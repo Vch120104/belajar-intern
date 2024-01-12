@@ -1,0 +1,491 @@
+package masteritemrepositoryimpl
+
+import (
+	masteritementities "after-sales/api/entities/master/item"
+	masteritempayloads "after-sales/api/payloads/master/item"
+	masteritemrepository "after-sales/api/repositories/master/item"
+	"after-sales/api/utils"
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/url"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+type ItemRepositoryImpl struct {
+	myDB  *gorm.DB
+	redis *redis.Client
+}
+
+func StartItemRepositoryImpl(db *gorm.DB, redis *redis.Client) masteritemrepository.ItemRepository {
+	return &ItemRepositoryImpl{myDB: db, redis: redis}
+}
+
+func (r *ItemRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.ItemRepository {
+	if trxHandle == nil {
+		log.Println("Transaction Database Not Found!")
+		return r
+	}
+	r.myDB = trxHandle
+	return r
+}
+
+func (r *ItemRepositoryImpl) GetAllItem(filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
+	var responses []masteritempayloads.ItemLookup
+	tableStruct := masteritempayloads.ItemLookup{}
+
+	cacheKey := utils.GenerateCacheKey(filterCondition)
+
+	cachedData, err := r.redis.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+		if cachedData != "" {
+			var decoder = json.NewDecoder(strings.NewReader(cachedData))
+			if err := decoder.Decode(&responses); err != nil {
+				return nil, err
+			}
+			return responses, nil
+		}
+	}
+
+	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	rows, err := whereQuery.Scan(&responses).Rows()
+
+	if err != nil {
+		return responses, err
+	}
+
+	if len(responses) == 0 {
+		return responses, gorm.ErrRecordNotFound
+	}
+
+	defer rows.Close()
+
+	dataToCache, err := json.Marshal(responses)
+	if err == nil {
+		_ = r.redis.Set(context.Background(), cacheKey, dataToCache, 1*time.Minute)
+	} else {
+		fmt.Println("Error marshalling data for Redis cache:", err)
+	}
+
+	return responses, nil
+}
+
+func (r *ItemRepositoryImpl) GetAllItemLookup(queryParams map[string]string) ([]map[string]interface{}, error) {
+	var paginationResponse utils.APIPaginationResponse
+	var c *gin.Context
+	var multiIds []string
+	var responses []masteritempayloads.ItemLookup
+	var getItemGroupResponse []masteritempayloads.ItemGroupResponse
+	var getSupplierMasterResponse []masteritempayloads.SupplierMasterResponse
+	tableStruct := masteritempayloads.ItemLookup{}
+	count := 0
+	for _, value := range queryParams {
+		if value != "" {
+			count++
+		}
+	}
+
+	if count == 2 && queryParams["limit"] != "" && queryParams["page"] != "" {
+		page, _ := strconv.Atoi(queryParams["page"])
+		limit, _ := strconv.Atoi(queryParams["limit"])
+
+		joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+
+		//execute
+		rows, err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Rows()
+
+		groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_code=" + queryParams["item_group_code"]
+		errUrlItemGroup := utils.Get(c, groupServiceUrl, &getItemGroupResponse, nil)
+
+		if errUrlItemGroup != nil {
+			return nil, errUrlItemGroup
+		}
+
+		joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+
+		for _, item := range responses {
+			idStr := strconv.Itoa(item.SupplierId)
+			duplicate := false
+			for _, existingID := range multiIds {
+				if existingID == idStr {
+					duplicate = true
+					break
+				}
+			}
+			if !duplicate {
+				multiIds = append(multiIds, idStr)
+			}
+		}
+
+		supplierServiceUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-multi-id/" + strings.Join(multiIds, ",")
+		errUrlSupplierMaster := utils.Get(c, supplierServiceUrl, &getSupplierMasterResponse, nil)
+		if errUrlSupplierMaster != nil {
+			return nil, errUrlSupplierMaster
+		}
+
+		joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getSupplierMasterResponse, "SupplierId")
+
+		if err != nil {
+			return joinedDataSecond, err
+		}
+
+		defer rows.Close()
+
+		return joinedDataSecond, nil
+	}
+
+	supplierDescUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-for-item-master"
+
+	u, err := url.Parse(supplierDescUrl)
+	if err != nil {
+		return nil, err
+	}
+	q := u.Query()
+	for key, value := range queryParams {
+		q.Set(key, value)
+	}
+	u.RawQuery = q.Encode()
+	supplierDescUrl = u.String()
+
+	paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(c, supplierDescUrl, paginationResponse, nil)
+	if errUrlSupplierMasterLookup != nil {
+		return nil, errUrlSupplierMasterLookup
+	}
+
+	dataSlice, _ := paginationRes.Data.([]map[string]interface{})
+
+	return dataSlice, nil
+}
+
+func (r *ItemRepositoryImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, error) {
+	entities := masteritementities.Item{}
+	response := masteritempayloads.ItemResponse{}
+
+	rows, err := r.myDB.Model(&entities).
+		Where(masteritementities.Item{
+			ItemId: Id,
+		}).
+		First(&response).
+		Rows()
+
+	if err != nil {
+		return response, err
+	}
+
+	defer rows.Close()
+
+	return response, nil
+}
+
+func (r *ItemRepositoryImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, error) {
+	entities := masteritementities.Item{}
+	var response []masteritempayloads.ItemResponse
+
+	newLogger := logger.New(
+		log.New(log.Writer(), "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold: time.Second,
+			LogLevel:      logger.Info,
+			Colorful:      true,
+		},
+	)
+
+	r.myDB.Logger = newLogger
+
+	rows, err := r.myDB.Model(&entities).
+		Where("item_id in ?", MultiIds).
+		Scan(&response).
+		Rows()
+
+	if err != nil {
+		return response, err
+	}
+
+	defer rows.Close()
+
+	return response, nil
+}
+
+func (r *ItemRepositoryImpl) GetItemCode(code string) ([]map[string]interface{}, error) {
+	entities := masteritementities.Item{}
+	response := masteritempayloads.ItemResponse{}
+	var getSupplierMasterResponse masteritempayloads.SupplierMasterResponse
+	var getItemGroupResponse masteritempayloads.ItemGroupResponse
+	var getStorageTypeResponse masteritempayloads.StorageTypeResponse
+	var getSpecialMovementResponse masteritempayloads.SpecialMovementResponse
+	var getAtpmSupplierResponse masteritempayloads.AtpmSupplierResponse
+	var getAtpmSupplierCodeOrderResponse masteritempayloads.AtpmSupplierCodeOrderResponse
+	// var getPersonInChargeResponse masteritempayloads.PersonInChargeResponse
+	var getAtpmWarrantyClaimTypeResponse masteritempayloads.AtpmWarrantyClaimTypeResponse
+	var c *gin.Context
+
+	rows, err := r.myDB.Model(&entities).
+		Where(masteritementities.Item{
+			ItemCode: code,
+		}).First(&response).Rows()
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	//FK Luar with mtr_item_group common-general service
+	errUrlItemGroup := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/item-group/"+strconv.Itoa(response.ItemGroupId), &getItemGroupResponse, nil)
+
+	if errUrlItemGroup != nil {
+		return nil, err
+	}
+
+	firstJoin := utils.DataFrameLeftJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.ItemGroupResponse{getItemGroupResponse}, "ItemGroupId")
+
+	//FK luar with mtr_supplier general service
+	errUrlSupplierMaster := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.SupplierId), &getSupplierMasterResponse, nil)
+
+	if errUrlSupplierMaster != nil {
+		return nil, err
+	}
+
+	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masteritempayloads.SupplierMasterResponse{getSupplierMasterResponse}, "SupplierId")
+	//FK luar with storage_type general service
+	errUrlStorageType := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/storage-type/"+strconv.Itoa(response.StorageTypeId), &getStorageTypeResponse, nil)
+
+	if errUrlStorageType != nil {
+		return nil, err
+	}
+
+	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masteritempayloads.StorageTypeResponse{getStorageTypeResponse}, "StorageTypeId")
+	//FK luar with mtr_warranty_claim_type common service
+	errUrlWarrantyClaimType := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/warranty-claim-type/"+strconv.Itoa(response.AtpmWarrantyClaimTypeId), &getAtpmWarrantyClaimTypeResponse, nil)
+
+	if errUrlWarrantyClaimType != nil {
+		return thirdJoin, err
+	}
+
+	fourthJoin := utils.DataFrameLeftJoin(thirdJoin, []masteritempayloads.AtpmWarrantyClaimTypeResponse{getAtpmWarrantyClaimTypeResponse}, "AtpmWarrantyClaimTypeId")
+	//FK luar with mtr_special_movement common service
+	errUrlSpecialMovement := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/special-movement/"+strconv.Itoa(response.SpecialMovementId), &getSpecialMovementResponse, nil)
+
+	if errUrlSpecialMovement != nil {
+		return fourthJoin, err
+	}
+
+	fifthJoin := utils.DataFrameLeftJoin(fourthJoin, []masteritempayloads.SpecialMovementResponse{getSpecialMovementResponse}, "SpecialMovementId")
+	//FK luar with mtr_supplier general service atpm_supplier_id
+	errUrlAtpmSupplier := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierId), &getAtpmSupplierResponse, nil)
+
+	if errUrlAtpmSupplier != nil {
+		return fifthJoin, err
+	}
+
+	sixthJoin := utils.DataFrameLeftJoin(fifthJoin, []masteritempayloads.AtpmSupplierResponse{getAtpmSupplierResponse}, "AtpmSupplierId")
+	//FK luar with mtr_supplier general service atpm_supplier_code_order_id
+	errUrlAtpmSupplierCodeOrder := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierCodeOrderId), &getAtpmSupplierCodeOrderResponse, nil)
+
+	if errUrlAtpmSupplierCodeOrder != nil {
+		return sixthJoin, err
+	}
+
+	seventhJoin := utils.DataFrameLeftJoin(sixthJoin, []masteritempayloads.AtpmSupplierCodeOrderResponse{getAtpmSupplierCodeOrderResponse}, "AtpmSupplierCodeOrderId")
+	//FK luar with mtr_user_details general service
+	// errUrlPersonInCharge := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/user-details-all/"+strconv.Itoa(response.PersonInChargeId), &getPersonInChargeResponse, nil)
+	// if errUrlPersonInCharge != nil {
+	// 	return seventhJoin, err
+	// }
+
+	// joinedDataPersonInCharge := utils.DataFrameLeftJoin(seventhJoin, getPersonInChargeResponse, "PersonInChargeId")
+
+	// FK luar with mtr_unit_of_measurement_type
+	// fk luar with mtr_atpm_order_type common service
+
+	return seventhJoin, nil
+}
+
+func (r *ItemRepositoryImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, error) {
+	entities := masteritementities.Item{
+		ItemCode:                     req.ItemCode,
+		ItemClassId:                  req.ItemClassId,
+		ItemName:                     req.ItemName,
+		ItemGroupId:                  req.ItemGroupId,
+		ItemType:                     req.ItemType,
+		ItemLevel1:                   req.ItemLevel_1,
+		ItemLevel2:                   req.ItemLevel_2,
+		ItemLevel3:                   req.ItemLevel_3,
+		ItemLevel4:                   req.ItemLevel_4,
+		SupplierId:                   req.SupplierId,
+		UnitOfMeasurementTypeId:      req.UnitOfMeasurementTypeId,
+		UnitOfMeasurementSellingId:   req.UnitOfMeasurementSellingId,
+		UnitOfMeasurementPurchaseId:  req.UnitOfMeasurementPurchaseId,
+		UnitOfMeasurementStockId:     req.UnitOfMeasurementStockId,
+		SalesItem:                    req.SalesItem,
+		Lottable:                     req.Lottable,
+		Inspection:                   req.Inspection,
+		PriceListItem:                req.PriceListItem,
+		StockKeeping:                 req.StockKeeping,
+		DiscountId:                   req.DiscountId,
+		MarkupMasterId:               req.MarkupMasterId,
+		DimensionOfLength:            req.DimensionOfLength,
+		DimensionOfWidth:             req.DimensionOfWidth,
+		DimensionOfHeight:            req.DimensionOfHeight,
+		DimensionUnitOfMeasurementId: req.DimensionUnitOfMeasurementId,
+		Weight:                       req.Weight,
+		UnitOfMeasurementWeight:      req.UnitOfMeasurementWeight,
+		StorageTypeId:                req.StorageTypeId,
+		Remark:                       req.Remark,
+		AtpmWarrantyClaimTypeId:      req.AtpmWarrantyClaimTypeId,
+		LastPrice:                    req.LastPrice,
+		UseDiscDecentralize:          req.UseDiscDecentralize,
+		CommonPricelist:              req.CommonPricelist,
+		IsRemovable:                  req.IsRemovable,
+		IsMaterialPlus:               req.IsMaterialPlus,
+		SpecialMovementId:            req.SpecialMovementId,
+		IsItemRegulation:             req.IsItemRegulation,
+		IsTechnicalDefect:            req.IsTechnicalDefect,
+		IsMandatory:                  req.IsMandatory,
+		MinimumOrderQty:              req.MinimumOrderQty,
+		HarmonizedNo:                 req.HarmonizedNo,
+		AtpmSupplierId:               req.AtpmSupplierId,
+		AtpmVendorSuppliability:      req.AtpmVendorSuppliability,
+		PmsItem:                      req.PmsItem,
+		Regulation:                   req.Regulation,
+		AutoPickWms:                  req.AutoPickWms,
+		GmmCatalogCode:               req.GmmCatalogCode,
+		PrincipalBrandParentId:       req.PrincipalBrandParentId,
+		ProportionalSupplyWms:        req.ProportionalSupplyWms,
+		Remark2:                      req.Remark2,
+		Remark3:                      req.Remark3,
+		SourceTypeId:                 req.SourceTypeId,
+		AtpmSupplierCodeOrderId:      req.AtpmSupplierCodeOrderId,
+		PersonInChargeId:             req.PersonInChargeId,
+	}
+
+	err := r.myDB.Save(&entities).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *ItemRepositoryImpl) ChangeStatusItem(Id int) (bool, error) {
+	var entities masteritementities.Item
+
+	result := r.myDB.Model(&entities).
+		Where("item_id = ?", Id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = r.myDB.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
+}
+
+func (r *ItemRepositoryImpl) GetAllItemDetail(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
+	// var responses []masteritempayloads.ItemDetailResponse
+	entities := []masteritementities.ItemClass{}
+	var responses []masteritempayloads.ItemClassResponse
+	// var getLineTypeResponse []masteritempayloads.LineTypeResponse
+	// var getItemGroupResponse []masteritempayloads.ItemGroupResponse
+	// var c *gin.Context
+	// var internalServiceFilter, externalServiceFilter []utils.FilterCondition
+	// var groupName, lineTypeCode string
+	// responseStruct := reflect.TypeOf(masteritempayloads.ItemClassResponse{})
+
+	// for i := 0; i < len(filterCondition); i++ {
+	// 	flag := false
+	// 	for j := 0; j < responseStruct.NumField(); j++ {
+	// 		if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+	// 			internalServiceFilter = append(internalServiceFilter, filterCondition[i])
+	// 			flag = true
+	// 			break
+	// 		}
+	// 		if !flag {
+	// 			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
+	// 		}
+	// 	}
+	// }
+
+	// //apply external services filter
+	// for i := 0; i < len(externalServiceFilter); i++ {
+	// 	if strings.Contains(externalServiceFilter[i].ColumnField, "line_type_code") {
+	// 		lineTypeCode = externalServiceFilter[i].ColumnValue
+	// 	} else {
+	// 		groupName = externalServiceFilter[i].ColumnValue
+	// 	}
+	// }
+
+	//define base model
+	baseModelQuery := r.myDB.Model(&entities)
+	//apply where query
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	//whereQuery := utils.ApplyFilter(baseModelQuery, internalServiceFilter)
+	//apply pagination and execute
+	rows, err := whereQuery.Scan(&responses).Rows()
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	if len(responses) == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	// groupServiceUrl := ""
+
+	// errUrlItemGroup := utils.Get(c, groupServiceUrl, &getItemGroupResponse, nil)
+
+	// if errUrlItemGroup != nil {
+	// 	return nil, errUrlItemGroup
+	// }
+
+	// joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+
+	return nil, nil
+}
+
+func (r *ItemRepositoryImpl) SaveItemDetail(request masteritempayloads.ItemDetailResponse) (bool, error) {
+	entities := masteritementities.ItemDetail{
+		IsActive:     request.IsActive,
+		ItemDetailId: request.ItemDetailId,
+		ItemId:       request.ItemId,
+		BrandId:      request.BrandId,
+		ModelId:      request.ModelId,
+		VariantId:    request.VariantId,
+		MillageEvery: request.MillageEvery,
+		ReturnEvery:  request.ReturnEvery,
+	}
+
+	err := r.myDB.Save(&entities).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}

@@ -1,0 +1,80 @@
+# PYTHON
+*.env.database
+*.env.services
+*.envtest
+*.db.env
+*.services.env
+*__pycache__
+*.pytest_cache
+alembic
+alembic.ini
+.idea
+.ipynb_checkpoints
+.mypy_cache
+.vscode
+htmlcov
+dist
+site
+.coverage
+coverage.xml
+.netlify
+test.db
+log.txt
+Pipfile.lock
+.venv
+
+
+# GOLANG
+#*.env
+*.exe
+*.exe~
+*.dll
+*.so 
+*.dylib
+*.sync.ffs_db
+# Test binary, built with `go test -c`
+*.test
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+# Dependency directories (remove the comment below to include it)
+.development
+# Go workspace file
+go.work
+# swagger generated file
+docs.go
+swagger.json
+swagger.yaml
+
+
+
+# NEXTJS
+# playwright testing
+/playwright/test-results
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+# testing
+/coverage
+# next.js
+/.next/
+/out/
+# production
+/build
+# misc
+.DS_Store
+*.pem
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+# local env files
+.env*.local
+# vercel
+.vercel
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+*/webapp-service/
