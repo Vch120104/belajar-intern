@@ -20,7 +20,6 @@ import (
 	masterserviceimpl "after-sales/api/services/service-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 
-	_ "after-sales/docs"
 	"fmt"
 	"net"
 	"net/http"
