@@ -23,7 +23,7 @@ type ItemLevelController struct {
 	itemLevelService masteritemlevelservice.ItemLevelService
 }
 
-func OpenItemLevelRoutes(
+func StartItemLevelRoutes(
 	db *gorm.DB,
 	r *gin.RouterGroup,
 	itemLevelService masteritemlevelservice.ItemLevelService,

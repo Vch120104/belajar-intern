@@ -81,6 +81,10 @@ func CreateHandler(db *gorm.DB, env string, redis *redis.Client) {
 	discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl(db)
 	discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository)
 
+	//mtr_item_level
+	itemLevelRepository := masteritemrepositoryimpl.StartItemLevelRepositoryImpl(db)
+	itemLevelService := masteritemserviceimpl.StartItemLevelService(itemLevelRepository)
+
 	warehouseGroupRepository := masterwarehouserepositoryimpl.OpenWarehouseGroupImpl(db)
 	warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository)
 
@@ -112,6 +116,7 @@ func CreateHandler(db *gorm.DB, env string, redis *redis.Client) {
 	masteroperationcontroller.StartOperationModelMappingRoutes(db, api, operationModelMappingService)
 	masteritemcontroller.StartUnitOfMeasurementRoutes(db, api, UnitOfMeasurementService)
 	masteritemcontroller.StartItemRoutes(db, api, itemService)
+	masteritemcontroller.StartItemLevelRoutes(db, api, itemLevelService)
 	masteritemcontroller.StartItemClassRoutes(db, api, itemClassService)
 	masteritemcontroller.StartPriceListRoutes(db, api, priceListService)
 	masteritemcontroller.StartMarkupMasterRoutes(db, api, markupMasterService)

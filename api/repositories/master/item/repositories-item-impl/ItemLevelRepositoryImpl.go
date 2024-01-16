@@ -16,7 +16,7 @@ type ItemLevelImpl struct {
 	DB *gorm.DB
 }
 
-func OpenItemLevelImpl(db *gorm.DB) masteritemlevelrepo.ItemLevelRepository {
+func StartItemLevelRepositoryImpl(db *gorm.DB) masteritemlevelrepo.ItemLevelRepository {
 	return &ItemLevelImpl{DB: db}
 }
 

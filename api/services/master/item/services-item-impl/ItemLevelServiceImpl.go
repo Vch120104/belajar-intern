@@ -14,7 +14,7 @@ type ItemLevelServiceImpl struct {
 	structItemLevelRepo masteritemlevelrepo.ItemLevelRepository
 }
 
-func OpenItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository) masteritemlevelservice.ItemLevelService {
+func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository) masteritemlevelservice.ItemLevelService {
 	return &ItemLevelServiceImpl{
 		structItemLevelRepo: itemlevelrepo,
 	}
