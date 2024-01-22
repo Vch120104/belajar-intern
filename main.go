@@ -12,7 +12,7 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in Header
 // @name Authorization
-// @host 10.1.32.26:2000
+// @host localhost:2000
 // @BasePath /api/aftersales
 func main() {
 	args := os.Args

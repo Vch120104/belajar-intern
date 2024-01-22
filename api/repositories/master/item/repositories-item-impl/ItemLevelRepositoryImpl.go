@@ -34,7 +34,7 @@ func (r *ItemLevelImpl) Save(request masteritemlevelpayloads.SaveItemLevelReques
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
 		ItemLevel:       request.ItemLevel,
-		ItemClassCode:   request.ItemClassCode,
+		ItemClassId:     request.ItemClassId,
 		ItemLevelParent: request.ItemLevelParent,
 		ItemLevelCode:   request.ItemLevelCode,
 		ItemLevelName:   request.ItemLevelName,
@@ -58,7 +58,7 @@ func (r *ItemLevelImpl) Update(request masteritemlevelpayloads.SaveItemLevelRequ
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
 		ItemLevel:       request.ItemLevel,
-		ItemClassCode:   request.ItemClassCode,
+		ItemClassId:     request.ItemClassId,
 		ItemLevelParent: request.ItemLevelParent,
 		ItemLevelCode:   request.ItemLevelCode,
 		ItemLevelName:   request.ItemLevelName,
@@ -108,10 +108,11 @@ func (r *ItemLevelImpl) GetAll(request masteritemlevelpayloads.GetAllItemLevelRe
 
 	tempRows := r.DB.
 		Model(&masteritementities.ItemLevel{}).
+		Joins("mtr_item_class on mtr_item_level.item_class_id = mtr_item_class.item_class_id").
 		Where("item_level like ?", "%"+request.ItemLevel+"%").
 		Where("item_level_code like ?", "%"+request.ItemLevelCode+"%").
 		Where("item_level_name like ?", "%"+request.ItemLevelName+"%").
-		Where("item_class like ?", "%"+request.ItemClassCode+"%").
+		Where("item_class_code like ?", "%"+request.ItemClassCode+"%").
 		Where("item_level_parent like ?", "%"+request.ItemLevelParent+"%")
 
 	if request.IsActive != "" {
