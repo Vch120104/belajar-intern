@@ -35,21 +35,11 @@ func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLeve
 	return save, nil
 }
 
-func (s *ItemLevelServiceImpl) Update(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, error) {
-	update, err := s.structItemLevelRepo.Update(request)
-
-	if err != nil {
-		return false, err
-	}
-
-	return update, nil
-}
-
-func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponse, error) {
+func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, error) {
 	get, err := s.structItemLevelRepo.GetById(itemLevelId)
 
 	if err != nil {
-		return masteritemlevelpayloads.GetItemLevelResponse{}, err
+		return masteritemlevelpayloads.GetItemLevelResponseById{}, err
 	}
 
 	return get, nil
@@ -65,7 +55,7 @@ func (s *ItemLevelServiceImpl) GetAll(request masteritemlevelpayloads.GetAllItem
 	return get, nil
 }
 
-func (s *ItemLevelServiceImpl) ChangeStatus(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponse, error) {
+func (s *ItemLevelServiceImpl) ChangeStatus(itemLevelId int) (bool, error) {
 	change_status, err := s.structItemLevelRepo.ChangeStatus(itemLevelId)
 
 	if err != nil {

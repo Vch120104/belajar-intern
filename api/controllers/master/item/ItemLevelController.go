@@ -4,7 +4,6 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
-	"fmt"
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
@@ -31,120 +30,10 @@ func StartItemLevelRoutes(
 	handler := ItemLevelController{
 		itemLevelService: itemLevelService,
 	}
-
-	// r.Use(middlewares.SetupAuthenticationMiddleware())
-	r.POST("/save-item-level", middlewares.DBTransactionMiddleware(db), handler.Save)
-	r.PUT("/update-item-level", middlewares.DBTransactionMiddleware(db), handler.Update)
-	r.GET("/get-item-level-by-id", middlewares.DBTransactionMiddleware(db), handler.GetById)
+	r.GET("/item-level-by-id", middlewares.DBTransactionMiddleware(db), handler.GetById)
 	r.GET("/item-level", middlewares.DBTransactionMiddleware(db), handler.GetAll)
-	r.PATCH("/change-item-level-status/:item_level_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
-}
-
-// @Summary Save Item Level
-// @Description Save Item Level
-// @Accept json
-// @Produce json
-// @Tags Master : Item Level
-// @Security BearerAuth
-// @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/save-item-level [post]
-func (r *ItemLevelController) Save(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	requestBody := masteritemlevelpayloads.SaveItemLevelRequest{}
-
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-
-	save, err := r.itemLevelService.WithTrx(trxHandle).Save(requestBody)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, save, "Success insert item level", http.StatusOK)
-
-}
-
-// @Summary Update Item Level
-// @Description Update Item Level
-// @Accept json
-// @Produce json
-// @Tags Master : Item Level
-// @Security BearerAuth
-// @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/update-item-level [put]
-func (r *ItemLevelController) Update(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	requestBody := masteritemlevelpayloads.SaveItemLevelRequest{}
-
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-
-	if requestBody.ItemLevelId == 0 {
-		exceptions.EntityException(c, "Item Level Id cannot be empty!")
-		return
-	}
-
-	get, errGet := r.itemLevelService.WithTrx(trxHandle).GetById(requestBody.ItemLevelId)
-
-	if errGet != nil {
-		exceptions.AppException(c, errGet.Error())
-		return
-	}
-
-	if get.ItemLevelId == 0 {
-		exceptions.AppException(c, "Item Level Id does not exist")
-		return
-	}
-
-	update, errUpdate := r.itemLevelService.WithTrx(trxHandle).Update(requestBody)
-
-	if errUpdate != nil {
-		exceptions.AppException(c, errUpdate.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, update, "Success update item level", http.StatusOK)
-
-}
-
-// @Summary Get Item Level By Id
-// @Description Get Item Level By Id
-// @Accept json
-// @Produce json
-// @Tags Master : Item Level
-// @Security BearerAuth
-// @Param item_level_id path string true "item_level_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/get-item-level-by-id [get]
-func (r *ItemLevelController) GetById(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	itemLevelId, _ := strconv.Atoi(c.Param("item_level_id"))
-
-	get, err := r.itemLevelService.WithTrx(trxHandle).GetById(itemLevelId)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if get.ItemLevelId == 0 {
-		exceptions.NotFoundException(c, "Item Level Data Not Found!")
-		return
-	}
-
-	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
-
+	r.POST("/item-level", middlewares.DBTransactionMiddleware(db), handler.Save)
+	r.PATCH("/item-level/:item_level_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
 }
 
 // @Summary Get All Item Level
@@ -165,7 +54,7 @@ func (r *ItemLevelController) GetById(c *gin.Context) {
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/item-level [get]
+// @Router /aftersales-service/api/aftersales/item-level [get]
 func (r *ItemLevelController) GetAll(c *gin.Context) {
 	trxHandle := c.MustGet("db_trx").(*gorm.DB)
 	page, _ := strconv.Atoi(c.Query("page"))
@@ -198,9 +87,85 @@ func (r *ItemLevelController) GetAll(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(get.Rows)
-
 	payloads.HandleSuccessPagination(c, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+}
+
+// @Summary Get Item Level By Id
+// @Description Get Item Level By Id
+// @Accept json
+// @Produce json
+// @Tags Master : Item Level
+// @Security BearerAuth
+// @Param item_level_id path string true "item_level_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/item-level-by-id [get]
+func (r *ItemLevelController) GetById(c *gin.Context) {
+	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+	itemLevelId, _ := strconv.Atoi(c.Param("item_level_id"))
+
+	get, err := r.itemLevelService.WithTrx(trxHandle).GetById(itemLevelId)
+
+	if err != nil {
+		exceptions.AppException(c, err.Error())
+		return
+	}
+
+	if get.ItemLevelId == 0 {
+		exceptions.NotFoundException(c, "Item Level Data Not Found!")
+		return
+	}
+
+	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Save Item Level
+// @Description Save Item Level
+// @Accept json
+// @Produce json
+// @Tags Master : Item Level
+// @Security BearerAuth
+// @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/item-level [post]
+func (r *ItemLevelController) Save(c *gin.Context) {
+	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+	var request masteritemlevelpayloads.SaveItemLevelRequest
+	var message = ""
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		exceptions.EntityException(c, err.Error())
+		return
+	}
+
+	if int(request.ItemLevelId) != 0 {
+		result, err := r.itemLevelService.WithTrx(trxHandle).GetById(int(request.ItemLevelId))
+
+		if err != nil {
+			exceptions.AppException(c, err.Error())
+			return
+		}
+
+		if result.ItemLevelId == 0 {
+			exceptions.NotFoundException(c, err.Error())
+			return
+		}
+	}
+
+	create, err := r.itemLevelService.WithTrx(trxHandle).Save(request)
+	if err != nil {
+		exceptions.AppException(c, err.Error())
+		return
+	}
+
+	if request.ItemLevelId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.HandleSuccess(c, create, message, http.StatusOK)
 }
 
 // @Summary Change Item Level Status By Id
@@ -212,18 +177,26 @@ func (r *ItemLevelController) GetAll(c *gin.Context) {
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/change-item-level-status/{item_level_id} [patch]
+// @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
 func (r *ItemLevelController) ChangeStatus(c *gin.Context) {
 	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	itemLevelId, _ := strconv.Atoi(c.Param("item_level_id"))
+	itemLevelId, err := strconv.Atoi(c.Param("item_level_id"))
+	if err != nil {
+		exceptions.EntityException(c, err.Error())
+		return
+	}
+	//id check
+	result, err := r.itemLevelService.WithTrx(trxHandle).GetById(int(itemLevelId))
+	if err != nil || result.ItemLevelId == 0 {
+		exceptions.NotFoundException(c, err.Error())
+		return
+	}
 
-	change_status, err := r.itemLevelService.WithTrx(trxHandle).ChangeStatus(itemLevelId)
-
+	response, err := r.itemLevelService.WithTrx(trxHandle).ChangeStatus(int(itemLevelId))
 	if err != nil {
 		exceptions.AppException(c, err.Error())
 		return
 	}
 
-	payloads.HandleSuccess(c, change_status, "Updated successfully", http.StatusOK)
-
+	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
 }

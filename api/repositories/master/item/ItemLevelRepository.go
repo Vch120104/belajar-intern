@@ -10,8 +10,7 @@ import (
 type ItemLevelRepository interface {
 	WithTrx(trxHandle *gorm.DB) ItemLevelRepository
 	Save(masteritemlevelpayloads.SaveItemLevelRequest) (bool, error)
-	Update(masteritemlevelpayloads.SaveItemLevelRequest) (bool, error)
-	GetById(int) (masteritemlevelpayloads.GetItemLevelResponse, error)
+	GetById(int) (masteritemlevelpayloads.GetItemLevelResponseById, error)
 	GetAll(request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, error)
-	ChangeStatus(int) (masteritemlevelpayloads.GetItemLevelResponse, error)
+	ChangeStatus(int) (bool, error)
 }
