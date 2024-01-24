@@ -1,6 +1,6 @@
 package masteritementities
 
-var CreateMarkupMasterTable = "mtr_mark_up_master"
+var CreateMarkupMasterTable = "mtr_markup_master"
 
 type MarkupMaster struct {
 	IsActive                bool   `gorm:"column:is_active;not null;default:true"        json:"is_active"`
