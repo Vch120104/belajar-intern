@@ -20,3 +20,11 @@ func AppException(c *gin.Context, message string) {
 
 	c.JSON(http.StatusInternalServerError, res)
 }
+
+type AppExceptionError struct {
+	Error string
+}
+
+func NewAppExceptionError(error string) AppExceptionError {
+	return AppExceptionError{Error: error}
+}

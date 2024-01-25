@@ -1,6 +1,8 @@
 package masteroperationserviceimpl
 
 import (
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
@@ -12,63 +14,70 @@ import (
 
 type OperationGroupServiceImpl struct {
 	operationGroupRepo masteroperationrepository.OperationGroupRepository
+	DB                 *gorm.DB
 }
 
-func StartOperationGroupService(operationGroupRepo masteroperationrepository.OperationGroupRepository) masteroperationservice.OperationGroupService {
+func StartOperationGroupService(operationGroupRepo masteroperationrepository.OperationGroupRepository, db *gorm.DB) masteroperationservice.OperationGroupService {
 	return &OperationGroupServiceImpl{
 		operationGroupRepo: operationGroupRepo,
+		DB:                 db,
 	}
 }
-func (s *OperationGroupServiceImpl) WithTrx(trxHandle *gorm.DB) masteroperationservice.OperationGroupService {
-	s.operationGroupRepo = s.operationGroupRepo.WithTrx(trxHandle)
-	return s
-}
 
-func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, error) {
-	results, err := s.operationGroupRepo.GetAllOperationGroupIsActive()
-	if err != nil {
-		return results, err
-	}
-	return results, nil
-}
-
-func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) (masteroperationpayloads.OperationGroupResponse, error) {
-	results, err := s.operationGroupRepo.GetOperationGroupById(id)
+func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() []masteroperationpayloads.OperationGroupResponse {
+	tx := s.DB.Begin()
+	get, err := s.operationGroupRepo.GetAllOperationGroupIsActive(tx)
 
 	if err != nil {
-		return masteroperationpayloads.OperationGroupResponse{}, err
+		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
-	return results, nil
+
+	return get
 }
 
-func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) (masteroperationpayloads.OperationGroupResponse, error) {
-	results, err := s.operationGroupRepo.GetOperationGroupByCode(Code)
+func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) masteroperationpayloads.OperationGroupResponse {
+	tx := s.DB.Begin()
+	results, err := s.operationGroupRepo.GetOperationGroupById(tx, id)
 	if err != nil {
-		return masteroperationpayloads.OperationGroupResponse{}, err
+		return masteroperationpayloads.OperationGroupResponse{}
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
-	results, err := s.operationGroupRepo.GetAllOperationGroup(filterCondition, pages)
+func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) masteroperationpayloads.OperationGroupResponse {
+	tx := s.DB.Begin()
+	results, err := s.operationGroupRepo.GetOperationGroupByCode(tx, Code)
 	if err != nil {
-		return pages, err
+		return masteroperationpayloads.OperationGroupResponse{}
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) (bool, error) {
-	results, err := s.operationGroupRepo.ChangeStatusOperationGroup(oprId)
+func (s *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	results, err := s.operationGroupRepo.GetAllOperationGroup(tx, filterCondition, pages)
 	if err != nil {
-		return false, err
+		return pages
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) (bool, error) {
-	results, err := s.operationGroupRepo.SaveOperationGroup(req)
+func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationGroupRepo.ChangeStatusOperationGroup(tx, oprId)
 	if err != nil {
-		return false, err
+		return false
 	}
-	return results, nil
+	return results
+}
+
+func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationGroupRepo.SaveOperationGroup(tx, req)
+	if err != nil {
+		return false
+	}
+	return results
 }

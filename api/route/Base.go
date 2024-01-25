@@ -33,6 +33,18 @@ import (
 	"gorm.io/gorm"
 )
 
+// func OperationGroupRouter(
+// 	operationGroupController masteroperationcontroller.OperationGroupController,
+// ) *httprouter.Router {
+// 	router := httprouter.New()
+// 	router.GET("/approval/approval-request", middlewares.NewAuthMiddleware(approvalController.GetApprovalRequestForRequester).Handler)
+// 	router.POST("/approval/approval-request", middlewares.NewAuthMiddleware(approvalController.CreateApprovalRequestDetail).Handler)
+// 	router.POST("/approval/approval-request-detail", middlewares.NewAuthMiddleware(approvalController.CreateApprovalRequestDetail).Handler)
+// 	router.PanicHandler = exceptions.ErrorHandler
+
+// 	return router
+// }
+
 func CreateHandler(db *gorm.DB, env string, redis *redis.Client) {
 	r := gin.New()
 	//mtr_operation_group
