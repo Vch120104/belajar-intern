@@ -12,4 +12,5 @@ type MarkupRateRepository interface {
 	GetMarkupRateById(Id int) (masteritempayloads.MarkupRateResponse, error)
 	SaveMarkupRate(request masteritempayloads.MarkupRateRequest) (bool, error)
 	GetAllMarkupRate(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error)
+	ChangeStatusMarkupRate(Id int) (bool, error)
 }

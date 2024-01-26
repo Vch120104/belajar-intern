@@ -32,6 +32,7 @@ func StartMarkupRateRoutes(
 	r.GET("/markup-rate", middlewares.DBTransactionMiddleware(db), markupRateHandler.GetAllMarkupRate)
 	r.GET("/markup-rate/:markup_rate_id", middlewares.DBTransactionMiddleware(db), markupRateHandler.GetMarkupRateByID)
 	r.POST("/markup-rate", middlewares.DBTransactionMiddleware(db), markupRateHandler.SaveMarkupRate)
+	r.PATCH("/markup-rate/:markup_rate_id", middlewares.DBTransactionMiddleware(db), markupRateHandler.ChangeStatusMarkupRate)
 }
 
 // @Summary Get All Markup Rate
@@ -148,4 +149,36 @@ func (r *MarkupRateController) SaveMarkupRate(c *gin.Context) {
 	}
 
 	payloads.HandleSuccess(c, create, message, http.StatusOK)
+}
+
+// @Summary Change Status Markup Rate
+// @Description REST API Markup Rate
+// @Accept json
+// @Produce json
+// @Tags Master : Markup Rate
+// @param markup_rate_id path int true "markup_rate_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [patch]
+func (r *MarkupRateController) ChangeStatusMarkupRate(c *gin.Context) {
+	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+	markupMasterId, err := strconv.Atoi(c.Param("markup_rate_id"))
+	if err != nil {
+		exceptions.EntityException(c, err.Error())
+		return
+	}
+	//id check
+	result, err := r.markupRateService.WithTrx(trxHandle).GetMarkupRateById(int(markupMasterId))
+	if err != nil || result.MarkupMasterId == 0 {
+		exceptions.NotFoundException(c, err.Error())
+		return
+	}
+
+	response, err := r.markupRateService.WithTrx(trxHandle).ChangeStatusMarkupRate(int(markupMasterId))
+	if err != nil {
+		exceptions.AppException(c, err.Error())
+		return
+	}
+
+	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
 }

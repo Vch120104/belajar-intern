@@ -48,3 +48,11 @@ func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRate
 	}
 	return results, nil
 }
+
+func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, error) {
+	results, err := s.markupRepo.ChangeStatusMarkupRate(Id)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}

@@ -35,7 +35,7 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(filterCondition []utils.Filt
 	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var orderTypeName string
-	responseStruct := reflect.TypeOf(masteritempayloads.MarkupRateResponse{})
+	responseStruct := reflect.TypeOf(masteritempayloads.MarkupRateListResponse{})
 
 	for i := 0; i < len(filterCondition); i++ {
 		flag := false
@@ -45,9 +45,9 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(filterCondition []utils.Filt
 				flag = true
 				break
 			}
-			if !flag {
-				externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-			}
+		}
+		if !flag {
+			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
 		}
 	}
 
@@ -126,3 +126,28 @@ func (r *MarkupRateRepositoryImpl) SaveMarkupRate(request masteritempayloads.Mar
 	return true, nil
 }
 
+func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(Id int) (bool, error) {
+	var entities masteritementities.MarkupRate
+
+	result := r.myDB.Model(&entities).
+		Where("markup_rate_id = ?", Id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = r.myDB.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
+}
