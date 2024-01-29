@@ -63,6 +63,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 		SortBy: params.ByName("sort_by"),
 	}
 
+	
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	result := r.OperationGroupService.GetAllOperationGroup(filterCondition, pagination)
