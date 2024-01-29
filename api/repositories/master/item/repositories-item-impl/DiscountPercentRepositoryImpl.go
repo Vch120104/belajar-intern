@@ -30,12 +30,12 @@ func (r *DiscountPercentRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemre
 }
 
 func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
-	var responses []masteritempayloads.DiscountPercentResponse
+	var responses []masteritempayloads.DiscountPercentListResponse
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
 	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var orderTypeName string
-	responseStruct := reflect.TypeOf(masteritempayloads.DiscountPercentResponse{})
+	responseStruct := reflect.TypeOf(masteritempayloads.DiscountPercentListResponse{})
 
 	for i := 0; i < len(filterCondition); i++ {
 		flag := false
@@ -45,9 +45,9 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []
 				flag = true
 				break
 			}
-			if !flag {
-				externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-			}
+		}
+		if !flag {
+			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
 		}
 	}
 
