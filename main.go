@@ -41,18 +41,19 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
+		basePath := "/api/aftersales/"
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle("/aftersales/", OperationGroupRouter)
+		mux.Handle(basePath, OperationGroupRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

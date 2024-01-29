@@ -13,14 +13,14 @@ import (
 )
 
 func OperationGroupRouter(
-	operationGroupController masteroperationcontroller.OperationGroupController,
+	operationGroupController masteroperationcontroller.OperationGroupController, path string,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/aftersales/operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET("/aftersales/operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("/aftersales/operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST("/aftersales/operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH("/aftersales/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET(path+"operation-group", operationGroupController.GetAllOperationGroup)
+	router.GET(path+"operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET(path+"operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
+	router.POST(path+"operation-group", operationGroupController.SaveOperationGroup)
+	router.PATCH(path+"operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 	return router
 }
 

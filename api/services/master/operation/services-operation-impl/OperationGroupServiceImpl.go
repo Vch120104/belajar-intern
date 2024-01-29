@@ -65,6 +65,15 @@ func (s *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils
 func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	checkId := masteroperationpayloads.OperationGroupResponse{}
+
+	resultId, _ := s.operationGroupRepo.GetOperationGroupById(tx, oprId)
+
+	if resultId == checkId {
+		panic(exceptions.NewNoContentError("id not found"))
+	}
+
 	results, err := s.operationGroupRepo.ChangeStatusOperationGroup(tx, oprId)
 	if err != nil {
 		return false
