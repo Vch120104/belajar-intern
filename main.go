@@ -52,7 +52,7 @@ func main() {
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle("/test/", OperationGroupRouter)
+		mux.Handle("/aftersales/", OperationGroupRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
