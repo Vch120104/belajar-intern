@@ -16,11 +16,11 @@ func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET("/operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("/operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST("/operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET("/aftersales/operation-group", operationGroupController.GetAllOperationGroup)
+	router.GET("/aftersales/operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/aftersales/operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/aftersales/operation-group", operationGroupController.SaveOperationGroup)
+	router.PATCH("/aftersales/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 	return router
 }
 

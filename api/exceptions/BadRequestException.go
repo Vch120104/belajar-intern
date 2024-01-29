@@ -14,3 +14,11 @@ func BadRequestException(c *gin.Context, message string) {
 
 	c.JSON(http.StatusBadRequest, res)
 }
+
+type BadRequestError struct {
+	Error string
+}
+
+func NewBadRequestError(error string) BadRequestError {
+	return BadRequestError{Error: error}
+}

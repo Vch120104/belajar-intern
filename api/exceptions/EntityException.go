@@ -14,3 +14,11 @@ func EntityException(c *gin.Context, message string) {
 
 	c.JSON(http.StatusUnprocessableEntity, res)
 }
+
+type EntityError struct {
+	Error string
+}
+
+func NewEntityError(error string) EntityError {
+	return EntityError{Error: error}
+}

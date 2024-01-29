@@ -14,3 +14,11 @@ func AuthorizeException(c *gin.Context, message string) {
 
 	c.JSON(http.StatusUnauthorized, res)
 }
+
+type AuthorizationError struct {
+	Error string
+}
+
+func NewAuthorizationError(error string) AuthorizationError {
+	return AuthorizationError{Error: error}
+}
