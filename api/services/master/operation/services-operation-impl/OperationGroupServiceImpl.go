@@ -26,6 +26,7 @@ func StartOperationGroupService(operationGroupRepo masteroperationrepository.Ope
 
 func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() []masteroperationpayloads.OperationGroupResponse {
 	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
 	get, err := s.operationGroupRepo.GetAllOperationGroupIsActive(tx)
 
 	if err != nil {
@@ -37,6 +38,7 @@ func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() []masteropera
 
 func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) masteroperationpayloads.OperationGroupResponse {
 	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetOperationGroupById(tx, id)
 	if err != nil {
 		return masteroperationpayloads.OperationGroupResponse{}
@@ -46,6 +48,7 @@ func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) masteroperatio
 
 func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) masteroperationpayloads.OperationGroupResponse {
 	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetOperationGroupByCode(tx, Code)
 	if err != nil {
 		return masteroperationpayloads.OperationGroupResponse{}
@@ -55,6 +58,7 @@ func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) mastero
 
 func (s *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
 	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetAllOperationGroup(tx, filterCondition, pages)
 	if err != nil {
 		return pages
