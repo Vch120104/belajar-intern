@@ -12,15 +12,15 @@ import (
 	"gorm.io/gorm"
 )
 
-type DiscountPercentRepositoryImpl struct {
+type MarkupRateRepositoryImpl struct {
 	myDB *gorm.DB
 }
 
-func StartDiscountPercentRepositoryImpl(db *gorm.DB) masteritemrepository.DiscountPercentRepository {
-	return &DiscountPercentRepositoryImpl{myDB: db}
+func StartMarkupRateRepositoryImpl(db *gorm.DB) masteritemrepository.MarkupRateRepository {
+	return &MarkupRateRepositoryImpl{myDB: db}
 }
 
-func (r *DiscountPercentRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.DiscountPercentRepository {
+func (r *MarkupRateRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.MarkupRateRepository {
 	if trxHandle == nil {
 		log.Println("Transaction Database Not Found!")
 		return r
@@ -29,13 +29,13 @@ func (r *DiscountPercentRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemre
 	return r
 }
 
-func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
-	var responses []masteritempayloads.DiscountPercentListResponse
+func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
+	var responses []masteritempayloads.MarkupRateListResponse
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
 	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var orderTypeName string
-	responseStruct := reflect.TypeOf(masteritempayloads.DiscountPercentListResponse{})
+	responseStruct := reflect.TypeOf(masteritempayloads.MarkupRateListResponse{})
 
 	for i := 0; i < len(filterCondition); i++ {
 		flag := false
@@ -57,7 +57,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []
 	}
 
 	// define table struct
-	tableStruct := masteritempayloads.DiscountPercentListResponse{}
+	tableStruct := masteritempayloads.MarkupRateListResponse{}
 	//define join table
 	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
 	//apply filter
@@ -77,10 +77,10 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []
 
 	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
 
-	errUrlDiscountPercent := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
+	errUrlMarkupRate := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
 
-	if errUrlDiscountPercent != nil {
-		return nil, errUrlDiscountPercent
+	if errUrlMarkupRate != nil {
+		return nil, errUrlMarkupRate
 	}
 
 	joinedData := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
@@ -88,13 +88,13 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []
 	return joinedData, nil
 }
 
-func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(Id int) (masteritempayloads.DiscountPercentResponse, error) {
-	entities := masteritementities.DiscountPercent{}
-	response := masteritempayloads.DiscountPercentResponse{}
+func (r *MarkupRateRepositoryImpl) GetMarkupRateById(Id int) (masteritempayloads.MarkupRateResponse, error) {
+	entities := masteritementities.MarkupRate{}
+	response := masteritempayloads.MarkupRateResponse{}
 
 	rows, err := r.myDB.Model(&entities).
-		Where(masteritementities.DiscountPercent{
-			DiscountPercentId: Id,
+		Where(masteritementities.MarkupRate{
+			MarkupRateId: Id,
 		}).
 		First(&response).
 		Rows()
@@ -108,13 +108,13 @@ func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(Id int) (masterit
 	return response, nil
 }
 
-func (r *DiscountPercentRepositoryImpl) SaveDiscountPercent(request masteritempayloads.DiscountPercentResponse) (bool, error) {
-	entities := masteritementities.DiscountPercent{
-		IsActive:          request.IsActive,
-		DiscountPercentId: request.DiscountPercentId,
-		DiscountCodeId:    request.DiscountCodeId,
-		OrderTypeId:       request.OrderTypeId,
-		Discount:          request.Discount,
+func (r *MarkupRateRepositoryImpl) SaveMarkupRate(request masteritempayloads.MarkupRateRequest) (bool, error) {
+	entities := masteritementities.MarkupRate{
+		IsActive:       true,
+		MarkupRateId:   request.MarkupRateId,
+		MarkupMasterId: request.MarkupMasterId,
+		OrderTypeId:    request.OrderTypeId,
+		MarkupRate:     request.MarkupRate,
 	}
 
 	err := r.myDB.Save(&entities).Error
@@ -126,11 +126,11 @@ func (r *DiscountPercentRepositoryImpl) SaveDiscountPercent(request masteritempa
 	return true, nil
 }
 
-func (r *DiscountPercentRepositoryImpl) ChangeStatusDiscountPercent(Id int) (bool, error) {
-	var entities masteritementities.DiscountPercent
+func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(Id int) (bool, error) {
+	var entities masteritementities.MarkupRate
 
 	result := r.myDB.Model(&entities).
-		Where("discount_percent_id = ?", Id).
+		Where("markup_rate_id = ?", Id).
 		First(&entities)
 
 	if result.Error != nil {
