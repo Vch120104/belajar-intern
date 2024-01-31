@@ -2,6 +2,7 @@ package route
 
 import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	"after-sales/api/exceptions"
 
 	_ "after-sales/docs"
 
@@ -16,11 +17,15 @@ func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController, path string,
 ) *httprouter.Router {
 	router := httprouter.New()
+
 	router.GET(path+"operation-group", operationGroupController.GetAllOperationGroup)
 	router.GET(path+"operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
 	router.GET(path+"operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
 	router.POST(path+"operation-group", operationGroupController.SaveOperationGroup)
 	router.PATCH(path+"operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+
+	router.PanicHandler = exceptions.ErrorHandler
+	
 	return router
 }
 

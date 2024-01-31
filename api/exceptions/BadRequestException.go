@@ -6,7 +6,7 @@ import (
 )
 
 func BadRequestException(c *gin.Context, message string) {
-	res := Error{
+	res := OldError{
 		Success: false,
 		Message: message,
 		Data: nil,

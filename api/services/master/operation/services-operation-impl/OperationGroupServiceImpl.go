@@ -70,12 +70,10 @@ func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	checkId := masteroperationpayloads.OperationGroupResponse{}
+	_, err := s.operationGroupRepo.GetOperationGroupById(tx, oprId)
 
-	resultId, _ := s.operationGroupRepo.GetOperationGroupById(tx, oprId)
-
-	if resultId == checkId {
-		panic(exceptions.NewNoContentError("id not found"))
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	results, err := s.operationGroupRepo.ChangeStatusOperationGroup(tx, oprId)

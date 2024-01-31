@@ -7,7 +7,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type NewError struct {
+type Error struct {
 	StatusCode uint16      `json:"status_code"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data"`
@@ -55,7 +55,7 @@ func validationErrors(writer http.ResponseWriter, request *http.Request, err int
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusBadRequest)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Bad Request",
 			Data:       exception.Error(),
@@ -74,7 +74,7 @@ func badRequestError(writer http.ResponseWriter, request *http.Request, err inte
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusBadRequest)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Bad Request",
 			Data:       exception.Error,
@@ -92,7 +92,7 @@ func noContentError(writer http.ResponseWriter, request *http.Request, err inter
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusNoContent)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusNoContent,
 			Message:    "Data Not Found",
 			Data:       exception.Error,
@@ -111,7 +111,7 @@ func notAuthorizedError(writer http.ResponseWriter, request *http.Request, err i
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusUnauthorized)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusUnauthorized,
 			Message:    "You don't have permission",
 			Data:       exception.Error,
@@ -121,7 +121,7 @@ func notAuthorizedError(writer http.ResponseWriter, request *http.Request, err i
 		return true
 	} else {
 		return false
-}
+	}
 }
 
 func conflictError(writer http.ResponseWriter, request *http.Request, err interface{}) bool {
@@ -130,7 +130,7 @@ func conflictError(writer http.ResponseWriter, request *http.Request, err interf
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusConflict)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusConflict,
 			Message:    "Data Already Exists",
 			Data:       exception.Error,
@@ -148,7 +148,7 @@ func entityError(writer http.ResponseWriter, request *http.Request, err interfac
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusUnprocessableEntity)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusUnprocessableEntity,
 			Message:    "Data Error, please check your input",
 			Data:       exception.Error,
@@ -165,7 +165,7 @@ func notFoundError(writer http.ResponseWriter, request *http.Request, err interf
 	if ok {
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusNotFound)
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusNotFound,
 			Message:    "Data Not Found",
 			Data:       exception.Error,
@@ -183,7 +183,7 @@ func internalServerError(writer http.ResponseWriter, request *http.Request, err 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusInternalServerError)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Internal Server Error",
 			Data:       exception.Error,
@@ -201,7 +201,7 @@ func roleError(writer http.ResponseWriter, request *http.Request, err interface{
 		writer.Header().Set("Content-Type", "application/json")
 		writer.WriteHeader(http.StatusForbidden)
 
-		webResponse := NewError{
+		webResponse := Error{
 			StatusCode: http.StatusForbidden,
 			Message:    "You don't have permission",
 			Data:       exception.Error,
