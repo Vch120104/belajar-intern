@@ -78,9 +78,9 @@ func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) bool {
 
 	results, err := s.operationGroupRepo.ChangeStatusOperationGroup(tx, oprId)
 	if err != nil {
-		return false
+		return results
 	}
-	return results
+	return true
 }
 
 func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) bool {

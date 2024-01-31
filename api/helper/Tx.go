@@ -7,8 +7,11 @@ import (
 func CommitOrRollback(tx *gorm.DB) {
 	err := recover()
 	if err != nil {
-		tx.Rollback()
+		errorRollback := tx.Rollback()
+		PanicIfError(errorRollback.Error)
+		panic(err)
 	} else {
-		tx.Commit()
+		errorCommit := tx.Commit()
+		PanicIfError(errorCommit.Error)
 	}
 }

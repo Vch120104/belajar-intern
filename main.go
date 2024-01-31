@@ -48,6 +48,11 @@ func main() {
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+
+		
+
+
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
 
 		swaggerRouter := route.SwaggerRouter()

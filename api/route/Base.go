@@ -2,7 +2,7 @@ package route
 
 import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
-	"after-sales/api/exceptions"
+	"fmt"
 
 	_ "after-sales/docs"
 
@@ -24,9 +24,14 @@ func OperationGroupRouter(
 	router.POST(path+"operation-group", operationGroupController.SaveOperationGroup)
 	router.PATCH(path+"operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
-	router.PanicHandler = exceptions.ErrorHandler
-	
+	router.PanicHandler = PanicHandler
+
 	return router
+}
+
+func PanicHandler(w http.ResponseWriter, req *http.Request, panicValue interface{}) {
+	fmt.Println("Panic occurred:", panicValue)
+	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
 func SwaggerRouter() *httprouter.Router {
