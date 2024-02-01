@@ -15,11 +15,11 @@ import (
 )
 
 func DiscountPercentRouter(
-	discountPercentController masteritemcontroller.DiscountPercentController, path string,
+	discountPercentController masteritemcontroller.DiscountPercentController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET(path+"discount-percent", discountPercentController.GetAllDiscountPercent)
+	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -27,15 +27,15 @@ func DiscountPercentRouter(
 }
 
 func OperationGroupRouter(
-	operationGroupController masteroperationcontroller.OperationGroupController, path string,
+	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET(path+"operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET(path+"operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET(path+"operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST(path+"operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH(path+"operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroup)
+	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/api/aftersales/operation-groupe/:operation-group-code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/api/aftersales/operation-group", operationGroupController.SaveOperationGroup)
+	router.PATCH("/api/aftersales/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

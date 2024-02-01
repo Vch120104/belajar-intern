@@ -2,11 +2,14 @@ package main
 
 import (
 	"after-sales/api/config"
-	masteritemcontroller "after-sales/api/controllers/master/item"
+	// masteritemcontroller "after-sales/api/controllers/master/item"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
-	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
+	// masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
+	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	"after-sales/api/route"
-	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
+	// masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
+	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
 	"os"
@@ -41,25 +44,26 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		basePath := "/api/aftersales/"
+		// basePath := "/api/aftersales/discount-percent"
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
-		// operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-		// operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		// operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
-		discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
-		discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
-		discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
+		// discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
+		// discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
+		// discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
 
-		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
-		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController, basePath)
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		// DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle(basePath, DiscountPercentRouter)
+		mux.Handle("/api/aftersales/operation-group", OperationGroupRouter)
+		// mux.Handle("/api/aftersales/discount-percent", DiscountPercentRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
