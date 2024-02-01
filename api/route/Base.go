@@ -1,6 +1,7 @@
 package route
 
 import (
+	mastercontroller "after-sales/api/controllers/master"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	"after-sales/api/exceptions"
@@ -42,6 +43,15 @@ func OperationGroupRouter(
 	return router
 }
 
+func ForecastMasterRouter(
+	forecastMasterController mastercontroller.ForecastMasterController, path string,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET(path+"forecast-master", forecastMasterController.GetForecastMasterById)
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
 func SwaggerRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
@@ -103,7 +113,6 @@ func swaggerHandler() http.HandlerFunc {
 // 	//mtr_incentive_group
 // 	incentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupImpl(db)
 // 	incentiveGroupService := masterserviceimpl.StartIncentiveGroup(incentiveGroupRepository)
-
 // 	//mtr_item_class
 // 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl(db)
 // 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository)
