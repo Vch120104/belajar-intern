@@ -108,7 +108,7 @@ func CreateHandler(db *gorm.DB, env string, redis *redis.Client) {
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
 
-	api := r.Group("aftersales-service/api/aftersales")
+	api := r.Group("/api/aftersales")
 	//master
 	mastercontroller.StartDiscountRoutes(db, api, discountService)
 	mastercontroller.StartIncentiveGroupRoutes(db, api, incentiveGroupService)
