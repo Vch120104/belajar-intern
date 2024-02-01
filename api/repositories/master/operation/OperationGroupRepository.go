@@ -9,11 +9,10 @@ import (
 )
 
 type OperationGroupRepository interface {
-	WithTrx(trxHandle *gorm.DB) OperationGroupRepository
-	GetAllOperationGroup([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
-	GetOperationGroupById(int) (masteroperationpayloads.OperationGroupResponse, error)
-	SaveOperationGroup(masteroperationpayloads.OperationGroupResponse) (bool, error)
-	ChangeStatusOperationGroup(int) (bool, error)
-	GetOperationGroupByCode(string) (masteroperationpayloads.OperationGroupResponse, error)
-	GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, error)
+	GetAllOperationGroup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
+	GetOperationGroupById(*gorm.DB, int) (masteroperationpayloads.OperationGroupResponse, error)
+	SaveOperationGroup(*gorm.DB, masteroperationpayloads.OperationGroupResponse) (bool, error)
+	ChangeStatusOperationGroup(*gorm.DB, int) (bool, error)
+	GetOperationGroupByCode(*gorm.DB, string) (masteroperationpayloads.OperationGroupResponse, error)
+	GetAllOperationGroupIsActive(*gorm.DB) ([]masteroperationpayloads.OperationGroupResponse, error)
 }

@@ -6,32 +6,21 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
 
 type OperationGroupRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartOperationGroupRepositoryImpl(db *gorm.DB) masteroperationrepository.OperationGroupRepository {
-	return &OperationGroupRepositoryImpl{myDB: db}
+func StartOperationGroupRepositoryImpl() masteroperationrepository.OperationGroupRepository {
+	return &OperationGroupRepositoryImpl{}
 }
 
-func (r *OperationGroupRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteroperationrepository.OperationGroupRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := []masteroperationentities.OperationGroup{}
 	//define base model
-	baseModelQuery := r.myDB.Model(&entities)
+	baseModelQuery := tx.Model(&entities)
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
@@ -52,11 +41,11 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(filterCondition []ut
 	return pages, nil
 }
 
-func (r *OperationGroupRepositoryImpl) GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, error) {
+func (r *OperationGroupRepositoryImpl) GetAllOperationGroupIsActive(tx *gorm.DB) ([]masteroperationpayloads.OperationGroupResponse, error) {
 	var OperationGroups []masteroperationentities.OperationGroup
 	response := []masteroperationpayloads.OperationGroupResponse{}
 
-	err := r.myDB.Model(&OperationGroups).Where("is_active = 'true'").Scan(&response).Error
+	err := tx.Model(&OperationGroups).Where("is_active = 'true'").Scan(&response).Error
 
 	if err != nil {
 		return response, err
@@ -65,11 +54,11 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroupIsActive() ([]mastero
 	return response, nil
 }
 
-func (r *OperationGroupRepositoryImpl) GetOperationGroupById(Id int) (masteroperationpayloads.OperationGroupResponse, error) {
+func (r *OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationGroupResponse, error) {
 	entities := masteroperationentities.OperationGroup{}
 	response := masteroperationpayloads.OperationGroupResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteroperationentities.OperationGroup{
 			OperationGroupId: Id,
 		}).
@@ -85,11 +74,11 @@ func (r *OperationGroupRepositoryImpl) GetOperationGroupById(Id int) (masteroper
 	return response, nil
 }
 
-func (r *OperationGroupRepositoryImpl) GetOperationGroupByCode(Code string) (masteroperationpayloads.OperationGroupResponse, error) {
+func (r *OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code string) (masteroperationpayloads.OperationGroupResponse, error) {
 	entities := masteroperationentities.OperationGroup{}
 	response := masteroperationpayloads.OperationGroupResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteroperationentities.OperationGroup{
 			OperationGroupCode: Code,
 		}).
@@ -105,7 +94,7 @@ func (r *OperationGroupRepositoryImpl) GetOperationGroupByCode(Code string) (mas
 	return response, nil
 }
 
-func (r *OperationGroupRepositoryImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) (bool, error) {
+func (r *OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req masteroperationpayloads.OperationGroupResponse) (bool, error) {
 	entities := masteroperationentities.OperationGroup{
 		IsActive:                  req.IsActive,
 		OperationGroupId:          req.OperationGroupId,
@@ -113,7 +102,7 @@ func (r *OperationGroupRepositoryImpl) SaveOperationGroup(req masteroperationpay
 		OperationGroupDescription: req.OperationGroupDescription,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -122,10 +111,10 @@ func (r *OperationGroupRepositoryImpl) SaveOperationGroup(req masteroperationpay
 	return true, nil
 }
 
-func (r *OperationGroupRepositoryImpl) ChangeStatusOperationGroup(Id int) (bool, error) {
+func (r *OperationGroupRepositoryImpl) ChangeStatusOperationGroup(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteroperationentities.OperationGroup
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("operation_group_id = ?", Id).
 		First(&entities)
 
@@ -139,7 +128,7 @@ func (r *OperationGroupRepositoryImpl) ChangeStatusOperationGroup(Id int) (bool,
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

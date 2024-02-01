@@ -2,8 +2,16 @@ package main
 
 import (
 	"after-sales/api/config"
+	// masteritemcontroller "after-sales/api/controllers/master/item"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	"after-sales/api/helper"
+	// masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
+	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	"after-sales/api/route"
+	// masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
+	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	migration "after-sales/generate/sql"
+	"net/http"
 	"os"
 )
 
@@ -12,7 +20,7 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in Header
 // @name Authorization
-// @host 10.1.32.26:2000
+// @host localhost:8000
 // @BasePath /api/aftersales
 func main() {
 	args := os.Args
@@ -28,15 +36,43 @@ func main() {
 	} else if env == "migg" {
 		migration.MigrateGG()
 	} else if env == "debug" {
-		config.InitEnvConfigs(false, env)
-		db := config.InitDB()
-		config.InitLogger(db)
-		redis := config.InitRedis()
-		route.CreateHandler(db, env, redis)
+		// config.InitEnvConfigs(false, env)
+		// db := config.InitDB()
+		// config.InitLogger(db)
+		// redis := config.InitRedis()
+		// route.CreateHandler(db, env, redis)
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		redis := config.InitRedis()
-		route.CreateHandler(db, env, redis)
+		// basePath := "/api/aftersales/discount-percent"
+		// redis := config.InitRedis()
+		// route.CreateHandler(db, env, redis)
+
+		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+
+		// discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
+		// discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
+		// discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
+
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		// DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
+
+		swaggerRouter := route.SwaggerRouter()
+		mux := http.NewServeMux()
+
+		mux.Handle("/api/aftersales/operation-group", OperationGroupRouter)
+		// mux.Handle("/api/aftersales/discount-percent", DiscountPercentRouter)
+
+		//Swagger
+		mux.Handle("/swagger/", swaggerRouter)
+		server := http.Server{
+			Addr:    config.EnvConfigs.ClientOrigin,
+			Handler: mux,
+		}
+
+		err := server.ListenAndServe()
+		helper.PanicIfError(err)
 	}
 }

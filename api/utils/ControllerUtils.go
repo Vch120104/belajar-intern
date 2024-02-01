@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/julienschmidt/httprouter"
 )
 
 // convert Pascal to Snake Case for json response
@@ -72,8 +73,14 @@ func BuildFilterCondition(queryParams map[string]string) []FilterCondition {
 	return criteria
 }
 
+// Deprecated: please change to the latest one without *gin.Context
 // GetQueryInt take QueryParam to return int
 func GetQueryInt(c *gin.Context, param string) int {
 	value, _ := strconv.Atoi(c.Query(param))
+	return value
+}
+
+func NewGetQueryInt(params httprouter.Params, param string) int {
+	value, _ := strconv.Atoi(params.ByName(param))
 	return value
 }
