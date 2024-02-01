@@ -2,11 +2,11 @@ package main
 
 import (
 	"after-sales/api/config"
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	"after-sales/api/helper"
-	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	"after-sales/api/route"
-	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
 	"os"
@@ -17,7 +17,7 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in Header
 // @name Authorization
-// @host localhost:2000
+// @host localhost:8000
 // @BasePath /api/aftersales
 func main() {
 	args := os.Args
@@ -45,20 +45,21 @@ func main() {
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
-		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+		// operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		// operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		// operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
-		
+		discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
+		discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
+		discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
 
-
-
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
+		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
+		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController, basePath)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle(basePath, OperationGroupRouter)
+		mux.Handle(basePath, DiscountPercentRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

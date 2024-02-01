@@ -10,14 +10,14 @@ require (
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.17.0
-	github.com/swaggo/files v1.0.1
-	github.com/swaggo/gin-swagger v1.6.0
 	golang.org/x/crypto v0.15.0
 	gorm.io/driver/postgres v1.5.3
 	gorm.io/driver/sqlserver v1.5.2
 	gorm.io/gen v0.3.23
 	gorm.io/gorm v1.25.5
 )
+
+require github.com/swaggo/files v1.0.1 // indirect
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -66,7 +66,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/swaggo/http-swagger v1.3.4
-	github.com/swaggo/swag v1.16.2 // indirect
+	github.com/swaggo/swag v1.16.2
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
