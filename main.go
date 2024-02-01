@@ -2,11 +2,14 @@ package main
 
 import (
 	"after-sales/api/config"
+	mastercontroller "after-sales/api/controllers/master"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
 	"os"
@@ -49,16 +52,18 @@ func main() {
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
-		
-
-
+		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
+		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
+		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController, basePath)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle(basePath, OperationGroupRouter)
+		mux.Handle(basePath, ForecastMasterRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
