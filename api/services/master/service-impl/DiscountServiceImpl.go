@@ -4,7 +4,7 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
-	masterservice "after-sales/api/services"
+	masterservice "after-sales/api/services/master"
 
 	"after-sales/api/utils"
 
