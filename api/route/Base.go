@@ -1,7 +1,9 @@
 package route
 
 import (
+	mastercontroller "after-sales/api/controllers/master"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
+
 	"fmt"
 
 	_ "after-sales/docs"
@@ -23,6 +25,18 @@ func OperationGroupRouter(
 	router.GET(path+"operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
 	router.POST(path+"operation-group", operationGroupController.SaveOperationGroup)
 	router.PATCH(path+"operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+
+	router.PanicHandler = PanicHandler
+
+	return router
+}
+
+func FieldActionRouter(
+	FieldActionController mastercontroller.FieldActionController, path string,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET(path+"field-action", FieldActionController.GetAllFieldAction)
 
 	router.PanicHandler = PanicHandler
 

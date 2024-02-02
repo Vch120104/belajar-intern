@@ -2,9 +2,12 @@ package main
 
 import (
 	"after-sales/api/config"
+	// mastercontroller "after-sales/api/controllers/master"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+
+	// masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	migration "after-sales/generate/sql"
@@ -48,13 +51,9 @@ func main() {
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
-
-		
-
-
-
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
 
+		// startIncentiveService := masterserviceimpl.StartIncen
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
