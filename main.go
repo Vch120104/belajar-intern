@@ -6,12 +6,10 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 
-	// masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 
-	// masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
