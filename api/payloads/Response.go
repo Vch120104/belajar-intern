@@ -1,12 +1,18 @@
 package payloads
 
-import "github.com/gin-gonic/gin"
+import (
+	"after-sales/api/helper"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 type Response struct {
 	StatusCode int         `json:"status_code"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data"`
 }
+
 type ResponsePagination struct {
 	StatusCode int         `json:"status_code"`
 	Message    string      `json:"message"`
@@ -17,6 +23,7 @@ type ResponsePagination struct {
 	Data       interface{} `json:"data"`
 }
 
+// Deprecated: please change to the latest one without *gin.Context
 func HandleSuccess(c *gin.Context, data interface{}, message string, status int) {
 	res := Response{
 		StatusCode: status,
@@ -27,6 +34,7 @@ func HandleSuccess(c *gin.Context, data interface{}, message string, status int)
 	c.JSON(status, res)
 }
 
+// Deprecated: please change to the latest one without *gin.Context
 func HandleSuccessPagination(c *gin.Context, data interface{}, message string, status int, limit int, page int, totalRows int64, totalPages int) {
 	res := ResponsePagination{
 		StatusCode: status,
@@ -38,4 +46,28 @@ func HandleSuccessPagination(c *gin.Context, data interface{}, message string, s
 		Data:       data,
 	}
 	c.JSON(status, res)
+}
+
+func NewHandleSuccess(writer http.ResponseWriter, data interface{}, message string, status int) {
+	res := Response{
+		StatusCode: status,
+		Message:    message,
+		Data:       data,
+	}
+
+	helper.WriteToResponseBody(writer, res)
+}
+
+func NewHandleSuccessPagination(writer http.ResponseWriter, data interface{}, message string, status int, limit int, page int, totalRows int64, totalPages int) {
+	res := ResponsePagination{
+		StatusCode: status,
+		Message:    message,
+		Page:       page,
+		Limit:      limit,
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Data:       data,
+	}
+
+	helper.WriteToResponseBody(writer, res)
 }

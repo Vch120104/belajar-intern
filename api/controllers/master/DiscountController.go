@@ -6,7 +6,7 @@ import (
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
-	masterservice "after-sales/api/services"
+	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"net/http"
 	"strconv"

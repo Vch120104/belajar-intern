@@ -3,7 +3,11 @@ package pagination
 import (
 	"math"
 
+	"reflect"
+
 	"gorm.io/gorm"
+
+	"github.com/go-gota/gota/dataframe"
 )
 
 type Pagination struct {
@@ -15,8 +19,6 @@ type Pagination struct {
 	TotalPages int         `json:"total_pages"`
 	Rows       interface{} `json:"rows"`
 }
-
-
 
 func (p *Pagination) GetOffset() int {
 	return p.GetPage() * p.GetLimit()
@@ -58,4 +60,41 @@ func Paginate(value interface{}, pagination *Pagination, db *gorm.DB) func(db *g
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(sort)
 	}
+}
+
+func NewDataFramePaginate(rows interface{}, pagination *Pagination) (result []map[string]interface{}, totalPages int, totalRows int) {
+	var df dataframe.DataFrame
+	tpy, _ := reflect.TypeOf(rows), reflect.ValueOf(rows)
+
+	if tpy.Kind() == reflect.Slice && tpy.Elem().Kind() != reflect.Struct {
+		df = dataframe.LoadMaps(rows.([]map[string]interface{}))
+	} else {
+		df = dataframe.LoadStructs(rows)
+	}
+
+	totalRows = df.Nrow()
+	if pagination.GetSortBy() != "" {
+		if pagination.GetSortBy() == "desc" {
+			df = df.Arrange(dataframe.RevSort(pagination.GetSortOf()))
+		} else {
+			df = df.Arrange(dataframe.Sort(pagination.GetSortOf()))
+		}
+	}
+
+	start := pagination.GetPage() * pagination.GetLimit()
+	end := start + pagination.GetLimit()
+
+	if end > df.Nrow() {
+		end = df.Nrow()
+	}
+
+	indices := make([]int, end-start)
+	for i := start; i < end; i++ {
+		indices[i-start] = i
+	}
+
+	totalPages = int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
+
+	df = df.Subset(indices)
+	return df.Maps(), totalPages, totalRows
 }

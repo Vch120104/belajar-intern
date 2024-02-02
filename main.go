@@ -2,8 +2,18 @@ package main
 
 import (
 	"after-sales/api/config"
+	mastercontroller "after-sales/api/controllers/master"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	"after-sales/api/helper"
+
+	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
+
+	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
+	"net/http"
 	"os"
 )
 
@@ -12,7 +22,7 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in Header
 // @name Authorization
-// @host 10.1.32.26:2000
+// @host localhost:8000
 // @BasePath /api/aftersales
 func main() {
 	args := os.Args
@@ -28,15 +38,44 @@ func main() {
 	} else if env == "migg" {
 		migration.MigrateGG()
 	} else if env == "debug" {
-		config.InitEnvConfigs(false, env)
-		db := config.InitDB()
-		config.InitLogger(db)
-		redis := config.InitRedis()
-		route.CreateHandler(db, env, redis)
+		// config.InitEnvConfigs(false, env)
+		// db := config.InitDB()
+		// config.InitLogger(db)
+		// redis := config.InitRedis()
+		// route.CreateHandler(db, env, redis)
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		redis := config.InitRedis()
-		route.CreateHandler(db, env, redis)
+		// redis := config.InitRedis()
+		// route.CreateHandler(db, env, redis)
+
+		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+
+		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
+		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
+		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
+
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
+
+		swaggerRouter := route.SwaggerRouter()
+		mux := http.NewServeMux()
+
+		mux.Handle("/operation-group/", OperationGroupRouter)
+
+
+		mux.Handle("/forecast-master/", ForecastMasterRouter)
+
+		//Swagger
+		mux.Handle("/swagger/", swaggerRouter)
+		server := http.Server{
+			Addr:    config.EnvConfigs.ClientOrigin,
+			Handler: mux,
+		}
+
+		err := server.ListenAndServe()
+		helper.PanicIfError(err)
 	}
 }

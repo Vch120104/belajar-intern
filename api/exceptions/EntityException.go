@@ -6,11 +6,19 @@ import (
 )
 
 func EntityException(c *gin.Context, message string) {
-	res := Error{
+	res := OldError{
 		Success: false,
 		Message: message,
 		Data: nil,
 	}
 
 	c.JSON(http.StatusUnprocessableEntity, res)
+}
+
+type EntityError struct {
+	Error string
+}
+
+func NewEntityError(error string) EntityError {
+	return EntityError{Error: error}
 }

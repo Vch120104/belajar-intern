@@ -4,7 +4,7 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
-	masterservice "after-sales/api/services"
+	masterservice "after-sales/api/services/master"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

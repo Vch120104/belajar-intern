@@ -26,6 +26,7 @@ type setupDatabase struct {
 	DBPort   int    `mapstructure:"DB_PORT"`
 	Port     string `mapstructure:"SERVER_PORT"`
 	JWTKey   string `mapstructure:"JWT_KEY"`
+	ClientOrigin  string `mapstructure:"CLIENT_ORIGIN"`
 }
 
 var EnvConfigs *setupDatabase
