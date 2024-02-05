@@ -44,7 +44,6 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		basePath := "/api/aftersales/"
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
@@ -56,14 +55,14 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
-		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController, basePath)
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle(basePath, OperationGroupRouter)
-		mux.Handle(basePath, ForecastMasterRouter)
+		mux.Handle("/operation-group/", OperationGroupRouter)
+		mux.Handle("/forecast-master/", ForecastMasterRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
