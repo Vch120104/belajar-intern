@@ -64,8 +64,6 @@ func main() {
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
-
-
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 
 		//Swagger
