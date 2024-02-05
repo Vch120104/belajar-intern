@@ -2,8 +2,8 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masteritemcontroller "after-sales/api/controllers/master/item"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/exceptions"
 
 	_ "after-sales/docs"
@@ -45,14 +45,14 @@ func OperationGroupRouter(
 
 func DeductionRouter(
 	DeductionController mastercontroller.DeductionController,
-)*httprouter.Router{
+) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("deduction", DeductionController.GetAllDeductionList)
-	router.GET("deduction/:deduction_detail_id", DeductionController.GetByIdDeductionDetail)
-	router.GET("deduction/:deduction_list_id", DeductionController.GetByIdDeductionList)
-	router.POST("deduction", DeductionController.SaveDeductionList)
-	router.POST("deduction", DeductionController.SaveDeductionDetail)
+	router.GET("/deduction-master/get-all", DeductionController.GetAllDeductionList)
+	// router.GET("/deduction/:deduction_detail_id", DeductionController.GetByIdDeductionDetail)
+	router.GET("/deduction-master/", DeductionController.GetByIdDeductionList)
+	router.POST("/deduction-master/", DeductionController.SaveDeductionList)
+	// router.POST("/deduction-master/", DeductionController.SaveDeductionDetail)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

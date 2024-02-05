@@ -13,19 +13,19 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-type DeductionController interface{
+type DeductionController interface {
 	GetAllDeductionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	GetByIdDeductionDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetByIdDeductionList(writer http.ResponseWriter, request * http.Request, params httprouter.Params)
+	GetByIdDeductionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	SaveDeductionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveDeductionDetail(writer http.ResponseWriter, request *http.Request,params httprouter.Params)
+	SaveDeductionDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 
 type DeductionControllerImpl struct {
 	DeductionService masterservice.DeductionService
 }
 
-func NewDeductionController(deductionService masterservice.DeductionService) DeductionController{
+func NewDeductionController(deductionService masterservice.DeductionService) DeductionController {
 	return &DeductionControllerImpl{
 		DeductionService: deductionService,
 	}
@@ -39,7 +39,7 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params,"limit"),
+		Limit:  utils.NewGetQueryInt(params, "limit"),
 		Page:   utils.NewGetQueryInt(params, "page"),
 		SortOf: params.ByName("sort_of"),
 		SortBy: params.ByName("sort_by"),
@@ -54,46 +54,56 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 
 func (r *DeductionControllerImpl) GetByIdDeductionDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	DeductionListIdstr := params.ByName("deduction_list_id")
+
 	DeductionListId, _ := strconv.Atoi(DeductionListIdstr)
+
 	result := r.DeductionService.GetByIdDeductionDetail(DeductionListId)
+
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *DeductionControllerImpl) GetByIdDeductionList(writer http.ResponseWriter, request * http.Request, params httprouter.Params){
-	DeductionListIdstr := params.ByName("deduction_list_id")
-	DeductionListId,_ := strconv.Atoi(DeductionListIdstr)
-	result := r.DeductionService.GetByIdDeductionList(DeductionListId)
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!",http.StatusOK)
+func (r *DeductionControllerImpl) GetByIdDeductionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	// DeductionListIdstr := params.ByName("deduction_list_id")
+	// page := params.ByName("page")
+	// limit := params.ByName("limit")
+
+	// DeductionListId, _ := strconv.Atoi(DeductionListIdstr)
+	// pageInt, _ := strconv.Atoi(page)
+	// limitInt, _ := strconv.Atoi(limit)
+
+	result := r.DeductionService.GetByIdDeductionList(1, 0, 0)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	var formRequest masterpayloads.DeductionListResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
-	
+
 	create := r.DeductionService.PostDeductionList(formRequest)
-	
+
 	if formRequest.DeductionListId == 0 {
-		message = "Create Data Successfully!" 
-	}else{
+		message = "Create Data Successfully!"
+	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.NewHandleSuccess(writer,create,message,http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter, request *http.Request,params httprouter.Params){
+func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	var formRequest masterpayloads.DeductionDetailResponse
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message =""
+	var message = ""
 
 	create := r.DeductionService.PostDeductionDetail(formRequest)
 
 	if formRequest.DeductionDetailId == 0 {
 		message = "Create data Successfully!"
-	}else{
+	} else {
 		message = "Update data Successfully!"
 	}
 
-	payloads.NewHandleSuccess(writer,create,message,http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }

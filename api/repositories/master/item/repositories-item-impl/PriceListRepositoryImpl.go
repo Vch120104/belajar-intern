@@ -84,8 +84,6 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(request masteritempayloads.
 
 	defer rows.Close()
 
-	
-
 	return responses, nil
 }
 
@@ -229,8 +227,6 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(Id int) (bool, error) {
 	}
 
 	result = r.myDB.Save(&entities)
-
-	tempro
 
 	return true, nil
 }

@@ -8,3 +8,4 @@ type DeductionDetailResponse struct {
 	DeductionDetailLevel int     `json:"deduction_detail_level"`
 	DeductionPercent     float64 `json:"deduction_percent"`
 }
+
