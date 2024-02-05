@@ -230,9 +230,7 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(Id int) (bool, error) {
 
 	result = r.myDB.Save(&entities)
 
-	if result.Error != nil {
-		return false, result.Error
-	}
+	tempro
 
 	return true, nil
 }

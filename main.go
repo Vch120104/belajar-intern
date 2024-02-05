@@ -60,14 +60,20 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
-		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController, basePath)
+		DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
+		DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository,db)
+		DeductionController := mastercontroller.NewDeductionController(DeductionService)
+
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController )
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController )
+		DeductionRouter := route.DeductionRouter(DeductionController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle(basePath, OperationGroupRouter)
-		mux.Handle(basePath, ForecastMasterRouter)
+		mux.Handle("/operation-group/",OperationGroupRouter)
+		mux.Handle("/forecast-master/",ForecastMasterRouter)
+		mux.Handle("/deduction-master/",DeductionRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
