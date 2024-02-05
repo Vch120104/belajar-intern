@@ -4,8 +4,10 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
+	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+	"after-sales/api/utils"
 
 	"gorm.io/gorm"
 )
@@ -57,4 +59,14 @@ func (s *ForecastMasterServiceImpl) ChangeStatusForecastMaster(Id int) bool {
 		return results
 	}
 	return true
+}
+
+func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.ForecastMasterRepo.GetAllForecastMaster(tx, filterCondition, pages)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results, totalPages, totalRows
 }
