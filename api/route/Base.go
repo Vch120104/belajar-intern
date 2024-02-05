@@ -1,8 +1,8 @@
 package route
 
 import (
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masteritemcontroller "after-sales/api/controllers/master/item"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/exceptions"
 
 	_ "after-sales/docs"
@@ -19,7 +19,10 @@ func DiscountPercentRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
+	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
+	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
