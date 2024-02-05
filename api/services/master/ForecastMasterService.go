@@ -6,4 +6,6 @@ import (
 
 type ForecastMasterService interface {
 	GetForecastMasterById(int) masterpayloads.ForecastMasterResponse
+	SaveForecastMaster(masterpayloads.ForecastMasterResponse) bool
+	ChangeStatusForecastMaster(int) bool
 }

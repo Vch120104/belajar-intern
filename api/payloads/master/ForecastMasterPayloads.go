@@ -6,7 +6,7 @@ type ForecastMasterResponse struct {
 	SupplierId                 int     `json:"supplier_id"`
 	MovingCodeId               int     `json:"moving_code_id"`
 	OrderTypeId                int     `json:"order_type_id"`
-	ForecastMasterReadTime     float64 `json:"forecast_master_read_time"`
+	ForecastMasterLeadTime     float64 `json:"forecast_master_lead_time"`
 	ForecastMasterSafetyFactor float64 `json:"forecast_master_safety_factor"`
 	ForecastMasterOrderCycle   float64 `json:"forecast_master_order_cycle"`
 }
