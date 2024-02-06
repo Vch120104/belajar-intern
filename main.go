@@ -57,14 +57,20 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+		ShiftScheduleRepository := masterrepositoryimpl.StartShiftScheduleRepositoryImpl()
+		ShiftScheduleService := masterserviceimpl.StartShiftScheduleService(ShiftScheduleRepository, db)
+		ShiftScheduleController := mastercontroller.NewShiftScheduleController(ShiftScheduleService)
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
+		ShiftScheduleRouter := route.ShiftScheduleRouter(ShiftScheduleController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
+		mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

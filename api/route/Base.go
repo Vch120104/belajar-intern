@@ -43,6 +43,22 @@ func OperationGroupRouter(
 	return router
 }
 
+func ShiftScheduleRouter(
+	ShiftScheduleController mastercontroller.ShiftScheduleController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/operation-group/", ShiftScheduleController.GetAllShiftSchedule)
+	// router.GET("/operation-group/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
+	// router.GET("/operation-group/by-code/:operation_group_code", ShiftScheduleController.GetShiftScheduleByCode)
+	router.POST("/operation-group/", ShiftScheduleController.SaveShiftSchedule)
+	router.PATCH("/operation-group/:operation_group_id", ShiftScheduleController.ChangeStatusShiftSchedule)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) *httprouter.Router {
