@@ -2,9 +2,10 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 
-	"fmt"
+	"after-sales/api/exceptions"
 
 	_ "after-sales/docs"
 
@@ -15,18 +16,33 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func OperationGroupRouter(
-	operationGroupController masteroperationcontroller.OperationGroupController, path string,
+func DiscountPercentRouter(
+	discountPercentController masteritemcontroller.DiscountPercentController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET(path+"operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET(path+"operation-group-drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET(path+"operation-group-by-code/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST(path+"operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH(path+"operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
+	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
+	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
 
-	router.PanicHandler = PanicHandler
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func OperationGroupRouter(
+	operationGroupController masteroperationcontroller.OperationGroupController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroup)
+	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/api/aftersales/operation-groupe/:operation-group-code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/api/aftersales/operation-group", operationGroupController.SaveOperationGroup)
+	router.PATCH("/api/aftersales/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+
+	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
@@ -43,11 +59,6 @@ func FieldActionRouter(
 	router.PanicHandler = PanicHandler
 
 	return router
-}
-
-func PanicHandler(w http.ResponseWriter, req *http.Request, panicValue interface{}) {
-	fmt.Println("Panic occurred:", panicValue)
-	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 }
 
 func SwaggerRouter() *httprouter.Router {

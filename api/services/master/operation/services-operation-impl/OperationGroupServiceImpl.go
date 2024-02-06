@@ -41,7 +41,7 @@ func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) masteroperatio
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetOperationGroupById(tx, id)
 	if err != nil {
-		return masteroperationpayloads.OperationGroupResponse{}
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 	return results
 }
@@ -51,7 +51,7 @@ func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) mastero
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetOperationGroupByCode(tx, Code)
 	if err != nil {
-		return masteroperationpayloads.OperationGroupResponse{}
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 	return results
 }
@@ -61,7 +61,7 @@ func (s *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetAllOperationGroup(tx, filterCondition, pages)
 	if err != nil {
-		return pages
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 	return results
 }
@@ -88,7 +88,7 @@ func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloa
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.SaveOperationGroup(tx, req)
 	if err != nil {
-		return false
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 	return results
 }
