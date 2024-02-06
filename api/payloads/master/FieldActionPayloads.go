@@ -16,3 +16,12 @@ type FieldActionResponse struct {
 	IsCritical              bool      `json:"is_critical"`
 	RemarkInvoice           string    `json:"remark_invoice"`
 }
+
+// type FieldActionByIdResponse struct {
+
+
+// 	Data       interface{} `json:"data"`
+// 	detail []ResponsePagination
+
+// 	RemarkInvoice           string    `json:"remark_invoice"`
+// }

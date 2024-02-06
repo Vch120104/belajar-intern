@@ -33,15 +33,17 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 	}
 }
 
-// @Summary Get All Operation Group
-// @Description REST API Operation Group
+// @Summary Get All Field Action
+// @Description REST API Field Action
 // @Accept json
 // @Produce json
-// @Tags Master : Operation Group
+// @Tags Master : Field Action
 // @Param page query string true "page"
 // @Param limit query string true "limit"
-// @Param operation_group_code query string false "operation_group_code"
-// @Param operation_group_description query string false "operation_group_description"
+// @Param field_action_system_number query string false "field_action_system_number"
+// @Param field_action_document_number query string false "field_action_document_number"
+// @Param approval_value query string false "approval_value"
+// @Param brand_id query string false "brand_id"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
@@ -51,9 +53,12 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	queryParams := map[string]string{
-		"operation_group_code":        params.ByName("operation_group_code"),
-		"operation_group_description": params.ByName("operation_group_description"),
 		"is_active":                   params.ByName("is_active"),
+		"field_action_system_number":        params.ByName("field_action_system_number"),
+		"field_action_document_number": params.ByName("field_action_document_number"),
+		"brand_id": params.ByName("brand_id"),
+		"approval_value": params.ByName("approval_value"),
+
 	}
 
 	pagination := pagination.Pagination{

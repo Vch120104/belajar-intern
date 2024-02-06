@@ -32,11 +32,13 @@ func OperationGroupRouter(
 }
 
 func FieldActionRouter(
-	FieldActionController mastercontroller.FieldActionController, path string,
+	FieldActionController mastercontroller.FieldActionController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET(path+"field-action", FieldActionController.GetAllFieldAction)
+	router.GET("/field-action/", FieldActionController.GetAllFieldAction)
+	// /field-action/drop-down
+	// /field-action/by-code/{}
 
 	router.PanicHandler = PanicHandler
 

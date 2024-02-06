@@ -2,17 +2,16 @@ package main
 
 import (
 	"after-sales/api/config"
-	// mastercontroller "after-sales/api/controllers/master"
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	mastercontroller "after-sales/api/controllers/master"
 	"after-sales/api/helper"
-	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
-	// masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
+	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
-	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
 	"os"
+
+	masterserviceimpl "after-sales/api/services/master/service-impl"
 )
 
 // @title After Sales API
@@ -44,20 +43,24 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		basePath := "/api/aftersales/"
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
-		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
+		// operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		// operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		// operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
 
-		// startIncentiveService := masterserviceimpl.StartIncen
+		startFieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
+		startFieldActionService := masterserviceimpl.StartFieldActionService(startFieldActionRepository, db)
+		startFieldActionController := mastercontroller.NewFieldActionController(startFieldActionService)
+		startFieldActionRouter := route.FieldActionRouter(startFieldActionController)
+
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		mux.Handle(basePath, OperationGroupRouter)
+		// mux.Handle(basePath, OperationGroupRouter)
+		mux.Handle("/field-action/", startFieldActionRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
