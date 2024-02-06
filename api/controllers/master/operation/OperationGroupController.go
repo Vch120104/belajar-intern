@@ -50,20 +50,21 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 // @Router /aftersales-service/api/aftersales/operation-group [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
+	queryValues := request.URL.Query()
+
 	queryParams := map[string]string{
-		"operation_group_code":        params.ByName("operation_group_code"),
-		"operation_group_description": params.ByName("operation_group_description"),
-		"is_active":                   params.ByName("is_active"),
+		"operation_group_code":        queryValues.Get("operation_group_code"),
+		"operation_group_description": queryValues.Get("operation_group_description"),
+		"is_active":                   queryValues.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
-	
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	result := r.OperationGroupService.GetAllOperationGroup(filterCondition, pagination)
