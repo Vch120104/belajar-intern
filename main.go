@@ -53,17 +53,31 @@ func main() {
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
+		IncentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupRepositoryImpl()
+		IncentiveGroupService := masterserviceimpl.StartIncentiveGroupService(IncentiveGroupRepository, db)
+		IncentiveGroupController := mastercontroller.NewIncentiveGroupController(IncentiveGroupService)
+
+		IncentiveGroupDetailRepository := masterrepositoryimpl.StartIncentiveGroupDetailRepositoryImpl()
+		IncentiveGroupDetailService := masterserviceimpl.StartIncentiveGroupDetailService(IncentiveGroupDetailRepository, db)
+		IncentiveGroupDetailController := mastercontroller.NewIncentiveGroupDetailController(IncentiveGroupDetailService)
+
+
 		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		IncentiveGroupRouter := route.IncentiveGroupRouter(IncentiveGroupController)
+		IncentiveGroupDetailRouter := route.IncentiveGroupDetailRouter(IncentiveGroupDetailController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
+
+		mux.Handle("/incentive-group/", IncentiveGroupRouter)
+		mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
 
 
 		mux.Handle("/forecast-master/", ForecastMasterRouter)

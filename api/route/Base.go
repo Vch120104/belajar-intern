@@ -35,7 +35,7 @@ func OperationGroupRouter(
 	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
 	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
 	// router.GET("/operation-group/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	// router.POST("/operation-group", operationGroupController.SaveOperationGroup)
+	// router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
 	// router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
@@ -43,11 +43,40 @@ func OperationGroupRouter(
 	return router
 }
 
+
+func IncentiveGroupRouter (
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-group/", incentiveGroupController.GetAllIncentiveGroup)
+	router.GET("/incentive-group/drop-down/", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.GET("/incentive-group/by-id/:incentive_group_id", incentiveGroupController.GetIncentiveGroupById)
+	router.POST("/incentive-group/", incentiveGroupController.SaveIncentiveGroup)
+	router.PATCH("/incentive-group/:incentive_group_id", incentiveGroupController.ChangeStatusIncentiveGroup)
+	
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func IncentiveGroupDetailRouter (
+	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-group-detail/", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
+	router.GET("/incentive-group-detail/:incentive_group_detail_id/", incentiveGroupDetailController.GetIncentiveGroupDetailById)
+	router.POST("/incentive-group-detail/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+	
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
 func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/forecast-master", forecastMasterController.GetForecastMasterById)
+	router.GET("/forecast-master/", forecastMasterController.GetForecastMasterById)
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
