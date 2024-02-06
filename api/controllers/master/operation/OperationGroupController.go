@@ -78,7 +78,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Tags Master : Operation Group
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-group-drop-down [get]
+// @Router /aftersales-service/api/aftersales/operation-group/drop-down [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	result := r.OperationGroupService.GetAllOperationGroupIsActive()
@@ -94,7 +94,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.
 // @Param operation_group_code path string true "operation_group_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-group-by-code/{operation_group_code} [get]
+// @Router /aftersales-service/api/aftersales/operation-group/by-code/{operation_group_code} [get]
 func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	operationGroupCode := params.ByName("operation_group_code")
