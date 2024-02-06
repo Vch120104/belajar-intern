@@ -7,6 +7,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"reflect"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -109,10 +110,14 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 	}
 
 	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		orderTypeName = externalServiceFilter[i].ColumnValue
-	}
 
+	for i := 0; i < len(externalServiceFilter); i++ {
+		if strings.Contains(externalServiceFilter[i].ColumnField, "supplier_name") {
+			supplierName = externalServiceFilter[i].ColumnValue
+		} else {
+			orderTypeName = externalServiceFilter[i].ColumnValue
+		}
+	}
 	// define table struct
 	tableStruct := masterpayloads.ForecastMasterListResponse{}
 	//define join table
@@ -132,29 +137,32 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		return nil, 0, 0, gorm.ErrRecordNotFound
 	}
 
-	supplierUrl := "http://10.1.32.26:8000/general-service/api/general/filter-supplier-master?supplier_name=" + supplierName
+	if supplierName != "" || orderTypeName != "" {
+		supplierUrl := "http://10.1.32.26:8000/general-service/api/general/filter-supplier-master?supplier_name=" + supplierName
 
-	errUrlSupplier := utils.Get(c, supplierUrl, &getSupplierResponse, nil)
+		errUrlSupplier := utils.Get(c, supplierUrl, &getSupplierResponse, nil)
 
-	if errUrlSupplier != nil {
-		return nil, 0, 0, errUrlSupplier
+		if errUrlSupplier != nil {
+			return nil, 0, 0, errUrlSupplier
+		}
+
+		joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
+
+		orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
+
+		errUrlOrderType := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
+
+		if errUrlOrderType != nil {
+			return nil, 0, 0, errUrlOrderType
+		}
+
+		joinedData2 := utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
+		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+		return dataPaginate, totalPages, totalRows, nil
+
 	}
 
-	joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
-
-	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
-
-	errUrlOrderType := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
-
-	if errUrlOrderType != nil {
-		return nil, 0, 0, errUrlOrderType
-	}
-
-	joinedData2 := utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
-
-	print(joinedData2)
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
-
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 	return dataPaginate, totalPages, totalRows, nil
+
 }

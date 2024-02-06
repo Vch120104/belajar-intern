@@ -113,16 +113,18 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/forecast-master [get]
+
 func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"supplier_name": params.ByName("supplier_name"),
-		"mtr_moving_code.moving_code_description":           params.ByName("moving_code_description"),
-		"order_type_name":                                   params.ByName("order_type_name"),
-		"mtr_forecast_master.forecast_master_lead_time":     params.ByName("forecast_master_lead_time"),
-		"mtr_forecast_master.forecast_master_safety_factor": params.ByName("forecast_master_safety_factor"),
-		"mtr_forecast_master.forecast_master_order_cycle":   params.ByName("forecast_master_order_cycle"),
-		"mtr_forecast_master.is_active":                     params.ByName("is_active"),
+		"supplier_name": queryValues.Get("supplier_name"),
+		"mtr_moving_code.moving_code_description":           queryValues.Get("moving_code_description"),
+		"order_type_name":                                   queryValues.Get("order_type_name"),
+		"mtr_forecast_master.forecast_master_lead_time":     queryValues.Get("forecast_master_lead_time"),
+		"mtr_forecast_master.forecast_master_safety_factor": queryValues.Get("forecast_master_safety_factor"),
+		"mtr_forecast_master.forecast_master_order_cycle":   queryValues.Get("forecast_master_order_cycle"),
+		"mtr_forecast_master.is_active":                     queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
@@ -131,9 +133,9 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 		SortOf: params.ByName("sort_of"),
 		SortBy: params.ByName("sort_by"),
 	}
+	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-
 	paginatedData, totalPages, totalRows := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
