@@ -3,9 +3,8 @@ package masterrepositoryimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	masterpayloads "after-sales/api/payloads/master"
-	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/payloads/pagination"
-	"after-sales/api/utils"
+	masterrepository "after-sales/api/repositories/master"
 
 	"gorm.io/gorm"
 )
@@ -17,16 +16,16 @@ func StartIncentiveGroupDetailRepositoryImpl() masterrepository.IncentiveGroupDe
 	return &IncentiveGroupDetailRepositoryImpl{}
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := []masterentities.IncentiveGroupDetail{}
+	response := []masterpayloads.IncentiveGroupDetailResponse{}
 	//define base model
-	baseModelQuery := tx.Model(&entities)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+	baseModelQuery := tx.Model(&entities).Where("mtr_incentive_group_detail.incentive_group_id = ?", headerId)
 
-	if len(entities) == 0 {
+	//apply pagination and execute
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&response).Rows()
+
+	if len(response) == 0 {
 		return pages, gorm.ErrRecordNotFound
 	}
 
@@ -36,7 +35,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 
 	defer rows.Close()
 
-	pages.Rows = entities
+	pages.Rows = response
 
 	return pages, nil
 }
@@ -61,45 +60,20 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 	return response, nil
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.DB, IncentiveGroupId int, req masterpayloads.IncentiveGroupDetailResponse) (bool, error) {
+func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.IncentiveGroupDetailRequest) (bool, error) {
 	entities := masterentities.IncentiveGroupDetail{
-		IncentiveGroupDetailId : req.IncentiveGroupDetailId,
-		IncentiveGroupId : IncentiveGroupId,
-		IncentiveLevel : req.IncentiveLevel,
-		TargetAmount : req.TargetAmount,
-		TargetPercent : req.TargetPercent,
+		IsActive:               req.IsActive,
+		IncentiveGroupDetailId: req.IncentiveGroupDetailId,
+		IncentiveGroupId:       req.IncentiveGroupId,
+		IncentiveLevel:         req.IncentiveLevel,
+		TargetAmount:           req.TargetAmount,
+		TargetPercent:          req.TargetPercent,
 	}
 
 	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
-	}
-
-	return true, nil
-}
-
-func (r *IncentiveGroupDetailRepositoryImpl) ChangeStatusIncentiveGroupDetail(tx *gorm.DB, Id int) (bool, error) {
-	var entities masterentities.IncentiveGroupDetail
-
-	result := tx.Model(&entities).
-		Where("incentive_group_detail_id = ?", Id).
-		First(&entities)
-
-	if result.Error != nil {
-		return false, result.Error
-	}
-
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
-
-	result = tx.Save(&entities)
-
-	if result.Error != nil {
-		return false, result.Error
 	}
 
 	return true, nil

@@ -7,7 +7,6 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
-	"after-sales/api/utils"
 
 	"gorm.io/gorm"
 )
@@ -24,6 +23,16 @@ func StartIncentiveGroupDetailService(IncentiveGroupDetailRepository masterrepos
 	}
 }
 
+func (s *IncentiveGroupDetailImpl) GetAllIncentiveGroupDetail(headerId int, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.IncentiveGroupDetailRepository.GetAllIncentiveGroupDetail(tx, headerId, pages)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
+}
+
 func (s *IncentiveGroupDetailImpl) GetIncentiveGroupDetailById(id int) masterpayloads.IncentiveGroupDetailResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -34,20 +43,10 @@ func (s *IncentiveGroupDetailImpl) GetIncentiveGroupDetailById(id int) masterpay
 	return results
 }
 
-func (s *IncentiveGroupDetailImpl) GetAllIncentiveGroupDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.IncentiveGroupDetailRequest) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.IncentiveGroupDetailRepository.GetAllIncentiveGroupDetail(tx, filterCondition, pages)
-	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
-	}
-	return results
-}
-
-func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(id int, req masterpayloads.IncentiveGroupDetailResponse) bool {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, err := s.IncentiveGroupDetailRepository.SaveIncentiveGroupDetail(tx, id, req)
+	results, err := s.IncentiveGroupDetailRepository.SaveIncentiveGroupDetail(tx, req)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
 	}

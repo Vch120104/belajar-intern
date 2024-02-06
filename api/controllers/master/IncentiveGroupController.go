@@ -46,18 +46,19 @@ func NewIncentiveGroupController(IncentiveGroupService masterservice.IncentiveGr
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group [get]
 func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"incentive_group_code":        params.ByName("incentive_group_code"),
-		"incentive_group_name": params.ByName("incentive_group_name"),
-		"effective_date":                   params.ByName("effective_date"),
+		"incentive_group_code":        queryValues.Get("incentive_group_code"),
+		"incentive_group_name": queryValues.Get("incentive_group_name"),
+		"effective_date":                   queryValues.Get("effective_date"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)

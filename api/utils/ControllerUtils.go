@@ -1,12 +1,12 @@
 package utils
 
 import (
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/julienschmidt/httprouter"
 )
 
 // convert Pascal to Snake Case for json response
@@ -80,7 +80,7 @@ func GetQueryInt(c *gin.Context, param string) int {
 	return value
 }
 
-func NewGetQueryInt(params httprouter.Params, param string) int {
-	value, _ := strconv.Atoi(params.ByName(param))
+func NewGetQueryInt(queryValues url.Values, param string) int {
+	value, _ := strconv.Atoi(queryValues.Get(param))
 	return value
 }
