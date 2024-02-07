@@ -91,6 +91,24 @@ func (r *WarehouseMasterImpl) GetById(warehouseId int) (masterwarehousepayloads.
 	return warehouseMasterResponse, nil
 }
 
+func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, error) {
+	var entities []masterwarehouseentities.WarehouseMaster
+	var warehouseMasterResponse []masterwarehousepayloads.GetAllWarehouseMasterResponse
+
+	rows, err := r.DB.Model(&entities).
+		Where("warehouse_id in ?", MultiIds).
+		Scan(&warehouseMasterResponse).
+		Rows()
+
+	if err != nil {
+		return warehouseMasterResponse, err
+	}
+
+	defer rows.Close()
+
+	return warehouseMasterResponse, nil
+}
+
 func (r *WarehouseMasterImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, error) {
 	var entities []masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse []masterwarehousepayloads.GetAllWarehouseMasterResponse

@@ -16,8 +16,20 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func DiscountPercentRouter(
-	discountPercentController masteritemcontroller.DiscountPercentController,
+// func DiscountPercentRouter(
+// 	discountPercentController masteritemcontroller.DiscountPercentController,
+// ) *httprouter.Router {
+// 	router := httprouter.New()
+
+// 	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+
+// 	router.PanicHandler = exceptions.ErrorHandler
+
+// 	return router
+// }
+
+func OperationGroupRouter(
+	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
@@ -25,22 +37,28 @@ func DiscountPercentRouter(
 	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
 	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
 	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
+	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
+	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
+	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
 
-func OperationGroupRouter(
-	operationGroupController masteroperationcontroller.OperationGroupController,
+func ShiftScheduleRouter(
+	ShiftScheduleController mastercontroller.ShiftScheduleController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("/api/aftersales/operation-groupe/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST("/api/aftersales/operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH("/api/aftersales/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET("/shift-schedule/", ShiftScheduleController.GetAllShiftSchedule)
+	// router.GET("/shift-schedule/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
+	// router.GET("/shift-schedule/by-code/:operation_group_code", ShiftScheduleController.GetShiftScheduleByCode)
+	router.POST("/shift-schedule/", ShiftScheduleController.SaveShiftSchedule)
+	router.GET("/shift-schedule/:shift_schedule_id", ShiftScheduleController.GetShiftScheduleById)
+	router.PATCH("/shift-schedule/:shift_schedule_id", ShiftScheduleController.ChangeStatusShiftSchedule)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -122,7 +140,6 @@ func swaggerHandler() http.HandlerFunc {
 // 	//mtr_incentive_group
 // 	incentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupImpl(db)
 // 	incentiveGroupService := masterserviceimpl.StartIncentiveGroup(incentiveGroupRepository)
-
 // 	//mtr_item_class
 // 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl(db)
 // 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository)
