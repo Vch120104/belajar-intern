@@ -86,6 +86,15 @@ func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) bool {
 func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if req.OperationGroupId != 0 {
+		_, err := s.operationGroupRepo.GetOperationGroupById(tx, req.OperationGroupId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	results, err := s.operationGroupRepo.SaveOperationGroup(tx, req)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
