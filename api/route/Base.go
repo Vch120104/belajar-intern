@@ -2,7 +2,6 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
-	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/exceptions"
 
@@ -15,17 +14,17 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func DiscountPercentRouter(
-	discountPercentController masteritemcontroller.DiscountPercentController,
-) *httprouter.Router {
-	router := httprouter.New()
+// func DiscountPercentRouter(
+// 	discountPercentController masteritemcontroller.DiscountPercentController,
+// ) *httprouter.Router {
+// 	router := httprouter.New()
 
-	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+// 	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
 
-	router.PanicHandler = exceptions.ErrorHandler
+// 	router.PanicHandler = exceptions.ErrorHandler
 
-	return router
-}
+// 	return router
+// }
 
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,

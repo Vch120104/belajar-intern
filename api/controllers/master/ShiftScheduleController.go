@@ -51,33 +51,34 @@ func NewShiftScheduleController(ShiftScheduleService masterservice.ShiftSchedule
 // @Router /aftersales-service/api/aftersales/shift-schedule [get]
 func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"is_active":         params.ByName("is_active"),
-		"company_id":        params.ByName("company_id"),
-		"shift_schedule_id": params.ByName("shift_schedule_id"),
-		"shift_code":        params.ByName("shift_code"),
-		"effective_date":    params.ByName("effective_date"),
-		"shift_group":       params.ByName("shift_group"),
-		"start_time":        params.ByName("start_time"),
-		"end_time":          params.ByName("end_time"),
-		"rest_start_time":   params.ByName("rest_start_time"),
-		"rest_end_time":     params.ByName("rest_end_time"),
-		"monday":            params.ByName("monday"),
-		"tuesday":           params.ByName("tuesday"),
-		"wednesday":         params.ByName("wednesday"),
-		"thursday":          params.ByName("thursday"),
-		"friday":            params.ByName("friday"),
-		"saturday":          params.ByName("saturday"),
-		"sunday":            params.ByName("sunday"),
-		"manpower":          params.ByName("manpower"),
-		"manpower_booking":  params.ByName("manpower_booking"),
+		"is_active":         queryValues.Get("is_active"),
+		"company_id":        queryValues.Get("company_id"),
+		"shift_schedule_id": queryValues.Get("shift_schedule_id"),
+		"shift_code":        queryValues.Get("shift_code"),
+		"effective_date":    queryValues.Get("effective_date"),
+		"shift_group":       queryValues.Get("shift_group"),
+		"start_time":        queryValues.Get("start_time"),
+		"end_time":          queryValues.Get("end_time"),
+		"rest_start_time":   queryValues.Get("rest_start_time"),
+		"rest_end_time":     queryValues.Get("rest_end_time"),
+		"monday":            queryValues.Get("monday"),
+		"tuesday":           queryValues.Get("tuesday"),
+		"wednesday":         queryValues.Get("wednesday"),
+		"thursday":          queryValues.Get("thursday"),
+		"friday":            queryValues.Get("friday"),
+		"saturday":          queryValues.Get("saturday"),
+		"sunday":            queryValues.Get("sunday"),
+		"manpower":          queryValues.Get("manpower"),
+		"manpower_booking":  queryValues.Get("manpower_booking"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
