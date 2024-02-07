@@ -48,11 +48,12 @@ func ShiftScheduleRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/operation-group/", ShiftScheduleController.GetAllShiftSchedule)
-	// router.GET("/operation-group/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
-	// router.GET("/operation-group/by-code/:operation_group_code", ShiftScheduleController.GetShiftScheduleByCode)
-	router.POST("/operation-group/", ShiftScheduleController.SaveShiftSchedule)
-	router.PATCH("/operation-group/:operation_group_id", ShiftScheduleController.ChangeStatusShiftSchedule)
+	router.GET("/shift-schedule/", ShiftScheduleController.GetAllShiftSchedule)
+	// router.GET("/shift-schedule/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
+	// router.GET("/shift-schedule/by-code/:operation_group_code", ShiftScheduleController.GetShiftScheduleByCode)
+	router.POST("/shift-schedule/", ShiftScheduleController.SaveShiftSchedule)
+	router.GET("/shift-schedule/:shift_schedule_id", ShiftScheduleController.GetShiftScheduleById)
+	router.PATCH("/shift-schedule/:shift_schedule_id", ShiftScheduleController.ChangeStatusShiftSchedule)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

@@ -22,6 +22,7 @@ type ShiftScheduleController interface {
 	// GetShiftScheduleByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	SaveShiftSchedule(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetShiftScheduleById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 type ShiftScheduleControllerImpl struct {
 	ShiftScheduleService masterservice.ShiftScheduleService
@@ -51,9 +52,25 @@ func NewShiftScheduleController(ShiftScheduleService masterservice.ShiftSchedule
 func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	queryParams := map[string]string{
-		"shift_schedule_code":        params.ByName("shift_schedule_code"),
-		"shift_schedule_description": params.ByName("shift_schedule_description"),
-		"is_active":                   params.ByName("is_active"),
+		"is_active":         params.ByName("is_active"),
+		"company_id":        params.ByName("company_id"),
+		"shift_schedule_id": params.ByName("shift_schedule_id"),
+		"shift_code":        params.ByName("shift_code"),
+		"effective_date":    params.ByName("effective_date"),
+		"shift_group":       params.ByName("shift_group"),
+		"start_time":        params.ByName("start_time"),
+		"end_time":          params.ByName("end_time"),
+		"rest_start_time":   params.ByName("rest_start_time"),
+		"rest_end_time":     params.ByName("rest_end_time"),
+		"monday":            params.ByName("monday"),
+		"tuesday":           params.ByName("tuesday"),
+		"wednesday":         params.ByName("wednesday"),
+		"thursday":          params.ByName("thursday"),
+		"friday":            params.ByName("friday"),
+		"saturday":          params.ByName("saturday"),
+		"sunday":            params.ByName("sunday"),
+		"manpower":          params.ByName("manpower"),
+		"manpower_booking":  params.ByName("manpower_booking"),
 	}
 
 	pagination := pagination.Pagination{
@@ -85,23 +102,24 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 // }
 
-// // @Summary Get Shift Schedule By Code
-// // @Description REST API Shift Schedule
-// // @Accept json
-// // @Produce json
-// // @Tags Master : Shift Schedule
-// // @Param shift_schedule_code path string true "shift_schedule_code"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// // @Router /aftersales-service/api/aftersales/shift-schedule/by-code/{shift_schedule_code} [get]
-// func (r *ShiftScheduleControllerImpl) GetShiftScheduleByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Summary Get Shift Schedule By Code
+// @Description REST API Shift Schedule
+// @Accept json
+// @Produce json
+// @Tags Master : Shift Schedule
+// @Param shift_schedule_code path string true "shift_schedule_code"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/shift-schedule/by-code/{shift_schedule_code} [get]
+func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-// 	ShiftScheduleCode := params.ByName("shift_schedule_code")
+	ShiftScheduleStr := params.ByName("shift_schedule_id")
+	ShiftScheduleId, _ := strconv.Atoi(ShiftScheduleStr)
 
-// 	result := r.ShiftScheduleService.GetShiftScheduleByCode(ShiftScheduleCode)
+	result := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
 
-// 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
-// }
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
 
 // @Summary Save Shift Schedule
 // @Description REST API Shift Schedule
