@@ -3,23 +3,23 @@ package main
 import (
 	"after-sales/api/config"
 	masteritemcontroller "after-sales/api/controllers/master/item"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
 
 	// masteroperationcontroller "after-sales/api/controllers/master/operation"
 	mastercontroller "after-sales/api/controllers/master"
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
+	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
 	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
-	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
+	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 
 	// masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 
-	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
@@ -58,24 +58,24 @@ func main() {
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
-		// operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-		// operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		// operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
 		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
+
 		discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
 		discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
 		discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
 
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
-		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 		markupRateRepository := masteritemrepositoryimpl.StartMarkupRateRepositoryImpl()
 		markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db)
 		markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
 
-		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
 		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
 
@@ -84,9 +84,7 @@ func main() {
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
-		// mux.Handle("/api/aftersales/operation-group", OperationGroupRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
-
 		mux.Handle("/markup-rate/", MarkupRateRouter)
 
 		//Swagger

@@ -48,19 +48,21 @@ func NewDiscountPercentController(discountPercentService masteritemservice.Disco
 // @Router /aftersales-service/api/aftersales/discount-percent [get]
 func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
+	queryValues := request.URL.Query()
+
 	queryParams := map[string]string{
-		"mtr_discount.discount_code_value":       params.ByName("discount_code_value"),
-		"mtr_discount.discount_code_description": params.ByName("discount_code_description"),
-		"order_type_name":                        params.ByName("order_type_name"),
-		"mtr_discount_percent.discount":          params.ByName("discount"),
-		"mtr_discount_percent.is_active":         params.ByName("is_active"),
+		"mtr_discount.discount_code_value":       queryValues.Get("discount_code_value"),
+		"mtr_discount.discount_code_description": queryValues.Get("discount_code_description"),
+		"order_type_name":                        queryValues.Get("order_type_name"),
+		"mtr_discount_percent.discount":          queryValues.Get("discount"),
+		"mtr_discount_percent.is_active":         queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)

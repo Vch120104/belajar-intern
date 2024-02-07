@@ -53,19 +53,21 @@ func NewMarkupRateController(markupRateService masteritemservice.MarkupRateServi
 // @Router /aftersales-service/api/aftersales/markup-rate [get]
 func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
+	queryValues := request.URL.Query()
+
 	queryParams := map[string]string{
-		"mtr_markup_master.markup_master_code":        params.ByName("markup_master_code"),
-		"mtr_markup_master.markup_master_description": params.ByName("markup_master_description"),
-		"order_type_name":                             params.ByName("order_type_name"),
-		"mtr_markup_rate.markup_rate":                 params.ByName("markup_rate"),
-		"mtr_markup_rate.is_active":                   params.ByName("is_active"),
+		"mtr_markup_master.markup_master_code":        queryValues.Get("markup_master_code"),
+		"mtr_markup_master.markup_master_description": queryValues.Get("markup_master_description"),
+		"order_type_name":                             queryValues.Get("order_type_name"),
+		"mtr_markup_rate.markup_rate":                 queryValues.Get("markup_rate"),
+		"mtr_markup_rate.is_active":                   queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
