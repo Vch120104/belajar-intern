@@ -3,9 +3,9 @@ package masteritemrepositoryimpl
 import (
 	masteritementities "after-sales/api/entities/master/item"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"log"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -13,23 +13,13 @@ import (
 )
 
 type DiscountPercentRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartDiscountPercentRepositoryImpl(db *gorm.DB) masteritemrepository.DiscountPercentRepository {
-	return &DiscountPercentRepositoryImpl{myDB: db}
+func StartDiscountPercentRepositoryImpl() masteritemrepository.DiscountPercentRepository {
+	return &DiscountPercentRepositoryImpl{}
 }
 
-func (r *DiscountPercentRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.DiscountPercentRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
+func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	var responses []masteritempayloads.DiscountPercentListResponse
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
 	var c *gin.Context
@@ -59,20 +49,20 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []
 	// define table struct
 	tableStruct := masteritempayloads.DiscountPercentListResponse{}
 	//define join table
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
 	//apply pagination and execute
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
 
 	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, 0, 0, gorm.ErrRecordNotFound
 	}
 
 	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
@@ -80,19 +70,21 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(filterCondition []
 	errUrlDiscountPercent := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
 
 	if errUrlDiscountPercent != nil {
-		return nil, errUrlDiscountPercent
+		return nil, 0, 0, errUrlDiscountPercent
 	}
 
 	joinedData := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
 
-	return joinedData, nil
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+
+	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(Id int) (masteritempayloads.DiscountPercentResponse, error) {
+func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(tx *gorm.DB, Id int) (masteritempayloads.DiscountPercentResponse, error) {
 	entities := masteritementities.DiscountPercent{}
 	response := masteritempayloads.DiscountPercentResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.DiscountPercent{
 			DiscountPercentId: Id,
 		}).
@@ -108,7 +100,7 @@ func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(Id int) (masterit
 	return response, nil
 }
 
-func (r *DiscountPercentRepositoryImpl) SaveDiscountPercent(request masteritempayloads.DiscountPercentResponse) (bool, error) {
+func (r *DiscountPercentRepositoryImpl) SaveDiscountPercent(tx *gorm.DB, request masteritempayloads.DiscountPercentResponse) (bool, error) {
 	entities := masteritementities.DiscountPercent{
 		IsActive:          request.IsActive,
 		DiscountPercentId: request.DiscountPercentId,
@@ -117,7 +109,7 @@ func (r *DiscountPercentRepositoryImpl) SaveDiscountPercent(request masteritempa
 		Discount:          request.Discount,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -126,10 +118,10 @@ func (r *DiscountPercentRepositoryImpl) SaveDiscountPercent(request masteritempa
 	return true, nil
 }
 
-func (r *DiscountPercentRepositoryImpl) ChangeStatusDiscountPercent(Id int) (bool, error) {
+func (r *DiscountPercentRepositoryImpl) ChangeStatusDiscountPercent(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteritementities.DiscountPercent
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("discount_percent_id = ?", Id).
 		First(&entities)
 
@@ -143,7 +135,7 @@ func (r *DiscountPercentRepositoryImpl) ChangeStatusDiscountPercent(Id int) (boo
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

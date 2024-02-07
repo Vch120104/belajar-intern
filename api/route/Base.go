@@ -2,6 +2,7 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/exceptions"
 
@@ -14,16 +15,28 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+func DiscountPercentRouter(
+	discountPercentController masteritemcontroller.DiscountPercentController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
 	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
-	router.GET("/operation-group/drop-down/", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("/operation-group-by-code/:operation-group-code/", operationGroupController.GetOperationGroupByCode)
+	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
 	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
-	router.PATCH("/operation-group/:operation_group_id/", operationGroupController.ChangeStatusOperationGroup)
+	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

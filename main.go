@@ -5,9 +5,11 @@ import (
 	mastercontroller "after-sales/api/controllers/master"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
+
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
+
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
@@ -20,7 +22,7 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in Header
 // @name Authorization
-// @host localhost:2000
+// @host localhost:8000
 // @BasePath /api/aftersales
 func main() {
 	args := os.Args
