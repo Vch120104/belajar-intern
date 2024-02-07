@@ -29,6 +29,21 @@ func DiscountPercentRouter(
 	return router
 }
 
+func MarkupRateRouter(
+	markupRateController masteritemcontroller.MarkupRateController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/markup-rate/", markupRateController.GetAllMarkupRate)
+	router.GET("/markup-rate/:markup_rate_id", markupRateController.GetMarkupRateByID)
+	router.POST("/markup-rate/", markupRateController.SaveMarkupRate)
+	router.PATCH("/markup-rate/:markup_rate_id", markupRateController.ChangeStatusMarkupRate)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {

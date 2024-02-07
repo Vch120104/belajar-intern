@@ -59,14 +59,21 @@ func main() {
 		discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
 		discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
 
+		markupRateRepository := masteritemrepositoryimpl.StartMarkupRateRepositoryImpl()
+		markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db)
+		markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
+
 		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
+		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		// mux.Handle("/api/aftersales/operation-group", OperationGroupRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
+
+		mux.Handle("/markup-rate/", MarkupRateRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
