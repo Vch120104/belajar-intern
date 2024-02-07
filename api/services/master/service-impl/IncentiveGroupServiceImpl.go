@@ -3,7 +3,7 @@ package masterserviceimpl
 import (
 	masterpayloads "after-sales/api/payloads/master"
 	masterrepository "after-sales/api/repositories/master"
-	masterservice "after-sales/api/services"
+	masterservice "after-sales/api/services/master"
 
 	"gorm.io/gorm"
 )

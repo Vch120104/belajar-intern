@@ -14,5 +14,6 @@ type WarehouseMasterService interface {
 	GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, error)
 	GetAllIsActive() ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, error)
 	GetWarehouseMasterByCode(Code string) ([]map[string]interface{}, error)
+	GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, error)
 	ChangeStatus(int) (masterwarehousepayloads.GetWarehouseMasterResponse, error)
 }

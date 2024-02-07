@@ -1,6 +1,8 @@
 package route
 
 import (
+	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/exceptions"
@@ -49,17 +51,26 @@ func OperationGroupRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET("/api/aftersales/operation-group", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("/api/aftersales/operation-groupe/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST("/api/aftersales/operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH("/api/aftersales/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
+	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
+	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
 
+func ForecastMasterRouter(
+	forecastMasterController mastercontroller.ForecastMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/forecast-master", forecastMasterController.GetForecastMasterById)
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
 func SwaggerRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
@@ -121,7 +132,6 @@ func swaggerHandler() http.HandlerFunc {
 // 	//mtr_incentive_group
 // 	incentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupImpl(db)
 // 	incentiveGroupService := masterserviceimpl.StartIncentiveGroup(incentiveGroupRepository)
-
 // 	//mtr_item_class
 // 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl(db)
 // 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository)

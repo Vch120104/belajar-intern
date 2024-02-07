@@ -59,6 +59,16 @@ func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads
 	return get, nil
 }
 
+func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, error) {
+	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(MultiIds)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return get, nil
+}
+
 func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, error) {
 	get, err := s.warehouseMasterRepo.GetAll(request, pages)
 
