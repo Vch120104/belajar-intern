@@ -1,7 +1,6 @@
 package masterwarehousecontroller
 
 import (
-	"after-sales/api/exceptions"
 	"after-sales/api/payloads"
 
 	"strconv"
@@ -110,11 +109,6 @@ func (r *WarehouseLocationControllerImpl) Save(c *gin.Context) {
 
 	var message string
 	requestBody := masterwarehousepayloads.GetWarehouseLocationResponse{}
-
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c.Error())
-		return
-	}
 
 	save := r.WarehouseLocationService.Save(requestBody)
 

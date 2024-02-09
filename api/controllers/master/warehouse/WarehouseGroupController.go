@@ -1,7 +1,6 @@
 package masterwarehousecontroller
 
 import (
-	"after-sales/api/exceptions"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"strconv"
@@ -98,11 +97,6 @@ func (r *WarehouseGroupControllerImpl) Save(c *gin.Context) {
 
 	var message string
 	requestBody := masterwarehousegrouppayloads.GetWarehouseGroupResponse{}
-
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c.Error())
-		return
-	}
 
 	save := r.WarehouseGroupService.Save(requestBody)
 
