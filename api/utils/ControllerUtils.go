@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"net/url"
 	"reflect"
 	"strconv"
 	"strings"
@@ -72,8 +73,16 @@ func BuildFilterCondition(queryParams map[string]string) []FilterCondition {
 	return criteria
 }
 
+// Deprecated: please change to the latest one without *gin.Context
 // GetQueryInt take QueryParam to return int
 func GetQueryInt(c *gin.Context, param string) int {
 	value, _ := strconv.Atoi(c.Query(param))
 	return value
 }
+
+func NewGetQueryInt(queryValues url.Values, param string) int {
+	value, _ := strconv.Atoi(queryValues.Get(param))
+	return value
+}
+
+

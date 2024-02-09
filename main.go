@@ -51,7 +51,7 @@ func main() {
 
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		operationGroupController := masteroperationcontroller.OperationGroupController(operationGroupService,db)
+		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
 		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
