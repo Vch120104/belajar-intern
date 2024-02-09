@@ -1,10 +1,10 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 	"net/http"
 	"strconv"
@@ -15,24 +15,23 @@ import (
 
 	// "strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type MarkupRateController struct {
-	markupRateService masteritemservice.MarkupRateService
+type MarkupRateController interface {
+	GetAllMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetMarkupRateByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+type MarkupRateControllerImpl struct {
+	MarkupRateService masteritemservice.MarkupRateService
 }
 
-func StartMarkupRateRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	markupRateService masteritemservice.MarkupRateService,
-) {
-	markupRateHandler := MarkupRateController{markupRateService: markupRateService}
-	r.GET("/markup-rate", middlewares.DBTransactionMiddleware(db), markupRateHandler.GetAllMarkupRate)
-	r.GET("/markup-rate/:markup_rate_id", middlewares.DBTransactionMiddleware(db), markupRateHandler.GetMarkupRateByID)
-	r.POST("/markup-rate", middlewares.DBTransactionMiddleware(db), markupRateHandler.SaveMarkupRate)
-	r.PATCH("/markup-rate/:markup_rate_id", middlewares.DBTransactionMiddleware(db), markupRateHandler.ChangeStatusMarkupRate)
+func NewMarkupRateController(markupRateService masteritemservice.MarkupRateService) MarkupRateController {
+	return &MarkupRateControllerImpl{
+		MarkupRateService: markupRateService,
+	}
 }
 
 // @Summary Get All Markup Rate
@@ -52,34 +51,30 @@ func StartMarkupRateRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate [get]
-func (r *MarkupRateController) GetAllMarkupRate(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_markup_master.markup_master_code":        c.Query("markup_master_code"),
-		"mtr_markup_master.markup_master_description": c.Query("markup_master_description"),
-		"order_type_name":                             c.Query("order_type_name"),
-		"mtr_markup_rate.markup_rate":                 c.Query("markup_rate"),
-		"mtr_markup_rate.is_active":                   c.Query("is_active"),
+		"mtr_markup_master.markup_master_code":        queryValues.Get("markup_master_code"),
+		"mtr_markup_master.markup_master_description": queryValues.Get("markup_master_description"),
+		"order_type_name":                             queryValues.Get("order_type_name"),
+		"mtr_markup_rate.markup_rate":                 queryValues.Get("markup_rate"),
+		"mtr_markup_rate.is_active":                   queryValues.Get("is_active"),
 	}
 
-	limit := utils.GetQueryInt(c, "limit")
-	page := utils.GetQueryInt(c, "page")
-	sortOf := c.Query("sort_of")
-	sortBy := c.Query("sort_by")
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.markupRateService.WithTrx(trxHandle).GetAllMarkupRate(criteria)
+	paginatedData, totalPages, totalRows := r.MarkupRateService.GetAllMarkupRate(criteria, paginate)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	paginatedData, totalPages, totalRows := utils.DataFramePaginate(result, page, limit, utils.SnaketoPascalCase(sortOf), sortBy)
-
-	payloads.HandleSuccessPagination(c, utils.ModifyKeysInResponse(paginatedData), "success", 200, limit, page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Markup Rate By ID
@@ -91,16 +86,13 @@ func (r *MarkupRateController) GetAllMarkupRate(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [get]
-func (r *MarkupRateController) GetMarkupRateByID(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	markupRateId, _ := strconv.Atoi(c.Param("markup_rate_id"))
-	result, err := r.markupRateService.WithTrx(trxHandle).GetMarkupRateById(int(markupRateId))
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	
+	markupRateId, _ := strconv.Atoi(params.ByName("markup_rate_id"))
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	result := r.MarkupRateService.GetMarkupRateById(markupRateId)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Markup Rate
@@ -112,43 +104,21 @@ func (r *MarkupRateController) GetMarkupRateByID(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate [post]
-func (r *MarkupRateController) SaveMarkupRate(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteritempayloads.MarkupRateRequest
+func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	
+	var formRequest masteritempayloads.MarkupRateRequest
+	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	create := r.MarkupRateService.SaveMarkupRate(formRequest)
 
-	if int(request.MarkupRateId) != 0 {
-		result, err := r.markupRateService.WithTrx(trxHandle).GetMarkupRateById(int(request.MarkupRateId))
-
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.MarkupRateId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.markupRateService.WithTrx(trxHandle).SaveMarkupRate(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.MarkupRateId == 0 {
+	if formRequest.MarkupRateId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Markup Rate
@@ -160,25 +130,11 @@ func (r *MarkupRateController) SaveMarkupRate(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [patch]
-func (r *MarkupRateController) ChangeStatusMarkupRate(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	markupMasterId, err := strconv.Atoi(c.Param("markup_rate_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.markupRateService.WithTrx(trxHandle).GetMarkupRateById(int(markupMasterId))
-	if err != nil || result.MarkupMasterId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	
+	markupRateId, _ := strconv.Atoi(params.ByName("markup_rate_id"))
 
-	response, err := r.markupRateService.WithTrx(trxHandle).ChangeStatusMarkupRate(int(markupMasterId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	response := r.MarkupRateService.ChangeStatusMarkupRate(int(markupRateId))
 
-	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
