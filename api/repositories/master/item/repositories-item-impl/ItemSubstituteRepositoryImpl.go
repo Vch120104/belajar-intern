@@ -15,7 +15,7 @@ import (
 type ItemSubstituteRepositoryImpl struct {
 }
 
-func StartItemSubstituteRepositoryImpl(db *gorm.DB) masteritemrepository.ItemSubstituteRepository {
+func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepository {
 	return &ItemSubstituteRepositoryImpl{}
 }
 
@@ -42,7 +42,7 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	return pages, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB,id int) (masteritempayloads.ItemSubstitutePayloads, error) {
+func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (masteritempayloads.ItemSubstitutePayloads, error) {
 	entities := masteritementities.ItemSubstitute{}
 	response := masteritempayloads.ItemSubstitutePayloads{}
 
@@ -55,10 +55,10 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB,id int)
 	return response, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, error) {
 	entities := []masteritementities.ItemSubstituteDetail{}
 
-	baseModelQuery := tx.Model(&entities)
+	baseModelQuery := tx.Model(&entities).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteId: id})
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 

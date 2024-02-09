@@ -27,6 +27,23 @@ func DiscountPercentRouter(
 	return router
 }
 
+func ItemSubstituteRouter(
+	itemSubstituteController masteritemcontroller.ItemSubstituteController,
+) *httprouter.Router{
+	router := httprouter.New()
+	router.GET("/api/aftersales/item-substitute",itemSubstituteController.GetAllItemSubstitute)
+	router.GET("/api/aftersales/item-substitute-id/:item_substitute_id",itemSubstituteController.GetByIdItemSubstitute)
+	router.GET("/api/aftersales/item-substitute-detail",itemSubstituteController.GetAllItemSubstituteDetail)
+	router.GET("/api/aftersales/item-substitute-detail-id/:item_substitute_detail_id",itemSubstituteController.GetByIdItemSubstituteDetail)
+	router.POST("/api/aftersales/item-substitute",itemSubstituteController.SaveItemSubstitute)
+	router.POST("/api/aftersales/item-substitute-detail",itemSubstituteController.SaveItemSubstituteDetail)
+	router.PATCH("/api/aftersales/item-substitute",itemSubstituteController.ChangeStatusOperationGroup)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {

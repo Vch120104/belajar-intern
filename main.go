@@ -3,13 +3,17 @@ package main
 import (
 	"after-sales/api/config"
 	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 
+	masteritemrepository "after-sales/api/repositories/master/item"
+	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 
+	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
@@ -49,6 +53,10 @@ func main() {
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
+		itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
+		itemSubstituteService:= masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository,db)
+		itemSubstituteController:= masteritemcontroller.NewItemSubstituteController(itemSubstituteService)
+
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
@@ -59,12 +67,14 @@ func main() {
 
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
+		ItemSubstituteRouter := route.ItemSubstituteRouter(itemSubstituteController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
+		mux.Handle("/item-substitute",ItemSubstituteRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

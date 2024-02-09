@@ -11,7 +11,7 @@ import (
 type ItemSubstituteRepository interface {
 	GetAllItemSubstitute(*gorm.DB,[]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
 	GetByIdItemSubstitute(*gorm.DB,int) (masteritempayloads.ItemSubstitutePayloads, error)
-	GetAllItemSubstituteDetail(*gorm.DB,[]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
+	GetAllItemSubstituteDetail(*gorm.DB,[]utils.FilterCondition, pagination.Pagination,int) (pagination.Pagination, error)
 	GetByIdItemSubstituteDetail(*gorm.DB,int) (masteritempayloads.ItemSubstituteDetailPayloads, error)
 	SaveItemSubstitute(*gorm.DB,masteritempayloads.ItemSubstitutePayloads) (bool, error)
 	SaveItemSubstituteDetail(*gorm.DB,masteritempayloads.ItemSubstituteDetailPayloads) (bool, error)

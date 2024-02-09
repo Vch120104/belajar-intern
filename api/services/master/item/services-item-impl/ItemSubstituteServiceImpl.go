@@ -1,14 +1,14 @@
 package masteritemserviceimpl
 
 import (
-	masteritementities "after-sales/api/entities/master/item"
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
+	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
-	"gorm.io/gen/helper"
 	"gorm.io/gorm"
 )
 
@@ -17,21 +17,106 @@ type ItemSubstituteServiceImpl struct {
 	Db                 *gorm.DB
 }
 
-func StartItemSubstitute(itemSubstituteRepo masteritemrepository.ItemSubstituteRepository, db *gorm.DB) masteritemservice.ItemSubstituteService {
+func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubstituteRepository, db *gorm.DB) masteritemservice.ItemSubstituteService {
 	return &ItemSubstituteServiceImpl{
 		itemSubstituteRepo: itemSubstituteRepo,
 		Db:                 db,
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
 	tx := s.Db.Begin()
-
 	defer helper.CommitOrRollback(tx)
-
 	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.newApp)
+		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
+	return results
+}
 
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) masteritempayloads.ItemSubstitutePayloads {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(filtercondition []utils.FilterCondition, pages pagination.Pagination, id int) pagination.Pagination {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, filtercondition, pages, id)
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailPayloads {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemSubstituteRepo.GetByIdItemSubstituteDetail(tx, id)
+
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePayloads) bool {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.itemSubstituteRepo.SaveItemSubstitute(tx, req)
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPayloads) bool {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req)
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) ChangeStatusItemOperation(id int) bool {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.itemSubstituteRepo.ChangeStatusItemOperation(tx, id)
+
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) bool {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.itemSubstituteRepo.DeactivateItemSubstituteDetail(tx, id)
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) bool {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.itemSubstituteRepo.ActivateItemSubstituteDetail(tx, id)
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
 }
