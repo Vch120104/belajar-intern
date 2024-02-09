@@ -2,71 +2,75 @@ package masterwarehouseserviceimpl
 
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
-	pagination "after-sales/api/payloads/pagination"
+	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
 
 	"log"
 
-	// "log"
-
-	// "after-sales/api/utils"
-
 	"gorm.io/gorm"
+	// "log"
+	// "after-sales/api/utils"
 )
 
 type WarehouseLocationServiceImpl struct {
 	warehouseLocationRepo masterwarehouserepository.WarehouseLocationRepository
+	DB                    *gorm.DB
 }
 
-func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.WarehouseLocationRepository) masterwarehouseservice.WarehouseLocationService {
+func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.WarehouseLocationRepository, db *gorm.DB) masterwarehouseservice.WarehouseLocationService {
 	return &WarehouseLocationServiceImpl{
 		warehouseLocationRepo: warehouseLocation,
+		DB:                    db,
 	}
 }
 
-func (s *WarehouseLocationServiceImpl) WithTrx(trxHandle *gorm.DB) masterwarehouseservice.WarehouseLocationService {
-	s.warehouseLocationRepo = s.warehouseLocationRepo.WithTrx(trxHandle)
-	return s
-}
-
-func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) (bool, error) {
-	save, err := s.warehouseLocationRepo.Save(request)
+func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	save, err := s.warehouseLocationRepo.Save(tx, request)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	return save, nil
+	return save
 }
 
-func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, error) {
-	get, err := s.warehouseLocationRepo.GetById(warehouseLocationId)
+func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) masterwarehousepayloads.GetWarehouseLocationResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 
 	if err != nil {
-		return masterwarehousepayloads.GetWarehouseLocationResponse{}, err
+		return masterwarehousepayloads.GetWarehouseLocationResponse{}
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseLocationServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, error) {
-	get, err := s.warehouseLocationRepo.GetAll(request, pages)
+func (s *WarehouseLocationServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseLocationRepo.GetAll(tx, request, pages)
 
 	if err != nil {
-		return pagination.Pagination{}, err
+		return pagination.Pagination{}
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, error) {
-	change_status, err := s.warehouseLocationRepo.ChangeStatus(warehouseLocationId)
+func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) masterwarehousepayloads.GetWarehouseLocationResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	change_status, err := s.warehouseLocationRepo.ChangeStatus(tx, warehouseLocationId)
 
 	if err != nil {
 		log.Panic(err.Error())
 	}
 
-	return change_status, nil
+	return change_status
 }

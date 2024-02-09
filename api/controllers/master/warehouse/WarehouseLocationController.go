@@ -2,7 +2,6 @@ package masterwarehousecontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 
 	"strconv"
@@ -16,27 +15,19 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-type WarehouseLocationController struct {
-	warehouseLocationService masterwarehouseservice.WarehouseLocationService
+type WarehouseLocationControllerImpl struct {
+	WarehouseLocationService masterwarehouseservice.WarehouseLocationService
 }
 
-func OpenWarehouseLocationRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	WarehouseLocationService masterwarehouseservice.WarehouseLocationService,
-) {
-	handler := WarehouseLocationController{
-		warehouseLocationService: WarehouseLocationService,
-	}
+type WarehouseLocationController interface {
+}
 
-	// r.Use(middlewares.SetupAuthenticationMiddleware())
-	r.GET("/warehouse-location/:warehouse_location_id", middlewares.DBTransactionMiddleware(db), handler.GetById)
-	r.GET("/warehouse-location", middlewares.DBTransactionMiddleware(db), handler.GetAll)
-	r.POST("/warehouse-location", middlewares.DBTransactionMiddleware(db), handler.Save)
-	r.PATCH("/warehouse-location/:warehouse_location_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
+func NewWarehouseLocationController(WarehouseLocationService masterwarehouseservice.WarehouseLocationService) WarehouseLocationController {
+	return &WarehouseLocationControllerImpl{
+		WarehouseLocationService: WarehouseLocationService,
+	}
 }
 
 // @Summary Get All Warehouse Location
@@ -57,8 +48,8 @@ func OpenWarehouseLocationRoutes(
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location [get]
-func (r *WarehouseLocationController) GetAll(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *WarehouseLocationControllerImpl) GetAll(c *gin.Context) {
+
 	page, _ := strconv.Atoi(c.Query("page"))
 	limit, _ := strconv.Atoi(c.Query("limit"))
 	sortOf := c.Query("sort_of")
@@ -69,7 +60,7 @@ func (r *WarehouseLocationController) GetAll(c *gin.Context) {
 	warehouseLocationDetailName := c.Query("warehouse_location_detail_name")
 	isActive := c.Query("is_active")
 
-	get, err := r.warehouseLocationService.WithTrx(trxHandle).GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
+	get := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
 		WarehouseLocationCode:       warehouseLocationName,
 		WarehouseLocationName:       warehouseLocationCode,
 		WarehouseLocationDetailName: warehouseLocationDetailName,
@@ -81,16 +72,6 @@ func (r *WarehouseLocationController) GetAll(c *gin.Context) {
 		SortBy: sortBy,
 		Page:   page,
 	})
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if get.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
 
 	payloads.HandleSuccessPagination(c, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
@@ -105,21 +86,11 @@ func (r *WarehouseLocationController) GetAll(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [get]
-func (r *WarehouseLocationController) GetById(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *WarehouseLocationControllerImpl) GetById(c *gin.Context) {
+
 	warehouseLocationId, _ := strconv.Atoi(c.Param("warehouse_location_id"))
 
-	get, err := r.warehouseLocationService.WithTrx(trxHandle).GetById(warehouseLocationId)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if get.WarehouseLocationId == 0 {
-		exceptions.NotFoundException(c, "Warehouse Location Data Not Found!")
-		return
-	}
+	get := r.WarehouseLocationService.GetById(warehouseLocationId)
 
 	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
 
@@ -135,36 +106,17 @@ func (r *WarehouseLocationController) GetById(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location [post]
-func (r *WarehouseLocationController) Save(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *WarehouseLocationControllerImpl) Save(c *gin.Context) {
+
 	var message string
 	requestBody := masterwarehousepayloads.GetWarehouseLocationResponse{}
 
 	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c, err.Error())
+		exceptions.EntityException(c.Error())
 		return
 	}
 
-	if int(requestBody.WarehouseLocationId) != 0 {
-		get, err := r.warehouseLocationService.WithTrx(trxHandle).GetById(requestBody.WarehouseLocationId)
-
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if get.WarehouseLocationId == 0 {
-			exceptions.NotFoundException(c, "Warehouse Location Data Not Found!")
-			return
-		}
-	}
-
-	save, err := r.warehouseLocationService.WithTrx(trxHandle).Save(requestBody)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	save := r.WarehouseLocationService.Save(requestBody)
 
 	if requestBody.WarehouseLocationId == 0 {
 		message = "Create Data Successfully!"
@@ -186,28 +138,11 @@ func (r *WarehouseLocationController) Save(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [patch]
-func (r *WarehouseLocationController) ChangeStatus(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *WarehouseLocationControllerImpl) ChangeStatus(c *gin.Context) {
+
 	warehouseLocationId, _ := strconv.Atoi(c.Param("warehouse_location_id"))
 
-	get, err := r.warehouseLocationService.WithTrx(trxHandle).GetById(warehouseLocationId)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if get.WarehouseLocationId == 0 {
-		exceptions.NotFoundException(c, "Warehouse Location Data Not Found!")
-		return
-	}
-
-	change_status, err := r.warehouseLocationService.WithTrx(trxHandle).ChangeStatus(warehouseLocationId)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	change_status := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 
 	payloads.HandleSuccess(c, change_status, "Updated successfully", http.StatusOK)
 

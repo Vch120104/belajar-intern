@@ -9,29 +9,17 @@ import (
 	masterwarehouseentites "after-sales/api/entities/master/warehouse"
 	// "after-sales/api/payloads/pagination"
 
-	"log"
-
 	"gorm.io/gorm"
 )
 
 type WarehouseGroupImpl struct {
-	DB *gorm.DB
 }
 
-func OpenWarehouseGroupImpl(db *gorm.DB) masterwarehouserepository.WarehouseGroupRepository {
-	return &WarehouseGroupImpl{DB: db}
+func OpenWarehouseGroupImpl() masterwarehouserepository.WarehouseGroupRepository {
+	return &WarehouseGroupImpl{}
 }
 
-func (r *WarehouseGroupImpl) WithTrx(Trxhandle *gorm.DB) masterwarehouserepository.WarehouseGroupRepository {
-	if Trxhandle == nil {
-		log.Println("Transaction Database Not Found")
-		return r
-	}
-	r.DB = Trxhandle
-	return r
-}
-
-func (r *WarehouseGroupImpl) Save(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, error) {
+func (r *WarehouseGroupImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, error) {
 
 	var warehouseGroup = masterwarehouseentites.WarehouseGroup{
 		IsActive:           utils.BoolPtr(request.IsActive),
@@ -41,7 +29,7 @@ func (r *WarehouseGroupImpl) Save(request masterwarehousepayloads.GetWarehouseGr
 		ProfitCenterId:     request.ProfitCenterId,
 	}
 
-	rows, err := r.DB.Model(&warehouseGroup).
+	rows, err := tx.Model(&warehouseGroup).
 		Save(&warehouseGroup).
 		Rows()
 
@@ -54,12 +42,12 @@ func (r *WarehouseGroupImpl) Save(request masterwarehousepayloads.GetWarehouseGr
 	return true, nil
 }
 
-func (r *WarehouseGroupImpl) GetById(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, error) {
+func (r *WarehouseGroupImpl) GetById(tx *gorm.DB, warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, error) {
 
 	var entities masterwarehouseentites.WarehouseGroup
 	var warehouseGroupResponse masterwarehousepayloads.GetWarehouseGroupResponse
 
-	rows, err := r.DB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masterwarehousepayloads.GetWarehouseGroupResponse{
 			WarehouseGroupId: warehouseGroupId,
 		}).
@@ -76,10 +64,10 @@ func (r *WarehouseGroupImpl) GetById(warehouseGroupId int) (masterwarehousepaylo
 	return warehouseGroupResponse, nil
 }
 
-func (r *WarehouseGroupImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseGroupRequest) ([]masterwarehousepayloads.GetWarehouseGroupResponse, error) {
+func (r *WarehouseGroupImpl) GetAll(tx *gorm.DB, request masterwarehousepayloads.GetAllWarehouseGroupRequest) ([]masterwarehousepayloads.GetWarehouseGroupResponse, error) {
 	var entities []masterwarehouseentites.WarehouseGroup
 	var warehouseGroupResponse []masterwarehousepayloads.GetWarehouseGroupResponse
-	tempRows := r.DB.
+	tempRows := tx.
 		Model(&entities).
 		Where("warehouse_group_code like ?", "%"+request.WarehouseGroupCode+"%").
 		Where("warehouse_group_name like ?", "%"+request.WarehouseGroupName+"%")
@@ -101,11 +89,11 @@ func (r *WarehouseGroupImpl) GetAll(request masterwarehousepayloads.GetAllWareho
 	return warehouseGroupResponse, nil
 }
 
-func (r *WarehouseGroupImpl) ChangeStatus(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, error) {
+func (r *WarehouseGroupImpl) ChangeStatus(tx *gorm.DB, warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, error) {
 	var entities masterwarehouseentites.WarehouseGroup
 	var warehouseGroupPayloads masterwarehousepayloads.GetWarehouseGroupResponse
 
-	rows, err := r.DB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masterwarehousepayloads.GetWarehouseGroupResponse{
 			WarehouseGroupId: warehouseGroupId,
 		}).
@@ -113,12 +101,12 @@ func (r *WarehouseGroupImpl) ChangeStatus(warehouseGroupId int) (masterwarehouse
 		Rows()
 
 	if err != nil {
-		log.Panic((err.Error()))
+		return warehouseGroupPayloads, err
 	}
 
 	defer rows.Close()
 
-	rows, err = r.DB.Model(&entities).
+	rows, err = tx.Model(&entities).
 		Where(masterwarehousepayloads.GetWarehouseGroupResponse{
 			WarehouseGroupId: warehouseGroupId,
 		}).
