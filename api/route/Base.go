@@ -34,9 +34,9 @@ func OperationGroupRouter(
 
 	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
 	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	// router.GET("/operation-group/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	// router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
-	// router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
+	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

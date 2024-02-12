@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"strconv"
+	"strings"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -36,6 +37,7 @@ func OpenWarehouseMasterRoutes(
 	r.GET("/warehouse-master", middlewares.DBTransactionMiddleware(db), handler.GetAll)
 	r.GET("/warehouse-master/:warehouse_id", middlewares.DBTransactionMiddleware(db), handler.GetById)
 	r.GET("/warehouse-master-by-code/:warehouse_code", middlewares.DBTransactionMiddleware(db), handler.GetByCode)
+	r.GET("/warehouse-master-multi-id/:warehouse_ids", middlewares.DBTransactionMiddleware(db), handler.GetWarehouseWithMultiId)
 	r.GET("/warehouse-master-drop-down", middlewares.DBTransactionMiddleware(db), handler.GetAllIsActive)
 	r.POST("/warehouse-master", middlewares.DBTransactionMiddleware(db), handler.Save)
 	r.PATCH("/warehouse-master/:warehouse_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
@@ -165,6 +167,31 @@ func (r *WarehouseMasterController) GetByCode(c *gin.Context) {
 
 	payloads.HandleSuccess(c, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
 
+}
+
+// @Summary Get Warehouse Master With MultiId
+// @Description Get Warehouse Master
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Master
+// @Param warehouse_ids path string true "warehouse_ids"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/warehouse-master-multi-id/{warehouse_ids} [get]
+func (r *WarehouseMasterController) GetWarehouseWithMultiId(c *gin.Context) {
+	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+	warehouse_ids := c.Param("warehouse_ids")
+
+	sliceOfString := strings.Split(warehouse_ids, ",")
+
+	result, err := r.warehouseMasterService.WithTrx(trxHandle).GetWarehouseWithMultiId(sliceOfString)
+
+	if err != nil {
+		exceptions.NotFoundException(c, err.Error())
+		return
+	}
+
+	payloads.HandleSuccess(c, result, "success", 200)
 }
 
 // @Summary Save Warehouse Master
