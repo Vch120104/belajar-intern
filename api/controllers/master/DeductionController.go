@@ -32,17 +32,19 @@ func NewDeductionController(deductionService masterservice.DeductionService) Ded
 }
 
 func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"is_active":      params.ByName("is_active"),
-		"deduction_name": params.ByName("deduction_name"),
-		"effective_date": params.ByName("effective_date"),
+		"is_active":      queryValues.Get("is_active"),
+		"deduction_name": queryValues.Get("deduction_name"),
+		"effective_date": queryValues.Get("effective_date"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition((queryParams))

@@ -2,20 +2,15 @@ package main
 
 import (
 	"after-sales/api/config"
-
-	// masteroperationcontroller "after-sales/api/controllers/master/operation"
 	mastercontroller "after-sales/api/controllers/master"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 
-
-	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
-
+	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 
-
-	// masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
-
+	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
@@ -51,26 +46,25 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		// basePath := "/api/aftersales/discount-percent"
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
-		// operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-		// operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		// operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
+		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
 		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
-		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
-		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController, basePath)
+		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		// mux.Handle(basePath, OperationGroupRouter)
-		mux.Handle(basePath, ForecastMasterRouter)
+		mux.Handle("/operation-group/", OperationGroupRouter)
+		mux.Handle("/forecast-master/", ForecastMasterRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
