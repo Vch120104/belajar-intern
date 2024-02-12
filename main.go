@@ -4,12 +4,14 @@ import (
 	"after-sales/api/config"
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
 	// masteroperationcontroller "after-sales/api/controllers/master/operation"
 	mastercontroller "after-sales/api/controllers/master"
 	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
 
 	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
@@ -17,6 +19,7 @@ import (
 	"after-sales/api/route"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
 
 	// masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 
@@ -74,10 +77,20 @@ func main() {
 		markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db)
 		markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
 
+		warehouseGroupRepository := masterwarehouserepositoryimpl.OpenWarehouseGroupImpl()
+		warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository, db)
+		warehouseGroupController := masterwarehousecontroller.NewWarehouseGroupController(warehouseGroupService)
+
+		warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
+		warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db)
+		warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
 		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
+		WarehouseGroup := route.WarehouseGroupRouter(warehouseGroupController)
+		WarehouseLocation := route.WarehouseLocationRouter(warehouseLocationController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
@@ -86,6 +99,8 @@ func main() {
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
 		mux.Handle("/markup-rate/", MarkupRateRouter)
+		mux.Handle("/warehouse-group/", WarehouseGroup)
+		mux.Handle("/warehouse-location/", WarehouseLocation)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

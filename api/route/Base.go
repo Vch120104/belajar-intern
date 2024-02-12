@@ -4,6 +4,7 @@ import (
 	mastercontroller "after-sales/api/controllers/master"
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
 
 	_ "after-sales/docs"
@@ -24,6 +25,36 @@ func DiscountPercentRouter(
 	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
 	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
 	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func WarehouseGroupRouter(
+	warehouseGroupController masterwarehousecontroller.WarehouseGroupController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/warehouse-group/", warehouseGroupController.GetAll)
+	router.GET("/warehouse-group/:warehouse_group_id", warehouseGroupController.GetById)
+	router.POST("/warehouse-group/", warehouseGroupController.Save)
+	router.PATCH("/warehouse-group/:warehouse_group_id", warehouseGroupController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func WarehouseLocationRouter(
+	warehouseLocationController masterwarehousecontroller.WarehouseLocationController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/warehouse-location/", warehouseLocationController.GetAll)
+	router.GET("/warehouse-location/:warehouse_location_id", warehouseLocationController.GetById)
+	router.POST("/warehouse-location/", warehouseLocationController.Save)
+	router.PATCH("/warehouse-location/:warehouse_location_id", warehouseLocationController.ChangeStatus)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
