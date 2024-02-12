@@ -14,13 +14,13 @@ import (
 
 type IncentiveGroupServiceImpl struct {
 	IncentiveGroupRepository masterrepository.IncentiveGroupRepository
-	DB                 *gorm.DB
+	DB                       *gorm.DB
 }
 
 func StartIncentiveGroupService(IncentiveGroupRepository masterrepository.IncentiveGroupRepository, db *gorm.DB) masterservice.IncentiveGroupService {
 	return &IncentiveGroupServiceImpl{
 		IncentiveGroupRepository: IncentiveGroupRepository,
-		DB:                 db,
+		DB:                       db,
 	}
 }
 
@@ -59,10 +59,20 @@ func (s *IncentiveGroupServiceImpl) GetIncentiveGroupById(id int) masterpayloads
 func (s *IncentiveGroupServiceImpl) SaveIncentiveGroup(req masterpayloads.IncentiveGroupResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if req.IncentiveGroupId != 0 {
+		_, err := s.IncentiveGroupRepository.GetIncentiveGroupById(tx, req.IncentiveGroupId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	results, err := s.IncentiveGroupRepository.SaveIncentiveGroup(tx, req)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
 	}
+
 	return results
 }
 
@@ -82,5 +92,3 @@ func (s *IncentiveGroupServiceImpl) ChangeStatusIncentiveGroup(id int) bool {
 	}
 	return true
 }
-
-
