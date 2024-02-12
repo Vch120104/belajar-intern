@@ -20,7 +20,25 @@ func DiscountPercentRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
+	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
+	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func MarkupRateRouter(
+	markupRateController masteritemcontroller.MarkupRateController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/markup-rate/", markupRateController.GetAllMarkupRate)
+	router.GET("/markup-rate/:markup_rate_id", markupRateController.GetMarkupRateByID)
+	router.POST("/markup-rate/", markupRateController.SaveMarkupRate)
+	router.PATCH("/markup-rate/:markup_rate_id", markupRateController.ChangeStatusMarkupRate)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

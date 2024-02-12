@@ -5,16 +5,22 @@ import (
 	mastercontroller "after-sales/api/controllers/master"
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
-	"after-sales/api/helper"
 
-	masteritemrepository "after-sales/api/repositories/master/item"
+	// masteroperationcontroller "after-sales/api/controllers/master/operation"
+	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+
+	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+
+	// masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
@@ -65,8 +71,18 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+		discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
+		discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
+		discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
+
+		markupRateRepository := masteritemrepositoryimpl.StartMarkupRateRepositoryImpl()
+		markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db)
+		markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
+		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
+		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
 		ItemSubstituteRouter := route.ItemSubstituteRouter(itemSubstituteController)
 
 		swaggerRouter := route.SwaggerRouter()
@@ -75,6 +91,8 @@ func main() {
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 		mux.Handle("/item-substitute",ItemSubstituteRouter)
+		mux.Handle("/discount-percent/", DiscountPercentRouter)
+		mux.Handle("/markup-rate/", MarkupRateRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
