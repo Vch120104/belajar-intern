@@ -1,6 +1,7 @@
 package masterwarehousecontroller
 
 import (
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"strconv"
@@ -12,7 +13,7 @@ import (
 	masterwarehousegroupservice "after-sales/api/services/master/warehouse"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/julienschmidt/httprouter"
 )
 
 type WarehouseGroupControllerImpl struct {
@@ -20,6 +21,10 @@ type WarehouseGroupControllerImpl struct {
 }
 
 type WarehouseGroupController interface {
+	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 
 func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService) WarehouseGroupController {
@@ -44,14 +49,15 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group [get]
-func (r *WarehouseGroupControllerImpl) GetAll(c *gin.Context) {
+func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
 
-	page, _ := strconv.Atoi(c.Query("page"))
-	limit, _ := strconv.Atoi(c.Query("limit"))
-	sortOf := c.Query("sort_of")
-	sortBy := c.Query("sort_by")
-	warehouseGroupCode := c.Query("warehouse_group_code")
-	warehouseGroupName := c.Query("warehouse_group_name")
+	page, _ := strconv.Atoi(queryValues.Get("page"))
+	limit, _ := strconv.Atoi(queryValues.Get("limit"))
+	sortOf := queryValues.Get("sort_of")
+	sortBy := queryValues.Get("sort_by")
+	warehouseGroupCode := queryValues.Get("warehouse_group_code")
+	warehouseGroupName := queryValues.Get("warehouse_group_name")
 
 	get := r.WarehouseGroupService.GetAll(masterwarehousegrouppayloads.GetAllWarehouseGroupRequest{
 		WarehouseGroupCode: warehouseGroupCode,
@@ -60,7 +66,7 @@ func (r *WarehouseGroupControllerImpl) GetAll(c *gin.Context) {
 
 	result, totalPages, totalRows := utils.DataFramePaginate(get, page, limit, sortOf, sortBy)
 
-	payloads.HandleSuccessPagination(c, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, limit, page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, limit, page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Warehouse Group By Id
@@ -73,13 +79,13 @@ func (r *WarehouseGroupControllerImpl) GetAll(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [get]
-func (r *WarehouseGroupControllerImpl) GetById(c *gin.Context) {
+func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	warehouseGroupId, _ := strconv.Atoi(c.Param("warehouse_group_id"))
+	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
 
 	get := r.WarehouseGroupService.GetById(warehouseGroupId)
 
-	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
 }
 
@@ -93,20 +99,21 @@ func (r *WarehouseGroupControllerImpl) GetById(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group [post]
-func (r *WarehouseGroupControllerImpl) Save(c *gin.Context) {
+func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var message string
-	requestBody := masterwarehousegrouppayloads.GetWarehouseGroupResponse{}
+	var formRequest masterwarehousegrouppayloads.GetWarehouseGroupResponse
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	save := r.WarehouseGroupService.Save(requestBody)
+	save := r.WarehouseGroupService.Save(formRequest)
 
-	if requestBody.WarehouseGroupId == 0 {
+	if formRequest.WarehouseGroupId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, save, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 
 }
 
@@ -120,12 +127,12 @@ func (r *WarehouseGroupControllerImpl) Save(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [patch]
-func (r *WarehouseGroupControllerImpl) ChangeStatus(c *gin.Context) {
+func (r *WarehouseGroupControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	warehouseGroupId, _ := strconv.Atoi(c.Param("warehouse_group_id"))
+	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
 
 	change_status := r.WarehouseGroupService.ChangeStatus(warehouseGroupId)
 
-	payloads.HandleSuccess(c, change_status, "Updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
 }
