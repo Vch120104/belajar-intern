@@ -2,15 +2,19 @@ package main
 
 import (
 	"after-sales/api/config"
+
+	// masteroperationcontroller "after-sales/api/controllers/master/operation"
 	mastercontroller "after-sales/api/controllers/master"
 	"after-sales/api/helper"
 
-	// masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
+
+	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 
-	// masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
+
+	// masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
@@ -47,7 +51,6 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
-		config.InitLogger(db)
 		// basePath := "/api/aftersales/discount-percent"
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
@@ -60,20 +63,14 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
-		DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
-		DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db)
-		DeductionController := mastercontroller.NewDeductionController(DeductionService)
-
-		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController )
-		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
-		DeductionRouter := route.DeductionRouter(DeductionController)
+		// OperationGroupRouter := route.OperationGroupRouter(operationGroupController, basePath)
+		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController, basePath)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
-		// mux.Handle("/operation-group/",OperationGroupRouter)
-		mux.Handle("/forecast-master/", ForecastMasterRouter)
-		mux.Handle("/deduction-master/", DeductionRouter)
+		// mux.Handle(basePath, OperationGroupRouter)
+		mux.Handle(basePath, ForecastMasterRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

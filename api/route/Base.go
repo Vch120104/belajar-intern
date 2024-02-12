@@ -20,7 +20,25 @@ func DiscountPercentRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
+	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
+	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func MarkupRateRouter(
+	markupRateController masteritemcontroller.MarkupRateController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/markup-rate/", markupRateController.GetAllMarkupRate)
+	router.GET("/markup-rate/:markup_rate_id", markupRateController.GetMarkupRateByID)
+	router.POST("/markup-rate/", markupRateController.SaveMarkupRate)
+	router.PATCH("/markup-rate/:markup_rate_id", markupRateController.ChangeStatusMarkupRate)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -32,27 +50,11 @@ func OperationGroupRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("operation-group", operationGroupController.GetAllOperationGroup)
-	router.GET("operation-group", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("operation-groupe/:operation-group-code", operationGroupController.GetOperationGroupByCode)
-	router.POST("operation-group", operationGroupController.SaveOperationGroup)
-	router.PATCH("operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
-
-	router.PanicHandler = exceptions.ErrorHandler
-
-	return router
-}
-
-func DeductionRouter(
-	DeductionController mastercontroller.DeductionController,
-) *httprouter.Router {
-	router := httprouter.New()
-
-	router.GET("/deduction-master/get-all", DeductionController.GetAllDeductionList)
-	// router.GET("/deduction/:deduction_detail_id", DeductionController.GetByIdDeductionDetail)
-	router.GET("/deduction-master/", DeductionController.GetByIdDeductionList)
-	router.POST("/deduction-master/", DeductionController.SaveDeductionList)
-	// router.POST("/deduction-master/", DeductionController.SaveDeductionDetail)
+	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
+	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
+	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -63,7 +65,7 @@ func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/forecast-master/", forecastMasterController.GetForecastMasterById)
+	router.GET("/forecast-master", forecastMasterController.GetForecastMasterById)
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
