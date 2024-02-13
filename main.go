@@ -3,13 +3,16 @@ package main
 import (
 	"after-sales/api/config"
 	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	"after-sales/api/helper"
 
+	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
 
+	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
@@ -48,6 +51,11 @@ func main() {
 		db := config.InitDB()
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
+		config.InitLogger(db)
+
+		itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl()
+		itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db)
+		itemClassController := masteritemcontroller.NewItemClassController(itemClassService)
 
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
@@ -57,12 +65,14 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+		itemClassRouter := route.ItemClassRouter(itemClassController)
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
+		mux.Handle("/item-class/", itemClassRouter)
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 

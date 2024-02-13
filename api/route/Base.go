@@ -43,6 +43,21 @@ func OperationGroupRouter(
 	return router
 }
 
+func ItemClassRouter(
+	itemClassController masteritemcontroller.ItemClassController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/item-class/", itemClassController.GetAllItemClass)
+	router.GET("/item-class/pop-up/", itemClassController.GetAllItemClassLookup)
+	router.POST("/item-class/", itemClassController.SaveItemClass)
+	router.PATCH("/item-class/:item_class_id", itemClassController.ChangeStatusItemClass)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) *httprouter.Router {
