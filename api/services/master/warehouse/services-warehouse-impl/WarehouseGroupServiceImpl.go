@@ -1,11 +1,11 @@
 package masterwarehouseserviceimpl
 
 import (
+	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
-	"log"
 
 	"gorm.io/gorm"
 	// "after-sales/api/utils"
@@ -29,7 +29,7 @@ func (s *WarehouseGroupServiceImpl) Save(request masterwarehousepayloads.GetWare
 	save, err := s.warehouseGroupRepo.Save(tx, request)
 
 	if err != nil {
-		return false
+		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
 
 	return save
@@ -41,7 +41,7 @@ func (s *WarehouseGroupServiceImpl) GetById(warehouseGroupId int) masterwarehous
 	get, err := s.warehouseGroupRepo.GetById(tx, warehouseGroupId)
 
 	if err != nil {
-		return masterwarehousepayloads.GetWarehouseGroupResponse{}
+		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
 
 	return get
@@ -53,7 +53,7 @@ func (s *WarehouseGroupServiceImpl) GetAll(request masterwarehousepayloads.GetAl
 	get, err := s.warehouseGroupRepo.GetAll(tx, request)
 
 	if err != nil {
-		return nil
+		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
 
 	return get
@@ -62,10 +62,17 @@ func (s *WarehouseGroupServiceImpl) GetAll(request masterwarehousepayloads.GetAl
 func (s *WarehouseGroupServiceImpl) ChangeStatus(warehouseGroupId int) masterwarehousepayloads.GetWarehouseGroupResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	_, err := s.warehouseGroupRepo.GetById(tx, warehouseGroupId)
+
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+
 	change_status, err := s.warehouseGroupRepo.ChangeStatus(tx, warehouseGroupId)
 
 	if err != nil {
-		log.Panic(err.Error())
+		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
 
 	return change_status
