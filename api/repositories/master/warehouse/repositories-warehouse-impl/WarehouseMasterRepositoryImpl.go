@@ -18,15 +18,10 @@ import (
 )
 
 type WarehouseMasterImpl struct {
-	warehouseMasterRepo masterwarehouserepository.WarehouseMasterRepository
-	DB                  *gorm.DB
 }
 
-func OpenWarehouseMasterImpl(warehouseMaster masterwarehouserepository.WarehouseMasterRepository, db *gorm.DB) masterwarehouserepository.WarehouseMasterRepository {
-	return &WarehouseMasterImpl{
-		warehouseMasterRepo: warehouseMaster,
-		DB:                  db,
-	}
+func OpenWarehouseMasterImpl() masterwarehouserepository.WarehouseMasterRepository {
+	return &WarehouseMasterImpl{}
 }
 
 func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, error) {

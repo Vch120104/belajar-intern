@@ -85,12 +85,17 @@ func main() {
 		warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db)
 		warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
 
+		warehouseMasterRepository := masterwarehouserepositoryimpl.OpenWarehouseMasterImpl()
+		warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db)
+		warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
 		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
 		WarehouseGroup := route.WarehouseGroupRouter(warehouseGroupController)
 		WarehouseLocation := route.WarehouseLocationRouter(warehouseLocationController)
+		WarehouseMaster := route.WarehouseMasterRouter(warehouseMasterController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
@@ -101,7 +106,7 @@ func main() {
 		mux.Handle("/markup-rate/", MarkupRateRouter)
 		mux.Handle("/warehouse-group/", WarehouseGroup)
 		mux.Handle("/warehouse-location/", WarehouseLocation)
-
+		mux.Handle("/warehouse-master/", WarehouseMaster)
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
 		server := http.Server{

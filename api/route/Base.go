@@ -36,23 +36,20 @@ func WarehouseMasterRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	// GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	// GetAllIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	// GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	// GetByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	// GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	// Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	// ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-
-	router.GET("/warehouse-group/", warehouseGroupController.GetAll)
-	router.GET("/warehouse-group/:warehouse_group_id", warehouseGroupController.GetById)
-	router.POST("/warehouse-group/", warehouseGroupController.Save)
-	router.PATCH("/warehouse-group/:warehouse_group_id", warehouseGroupController.ChangeStatus)
+	router.GET("/warehouse-master/", warehouseMasterController.GetAll)
+	// Change route to differentiate clearly between ID and code-based lookups
+	router.GET("/warehouse-master/by-id/:warehouse_id", warehouseMasterController.GetById)
+	router.GET("/warehouse-master/code/:warehouse_code", warehouseMasterController.GetByCode)
+	router.GET("/warehouse-master/multi-id/:warehouse_ids", warehouseMasterController.GetWarehouseWithMultiId)
+	router.GET("/warehouse-master/drop-down", warehouseMasterController.GetAllIsActive)
+	router.POST("/warehouse-master/", warehouseMasterController.Save)
+	router.PATCH("/warehouse-master/id/:warehouse_id", warehouseMasterController.ChangeStatus) // Adjusted for consistency
 
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
+
 
 
 func WarehouseGroupRouter(

@@ -86,7 +86,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master-drop-down [get]
+// @Router /aftersales-service/api/aftersales/warehouse-master/drop-down [get]
 func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	get := r.WarehouseMasterService.GetAllIsActive()
@@ -103,7 +103,7 @@ func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWrite
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/{warehouse_id} [get]
+// @Router /aftersales-service/api/aftersales/warehouse-master/by-id/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	warehouseId, _ := strconv.Atoi(params.ByName("warehouse_id"))
@@ -122,7 +122,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Param warehouse_code path string true "warehouse_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master-by-code/{warehouse_code} [get]
+// @Router /aftersales-service/api/aftersales/warehouse-master/by-code/{warehouse_code} [get]
 func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	code := params.ByName("warehouse_code")
@@ -141,7 +141,7 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 // @Param warehouse_ids path string true "warehouse_ids"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master-multi-id/{warehouse_ids} [get]
+// @Router /aftersales-service/api/aftersales/warehouse-master/multi-id/{warehouse_ids} [get]
 func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	warehouse_ids := params.ByName("warehouse_ids")
