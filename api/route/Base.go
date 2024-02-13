@@ -62,7 +62,11 @@ func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/forecast-master", forecastMasterController.GetForecastMasterById)
+	router.GET("/forecast-master/:forecast_master_id", forecastMasterController.GetForecastMasterById)
+	router.POST("/forecast-master/", forecastMasterController.SaveForecastMaster)
+	router.PATCH("/forecast-master/:forecast_master_id", forecastMasterController.ChangeStatusForecastMaster)
+	router.GET("/forecast-master/", forecastMasterController.GetAllForecastMaster)
+
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
@@ -161,24 +165,25 @@ func swaggerHandler() http.HandlerFunc {
 // 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 // 	}
 
-// 	api := r.Group("aftersales-service/api/aftersales")
-// 	//master
-// 	mastercontroller.StartDiscountRoutes(db, api, discountService)
-// 	mastercontroller.StartIncentiveGroupRoutes(db, api, incentiveGroupService)
-// 	//operation
-// 	masteroperationcontroller.StartOperationGroupRoutes(db, api, operationGroupService)
-// 	masteroperationcontroller.StartOperationSectionRoutes(db, api, operationSectionService)
-// 	masteroperationcontroller.StartOperationKeyRoutes(db, api, operationKeyService)
-// 	masteroperationcontroller.StartOperationCodeRoutes(db, api, operationCodeService)
-// 	masteroperationcontroller.StartOperationEntriesRoutes(db, api, operationEntriesService)
-// 	masteroperationcontroller.StartOperationModelMappingRoutes(db, api, operationModelMappingService)
-// 	masteritemcontroller.StartUnitOfMeasurementRoutes(db, api, UnitOfMeasurementService)
-// 	masteritemcontroller.StartItemRoutes(db, api, itemService)
-// 	masteritemcontroller.StartItemLevelRoutes(db, api, itemLevelService)
-// 	masteritemcontroller.StartItemClassRoutes(db, api, itemClassService)
-// 	masteritemcontroller.StartPriceListRoutes(db, api, priceListService)
-// 	masteritemcontroller.StartMarkupMasterRoutes(db, api, markupMasterService)
-// 	masteritemcontroller.StartDiscountPercentRoutes(db, api, discountPercentService)
+// api := r.Group("/api/aftersales")
+// //master
+// mastercontroller.StartDiscountRoutes(db, api, discountService)
+// mastercontroller.StartIncentiveGroupRoutes(db, api, incentiveGroupService)
+// //operation
+// masteroperationcontroller.StartOperationGroupRoutes(db, api, operationGroupService)
+// masteroperationcontroller.StartOperationSectionRoutes(db, api, operationSectionService)
+// masteroperationcontroller.StartOperationKeyRoutes(db, api, operationKeyService)
+// masteroperationcontroller.StartOperationCodeRoutes(db, api, operationCodeService)
+// masteroperationcontroller.StartOperationEntriesRoutes(db, api, operationEntriesService)
+// masteroperationcontroller.StartOperationModelMappingRoutes(db, api, operationModelMappingService)
+// masteritemcontroller.StartUnitOfMeasurementRoutes(db, api, UnitOfMeasurementService)
+// masteritemcontroller.StartItemRoutes(db, api, itemService)
+// masteritemcontroller.StartItemLevelRoutes(db, api, itemLevelService)
+// masteritemcontroller.StartItemClassRoutes(db, api, itemClassService)
+// masteritemcontroller.StartPriceListRoutes(db, api, priceListService)
+// masteritemcontroller.StartMarkupMasterRoutes(db, api, markupMasterService)
+// masteritemcontroller.StartMarkupRateRoutes(db, api, markupRateService)
+// masteritemcontroller.StartDiscountPercentRoutes(db, api, discountPercentService)
 
 // 	masterwarehousecontroller.OpenWarehouseGroupRoutes(db, api, warehouseGroupService)
 // 	masterwarehousecontroller.OpenWarehouseMasterRoutes(db, api, warehouseMasterService)
