@@ -146,7 +146,7 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 // @param reqBody body masterpayloads.DeductionDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/deduction-detail [post]
+// @Router /aftersales-service/api/aftersales/deduction/detail [post]
 func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	var formRequest masterpayloads.DeductionDetailResponse
 	helper.ReadFromRequestBody(request, &formRequest)
