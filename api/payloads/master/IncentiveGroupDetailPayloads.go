@@ -10,7 +10,7 @@ type IncentiveGroupDetailResponse struct {
 }
 
 type IncentiveGroupDetailRequest struct {
-	IsActive               bool    ` json:"is_active"`
+	IsActive               bool    `json:"is_active"`
 	IncentiveGroupDetailId int     `json:"incentive_group_detail_id"`
 	IncentiveGroupId       int     `json:"incentive_group_id"`
 	IncentiveLevel         float64 `json:"incentive_level"`

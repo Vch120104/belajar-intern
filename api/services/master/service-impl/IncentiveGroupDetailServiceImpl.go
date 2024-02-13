@@ -1,25 +1,25 @@
 package masterserviceimpl
 
 import (
-	masterpayloads "after-sales/api/payloads/master"
-	masterrepository "after-sales/api/repositories/master"
-	masterservice "after-sales/api/services/master"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
+	masterrepository "after-sales/api/repositories/master"
+	masterservice "after-sales/api/services/master"
 
 	"gorm.io/gorm"
 )
 
 type IncentiveGroupDetailImpl struct {
 	IncentiveGroupDetailRepository masterrepository.IncentiveGroupDetailRepository
-	DB                 *gorm.DB
+	DB                             *gorm.DB
 }
 
 func StartIncentiveGroupDetailService(IncentiveGroupDetailRepository masterrepository.IncentiveGroupDetailRepository, db *gorm.DB) masterservice.IncentiveGroupDetailService {
 	return &IncentiveGroupDetailImpl{
 		IncentiveGroupDetailRepository: IncentiveGroupDetailRepository,
-		DB:                 db,
+		DB:                             db,
 	}
 }
 
@@ -46,6 +46,13 @@ func (s *IncentiveGroupDetailImpl) GetIncentiveGroupDetailById(id int) masterpay
 func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.IncentiveGroupDetailRequest) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	_, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, req.IncentiveGroupDetailId)
+
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+
 	results, err := s.IncentiveGroupDetailRepository.SaveIncentiveGroupDetail(tx, req)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
