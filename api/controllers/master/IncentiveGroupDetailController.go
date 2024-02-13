@@ -97,7 +97,7 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 // @Param incentive_group_detail_id path string true "incentive_group_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/incentive-group-detail-by-id/{incentive_group_detail_id} [get]
+// @Router /aftersales-service/api/aftersales/incentive-group-detail/by-detail-id/{incentive_group_detail_id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	IncentiveGrouDetailId, _ := strconv.Atoi(params.ByName("incentive_group_detail_id"))
 
