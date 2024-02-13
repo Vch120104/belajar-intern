@@ -26,7 +26,7 @@ func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.Warehous
 func (s *WarehouseGroupServiceImpl) Save(request masterwarehousepayloads.GetWarehouseGroupResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	
+
 	if request.WarehouseGroupId != 0 {
 		_, err := s.warehouseGroupRepo.GetById(tx, request.WarehouseGroupId)
 
@@ -38,7 +38,7 @@ func (s *WarehouseGroupServiceImpl) Save(request masterwarehousepayloads.GetWare
 	save, err := s.warehouseGroupRepo.Save(tx, request)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return save
@@ -50,7 +50,7 @@ func (s *WarehouseGroupServiceImpl) GetById(warehouseGroupId int) masterwarehous
 	get, err := s.warehouseGroupRepo.GetById(tx, warehouseGroupId)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -62,7 +62,7 @@ func (s *WarehouseGroupServiceImpl) GetAll(request masterwarehousepayloads.GetAl
 	get, err := s.warehouseGroupRepo.GetAll(tx, request)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -81,7 +81,7 @@ func (s *WarehouseGroupServiceImpl) ChangeStatus(warehouseGroupId int) masterwar
 	change_status, err := s.warehouseGroupRepo.ChangeStatus(tx, warehouseGroupId)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return change_status
