@@ -3,14 +3,12 @@ package main
 import (
 	"after-sales/api/config"
 	masteritemcontroller "after-sales/api/controllers/master/item"
-	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
 	// masteroperationcontroller "after-sales/api/controllers/master/operation"
 	mastercontroller "after-sales/api/controllers/master"
 	"after-sales/api/helper"
-	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
@@ -19,7 +17,6 @@ import (
 
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	"after-sales/api/route"
-	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
