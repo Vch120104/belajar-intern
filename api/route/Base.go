@@ -31,6 +31,30 @@ func DiscountPercentRouter(
 	return router
 }
 
+func WarehouseMasterRouter(
+	warehouseMasterController masterwarehousecontroller.WarehouseMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	// GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	// GetAllIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	// GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	// GetByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	// GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	// Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	// ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+
+	router.GET("/warehouse-group/", warehouseGroupController.GetAll)
+	router.GET("/warehouse-group/:warehouse_group_id", warehouseGroupController.GetById)
+	router.POST("/warehouse-group/", warehouseGroupController.Save)
+	router.PATCH("/warehouse-group/:warehouse_group_id", warehouseGroupController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+
 func WarehouseGroupRouter(
 	warehouseGroupController masterwarehousecontroller.WarehouseGroupController,
 ) *httprouter.Router {

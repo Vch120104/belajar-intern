@@ -1,6 +1,7 @@
 package masterwarehouseserviceimpl
 
 import (
+	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
@@ -16,85 +17,96 @@ import (
 
 type WarehouseMasterServiceImpl struct {
 	warehouseMasterRepo masterwarehouserepository.WarehouseMasterRepository
+	DB                  *gorm.DB
 }
 
-func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.WarehouseMasterRepository) masterwarehouseservice.WarehouseMasterService {
+func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.WarehouseMasterRepository, db *gorm.DB) masterwarehouseservice.WarehouseMasterService {
 	return &WarehouseMasterServiceImpl{
 		warehouseMasterRepo: warehouseMaster,
+		DB:                  db,
 	}
 }
 
-func (s *WarehouseMasterServiceImpl) WithTrx(trxHandle *gorm.DB) masterwarehouseservice.WarehouseMasterService {
-	s.warehouseMasterRepo = s.warehouseMasterRepo.WithTrx(trxHandle)
-	return s
-}
-
-func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, error) {
-	save, err := s.warehouseMasterRepo.Save(request)
+func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	save, err := s.warehouseMasterRepo.Save(tx, request)
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
-	return save, nil
+	return save
 }
 
-func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, error) {
-	get, err := s.warehouseMasterRepo.GetById(warehouseId)
+func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) masterwarehousepayloads.GetWarehouseMasterResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
 
 	if err != nil {
-		return masterwarehousepayloads.GetWarehouseMasterResponse{}, err
+		return masterwarehousepayloads.GetWarehouseMasterResponse{}
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, error) {
-	get, err := s.warehouseMasterRepo.GetAllIsActive()
+func (s *WarehouseMasterServiceImpl) GetAllIsActive() []masterwarehousepayloads.IsActiveWarehouseMasterResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.GetAllIsActive(tx)
 
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, error) {
-	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(MultiIds)
+func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) []masterwarehousepayloads.GetAllWarehouseMasterResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(tx, MultiIds)
 
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, error) {
-	get, err := s.warehouseMasterRepo.GetAll(request, pages)
+func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.GetAll(tx, request, pages)
 
 	if err != nil {
-		return pagination.Pagination{}, err
+		return pagination.Pagination{}
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) ([]map[string]interface{}, error) {
-	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(Code)
+func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) []map[string]interface{} {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
 
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	return get, nil
+	return get
 }
 
-func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, error) {
-	change_status, err := s.warehouseMasterRepo.ChangeStatus(warehouseId)
+func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) masterwarehousepayloads.GetWarehouseMasterResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	change_status, err := s.warehouseMasterRepo.ChangeStatus(tx, warehouseId)
 
 	if err != nil {
 		log.Panic(err.Error())
 	}
 
-	return change_status, nil
+	return change_status
 }
