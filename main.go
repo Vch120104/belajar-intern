@@ -16,7 +16,6 @@ import (
 	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
-	"after-sales/api/route"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
@@ -27,6 +26,7 @@ import (
 	migration "after-sales/generate/sql"
 	"net/http"
 	"os"
+	route "after-sales/api/route"
 )
 
 // @title After Sales API

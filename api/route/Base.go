@@ -2,6 +2,7 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
@@ -15,10 +16,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// func DiscountPercentRouter(
-// 	discountPercentController masteritemcontroller.DiscountPercentController,
-// ) *httprouter.Router {
-// 	router := httprouter.New()
+func DiscountPercentRouter(
+	discountPercentController masteritemcontroller.DiscountPercentController,
+) *httprouter.Router {
+	router := httprouter.New()
 
 	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
 	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
@@ -88,10 +89,10 @@ func MarkupRateRouter(
 	router.POST("/markup-rate/", markupRateController.SaveMarkupRate)
 	router.PATCH("/markup-rate/:markup_rate_id", markupRateController.ChangeStatusMarkupRate)
 
-// 	router.PanicHandler = exceptions.ErrorHandler
+	router.PanicHandler = exceptions.ErrorHandler
 
-// 	return router
-// }
+	return router
+}
 
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
