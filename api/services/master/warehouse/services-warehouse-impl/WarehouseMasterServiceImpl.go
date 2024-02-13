@@ -42,7 +42,7 @@ func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWar
 	save, err := s.warehouseMasterRepo.Save(tx, request)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return save
@@ -54,7 +54,7 @@ func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) masterwarehousepay
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -66,7 +66,7 @@ func (s *WarehouseMasterServiceImpl) GetAllIsActive() []masterwarehousepayloads.
 	get, err := s.warehouseMasterRepo.GetAllIsActive(tx)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -78,7 +78,7 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) 
 	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(tx, MultiIds)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -90,7 +90,7 @@ func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetA
 	get, err := s.warehouseMasterRepo.GetAll(tx, request, pages)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -102,7 +102,7 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) []map
 	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -121,7 +121,7 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) masterwarehou
 	change_status, err := s.warehouseMasterRepo.ChangeStatus(tx, warehouseId)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return change_status

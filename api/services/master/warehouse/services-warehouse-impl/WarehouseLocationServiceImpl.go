@@ -41,7 +41,7 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetW
 	save, err := s.warehouseLocationRepo.Save(tx, request)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return save
@@ -53,7 +53,7 @@ func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) masterwa
 	get, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -65,7 +65,7 @@ func (s *WarehouseLocationServiceImpl) GetAll(request masterwarehousepayloads.Ge
 	get, err := s.warehouseLocationRepo.GetAll(tx, request, pages)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return get
@@ -84,7 +84,7 @@ func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) mas
 	change_status, err := s.warehouseLocationRepo.ChangeStatus(tx, warehouseLocationId)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	return change_status

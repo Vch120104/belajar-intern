@@ -61,7 +61,7 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 		Where(masterwarehousepayloads.GetWarehouseLocationResponse{
 			WarehouseLocationId: warehouseLocationId,
 		}).
-		Scan(&warehouseLocationResponse).
+		First(&warehouseLocationResponse).
 		// Find(&warehouseMasterResponse).
 		Rows()
 
