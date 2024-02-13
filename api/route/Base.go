@@ -37,20 +37,17 @@ func WarehouseMasterRouter(
 	router := httprouter.New()
 
 	router.GET("/warehouse-master/", warehouseMasterController.GetAll)
-	// Change route to differentiate clearly between ID and code-based lookups
 	router.GET("/warehouse-master/by-id/:warehouse_id", warehouseMasterController.GetById)
-	router.GET("/warehouse-master/code/:warehouse_code", warehouseMasterController.GetByCode)
+	router.GET("/warehouse-master/by-code/:warehouse_code", warehouseMasterController.GetByCode)
 	router.GET("/warehouse-master/multi-id/:warehouse_ids", warehouseMasterController.GetWarehouseWithMultiId)
 	router.GET("/warehouse-master/drop-down", warehouseMasterController.GetAllIsActive)
 	router.POST("/warehouse-master/", warehouseMasterController.Save)
-	router.PATCH("/warehouse-master/id/:warehouse_id", warehouseMasterController.ChangeStatus) // Adjusted for consistency
+	router.PATCH("/warehouse-master/:warehouse_id", warehouseMasterController.ChangeStatus)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
-
-
 
 func WarehouseGroupRouter(
 	warehouseGroupController masterwarehousecontroller.WarehouseGroupController,

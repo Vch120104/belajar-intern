@@ -33,7 +33,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 	}
 }
 
-// @Summary Get All Warehouse Groupfil
+// @Summary Get All Warehouse Group
 // @Description Get All Warehouse Group
 // @Accept json
 // @Produce json
@@ -42,7 +42,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
-// @Param is_active query bool false "Is Active"
+// @Param is_active query bool false "is_active"
 // @Param warehouse_group_code query string false "Warehouse Group Code"
 // @Param warehouse_group_name query string false "Warehouse Group Name"
 // @Param sort_by query string false "Sort Of: {column}"
@@ -56,10 +56,12 @@ func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, reques
 	limit, _ := strconv.Atoi(queryValues.Get("limit"))
 	sortOf := queryValues.Get("sort_of")
 	sortBy := queryValues.Get("sort_by")
+	isActive := queryValues.Get("is_active")
 	warehouseGroupCode := queryValues.Get("warehouse_group_code")
 	warehouseGroupName := queryValues.Get("warehouse_group_name")
 
 	get := r.WarehouseGroupService.GetAll(masterwarehousegrouppayloads.GetAllWarehouseGroupRequest{
+		IsActive:           isActive,
 		WarehouseGroupCode: warehouseGroupCode,
 		WarehouseGroupName: warehouseGroupName,
 	})
