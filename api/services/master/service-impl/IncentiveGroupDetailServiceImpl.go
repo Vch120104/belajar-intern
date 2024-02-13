@@ -47,10 +47,12 @@ func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.I
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	_, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, req.IncentiveGroupDetailId)
+	if req.IncentiveGroupDetailId != 0 {
+		_, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, req.IncentiveGroupDetailId)
 
-	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
 	}
 
 	results, err := s.IncentiveGroupDetailRepository.SaveIncentiveGroupDetail(tx, req)
