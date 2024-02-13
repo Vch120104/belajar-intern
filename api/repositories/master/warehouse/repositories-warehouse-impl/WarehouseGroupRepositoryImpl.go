@@ -52,7 +52,7 @@ func (r *WarehouseGroupImpl) GetById(tx *gorm.DB, warehouseGroupId int) (masterw
 			WarehouseGroupId: warehouseGroupId,
 		}).
 		Find(&warehouseGroupResponse).
-		Scan(&warehouseGroupResponse).
+		First(&warehouseGroupResponse).
 		Rows()
 
 	if err != nil {
