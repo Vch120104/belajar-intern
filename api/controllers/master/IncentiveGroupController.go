@@ -9,6 +9,7 @@ import (
 	"after-sales/api/utils"
 	"net/http"
 	"strconv"
+
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -49,9 +50,9 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"incentive_group_code":        queryValues.Get("incentive_group_code"),
+		"incentive_group_code": queryValues.Get("incentive_group_code"),
 		"incentive_group_name": queryValues.Get("incentive_group_name"),
-		"effective_date":                   queryValues.Get("effective_date"),
+		"effective_date":       queryValues.Get("effective_date"),
 	}
 
 	pagination := pagination.Pagination{
@@ -91,15 +92,14 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 // @Param incentive_group_id path string true "incentive_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/incentive-group-by-id/{incentive_group_id} [get]
+// @Router /aftersales-service/api/aftersales/incentive-group/by-id/{incentive_group_id} [get]
 func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	IncentiveGroupId,_ := strconv.Atoi(params.ByName("incentive_group_id"))
+	IncentiveGroupId, _ := strconv.Atoi(params.ByName("incentive_group_id"))
 
 	result := r.IncentiveGroupService.GetIncentiveGroupById(IncentiveGroupId)
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
-
 
 // @Summary Save Incentive Group
 // @Description REST API Incentive Group
