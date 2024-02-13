@@ -103,19 +103,18 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 // }
 
-// @Summary Get Shift Schedule By Code
+// @Summary Get Shift Schedule By Id
 // @Description REST API Shift Schedule
 // @Accept json
 // @Produce json
 // @Tags Master : Shift Schedule
-// @Param shift_schedule_code path string true "shift_schedule_code"
+// @Param shift_schedule_id path string true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/shift-schedule/by-code/{shift_schedule_code} [get]
+// @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [get]
 func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	ShiftScheduleStr := params.ByName("shift_schedule_id")
-	ShiftScheduleId, _ := strconv.Atoi(ShiftScheduleStr)
+	ShiftScheduleId, _ := strconv.Atoi(params.ByName("shift_schedule_id"))
 
 	result := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
 
