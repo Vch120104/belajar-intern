@@ -70,6 +70,15 @@ func main() {
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
+		IncentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupRepositoryImpl()
+		IncentiveGroupService := masterserviceimpl.StartIncentiveGroupService(IncentiveGroupRepository, db)
+		IncentiveGroupController := mastercontroller.NewIncentiveGroupController(IncentiveGroupService)
+
+		IncentiveGroupDetailRepository := masterrepositoryimpl.StartIncentiveGroupDetailRepositoryImpl()
+		IncentiveGroupDetailService := masterserviceimpl.StartIncentiveGroupDetailService(IncentiveGroupDetailRepository, db)
+		IncentiveGroupDetailController := mastercontroller.NewIncentiveGroupDetailController(IncentiveGroupDetailService)
+
+
 		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
@@ -96,6 +105,8 @@ func main() {
 
 		itemClassRouter := route.ItemClassRouter(itemClassController)
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		IncentiveGroupRouter := route.IncentiveGroupRouter(IncentiveGroupController)
+		IncentiveGroupDetailRouter := route.IncentiveGroupDetailRouter(IncentiveGroupDetailController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
 		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
@@ -108,6 +119,11 @@ func main() {
 
 		mux.Handle("/item-class/", itemClassRouter)
 		mux.Handle("/operation-group/", OperationGroupRouter)
+
+		mux.Handle("/incentive-group/", IncentiveGroupRouter)
+		mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
+
+
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
 		mux.Handle("/markup-rate/", MarkupRateRouter)

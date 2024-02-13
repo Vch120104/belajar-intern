@@ -125,11 +125,39 @@ func ItemClassRouter(
 	return router
 }
 
+func IncentiveGroupRouter(
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-group/", incentiveGroupController.GetAllIncentiveGroup)
+	router.GET("/incentive-group/drop-down/", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.GET("/incentive-group/by-id/:incentive_group_id", incentiveGroupController.GetIncentiveGroupById)
+	router.POST("/incentive-group/", incentiveGroupController.SaveIncentiveGroup)
+	router.PATCH("/incentive-group/:incentive_group_id", incentiveGroupController.ChangeStatusIncentiveGroup)
+
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func IncentiveGroupDetailRouter(
+	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-group-detail/by-header-id/", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
+	router.GET("/incentive-group-detail/by-detail-id/:incentive_group_detail_id", incentiveGroupDetailController.GetIncentiveGroupDetailById)
+	router.POST("/incentive-group-detail/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
 func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/forecast-master/:forecast_master_id", forecastMasterController.GetForecastMasterById)
+	router.GET("/forecast-master/:forecast_master_id/", forecastMasterController.GetForecastMasterById)
 	router.POST("/forecast-master/", forecastMasterController.SaveForecastMaster)
 	router.PATCH("/forecast-master/:forecast_master_id", forecastMasterController.ChangeStatusForecastMaster)
 	router.GET("/forecast-master/", forecastMasterController.GetAllForecastMaster)
