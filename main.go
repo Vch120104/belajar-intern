@@ -49,6 +49,10 @@ func main() {
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
+		deductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
+		deductionService := masterserviceimpl.StartDeductionService(deductionRepository, db)
+		deductionController := mastercontroller.NewDeductionController(deductionService)
+
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
 		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
@@ -59,12 +63,14 @@ func main() {
 
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
+		DeductionRouter := route.DeductionRouter(deductionController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
+		mux.Handle("/deduction/", DeductionRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)

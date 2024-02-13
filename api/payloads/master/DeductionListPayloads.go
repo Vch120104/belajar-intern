@@ -10,3 +10,8 @@ type DeductionListResponse struct {
 	DeductionName   string    `json:"deduction_name"`
 	EffectiveDate   time.Time `json:"effective_date"`
 }
+
+type DeductionListPostResponse struct {
+	DeductionName   string    `json:"deduction_name"`
+	EffectiveDate   time.Time `json:"effective_date"`
+}

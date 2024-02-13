@@ -30,6 +30,23 @@ func DiscountPercentRouter(
 	return router
 }
 
+func DeductionRouter(
+	deductionController mastercontroller.DeductionController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/deduction/", deductionController.GetAllDeductionList)
+	router.GET("/deduction/header/by-id/:deduction_list_id", deductionController.GetByIdDeductionList)
+	router.GET("/deduction/detail/by-id/:deduction_detail_id", deductionController.GetByIdDeductionDetail)
+	router.POST("/deduction/", deductionController.SaveDeductionList)
+	router.POST("/deduction/detail/", deductionController.SaveDeductionDetail)
+	router.PATCH("/deduction/:deduction_list_id", deductionController.ChangeStatusDeduction)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func MarkupRateRouter(
 	markupRateController masteritemcontroller.MarkupRateController,
 ) *httprouter.Router {

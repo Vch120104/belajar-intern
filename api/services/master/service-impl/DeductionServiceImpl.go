@@ -110,3 +110,20 @@ func (s *DeductionServiceImpl) GetByIdDeductionList(Id int, page int, limit int)
 	}
 
 }
+
+func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	_, err := s.deductionrepo.GetDeductionById(tx, Id)
+
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+
+	results, err := s.deductionrepo.ChangeStatusDeduction(tx, Id)
+	if err != nil {
+		return results
+	}
+	return true
+}

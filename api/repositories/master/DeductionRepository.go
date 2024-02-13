@@ -15,4 +15,5 @@ type DeductionRepository interface {
 	GetByIdDeductionDetail(*gorm.DB, int) (masterpayloads.DeductionDetailResponse, error)
 	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (masterpayloads.DeductionListResponse, error)
 	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse) (masterpayloads.DeductionDetailResponse, error)
+	ChangeStatusDeduction(tx *gorm.DB, Id int) (bool, error)
 }

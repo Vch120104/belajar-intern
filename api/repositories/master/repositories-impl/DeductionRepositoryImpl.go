@@ -148,3 +148,29 @@ func (r *DeductionRepositoryImpl) SaveDeductionDetail(tx *gorm.DB, request maste
 
 	return request, nil
 }
+
+func (*DeductionRepositoryImpl) ChangeStatusDeduction(tx *gorm.DB, Id int) (bool, error) {
+	var entities masterentities.DeductionList
+
+	result := tx.Model(&entities).
+		Where("deduction_list_id = ?", Id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = tx.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
+}

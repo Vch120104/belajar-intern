@@ -13,4 +13,5 @@ type DeductionService interface {
 	GetByIdDeductionList(id int, page int, limit int) payloads.ResponsePaginationHeader
 	PostDeductionDetail(req masterpayloads.DeductionDetailResponse) masterpayloads.DeductionDetailResponse
 	PostDeductionList(req masterpayloads.DeductionListResponse) masterpayloads.DeductionListResponse
+	ChangeStatusDeduction(Id int) bool
 }
