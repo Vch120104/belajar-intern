@@ -26,6 +26,15 @@ func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.Warehous
 func (s *WarehouseGroupServiceImpl) Save(request masterwarehousepayloads.GetWarehouseGroupResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+	
+	if request.WarehouseGroupId != 0 {
+		_, err := s.warehouseGroupRepo.GetById(tx, request.WarehouseGroupId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	save, err := s.warehouseGroupRepo.Save(tx, request)
 
 	if err != nil {

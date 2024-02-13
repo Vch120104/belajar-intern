@@ -30,6 +30,15 @@ func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.Wareho
 func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if request.WarehouseId != 0 {
+		_, err := s.warehouseMasterRepo.GetById(tx, request.WarehouseId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	save, err := s.warehouseMasterRepo.Save(tx, request)
 
 	if err != nil {

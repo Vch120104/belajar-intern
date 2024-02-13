@@ -29,6 +29,15 @@ func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.Wa
 func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if request.WarehouseLocationId != 0 {
+		_, err := s.warehouseLocationRepo.GetById(tx, request.WarehouseLocationId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	save, err := s.warehouseLocationRepo.Save(tx, request)
 
 	if err != nil {
