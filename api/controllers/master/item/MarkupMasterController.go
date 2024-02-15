@@ -52,8 +52,8 @@ func StartMarkupMasterRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master [get]
-func (r *MarkupMasterController) GetMarkupMasterList(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *MarkupMasterController) GetMarkupMasterList() {
+
 	queryParams := map[string]string{
 		"markup_master_code":        c.Query("markup_master_code"),
 		"markup_master_description": c.Query("markup_master_description"),
@@ -69,17 +69,10 @@ func (r *MarkupMasterController) GetMarkupMasterList(c *gin.Context) {
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.markupMasterService.WithTrx(trxHandle).GetMarkupMasterList(filterCondition, pagination)
+	result := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
 
-	if result.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
+
 
 	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -93,14 +86,11 @@ func (r *MarkupMasterController) GetMarkupMasterList(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master-by-code/{markup_master_code} [get]
-func (r *MarkupMasterController) GetMarkupMasterByCode(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *MarkupMasterController) GetMarkupMasterByCode() {
+
 	markupMasterCode := c.Param("markup_master_code")
-	result, err := r.markupMasterService.WithTrx(trxHandle).GetMarkupMasterByCode(markupMasterCode)
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	result := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
+
 	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -113,35 +103,18 @@ func (r *MarkupMasterController) GetMarkupMasterByCode(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master [post]
-func (r *MarkupMasterController) SaveMarkupMaster(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *MarkupMasterController) SaveMarkupMaster() {
+
 	var request masteritempayloads.MarkupMasterResponse
 	var message = ""
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
+		exceptions.EntityException(c.Error())
 		return
 	}
 
-	if int(request.MarkupMasterId) != 0 {
-		result, err := r.markupMasterService.WithTrx(trxHandle).GetMarkupMasterById(int(request.MarkupMasterId))
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.MarkupMasterId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.markupMasterService.WithTrx(trxHandle).SaveMarkupMaster(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	create := r.markupMasterService.SaveMarkupMaster(request)
 
 	if request.MarkupMasterId == 0 {
 		message = "Create Data Successfully!"
@@ -161,25 +134,12 @@ func (r *MarkupMasterController) SaveMarkupMaster(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master/{markup_master_id} [patch]
-func (r *MarkupMasterController) ChangeStatusMarkupMaster(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	markupMasterId, err := strconv.Atoi(c.Param("markup_master_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.markupMasterService.WithTrx(trxHandle).GetMarkupMasterById(int(markupMasterId))
-	if err != nil || result.MarkupMasterId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *MarkupMasterController) ChangeStatusMarkupMaster() {
 
-	response, err := r.markupMasterService.WithTrx(trxHandle).ChangeStatusMasterMarkupMaster(int(markupMasterId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	markupMasterId, _ := strconv.Atoi(c.Param("markup_master_id"))
+
+
+	response := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
 
 	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
 }

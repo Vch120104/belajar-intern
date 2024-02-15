@@ -48,8 +48,8 @@ func StartUnitOfMeasurementRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [get]
-func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement() {
+
 	queryParams := map[string]string{
 		"mtr_uom.is_active":          c.Query("is_active"),
 		"mtr_uom.uom_code":           c.Query("uom_code"),
@@ -66,12 +66,7 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement(c *gin.Context) {
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetAllUnitOfMeasurement(filterCondition, pagination)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	result := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
 
 	if result.Rows == nil {
 		exceptions.NotFoundException(c, "Nothing matching request")
@@ -89,13 +84,10 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-drop-down [get]
-func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetAllUnitOfMeasurementIsActive()
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive() {
+
+	result := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
+
 	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -108,14 +100,11 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive(c *gin.Con
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-by-code/{uom_code} [get]
-func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode() {
+
 	operationGroupCode := c.Param("uom_code")
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetUnitOfMeasurementByCode(operationGroupCode)
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	result := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(operationGroupCode)
+
 	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -128,8 +117,8 @@ func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode(c *gin.Context)
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [post]
-func (r *UnitOfMeasurementController) SaveUnitOfMeasurement(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *UnitOfMeasurementController) SaveUnitOfMeasurement() {
+
 	var request masteritempayloads.UomResponse
 	var message = ""
 
@@ -138,25 +127,7 @@ func (r *UnitOfMeasurementController) SaveUnitOfMeasurement(c *gin.Context) {
 		return
 	}
 
-	if int(request.UomId) != 0 {
-		result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetUnitOfMeasurementById(int(request.UomId))
-
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.UomId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.unitofmeasurementservice.WithTrx(trxHandle).SaveUnitOfMeasurement(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	create := r.unitofmeasurementservice.SaveUnitOfMeasurement(request)
 
 	if request.UomId == 0 {
 		message = "Create Data Successfully!"
@@ -176,25 +147,11 @@ func (r *UnitOfMeasurementController) SaveUnitOfMeasurement(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement/{uom_id} [patch]
-func (r *UnitOfMeasurementController) ChangeStatusUnitOfMeasurement(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	uomId, err := strconv.Atoi(c.Param("uom_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetUnitOfMeasurementById(int(uomId))
-	if err != nil || result.UomId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *UnitOfMeasurementController) ChangeStatusUnitOfMeasurement() {
 
-	response, err := r.unitofmeasurementservice.WithTrx(trxHandle).ChangeStatusUnitOfMeasurement(int(uomId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	uomId, _ := strconv.Atoi(c.Param("uom_id"))
+
+	response := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
 
 	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
 }

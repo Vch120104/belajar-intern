@@ -45,8 +45,8 @@ func StartPriceListRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/get-all-lookup [get]
-func (r *PriceListController) GetPriceListLookup(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *PriceListController) GetPriceListLookup() {
+
 	PriceListCode := c.Query("price_list_code")
 	companyId, _ := strconv.Atoi(c.Query("company_id"))
 	brandId, _ := strconv.Atoi(c.Query("brand_id"))
@@ -65,12 +65,9 @@ func (r *PriceListController) GetPriceListLookup(c *gin.Context) {
 		ItemClassId:   int32(itemClassId),
 	}
 
-	result, err := r.pricelistservice.WithTrx(trxHandle).GetPriceList(priceListRequest)
+	result := r.pricelistservice.GetPriceList(priceListRequest)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+
 
 	payloads.HandleSuccess(c, result, "success", 200)
 }
@@ -95,8 +92,8 @@ func (r *PriceListController) GetPriceListLookup(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/get-all [get]
-func (r *PriceListController) GetPriceList(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *PriceListController) GetPriceList() {
+
 	PriceListCode := c.Query("price_list_code")
 	companyId, _ := strconv.Atoi(c.Query("company_id"))
 	brandId, _ := strconv.Atoi(c.Query("brand_id"))
@@ -125,12 +122,9 @@ func (r *PriceListController) GetPriceList(c *gin.Context) {
 		AtpmSyncronizeTime:  atpmSyncronizeTime,
 	}
 
-	result, err := r.pricelistservice.WithTrx(trxHandle).GetPriceList(priceListRequest)
+	result := r.pricelistservice.GetPriceList(priceListRequest)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+
 
 	payloads.HandleSuccess(c, result, "success", 200)
 }
@@ -144,35 +138,19 @@ func (r *PriceListController) GetPriceList(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list [post]
-func (r *PriceListController) SavePriceList(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *PriceListController) SavePriceList() {
+
 	var request masteritempayloads.PriceListResponse
 	var message = ""
 
 	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
+		exceptions.EntityException(c.Error())
 		return
 	}
 
-	if int(request.PriceListId) != 0 {
-		result, err := r.pricelistservice.WithTrx(trxHandle).GetPriceListById(int(request.PriceListId))
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
+	create := r.pricelistservice.SavePriceList(request)
 
-		if result.PriceListId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.pricelistservice.WithTrx(trxHandle).SavePriceList(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
 
 	if request.PriceListId == 0 {
 		message = "Create Data Successfully!"
@@ -192,25 +170,13 @@ func (r *PriceListController) SavePriceList(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/{price_list_id} [patch]
-func (r *PriceListController) ChangeStatusPriceList(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	PriceListId, err := strconv.Atoi(c.Param("price_list_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.pricelistservice.WithTrx(trxHandle).GetPriceListById(int(PriceListId))
-	if err != nil || result.PriceListId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *PriceListController) ChangeStatusPriceList() {
 
-	response, err := r.pricelistservice.WithTrx(trxHandle).ChangeStatusPriceList(int(PriceListId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	PriceListId, _ := strconv.Atoi(c.Param("price_list_id"))
+
+
+	response := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+
 
 	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
 }
