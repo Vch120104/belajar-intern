@@ -1,6 +1,8 @@
 package masteritemserviceimpl
 
 import (
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
@@ -11,71 +13,98 @@ import (
 
 type ItemServiceImpl struct {
 	itemRepo masteritemrepository.ItemRepository
+	DB       *gorm.DB
 }
 
-func StartItemService(itemRepo masteritemrepository.ItemRepository) masteritemservice.ItemService {
+func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB) masteritemservice.ItemService {
 	return &ItemServiceImpl{
 		itemRepo: itemRepo,
+		DB:       db,
 	}
 }
 
-func (s *ItemServiceImpl) WithTrx(trxHandle *gorm.DB) masteritemservice.ItemService {
-	s.itemRepo = s.itemRepo.WithTrx(trxHandle)
-	return s
-}
-
-func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
-	results, err := s.itemRepo.GetAllItem(filterCondition)
+func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition) []masteritempayloads.ItemLookup {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetAllItem(tx, filterCondition)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *ItemServiceImpl) GetAllItemLookup(queryParams map[string]string) ([]map[string]interface{}, error) {
-	results, err := s.itemRepo.GetAllItemLookup(queryParams)
+func (s *ItemServiceImpl) GetAllItemLookup(queryParams map[string]string) []map[string]interface{} {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetAllItemLookup(tx, queryParams)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, error) {
-	result, err := s.itemRepo.GetItemById(Id)
+func (s *ItemServiceImpl) GetItemById(Id int) masteritempayloads.ItemResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetItemById(tx, Id)
 	if err != nil {
-		return result, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return result, nil
+	return result
 }
 
-func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, error) {
-	result, err := s.itemRepo.GetItemWithMultiId(MultiIds)
+func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) []masteritempayloads.ItemResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetItemWithMultiId(tx, MultiIds)
 	if err != nil {
-		return result, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return result, nil
+	return result
 }
 
-func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, error) {
-	results, err := s.itemRepo.GetItemCode(code)
+func (s *ItemServiceImpl) GetItemCode(code string) []map[string]interface{} {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetItemCode(tx, code)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, error) {
-	results, err := s.itemRepo.SaveItem(req)
-	if err != nil {
-		return results, err
+func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	if req.ItemId != 0 {
+		_, err := s.itemRepo.GetItemById(tx, req.ItemId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
 	}
-	return results, nil
+
+	results, err := s.itemRepo.SaveItem(tx, req)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }
 
-func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, error) {
-	results, err := s.itemRepo.ChangeStatusItem(Id)
+func (s *ItemServiceImpl) ChangeStatusItem(Id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	_, err := s.itemRepo.GetItemById(tx, Id)
+
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+
+	results, err := s.itemRepo.ChangeStatusItem(tx, Id)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }
