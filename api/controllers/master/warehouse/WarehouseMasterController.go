@@ -1,11 +1,12 @@
 package masterwarehousecontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"net/http"
 	"strconv"
+	"strings"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -13,32 +14,28 @@ import (
 
 	// masteritemlevelrepo "after-sales/api/repositories/master/item_level"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
-	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type WarehouseMasterController struct {
-	warehouseMasterService masterwarehouseservice.WarehouseMasterService
+type WarehouseMasterControllerImpl struct {
+	WarehouseMasterService masterwarehouseservice.WarehouseMasterService
 }
 
-func OpenWarehouseMasterRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	warehouseMasterService masterwarehouseservice.WarehouseMasterService,
-) {
-	handler := WarehouseMasterController{
-		warehouseMasterService: warehouseMasterService,
-	}
+type WarehouseMasterController interface {
+	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
 
-	// r.Use(middlewares.SetupAuthenticationMiddleware())
-	r.GET("/warehouse-master", middlewares.DBTransactionMiddleware(db), handler.GetAll)
-	r.GET("/warehouse-master/:warehouse_id", middlewares.DBTransactionMiddleware(db), handler.GetById)
-	r.GET("/warehouse-master-by-code/:warehouse_code", middlewares.DBTransactionMiddleware(db), handler.GetByCode)
-	r.GET("/warehouse-master-drop-down", middlewares.DBTransactionMiddleware(db), handler.GetAllIsActive)
-	r.POST("/warehouse-master", middlewares.DBTransactionMiddleware(db), handler.Save)
-	r.PATCH("/warehouse-master/:warehouse_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
+func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.WarehouseMasterService) WarehouseMasterController {
+	return &WarehouseMasterControllerImpl{
+		WarehouseMasterService: WarehouseMasterService,
+	}
 }
 
 // @Summary Get All Warehouse Master
@@ -57,17 +54,17 @@ func OpenWarehouseMasterRoutes(
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-master [get]
-func (r *WarehouseMasterController) GetAll(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	page, _ := strconv.Atoi(c.Query("page"))
-	limit, _ := strconv.Atoi(c.Query("limit"))
-	sortOf := c.Query("sort_of")
-	sortBy := c.Query("sort_by")
-	warehouseName := c.Query("warehouse_name")
-	warehouseCode := c.Query("warehouse_code")
-	isActive := c.Query("is_active")
+func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
+	page, _ := strconv.Atoi(queryValues.Get("page"))
+	limit, _ := strconv.Atoi(queryValues.Get("limit"))
+	sortOf := queryValues.Get("sort_of")
+	sortBy := queryValues.Get("sort_by")
+	warehouseName := queryValues.Get("warehouse_name")
+	warehouseCode := queryValues.Get("warehouse_code")
+	isActive := queryValues.Get("is_active")
 
-	get, err := r.warehouseMasterService.WithTrx(trxHandle).GetAll(masterwarehousepayloads.GetAllWarehouseMasterRequest{
+	get := r.WarehouseMasterService.GetAll(masterwarehousepayloads.GetAllWarehouseMasterRequest{
 		WarehouseName: warehouseName,
 		WarehouseCode: warehouseCode,
 		IsActive:      isActive,
@@ -78,17 +75,7 @@ func (r *WarehouseMasterController) GetAll(c *gin.Context) {
 		Page:   page,
 	})
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if get.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
 
 // @Summary Get All Warehouse Master Is Active
@@ -99,18 +86,12 @@ func (r *WarehouseMasterController) GetAll(c *gin.Context) {
 // @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master-drop-down [get]
-func (r *WarehouseMasterController) GetAllIsActive(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+// @Router /aftersales-service/api/aftersales/warehouse-master/drop-down [get]
+func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.warehouseMasterService.WithTrx(trxHandle).GetAllIsActive()
+	get := r.WarehouseMasterService.GetAllIsActive()
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Master By Id
@@ -122,24 +103,14 @@ func (r *WarehouseMasterController) GetAllIsActive(c *gin.Context) {
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/{warehouse_id} [get]
-func (r *WarehouseMasterController) GetById(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	warehouseId, _ := strconv.Atoi(c.Param("warehouse_id"))
+// @Router /aftersales-service/api/aftersales/warehouse-master/by-id/{warehouse_id} [get]
+func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.warehouseMasterService.WithTrx(trxHandle).GetById(warehouseId)
+	warehouseId, _ := strconv.Atoi(params.ByName("warehouse_id"))
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	get := r.WarehouseMasterService.GetById(warehouseId)
 
-	if get.WarehouseId == 0 {
-		exceptions.NotFoundException(c, "Warehouse Master Data Not Found!")
-		return
-	}
-
-	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Master By Code
@@ -151,20 +122,35 @@ func (r *WarehouseMasterController) GetById(c *gin.Context) {
 // @Param warehouse_code path string true "warehouse_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master-by-code/{warehouse_code} [get]
-func (r *WarehouseMasterController) GetByCode(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	code := c.Param("warehouse_code")
+// @Router /aftersales-service/api/aftersales/warehouse-master/by-code/{warehouse_code} [get]
+func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.warehouseMasterService.WithTrx(trxHandle).GetWarehouseMasterByCode(code)
+	code := params.ByName("warehouse_code")
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	get := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
 
-	payloads.HandleSuccess(c, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
 
+}
+
+// @Summary Get Warehouse Master With MultiId
+// @Description Get Warehouse Master
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Master
+// @Param warehouse_ids path string true "warehouse_ids"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/warehouse-master/multi-id/{warehouse_ids} [get]
+func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	warehouse_ids := params.ByName("warehouse_ids")
+
+	sliceOfString := strings.Split(warehouse_ids, ",")
+
+	result := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
+
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Save Warehouse Master
@@ -177,44 +163,21 @@ func (r *WarehouseMasterController) GetByCode(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-master [post]
-func (r *WarehouseMasterController) Save(c *gin.Context) {
+func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	var message string
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	requestBody := masterwarehousepayloads.GetWarehouseMasterResponse{}
 
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	if int(requestBody.WarehouseId) != 0 {
-		get, err := r.warehouseMasterService.WithTrx(trxHandle).GetById(requestBody.WarehouseId)
+	save := r.WarehouseMasterService.Save(formRequest)
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if get.WarehouseId == 0 {
-			exceptions.NotFoundException(c, "Warehouse Master Data Not Found!")
-			return
-		}
-	}
-
-	save, err := r.warehouseMasterService.WithTrx(trxHandle).Save(requestBody)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if requestBody.WarehouseId == 0 {
+	if formRequest.WarehouseId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, save, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 
 }
 
@@ -228,29 +191,12 @@ func (r *WarehouseMasterController) Save(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-master/{warehouse_id} [patch]
-func (r *WarehouseMasterController) ChangeStatus(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	warehouseId, _ := strconv.Atoi(c.Param("warehouse_id"))
+func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.warehouseMasterService.WithTrx(trxHandle).GetById(warehouseId)
+	warehouseId, _ := strconv.Atoi(params.ByName("warehouse_id"))
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	change_status := r.WarehouseMasterService.ChangeStatus(warehouseId)
 
-	if get.WarehouseId == 0 {
-		exceptions.NotFoundException(c, "Warehouse Master Data Not Found!")
-		return
-	}
-
-	change_status, err := r.warehouseMasterService.WithTrx(trxHandle).ChangeStatus(warehouseId)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, change_status, "Updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
 }

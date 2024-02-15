@@ -84,3 +84,5 @@ func NewGetQueryInt(queryValues url.Values, param string) int {
 	value, _ := strconv.Atoi(queryValues.Get(param))
 	return value
 }
+
+

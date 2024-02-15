@@ -1,6 +1,8 @@
 package masteritemserviceimpl
 
 import (
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
@@ -11,47 +13,68 @@ import (
 
 type ItemClassServiceImpl struct {
 	itemRepo masteritemrepository.ItemClassRepository
+	DB       *gorm.DB
 }
 
-func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository) masteritemservice.ItemClassService {
+func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db *gorm.DB) masteritemservice.ItemClassService {
 	return &ItemClassServiceImpl{
 		itemRepo: itemRepo,
+		DB:       db,
 	}
 }
 
-func (s *ItemClassServiceImpl) WithTrx(trxHandle *gorm.DB) masteritemservice.ItemClassService {
-	s.itemRepo = s.itemRepo.WithTrx(trxHandle)
-	return s
-}
-
-func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
-	results, err := s.itemRepo.GetAllItemClass(filterCondition)
+func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition) []map[string]interface{} {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetAllItemClass(tx, filterCondition)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, error) {
-	result, err := s.itemRepo.GetItemClassById(Id)
+func (s *ItemClassServiceImpl) GetItemClassById(Id int) masteritempayloads.ItemClassResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetItemClassById(tx, Id)
 	if err != nil {
-		return result, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return result, nil
+	return result
 }
 
-func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassResponse) (bool, error) {
-	results, err := s.itemRepo.SaveItemClass(req)
-	if err != nil {
-		return results, err
+func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	if req.ItemClassId != 0 {
+		_, err := s.itemRepo.GetItemClassById(tx, req.ItemClassId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
 	}
-	return results, nil
+
+	results, err := s.itemRepo.SaveItemClass(tx, req)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }
 
-func (s *ItemClassServiceImpl) ChangeStatusItemClass(Id int) (bool, error) {
-	results, err := s.itemRepo.ChangeStatusItemClass(Id)
+func (s *ItemClassServiceImpl) ChangeStatusItemClass(Id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	_, err := s.itemRepo.GetItemClassById(tx, Id)
+
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+
+	results, err := s.itemRepo.ChangeStatusItemClass(tx, Id)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }

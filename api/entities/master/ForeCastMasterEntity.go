@@ -12,7 +12,7 @@ type ForecastMaster struct {
 	OrderTypeId                int     `gorm:"column:order_type_id;not null" json:"order_type_id"`
 	ForecastMasterLeadTime     float64 `gorm:"column:forecast_master_lead_time;not null" json:"forecast_master_lead_time"`
 	ForecastMasterSafetyFactor float64 `gorm:"column:forecast_master_safety_factor;not null" json:"forecast_master_safety_factor"`
-	ForecastMasterOrderCycle   float64 `gorm:"column:forecast_master_order_order_cycle;not null" json:"forecast_master_order_cycle"`
+	ForecastMasterOrderCycle   float64 `gorm:"column:forecast_master_order_cycle;not null" json:"forecast_master_order_cycle"`
 }
 
 func (*ForecastMaster) TableName() string {

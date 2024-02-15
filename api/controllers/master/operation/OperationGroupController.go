@@ -51,20 +51,21 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	query := request.URL.Query()
 
+	queryValues := request.URL.Query()
+
 	queryParams := map[string]string{
-		"operation_group_code":        params.ByName("operation_group_code"),
-		"operation_group_description": params.ByName("operation_group_description"),
-		"is_active":                   params.ByName("is_active"),
+		"operation_group_code":        queryValues.Get("operation_group_code"),
+		"operation_group_description": queryValues.Get("operation_group_description"),
+		"is_active":                   queryValues.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(query, "limit"),
-		Page:   utils.NewGetQueryInt(query, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
-	
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	result := r.OperationGroupService.GetAllOperationGroup(filterCondition, pagination)
@@ -79,7 +80,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Tags Master : Operation Group
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-group-drop-down [get]
+// @Router /aftersales-service/api/aftersales/operation-group/drop-down [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	result := r.OperationGroupService.GetAllOperationGroupIsActive()
@@ -95,7 +96,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.
 // @Param operation_group_code path string true "operation_group_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-group-by-code/{operation_group_code} [get]
+// @Router /aftersales-service/api/aftersales/operation-group/by-code/{operation_group_code} [get]
 func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	operationGroupCode := params.ByName("operation_group_code")

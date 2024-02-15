@@ -7,9 +7,8 @@ import (
 )
 
 type WarehouseGroupRepository interface {
-	WithTrx(trxHandle *gorm.DB) WarehouseGroupRepository
-	Save(masterwarehousepayloads.GetWarehouseGroupResponse) (bool, error)
-	GetById(int) (masterwarehousepayloads.GetWarehouseGroupResponse, error)
-	GetAll(request masterwarehousepayloads.GetAllWarehouseGroupRequest) ([]masterwarehousepayloads.GetWarehouseGroupResponse, error)
-	ChangeStatus(int) (masterwarehousepayloads.GetWarehouseGroupResponse, error)
+	Save(*gorm.DB, masterwarehousepayloads.GetWarehouseGroupResponse) (bool, error)
+	GetById(*gorm.DB, int) (masterwarehousepayloads.GetWarehouseGroupResponse, error)
+	GetAll(*gorm.DB, masterwarehousepayloads.GetAllWarehouseGroupRequest) ([]masterwarehousepayloads.GetWarehouseGroupResponse, error)
+	ChangeStatus(*gorm.DB, int) (masterwarehousepayloads.GetWarehouseGroupResponse, error)
 }
