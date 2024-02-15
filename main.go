@@ -61,6 +61,26 @@ func main() {
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 		config.InitLogger(db)
+		
+		unitOfMeasurementRepository := masteritemrepositoryimpl.StartUnitOfMeasurementRepositoryImpl()
+		unitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(unitOfMeasurementRepository, db)
+		unitOfMeasurementController := masteritemcontroller.NewUnitOfMeasurementController(unitOfMeasurementService)
+		
+		markupMasterRepository := masteritemrepositoryimpl.StartMarkupMasterRepositoryImpl()
+		markupMasterService := masteritemserviceimpl.StartMarkupMasterService(markupMasterRepository, db)
+		markupMasterController := masteritemcontroller.NewMarkupMasterController(markupMasterService)
+		
+		itemLevelRepository := masteritemrepositoryimpl.StartItemLevelRepositoryImpl()
+		itemLevelService := masteritemserviceimpl.StartItemLevelService(itemLevelRepository, db)
+		itemLevelController := masteritemcontroller.NewItemLevelController(itemLevelService)
+		
+		itemRepository := masteritemrepositoryimpl.StartItemRepositoryImpl()
+		itemService := masteritemserviceimpl.StartItemService(itemRepository, db)
+		itemController := masteritemcontroller.NewItemController(itemService)
+		
+		priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl()
+		priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db)
+		priceListController := masteritemcontroller.NewPriceListController(priceListService)
 
 		itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl()
 		itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db)
@@ -132,11 +152,21 @@ func main() {
 		WarehouseLocation := route.WarehouseLocationRouter(warehouseLocationController)
 		WarehouseMaster := route.WarehouseMasterRouter(warehouseMasterController)
 		ShiftScheduleRouter := route.ShiftScheduleRouter(ShiftScheduleController)
+		unitOfMeasurementRouter := route.UnitOfMeasurementRouter(unitOfMeasurementController)
+		markupMasterRouter := route.MarkupMasterRouter(markupMasterController)
+		itemLevelRouter := route.ItemLevelRouter(itemLevelController)
+		itemRouter := route.ItemRouter(itemController)
+		priceListRouter := route.PriceListRouter(priceListController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/item-class/", itemClassRouter)
+		mux.Handle("/unit-of-measurement/", unitOfMeasurementRouter)
+		mux.Handle("/markup-master/", markupMasterRouter)
+		mux.Handle("/item-level/", itemLevelRouter)
+		mux.Handle("/item/", itemRouter)
+		mux.Handle("/price-list/", priceListRouter)
 		mux.Handle("/operation-group/", OperationGroupRouter)
 
 		mux.Handle("/incentive-group/", IncentiveGroupRouter)
