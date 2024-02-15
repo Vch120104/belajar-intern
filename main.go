@@ -57,13 +57,31 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+		operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl()
+		operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository, db)
+		operationSectionController := masteroperationcontroller.NewOperationSectionController(operationSectionService)
+
+		operationEntriesRepository := masteroperationrepositoryimpl.StartOperationEntriesRepositoryImpl()
+		operationEntriesService := masteroperationserviceimpl.StartOperationEntriesService(operationEntriesRepository, db)
+		operationEntriesController := masteroperationcontroller.NewOperationEntriesController(operationEntriesService)
+
+		operationKeyRepository := masteroperationrepositoryimpl.StartOperationKeyRepositoryImpl()
+		operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository, db)
+		operationKeyController := masteroperationcontroller.NewOperationKeyController(operationKeyService)
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
+		OperationSectionRouter := route.OperationSectionRouter(operationSectionController)
+		OperationEntriesRouter := route.OperationEntriesRouter(operationEntriesController)
+		OperationKeyRouter := route.OperationKeyRouter(operationKeyController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
+		mux.Handle("/operation-section/", OperationSectionRouter)
+		mux.Handle("/operation-key/", OperationKeyRouter)
+		mux.Handle("/operation-entries/", OperationEntriesRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 
 		//Swagger

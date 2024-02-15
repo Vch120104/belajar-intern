@@ -1,10 +1,10 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
+	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 
 	// "after-sales/api/middlewares"
@@ -13,24 +13,69 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type OperationEntriesController struct {
-	operationentriesservice masteroperationservice.OperationEntriesService
+type OperationEntriesController interface {
+	GetAllOperationEntries(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetOperationEntriesByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetOperationEntriesName(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveOperationEntries(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusOperationEntries(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 
-func StartOperationEntriesRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	operationentriesservice masteroperationservice.OperationEntriesService,
-) {
-	operationEntriesHandler := OperationEntriesController{operationentriesservice: operationentriesservice}
-	r.GET("/operation-entries/:operation_entries_id", middlewares.DBTransactionMiddleware(db), operationEntriesHandler.GetOperationEntriesByID)
-	r.GET("/operation-entries-by-name", middlewares.DBTransactionMiddleware(db), operationEntriesHandler.GetOperationEntriesName)
-	r.POST("/operation-entries", middlewares.DBTransactionMiddleware(db), operationEntriesHandler.SaveOperationEntries)
-	r.PATCH("/operation-entries/:operation_entries_id", middlewares.DBTransactionMiddleware(db), operationEntriesHandler.ChangeStatusOperationEntries)
+type OperationEntriesControllerImpl struct {
+	operationEntriesService masteroperationservice.OperationEntriesService
+}
+
+func NewOperationEntriesController(operationEntriesService masteroperationservice.OperationEntriesService) OperationEntriesController {
+	return &OperationEntriesControllerImpl{
+		operationEntriesService: operationEntriesService,
+	}
+}
+
+// @Summary Get All Operation Entries
+// @Description REST API Operation Entries
+// @Accept json
+// @Produce json
+// @Tags Master : Operation Entries
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param operation_section_description query string false "operation_section_description"
+// @Param operation_group_description query string false "operation_group_description"
+// @Param operation_key_description query string false "operation_key_description"
+// @Param operation_entries_code query string false "operation_entries_code"
+// @Param operation_entries_desc query string false "operation_entries_desc"
+// @Param is_active query string false "is_active" Enums(true, false)
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/operation-entries [get]
+func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	query := request.URL.Query()
+	queryParams := map[string]string{
+		"mtr_operation_group.operation_group_description":     query.Get("operation_group_description"),
+		"mtr_operation_section.operation_section_description": query.Get("operation_section_description"),
+		"mtr_operation_entries.operation_entries_code":        query.Get("operation_entries_code"),
+		"mtr_operation_entries.operation_entries_desc":        query.Get("operation_entries_desc"),
+		"mtr_operation_key.is_active":                         query.Get("is_active"),
+		"mtr_operation_key.operation_key_description":         query.Get("operation_key_description"),
+	}
+
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(query, "limit"),
+		Page:   utils.NewGetQueryInt(query, "page"),
+		SortOf: query.Get("sort_of"),
+		SortBy: query.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result := r.operationEntriesService.GetAllOperationEntries(criteria, pagination)
+
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Operation Entries By ID
@@ -42,16 +87,12 @@ func StartOperationEntriesRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-entries/{operation_entries_id} [get]
-func (r *OperationEntriesController) GetOperationEntriesByID(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationId, _ := strconv.Atoi(c.Param("operation_entries_id"))
-	result, err := r.operationentriesservice.WithTrx(trxHandle).GetOperationEntriesById(int32(operationId))
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	operationId, _ := strconv.Atoi(params.ByName("operation_entries_id"))
+	result := r.operationEntriesService.GetOperationEntriesById(int(operationId))
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Operation Entries Name
@@ -66,26 +107,23 @@ func (r *OperationEntriesController) GetOperationEntriesByID(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-entries-by-name [get]
-func (r *OperationEntriesController) GetOperationEntriesName(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationGroupId := utils.GetQueryInt(c, "operation_group_id")
-	operationSectionId := utils.GetQueryInt(c, "operation_section_id")
-	operationKeyId := utils.GetQueryInt(c, "operation_key_id")
-	operationEntriesCode := c.Query("operation_entries_code")
+func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	result, err := r.operationentriesservice.WithTrx(trxHandle).GetOperationEntriesName(masteroperationpayloads.OperationEntriesRequest{
+	query := request.URL.Query()
+
+	operationGroupId := utils.NewGetQueryInt(query, "operation_group_id")
+	operationSectionId := utils.NewGetQueryInt(query, "operation_section_id")
+	operationKeyId := utils.NewGetQueryInt(query, "operation_key_id")
+	operationEntriesCode := query.Get("operation_entries_code")
+
+	result := r.operationEntriesService.GetOperationEntriesName(masteroperationpayloads.OperationEntriesRequest{
 		OperationGroupId:     operationGroupId,
 		OperationSectionId:   operationSectionId,
 		OperationKeyId:       operationKeyId,
 		OperationEntriesCode: operationEntriesCode,
 	})
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Operation Entries
@@ -97,43 +135,21 @@ func (r *OperationEntriesController) GetOperationEntriesName(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-entries [post]
-func (r *OperationEntriesController) SaveOperationEntries(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteroperationpayloads.OperationEntriesResponse
+func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	var requestForm masteroperationpayloads.OperationEntriesResponse
 	var message = ""
+	helper.ReadFromRequestBody(request, &requestForm)
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	create := r.operationEntriesService.SaveOperationEntries(requestForm)
 
-	if int(request.OperationEntriesId) != 0 {
-		result, err := r.operationentriesservice.WithTrx(trxHandle).GetOperationEntriesById(request.OperationEntriesId)
-
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.OperationEntriesId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.operationentriesservice.WithTrx(trxHandle).SaveOperationEntries(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.OperationEntriesId == 0 {
+	if requestForm.OperationEntriesId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Operation Entries
@@ -145,31 +161,10 @@ func (r *OperationEntriesController) SaveOperationEntries(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-entries/{operation_entries_id} [patch]
-func (r *OperationEntriesController) ChangeStatusOperationEntries(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationEntriesId, err := strconv.Atoi(c.Param("operation_entries_id"))
+func (r *OperationEntriesControllerImpl) ChangeStatusOperationEntries(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	operationEntriesId, _ := strconv.Atoi(params.ByName("operation_entries_id"))
 
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.operationentriesservice.WithTrx(trxHandle).GetOperationEntriesById(int32(operationEntriesId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	response := r.operationEntriesService.ChangeStatusOperationEntries(operationEntriesId)
 
-	if result.OperationEntriesId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	response, err := r.operationentriesservice.WithTrx(trxHandle).ChangeStatusOperationEntries(operationEntriesId)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

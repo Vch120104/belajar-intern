@@ -49,6 +49,7 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-group [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	query := request.URL.Query()
 
 	queryParams := map[string]string{
 		"operation_group_code":        params.ByName("operation_group_code"),
@@ -57,8 +58,8 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
+		Limit:  utils.NewGetQueryInt(query, "limit"),
+		Page:   utils.NewGetQueryInt(query, "page"),
 		SortOf: params.ByName("sort_of"),
 		SortBy: params.ByName("sort_by"),
 	}

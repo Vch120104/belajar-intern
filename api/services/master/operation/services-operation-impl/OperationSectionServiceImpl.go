@@ -1,6 +1,8 @@
 package masteroperationserviceimpl
 
 import (
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
@@ -14,78 +16,89 @@ import (
 
 type OperationSectionServiceImpl struct {
 	operationSectionRepo masteroperationrepository.OperationSectionRepository
+	DB                   *gorm.DB
 }
 
-func StartOperationSectionService(operationSectionRepo masteroperationrepository.OperationSectionRepository) masteroperationservice.OperationSectionService {
+func StartOperationSectionService(operationSectionRepo masteroperationrepository.OperationSectionRepository, db *gorm.DB) masteroperationservice.OperationSectionService {
 	return &OperationSectionServiceImpl{
 		operationSectionRepo: operationSectionRepo,
+		DB:                   db,
 	}
 }
 
-func (r *OperationSectionServiceImpl) WithTrx(trxHandle *gorm.DB) masteroperationservice.OperationSectionService {
-	r.operationSectionRepo = r.operationSectionRepo.WithTrx(trxHandle)
-	return r
+func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationSectionRepo.GetAllOperationSectionList(tx, filterCondition, pages)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }
 
-func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
-	results, err := s.operationSectionRepo.GetAllOperationSectionList(filterCondition, pages)
+func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) []masteroperationpayloads.OperationSectionCodeResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationSectionRepo.GetSectionCodeByGroupId(tx, GroupId)
 
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
-	return results, nil
+	return results
 }
 
-func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId string) ([]masteroperationpayloads.OperationSectionCodeResponse, error) {
-	results, err := s.operationSectionRepo.GetSectionCodeByGroupId(GroupId)
+func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) masteroperationpayloads.OperationSectionNameResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationSectionRepo.GetOperationSectionName(tx, group_id, section_code)
 
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
-	return results, nil
+	return results
 }
 
-func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) (masteroperationpayloads.OperationSectionNameResponse, error) {
-	results, err := s.operationSectionRepo.GetOperationSectionName(group_id, section_code)
+func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
 
-	if err != nil {
-		return results, err
+	if req.OperationSectionId != 0 {
+		_, err := s.operationSectionRepo.GetOperationSectionById(tx, req.OperationSectionId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
 	}
-
-	return results, nil
+	
+	if len(req.OperationSectionCode) > 3 {
+		panic(exceptions.NewBadRequestError("Operation Section Code max 3 characters"))
+	}
+	results, err := s.operationSectionRepo.SaveOperationSection(tx, req)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }
 
-func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) (bool, error) {
-	results, err := s.operationSectionRepo.SaveOperationSection(req)
+func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) masteroperationpayloads.OperationSectionListResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationSectionRepo.GetOperationSectionById(tx, id)
+
 	if err != nil {
-		return false, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) (masteroperationpayloads.OperationSectionResponse, error) {
-	results, err := s.operationSectionRepo.GetOperationSectionById(id)
-
+func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationSectionRepo.ChangeStatusOperationSection(tx, Id)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
-}
-
-func (s *OperationSectionServiceImpl) GetAllOperationSection() ([]masteroperationpayloads.OperationSectionResponse, error) {
-	results, err := s.operationSectionRepo.GetAllOperationSection()
-	if err != nil {
-		return results, err
-	}
-	return results, nil
-}
-
-func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) (bool, error) {
-	results, err := s.operationSectionRepo.ChangeStatusOperationSection(Id)
-	if err != nil {
-		return false, err
-	}
-	return results, nil
+	return results
 }
