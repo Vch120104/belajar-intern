@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemservice "after-sales/api/services/master/item"
@@ -10,24 +9,24 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type PriceListController struct {
+type PriceListController interface {
+	GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type PriceListControllerImpl struct {
 	pricelistservice masteritemservice.PriceListService
 }
 
-func StartPriceListRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	pricelistservice masteritemservice.PriceListService,
-) {
-	priceListHandler := PriceListController{pricelistservice: pricelistservice}
-	r.GET("/price-list/get-all", middlewares.DBTransactionMiddleware(db), priceListHandler.GetPriceList)
-	r.GET("/price-list/get-all-lookup", middlewares.DBTransactionMiddleware(db), priceListHandler.GetPriceListLookup)
-	r.POST("/price-list", middlewares.DBTransactionMiddleware(db), priceListHandler.SavePriceList)
-	r.PATCH("/price-list/:price_list_id", middlewares.DBTransactionMiddleware(db), priceListHandler.ChangeStatusPriceList)
+func NewPriceListController(PriceListService masteritemservice.PriceListService) PriceListController {
+	return &PriceListControllerImpl{
+		pricelistservice: PriceListService,
+	}
 }
 
 // @Summary Get All Price List Lookup
@@ -45,7 +44,7 @@ func StartPriceListRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/get-all-lookup [get]
-func (r *PriceListController) GetPriceListLookup() {
+func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	PriceListCode := c.Query("price_list_code")
 	companyId, _ := strconv.Atoi(c.Query("company_id"))
@@ -66,8 +65,6 @@ func (r *PriceListController) GetPriceListLookup() {
 	}
 
 	result := r.pricelistservice.GetPriceList(priceListRequest)
-
-
 
 	payloads.HandleSuccess(c, result, "success", 200)
 }
@@ -92,7 +89,7 @@ func (r *PriceListController) GetPriceListLookup() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/get-all [get]
-func (r *PriceListController) GetPriceList() {
+func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	PriceListCode := c.Query("price_list_code")
 	companyId, _ := strconv.Atoi(c.Query("company_id"))
@@ -124,8 +121,6 @@ func (r *PriceListController) GetPriceList() {
 
 	result := r.pricelistservice.GetPriceList(priceListRequest)
 
-
-
 	payloads.HandleSuccess(c, result, "success", 200)
 }
 
@@ -138,7 +133,7 @@ func (r *PriceListController) GetPriceList() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list [post]
-func (r *PriceListController) SavePriceList() {
+func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var request masteritempayloads.PriceListResponse
 	var message = ""
@@ -148,9 +143,7 @@ func (r *PriceListController) SavePriceList() {
 		return
 	}
 
-
 	create := r.pricelistservice.SavePriceList(request)
-
 
 	if request.PriceListId == 0 {
 		message = "Create Data Successfully!"
@@ -170,13 +163,11 @@ func (r *PriceListController) SavePriceList() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/{price_list_id} [patch]
-func (r *PriceListController) ChangeStatusPriceList() {
+func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	PriceListId, _ := strconv.Atoi(c.Param("price_list_id"))
 
-
 	response := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
-
 
 	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
 }

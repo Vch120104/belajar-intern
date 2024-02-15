@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 	"strconv"
 
@@ -14,26 +13,26 @@ import (
 	masteritemlevelservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type ItemLevelController struct {
+
+
+type ItemLevelController interface {
+	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type ItemLevelControllerImpl struct {
 	itemLevelService masteritemlevelservice.ItemLevelService
 }
 
-func StartItemLevelRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	itemLevelService masteritemlevelservice.ItemLevelService,
-) {
-	handler := ItemLevelController{
-		itemLevelService: itemLevelService,
+func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelService) ItemLevelController {
+	return &ItemLevelControllerImpl{
+		itemLevelService: ItemLevelService,
 	}
-	r.GET("/item-level-by-id", middlewares.DBTransactionMiddleware(db), handler.GetById)
-	r.GET("/item-level", middlewares.DBTransactionMiddleware(db), handler.GetAll)
-	r.POST("/item-level", middlewares.DBTransactionMiddleware(db), handler.Save)
-	r.PATCH("/item-level/:item_level_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
 }
 
 // @Summary Get All Item Level
@@ -55,7 +54,7 @@ func StartItemLevelRoutes(
 // @Param is_active query bool false "Is Active"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level [get]
-func (r *ItemLevelController) GetAll() {
+func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	page, _ := strconv.Atoi(c.Query("page"))
 	limit, _ := strconv.Atoi(c.Query("limit"))
@@ -95,7 +94,7 @@ func (r *ItemLevelController) GetAll() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level-by-id [get]
-func (r *ItemLevelController) GetById() {
+func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	itemLevelId, _ := strconv.Atoi(c.Param("item_level_id"))
 
@@ -119,7 +118,7 @@ func (r *ItemLevelController) GetById() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level [post]
-func (r *ItemLevelController) Save() {
+func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var request masteritemlevelpayloads.SaveItemLevelRequest
 	var message = ""
@@ -150,7 +149,7 @@ func (r *ItemLevelController) Save() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
-func (r *ItemLevelController) ChangeStatus() {
+func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	itemLevelId, _ := strconv.Atoi(c.Param("item_level_id"))
 

@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/utils"
@@ -12,26 +11,28 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type ItemController struct {
+
+
+type ItemController interface {
+	GetAllItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllItemLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetItemByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type ItemControllerImpl struct {
 	itemservice masteritemservice.ItemService
 }
 
-func StartItemRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	itemservice masteritemservice.ItemService,
-) {
-	itemHandler := ItemController{itemservice: itemservice}
-	r.GET("/item/", middlewares.DBTransactionMiddleware(db), itemHandler.GetAllItem)
-	r.GET("/item/pop-up", middlewares.DBTransactionMiddleware(db), itemHandler.GetAllItemLookup)
-	r.GET("/item-multi-id/:item_ids", middlewares.DBTransactionMiddleware(db), itemHandler.GetItemWithMultiId)
-	r.GET("/item/:item_code", middlewares.DBTransactionMiddleware(db), itemHandler.GetItemByCode)
-	r.POST("/item", middlewares.DBTransactionMiddleware(db), itemHandler.SaveItem)
-	r.PATCH("/item/:item_id", middlewares.DBTransactionMiddleware(db), itemHandler.ChangeStatusItem)
+func NewItemController(ItemService masteritemservice.ItemService) ItemController {
+	return &ItemControllerImpl{
+		itemservice: ItemService,
+	}
 }
 
 // @Summary Get All Item
@@ -47,7 +48,7 @@ func StartItemRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/ [get]
-func (r *ItemController) GetAllItem() {
+func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	queryParams := map[string]string{
 		"mtr_item.item_code":             c.Query("item_code"),
@@ -84,7 +85,7 @@ func (r *ItemController) GetAllItem() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/pop-up [get]
-func (r *ItemController) GetAllItemLookup() {
+func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	queryParams := map[string]string{
 		"item_code":       c.Query("item_code"),
@@ -118,7 +119,7 @@ func (r *ItemController) GetAllItemLookup() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-multi-id/{item_ids} [get]
-func (r *ItemController) GetItemWithMultiId() {
+func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	item_ids := c.Param("item_ids")
 
@@ -138,7 +139,7 @@ func (r *ItemController) GetItemWithMultiId() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/{item_code} [get]
-func (r *ItemController) GetItemByCode() {
+func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	itemCode := c.Param("item_code")
 
@@ -156,7 +157,7 @@ func (r *ItemController) GetItemByCode() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item [post]
-func (r *ItemController) SaveItem() {
+func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var request masteritempayloads.ItemResponse
 	var message = ""
@@ -186,7 +187,7 @@ func (r *ItemController) SaveItem() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/{item_id} [patch]
-func (r *ItemController) ChangeStatusItem() {
+func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	ItemId, _ := strconv.Atoi(c.Param("item_id"))
 

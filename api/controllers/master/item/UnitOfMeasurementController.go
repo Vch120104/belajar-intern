@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -11,25 +10,25 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type UnitOfMeasurementController struct {
+type UnitOfMeasurementController interface {
+	GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type UnitOfMeasurementControllerImpl struct {
 	unitofmeasurementservice masteritemservice.UnitOfMeasurementService
 }
 
-func StartUnitOfMeasurementRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	unitofmeasurementservice masteritemservice.UnitOfMeasurementService,
-) {
-	unitOfMeasurementHandler := UnitOfMeasurementController{unitofmeasurementservice: unitofmeasurementservice}
-	r.GET("/unit-of-measurement", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.GetAllUnitOfMeasurement)
-	r.GET("/unit-of-measurement-drop-down", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.GetAllUnitOfMeasurementIsActive)
-	r.GET("/unit-of-measurement-by-code/:uom_code", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.GetUnitOfMeasurementByCode)
-	r.POST("/unit-of-measurement", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.SaveUnitOfMeasurement)
-	r.PATCH("/unit-of-measurement/:uom_id", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.ChangeStatusUnitOfMeasurement)
+func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.UnitOfMeasurementService) UnitOfMeasurementController {
+	return &UnitOfMeasurementControllerImpl{
+		unitofmeasurementservice: UnitOfMeasurementService,
+	}
 }
 
 // @Summary Get All Unit Of Measurement
@@ -48,7 +47,7 @@ func StartUnitOfMeasurementRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [get]
-func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement() {
+func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	queryParams := map[string]string{
 		"mtr_uom.is_active":          c.Query("is_active"),
@@ -84,7 +83,7 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-drop-down [get]
-func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive() {
+func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	result := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
 
@@ -100,7 +99,7 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-by-code/{uom_code} [get]
-func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode() {
+func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	operationGroupCode := c.Param("uom_code")
 	result := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(operationGroupCode)
@@ -117,7 +116,7 @@ func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [post]
-func (r *UnitOfMeasurementController) SaveUnitOfMeasurement() {
+func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var request masteritempayloads.UomResponse
 	var message = ""
@@ -147,7 +146,7 @@ func (r *UnitOfMeasurementController) SaveUnitOfMeasurement() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement/{uom_id} [patch]
-func (r *UnitOfMeasurementController) ChangeStatusUnitOfMeasurement() {
+func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	uomId, _ := strconv.Atoi(c.Param("uom_id"))
 

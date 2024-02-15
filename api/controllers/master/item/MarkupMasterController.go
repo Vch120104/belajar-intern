@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 	"net/http"
 	"strconv"
@@ -17,24 +16,24 @@ import (
 
 	// "strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type MarkupMasterController struct {
+type MarkupMasterController interface {
+	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type MarkupMasterControllerImpl struct {
 	markupMasterService masteritemservice.MarkupMasterService
 }
 
-func StartMarkupMasterRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	markupMasterService masteritemservice.MarkupMasterService,
-) {
-	markupMasterHandler := MarkupMasterController{markupMasterService: markupMasterService}
-	r.GET("/markup-master", middlewares.DBTransactionMiddleware(db), markupMasterHandler.GetMarkupMasterList)
-	r.GET("/markup-master-by-code/:markup_master_code", middlewares.DBTransactionMiddleware(db), markupMasterHandler.GetMarkupMasterByCode)
-	r.POST("/markup-master", middlewares.DBTransactionMiddleware(db), markupMasterHandler.SaveMarkupMaster)
-	r.PATCH("/markup-master/:markup_master_id", middlewares.DBTransactionMiddleware(db), markupMasterHandler.ChangeStatusMarkupMaster)
+func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMasterService) MarkupMasterController {
+	return &MarkupMasterControllerImpl{
+		markupMasterService: MarkupMasterService,
+	}
 }
 
 // @Summary Get All Markup Master
@@ -52,7 +51,7 @@ func StartMarkupMasterRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master [get]
-func (r *MarkupMasterController) GetMarkupMasterList() {
+func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	queryParams := map[string]string{
 		"markup_master_code":        c.Query("markup_master_code"),
@@ -71,9 +70,6 @@ func (r *MarkupMasterController) GetMarkupMasterList() {
 
 	result := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
 
-
-
-
 	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
@@ -86,7 +82,7 @@ func (r *MarkupMasterController) GetMarkupMasterList() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master-by-code/{markup_master_code} [get]
-func (r *MarkupMasterController) GetMarkupMasterByCode() {
+func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	markupMasterCode := c.Param("markup_master_code")
 	result := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
@@ -103,7 +99,7 @@ func (r *MarkupMasterController) GetMarkupMasterByCode() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master [post]
-func (r *MarkupMasterController) SaveMarkupMaster() {
+func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var request masteritempayloads.MarkupMasterResponse
 	var message = ""
@@ -112,7 +108,6 @@ func (r *MarkupMasterController) SaveMarkupMaster() {
 		exceptions.EntityException(c.Error())
 		return
 	}
-
 
 	create := r.markupMasterService.SaveMarkupMaster(request)
 
@@ -134,10 +129,9 @@ func (r *MarkupMasterController) SaveMarkupMaster() {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master/{markup_master_id} [patch]
-func (r *MarkupMasterController) ChangeStatusMarkupMaster() {
+func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	markupMasterId, _ := strconv.Atoi(c.Param("markup_master_id"))
-
 
 	response := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
 
