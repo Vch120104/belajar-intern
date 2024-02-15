@@ -248,7 +248,7 @@ func MarkupMasterRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/markup-master/", markupMasterController.GetMarkupMasterList)
-	router.GET("/markup-master/:markup_master_code", markupMasterController.GetMarkupMasterByCode)
+	router.GET("/markup-master/by-code/:markup_master_code", markupMasterController.GetMarkupMasterByCode)
 	router.POST("/markup-master/", markupMasterController.SaveMarkupMaster)
 	router.PATCH("/markup-master/:markup_master_id", markupMasterController.ChangeStatusMarkupMaster)
 
@@ -278,7 +278,7 @@ func ItemRouter(
 	router.GET("/item/", itemController.GetAllItem)
 	router.GET("/item/pop-up/", itemController.GetAllItemLookup)
 	router.GET("/item/multi-id/:item_ids", itemController.GetItemWithMultiId)
-	router.GET("/item/by-code/:item_id", itemController.GetItemByCode)
+	router.GET("/item/by-code/:item_code", itemController.GetItemByCode)
 	router.POST("/item/", itemController.SaveItem)
 	router.PATCH("/item/:item_id", itemController.ChangeStatusItem)
 
@@ -292,7 +292,7 @@ func PriceListRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/price-list/", priceListController.GetPriceList)
-	router.GET("/price-list/:price_list_id", priceListController.GetPriceListLookup)
+	router.GET("/price-list/pop-up/", priceListController.GetPriceListLookup)
 	router.POST("/price-list/", priceListController.SavePriceList)
 	router.PATCH("/price-list/:price_list_id", priceListController.ChangeStatusPriceList)
 

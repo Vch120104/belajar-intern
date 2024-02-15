@@ -115,8 +115,8 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-multi-id/{item_ids} [get]
 func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	queryValues := request.URL.Query()
-	item_ids := queryValues.Get("item_ids")
+
+	item_ids := params.ByName("item_ids")
 
 	sliceOfString := strings.Split(item_ids, ",")
 

@@ -34,7 +34,7 @@ func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurementIsActive() []maste
 	return results
 }
 
-func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) masteritempayloads.UomResponse {
+func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) masteritempayloads.UomIdCodeResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementById(tx, id)
@@ -45,7 +45,7 @@ func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) masterit
 	return results
 }
 
-func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementByCode(Code string) masteritempayloads.UomResponse {
+func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementByCode(Code string) masteritempayloads.UomIdCodeResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementByCode(tx, Code)

@@ -53,9 +53,9 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurementIsActive(tx *go
 	return response, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementById(tx *gorm.DB,Id int) (masteritempayloads.UomResponse, error) {
+func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementById(tx *gorm.DB,Id int) (masteritempayloads.UomIdCodeResponse, error) {
 	entities := masteritementities.Uom{}
-	response := masteritempayloads.UomResponse{}
+	response := masteritempayloads.UomIdCodeResponse{}
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.Uom{
@@ -73,9 +73,9 @@ func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementById(tx *gorm.DB,I
 	return response, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementByCode(tx *gorm.DB,Code string) (masteritempayloads.UomResponse, error) {
+func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementByCode(tx *gorm.DB,Code string) (masteritempayloads.UomIdCodeResponse, error) {
 	entities := masteritementities.Uom{}
-	response := masteritempayloads.UomResponse{}
+	response := masteritempayloads.UomIdCodeResponse{}
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.Uom{
