@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -48,31 +48,26 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [get]
 func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_uom.is_active":          c.Query("is_active"),
-		"mtr_uom.uom_code":           c.Query("uom_code"),
-		"mtr_uom.uom_description":    c.Query("uom_description"),
-		"mtr_uom_type.uom_type_desc": c.Query("uom_type_desc"),
+		"mtr_uom.is_active":          queryValues.Get("is_active"),
+		"mtr_uom.uom_code":           queryValues.Get("uom_code"),
+		"mtr_uom.uom_description":    queryValues.Get("uom_description"),
+		"mtr_uom_type.uom_type_desc": queryValues.Get("uom_type_desc"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.GetQueryInt(c, "limit"),
-		Page:   utils.GetQueryInt(c, "page"),
-		SortOf: c.Query("sort_of"),
-		SortBy: c.Query("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	result := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
 
-	if result.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get All Unit Of Measurement drop down
@@ -87,7 +82,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 
 	result := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Unit Of Measurement By Code
@@ -101,10 +96,10 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-by-code/{uom_code} [get]
 func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	operationGroupCode := c.Param("uom_code")
+	operationGroupCode := params.ByName("uom_code")
 	result := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(operationGroupCode)
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Unit Of Measurement
@@ -118,23 +113,20 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [post]
 func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	var request masteritempayloads.UomResponse
+	var formRequest masteritempayloads.UomResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.unitofmeasurementservice.SaveUnitOfMeasurement(request)
+	create := r.unitofmeasurementservice.SaveUnitOfMeasurement(formRequest)
 
-	if request.UomId == 0 {
+	if formRequest.UomId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Unit Of Measurement
@@ -148,9 +140,9 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 // @Router /aftersales-service/api/aftersales/unit-of-measurement/{uom_id} [patch]
 func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	uomId, _ := strconv.Atoi(c.Param("uom_id"))
+	uomId, _ := strconv.Atoi(params.ByName("uom_id"))
 
 	response := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
 
-	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

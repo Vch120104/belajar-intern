@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"net/http"
 	"strconv"
@@ -52,25 +52,25 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-master [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"markup_master_code":        c.Query("markup_master_code"),
-		"markup_master_description": c.Query("markup_master_description"),
-		"is_active":                 c.Query("is_active"),
+		"markup_master_code":        queryValues.Get("markup_master_code"),
+		"markup_master_description": queryValues.Get("markup_master_description"),
+		"is_active":                 queryValues.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.GetQueryInt(c, "limit"),
-		Page:   utils.GetQueryInt(c, "page"),
-		SortOf: c.Query("sort_of"),
-		SortBy: c.Query("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	result := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
 
-	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Markup Master Description by code
@@ -84,10 +84,11 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 // @Router /aftersales-service/api/aftersales/markup-master-by-code/{markup_master_code} [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	markupMasterCode := c.Param("markup_master_code")
+	markupMasterCode := params.ByName("markup_master_code")
+
 	result := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Markup Master
@@ -101,23 +102,20 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 // @Router /aftersales-service/api/aftersales/markup-master [post]
 func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	var request masteritempayloads.MarkupMasterResponse
+	var formRequest masteritempayloads.MarkupMasterResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.markupMasterService.SaveMarkupMaster(request)
+	create := r.markupMasterService.SaveMarkupMaster(formRequest)
 
-	if request.MarkupMasterId == 0 {
+	if formRequest.MarkupMasterId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Markup Master
@@ -131,9 +129,9 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Router /aftersales-service/api/aftersales/markup-master/{markup_master_id} [patch]
 func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	markupMasterId, _ := strconv.Atoi(c.Param("markup_master_id"))
+	markupMasterId, _ := strconv.Atoi(params.ByName("markup_master_id"))
 
 	response := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
 
-	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemservice "after-sales/api/services/master/item"
@@ -45,14 +45,14 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/get-all-lookup [get]
 func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
-	PriceListCode := c.Query("price_list_code")
-	companyId, _ := strconv.Atoi(c.Query("company_id"))
-	brandId, _ := strconv.Atoi(c.Query("brand_id"))
-	currencyId, _ := strconv.Atoi(c.Query("currency_id"))
-	effectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", c.Query("effective_date"))
-	itemGroupId, _ := strconv.Atoi(c.Query("item_group_id"))
-	itemClassId, _ := strconv.Atoi(c.Query("item_class_id"))
+	queryValues := request.URL.Query()
+	PriceListCode := queryValues.Get("price_list_code")
+	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
+	brandId, _ := strconv.Atoi(queryValues.Get("brand_id"))
+	currencyId, _ := strconv.Atoi(queryValues.Get("currency_id"))
+	effectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
+	itemGroupId, _ := strconv.Atoi(queryValues.Get("item_group_id"))
+	itemClassId, _ := strconv.Atoi(queryValues.Get("item_class_id"))
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode: PriceListCode,
@@ -66,7 +66,7 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 
 	result := r.pricelistservice.GetPriceList(priceListRequest)
 
-	payloads.HandleSuccess(c, result, "success", 200)
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Get All Price List
@@ -90,19 +90,19 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/price-list/get-all [get]
 func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
-	PriceListCode := c.Query("price_list_code")
-	companyId, _ := strconv.Atoi(c.Query("company_id"))
-	brandId, _ := strconv.Atoi(c.Query("brand_id"))
-	currencyId, _ := strconv.Atoi(c.Query("currency_id"))
-	effectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", c.Query("effective_date"))
-	itemId, _ := strconv.Atoi(c.Query("item_id"))
-	itemGroupId, _ := strconv.Atoi(c.Query("item_group_id"))
-	itemClassId, _ := strconv.Atoi(c.Query("item_class_id"))
-	priceListAmount, _ := strconv.ParseFloat(c.Query("price_list_amount"), 64)
-	priceListModifiable := c.Query("price_list_modifiable")
-	atpmSyncronize := c.Query("atpm_syncronize")
-	atpmSyncronizeTime, _ := time.Parse("2006-01-02T15:04:05.000Z", c.Query("atpm_syncronize_time"))
+	queryValues := request.URL.Query()
+	PriceListCode := queryValues.Get("price_list_code")
+	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
+	brandId, _ := strconv.Atoi(queryValues.Get("brand_id"))
+	currencyId, _ := strconv.Atoi(queryValues.Get("currency_id"))
+	effectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
+	itemId, _ := strconv.Atoi(queryValues.Get("item_id"))
+	itemGroupId, _ := strconv.Atoi(queryValues.Get("item_group_id"))
+	itemClassId, _ := strconv.Atoi(queryValues.Get("item_class_id"))
+	priceListAmount, _ := strconv.ParseFloat(queryValues.Get("price_list_amount"), 64)
+	priceListModifiable := queryValues.Get("price_list_modifiable")
+	atpmSyncronize := queryValues.Get("atpm_syncronize")
+	atpmSyncronizeTime, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("atpm_syncronize_time"))
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode:       PriceListCode,
@@ -121,7 +121,7 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 
 	result := r.pricelistservice.GetPriceList(priceListRequest)
 
-	payloads.HandleSuccess(c, result, "success", 200)
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Save Price List
@@ -135,23 +135,20 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 // @Router /aftersales-service/api/aftersales/price-list [post]
 func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	var request masteritempayloads.PriceListResponse
+	var formRequest masteritempayloads.PriceListResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.pricelistservice.SavePriceList(request)
+	create := r.pricelistservice.SavePriceList(formRequest)
 
-	if request.PriceListId == 0 {
+	if formRequest.PriceListId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Price List
@@ -165,9 +162,9 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 // @Router /aftersales-service/api/aftersales/price-list/{price_list_id} [patch]
 func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	PriceListId, _ := strconv.Atoi(c.Param("price_list_id"))
+	PriceListId, _ := strconv.Atoi(params.ByName("price_list_id"))
 
 	response := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
 
-	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
