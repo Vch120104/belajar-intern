@@ -22,11 +22,11 @@ import (
 
 	// masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 
+	route "after-sales/api/route"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	migration "after-sales/generate/sql"
 	"net/http"
 	"os"
-	route "after-sales/api/route"
 )
 
 // @title After Sales API
@@ -78,22 +78,9 @@ func main() {
 		IncentiveGroupDetailService := masterserviceimpl.StartIncentiveGroupDetailService(IncentiveGroupDetailRepository, db)
 		IncentiveGroupDetailController := mastercontroller.NewIncentiveGroupDetailController(IncentiveGroupDetailService)
 
-
 		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
-
-		operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl()
-		operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository, db)
-		operationSectionController := masteroperationcontroller.NewOperationSectionController(operationSectionService)
-
-		operationEntriesRepository := masteroperationrepositoryimpl.StartOperationEntriesRepositoryImpl()
-		operationEntriesService := masteroperationserviceimpl.StartOperationEntriesService(operationEntriesRepository, db)
-		operationEntriesController := masteroperationcontroller.NewOperationEntriesController(operationEntriesService)
-
-		operationKeyRepository := masteroperationrepositoryimpl.StartOperationKeyRepositoryImpl()
-		operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository, db)
-		operationKeyController := masteroperationcontroller.NewOperationKeyController(operationKeyService)
 
 		operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl()
 		operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository, db)
@@ -155,7 +142,6 @@ func main() {
 		mux.Handle("/incentive-group/", IncentiveGroupRouter)
 		mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
 
-
 		mux.Handle("/operation-section/", OperationSectionRouter)
 		mux.Handle("/operation-key/", OperationKeyRouter)
 		mux.Handle("/operation-entries/", OperationEntriesRouter)
@@ -164,7 +150,7 @@ func main() {
 		mux.Handle("/markup-rate/", MarkupRateRouter)
 		mux.Handle("/warehouse-group/", WarehouseGroup)
 		mux.Handle("/warehouse-location/", WarehouseLocation)
-		mux.Handle("/warehouse-master/", WarehouseMaster)		
+		mux.Handle("/warehouse-master/", WarehouseMaster)
 		mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 
 		//Swagger

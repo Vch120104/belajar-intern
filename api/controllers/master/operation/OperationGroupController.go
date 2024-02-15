@@ -49,7 +49,6 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-group [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	query := request.URL.Query()
 
 	queryValues := request.URL.Query()
 
