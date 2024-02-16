@@ -103,7 +103,7 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(Code string) (masterpayloads.
 	rows, err := r.myDB.Model(&entities).
 		Where(masterentities.Discount{
 			DiscountCodeValue: Code,
-		}).
+	}).
 		First(&response).
 		Rows()
 
