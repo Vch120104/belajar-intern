@@ -43,10 +43,11 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (masteritempayloads.ItemSubstitutePayloads, error) {
-	entities := masteritementities.ItemSubstitute{}
 	response := masteritempayloads.ItemSubstitutePayloads{}
+	tableStruct := masteritempayloads.ItemSubstitutePayloads{}
+	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masteritementities.ItemSubstitute{ItemSubstituteId: id})
 
-	rows, err := tx.Model(&entities).Where(masteritementities.ItemSubstitute{ItemSubstituteId: id}).First(&response).Rows()
+	rows, err := baseModelQuery.First(&response).Rows()
 
 	if err != nil {
 		return response, err
@@ -79,10 +80,12 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstituteDetail(tx *gorm.DB, id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, error) {
-	entities := masteritementities.ItemSubstituteDetail{}
 	response := masteritempayloads.ItemSubstituteDetailGetPayloads{}
+	tableStruct := masteritempayloads.ItemSubstituteDetailPayloads{}
+	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteId: id})
 
-	rows, err := tx.Model(&entities).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteDetailId: id}).First(&response).Rows()
+
+	rows, err := baseModelQuery.First(&response).Rows()
 
 	if err != nil {
 		return response, err
