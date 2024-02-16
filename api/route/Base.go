@@ -37,8 +37,8 @@ func DiscountRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/discount/", discountController.GetAllDiscount)
-	router.GET("/discount-drop-down/", discountController.GetAllDiscountIsActive)
-	router.GET("/discount-by-code/:discount_code", discountController.GetDiscountByCode)
+	router.GET("/discount/drop-down/", discountController.GetAllDiscountIsActive)
+	router.GET("/discount/by-code/:discount_code", discountController.GetDiscountByCode)
 	router.POST("/discount/", discountController.SaveDiscount)
 	router.PATCH("/discount/:discount_code_id", discountController.ChangeStatusDiscount)
 
