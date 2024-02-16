@@ -31,6 +31,22 @@ func DiscountPercentRouter(
 	return router
 }
 
+func DiscountRouter(
+
+	discountController mastercontroller.DiscountController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/discount/", discountController.GetAllDiscount)
+	router.GET("/discount-drop-down/", discountController.GetAllDiscountIsActive)
+	router.GET("/discount-by-code/:discount_code", discountController.GetDiscountByCode)
+	router.POST("/discount/", discountController.SaveDiscount)
+	router.PATCH("/discount/:discount_code_id", discountController.ChangeStatusDiscount)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func WarehouseMasterRouter(
 	warehouseMasterController masterwarehousecontroller.WarehouseMasterController,
 ) *httprouter.Router {
@@ -201,7 +217,7 @@ func OperationEntriesRouter(
 
 func OperationKeyRouter(
 	operationKeyController masteroperationcontroller.OperationKeyController,
- 
+
 ) *httprouter.Router {
 	router := httprouter.New()
 

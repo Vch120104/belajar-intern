@@ -16,23 +16,13 @@ import (
 )
 
 type DiscountRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartDiscountRepositoryImpl(db *gorm.DB) masterrepository.DiscountRepository {
-	return &DiscountRepositoryImpl{myDB: db}
+func StartDiscountRepositoryImpl() masterrepository.DiscountRepository {
+	return &DiscountRepositoryImpl{}
 }
 
-func (r *DiscountRepositoryImpl) WithTrx(trxHandle *gorm.DB) masterrepository.DiscountRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *DiscountRepositoryImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := masterentities.Discount{}
 	var responses []masterpayloads.DiscountResponse
 	newLogger := logger.New(
@@ -44,16 +34,16 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(filterCondition []utils.FilterCo
 		},
 	)
 
-	r.myDB.Logger = newLogger
+	tx.Logger = newLogger
 	//define base model
-	baseModelQuery := r.myDB.Model(&entities)
+	baseModelQuery := tx.Model(&entities)
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+	rows, _ := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
-	if err != nil {
-		return pages, err
+	if len(responses) == 0 {
+		return pages, gorm.ErrRecordNotFound
 	}
 
 	defer rows.Close()
@@ -63,24 +53,37 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(filterCondition []utils.FilterCo
 	return pages, nil
 }
 
-func (r *DiscountRepositoryImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, error) {
+func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpayloads.DiscountResponse, error) {
 	var Discounts []masterentities.Discount
 	response := []masterpayloads.DiscountResponse{}
 
-	err := r.myDB.Model(&Discounts).Where("is_active = 'true'").Scan(&response).Error
+	newLogger := logger.New(
+		log.New(log.Writer(), "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold: time.Second,
+			LogLevel:      logger.Info,
+			Colorful:      true,
+		},
+	)
 
-	if err != nil {
-		return response, err
+	tx.Logger = newLogger
+
+	rows, _ := tx.Model(&Discounts).Where("is_active = 'true'").Scan(&response).Rows()
+
+	if len(response) == 0 {
+		return response, gorm.ErrRecordNotFound
 	}
+
+	defer rows.Close()
 
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) GetDiscountById(Id int) (masterpayloads.DiscountResponse, error) {
+func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpayloads.DiscountResponse, error) {
 	entities := masterentities.Discount{}
 	response := masterpayloads.DiscountResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masterentities.Discount{
 			DiscountCodeId: Id,
 		}).
@@ -96,14 +99,14 @@ func (r *DiscountRepositoryImpl) GetDiscountById(Id int) (masterpayloads.Discoun
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, error) {
+func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (masterpayloads.DiscountResponse, error) {
 	entities := masterentities.Discount{}
 	response := masterpayloads.DiscountResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masterentities.Discount{
 			DiscountCodeValue: Code,
-	}).
+		}).
 		First(&response).
 		Rows()
 
@@ -116,7 +119,7 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(Code string) (masterpayloads.
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) SaveDiscount(req masterpayloads.DiscountResponse) (bool, error) {
+func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, error) {
 	entities := masterentities.Discount{
 		IsActive:                req.IsActive,
 		DiscountCodeId:          req.DiscountCodeId,
@@ -124,7 +127,7 @@ func (r *DiscountRepositoryImpl) SaveDiscount(req masterpayloads.DiscountRespons
 		DiscountCodeDescription: req.DiscountCodeDescription,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -133,10 +136,10 @@ func (r *DiscountRepositoryImpl) SaveDiscount(req masterpayloads.DiscountRespons
 	return true, nil
 }
 
-func (r *DiscountRepositoryImpl) ChangeStatusDiscount(Id int) (bool, error) {
+func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool, error) {
 	var entities masterentities.Discount
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("discount_code_id = ?", Id).
 		First(&entities)
 
@@ -150,7 +153,7 @@ func (r *DiscountRepositoryImpl) ChangeStatusDiscount(Id int) (bool, error) {
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

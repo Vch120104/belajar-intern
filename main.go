@@ -102,6 +102,10 @@ func main() {
 		discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
 		discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
 
+		discountRepository := masterrepositoryimpl.StartDiscountRepositoryImpl()
+		discountService := masterserviceimpl.StartDiscountService(discountRepository, db)
+		discountController := mastercontroller.NewDiscountController(discountService)
+
 		markupRateRepository := masteritemrepositoryimpl.StartMarkupRateRepositoryImpl()
 		markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db)
 		markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
@@ -127,6 +131,7 @@ func main() {
 		OperationKeyRouter := route.OperationKeyRouter(operationKeyController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
+		DiscountRouter := route.DiscountRouter(discountController)
 		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
 		WarehouseGroup := route.WarehouseGroupRouter(warehouseGroupController)
 		WarehouseLocation := route.WarehouseLocationRouter(warehouseLocationController)
@@ -147,6 +152,7 @@ func main() {
 		mux.Handle("/operation-entries/", OperationEntriesRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
+		mux.Handle("/discount/", DiscountRouter)
 		mux.Handle("/markup-rate/", MarkupRateRouter)
 		mux.Handle("/warehouse-group/", WarehouseGroup)
 		mux.Handle("/warehouse-location/", WarehouseLocation)
