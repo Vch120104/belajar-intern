@@ -128,8 +128,8 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	}
 
 	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: params.ByName("sort_of"),
 		SortBy: params.ByName("sort_by"),
 	}

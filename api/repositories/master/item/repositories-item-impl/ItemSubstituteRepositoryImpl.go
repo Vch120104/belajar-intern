@@ -24,7 +24,6 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	tableStruct := masteritempayloads.ItemSubstitutePayloads{}
 	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	//apply filter
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Rows()
@@ -111,7 +110,7 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, error) {
 	entities := masteritementities.ItemSubstituteDetail{
 		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
-		SubstituteItemId:       req.SubstituteItemId,
+		ItemId:                 req.ItemId,
 		ItemSubstituteId:       id,
 		Quantity:               req.Quantity,
 		Sequence:               req.Sequence,
@@ -152,41 +151,41 @@ func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id
 }
 
 func (r *ItemSubstituteRepositoryImpl) DeactivateItemSubstituteDetail(tx *gorm.DB, id string) (bool, error) {
-    idSlice := strings.Split(id, ",")
+	idSlice := strings.Split(id, ",")
 
-    for _, Ids := range idSlice {
-        var entityToUpdate masteritementities.ItemSubstituteDetail
-        err := tx.Model(&entityToUpdate).Where("item_substitute_detail_id = ?", Ids).First(&entityToUpdate).Error
-        if err != nil {
-            return false, err
-        }
+	for _, Ids := range idSlice {
+		var entityToUpdate masteritementities.ItemSubstituteDetail
+		err := tx.Model(&entityToUpdate).Where("item_substitute_detail_id = ?", Ids).First(&entityToUpdate).Error
+		if err != nil {
+			return false, err
+		}
 
-        entityToUpdate.IsActive = false // Set IsActive to false
-        result := tx.Save(&entityToUpdate)
-        if result.Error != nil {
-            return false, result.Error
-        }
-    }
+		entityToUpdate.IsActive = false
+		result := tx.Save(&entityToUpdate)
+		if result.Error != nil {
+			return false, result.Error
+		}
+	}
 
-    return true, nil
+	return true, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) ActivateItemSubstituteDetail(tx *gorm.DB, id string) (bool, error) {
-    idSlice := strings.Split(id, ",")
+	idSlice := strings.Split(id, ",")
 
-    for _, Ids := range idSlice {
-        var entityToUpdate masteritementities.ItemSubstituteDetail
-        err := tx.Model(&entityToUpdate).Where("item_substitute_detail_id = ?", Ids).First(&entityToUpdate).Error
-        if err != nil {
-            return false, err
-        }
+	for _, Ids := range idSlice {
+		var entityToUpdate masteritementities.ItemSubstituteDetail
+		err := tx.Model(&entityToUpdate).Where("item_substitute_detail_id = ?", Ids).First(&entityToUpdate).Error
+		if err != nil {
+			return false, err
+		}
 
-        entityToUpdate.IsActive = true
-        result := tx.Save(&entityToUpdate)
-        if result.Error != nil {
-            return false, result.Error
-        }
-    }
+		entityToUpdate.IsActive = true
+		result := tx.Save(&entityToUpdate)
+		if result.Error != nil {
+			return false, result.Error
+		}
+	}
 
-    return true, nil
+	return true, nil
 }
