@@ -44,17 +44,17 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) masteritempayl
 	return result
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(filtercondition []utils.FilterCondition, pages pagination.Pagination, id int) pagination.Pagination {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.Pagination, id int) pagination.Pagination {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, filtercondition, pages, id)
+	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, pages, id)
 	if err != nil {
 		panic(exceptions.NewAppExceptionError(err.Error()))
 	}
 	return result
 }
 
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailPayloads {
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailGetPayloads {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstituteDetail(tx, id)
@@ -65,7 +65,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) masterit
 	return result
 }
 
-func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePayloads) bool {
+func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) bool {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -76,11 +76,11 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.It
 	return result
 }
 
-func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPayloads) bool {
+func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) bool {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req)
+	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req,id)
 	if err != nil {
 		panic(exceptions.NewAppExceptionError(err.Error()))
 	}

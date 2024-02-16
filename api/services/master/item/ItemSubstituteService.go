@@ -9,10 +9,10 @@ import (
 type ItemSubstituteService interface {
 	GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination
 	GetByIdItemSubstitute(id int) masteritempayloads.ItemSubstitutePayloads
-	GetAllItemSubstituteDetail([]utils.FilterCondition, pagination.Pagination,int) pagination.Pagination
-	GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailPayloads
-	SaveItemSubstitute(req masteritempayloads.ItemSubstitutePayloads) bool
-	SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPayloads) bool
+	GetAllItemSubstituteDetail(pagination.Pagination,int) pagination.Pagination
+	GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailGetPayloads
+	SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) bool
+	SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) bool
 	ChangeStatusItemOperation(id int) bool
 	DeactivateItemSubstituteDetail(id string)bool
 	ActivateItemSubstituteDetail(id string)bool

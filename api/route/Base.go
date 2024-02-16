@@ -49,13 +49,15 @@ func ItemSubstituteRouter(
 	itemSubstituteController masteritemcontroller.ItemSubstituteController,
 ) *httprouter.Router{
 	router := httprouter.New()
-	router.GET("/api/aftersales/item-substitute",itemSubstituteController.GetAllItemSubstitute)
-	router.GET("/api/aftersales/item-substitute-id/:item_substitute_id",itemSubstituteController.GetByIdItemSubstitute)
-	router.GET("/api/aftersales/item-substitute-detail",itemSubstituteController.GetAllItemSubstituteDetail)
-	router.GET("/api/aftersales/item-substitute-detail-id/:item_substitute_detail_id",itemSubstituteController.GetByIdItemSubstituteDetail)
-	router.POST("/api/aftersales/item-substitute",itemSubstituteController.SaveItemSubstitute)
-	router.POST("/api/aftersales/item-substitute-detail",itemSubstituteController.SaveItemSubstituteDetail)
-	router.PATCH("/api/aftersales/item-substitute",itemSubstituteController.ChangeStatusOperationGroup)
+	router.GET("/item-substitute/",itemSubstituteController.GetAllItemSubstitute)
+	router.GET("/item-substitute/header/by-id/:item_substitute_id",itemSubstituteController.GetByIdItemSubstitute)
+	router.GET("/item-substitute/detail/all/by-id/:item_substitute_id",itemSubstituteController.GetAllItemSubstituteDetail)
+	router.GET("/item-substitute/detail/by-id/:item_substitute_detail_id",itemSubstituteController.GetByIdItemSubstituteDetail)
+	router.POST("/item-substitute/",itemSubstituteController.SaveItemSubstitute)
+	router.POST("/item-substitute/detail/:item_substitute_id",itemSubstituteController.SaveItemSubstituteDetail)
+	router.PATCH("/item-substitute/header/by-id/:item_substitute_id",itemSubstituteController.ChangeStatusItemSubstitute)
+	router.PATCH("/item-substitute/detail/activate/by-id/",itemSubstituteController.ActivateItemSubstituteDetail)
+	router.PATCH("/item-substitute/detail/deactivate/by-id/",itemSubstituteController.DeactivateItemSubstituteDetail)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

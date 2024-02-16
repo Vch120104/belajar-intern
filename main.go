@@ -56,12 +56,13 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
+		config.InitLogger(db)
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 
 		itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
-		itemSubstituteService:= masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository,db)
-		itemSubstituteController:= masteritemcontroller.NewItemSubstituteController(itemSubstituteService)
+		itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db)
+		itemSubstituteController := masteritemcontroller.NewItemSubstituteController(itemSubstituteService)
 
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
@@ -90,7 +91,7 @@ func main() {
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
-		mux.Handle("/item-substitute",ItemSubstituteRouter)
+		mux.Handle("/item-substitute/", ItemSubstituteRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
 		mux.Handle("/markup-rate/", MarkupRateRouter)
 
