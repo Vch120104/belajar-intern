@@ -8,12 +8,11 @@ import (
 )
 
 type ItemRepository interface {
-	WithTrx(trxHandle *gorm.DB) ItemRepository
-	GetAllItem(filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error)
-	GetAllItemLookup(map[string]string) ([]map[string]interface{}, error)
-	GetItemById(Id int) (masteritempayloads.ItemResponse, error)
-	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, error)
-	GetItemCode(string) ([]map[string]interface{}, error)
-	SaveItem(masteritempayloads.ItemResponse) (bool, error)
-	ChangeStatusItem(Id int) (bool, error)
+	GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error)
+	GetAllItemLookup(*gorm.DB, map[string]string) ([]map[string]interface{}, error)
+	GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, error)
+	GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, error)
+	GetItemCode(*gorm.DB, string) ([]map[string]interface{}, error)
+	SaveItem(*gorm.DB, masteritempayloads.ItemResponse) (bool, error)
+	ChangeStatusItem(tx *gorm.DB, Id int) (bool, error)
 }

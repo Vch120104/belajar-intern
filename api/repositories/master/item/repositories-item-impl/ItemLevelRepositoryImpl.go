@@ -7,33 +7,21 @@ import (
 	masteritemlevelpayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 
-	"log"
-
 	"gorm.io/gorm"
 )
 
 type ItemLevelImpl struct {
-	DB *gorm.DB
 }
 
-func StartItemLevelRepositoryImpl(db *gorm.DB) masteritemlevelrepo.ItemLevelRepository {
-	return &ItemLevelImpl{DB: db}
+func StartItemLevelRepositoryImpl() masteritemlevelrepo.ItemLevelRepository {
+	return &ItemLevelImpl{}
 }
 
-func (r *ItemLevelImpl) WithTrx(Trxhandle *gorm.DB) masteritemlevelrepo.ItemLevelRepository {
-	if Trxhandle == nil {
-		log.Println("Transaction Database Not Found")
-		return r
-	}
-	r.DB = Trxhandle
-	return r
-}
-
-func (r *ItemLevelImpl) GetAll(request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *ItemLevelImpl) GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, error) {
 	var entities []masteritementities.ItemLevel
 	var itemLevelResponse []masteritemlevelpayloads.GetAllItemLevelResponse
 
-	tempRows := r.DB.
+	tempRows := tx.
 		Select("mtr_item_level.is_active, mtr_item_level.item_level_id, mtr_item_level.item_level, mtr_item_level.item_level_code, mtr_item_level.item_level_name, mtr_item_level.item_class_id, mtr_item_level.item_level_parent, mtr_item_class.item_class_code").
 		Table("mtr_item_level").
 		Joins("JOIN mtr_item_class ON mtr_item_level.item_class_id = mtr_item_class.item_class_id").
@@ -62,12 +50,12 @@ func (r *ItemLevelImpl) GetAll(request masteritemlevelpayloads.GetAllItemLevelRe
 	return pages, nil
 }
 
-func (r *ItemLevelImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, error) {
+func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, error) {
 
 	var entities masteritementities.ItemLevel
 	var itemLevelResponse masteritemlevelpayloads.GetItemLevelResponseById
 
-	rows, err := r.DB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritemlevelpayloads.GetItemLevelResponseById{
 			ItemLevelId: itemLevelId,
 		}).
@@ -84,7 +72,7 @@ func (r *ItemLevelImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetIte
 	return itemLevelResponse, nil
 }
 
-func (r *ItemLevelImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, error) {
+func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, error) {
 
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
@@ -96,7 +84,7 @@ func (r *ItemLevelImpl) Save(request masteritemlevelpayloads.SaveItemLevelReques
 		ItemLevelName:   request.ItemLevelName,
 	}
 
-	err := r.DB.Save(&itemLevelEntities).Error
+	err := tx.Save(&itemLevelEntities).Error
 
 	if err != nil {
 		return false, err
@@ -105,10 +93,10 @@ func (r *ItemLevelImpl) Save(request masteritemlevelpayloads.SaveItemLevelReques
 	return true, nil
 }
 
-func (r *ItemLevelImpl) ChangeStatus(Id int) (bool, error) {
+func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteritementities.ItemLevel
 
-	result := r.DB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("item_level_id = ?", Id).
 		First(&entities)
 
@@ -122,7 +110,7 @@ func (r *ItemLevelImpl) ChangeStatus(Id int) (bool, error) {
 		entities.IsActive = true
 	}
 
-	result = r.DB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

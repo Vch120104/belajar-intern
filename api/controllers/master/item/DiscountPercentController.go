@@ -82,7 +82,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [get]
 func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	
+
 	discountPercentId, _ := strconv.Atoi(params.ByName("discount_percent_id"))
 
 	result := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
@@ -126,7 +126,7 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [patch]
 func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	
+
 	discountPercentId, _ := strconv.Atoi(params.ByName("discount_percent_id"))
 
 	response := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))

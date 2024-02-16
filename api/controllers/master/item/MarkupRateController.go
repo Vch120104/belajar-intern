@@ -87,7 +87,7 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [get]
 func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	
+
 	markupRateId, _ := strconv.Atoi(params.ByName("markup_rate_id"))
 
 	result := r.MarkupRateService.GetMarkupRateById(markupRateId)
@@ -105,7 +105,7 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate [post]
 func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	
+
 	var formRequest masteritempayloads.MarkupRateRequest
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
@@ -131,7 +131,7 @@ func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [patch]
 func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	
+
 	markupRateId, _ := strconv.Atoi(params.ByName("markup_rate_id"))
 
 	response := r.MarkupRateService.ChangeStatusMarkupRate(int(markupRateId))
