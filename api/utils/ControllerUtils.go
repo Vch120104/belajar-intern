@@ -10,6 +10,7 @@ import (
 )
 
 // convert Pascal to Snake Case for json response
+//
 func ModifyKeysInResponse(data interface{}) interface{} {
 	v := reflect.ValueOf(data)
 
