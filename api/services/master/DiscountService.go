@@ -5,15 +5,13 @@ import (
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 
-	"gorm.io/gorm"
 )
 
 type DiscountService interface {
-	WithTrx(trxHandle *gorm.DB) DiscountService
-	GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error)
-	GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, error)
-	GetDiscountById(Id int) (masterpayloads.DiscountResponse, error)
-	GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, error)
-	SaveDiscount(req masterpayloads.DiscountResponse) (bool, error)
-	ChangeStatusDiscount(Id int) (bool, error)
+	GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination
+	GetAllDiscountIsActive() []masterpayloads.DiscountResponse
+	GetDiscountById(Id int) masterpayloads.DiscountResponse
+	GetDiscountByCode(Code string) masterpayloads.DiscountResponse
+	SaveDiscount(req masterpayloads.DiscountResponse) bool
+	ChangeStatusDiscount(Id int) bool
 }

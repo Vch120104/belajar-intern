@@ -31,6 +31,22 @@ func DiscountPercentRouter(
 	return router
 }
 
+func DiscountRouter(
+
+	discountController mastercontroller.DiscountController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/discount/", discountController.GetAllDiscount)
+	router.GET("/discount/drop-down/", discountController.GetAllDiscountIsActive)
+	router.GET("/discount/by-code/:discount_code", discountController.GetDiscountByCode)
+	router.POST("/discount/", discountController.SaveDiscount)
+	router.PATCH("/discount/:discount_code_id", discountController.ChangeStatusDiscount)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func WarehouseMasterRouter(
 	warehouseMasterController masterwarehousecontroller.WarehouseMasterController,
 ) *httprouter.Router {
@@ -167,6 +183,50 @@ func ShiftScheduleRouter(
 
 	router.PanicHandler = exceptions.ErrorHandler
 
+	return router
+}
+
+func OperationSectionRouter(
+	operationSectionController masteroperationcontroller.OperationSectionController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/operation-section/", operationSectionController.GetAllOperationSectionList)
+	router.GET("/operation-section/by-id/:operation_section_id", operationSectionController.GetOperationSectionByID)
+	router.GET("/operation-section/by-name", operationSectionController.GetOperationSectionName)
+	router.GET("/operation-section/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
+	router.PUT("/operation-section/", operationSectionController.SaveOperationSection)
+	router.PATCH("/operation-section/:operation_section_id", operationSectionController.ChangeStatusOperationSection)
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func OperationEntriesRouter(
+	operationEntriesController masteroperationcontroller.OperationEntriesController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/operation-entries/", operationEntriesController.GetAllOperationEntries)
+	router.GET("/operation-entries/:operation_entries_id", operationEntriesController.GetOperationEntriesByID)
+	router.GET("/operation-entries-by-name/", operationEntriesController.GetOperationEntriesName)
+	router.POST("/operation-entries/", operationEntriesController.SaveOperationEntries)
+	router.PATCH("/operation-entries/:operation_entries_id", operationEntriesController.ChangeStatusOperationEntries)
+
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func OperationKeyRouter(
+	operationKeyController masteroperationcontroller.OperationKeyController,
+
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/operation-key/:operation_key_id", operationKeyController.GetOperationKeyByID)
+	router.GET("/operation-key/", operationKeyController.GetAllOperationKeyList)
+	router.GET("/operation-key-name/", operationKeyController.GetOperationKeyName)
+	router.POST("/operation-key/", operationKeyController.SaveOperationKey)
+	router.PATCH("/operation-key/:operation_key_id", operationKeyController.ChangeStatusOperationKey)
+	router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 

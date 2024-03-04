@@ -7,54 +7,32 @@ import (
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
 
 type OperationSectionRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartOperationSectionRepositoryImpl(db *gorm.DB) masteroperationrepository.OperationSectionRepository {
-	return &OperationSectionRepositoryImpl{myDB: db}
+func StartOperationSectionRepositoryImpl() masteroperationrepository.OperationSectionRepository {
+	return &OperationSectionRepositoryImpl{}
 }
 
-func (r *OperationSectionRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteroperationrepository.OperationSectionRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *OperationSectionRepositoryImpl) GetAllOperationSection() ([]masteroperationpayloads.OperationSectionResponse, error) {
-	var OperationSections masteroperationentities.OperationSection
-	var response []masteroperationpayloads.OperationSectionResponse
-
-	rows, err := r.myDB.Model(&OperationSections).Scan(response).Rows()
-
-	if err != nil {
-		return response, err
-	}
-
-	defer rows.Close()
-
-	return response, nil
-}
-
-func (r *OperationSectionRepositoryImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *OperationSectionRepositoryImpl) GetAllOperationSectionList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := masteroperationentities.OperationSection{}
 	var responses []masteroperationpayloads.OperationSectionListResponse
 	// define table struct
 	tableStruct := masteroperationpayloads.OperationSectionListResponse{}
 	//define join table
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	//apply pagination and execute
 	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+
+	if len(responses) == 0 {
+		return pages, gorm.ErrRecordNotFound
+	}
 
 	if err != nil {
 		return pages, err
@@ -68,10 +46,10 @@ func (r *OperationSectionRepositoryImpl) GetAllOperationSectionList(filterCondit
 
 }
 
-func (r *OperationSectionRepositoryImpl) GetOperationSectionName(GroupId int, SectionCode string) (masteroperationpayloads.OperationSectionNameResponse, error) {
+func (r *OperationSectionRepositoryImpl) GetOperationSectionName(tx *gorm.DB, GroupId int, SectionCode string) (masteroperationpayloads.OperationSectionNameResponse, error) {
 	tableStruct := masteroperationpayloads.OperationSectionNameResponse{}
 
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
 	row, err := joinTable.Where("mtr_operation_group.operation_group_id = ?", GroupId).
 		Where("mtr_operation_section.operation_section_code = ?", SectionCode).
@@ -86,17 +64,21 @@ func (r *OperationSectionRepositoryImpl) GetOperationSectionName(GroupId int, Se
 	return tableStruct, nil
 }
 
-func (r *OperationSectionRepositoryImpl) GetSectionCodeByGroupId(GroupId string) ([]masteroperationpayloads.OperationSectionCodeResponse, error) {
+func (r *OperationSectionRepositoryImpl) GetSectionCodeByGroupId(tx *gorm.DB, GroupId int) ([]masteroperationpayloads.OperationSectionCodeResponse, error) {
 	tableStruct := masteroperationpayloads.OperationSectionCodeResponse{}
 	var sliceTableStruct []masteroperationpayloads.OperationSectionCodeResponse
 
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
 	WhereQuery := joinTable.
 		Where("mtr_operation_group.operation_group_id = ?", GroupId).
 		Where("mtr_operation_section.is_active = 1")
 
 	rows, err := WhereQuery.Scan(&sliceTableStruct).Rows()
+
+	if len(sliceTableStruct) == 0 {
+		return sliceTableStruct, gorm.ErrRecordNotFound
+	}
 
 	if err != nil {
 		return sliceTableStruct, err
@@ -106,16 +88,14 @@ func (r *OperationSectionRepositoryImpl) GetSectionCodeByGroupId(GroupId string)
 	return sliceTableStruct, nil
 }
 
-func (r *OperationSectionRepositoryImpl) GetOperationSectionById(Id int) (masteroperationpayloads.OperationSectionResponse, error) {
-	entities := masteroperationentities.OperationSection{}
-	response := masteroperationpayloads.OperationSectionResponse{}
+func (r *OperationSectionRepositoryImpl) GetOperationSectionById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationSectionListResponse, error) {
+	response := masteroperationpayloads.OperationSectionListResponse{}
 
-	rows, err := r.myDB.Model(&entities).
-		Where(masteroperationentities.OperationSection{
-			OperationSectionId: Id,
-		}).
-		First(&response).
-		Rows()
+	joinTable := utils.CreateJoinSelectStatement(tx, response)
+
+	whereQuery := joinTable.Where("operation_section_id = ?", Id)
+
+	rows, err := whereQuery.First(&response).Rows()
 
 	if err != nil {
 		return response, err
@@ -126,7 +106,7 @@ func (r *OperationSectionRepositoryImpl) GetOperationSectionById(Id int) (master
 	return response, nil
 }
 
-func (r *OperationSectionRepositoryImpl) SaveOperationSection(request masteroperationpayloads.OperationSectionRequest) (bool, error) {
+func (r *OperationSectionRepositoryImpl) SaveOperationSection(tx *gorm.DB, request masteroperationpayloads.OperationSectionRequest) (bool, error) {
 	entities := masteroperationentities.OperationSection{
 		IsActive:                    request.IsActive,
 		OperationSectionId:          request.OperationSectionId,
@@ -135,7 +115,7 @@ func (r *OperationSectionRepositoryImpl) SaveOperationSection(request masteroper
 		OperationSectionDescription: request.OperationSectionDescription,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -144,10 +124,10 @@ func (r *OperationSectionRepositoryImpl) SaveOperationSection(request masteroper
 	return true, nil
 }
 
-func (r *OperationSectionRepositoryImpl) ChangeStatusOperationSection(Id int) (bool, error) {
+func (r *OperationSectionRepositoryImpl) ChangeStatusOperationSection(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteroperationentities.OperationSection
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("operation_section_id = ?", Id).
 		First(&entities)
 
@@ -162,7 +142,7 @@ func (r *OperationSectionRepositoryImpl) ChangeStatusOperationSection(Id int) (b
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

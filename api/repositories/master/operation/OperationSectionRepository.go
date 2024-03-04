@@ -10,12 +10,10 @@ import (
 )
 
 type OperationSectionRepository interface {
-	WithTrx(trxHandle *gorm.DB) OperationSectionRepository
-	GetAllOperationSection() ([]masteroperationpayloads.OperationSectionResponse, error)
-	GetOperationSectionById(int) (masteroperationpayloads.OperationSectionResponse, error)
-	GetSectionCodeByGroupId(string) ([]masteroperationpayloads.OperationSectionCodeResponse, error)
-	GetOperationSectionName(int, string) (masteroperationpayloads.OperationSectionNameResponse, error)
-	GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error)
-	SaveOperationSection(masteroperationpayloads.OperationSectionRequest) (bool, error)
-	ChangeStatusOperationSection(int) (bool, error)
+	GetOperationSectionById(*gorm.DB, int) (masteroperationpayloads.OperationSectionListResponse, error)
+	GetSectionCodeByGroupId(*gorm.DB, int) ([]masteroperationpayloads.OperationSectionCodeResponse, error)
+	GetOperationSectionName(*gorm.DB, int, string) (masteroperationpayloads.OperationSectionNameResponse, error)
+	GetAllOperationSectionList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
+	SaveOperationSection(*gorm.DB, masteroperationpayloads.OperationSectionRequest) (bool, error)
+	ChangeStatusOperationSection(*gorm.DB, int) (bool, error)
 }

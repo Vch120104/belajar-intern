@@ -1,56 +1,85 @@
 package masteroperationserviceimpl
 
 import (
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
+	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	masteroperationservice "after-sales/api/services/master/operation"
+	"after-sales/api/utils"
 
 	"gorm.io/gorm"
 )
 
 type OperationEntriesServiceImpl struct {
 	operationEntriesRepo masteroperationrepository.OperationEntriesRepository
+	DB                   *gorm.DB
 }
 
-func StartOperationEntriesService(operationEntriesRepo masteroperationrepository.OperationEntriesRepository) masteroperationservice.OperationEntriesService {
+func StartOperationEntriesService(operationEntriesRepo masteroperationrepository.OperationEntriesRepository, db *gorm.DB) masteroperationservice.OperationEntriesService {
 	return &OperationEntriesServiceImpl{
 		operationEntriesRepo: operationEntriesRepo,
+		DB:                   db,
 	}
 }
 
-func (s *OperationEntriesServiceImpl) WithTrx(trxHandle *gorm.DB) masteroperationservice.OperationEntriesService {
-	s.operationEntriesRepo = s.operationEntriesRepo.WithTrx(trxHandle)
-	return s
-}
-
-func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int32) (masteroperationpayloads.OperationEntriesResponse, error) {
-	results, err := s.operationEntriesRepo.GetOperationEntriesById(id)
+func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationEntriesRepo.GetAllOperationEntries(tx, filterCondition, pages)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, error) {
-	results, err := s.operationEntriesRepo.GetOperationEntriesName(request)
+func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) masteroperationpayloads.OperationEntriesResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationEntriesRepo.GetOperationEntriesById(tx, id)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) (bool, error) {
-	results, err := s.operationEntriesRepo.SaveOperationEntries(req)
+func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) masteroperationpayloads.OperationEntriesResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationEntriesRepo.GetOperationEntriesName(tx, request)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, error) {
-	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(Id)
-	if err != nil {
-		return results, err
+func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	
+	if req.OperationEntriesId != 0 {
+		_, err := s.operationEntriesRepo.GetOperationEntriesById(tx, req.OperationEntriesId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
 	}
-	return results, nil
+
+	results, err := s.operationEntriesRepo.SaveOperationEntries(tx, req)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
+}
+
+func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(tx, Id)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }
