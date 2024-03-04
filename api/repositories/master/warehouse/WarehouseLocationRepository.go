@@ -8,9 +8,8 @@ import (
 )
 
 type WarehouseLocationRepository interface {
-	WithTrx(trxHandle *gorm.DB) WarehouseLocationRepository
-	Save(masterwarehousepayloads.GetWarehouseLocationResponse) (bool, error)
-	GetById(int) (masterwarehousepayloads.GetWarehouseLocationResponse, error)
-	GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, error)
-	ChangeStatus(int) (masterwarehousepayloads.GetWarehouseLocationResponse, error)
+	Save(*gorm.DB, masterwarehousepayloads.GetWarehouseLocationResponse) (bool, error)
+	GetById(*gorm.DB, int) (masterwarehousepayloads.GetWarehouseLocationResponse, error)
+	GetAll(*gorm.DB, masterwarehousepayloads.GetAllWarehouseLocationRequest, pagination.Pagination) (pagination.Pagination, error)
+	ChangeStatus(*gorm.DB, int) (masterwarehousepayloads.GetWarehouseLocationResponse, error)
 }

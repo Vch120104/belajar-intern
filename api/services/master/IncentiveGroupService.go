@@ -1,12 +1,15 @@
 package masterservice
 
 import (
-	masterpayloads "after-sales/api/payloads/master"
-
-	"gorm.io/gorm"
+	masterpayloads "after-sales/api/payloads/master" 
+	"after-sales/api/payloads/pagination"
+	"after-sales/api/utils"
 )
 
 type IncentiveGroupService interface {
-	WithTrx(trxHandle *gorm.DB) IncentiveGroupService
-	GetAllIncentiveGroupIsActive() ([]masterpayloads.IncentiveGroupResponse, error)
+	GetAllIncentiveGroup([]utils.FilterCondition,  pagination.Pagination) pagination.Pagination
+	GetAllIncentiveGroupIsActive() []masterpayloads.IncentiveGroupResponse
+	GetIncentiveGroupById(int) masterpayloads.IncentiveGroupResponse
+	SaveIncentiveGroup(masterpayloads.IncentiveGroupResponse) bool
+	ChangeStatusIncentiveGroup(int) bool
 }

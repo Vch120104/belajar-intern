@@ -37,7 +37,17 @@ func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) masterpayloads
 func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.ForecastMasterResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if req.ForecastMasterId != 0 {
+		_, err := s.ForecastMasterRepo.GetForecastMasterById(tx, req.ForecastMasterId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	results, err := s.ForecastMasterRepo.SaveForecastMaster(tx, req)
+
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
 	}
