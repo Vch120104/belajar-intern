@@ -243,6 +243,80 @@ func ForecastMasterRouter(
 
 	return router
 }
+
+func UnitOfMeasurementRouter(
+	unitOfMeasurementController masteritemcontroller.UnitOfMeasurementController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/unit-of-measurement/", unitOfMeasurementController.GetAllUnitOfMeasurement)
+	router.GET("/unit-of-measurement/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
+	router.GET("/unit-of-measurement/by-code/:uom_code", unitOfMeasurementController.GetUnitOfMeasurementByCode)
+	router.POST("/unit-of-measurement/", unitOfMeasurementController.SaveUnitOfMeasurement)
+	router.PATCH("/unit-of-measurement/:uom_id", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func MarkupMasterRouter(
+	markupMasterController masteritemcontroller.MarkupMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/markup-master/", markupMasterController.GetMarkupMasterList)
+	router.GET("/markup-master/by-code/:markup_master_code", markupMasterController.GetMarkupMasterByCode)
+	router.POST("/markup-master/", markupMasterController.SaveMarkupMaster)
+	router.PATCH("/markup-master/:markup_master_id", markupMasterController.ChangeStatusMarkupMaster)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemLevelRouter(
+	itemLevelController masteritemcontroller.ItemLevelController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/item-level/", itemLevelController.GetAll)
+	router.GET("/item-level/:item_level_id", itemLevelController.GetById)
+	router.POST("/item-level/", itemLevelController.Save)
+	router.PATCH("/item-level/:item_level_id", itemLevelController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemRouter(
+	itemController masteritemcontroller.ItemController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/item/", itemController.GetAllItem)
+	router.GET("/item/pop-up/", itemController.GetAllItemLookup)
+	router.GET("/item/multi-id/:item_ids", itemController.GetItemWithMultiId)
+	router.GET("/item/by-code/:item_code", itemController.GetItemByCode)
+	router.POST("/item/", itemController.SaveItem)
+	router.PATCH("/item/:item_id", itemController.ChangeStatusItem)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func PriceListRouter(
+	priceListController masteritemcontroller.PriceListController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/price-list/", priceListController.GetPriceList)
+	router.GET("/price-list/pop-up/", priceListController.GetPriceListLookup)
+	router.POST("/price-list/", priceListController.SavePriceList)
+	router.PATCH("/price-list/:price_list_id", priceListController.ChangeStatusPriceList)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func SwaggerRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
