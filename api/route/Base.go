@@ -110,6 +110,25 @@ func MarkupRateRouter(
 	return router
 }
 
+func ItemSubstituteRouter(
+	itemSubstituteController masteritemcontroller.ItemSubstituteController,
+) *httprouter.Router{
+	router := httprouter.New()
+	router.GET("/item-substitute/",itemSubstituteController.GetAllItemSubstitute)
+	router.GET("/item-substitute/header/by-id/:item_substitute_id",itemSubstituteController.GetByIdItemSubstitute)
+	router.GET("/item-substitute/detail/all/by-id/:item_substitute_id",itemSubstituteController.GetAllItemSubstituteDetail)
+	router.GET("/item-substitute/detail/by-id/:item_substitute_detail_id",itemSubstituteController.GetByIdItemSubstituteDetail)
+	router.POST("/item-substitute/",itemSubstituteController.SaveItemSubstitute)
+	router.POST("/item-substitute/detail/:item_substitute_id",itemSubstituteController.SaveItemSubstituteDetail)
+	router.PATCH("/item-substitute/header/by-id/:item_substitute_id",itemSubstituteController.ChangeStatusItemSubstitute)
+	router.PATCH("/item-substitute/detail/activate/by-id/",itemSubstituteController.ActivateItemSubstituteDetail)
+	router.PATCH("/item-substitute/detail/deactivate/by-id/",itemSubstituteController.DeactivateItemSubstituteDetail)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {

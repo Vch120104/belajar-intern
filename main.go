@@ -2,12 +2,12 @@ package main
 
 import (
 	"after-sales/api/config"
+	mastercontroller "after-sales/api/controllers/master"
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
 	// masteroperationcontroller "after-sales/api/controllers/master/operation"
-	mastercontroller "after-sales/api/controllers/master"
 	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
@@ -16,6 +16,7 @@ import (
 	// masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
+
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
@@ -58,6 +59,7 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
+		config.InitLogger(db)
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
 		config.InitLogger(db)
@@ -85,6 +87,10 @@ func main() {
 		itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl()
 		itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db)
 		itemClassController := masteritemcontroller.NewItemClassController(itemClassService)
+
+		itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
+		itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db)
+		itemSubstituteController := masteritemcontroller.NewItemSubstituteController(itemSubstituteService)
 
 		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
@@ -153,6 +159,7 @@ func main() {
 		DiscountPercentRouter := route.DiscountPercentRouter(discountPercentController)
 		DiscountRouter := route.DiscountRouter(discountController)
 		MarkupRateRouter := route.MarkupRateRouter(markupRateController)
+		ItemSubstituteRouter := route.ItemSubstituteRouter(itemSubstituteController)
 		WarehouseGroup := route.WarehouseGroupRouter(warehouseGroupController)
 		WarehouseLocation := route.WarehouseLocationRouter(warehouseLocationController)
 		WarehouseMaster := route.WarehouseMasterRouter(warehouseMasterController)
@@ -181,6 +188,7 @@ func main() {
 		mux.Handle("/operation-key/", OperationKeyRouter)
 		mux.Handle("/operation-entries/", OperationEntriesRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
+		mux.Handle("/item-substitute/", ItemSubstituteRouter)
 		mux.Handle("/discount-percent/", DiscountPercentRouter)
 		mux.Handle("/discount/", DiscountRouter)
 		mux.Handle("/markup-rate/", MarkupRateRouter)
