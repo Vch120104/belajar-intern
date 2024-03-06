@@ -16,6 +16,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+/* Master */
 func DiscountPercentRouter(
 	discountPercentController masteritemcontroller.DiscountPercentController,
 ) *httprouter.Router {
@@ -32,7 +33,6 @@ func DiscountPercentRouter(
 }
 
 func DiscountRouter(
-
 	discountController mastercontroller.DiscountController,
 ) *httprouter.Router {
 	router := httprouter.New()
@@ -112,17 +112,17 @@ func MarkupRateRouter(
 
 func ItemSubstituteRouter(
 	itemSubstituteController masteritemcontroller.ItemSubstituteController,
-) *httprouter.Router{
+) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/item-substitute/",itemSubstituteController.GetAllItemSubstitute)
-	router.GET("/item-substitute/header/by-id/:item_substitute_id",itemSubstituteController.GetByIdItemSubstitute)
-	router.GET("/item-substitute/detail/all/by-id/:item_substitute_id",itemSubstituteController.GetAllItemSubstituteDetail)
-	router.GET("/item-substitute/detail/by-id/:item_substitute_detail_id",itemSubstituteController.GetByIdItemSubstituteDetail)
-	router.POST("/item-substitute/",itemSubstituteController.SaveItemSubstitute)
-	router.POST("/item-substitute/detail/:item_substitute_id",itemSubstituteController.SaveItemSubstituteDetail)
-	router.PATCH("/item-substitute/header/by-id/:item_substitute_id",itemSubstituteController.ChangeStatusItemSubstitute)
-	router.PATCH("/item-substitute/detail/activate/by-id/",itemSubstituteController.ActivateItemSubstituteDetail)
-	router.PATCH("/item-substitute/detail/deactivate/by-id/",itemSubstituteController.DeactivateItemSubstituteDetail)
+	router.GET("/item-substitute/", itemSubstituteController.GetAllItemSubstitute)
+	router.GET("/item-substitute/header/by-id/:item_substitute_id", itemSubstituteController.GetByIdItemSubstitute)
+	router.GET("/item-substitute/detail/all/by-id/:item_substitute_id", itemSubstituteController.GetAllItemSubstituteDetail)
+	router.GET("/item-substitute/detail/by-id/:item_substitute_detail_id", itemSubstituteController.GetByIdItemSubstituteDetail)
+	router.POST("/item-substitute/", itemSubstituteController.SaveItemSubstitute)
+	router.POST("/item-substitute/detail/:item_substitute_id", itemSubstituteController.SaveItemSubstituteDetail)
+	router.PATCH("/item-substitute/header/by-id/:item_substitute_id", itemSubstituteController.ChangeStatusItemSubstitute)
+	router.PATCH("/item-substitute/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.PATCH("/item-substitute/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -134,7 +134,7 @@ func OperationGroupRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
+	router.GET("/operation-group", operationGroupController.GetAllOperationGroup)
 	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
 	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
 	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
