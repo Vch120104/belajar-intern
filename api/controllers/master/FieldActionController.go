@@ -52,20 +52,20 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 // @Router /aftersales-service/api/aftersales/operation-group [get]
 func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"is_active":                   params.ByName("is_active"),
-		"field_action_system_number":        params.ByName("field_action_system_number"),
-		"field_action_document_number": params.ByName("field_action_document_number"),
-		"brand_id": params.ByName("brand_id"),
-		"approval_value": params.ByName("approval_value"),
-
+		"is_active":                    queryValues.Get("is_active"),
+		"field_action_system_number":   queryValues.Get("field_action_system_number"),
+		"field_action_document_number": queryValues.Get("field_action_document_number"),
+		"brand_id":                     queryValues.Get("brand_id"),
+		"approval_value":               queryValues.Get("approval_value"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(params, "limit"),
-		Page:   utils.NewGetQueryInt(params, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)

@@ -14,6 +14,5 @@ type FieldActionRepository interface {
 	SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionResponse) (bool, error)
 
 	GetFieldActionHeaderById(tx *gorm.DB, Id int) (masterpayloads.FieldActionResponse, error)
-	GetFieldActionDetailById(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error)
+	GetAllFieldActionVehicleDetailById(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error)
 }
-

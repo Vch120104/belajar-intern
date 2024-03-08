@@ -49,11 +49,11 @@ func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionR
 // 	tx := s.DB.Begin()
 // 	defer helper.CommitOrRollback(tx)
 // 	results, err := s.FieldActionRepo.GetFieldActionHeaderById(tx, id)
-// 	resultDetail, err := s.FieldActionRepo.GetFieldActionDetailById(tx, id, filterCondition, pages)
+// 	resultDetail, err := s.FieldActionRepo.GetAllFieldActionVehicleDetailById(tx, id, filterCondition, pages)
 
 // 	detail []ResponsePagination = resultDetail
 // 	if err != nil {
 // 		return masterpayloads.FieldActionResponse{}
 // 	}
-// 	return 
+// 	return
 // }

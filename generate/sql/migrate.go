@@ -76,7 +76,7 @@ func Migrate() {
 		// // &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},
-		&masterentities.ShiftSchedule{},
+		// &masterentities.ShiftSchedule{},
 
 		// &masterwarehouseentities.WarehouseGroup{},
 		&masterentities.FieldAction{},

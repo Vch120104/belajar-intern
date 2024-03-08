@@ -17,8 +17,34 @@ type FieldActionResponse struct {
 	RemarkInvoice           string    `json:"remark_invoice"`
 }
 
-// type FieldActionByIdResponse struct {
+type FieldActionDetailResponse struct {
+	FieldActionEligibleVehicleSystemNumber int       `json:"field_action_eligible_vehicle_system_number"`
+	FieldActionRecallLineNumber            int       `json:"field_action_recall_line_number"`
+	FieldActionSystemNumber                int       `json:"field_action_system_number"`
+	VehicleId                              int       `json:"vehicle_id"`
+	CompanyId                              int       `json:"company_id"`
+	FieldActionDate                        time.Time `json:"field_action_date"`
+	FieldActionHasTaken                    bool      `json:"field_action_has_taken"`
+}
 
+type FieldActionItemDetailResponse struct {
+	FieldActionEligibleVehicleItemSystemNumber int     `json:"field_action_eligible_vehicle_item_system_number"`
+	FieldActionEligibleVehicleSystemNumber     int     `json:"field_action_eligible_vehicle_system_number"`
+	FieldActionSystemNumber                    int     `json:"field_action_system_number"`
+	LineTypeId                                 int     `json:"line_type_id"`
+	FieldActionEligibleVehicleItemLineNumber   float64 `json:"field_action_eligible_vehicle_item_line_number"`
+	ItemOperationCode                          int     `json:"item_operation_code"`
+	FieldActionFrt                             float64 `json:"field_action_frt"`
+}
+
+// type FieldActionItemDetailRequest struct {
+// 	LineTypeId                                 int     `json:"line_type_id"`
+// 	ItemOperationCode                          int     `json:"item_operation_code"`
+// 	FieldActionFrt                             float64 `json:"field_action_frt"`
+// }
+
+
+// type FieldActionByIdResponse struct {
 
 // 	Data       interface{} `json:"data"`
 // 	detail []ResponsePagination

@@ -2,7 +2,6 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
-	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 
 	"after-sales/api/exceptions"
@@ -33,10 +32,6 @@ func OperationGroupRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
-	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
-	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
-	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
 	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
 	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
 	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
@@ -74,7 +69,7 @@ func FieldActionRouter(
 	// /field-action/drop-down
 	// /field-action/by-code/{}
 
-	router.PanicHandler = PanicHandler
+	router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
