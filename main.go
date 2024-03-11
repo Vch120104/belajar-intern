@@ -57,14 +57,20 @@ func main() {
 		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+		warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+		warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
+		warrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+
 		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
 		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
+		WarrantyFreeServiceRouter := route.WarrantyFreeServiceRouter(warrantyFreeServiceController)
 
 		swaggerRouter := route.SwaggerRouter()
 		mux := http.NewServeMux()
 
 		mux.Handle("/operation-group/", OperationGroupRouter)
 		mux.Handle("/forecast-master/", ForecastMasterRouter)
+		mux.Handle("/warranty-free-service/", WarrantyFreeServiceRouter)
 
 		//Swagger
 		mux.Handle("/swagger/", swaggerRouter)
