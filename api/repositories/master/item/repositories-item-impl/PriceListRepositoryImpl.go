@@ -4,46 +4,22 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
-	"log"
 	"strconv"
-	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type PriceListRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartPriceListRepositoryImpl(db *gorm.DB) masteritemrepository.PriceListRepository {
-	return &PriceListRepositoryImpl{myDB: db}
+func StartPriceListRepositoryImpl() masteritemrepository.PriceListRepository {
+	return &PriceListRepositoryImpl{}
 }
 
-func (r *PriceListRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.PriceListRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *PriceListRepositoryImpl) GetPriceListLookup(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error) {
+func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error) {
 	var responses []masteritempayloads.PriceListResponse
 
-	newLogger := logger.New(
-		log.New(log.Writer(), "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold: time.Second,
-			LogLevel:      logger.Info,
-			Colorful:      true,
-		},
-	)
-
-	r.myDB.Logger = newLogger
-
-	tempRows := r.myDB.
+	tempRows := tx.
 		Model(&masteritementities.PriceList{})
 
 	if request.CompanyId != 0 {
@@ -84,16 +60,14 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(request masteritempayloads.
 
 	defer rows.Close()
 
-	
-
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error) {
+func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error) {
 	var responses []masteritempayloads.PriceListResponse
 	var idMaps = make(map[string][]string)
 
-	tempRows := r.myDB.
+	tempRows := tx.
 		Model(&masteritementities.PriceList{})
 
 	if request.CompanyId != 0 {
@@ -164,11 +138,11 @@ func (r *PriceListRepositoryImpl) GetPriceList(request masteritempayloads.PriceL
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceListById(Id int) (masteritempayloads.PriceListResponse, error) {
+func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListResponse, error) {
 	entities := masteritementities.PriceList{}
 	response := masteritempayloads.PriceListResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.PriceList{
 			PriceListId: int32(Id),
 		}).
@@ -184,7 +158,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(Id int) (masteritempayloads.P
 	return response, nil
 }
 
-func (r *PriceListRepositoryImpl) SavePriceList(request masteritempayloads.PriceListResponse) (bool, error) {
+func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, error) {
 	entities := masteritementities.PriceList{
 		IsActive:            request.IsActive,
 		PriceListId:         request.PriceListId,
@@ -202,7 +176,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(request masteritempayloads.Price
 		AtpmSyncronizeTime:  request.AtpmSyncronizeTime,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -211,10 +185,10 @@ func (r *PriceListRepositoryImpl) SavePriceList(request masteritempayloads.Price
 	return true, nil
 }
 
-func (r *PriceListRepositoryImpl) ChangeStatusPriceList(Id int) (bool, error) {
+func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteritementities.PriceList
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("price_list_id = ?", Id).
 		First(&entities)
 
@@ -228,7 +202,7 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(Id int) (bool, error) {
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

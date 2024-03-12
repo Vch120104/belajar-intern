@@ -53,17 +53,16 @@ func InitDB() *gorm.DB {
 	sqlDB.SetMaxOpenConns(10)
 	sqlDB.SetConnMaxLifetime(time.Minute * 3)
 
-	log.Info("Connected Database " + EnvConfigs.DBDriver)
+	log.Info("Connected Database " + EnvConfigs.DBDriver + " -- running in -- " + EnvConfigs.ClientOrigin)
 
 	return db
 }
 
-
 func InitRedis() *redis.Client {
 	rdb = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379", 
-		Password: "",               
-		DB:       0,                
+		Addr:     EnvConfigs.ClientRedis,
+		Password: "",
+		DB:       0,
 	})
 	return rdb
 }

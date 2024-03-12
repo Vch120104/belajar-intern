@@ -4,8 +4,10 @@ import (
 	"after-sales/api/config"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
+	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
-	masterentities "after-sales/api/entities/master"
+	masteritementities "after-sales/api/entities/master/item"
+	// masterentities "after-sales/api/entities/master"
 	"time"
 
 	"fmt"
@@ -75,9 +77,14 @@ func Migrate() {
 		// // &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},
-		&masterentities.WarrantyFreeService{},
+		// &masteritementities.ItemSubstitute{},
+		&masteritementities.ItemSubstituteDetail{},
+		// &masterentities.ForecastMaster{},
+		// &masterentities.MovingCode{},
+		// &masterentities.ShiftSchedule{},
 
-		// &masterwarehouseentities.WarehouseGroup{},
+		// &masterentities.IncentiveGroupDetail{},
+		// // &masterwarehouseentities.WarehouseGroup{},
 		// &masterwarehouseentities.WarehouseMaster{},
 		// &masterwarehouseentities.WarehouseLocation{},
 

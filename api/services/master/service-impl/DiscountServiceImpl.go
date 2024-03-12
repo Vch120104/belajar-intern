@@ -1,6 +1,8 @@
 package masterserviceimpl
 
 import (
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -13,63 +15,82 @@ import (
 
 type DiscountServiceImpl struct {
 	discountRepo masterrepository.DiscountRepository
+	DB           *gorm.DB
 }
 
-func StartDiscountService(discountRepo masterrepository.DiscountRepository) masterservice.DiscountService {
+func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *gorm.DB) masterservice.DiscountService {
 	return &DiscountServiceImpl{
 		discountRepo: discountRepo,
+		DB:           db,
 	}
 }
-func (s *DiscountServiceImpl) WithTrx(trxHandle *gorm.DB) masterservice.DiscountService {
-	s.discountRepo = s.discountRepo.WithTrx(trxHandle)
-	return s
-}
 
-func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, error) {
-	results, err := s.discountRepo.GetAllDiscountIsActive()
+func (s *DiscountServiceImpl) GetAllDiscountIsActive() []masterpayloads.DiscountResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.discountRepo.GetAllDiscountIsActive(tx)
 	if err != nil {
-		return results, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountResponse, error) {
-	results, err := s.discountRepo.GetDiscountById(id)
+func (s *DiscountServiceImpl) GetDiscountById(id int) masterpayloads.DiscountResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.discountRepo.GetDiscountById(tx, id)
 
 	if err != nil {
-		return masterpayloads.DiscountResponse{}, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, error) {
-	results, err := s.discountRepo.GetDiscountByCode(Code)
+func (s *DiscountServiceImpl) GetDiscountByCode(Code string) masterpayloads.DiscountResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.discountRepo.GetDiscountByCode(tx, Code)
 	if err != nil {
-		return masterpayloads.DiscountResponse{}, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
-	results, err := s.discountRepo.GetAllDiscount(filterCondition, pages)
+func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.discountRepo.GetAllDiscount(tx, filterCondition, pages)
 	if err != nil {
-		return pages, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, error) {
-	results, err := s.discountRepo.ChangeStatusDiscount(Id)
+func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.discountRepo.ChangeStatusDiscount(tx, Id)
 	if err != nil {
-		return false, err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
-	return results, nil
+	return results
 }
 
-func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) (bool, error) {
-	results, err := s.discountRepo.SaveDiscount(req)
-	if err != nil {
-		return false, err
+func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	if req.DiscountCodeId != 0 {
+		_, err := s.discountRepo.GetDiscountById(tx, req.DiscountCodeId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
 	}
-	return results, nil
+	
+	results, err := s.discountRepo.SaveDiscount(tx, req)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
 }

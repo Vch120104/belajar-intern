@@ -2,28 +2,11 @@ package main
 
 import (
 	"after-sales/api/config"
-	mastercontroller "after-sales/api/controllers/master"
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
-	"after-sales/api/helper"
-
-	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
-	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
-	"after-sales/api/route"
-
-	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
-	masterserviceimpl "after-sales/api/services/master/service-impl"
+	route "after-sales/api/route"
 	migration "after-sales/generate/sql"
-	"net/http"
 	"os"
 )
 
-// @title After Sales API
-// @version 1.0
-// @securityDefinitions.apikey BearerAuth
-// @in Header
-// @name Authorization
-// @host localhost:8000
-// @BasePath /api/aftersales
 func main() {
 	args := os.Args
 	env := ""
@@ -46,40 +29,9 @@ func main() {
 	} else {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
+		config.InitLogger(db)
+		route.StartRouting(db)
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
-
-		operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-		operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
-		operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
-
-		forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
-		forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
-		forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
-
-		warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-		warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
-		warrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
-
-		OperationGroupRouter := route.OperationGroupRouter(operationGroupController)
-		ForecastMasterRouter := route.ForecastMasterRouter(forecastMasterController)
-		WarrantyFreeServiceRouter := route.WarrantyFreeServiceRouter(warrantyFreeServiceController)
-
-		swaggerRouter := route.SwaggerRouter()
-		mux := http.NewServeMux()
-
-		mux.Handle("/operation-group/", OperationGroupRouter)
-		mux.Handle("/forecast-master/", ForecastMasterRouter)
-		mux.Handle("/warranty-free-service/", WarrantyFreeServiceRouter)
-
-		//Swagger
-		mux.Handle("/swagger/", swaggerRouter)
-		server := http.Server{
-			Addr:    config.EnvConfigs.ClientOrigin,
-			Handler: mux,
-		}
-
-		err := server.ListenAndServe()
-		helper.PanicIfError(err)
 	}
 }

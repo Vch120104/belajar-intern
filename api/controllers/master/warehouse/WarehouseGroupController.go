@@ -1,8 +1,7 @@
 package masterwarehousecontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"strconv"
@@ -14,28 +13,24 @@ import (
 	masterwarehousegroupservice "after-sales/api/services/master/warehouse"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type WarehouseGroupController struct {
-	warehouseGroupService masterwarehousegroupservice.WarehouseGroupService
+type WarehouseGroupControllerImpl struct {
+	WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService
 }
 
-func OpenWarehouseGroupRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	warehouseGroupService masterwarehousegroupservice.WarehouseGroupService,
-) {
-	handler := WarehouseGroupController{
-		warehouseGroupService: warehouseGroupService,
-	}
+type WarehouseGroupController interface {
+	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
 
-	// r.Use(middlewares.SetupAuthenticationMiddleware())
-	r.GET("/warehouse-group/:warehouse_group_id", middlewares.DBTransactionMiddleware(db), handler.GetById)
-	r.GET("/warehouse-group", middlewares.DBTransactionMiddleware(db), handler.GetAll)
-	r.POST("/warehouse-group", middlewares.DBTransactionMiddleware(db), handler.Save)
-	r.PATCH("/warehouse-group/:warehouse_group_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
+func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService) WarehouseGroupController {
+	return &WarehouseGroupControllerImpl{
+		WarehouseGroupService: WarehouseGroupService,
+	}
 }
 
 // @Summary Get All Warehouse Group
@@ -47,40 +42,33 @@ func OpenWarehouseGroupRoutes(
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
-// @Param is_active query bool false "Is Active"
+// @Param is_active query bool false "is_active"
 // @Param warehouse_group_code query string false "Warehouse Group Code"
 // @Param warehouse_group_name query string false "Warehouse Group Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group [get]
-func (r *WarehouseGroupController) GetAll(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	page, _ := strconv.Atoi(c.Query("page"))
-	limit, _ := strconv.Atoi(c.Query("limit"))
-	sortOf := c.Query("sort_of")
-	sortBy := c.Query("sort_by")
-	warehouseGroupCode := c.Query("warehouse_group_code")
-	warehouseGroupName := c.Query("warehouse_group_name")
+func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
 
-	get, err := r.warehouseGroupService.WithTrx(trxHandle).GetAll(masterwarehousegrouppayloads.GetAllWarehouseGroupRequest{
+	page, _ := strconv.Atoi(queryValues.Get("page"))
+	limit, _ := strconv.Atoi(queryValues.Get("limit"))
+	sortOf := queryValues.Get("sort_of")
+	sortBy := queryValues.Get("sort_by")
+	isActive := queryValues.Get("is_active")
+	warehouseGroupCode := queryValues.Get("warehouse_group_code")
+	warehouseGroupName := queryValues.Get("warehouse_group_name")
+
+	get := r.WarehouseGroupService.GetAll(masterwarehousegrouppayloads.GetAllWarehouseGroupRequest{
+		IsActive:           isActive,
 		WarehouseGroupCode: warehouseGroupCode,
 		WarehouseGroupName: warehouseGroupName,
 	})
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if len(get) == 0 {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
-
 	result, totalPages, totalRows := utils.DataFramePaginate(get, page, limit, sortOf, sortBy)
 
-	payloads.HandleSuccessPagination(c, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, limit, page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, limit, page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Warehouse Group By Id
@@ -93,23 +81,13 @@ func (r *WarehouseGroupController) GetAll(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [get]
-func (r *WarehouseGroupController) GetById(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	warehouseGroupId, _ := strconv.Atoi(c.Param("warehouse_group_id"))
+func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.warehouseGroupService.WithTrx(trxHandle).GetById(warehouseGroupId)
+	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	get := r.WarehouseGroupService.GetById(warehouseGroupId)
 
-	if get.WarehouseGroupId == 0 {
-		exceptions.NotFoundException(c, "Warehouse Group Data Not Found!")
-		return
-	}
-
-	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
 }
 
@@ -123,44 +101,21 @@ func (r *WarehouseGroupController) GetById(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group [post]
-func (r *WarehouseGroupController) Save(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
 	var message string
-	requestBody := masterwarehousegrouppayloads.GetWarehouseGroupResponse{}
+	var formRequest masterwarehousegrouppayloads.GetWarehouseGroupResponse
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	save := r.WarehouseGroupService.Save(formRequest)
 
-	if int(requestBody.WarehouseGroupId) != 0 {
-		result, err := r.warehouseGroupService.WithTrx(trxHandle).GetById(int(requestBody.WarehouseGroupId))
-
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.WarehouseGroupId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	save, err := r.warehouseGroupService.WithTrx(trxHandle).Save(requestBody)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if requestBody.WarehouseGroupId == 0 {
+	if formRequest.WarehouseGroupId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, save, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 
 }
 
@@ -174,29 +129,12 @@ func (r *WarehouseGroupController) Save(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [patch]
-func (r *WarehouseGroupController) ChangeStatus(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	warehouseGroupId, _ := strconv.Atoi(c.Param("warehouse_group_id"))
+func (r *WarehouseGroupControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.warehouseGroupService.WithTrx(trxHandle).GetById(warehouseGroupId)
+	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	change_status := r.WarehouseGroupService.ChangeStatus(warehouseGroupId)
 
-	if get.WarehouseGroupId == 0 {
-		exceptions.NotFoundException(c, "Warehouse Group Data Not Found!")
-		return
-	}
-
-	change_status, err := r.warehouseGroupService.WithTrx(trxHandle).ChangeStatus(warehouseGroupId)
-
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, change_status, "Updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
 }

@@ -1,21 +1,27 @@
 package masteritemcontroller
 
-// import (
-// 	"after-sales/api/payloads"
-// 	"after-sales/api/payloads/pagination"
-// 	masteritemservice "after-sales/api/services/master/item"
-// 	"after-sales/api/utils"
-// 	"net/http"
+import (
+	"after-sales/api/helper"
+	"after-sales/api/payloads"
+	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
+	masteritemservice "after-sales/api/services/master/item"
+	"after-sales/api/utils"
+	"net/http"
+	"strconv"
 
 // 	"github.com/julienschmidt/httprouter"
 // )
 
-// type DiscountPercentController interface {
-// 	GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-// }
-// type DiscountPercentControllerImpl struct {
-// 	DiscountPercentService masteritemservice.DiscountPercentService
-// }
+type DiscountPercentController interface {
+	GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+type DiscountPercentControllerImpl struct {
+	DiscountPercentService masteritemservice.DiscountPercentService
+}
 
 // func NewDiscountPercentController(discountPercentService masteritemservice.DiscountPercentService) DiscountPercentController {
 // 	return &DiscountPercentControllerImpl{
@@ -42,20 +48,22 @@ package masteritemcontroller
 // // @Router /aftersales-service/api/aftersales/discount-percent [get]
 // func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-// 	queryParams := map[string]string{
-// 		"mtr_discount.discount_code_value":       params.ByName("discount_code_value"),
-// 		"mtr_discount.discount_code_description": params.ByName("discount_code_description"),
-// 		"order_type_name":                        params.ByName("order_type_name"),
-// 		"mtr_discount_percent.discount":          params.ByName("discount"),
-// 		"mtr_discount_percent.is_active":         params.ByName("is_active"),
-// 	}
+	queryValues := request.URL.Query()
 
-// 	paginate := pagination.Pagination{
-// 		Limit:  utils.NewGetQueryInt(params, "limit"),
-// 		Page:   utils.NewGetQueryInt(params, "page"),
-// 		SortOf: params.ByName("sort_of"),
-// 		SortBy: params.ByName("sort_by"),
-// 	}
+	queryParams := map[string]string{
+		"mtr_discount.discount_code_value":       queryValues.Get("discount_code_value"),
+		"mtr_discount.discount_code_description": queryValues.Get("discount_code_description"),
+		"order_type_name":                        queryValues.Get("order_type_name"),
+		"mtr_discount_percent.discount":          queryValues.Get("discount"),
+		"mtr_discount_percent.is_active":         queryValues.Get("is_active"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
 // 	criteria := utils.BuildFilterCondition(queryParams)
 
@@ -64,103 +72,64 @@ package masteritemcontroller
 // 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 // }
 
-// // @Summary Get Discount Percent By ID
-// // @Description REST API Discount Percent
-// // @Accept json
-// // @Produce json
-// // @Tags Master : Discount Percent
-// // @Param discount_percent_id path int true "discount_percent_id"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// // @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [get]
-// func (r *DiscountPercentController) GetDiscountPercentByID(c *gin.Context) {
-// 	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-// 	discountPercentId, _ := strconv.Atoi(c.Param("discount_percent_id"))
-// 	result, err := r.discountpercentservice.WithTrx(trxHandle).GetDiscountPercentById(int(discountPercentId))
-// 	if err != nil {
-// 		exceptions.NotFoundException(c, err.Error())
-// 		return
-// 	}
+// @Summary Get Discount Percent By ID
+// @Description REST API Discount Percent
+// @Accept json
+// @Produce json
+// @Tags Master : Discount Percent
+// @Param discount_percent_id path int true "discount_percent_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [get]
+func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-// 	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
-// }
+	discountPercentId, _ := strconv.Atoi(params.ByName("discount_percent_id"))
 
-// // @Summary Save Discount Percent
-// // @Description REST API Discount Percent
-// // @Accept json
-// // @Produce json
-// // @Tags Master : Discount Percent
-// // @param reqBody body masteritempayloads.DiscountPercentResponse true "Form Request"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// // @Router /aftersales-service/api/aftersales/discount-percent [post]
-// func (r *DiscountPercentController) SaveDiscountPercent(c *gin.Context) {
-// 	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-// 	var request masteritempayloads.DiscountPercentResponse
-// 	var message = ""
+	result := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
 
-// 	if err := c.ShouldBindJSON(&request); err != nil {
-// 		exceptions.EntityException(c, err.Error())
-// 		return
-// 	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
 
-// 	if int(request.DiscountPercentId) != 0 {
-// 		result, err := r.discountpercentservice.WithTrx(trxHandle).GetDiscountPercentById(int(request.DiscountPercentId))
+// @Summary Save Discount Percent
+// @Description REST API Discount Percent
+// @Accept json
+// @Produce json
+// @Tags Master : Discount Percent
+// @param reqBody body masteritempayloads.DiscountPercentResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/discount-percent [post]
+func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-// 		if err != nil {
-// 			exceptions.AppException(c, err.Error())
-// 			return
-// 		}
+	var formRequest masteritempayloads.DiscountPercentResponse
+	helper.ReadFromRequestBody(request, &formRequest)
+	var message = ""
 
-// 		if result.DiscountPercentId == 0 {
-// 			exceptions.NotFoundException(c, err.Error())
-// 			return
-// 		}
-// 	}
+	create := r.DiscountPercentService.SaveDiscountPercent(formRequest)
 
-// 	create, err := r.discountpercentservice.WithTrx(trxHandle).SaveDiscountPercent(request)
-// 	if err != nil {
-// 		exceptions.AppException(c, err.Error())
-// 		return
-// 	}
+	if formRequest.DiscountPercentId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
 
-// 	if request.DiscountPercentId == 0 {
-// 		message = "Create Data Successfully!"
-// 	} else {
-// 		message = "Update Data Successfully!"
-// 	}
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
 
-// 	payloads.HandleSuccess(c, create, message, http.StatusOK)
-// }
+// @Summary Change Status Discount Percent
+// @Description REST API Discount Percent
+// @Accept json
+// @Produce json
+// @Tags Master : Discount Percent
+// @param discount_percent_id path int true "discount_percent_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [patch]
+func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-// // @Summary Change Status Discount Percent
-// // @Description REST API Discount Percent
-// // @Accept json
-// // @Produce json
-// // @Tags Master : Discount Percent
-// // @param discount_percent_id path int true "discount_percent_id"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// // @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [patch]
-// func (r *DiscountPercentController) ChangeStatusDiscountPercent(c *gin.Context) {
-// 	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-// 	discountPercentId, err := strconv.Atoi(c.Param("discount_percent_id"))
-// 	if err != nil {
-// 		exceptions.EntityException(c, err.Error())
-// 		return
-// 	}
-// 	//id check
-// 	result, err := r.discountpercentservice.WithTrx(trxHandle).GetDiscountPercentById(int(discountPercentId))
-// 	if err != nil || result.DiscountPercentId == 0 {
-// 		exceptions.NotFoundException(c, err.Error())
-// 		return
-// 	}
+	discountPercentId, _ := strconv.Atoi(params.ByName("discount_percent_id"))
 
-// 	response, err := r.discountpercentservice.WithTrx(trxHandle).ChangeStatusDiscountPercent(int(discountPercentId))
-// 	if err != nil {
-// 		exceptions.AppException(c, err.Error())
-// 		return
-// 	}
+	response := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
 
-// 	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
-// }
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}

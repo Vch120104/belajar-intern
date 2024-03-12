@@ -9,10 +9,9 @@ import (
 )
 
 type MarkupMasterRepository interface {
-	WithTrx(trxHandle *gorm.DB) MarkupMasterRepository
-	GetMarkupMasterList([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
-	GetMarkupMasterById(int) (masteritempayloads.MarkupMasterResponse, error)
-	SaveMarkupMaster(masteritempayloads.MarkupMasterResponse) (bool, error)
-	ChangeStatusMasterMarkupMaster(Id int) (bool, error)
-	GetMarkupMasterByCode(string) (masteritempayloads.MarkupMasterResponse, error)
+	GetMarkupMasterList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
+	GetMarkupMasterById(*gorm.DB, int) (masteritempayloads.MarkupMasterResponse, error)
+	SaveMarkupMaster(*gorm.DB, masteritempayloads.MarkupMasterResponse) (bool, error)
+	ChangeStatusMasterMarkupMaster(tx *gorm.DB, Id int) (bool, error)
+	GetMarkupMasterByCode(*gorm.DB, string) (masteritempayloads.MarkupMasterResponse, error)
 }

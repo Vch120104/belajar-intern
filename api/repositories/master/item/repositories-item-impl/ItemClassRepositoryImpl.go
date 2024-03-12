@@ -5,7 +5,6 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"log"
 	"reflect"
 	"strings"
 
@@ -14,23 +13,13 @@ import (
 )
 
 type ItemClassRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartItemClassRepositoryImpl(db *gorm.DB) masteritemrepository.ItemClassRepository {
-	return &ItemClassRepositoryImpl{myDB: db}
+func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
+	return &ItemClassRepositoryImpl{}
 }
 
-func (r *ItemClassRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.ItemClassRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *ItemClassRepositoryImpl) GetAllItemClass(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
+func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
 	entities := []masteritementities.ItemClass{}
 	var responses []masteritempayloads.ItemClassResponse
 	var getLineTypeResponse []masteritempayloads.LineTypeResponse
@@ -48,9 +37,9 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(filterCondition []utils.Filter
 				flag = true
 				break
 			}
-			if !flag {
-				externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-			}
+		}
+		if !flag {
+			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
 		}
 	}
 
@@ -64,7 +53,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(filterCondition []utils.Filter
 	}
 
 	//define base model
-	baseModelQuery := r.myDB.Model(&entities)
+	baseModelQuery := tx.Model(&entities)
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, internalServiceFilter)
 	//apply pagination and execute
@@ -103,11 +92,11 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(filterCondition []utils.Filter
 	return joinedDataSecond, nil
 }
 
-func (r *ItemClassRepositoryImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, error) {
+func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteritempayloads.ItemClassResponse, error) {
 	entities := masteritementities.ItemClass{}
 	response := masteritempayloads.ItemClassResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.ItemClass{
 			ItemClassId: Id,
 		}).
@@ -123,7 +112,7 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(Id int) (masteritempayloads.I
 	return response, nil
 }
 
-func (r *ItemClassRepositoryImpl) SaveItemClass(request masteritempayloads.ItemClassResponse) (bool, error) {
+func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritempayloads.ItemClassResponse) (bool, error) {
 	entities := masteritementities.ItemClass{
 		IsActive:      request.IsActive,
 		ItemClassId:   request.ItemClassId,
@@ -133,7 +122,7 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(request masteritempayloads.ItemC
 		ItemClassName: request.ItemClassName,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -142,10 +131,10 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(request masteritempayloads.ItemC
 	return true, nil
 }
 
-func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(Id int) (bool, error) {
+func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteritementities.ItemClass
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("item_class_id = ?", Id).
 		First(&entities)
 
@@ -159,7 +148,7 @@ func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(Id int) (bool, error) {
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

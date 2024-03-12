@@ -3,34 +3,54 @@ package masteroperationrepositoryimpl
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
+	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
 
 type OperationEntriesRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartOperationEntriesRepositoryImpl(db *gorm.DB) masteroperationrepository.OperationEntriesRepository {
-	return &OperationEntriesRepositoryImpl{myDB: db}
+func StartOperationEntriesRepositoryImpl() masteroperationrepository.OperationEntriesRepository {
+	return &OperationEntriesRepositoryImpl{}
 }
 
-func (r *OperationEntriesRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteroperationrepository.OperationEntriesRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
+func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+	entities := masteroperationentities.OperationEntries{}
+	var responses []masteroperationpayloads.OperationEntriesResponse
 
-func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, error) {
+	// define table struct
 	tableStruct := masteroperationpayloads.OperationEntriesResponse{}
 
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	//join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	//apply filter
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	//apply pagination and execute
+	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+
+	if len(responses) == 0 {
+		return pages, gorm.ErrRecordNotFound
+	}
+
+	if err != nil {
+		return pages, err
+	}
+
+	defer rows.Close()
+
+	pages.Rows = responses
+
+	return pages, nil
+}
+
+func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(tx *gorm.DB, request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, error) {
+	tableStruct := masteroperationpayloads.OperationEntriesResponse{}
+
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
 	WhereQuery := joinTable.
 		Where("mtr_operation_group.operation_group_id = ?", request.OperationGroupId).
@@ -49,16 +69,15 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(request mastero
 	return tableStruct, nil
 }
 
-func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(Id int32) (masteroperationpayloads.OperationEntriesResponse, error) {
-	entities := masteroperationentities.OperationEntries{}
+func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationEntriesResponse, error) {
 	response := masteroperationpayloads.OperationEntriesResponse{}
 
-	rows, err := r.myDB.Model(&entities).
-		Where(masteroperationentities.OperationEntries{
-			OperationEntriesId: Id,
-		}).
-		First(&response).
-		Rows()
+	joinTable := utils.CreateJoinSelectStatement(tx, response)
+
+	whereQuery := joinTable.Where("operation_entries_id = ?", Id)
+
+	rows, err := whereQuery.First(&response).Rows()
+
 
 	if err != nil {
 		return response, err
@@ -71,7 +90,7 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(Id int32) (mast
 
 // func (r *OperationEntriesRepositoryImpl) GetOperationEntriesKeyCodeByGroupId
 
-func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(request masteroperationpayloads.OperationEntriesResponse) (bool, error) {
+func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, request masteroperationpayloads.OperationEntriesResponse) (bool, error) {
 	entities := masteroperationentities.OperationEntries{
 		IsActive:             request.IsActive,
 		OperationEntriesId:   request.OperationEntriesId,
@@ -82,7 +101,7 @@ func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(request masteroper
 		OperationEntriesDesc: request.OperationEntriesDesc,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -91,9 +110,9 @@ func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(request masteroper
 	return true, nil
 }
 
-func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(Id int) (bool, error) {
+func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteroperationentities.OperationEntries
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("operation_entries_id = ?", Id).
 		First(&entities)
 
@@ -107,7 +126,7 @@ func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(Id int) (b
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

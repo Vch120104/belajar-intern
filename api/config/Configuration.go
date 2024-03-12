@@ -18,15 +18,16 @@ type Configuration struct {
 }
 
 type setupDatabase struct {
-	DBDriver string `mapstructure:"DB_DRIVER"`
-	DBUser   string `mapstructure:"DB_USER"`
-	DBPass   string `mapstructure:"DB_PASS"`
-	DBName   string `mapstructure:"DB_NAME"`
-	DBHost   string `mapstructure:"DB_HOST"`
-	DBPort   int    `mapstructure:"DB_PORT"`
-	Port     string `mapstructure:"SERVER_PORT"`
-	JWTKey   string `mapstructure:"JWT_KEY"`
-	ClientOrigin  string `mapstructure:"CLIENT_ORIGIN"`
+	DBDriver     string `mapstructure:"DB_DRIVER"`
+	DBUser       string `mapstructure:"DB_USER"`
+	DBPass       string `mapstructure:"DB_PASS"`
+	DBName       string `mapstructure:"DB_NAME"`
+	DBHost       string `mapstructure:"DB_HOST"`
+	DBPort       int    `mapstructure:"DB_PORT"`
+	Port         string `mapstructure:"SERVER_PORT"`
+	JWTKey       string `mapstructure:"JWT_KEY"`
+	ClientOrigin string `mapstructure:"CLIENT_ORIGIN"`
+	ClientRedis  string `mapstructure:"CLIENT_REDIS"`
 }
 
 var EnvConfigs *setupDatabase
