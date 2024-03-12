@@ -336,6 +336,18 @@ func PriceListRouter(
 	return router
 }
 
+func WarrantyFreeServiceRouter(
+	warrantyFreeServiceController mastercontroller.WarrantyFreeServiceController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
+	router.POST("/warranty-free-service/", warrantyFreeServiceController.SaveWarrantyFreeService)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func SwaggerRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))

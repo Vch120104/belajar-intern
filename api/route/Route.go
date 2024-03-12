@@ -130,6 +130,11 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
+	// Warranty Free Service
+	warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
+	warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
@@ -152,6 +157,7 @@ func StartRouting(db *gorm.DB) {
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
+	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
 
 	mux := http.NewServeMux()
 	mux.Handle("/item-class/", itemClassRouter)
@@ -175,6 +181,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/warehouse-location/", WarehouseLocation)
 	mux.Handle("/warehouse-master/", WarehouseMaster)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
+	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
