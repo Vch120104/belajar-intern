@@ -2,7 +2,7 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
-	// masteritemcontroller "after-sales/api/controllers/master/item"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
@@ -124,10 +124,10 @@ func ItemSubstituteRouter(
 	router.PATCH("/item-substitute/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.PATCH("/item-substitute/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
 
-// 	router.PanicHandler = exceptions.ErrorHandler
+	router.PanicHandler = exceptions.ErrorHandler
 
-// 	return router
-// }
+	return router
+}
 
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
