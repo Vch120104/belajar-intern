@@ -1,8 +1,8 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
+
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -13,26 +13,26 @@ import (
 
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type OperationSectionController struct {
+type OperationSectionController interface {
+	GetAllOperationSectionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetOperationSectionByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetSectionCodeByGroupId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetOperationSectionName(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveOperationSection(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusOperationSection(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type OperationSectionControllerImpl struct {
 	operationsectionservice masteroperationservice.OperationSectionService
 }
 
-func StartOperationSectionRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	operationsectionservice masteroperationservice.OperationSectionService,
-) {
-	operationSectionHandler := OperationSectionController{operationsectionservice: operationsectionservice}
-	r.GET("/operation-section", middlewares.DBTransactionMiddleware(db), operationSectionHandler.GetAllOperationSectionList)
-	r.GET("/operation-section/:operation_section_id", middlewares.DBTransactionMiddleware(db), operationSectionHandler.GetOperationSectionByID)
-	r.GET("/operation-section-name", middlewares.DBTransactionMiddleware(db), operationSectionHandler.GetOperationSectionName)
-	r.GET("/operation-section-code-by-group-id", middlewares.DBTransactionMiddleware(db), operationSectionHandler.GetSectionCodeByGroupId)
-	r.PUT("/operation-section", middlewares.DBTransactionMiddleware(db), operationSectionHandler.SaveOperationSection)
-	r.PATCH("/operation-section/:operation_section_id", middlewares.DBTransactionMiddleware(db), operationSectionHandler.ChangeStatusOperationSection)
+func NewOperationSectionController(operationSectionService masteroperationservice.OperationSectionService) OperationSectionController {
+	return &OperationSectionControllerImpl{
+		operationsectionservice: operationSectionService,
+	}
 }
 
 // @Summary Get All Operation Section
@@ -52,38 +52,28 @@ func StartOperationSectionRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-section [get]
-func (r *OperationSectionController) GetAllOperationSectionList(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	query := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_operation_group.operation_group_code":            c.Query("operation_group_code"),
-		"mtr_operation_group.operation_group_description":     c.Query("operation_group_description"),
-		"mtr_operation_section.peration_section_code":         c.Query("operation_section_code"),
-		"mtr_operation_section.operation_section_description": c.Query("operation_section_description"),
-		"mtr_operation_section.is_active":                     c.Query("is_active"),
+		"mtr_operation_group.operation_group_code":            query.Get("operation_group_code"),
+		"mtr_operation_group.operation_group_description":     query.Get("operation_group_description"),
+		"mtr_operation_section.operation_section_code":         query.Get("operation_section_code"),
+		"mtr_operation_section.operation_section_description": query.Get("operation_section_description"),
+		"mtr_operation_section.is_active":                     query.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.GetQueryInt(c, "limit"),
-		Page:   utils.GetQueryInt(c, "page"),
-		SortOf: c.Query("sort_of"),
-		SortBy: c.Query("sort_by"),
+		Limit:  utils.NewGetQueryInt(query, "page_limit"),
+		Page:   utils.NewGetQueryInt(query, "page"),
+		SortOf: query.Get("sort_of"),
+		SortBy: query.Get("sort_by"),
 	}
+	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	criteria := utils.BuildFilterCondition(queryParams)
+	result := r.operationsectionservice.GetAllOperationSectionList(filterCondition, pagination)
 
-	result, err := r.operationsectionservice.WithTrx(trxHandle).GetAllOperationSectionList(criteria, pagination)
-
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	if result.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Operation Section By ID
@@ -95,18 +85,13 @@ func (r *OperationSectionController) GetAllOperationSectionList(c *gin.Context) 
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-section/{operation_section_id} [get]
-func (r *OperationSectionController) GetOperationSectionByID(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationSectionId, _ := strconv.Atoi(c.Param("operation_section_id"))
+func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	result, err := r.operationsectionservice.WithTrx(trxHandle).GetOperationSectionById(int(operationSectionId))
+	operationSectionId, _ := strconv.Atoi(params.ByName("operation_section_id"))
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	result := r.operationsectionservice.GetOperationSectionById(int(operationSectionId))
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Section Code By Group Id
@@ -118,17 +103,13 @@ func (r *OperationSectionController) GetOperationSectionByID(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-section-code-by-group-id [get]
-func (r *OperationSectionController) GetSectionCodeByGroupId(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	groupId := c.Query("operation_group_id")
+func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	result, err := r.operationsectionservice.WithTrx(trxHandle).GetSectionCodeByGroupId(groupId)
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	groupId, _ := strconv.Atoi(params.ByName("operation_group_id"))
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	result := r.operationsectionservice.GetSectionCodeByGroupId(groupId)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Operation Section Name
@@ -141,19 +122,15 @@ func (r *OperationSectionController) GetSectionCodeByGroupId(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-section-name [get]
-func (r *OperationSectionController) GetOperationSectionName(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationGroupId := utils.GetQueryInt(c, "operation_group_id")
-	section_code := c.Query("operation_section_code")
+func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	query := request.URL.Query()
 
-	result, err := r.operationsectionservice.WithTrx(trxHandle).GetOperationSectionName(operationGroupId, section_code)
+	operationGroupId := utils.NewGetQueryInt(query, "operation_group_id")
+	section_code := query.Get("operation_section_code")
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	result := r.operationsectionservice.GetOperationSectionName(operationGroupId, section_code)
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Operation Section
@@ -165,29 +142,21 @@ func (r *OperationSectionController) GetOperationSectionName(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-section [put]
-func (r *OperationSectionController) SaveOperationSection(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteroperationpayloads.OperationSectionRequest
+func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	var formRequest masteroperationpayloads.OperationSectionRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	create := r.operationsectionservice.SaveOperationSection(formRequest)
 
-	create, err := r.operationsectionservice.WithTrx(trxHandle).SaveOperationSection(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.OperationSectionId == 0 {
+	if formRequest.OperationSectionId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Operation Section
@@ -199,31 +168,11 @@ func (r *OperationSectionController) SaveOperationSection(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-section/{operation_section_id} [patch]
-func (r *OperationSectionController) ChangeStatusOperationSection(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationSectionId, err := strconv.Atoi(c.Param("operation_section_id"))
+func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.operationsectionservice.WithTrx(trxHandle).GetOperationSectionById(int(operationSectionId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	operationSectionId, _ := strconv.Atoi(params.ByName("operation_section_id"))
 
-	if result.OperationSectionId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	response := r.operationsectionservice.ChangeStatusOperationSection(int(operationSectionId))
 
-	response, err := r.operationsectionservice.WithTrx(trxHandle).ChangeStatusOperationSection(int(operationSectionId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

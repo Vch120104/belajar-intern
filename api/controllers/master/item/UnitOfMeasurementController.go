@@ -1,8 +1,7 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -11,25 +10,25 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type UnitOfMeasurementController struct {
+type UnitOfMeasurementController interface {
+	GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type UnitOfMeasurementControllerImpl struct {
 	unitofmeasurementservice masteritemservice.UnitOfMeasurementService
 }
 
-func StartUnitOfMeasurementRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	unitofmeasurementservice masteritemservice.UnitOfMeasurementService,
-) {
-	unitOfMeasurementHandler := UnitOfMeasurementController{unitofmeasurementservice: unitofmeasurementservice}
-	r.GET("/unit-of-measurement", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.GetAllUnitOfMeasurement)
-	r.GET("/unit-of-measurement-drop-down", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.GetAllUnitOfMeasurementIsActive)
-	r.GET("/unit-of-measurement-by-code/:uom_code", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.GetUnitOfMeasurementByCode)
-	r.POST("/unit-of-measurement", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.SaveUnitOfMeasurement)
-	r.PATCH("/unit-of-measurement/:uom_id", middlewares.DBTransactionMiddleware(db), unitOfMeasurementHandler.ChangeStatusUnitOfMeasurement)
+func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.UnitOfMeasurementService) UnitOfMeasurementController {
+	return &UnitOfMeasurementControllerImpl{
+		unitofmeasurementservice: UnitOfMeasurementService,
+	}
 }
 
 // @Summary Get All Unit Of Measurement
@@ -48,37 +47,27 @@ func StartUnitOfMeasurementRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [get]
-func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_uom.is_active":          c.Query("is_active"),
-		"mtr_uom.uom_code":           c.Query("uom_code"),
-		"mtr_uom.uom_description":    c.Query("uom_description"),
-		"mtr_uom_type.uom_type_desc": c.Query("uom_type_desc"),
+		"mtr_uom.is_active":          queryValues.Get("is_active"),
+		"mtr_uom.uom_code":           queryValues.Get("uom_code"),
+		"mtr_uom.uom_description":    queryValues.Get("uom_description"),
+		"mtr_uom_type.uom_type_desc": queryValues.Get("uom_type_desc"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.GetQueryInt(c, "limit"),
-		Page:   utils.GetQueryInt(c, "page"),
-		SortOf: c.Query("sort_of"),
-		SortBy: c.Query("sort_by"),
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetAllUnitOfMeasurement(filterCondition, pagination)
+	result := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if result.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get All Unit Of Measurement drop down
@@ -89,14 +78,11 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurement(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-drop-down [get]
-func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetAllUnitOfMeasurementIsActive()
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	result := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Unit Of Measurement By Code
@@ -108,15 +94,12 @@ func (r *UnitOfMeasurementController) GetAllUnitOfMeasurementIsActive(c *gin.Con
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-by-code/{uom_code} [get]
-func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationGroupCode := c.Param("uom_code")
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetUnitOfMeasurementByCode(operationGroupCode)
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	operationGroupCode := params.ByName("uom_code")
+	result := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(operationGroupCode)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Unit Of Measurement
@@ -128,43 +111,22 @@ func (r *UnitOfMeasurementController) GetUnitOfMeasurementByCode(c *gin.Context)
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [post]
-func (r *UnitOfMeasurementController) SaveUnitOfMeasurement(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteritempayloads.UomResponse
+func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	var formRequest masteritempayloads.UomResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	if int(request.UomId) != 0 {
-		result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetUnitOfMeasurementById(int(request.UomId))
+	create := r.unitofmeasurementservice.SaveUnitOfMeasurement(formRequest)
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.UomId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.unitofmeasurementservice.WithTrx(trxHandle).SaveUnitOfMeasurement(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.UomId == 0 {
+	if formRequest.UomId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Unit Of Measurement
@@ -176,25 +138,11 @@ func (r *UnitOfMeasurementController) SaveUnitOfMeasurement(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement/{uom_id} [patch]
-func (r *UnitOfMeasurementController) ChangeStatusUnitOfMeasurement(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	uomId, err := strconv.Atoi(c.Param("uom_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.unitofmeasurementservice.WithTrx(trxHandle).GetUnitOfMeasurementById(int(uomId))
-	if err != nil || result.UomId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	response, err := r.unitofmeasurementservice.WithTrx(trxHandle).ChangeStatusUnitOfMeasurement(int(uomId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	uomId, _ := strconv.Atoi(params.ByName("uom_id"))
 
-	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
+	response := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

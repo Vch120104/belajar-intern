@@ -19,23 +19,13 @@ import (
 )
 
 type WarehouseLocationImpl struct {
-	DB *gorm.DB
 }
 
-func OpenWarehouseLocationImpl(db *gorm.DB) masterwarehouserepository.WarehouseLocationRepository {
-	return &WarehouseLocationImpl{DB: db}
+func OpenWarehouseLocationImpl() masterwarehouserepository.WarehouseLocationRepository {
+	return &WarehouseLocationImpl{}
 }
 
-func (r *WarehouseLocationImpl) WithTrx(Trxhandle *gorm.DB) masterwarehouserepository.WarehouseLocationRepository {
-	if Trxhandle == nil {
-		log.Println("Transaction Database Not Found")
-		return r
-	}
-	r.DB = Trxhandle
-	return r
-}
-
-func (r *WarehouseLocationImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) (bool, error) {
+func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseLocationResponse) (bool, error) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseLocation{
 		IsActive:                      utils.BoolPtr(request.IsActive),
@@ -49,7 +39,7 @@ func (r *WarehouseLocationImpl) Save(request masterwarehousepayloads.GetWarehous
 		WarehouseLocationCapacityInM3: request.WarehouseLocationCapacityInM3,
 	}
 
-	rows, err := r.DB.Model(&warehouseMaster).
+	rows, err := tx.Model(&warehouseMaster).
 		Save(&warehouseMaster).
 		Rows()
 
@@ -62,16 +52,16 @@ func (r *WarehouseLocationImpl) Save(request masterwarehousepayloads.GetWarehous
 	return true, nil
 }
 
-func (r *WarehouseLocationImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, error) {
+func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, error) {
 
 	var entities masterwarehouseentities.WarehouseLocation
 	var warehouseLocationResponse masterwarehousepayloads.GetWarehouseLocationResponse
 
-	rows, err := r.DB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masterwarehousepayloads.GetWarehouseLocationResponse{
 			WarehouseLocationId: warehouseLocationId,
 		}).
-		Scan(&warehouseLocationResponse).
+		First(&warehouseLocationResponse).
 		// Find(&warehouseMasterResponse).
 		Rows()
 
@@ -84,11 +74,11 @@ func (r *WarehouseLocationImpl) GetById(warehouseLocationId int) (masterwarehous
 	return warehouseLocationResponse, nil
 }
 
-func (r *WarehouseLocationImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, error) {
 	var entities []masterwarehouseentities.WarehouseLocation
 	var warehouseLocationResponse []masterwarehousepayloads.GetAllWarehouseLocationResponse
 
-	tempRows := r.DB.
+	tempRows := tx.
 		Model(&masterwarehouseentities.WarehouseLocation{}).
 		Where("warehouse_location_code like ?", "%"+request.WarehouseLocationCode+"%").
 		Where("warehouse_location_name like ?", "%"+request.WarehouseLocationName+"%").
@@ -117,11 +107,11 @@ func (r *WarehouseLocationImpl) GetAll(request masterwarehousepayloads.GetAllWar
 	return pages, nil
 }
 
-func (r *WarehouseLocationImpl) ChangeStatus(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, error) {
+func (r *WarehouseLocationImpl) ChangeStatus(tx *gorm.DB, warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, error) {
 	var entities masterwarehouseentities.WarehouseLocation
 	var warehouseLocationPayloads masterwarehousepayloads.GetWarehouseLocationResponse
 
-	rows, err := r.DB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masterwarehousepayloads.GetWarehouseLocationResponse{
 			WarehouseLocationId: warehouseLocationId,
 		}).
@@ -134,7 +124,7 @@ func (r *WarehouseLocationImpl) ChangeStatus(warehouseLocationId int) (masterwar
 
 	defer rows.Close()
 
-	rows, err = r.DB.Model(&entities).
+	rows, err = tx.Model(&entities).
 		Where(masterwarehousepayloads.GetWarehouseLocationResponse{
 			WarehouseLocationId: warehouseLocationId,
 		}).

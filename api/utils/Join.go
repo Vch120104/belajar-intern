@@ -8,6 +8,24 @@ import (
 	"gorm.io/gorm"
 )
 
+// CreateJoinSelectStatement generates a GORM database query for selecting columns from a main table and joining with reference tables.
+//
+// Parameters:
+//   - db: A pointer to a GORM database query to which the join and select operations will be applied.
+//   - tableStruct: An instance of a structure representing the main table's fields and their attributes, including reference table information.
+//
+// Returns:
+//   - result: A modified GORM database query with select and join operations based on the provided main table structure and reference table information.
+//
+// Example Usage:
+//
+//	type User struct {
+//	    ID           int    `json:"id" main_table:"users"`
+//	    Name         string `json:"name"`
+//	    ParentEntity string `json:"parent_entity" references:"organizations"`
+//	}
+//	tableStruct := User{}
+//	query := CreateJoinSelectStatement(db, tableStruct)
 func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	keyAttribute := []string{}
 	responseType := reflect.TypeOf(tableStruct)
@@ -58,5 +76,3 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 
 	return query
 }
-
-

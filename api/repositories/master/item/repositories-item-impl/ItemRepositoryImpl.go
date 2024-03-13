@@ -5,9 +5,6 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"context"
-	"encoding/json"
-	"fmt"
 	"log"
 	"net/url"
 	"strconv"
@@ -15,47 +12,22 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 type ItemRepositoryImpl struct {
-	myDB  *gorm.DB
-	redis *redis.Client
 }
 
-func StartItemRepositoryImpl(db *gorm.DB, redis *redis.Client) masteritemrepository.ItemRepository {
-	return &ItemRepositoryImpl{myDB: db, redis: redis}
+func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
+	return &ItemRepositoryImpl{}
 }
 
-func (r *ItemRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.ItemRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *ItemRepositoryImpl) GetAllItem(filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
 	var responses []masteritempayloads.ItemLookup
 	tableStruct := masteritempayloads.ItemLookup{}
 
-	cacheKey := utils.GenerateCacheKey(filterCondition)
-
-	cachedData, err := r.redis.Get(context.Background(), cacheKey).Result()
-	if err == nil {
-		if cachedData != "" {
-			var decoder = json.NewDecoder(strings.NewReader(cachedData))
-			if err := decoder.Decode(&responses); err != nil {
-				return nil, err
-			}
-			return responses, nil
-		}
-	}
-
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
@@ -71,17 +43,10 @@ func (r *ItemRepositoryImpl) GetAllItem(filterCondition []utils.FilterCondition)
 
 	defer rows.Close()
 
-	dataToCache, err := json.Marshal(responses)
-	if err == nil {
-		_ = r.redis.Set(context.Background(), cacheKey, dataToCache, 1*time.Minute)
-	} else {
-		fmt.Println("Error marshalling data for Redis cache:", err)
-	}
-
 	return responses, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItemLookup(queryParams map[string]string) ([]map[string]interface{}, error) {
+func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[string]string) ([]map[string]interface{}, error) {
 	var paginationResponse utils.APIPaginationResponse
 	var c *gin.Context
 	var multiIds []string
@@ -100,7 +65,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(queryParams map[string]string) ([]
 		page, _ := strconv.Atoi(queryParams["page"])
 		limit, _ := strconv.Atoi(queryParams["limit"])
 
-		joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+		joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
 		//execute
 		rows, err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Rows()
@@ -168,11 +133,11 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(queryParams map[string]string) ([]
 	return dataSlice, nil
 }
 
-func (r *ItemRepositoryImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, error) {
+func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, error) {
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.Item{
 			ItemId: Id,
 		}).
@@ -188,7 +153,7 @@ func (r *ItemRepositoryImpl) GetItemById(Id int) (masteritempayloads.ItemRespons
 	return response, nil
 }
 
-func (r *ItemRepositoryImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, error) {
+func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, error) {
 	entities := masteritementities.Item{}
 	var response []masteritempayloads.ItemResponse
 
@@ -201,9 +166,9 @@ func (r *ItemRepositoryImpl) GetItemWithMultiId(MultiIds []string) ([]masteritem
 		},
 	)
 
-	r.myDB.Logger = newLogger
+	tx.Logger = newLogger
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where("item_id in ?", MultiIds).
 		Scan(&response).
 		Rows()
@@ -217,7 +182,7 @@ func (r *ItemRepositoryImpl) GetItemWithMultiId(MultiIds []string) ([]masteritem
 	return response, nil
 }
 
-func (r *ItemRepositoryImpl) GetItemCode(code string) ([]map[string]interface{}, error) {
+func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string]interface{}, error) {
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 	var getSupplierMasterResponse masteritempayloads.SupplierMasterResponse
@@ -230,7 +195,7 @@ func (r *ItemRepositoryImpl) GetItemCode(code string) ([]map[string]interface{},
 	var getAtpmWarrantyClaimTypeResponse masteritempayloads.AtpmWarrantyClaimTypeResponse
 	var c *gin.Context
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.Item{
 			ItemCode: code,
 		}).First(&response).Rows()
@@ -311,7 +276,7 @@ func (r *ItemRepositoryImpl) GetItemCode(code string) ([]map[string]interface{},
 	return seventhJoin, nil
 }
 
-func (r *ItemRepositoryImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, error) {
+func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemResponse) (bool, error) {
 	entities := masteritementities.Item{
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
@@ -369,7 +334,7 @@ func (r *ItemRepositoryImpl) SaveItem(req masteritempayloads.ItemResponse) (bool
 		PersonInChargeId:             req.PersonInChargeId,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -378,10 +343,10 @@ func (r *ItemRepositoryImpl) SaveItem(req masteritempayloads.ItemResponse) (bool
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) ChangeStatusItem(Id int) (bool, error) {
+func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteritementities.Item
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("item_id = ?", Id).
 		First(&entities)
 
@@ -395,7 +360,7 @@ func (r *ItemRepositoryImpl) ChangeStatusItem(Id int) (bool, error) {
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error
@@ -404,7 +369,7 @@ func (r *ItemRepositoryImpl) ChangeStatusItem(Id int) (bool, error) {
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItemDetail(filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
+func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
 	// var responses []masteritempayloads.ItemDetailResponse
 	entities := []masteritementities.ItemClass{}
 	var responses []masteritempayloads.ItemClassResponse
@@ -439,7 +404,7 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(filterCondition []utils.FilterCond
 	// }
 
 	//define base model
-	baseModelQuery := r.myDB.Model(&entities)
+	baseModelQuery := tx.Model(&entities)
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//whereQuery := utils.ApplyFilter(baseModelQuery, internalServiceFilter)
@@ -469,7 +434,7 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(filterCondition []utils.FilterCond
 	return nil, nil
 }
 
-func (r *ItemRepositoryImpl) SaveItemDetail(request masteritempayloads.ItemDetailResponse) (bool, error) {
+func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempayloads.ItemDetailResponse) (bool, error) {
 	entities := masteritementities.ItemDetail{
 		IsActive:     request.IsActive,
 		ItemDetailId: request.ItemDetailId,
@@ -481,7 +446,7 @@ func (r *ItemRepositoryImpl) SaveItemDetail(request masteritempayloads.ItemDetai
 		ReturnEvery:  request.ReturnEvery,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err

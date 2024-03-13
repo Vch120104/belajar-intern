@@ -1,8 +1,7 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"strconv"
 
@@ -14,26 +13,24 @@ import (
 	masteritemlevelservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type ItemLevelController struct {
+type ItemLevelController interface {
+	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type ItemLevelControllerImpl struct {
 	itemLevelService masteritemlevelservice.ItemLevelService
 }
 
-func StartItemLevelRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	itemLevelService masteritemlevelservice.ItemLevelService,
-) {
-	handler := ItemLevelController{
-		itemLevelService: itemLevelService,
+func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelService) ItemLevelController {
+	return &ItemLevelControllerImpl{
+		itemLevelService: ItemLevelService,
 	}
-	r.GET("/item-level-by-id", middlewares.DBTransactionMiddleware(db), handler.GetById)
-	r.GET("/item-level", middlewares.DBTransactionMiddleware(db), handler.GetAll)
-	r.POST("/item-level", middlewares.DBTransactionMiddleware(db), handler.Save)
-	r.PATCH("/item-level/:item_level_id", middlewares.DBTransactionMiddleware(db), handler.ChangeStatus)
 }
 
 // @Summary Get All Item Level
@@ -55,20 +52,20 @@ func StartItemLevelRoutes(
 // @Param is_active query bool false "Is Active"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level [get]
-func (r *ItemLevelController) GetAll(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	page, _ := strconv.Atoi(c.Query("page"))
-	limit, _ := strconv.Atoi(c.Query("limit"))
-	sortOf := c.Query("sort_of")
-	sortBy := c.Query("sort_by")
-	itemLevel := c.Query("item_level")
-	itemClassCode := c.Query("item_class_code")
-	itemLevelParent := c.Query("item_level_parent")
-	itemLevelCode := c.Query("item_level_code")
-	itemLevelName := c.Query("item_level_name")
-	isActive := c.Query("is_active")
+func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
+	page, _ := strconv.Atoi(queryValues.Get("page"))
+	limit, _ := strconv.Atoi(queryValues.Get("limit"))
+	sortOf := queryValues.Get("sort_of")
+	sortBy := queryValues.Get("sort_by")
+	itemLevel := queryValues.Get("item_level")
+	itemClassCode := queryValues.Get("item_class_code")
+	itemLevelParent := queryValues.Get("item_level_parent")
+	itemLevelCode := queryValues.Get("item_level_code")
+	itemLevelName := queryValues.Get("item_level_name")
+	isActive := queryValues.Get("is_active")
 
-	get, err := r.itemLevelService.WithTrx(trxHandle).GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
+	get := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
 		ItemLevel:       itemLevel,
 		ItemClassCode:   itemClassCode,
 		ItemLevelParent: itemLevelParent,
@@ -82,12 +79,7 @@ func (r *ItemLevelController) GetAll(c *gin.Context) {
 		Page:   page,
 	})
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
 
 // @Summary Get Item Level By Id
@@ -100,23 +92,13 @@ func (r *ItemLevelController) GetAll(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level-by-id [get]
-func (r *ItemLevelController) GetById(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	itemLevelId, _ := strconv.Atoi(c.Param("item_level_id"))
+func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	get, err := r.itemLevelService.WithTrx(trxHandle).GetById(itemLevelId)
+	itemLevelId, _ := strconv.Atoi(params.ByName("item_level_id"))
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	get := r.itemLevelService.GetById(itemLevelId)
 
-	if get.ItemLevelId == 0 {
-		exceptions.NotFoundException(c, "Item Level Data Not Found!")
-		return
-	}
-
-	payloads.HandleSuccess(c, get, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Item Level
@@ -129,43 +111,22 @@ func (r *ItemLevelController) GetById(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level [post]
-func (r *ItemLevelController) Save(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteritemlevelpayloads.SaveItemLevelRequest
+func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	var formRequest masteritemlevelpayloads.SaveItemLevelRequest
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	if int(request.ItemLevelId) != 0 {
-		result, err := r.itemLevelService.WithTrx(trxHandle).GetById(int(request.ItemLevelId))
+	create := r.itemLevelService.Save(formRequest)
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.ItemLevelId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.itemLevelService.WithTrx(trxHandle).Save(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.ItemLevelId == 0 {
+	if formRequest.ItemLevelId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Item Level Status By Id
@@ -178,25 +139,11 @@ func (r *ItemLevelController) Save(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
-func (r *ItemLevelController) ChangeStatus(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	itemLevelId, err := strconv.Atoi(c.Param("item_level_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.itemLevelService.WithTrx(trxHandle).GetById(int(itemLevelId))
-	if err != nil || result.ItemLevelId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	response, err := r.itemLevelService.WithTrx(trxHandle).ChangeStatus(int(itemLevelId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	itemLevelId, _ := strconv.Atoi(params.ByName("item_level_id"))
 
-	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
+	response := r.itemLevelService.ChangeStatus(int(itemLevelId))
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

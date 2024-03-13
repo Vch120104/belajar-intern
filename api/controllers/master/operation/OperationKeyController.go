@@ -1,39 +1,36 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
-
-	// "after-sales/api/middlewares"
-
 	masteroperationservice "after-sales/api/services/master/operation"
 	"net/http"
 	"strconv"
-
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type OperationKeyController struct {
+type OperationKeyController interface {
+	GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetOperationKeyByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetOperationKeyName(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type OperationKeyControllerImpl struct {
 	operationkeyservice masteroperationservice.OperationKeyService
 }
 
-func StartOperationKeyRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	operationkeyservice masteroperationservice.OperationKeyService,
-) {
-	operationKeyHandler := OperationKeyController{operationkeyservice: operationkeyservice}
-	r.GET("/operation-key/:operation_key_id", middlewares.DBTransactionMiddleware(db), operationKeyHandler.GetOperationKeyByID)
-	r.GET("/operation-key", middlewares.DBTransactionMiddleware(db), operationKeyHandler.GetAllOperationKeyList)
-	r.GET("/operation-key-name", middlewares.DBTransactionMiddleware(db), operationKeyHandler.GetOperationKeyName)
-	r.POST("/operation-key", middlewares.DBTransactionMiddleware(db), operationKeyHandler.SaveOperationKey)
-	r.PATCH("/operation-key/:operation_key_id", middlewares.DBTransactionMiddleware(db), operationKeyHandler.ChangeStatusOperationKey)
+func NewOperationKeyController(operationKeyService masteroperationservice.OperationKeyService) OperationKeyController {
+	return &OperationKeyControllerImpl{
+		operationkeyservice: operationKeyService,
+	}
 }
+
+
 
 // @Summary Get All Operation Key
 // @Description REST API Operation Key
@@ -54,35 +51,31 @@ func StartOperationKeyRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key [get]
-func (r *OperationKeyController) GetAllOperationKeyList(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	query := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_operation_group.operation_group_code":            c.Query("operation_group_code"),
-		"mtr_operation_group.operation_group_description":     c.Query("operation_group_description"),
-		"mtr_operation_section.operation_section_code":        c.Query("operation_section_code"),
-		"mtr_operation_section.operation_section_description": c.Query("operation_section_description"),
-		"mtr_operation_key.is_active":                         c.Query("is_active"),
-		"mtr_operation_key.operation_key_code":                c.Query("operation_key_code"),
-		"mtr_operation_key.operation_key_description":         c.Query("operation_key_description"),
+		"mtr_operation_group.operation_group_code":            query.Get("operation_group_code"),
+		"mtr_operation_group.operation_group_description":     query.Get("operation_group_description"),
+		"mtr_operation_section.operation_section_code":        query.Get("operation_section_code"),
+		"mtr_operation_section.operation_section_description": query.Get("operation_section_description"),
+		"mtr_operation_key.is_active":                         query.Get("is_active"),
+		"mtr_operation_key.operation_key_code":                query.Get("operation_key_code"),
+		"mtr_operation_key.operation_key_description":         query.Get("operation_key_description"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.GetQueryInt(c, "limit"),
-		Page:   utils.GetQueryInt(c, "page"),
-		SortOf: c.Query("sort_of"),
-		SortBy: c.Query("sort_by"),
+		Limit:  utils.NewGetQueryInt(query, "limit"),
+		Page:   utils.NewGetQueryInt(query, "page"),
+		SortOf: query.Get("sort_of"),
+		SortBy: query.Get("sort_by"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.operationkeyservice.WithTrx(trxHandle).GetAllOperationKeyList(criteria, pagination)
+	result := r.operationkeyservice.GetAllOperationKeyList(criteria, pagination)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Operation Key By ID
@@ -94,15 +87,11 @@ func (r *OperationKeyController) GetAllOperationKeyList(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [get]
-func (r *OperationKeyController) GetOperationKeyByID(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationKeyId, _ := strconv.Atoi(c.Param("operation_key_id"))
-	result, err := r.operationkeyservice.WithTrx(trxHandle).GetOperationKeyById(operationKeyId)
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	operationKeyId, _ := strconv.Atoi(params.ByName("operation_key_id"))
+	result := r.operationkeyservice.GetOperationKeyById(operationKeyId)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Operation Key Name
@@ -116,24 +105,20 @@ func (r *OperationKeyController) GetOperationKeyByID(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key-name [get]
-func (r *OperationKeyController) GetOperationKeyName(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationGroupId := utils.GetQueryInt(c, "operation_group_id")
-	operationSectionId := utils.GetQueryInt(c, "operation_section_id")
-	keyCode := c.Query("operation_key_code")
+func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	query := request.URL.Query()
 
-	result, err := r.operationkeyservice.WithTrx(trxHandle).GetOperationKeyName(masteroperationpayloads.OperationKeyRequest{
+	operationGroupId := utils.NewGetQueryInt(query, "operation_group_id")
+	operationSectionId := utils.NewGetQueryInt(query, "operation_section_id")
+	keyCode := query.Get("operation_key_code")
+
+	result := r.operationkeyservice.GetOperationKeyName(masteroperationpayloads.OperationKeyRequest{
 		OperationGroupId:   int32(operationGroupId),
 		OperationSectionId: int32(operationSectionId),
 		OperationKeyCode:   keyCode,
 	})
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Operation Key
@@ -145,43 +130,21 @@ func (r *OperationKeyController) GetOperationKeyName(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key [post]
-func (r *OperationKeyController) SaveOperationKey(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteroperationpayloads.OperationKeyResponse
+func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	var requestForm masteroperationpayloads.OperationKeyResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &requestForm)
 
-	if int(request.OperationKeyId) != 0 {
-		result, err := r.operationkeyservice.WithTrx(trxHandle).GetOperationKeyById(int(request.OperationKeyId))
+	create := r.operationkeyservice.SaveOperationKey(requestForm)
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.OperationKeyId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.operationkeyservice.WithTrx(trxHandle).SaveOperationKey(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.OperationKeyId == 0 {
+	if requestForm.OperationKeyId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Operation Key
@@ -193,31 +156,10 @@ func (r *OperationKeyController) SaveOperationKey(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [patch]
-func (r *OperationKeyController) ChangeStatusOperationKey(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationKeyId, err := strconv.Atoi(c.Param("operation_key_id"))
+func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	operationKeyId, _ := strconv.Atoi(params.ByName("operation_key_id"))
 
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.operationkeyservice.WithTrx(trxHandle).GetOperationKeyById(int(operationKeyId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	response := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
 
-	if result.OperationKeyId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	response, err := r.operationkeyservice.WithTrx(trxHandle).ChangeStatusOperationKey(int(operationKeyId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

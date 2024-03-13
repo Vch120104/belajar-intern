@@ -1,8 +1,7 @@
 package mastercontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -11,25 +10,25 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type DiscountController struct {
+type DiscountController interface {
+	GetAllDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetDiscountByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type DiscountControllerImpl struct {
 	discountservice masterservice.DiscountService
 }
 
-func StartDiscountRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	discountservice masterservice.DiscountService,
-) {
-	discountHandler := DiscountController{discountservice: discountservice}
-	r.GET("/discount", middlewares.DBTransactionMiddleware(db), discountHandler.GetAllDiscount)
-	r.GET("/discount-drop-down/", middlewares.DBTransactionMiddleware(db), discountHandler.GetAllDiscountIsActive)
-	r.GET("/discount-by-code/:discount_code", middlewares.DBTransactionMiddleware(db), discountHandler.GetDiscountByCode)
-	r.POST("/discount", middlewares.DBTransactionMiddleware(db), discountHandler.SaveDiscount)
-	r.PATCH("/discount/:discount_code_id", middlewares.DBTransactionMiddleware(db), discountHandler.ChangeStatusDiscount)
+func NewDiscountController(discountService masterservice.DiscountService) DiscountController {
+	return &DiscountControllerImpl{
+		discountservice: discountService,
+	}
 }
 
 // @Summary Get All Discount
@@ -47,36 +46,26 @@ func StartDiscountRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount [get]
-func (r *DiscountController) GetAllDiscount(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	query := request.URL.Query()
 	queryParams := map[string]string{
-		"is_active":                 c.Query("is_active"),
-		"discount_code_value":       c.Query("discount_code_value"),
-		"discount_code_description": c.Query("discount_code_description"),
+		"is_active":                 query.Get("is_active"),
+		"discount_code_value":       query.Get("discount_code_value"),
+		"discount_code_description": query.Get("discount_code_description"),
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.GetQueryInt(c, "limit"),
-		Page:   utils.GetQueryInt(c, "page"),
-		SortOf: c.Query("sort_of"),
-		SortBy: c.Query("sort_by"),
+		Limit:  utils.NewGetQueryInt(query, "limit"),
+		Page:   utils.NewGetQueryInt(query, "page"),
+		SortOf: query.Get("sort_of"),
+		SortBy: query.Get("sort_by"),
 	}
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.discountservice.WithTrx(trxHandle).GetAllDiscount(filterCondition, pagination)
+	result := r.discountservice.GetAllDiscount(filterCondition, pagination)
 
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if result.Rows == nil {
-		exceptions.NotFoundException(c, "Nothing matching request")
-		return
-	}
-
-	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get All Discount drop down
@@ -87,14 +76,11 @@ func (r *DiscountController) GetAllDiscount(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-drop-down/ [get]
-func (r *DiscountController) GetAllDiscountIsActive(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	result, err := r.discountservice.WithTrx(trxHandle).GetAllDiscountIsActive()
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	result := r.discountservice.GetAllDiscountIsActive()
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Discount By Code
@@ -106,15 +92,13 @@ func (r *DiscountController) GetAllDiscountIsActive(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-by-code/{discount_code} [get]
-func (r *DiscountController) GetDiscountByCode(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	operationGroupCode := c.Param("discount_code")
-	result, err := r.discountservice.WithTrx(trxHandle).GetDiscountByCode(operationGroupCode)
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	query := request.URL.Query()
+
+	operationGroupCode := query.Get("discount_code")
+	result := r.discountservice.GetDiscountByCode(operationGroupCode)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Discount
@@ -126,43 +110,22 @@ func (r *DiscountController) GetDiscountByCode(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount [post]
-func (r *DiscountController) SaveDiscount(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masterpayloads.DiscountResponse
+func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	var requestForm masterpayloads.DiscountResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &requestForm)
 
-	if int(request.DiscountCodeId) != 0 {
-		result, err := r.discountservice.WithTrx(trxHandle).GetDiscountById(int(request.DiscountCodeId))
+	create := r.discountservice.SaveDiscount(requestForm)
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.DiscountCodeId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.discountservice.WithTrx(trxHandle).SaveDiscount(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.DiscountCodeId == 0 {
+	if requestForm.DiscountCodeId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Discount
@@ -174,25 +137,11 @@ func (r *DiscountController) SaveDiscount(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount/{discount_code_id} [patch]
-func (r *DiscountController) ChangeStatusDiscount(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	uomId, err := strconv.Atoi(c.Param("discount_code_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.discountservice.WithTrx(trxHandle).GetDiscountById(int(uomId))
-	if err != nil || result.DiscountCodeId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	response, err := r.discountservice.WithTrx(trxHandle).ChangeStatusDiscount(int(uomId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	uomId, _ := strconv.Atoi(params.ByName("discount_code_id"))
 
-	payloads.HandleSuccess(c, response, "Update Data Successfully!", http.StatusOK)
+	response := r.discountservice.ChangeStatusDiscount(int(uomId))
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

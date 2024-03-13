@@ -6,32 +6,21 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
 
 type MarkupMasterRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartMarkupMasterRepositoryImpl(db *gorm.DB) masteritemrepository.MarkupMasterRepository {
-	return &MarkupMasterRepositoryImpl{myDB: db}
+func StartMarkupMasterRepositoryImpl() masteritemrepository.MarkupMasterRepository {
+	return &MarkupMasterRepositoryImpl{}
 }
 
-func (r *MarkupMasterRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.MarkupMasterRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB,filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	var responses []masteritementities.MarkupMaster
 
-	baseModelQuery := r.myDB.Model(&responses)
+	baseModelQuery := tx.Model(&responses)
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
@@ -52,11 +41,11 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(filterCondition []utils
 	return pages, nil
 }
 
-func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(Id int) (masteritempayloads.MarkupMasterResponse, error) {
+func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(tx *gorm.DB,Id int) (masteritempayloads.MarkupMasterResponse, error) {
 	entities := masteritementities.MarkupMaster{}
 	response := masteritempayloads.MarkupMasterResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.MarkupMaster{
 			MarkupMasterId: Id,
 		}).
@@ -72,7 +61,7 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(Id int) (masteritempayl
 	return response, nil
 }
 
-func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(req masteritempayloads.MarkupMasterResponse) (bool, error) {
+func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB,req masteritempayloads.MarkupMasterResponse) (bool, error) {
 	entities := masteritementities.MarkupMaster{
 		IsActive:                req.IsActive,
 		MarkupMasterId:          req.MarkupMasterId,
@@ -80,7 +69,7 @@ func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(req masteritempayloads.Mar
 		MarkupMasterDescription: req.MarkupMasterDescription,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -88,10 +77,10 @@ func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(req masteritempayloads.Mar
 
 	return true, nil
 }
-func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(Id int) (bool, error) {
+func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(tx *gorm.DB,Id int) (bool, error) {
 	var entities masteritementities.MarkupMaster
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("markup_master_id = ?", Id).
 		First(&entities)
 
@@ -105,7 +94,7 @@ func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(Id int) (boo
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error
@@ -113,10 +102,10 @@ func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(Id int) (boo
 
 	return true, nil
 }
-func (r *MarkupMasterRepositoryImpl) GetMarkupMasterByCode(markupCode string) (masteritempayloads.MarkupMasterResponse, error) {
+func (r *MarkupMasterRepositoryImpl) GetMarkupMasterByCode(tx *gorm.DB,markupCode string) (masteritempayloads.MarkupMasterResponse, error) {
 	response := masteritempayloads.MarkupMasterResponse{}
 	var entities masteritementities.MarkupMaster
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where("markup_master_code = ?", markupCode).
 		First(&response).Rows()
 

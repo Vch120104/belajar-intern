@@ -26,11 +26,13 @@ type APIPaginationResponse struct {
 	TotalRows  int64       `json:"total_rows"`
 }
 
+// Deprecated: please change to the latest one without *gin.Context
+// get data from url
 func Get(c *gin.Context, url string, data interface{}, body interface{}) error {
 	client := &http.Client{}
 	var buf bytes.Buffer
 
-	// Jika ada parameter Body
+	// Jika ada parameter Body/body request untuk getnya
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
 		exceptions.EntityException(c, "Error Entity Body!")
@@ -59,12 +61,14 @@ func Get(c *gin.Context, url string, data interface{}, body interface{}) error {
 		Data: data,
 	}
 
+	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
 		return nil
 		// c.JSON(newResponse.StatusCode, gin.H{"error": "Failed to fetch data from the external API"})
 		// return err
 	}
 
+	//decode body response
 	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
 
 	if err != nil {
@@ -75,6 +79,8 @@ func Get(c *gin.Context, url string, data interface{}, body interface{}) error {
 	return nil
 }
 
+// Deprecated: please change to the latest one without *gin.Context
+// get data from url with pagination, the returned data is in form of APIPaginationResponse
 func GetWithPagination(c *gin.Context, url string, pagination APIPaginationResponse, body interface{}) (APIPaginationResponse, error) {
 	client := &http.Client{}
 	var buf bytes.Buffer

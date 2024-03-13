@@ -10,7 +10,8 @@ type OldError struct {
 	Message string `json:"Message"`
 	Data interface{} `json:"Data"`
 }
-
+// Deprecated: please change to the latest one without *gin.Context
+//
 func AppException(c *gin.Context, message string) {
 	res := OldError{
 		Success: false,

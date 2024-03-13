@@ -2,8 +2,9 @@ package route
 
 import (
 	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
-
+	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
 
 	_ "after-sales/docs"
@@ -15,24 +16,125 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// func DiscountPercentRouter(
-// 	discountPercentController masteritemcontroller.DiscountPercentController,
-// ) *httprouter.Router {
-// 	router := httprouter.New()
+/* Master */
+func DiscountPercentRouter(
+	discountPercentController masteritemcontroller.DiscountPercentController,
+) *httprouter.Router {
+	router := httprouter.New()
 
-// 	router.GET("/api/aftersales/discount-percent", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
+	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
+	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
+	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
 
-// 	router.PanicHandler = exceptions.ErrorHandler
+	router.PanicHandler = exceptions.ErrorHandler
 
-// 	return router
-// }
+	return router
+}
+
+func DiscountRouter(
+	discountController mastercontroller.DiscountController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/discount/", discountController.GetAllDiscount)
+	router.GET("/discount/drop-down/", discountController.GetAllDiscountIsActive)
+	router.GET("/discount/by-code/:discount_code", discountController.GetDiscountByCode)
+	router.POST("/discount/", discountController.SaveDiscount)
+	router.PATCH("/discount/:discount_code_id", discountController.ChangeStatusDiscount)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func WarehouseMasterRouter(
+	warehouseMasterController masterwarehousecontroller.WarehouseMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/warehouse-master/", warehouseMasterController.GetAll)
+	router.GET("/warehouse-master/by-id/:warehouse_id", warehouseMasterController.GetById)
+	router.GET("/warehouse-master/by-code/:warehouse_code", warehouseMasterController.GetByCode)
+	router.GET("/warehouse-master/multi-id/:warehouse_ids", warehouseMasterController.GetWarehouseWithMultiId)
+	router.GET("/warehouse-master/drop-down", warehouseMasterController.GetAllIsActive)
+	router.POST("/warehouse-master/", warehouseMasterController.Save)
+	router.PATCH("/warehouse-master/:warehouse_id", warehouseMasterController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func WarehouseGroupRouter(
+	warehouseGroupController masterwarehousecontroller.WarehouseGroupController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/warehouse-group/", warehouseGroupController.GetAll)
+	router.GET("/warehouse-group/:warehouse_group_id", warehouseGroupController.GetById)
+	router.POST("/warehouse-group/", warehouseGroupController.Save)
+	router.PATCH("/warehouse-group/:warehouse_group_id", warehouseGroupController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func WarehouseLocationRouter(
+	warehouseLocationController masterwarehousecontroller.WarehouseLocationController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/warehouse-location/", warehouseLocationController.GetAll)
+	router.GET("/warehouse-location/:warehouse_location_id", warehouseLocationController.GetById)
+	router.POST("/warehouse-location/", warehouseLocationController.Save)
+	router.PATCH("/warehouse-location/:warehouse_location_id", warehouseLocationController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func MarkupRateRouter(
+	markupRateController masteritemcontroller.MarkupRateController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/markup-rate/", markupRateController.GetAllMarkupRate)
+	router.GET("/markup-rate/:markup_rate_id", markupRateController.GetMarkupRateByID)
+	router.POST("/markup-rate/", markupRateController.SaveMarkupRate)
+	router.PATCH("/markup-rate/:markup_rate_id", markupRateController.ChangeStatusMarkupRate)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemSubstituteRouter(
+	itemSubstituteController masteritemcontroller.ItemSubstituteController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/item-substitute/", itemSubstituteController.GetAllItemSubstitute)
+	router.GET("/item-substitute/header/by-id/:item_substitute_id", itemSubstituteController.GetByIdItemSubstitute)
+	router.GET("/item-substitute/detail/all/by-id/:item_substitute_id", itemSubstituteController.GetAllItemSubstituteDetail)
+	router.GET("/item-substitute/detail/by-id/:item_substitute_detail_id", itemSubstituteController.GetByIdItemSubstituteDetail)
+	router.POST("/item-substitute/", itemSubstituteController.SaveItemSubstitute)
+	router.POST("/item-substitute/detail/:item_substitute_id", itemSubstituteController.SaveItemSubstituteDetail)
+	router.PATCH("/item-substitute/header/by-id/:item_substitute_id", itemSubstituteController.ChangeStatusItemSubstitute)
+	router.PATCH("/item-substitute/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.PATCH("/item-substitute/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
 
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
+	router.GET("/operation-group", operationGroupController.GetAllOperationGroup)
 	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
 	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
 	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
@@ -40,6 +142,49 @@ func OperationGroupRouter(
 
 	router.PanicHandler = exceptions.ErrorHandler
 
+	return router
+}
+
+func ItemClassRouter(
+	itemClassController masteritemcontroller.ItemClassController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/item-class/", itemClassController.GetAllItemClass)
+	router.GET("/item-class/pop-up/", itemClassController.GetAllItemClassLookup)
+	router.POST("/item-class/", itemClassController.SaveItemClass)
+	router.PATCH("/item-class/:item_class_id", itemClassController.ChangeStatusItemClass)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func IncentiveGroupRouter(
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-group/", incentiveGroupController.GetAllIncentiveGroup)
+	router.GET("/incentive-group/drop-down/", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.GET("/incentive-group/by-id/:incentive_group_id", incentiveGroupController.GetIncentiveGroupById)
+	router.POST("/incentive-group/", incentiveGroupController.SaveIncentiveGroup)
+	router.PATCH("/incentive-group/:incentive_group_id", incentiveGroupController.ChangeStatusIncentiveGroup)
+
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func IncentiveGroupDetailRouter(
+	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-group-detail/by-header-id/", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
+	router.GET("/incentive-group-detail/by-detail-id/:incentive_group_detail_id", incentiveGroupDetailController.GetIncentiveGroupDetailById)
+	router.POST("/incentive-group-detail/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+
+	router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 
@@ -60,14 +205,131 @@ func ShiftScheduleRouter(
 	return router
 }
 
-func FieldActionRouter(
-	FieldActionController mastercontroller.FieldActionController,
+func OperationSectionRouter(
+	operationSectionController masteroperationcontroller.OperationSectionController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/field-action/", FieldActionController.GetAllFieldAction)
-	// /field-action/drop-down
-	// /field-action/by-code/{}
+	router.GET("/operation-section/", operationSectionController.GetAllOperationSectionList)
+	router.GET("/operation-section/by-id/:operation_section_id", operationSectionController.GetOperationSectionByID)
+	router.GET("/operation-section/by-name", operationSectionController.GetOperationSectionName)
+	router.GET("/operation-section/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
+	router.PUT("/operation-section/", operationSectionController.SaveOperationSection)
+	router.PATCH("/operation-section/:operation_section_id", operationSectionController.ChangeStatusOperationSection)
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func OperationEntriesRouter(
+	operationEntriesController masteroperationcontroller.OperationEntriesController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/operation-entries/", operationEntriesController.GetAllOperationEntries)
+	router.GET("/operation-entries/:operation_entries_id", operationEntriesController.GetOperationEntriesByID)
+	router.GET("/operation-entries-by-name/", operationEntriesController.GetOperationEntriesName)
+	router.POST("/operation-entries/", operationEntriesController.SaveOperationEntries)
+	router.PATCH("/operation-entries/:operation_entries_id", operationEntriesController.ChangeStatusOperationEntries)
+
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func OperationKeyRouter(
+	operationKeyController masteroperationcontroller.OperationKeyController,
+
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/operation-key/:operation_key_id", operationKeyController.GetOperationKeyByID)
+	router.GET("/operation-key/", operationKeyController.GetAllOperationKeyList)
+	router.GET("/operation-key-name/", operationKeyController.GetOperationKeyName)
+	router.POST("/operation-key/", operationKeyController.SaveOperationKey)
+	router.PATCH("/operation-key/:operation_key_id", operationKeyController.ChangeStatusOperationKey)
+	router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func ForecastMasterRouter(
+	forecastMasterController mastercontroller.ForecastMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/forecast-master/", forecastMasterController.GetAllForecastMaster)
+	router.GET("/forecast-master/:forecast_master_id", forecastMasterController.GetForecastMasterById)
+	router.POST("/forecast-master/", forecastMasterController.SaveForecastMaster)
+	router.PATCH("/forecast-master/:forecast_master_id", forecastMasterController.ChangeStatusForecastMaster)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func UnitOfMeasurementRouter(
+	unitOfMeasurementController masteritemcontroller.UnitOfMeasurementController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/unit-of-measurement/", unitOfMeasurementController.GetAllUnitOfMeasurement)
+	router.GET("/unit-of-measurement/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
+	router.GET("/unit-of-measurement/by-code/:uom_code", unitOfMeasurementController.GetUnitOfMeasurementByCode)
+	router.POST("/unit-of-measurement/", unitOfMeasurementController.SaveUnitOfMeasurement)
+	router.PATCH("/unit-of-measurement/:uom_id", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func MarkupMasterRouter(
+	markupMasterController masteritemcontroller.MarkupMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/markup-master/", markupMasterController.GetMarkupMasterList)
+	router.GET("/markup-master/by-code/:markup_master_code", markupMasterController.GetMarkupMasterByCode)
+	router.POST("/markup-master/", markupMasterController.SaveMarkupMaster)
+	router.PATCH("/markup-master/:markup_master_id", markupMasterController.ChangeStatusMarkupMaster)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemLevelRouter(
+	itemLevelController masteritemcontroller.ItemLevelController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/item-level/", itemLevelController.GetAll)
+	router.GET("/item-level/:item_level_id", itemLevelController.GetById)
+	router.POST("/item-level/", itemLevelController.Save)
+	router.PATCH("/item-level/:item_level_id", itemLevelController.ChangeStatus)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemRouter(
+	itemController masteritemcontroller.ItemController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/item/", itemController.GetAllItem)
+	router.GET("/item/pop-up/", itemController.GetAllItemLookup)
+	router.GET("/item/multi-id/:item_ids", itemController.GetItemWithMultiId)
+	router.GET("/item/by-code/:item_code", itemController.GetItemByCode)
+	router.POST("/item/", itemController.SaveItem)
+	router.PATCH("/item/:item_id", itemController.ChangeStatusItem)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func PriceListRouter(
+	priceListController masteritemcontroller.PriceListController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/price-list/", priceListController.GetPriceList)
+	router.GET("/price-list/pop-up/", priceListController.GetPriceListLookup)
+	router.POST("/price-list/", priceListController.SavePriceList)
+	router.PATCH("/price-list/:price_list_id", priceListController.ChangeStatusPriceList)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -89,117 +351,3 @@ func adaptHandler(h http.Handler) httprouter.Handle {
 func swaggerHandler() http.HandlerFunc {
 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
 }
-
-// type OperationGroupController interface {
-// 	GetAllOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-// 	GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-// 	GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-// 	SaveOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-// 	ChangeStatusOperationGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-// }
-
-// func CreateHandler(db *gorm.DB, env string, redis *redis.Client) {
-// 	r := gin.New()
-// 	//mtr_operation_group
-// 	operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl(db)
-// 	operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository)
-// 	//mtr_operation_section
-// 	operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl(db)
-// 	operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository)
-// 	//mtr_operation_key
-// 	operationKeyRepository := masteroperationrepositoryimpl.StartOperationKeyRepositoryImpl(db)
-// 	operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository)
-// 	// //mtr_operation_code
-// 	operationCodeRepository := masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl(db)
-// 	operationCodeService := masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository)
-// 	// //mtr_operation_entries
-// 	operationEntriesRepository := masteroperationrepositoryimpl.StartOperationEntriesRepositoryImpl(db)
-// 	operationEntriesService := masteroperationserviceimpl.StartOperationEntriesService(operationEntriesRepository)
-// 	// //mtr_operation_model_mapping
-// 	operationModelMappingRepository := masteroperationrepositoryimpl.StartOperationModelMappingRepositoryImpl(db)
-// 	operationModelMappingService := masteroperationserviceimpl.StartOperationMappingService(operationModelMappingRepository)
-
-// 	//mtr_markup_master
-// 	markupMasterRepository := masteritemrepositoryimpl.StartMarkupMasterRepositoryImpl(db)
-// 	markupMasterService := masteritemserviceimpl.StartMarkupMasterService(markupMasterRepository)
-
-// 	//mtr_uom
-// 	UnitOfMeasurementRepository := masteritemrepositoryimpl.StartUnitOfMeasurementRepositoryImpl(db)
-// 	UnitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(UnitOfMeasurementRepository)
-// 	//mtr_item
-// 	itemRepository := masteritemrepositoryimpl.StartItemRepositoryImpl(db, redis)
-// 	itemService := masteritemserviceimpl.StartItemService(itemRepository)
-// 	//mtr_discount
-// 	discountRepository := masterrepositoryimpl.StartDiscountRepositoryImpl(db)
-// 	discountService := masterserviceimpl.StartDiscountService(discountRepository)
-// 	//mtr_incentive_group
-// 	incentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupImpl(db)
-// 	incentiveGroupService := masterserviceimpl.StartIncentiveGroup(incentiveGroupRepository)
-// 	//mtr_item_class
-// 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl(db)
-// 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository)
-// 	//mtr_price_list
-// 	priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl(db)
-// 	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository)
-
-// 	//mtr_discount_percent
-// 	discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl(db)
-// 	discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository)
-
-// 	//mtr_item_level
-// 	itemLevelRepository := masteritemrepositoryimpl.StartItemLevelRepositoryImpl(db)
-// 	itemLevelService := masteritemserviceimpl.StartItemLevelService(itemLevelRepository)
-
-// 	warehouseGroupRepository := masterwarehouserepositoryimpl.OpenWarehouseGroupImpl(db)
-// 	warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository)
-
-// 	warehouseMasterRepository := masterwarehouserepositoryimpl.OpenWarehouseMasterImpl(db)
-// 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository)
-
-// 	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl(db)
-// 	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository)
-
-// 	bookingEstimationRepository := transactionworkshoprepositoryimpl.OpenBookingEstimationImpl(db)
-// 	bookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(bookingEstimationRepository)
-
-// 	r.Use(middlewares.SetupCorsMiddleware())
-
-// 	if env != "prod" {
-// 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-// 	}
-
-// 	api := r.Group("aftersales-service/api/aftersales")
-// 	//master
-// 	mastercontroller.StartDiscountRoutes(db, api, discountService)
-// 	mastercontroller.StartIncentiveGroupRoutes(db, api, incentiveGroupService)
-// 	//operation
-// 	masteroperationcontroller.StartOperationGroupRoutes(db, api, operationGroupService)
-// 	masteroperationcontroller.StartOperationSectionRoutes(db, api, operationSectionService)
-// 	masteroperationcontroller.StartOperationKeyRoutes(db, api, operationKeyService)
-// 	masteroperationcontroller.StartOperationCodeRoutes(db, api, operationCodeService)
-// 	masteroperationcontroller.StartOperationEntriesRoutes(db, api, operationEntriesService)
-// 	masteroperationcontroller.StartOperationModelMappingRoutes(db, api, operationModelMappingService)
-// 	masteritemcontroller.StartUnitOfMeasurementRoutes(db, api, UnitOfMeasurementService)
-// 	masteritemcontroller.StartItemRoutes(db, api, itemService)
-// 	masteritemcontroller.StartItemLevelRoutes(db, api, itemLevelService)
-// 	masteritemcontroller.StartItemClassRoutes(db, api, itemClassService)
-// 	masteritemcontroller.StartPriceListRoutes(db, api, priceListService)
-// 	masteritemcontroller.StartMarkupMasterRoutes(db, api, markupMasterService)
-// 	masteritemcontroller.StartDiscountPercentRoutes(db, api, discountPercentService)
-
-// 	masterwarehousecontroller.OpenWarehouseGroupRoutes(db, api, warehouseGroupService)
-// 	masterwarehousecontroller.OpenWarehouseMasterRoutes(db, api, warehouseMasterService)
-// 	masterwarehousecontroller.OpenWarehouseLocationRoutes(db, api, warehouseLocationService)
-// 	// //transaction
-// 	// transactioncontroller.StartSupplySlipRoutes(db, api.Group("/transaction"), supplySlipService)
-
-// 	transactionworkshopcontroller.OpenBookingEstimationRoutes(db, api, bookingEstimationService)
-
-// 	server := &http.Server{Handler: r}
-// 	l, err := net.Listen("tcp4", fmt.Sprintf(":%v", config.EnvConfigs.Port))
-// 	err = server.Serve(l)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return
-// 	}
-// }

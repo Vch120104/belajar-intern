@@ -14,13 +14,13 @@ import (
 
 type ShiftScheduleServiceImpl struct {
 	ShiftScheduleRepo masterrepository.ShiftScheduleRepository
-	DB                 *gorm.DB
+	DB                *gorm.DB
 }
 
 func StartShiftScheduleService(ShiftScheduleRepo masterrepository.ShiftScheduleRepository, db *gorm.DB) masterservice.ShiftScheduleService {
 	return &ShiftScheduleServiceImpl{
 		ShiftScheduleRepo: ShiftScheduleRepo,
-		DB:                 db,
+		DB:                db,
 	}
 }
 
@@ -86,6 +86,15 @@ func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) bool {
 func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftScheduleResponse) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if req.ShiftScheduleId != 0 {
+		_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, req.ShiftScheduleId)
+
+		if err != nil {
+			panic(exceptions.NewNotFoundError(err.Error()))
+		}
+	}
+
 	results, err := s.ShiftScheduleRepo.SaveShiftSchedule(tx, req)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))

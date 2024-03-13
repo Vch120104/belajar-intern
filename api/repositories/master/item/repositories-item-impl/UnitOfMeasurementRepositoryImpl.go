@@ -6,35 +6,24 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
 
 type UnitOfMeasurementRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartUnitOfMeasurementRepositoryImpl(db *gorm.DB) masteritemrepository.UnitOfMeasurementRepository {
-	return &UnitOfMeasurementRepositoryImpl{myDB: db}
+func StartUnitOfMeasurementRepositoryImpl() masteritemrepository.UnitOfMeasurementRepository {
+	return &UnitOfMeasurementRepositoryImpl{}
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteritemrepository.UnitOfMeasurementRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := masteritementities.Uom{}
 	var responses []masteritempayloads.UomResponse
 	// define table struct
 	tableStruct := masteritempayloads.UomResponse{}
 	//define join table
-	joinTable := utils.CreateJoinSelectStatement(r.myDB, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	//apply pagination and execute
@@ -51,11 +40,11 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(filterConditio
 	return pages, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurementIsActive() ([]masteritempayloads.UomResponse, error) {
+func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurementIsActive(tx *gorm.DB) ([]masteritempayloads.UomResponse, error) {
 	var UnitOfMeasurements []masteritementities.Uom
 	response := []masteritempayloads.UomResponse{}
 
-	err := r.myDB.Model(&UnitOfMeasurements).Where("is_active = 'true'").Scan(&response).Error
+	err := tx.Model(&UnitOfMeasurements).Where("is_active = 'true'").Scan(&response).Error
 
 	if err != nil {
 		return response, err
@@ -64,11 +53,11 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurementIsActive() ([]m
 	return response, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementById(Id int) (masteritempayloads.UomResponse, error) {
+func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementById(tx *gorm.DB,Id int) (masteritempayloads.UomIdCodeResponse, error) {
 	entities := masteritementities.Uom{}
-	response := masteritempayloads.UomResponse{}
+	response := masteritempayloads.UomIdCodeResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.Uom{
 			UomId: Id,
 		}).
@@ -84,11 +73,11 @@ func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementById(Id int) (mast
 	return response, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementByCode(Code string) (masteritempayloads.UomResponse, error) {
+func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementByCode(tx *gorm.DB,Code string) (masteritempayloads.UomIdCodeResponse, error) {
 	entities := masteritementities.Uom{}
-	response := masteritempayloads.UomResponse{}
+	response := masteritempayloads.UomIdCodeResponse{}
 
-	rows, err := r.myDB.Model(&entities).
+	rows, err := tx.Model(&entities).
 		Where(masteritementities.Uom{
 			UomCode: Code,
 		}).
@@ -104,7 +93,7 @@ func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementByCode(Code string
 	return response, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) SaveUnitOfMeasurement(req masteritempayloads.UomResponse) (bool, error) {
+func (r *UnitOfMeasurementRepositoryImpl) SaveUnitOfMeasurement(tx *gorm.DB,req masteritempayloads.UomResponse) (bool, error) {
 	entities := masteritementities.Uom{
 		IsActive:       req.IsActive,
 		UomId:          req.UomId,
@@ -113,7 +102,7 @@ func (r *UnitOfMeasurementRepositoryImpl) SaveUnitOfMeasurement(req masteritempa
 		UomDescription: req.UomDescription,
 	}
 
-	err := r.myDB.Save(&entities).Error
+	err := tx.Save(&entities).Error
 
 	if err != nil {
 		return false, err
@@ -122,10 +111,10 @@ func (r *UnitOfMeasurementRepositoryImpl) SaveUnitOfMeasurement(req masteritempa
 	return true, nil
 }
 
-func (r *UnitOfMeasurementRepositoryImpl) ChangeStatusUnitOfMeasurement(Id int) (bool, error) {
+func (r *UnitOfMeasurementRepositoryImpl) ChangeStatusUnitOfMeasurement(tx *gorm.DB,Id int) (bool, error) {
 	var entities masteritementities.Uom
 
-	result := r.myDB.Model(&entities).
+	result := tx.Model(&entities).
 		Where("uom_id = ?", Id).
 		First(&entities)
 
@@ -139,7 +128,7 @@ func (r *UnitOfMeasurementRepositoryImpl) ChangeStatusUnitOfMeasurement(Id int) 
 		entities.IsActive = true
 	}
 
-	result = r.myDB.Save(&entities)
+	result = tx.Save(&entities)
 
 	if result.Error != nil {
 		return false, result.Error

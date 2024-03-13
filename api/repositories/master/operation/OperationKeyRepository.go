@@ -9,10 +9,9 @@ import (
 )
 
 type OperationKeyRepository interface {
-	WithTrx(trxHandle *gorm.DB) OperationKeyRepository
-	GetOperationKeyById(int) (masteroperationpayloads.OperationKeyResponse, error)
-	GetOperationKeyName(masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, error)
-	SaveOperationKey(masteroperationpayloads.OperationKeyResponse) (bool, error)
-	GetAllOperationKeyList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error)
-	ChangeStatusOperationKey(int) (bool, error)
+	GetOperationKeyById(*gorm.DB, int) (masteroperationpayloads.OperationkeyListResponse, error)
+	GetOperationKeyName(*gorm.DB, masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, error)
+	SaveOperationKey(*gorm.DB, masteroperationpayloads.OperationKeyResponse) (bool, error)
+	GetAllOperationKeyList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
+	ChangeStatusOperationKey(*gorm.DB, int) (bool, error)
 }

@@ -4,7 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
-
+// Deprecated: please change to the latest one without *gin.Context
+//
 func EntityException(c *gin.Context, message string) {
 	res := OldError{
 		Success: false,

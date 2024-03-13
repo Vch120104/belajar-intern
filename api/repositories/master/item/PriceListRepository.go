@@ -7,9 +7,8 @@ import (
 )
 
 type PriceListRepository interface {
-	WithTrx(trxHandle *gorm.DB) PriceListRepository
-	GetPriceList(masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error)
-	SavePriceList(request masteritempayloads.PriceListResponse) (bool, error)
-	GetPriceListById(Id int) (masteritempayloads.PriceListResponse, error)
-	ChangeStatusPriceList(Id int) (bool, error)
+	GetPriceList(*gorm.DB, masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error)
+	SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, error)
+	GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListResponse, error)
+	ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, error)
 }

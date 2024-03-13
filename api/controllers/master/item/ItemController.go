@@ -1,8 +1,7 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/utils"
@@ -12,26 +11,26 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/julienschmidt/httprouter"
 )
 
-type ItemController struct {
+type ItemController interface {
+	GetAllItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllItemLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetItemByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+}
+
+type ItemControllerImpl struct {
 	itemservice masteritemservice.ItemService
 }
 
-func StartItemRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	itemservice masteritemservice.ItemService,
-) {
-	itemHandler := ItemController{itemservice: itemservice}
-	r.GET("/item/", middlewares.DBTransactionMiddleware(db), itemHandler.GetAllItem)
-	r.GET("/item/pop-up", middlewares.DBTransactionMiddleware(db), itemHandler.GetAllItemLookup)
-	r.GET("/item-multi-id/:item_ids", middlewares.DBTransactionMiddleware(db), itemHandler.GetItemWithMultiId)
-	r.GET("/item/:item_code", middlewares.DBTransactionMiddleware(db), itemHandler.GetItemByCode)
-	r.POST("/item", middlewares.DBTransactionMiddleware(db), itemHandler.SaveItem)
-	r.PATCH("/item/:item_id", middlewares.DBTransactionMiddleware(db), itemHandler.ChangeStatusItem)
+func NewItemController(ItemService masteritemservice.ItemService) ItemController {
+	return &ItemControllerImpl{
+		itemservice: ItemService,
+	}
 }
 
 // @Summary Get All Item
@@ -47,27 +46,21 @@ func StartItemRoutes(
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/ [get]
-func (r *ItemController) GetAllItem(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-
+func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_item.item_code":             c.Query("item_code"),
-		"mtr_item.item_name":             c.Query("item_name"),
-		"mtr_item.item_type":             c.Query("item_type"),
-		"mtr_item_class.item_class_code": c.Query("item_class_code"),
-		"mtr_item.is_active":             c.Query("is_active"),
+		"mtr_item.item_code":             queryValues.Get("item_code"),
+		"mtr_item.item_name":             queryValues.Get("item_name"),
+		"mtr_item.item_type":             queryValues.Get("item_type"),
+		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
+		"mtr_item.is_active":             queryValues.Get("is_active"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.itemservice.WithTrx(trxHandle).GetAllItem(criteria)
+	result := r.itemservice.GetAllItem(criteria)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, result, "success", 200)
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Get All Item Lookup
@@ -90,34 +83,26 @@ func (r *ItemController) GetAllItem(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/pop-up [get]
-func (r *ItemController) GetAllItemLookup(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
+func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"item_code":       c.Query("item_code"),
-		"item_name":       c.Query("item_name"),
-		"item_type":       c.Query("item_type"),
-		"item_group_code": c.Query("item_group_code"),
-		"item_class_code": c.Query("item_class_code"),
-		"supplier_code":   c.Query("supplier_code"),
-		"supplier_name":   c.Query("supplier_name"),
-		"is_active":       c.Query("is_active"),
-		"sort_of":         c.Query("sort_of"),
-		"sort_by":         c.Query("sort_by"),
-		"limit":           c.Query("limit"),
-		"page":            c.Query("page"),
+		"item_code":       queryValues.Get("item_code"),
+		"item_name":       queryValues.Get("item_name"),
+		"item_type":       queryValues.Get("item_type"),
+		"item_group_code": queryValues.Get("item_group_code"),
+		"item_class_code": queryValues.Get("item_class_code"),
+		"supplier_code":   queryValues.Get("supplier_code"),
+		"supplier_name":   queryValues.Get("supplier_name"),
+		"is_active":       queryValues.Get("is_active"),
+		"sort_of":         queryValues.Get("sort_of"),
+		"sort_by":         queryValues.Get("sort_by"),
+		"limit":           queryValues.Get("limit"),
+		"page":            queryValues.Get("page"),
 	}
 
-	result, err := r.itemservice.WithTrx(trxHandle).GetAllItemLookup(queryParams)
+	result := r.itemservice.GetAllItemLookup(queryParams)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	// paginatedData, totalPages, totalRows := utils.DataFramePaginate(result, 0, 0, SnaketoPascalCase(sortOf), sortBy)
-
-	// payloads.HandleSuccessPagination(c, modifyKeysInResponse(paginatedData), "Get Data Successfully!", 200, limit, page, int64(totalRows), totalPages)
-	payloads.HandleSuccessPagination(c, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, 0, 0, int64(0), 0)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, 0, 0, int64(0), 0)
 }
 
 // @Summary Get Item With MultiId
@@ -129,20 +114,15 @@ func (r *ItemController) GetAllItemLookup(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-multi-id/{item_ids} [get]
-func (r *ItemController) GetItemWithMultiId(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	item_ids := c.Param("item_ids")
+func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	item_ids := params.ByName("item_ids")
 
 	sliceOfString := strings.Split(item_ids, ",")
 
-	result, err := r.itemservice.WithTrx(trxHandle).GetItemWithMultiId(sliceOfString)
+	result := r.itemservice.GetItemWithMultiId(sliceOfString)
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
-
-	payloads.HandleSuccess(c, result, "success", 200)
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Get Item By code
@@ -154,18 +134,13 @@ func (r *ItemController) GetItemWithMultiId(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/{item_code} [get]
-func (r *ItemController) GetItemByCode(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	itemCode := c.Param("item_code")
+func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	result, err := r.itemservice.WithTrx(trxHandle).GetItemCode(itemCode)
+	itemCode := params.ByName("item_code")
 
-	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+	result := r.itemservice.GetItemCode(itemCode)
 
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Item
@@ -177,43 +152,22 @@ func (r *ItemController) GetItemByCode(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item [post]
-func (r *ItemController) SaveItem(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	var request masteritempayloads.ItemResponse
+func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	var formRequest masteritempayloads.ItemResponse
 	var message = ""
 
-	if err := c.ShouldBindJSON(&request); err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	if int(request.ItemId) != 0 {
-		result, err := r.itemservice.WithTrx(trxHandle).GetItemById(int(request.ItemId))
+	create := r.itemservice.SaveItem(formRequest)
 
-		if err != nil {
-			exceptions.AppException(c, err.Error())
-			return
-		}
-
-		if result.ItemId == 0 {
-			exceptions.NotFoundException(c, err.Error())
-			return
-		}
-	}
-
-	create, err := r.itemservice.WithTrx(trxHandle).SaveItem(request)
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
-
-	if request.ItemId == 0 {
+	if formRequest.ItemId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	payloads.HandleSuccess(c, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Item
@@ -225,25 +179,11 @@ func (r *ItemController) SaveItem(c *gin.Context) {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item/{item_id} [patch]
-func (r *ItemController) ChangeStatusItem(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	ItemId, err := strconv.Atoi(c.Param("item_id"))
-	if err != nil {
-		exceptions.EntityException(c, err.Error())
-		return
-	}
-	//id check
-	result, err := r.itemservice.WithTrx(trxHandle).GetItemById(int(ItemId))
-	if err != nil || result.ItemId == 0 {
-		exceptions.NotFoundException(c, err.Error())
-		return
-	}
+func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	response, err := r.itemservice.WithTrx(trxHandle).ChangeStatusItem(int(ItemId))
-	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return
-	}
+	ItemId, _ := strconv.Atoi(params.ByName("item_id"))
 
-	payloads.HandleSuccess(c, response, "Change Status Successfully!", http.StatusOK)
+	response := r.itemservice.ChangeStatusItem(int(ItemId))
+
+	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
