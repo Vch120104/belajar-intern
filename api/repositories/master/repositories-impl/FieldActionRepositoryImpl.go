@@ -238,7 +238,7 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 
 	}
 
-	tx.Model(&entities).Where("vehicle_id in (?)", strids).Scan(&entityToUpdate)
+	tx.Model(&entities).Where("vehicle_id in (?) AND field_action_system_number == ?", strids, headerId).Scan(&entityToUpdate)
 
 	if len(entityToUpdate) != 0 {
 		return false, gorm.ErrRecordNotFound
