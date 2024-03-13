@@ -340,6 +340,7 @@ func WarrantyFreeServiceRouter(
 	warrantyFreeServiceController mastercontroller.WarrantyFreeServiceController,
 ) *httprouter.Router {
 	router := httprouter.New()
+	router.GET("/warranty-free-service/", warrantyFreeServiceController.GetAllWarrantyFreeService)
 	router.GET("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.POST("/warranty-free-service/", warrantyFreeServiceController.SaveWarrantyFreeService)
 

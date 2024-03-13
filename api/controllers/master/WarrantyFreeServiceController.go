@@ -4,6 +4,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
+	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 )
 
 type WarrantyFreeServiceController interface {
+	GetAllWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	SaveWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
@@ -24,6 +26,30 @@ func NewWarrantyFreeServiceController(warrantyFreeServiceService masterservice.W
 	return &WarrantyFreeServiceControllerImpl{
 		WarrantyFreeServiceService: warrantyFreeServiceService,
 	}
+}
+
+func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"mtr_warranty_free_service.is_active":      queryValues.Get("is_active"),
+		"mtr_warranty_free_service.effective_date": queryValues.Get("effective_date"),
+		"brand_code": queryValues.Get("brand_code"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows := r.WarrantyFreeServiceService.GetAllWarrantyFreeService(criteria, paginate)
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
