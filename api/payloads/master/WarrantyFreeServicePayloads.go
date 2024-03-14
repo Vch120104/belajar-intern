@@ -49,6 +49,7 @@ type BrandResponse struct {
 type UnitModelResponse struct {
 	ModelId          int    `json:"model_id"`
 	ModelDescription string `json:"model_description"`
+	ModelCode string `json:"model_code"`
 }
 
 type UnitVariantResponse struct {

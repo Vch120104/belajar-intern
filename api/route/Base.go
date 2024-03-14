@@ -7,8 +7,6 @@ import (
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
 
-	_ "after-sales/docs"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"
@@ -343,6 +341,7 @@ func WarrantyFreeServiceRouter(
 	router.GET("/warranty-free-service/", warrantyFreeServiceController.GetAllWarrantyFreeService)
 	router.GET("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.POST("/warranty-free-service/", warrantyFreeServiceController.SaveWarrantyFreeService)
+	router.PATCH("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

@@ -24,9 +24,11 @@ func StartWarrantyFreeServiceRepositoryImpl() masterrepository.WarrantyFreeServi
 func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	var responses []masterpayloads.WarrantyFreeServiceListResponse
 	var getBrandResponse []masterpayloads.BrandResponse
+	var getModelResponse []masterpayloads.UnitModelResponse
 	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var brandCode string
+	var modelCode string
 	responseStruct := reflect.TypeOf(masterpayloads.WarrantyFreeServiceListResponse{})
 
 	for i := 0; i < len(filterCondition); i++ {
@@ -47,6 +49,8 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	for i := 0; i < len(externalServiceFilter); i++ {
 		if strings.Contains(externalServiceFilter[i].ColumnField, "brand_code") {
 			brandCode = externalServiceFilter[i].ColumnValue
+		} else {
+			modelCode = externalServiceFilter[i].ColumnValue
 		}
 	}
 
@@ -69,7 +73,9 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 		return nil, 0, 0, gorm.ErrRecordNotFound
 	}
 
-	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand-by-code/" + brandCode
+	// join with mtr_brand
+
+	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand?page=0&limit=1000000&brand_code=" + brandCode
 
 	errUrlUnitBrand := utils.Get(c, unitBrandUrl, &getBrandResponse, nil)
 
@@ -77,9 +83,21 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 		return nil, 0, 0, errUrlUnitBrand
 	}
 
-	joinedData := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+	joinedData1 := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+	// join with mtr_unit_model
+
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=100000&model_code=" + modelCode
+
+	errUrlUnitModel := utils.Get(c, unitModelUrl, &getModelResponse, nil)
+
+	if errUrlUnitModel != nil {
+		return nil, 0, 0, errUrlUnitModel
+	}
+
+	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -165,6 +183,32 @@ func (r *WarrantyFreeServiceRepositoryImpl) SaveWarrantyFreeService(tx *gorm.DB,
 
 	if err != nil {
 		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *WarrantyFreeServiceRepositoryImpl) ChangeStatusWarrantyFreeService(tx *gorm.DB, Id int) (bool, error) {
+	var entities masterentities.WarrantyFreeService
+
+	result := tx.Model(&entities).
+		Where("warranty_free_services_id = ?", Id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = tx.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
 	}
 
 	return true, nil

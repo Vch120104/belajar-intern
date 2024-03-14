@@ -17,6 +17,7 @@ type WarrantyFreeServiceController interface {
 	GetAllWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	SaveWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	ChangeStatusWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 type WarrantyFreeServiceControllerImpl struct {
 	WarrantyFreeServiceService masterservice.WarrantyFreeServiceService
@@ -36,6 +37,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 		"mtr_warranty_free_service.is_active":      queryValues.Get("is_active"),
 		"mtr_warranty_free_service.effective_date": queryValues.Get("effective_date"),
 		"brand_code": queryValues.Get("brand_code"),
+		"model_code": queryValues.Get("model_code"),
 	}
 
 	paginate := pagination.Pagination{
@@ -76,4 +78,13 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 	}
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	warrantyFreeServiceId, _ := strconv.Atoi(params.ByName("warranty_free_services_id"))
+
+	response := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(int(warrantyFreeServiceId))
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

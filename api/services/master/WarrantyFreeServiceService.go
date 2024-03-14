@@ -10,4 +10,5 @@ type WarrantyFreeServiceService interface {
 	GetAllWarrantyFreeService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int)
 	GetWarrantyFreeServiceById(Id int) map[string]interface{}
 	SaveWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest) bool
+	ChangeStatusWarrantyFreeService(Id int) (bool)
 }

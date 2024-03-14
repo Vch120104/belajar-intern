@@ -62,3 +62,20 @@ func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpaylo
 	}
 	return results
 }
+
+func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int) (bool) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	_, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
+
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+
+	results, err := s.warrantyFreeServiceRepo.ChangeStatusWarrantyFreeService(tx, Id)
+	if err != nil {
+		return results
+	}
+	return true
+}
