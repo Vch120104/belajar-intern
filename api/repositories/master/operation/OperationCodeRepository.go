@@ -9,7 +9,8 @@ import (
 )
 
 type OperationCodeRepository interface {
-	WithTrx(trxHandle *gorm.DB) OperationCodeRepository
-	GetOperationCodeById(int32) (masteroperationpayloads.OperationCodeResponse, error)
-	GetAllOperationCode([]utils.FilterCondition, pagination.Pagination)(pagination.Pagination, error)
+	GetOperationCodeById(*gorm.DB,int) (masteroperationpayloads.OperationCodeResponse, error)
+	GetAllOperationCode(*gorm.DB,[]utils.FilterCondition, pagination.Pagination)(pagination.Pagination, error)
+	SaveOperationCode(*gorm.DB,masteroperationpayloads.OperationCodeSave)(bool,error)
+	ChangeStatusItemSubstitute(*gorm.DB,int)(bool,error)
 }

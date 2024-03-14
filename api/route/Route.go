@@ -80,6 +80,13 @@ func StartRouting(db *gorm.DB) {
 	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+	// operation code
+	operationCodeRepository:= masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
+	operationCodeService:= masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository,db)
+	operationCodeController:= masteroperationcontroller.NewOperationCodeController(operationCodeService)
+
+
+
 	// Operation Section
 	operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl()
 	operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository, db)
@@ -135,6 +142,7 @@ func StartRouting(db *gorm.DB) {
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
+	OperationCodeRouter:= OperationCodeRouter(operationCodeController)
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
@@ -163,6 +171,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/operation-group/", OperationGroupRouter)
 	mux.Handle("/incentive-group/", IncentiveGroupRouter)
 	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
+	mux.Handle("/operation-code/",OperationCodeRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
 	mux.Handle("/operation-key/", OperationKeyRouter)
 	mux.Handle("/operation-entries/", OperationEntriesRouter)
