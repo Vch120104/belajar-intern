@@ -7,8 +7,6 @@ import (
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
 
-	_ "after-sales/docs"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"

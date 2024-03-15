@@ -9,7 +9,6 @@ import (
 	"after-sales/api/utils"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -84,7 +83,6 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(fil
 	var responses []masteroperationpayloads.OperationModelMappingResponse
 	var getBrandResponse []masteroperationpayloads.BrandResponse
 	var getModelResponse []masteroperationpayloads.ModelResponse
-	var c *gin.Context
 
 	// define table struct
 	tableStruct := masteroperationpayloads.OperationModelMappingLookup{}
@@ -99,13 +97,13 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(fil
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	brandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand?page=0&limit=10"
-	errUrlBrand := utils.Get(c, brandUrl, &getBrandResponse, nil)
+	errUrlBrand := utils.Get(brandUrl, &getBrandResponse, nil)
 	if errUrlBrand != nil {
 		return nil, errUrlBrand
 	}
 
 	modelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=10"
-	errUrlModel := utils.Get(c, modelUrl, &getModelResponse, nil)
+	errUrlModel := utils.Get(modelUrl, &getModelResponse, nil)
 	if errUrlModel != nil {
 		return nil, errUrlBrand
 	}

@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -24,7 +23,6 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	var responses []masteritempayloads.ItemClassResponse
 	var getLineTypeResponse []masteritempayloads.LineTypeResponse
 	var getItemGroupResponse []masteritempayloads.ItemGroupResponse
-	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var groupName, lineTypeCode string
 	responseStruct := reflect.TypeOf(masteritempayloads.ItemClassResponse{})
@@ -71,7 +69,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_name=" + groupName
 
-	errUrlItemGroup := utils.Get(c, groupServiceUrl, &getItemGroupResponse, nil)
+	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
 	if errUrlItemGroup != nil {
 		return nil, errUrlItemGroup
@@ -81,7 +79,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	lineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type?line_type_code=" + lineTypeCode
 
-	errUrlLineType := utils.Get(c, lineTypeUrl, &getLineTypeResponse, nil)
+	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 
 	if errUrlLineType != nil {
 		return nil, errUrlLineType
