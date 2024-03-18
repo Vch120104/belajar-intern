@@ -49,10 +49,16 @@ type BrandResponse struct {
 type UnitModelResponse struct {
 	ModelId          int    `json:"model_id"`
 	ModelDescription string `json:"model_description"`
-	ModelCode string `json:"model_code"`
+	ModelCode        string `json:"model_code"`
 }
 
 type UnitVariantResponse struct {
 	VariantId          int    `json:"variant_id"`
 	VariantDescription string `json:"variant_description"`
+}
+
+type WarrantyFreeServiceTypeResponse struct {
+	WarrantyFreeServiceTypeId          int    `json:"warranty_free_service_type_id"`
+	WarrantyFreeServiceTypeCode        string `json:"warranty_free_service_type_code"`
+	WarrantyFreeServiceTypeDescription string `json:"warranty_free_service_type_description"`
 }

@@ -25,10 +25,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	var responses []masterpayloads.WarrantyFreeServiceListResponse
 	var getBrandResponse []masterpayloads.BrandResponse
 	var getModelResponse []masterpayloads.UnitModelResponse
+	var getWarrantyFreeServiceTypeResponse []masterpayloads.WarrantyFreeServiceTypeResponse
 	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var brandCode string
 	var modelCode string
+	var warrantyFreeServiceTypeCode string
 	responseStruct := reflect.TypeOf(masterpayloads.WarrantyFreeServiceListResponse{})
 
 	for i := 0; i < len(filterCondition); i++ {
@@ -49,7 +51,9 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	for i := 0; i < len(externalServiceFilter); i++ {
 		if strings.Contains(externalServiceFilter[i].ColumnField, "brand_code") {
 			brandCode = externalServiceFilter[i].ColumnValue
-		} else {
+		} else if strings.Contains(externalServiceFilter[i].ColumnField, "warranty_free_service_type_code"){
+			warrantyFreeServiceTypeCode = externalServiceFilter[i].ColumnValue
+		}else {
 			modelCode = externalServiceFilter[i].ColumnValue
 		}
 	}
@@ -97,7 +101,19 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+	// join with mtr_warranty_free_service_type
+
+	warrantyFreeServiceTypeUrl := "http://10.1.32.26:8000/general-service/api/general/warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
+
+	errUrlWarrantyFreeServiceType := utils.Get(c, warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
+
+	if errUrlWarrantyFreeServiceType != nil {
+		return nil, 0, 0, errUrlWarrantyFreeServiceType
+	}
+
+	joinedData3 := utils.DataFrameInnerJoin(joinedData2, getWarrantyFreeServiceTypeResponse, "WarrantyFreeServiceTypeId")
+
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData3, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -109,6 +125,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 	var getUnitBrandResponse masterpayloads.BrandResponse
 	var getUnitModelResponse masterpayloads.UnitModelResponse
 	var getUnitVariantResponse masterpayloads.UnitVariantResponse
+	var getWarrantyFreeServiceTypeResponse masterpayloads.WarrantyFreeServiceTypeResponse
 
 	rows, err := tx.Model(&entities).
 		Where(masterentities.WarrantyFreeService{
@@ -159,7 +176,19 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
 
-	result := joinedData3[0]
+	// join with mtr_warranty_free_service_type on general service
+
+	warrantyFreeServiceTypeUrl := "http://10.1.32.26:8000/general-service/api/general/warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
+
+	errUrlWarrantyFreeServiceType := utils.Get(c, warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
+
+	if errUrlWarrantyFreeServiceType != nil {
+		return nil, errUrlWarrantyFreeServiceType
+	}
+
+	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.WarrantyFreeServiceTypeResponse{getWarrantyFreeServiceTypeResponse}, "WarrantyFreeServiceTypeId")
+
+	result := joinedData4[0]
 
 	return result, nil
 }

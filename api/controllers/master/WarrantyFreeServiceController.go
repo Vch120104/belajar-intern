@@ -36,8 +36,9 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 	queryParams := map[string]string{
 		"mtr_warranty_free_service.is_active":      queryValues.Get("is_active"),
 		"mtr_warranty_free_service.effective_date": queryValues.Get("effective_date"),
-		"brand_code": queryValues.Get("brand_code"),
-		"model_code": queryValues.Get("model_code"),
+		"brand_code":                      queryValues.Get("brand_code"),
+		"model_code":                      queryValues.Get("model_code"),
+		"warranty_free_service_type_code": queryValues.Get("warranty_free_service_type_code"),
 	}
 
 	paginate := pagination.Pagination{
