@@ -6,7 +6,6 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"
@@ -127,12 +126,26 @@ func ItemSubstituteRouter(
 	return router
 }
 
+func OperationCodeRouter(
+	operationCodeController masteroperationcontroller.OperationCodeController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/operation-code/", operationCodeController.GetAllOperationCode)
+	router.GET("/operation-code/by-id/:operation_id", operationCodeController.GetByIdOperationCode)
+	router.POST("/operation-code/", operationCodeController.SaveOperationCode)
+	router.PATCH("/operation-code/:operation_id", operationCodeController.ChangeStatusOperationCode)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/operation-group", operationGroupController.GetAllOperationGroup)
+	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
 	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
 	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
 	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
