@@ -1,4 +1,4 @@
-package masteroperationrepositoryimpl
+	package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
