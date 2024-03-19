@@ -81,11 +81,9 @@ func StartRouting(db *gorm.DB) {
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
 	// operation code
-	operationCodeRepository:= masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
-	operationCodeService:= masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository,db)
-	operationCodeController:= masteroperationcontroller.NewOperationCodeController(operationCodeService)
-
-
+	operationCodeRepository := masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
+	operationCodeService := masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository, db)
+	operationCodeController := masteroperationcontroller.NewOperationCodeController(operationCodeService)
 
 	// Operation Section
 	operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl()
@@ -142,12 +140,17 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
 	warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
 
+	// Incentive Master
+	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
+	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
+	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
-	OperationCodeRouter:= OperationCodeRouter(operationCodeController)
+	OperationCodeRouter := OperationCodeRouter(operationCodeController)
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
@@ -166,6 +169,7 @@ func StartRouting(db *gorm.DB) {
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
+	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
 
 	mux := http.NewServeMux()
 	mux.Handle("/item-class/", itemClassRouter)
@@ -177,7 +181,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/operation-group/", OperationGroupRouter)
 	mux.Handle("/incentive-group/", IncentiveGroupRouter)
 	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
-	mux.Handle("/operation-code/",OperationCodeRouter)
+	mux.Handle("/operation-code/", OperationCodeRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
 	mux.Handle("/operation-key/", OperationKeyRouter)
 	mux.Handle("/operation-entries/", OperationEntriesRouter)
@@ -191,7 +195,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/warehouse-master/", WarehouseMaster)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
-
+	mux.Handle("/incentive-master/", IncentiveMasterRouter)
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
 		Handler: mux,

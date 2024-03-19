@@ -6,6 +6,7 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
+
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"
@@ -355,6 +356,21 @@ func WarrantyFreeServiceRouter(
 	router.GET("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.POST("/warranty-free-service/", warrantyFreeServiceController.SaveWarrantyFreeService)
 	router.PATCH("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func IncentiveMasterRouter(
+	IncentiveMasterController mastercontroller.IncentiveMasterController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/incentive-master/", IncentiveMasterController.GetAllIncentiveMaster)
+	router.GET("/incentive-master/:incentive_master_id", IncentiveMasterController.GetIncentiveMasterById)
+	router.POST("/incentive-master/", IncentiveMasterController.SaveIncentiveMaster)
+	router.PATCH("/incentive-master/:incentive_master_id", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
