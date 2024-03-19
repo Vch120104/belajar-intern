@@ -97,14 +97,14 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 // @Produce json
 // @Tags Master : Incentive Master
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
-// @Success 200 {object} payloads.Response
+// @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /incentive-master [post]
 func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
 	var formRequest masterpayloads.IncentiveMasterRequest
-	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
+	helper.ReadFromRequestBody(request, &formRequest)
 
 	create := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
 

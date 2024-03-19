@@ -2,6 +2,7 @@ package payloads
 
 import (
 	"after-sales/api/helper"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,34 @@ type ResponsePagination struct {
 	TotalRows  int64       `json:"total_rows"`
 	TotalPages int         `json:"total_pages"`
 	Data       interface{} `json:"data"`
+}
+
+// ErrorResponse represents the structure of an error response
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+func NewHandleError(w http.ResponseWriter, errorMessage string, statusCode int) {
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+	// Set the status code
+	w.WriteHeader(statusCode)
+	// Create the error response payload
+	errorResponse := ErrorResponse{Error: errorMessage}
+	// Convert the error response to JSON
+	jsonResponse, err := json.Marshal(errorResponse)
+	if err != nil {
+		// If there's an error in marshalling the JSON response, log it
+		http.Error(w, "Failed to marshal error response", http.StatusInternalServerError)
+		return
+	}
+	// Write the JSON response to the response writer
+	_, err = w.Write(jsonResponse)
+	if err != nil {
+		// If there's an error in writing the response, log it
+		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
 
 // Deprecated: please change to the latest one without *gin.Context

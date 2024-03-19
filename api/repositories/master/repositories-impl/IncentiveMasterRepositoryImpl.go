@@ -102,7 +102,6 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 
 func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest) (bool, error) {
 	entities := masterentities.IncentiveMaster{
-		IsActive:                   true,
 		IncentiveMasterId:          request.IncentiveMasterId,
 		IncentiveMasterLevel:       request.IncentiveMasterLevel,
 		IncentiveMasterDescription: request.IncentiveMasterDescription,
@@ -110,10 +109,20 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 		IncentiveMasterPercent:     request.IncentiveMasterPercent,
 	}
 
-	err := tx.Save(&entities).Error
-
-	if err != nil {
-		return false, err
+	if request.IncentiveMasterId == 0 {
+		// Jika IncentiveMasterId == 0, ini adalah operasi membuat data baru
+		err := tx.Create(&entities).Error
+		if err != nil {
+			return false, err
+		}
+	} else {
+		// Jika IncentiveMasterId != 0, ini adalah operasi memperbarui data yang sudah ada
+		err := tx.Model(&masterentities.IncentiveMaster{}).
+			Where("incentive_master_id = ?", request.IncentiveMasterId).
+			Updates(entities).Error
+		if err != nil {
+			return false, err
+		}
 	}
 
 	return true, nil
