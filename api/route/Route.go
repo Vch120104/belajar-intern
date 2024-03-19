@@ -50,6 +50,11 @@ func StartRouting(db *gorm.DB) {
 	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db)
 	priceListController := masteritemcontroller.NewPriceListController(priceListService)
 
+	// Landed Cost Master
+	LandedCostMasterRepository := masteritemrepositoryimpl.StartLandedCostMasterRepositoryImpl()
+	LandedCostMasterService := masteritemserviceimpl.StartLandedCostMasterService(LandedCostMasterRepository,db)
+	LandedCostMasterController := masteritemcontroller.NewLandedCostMasterController(LandedCostMasterService)
+
 	// Item Class
 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl()
 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db)
@@ -138,6 +143,7 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
 	// Master
+	LandedCostMasterRouter:= LandedCostMasterRouter(LandedCostMasterController)
 	itemClassRouter := ItemClassRouter(itemClassController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
@@ -162,6 +168,7 @@ func StartRouting(db *gorm.DB) {
 	priceListRouter := PriceListRouter(priceListController)
 
 	mux := http.NewServeMux()
+	mux.Handle("/landed-cost-master/",LandedCostMasterRouter)
 	mux.Handle("/item-class/", itemClassRouter)
 	mux.Handle("/unit-of-measurement/", unitOfMeasurementRouter)
 	mux.Handle("/markup-master/", markupMasterRouter)
