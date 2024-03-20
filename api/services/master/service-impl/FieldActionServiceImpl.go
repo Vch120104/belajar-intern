@@ -57,10 +57,10 @@ func (s *FieldActionServiceImpl) GetFieldActionHeaderById(Id int) masterpayloads
 	return results
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) pagination.Pagination {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleDetailById(tx, Id, filterCondition, pages)
+	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleDetailById(tx, Id, pages, filterCondition)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
 	}
@@ -77,10 +77,10 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) masterp
 	return results
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, pages pagination.Pagination) pagination.Pagination {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, filterCondition, pages)
+	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, pages)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
 	}
@@ -117,10 +117,10 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleDetail(Id int, req master
 	return results
 }
 
-func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, companyId int, id string) bool {
+func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id string) bool {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.FieldActionRepo.PostMultipleVehicleDetail(tx, headerId, companyId, id)
+	results, err := s.FieldActionRepo.PostMultipleVehicleDetail(tx, headerId, id)
 	if err != nil {
 		return false
 	}
@@ -135,4 +135,40 @@ func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId in
 		return false
 	}
 	return results
+}
+
+func (s *FieldActionServiceImpl) ChangeStatusFieldAction(id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.FieldActionRepo.ChangeStatusFieldAction(tx, id)
+
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicle(id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.FieldActionRepo.ChangeStatusFieldActionVehicle(tx, id)
+
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
+}
+
+func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicleItem(id int) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, err := s.FieldActionRepo.ChangeStatusFieldActionVehicleItem(tx, id)
+
+	if err != nil {
+		panic(exceptions.NewAppExceptionError(err.Error()))
+	}
+	return result
 }

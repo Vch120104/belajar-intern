@@ -23,14 +23,16 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 
 func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := []masterentities.FieldAction{}
-	//define base model
+	payloads := []masterpayloads.FieldActionResponse{}
+	// tableStruct := masterpayloads.FieldActionResponse{}
+	// baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct)
 	baseModelQuery := tx.Model(&entities)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
-	if len(entities) == 0 {
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Rows()
+
+	if len(payloads) == 0 {
 		return pages, gorm.ErrRecordNotFound
 	}
 
@@ -40,7 +42,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 
 	defer rows.Close()
 
-	pages.Rows = entities
+	pages.Rows = payloads
 
 	return pages, nil
 }
@@ -49,7 +51,7 @@ func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpaylo
 	entities := masterentities.FieldAction{
 		IsActive:                  req.IsActive,
 		FieldActionSystemNumber:   req.FieldActionSystemNumber,
-		FieldActionDocumentNumber: req.FieldActionDocumentNo,
+		FieldActionDocumentNumber: req.FieldActionDocumentNumber,
 		ApprovalValue:             req.ApprovalValue,
 		BrandId:                   req.BrandId,
 		FieldActionName:           req.FieldActionName,
@@ -90,18 +92,19 @@ func (r *FieldActionRepositoryImpl) GetFieldActionHeaderById(tx *gorm.DB, Id int
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.DB, Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, error) {
 	entities := []masterentities.FieldActionEligibleVehicle{}
-	// response := []masterpayloads.FieldActionDetailResponse{}
+	payloads := []masterpayloads.FieldActionDetailResponse{}
+	// tableStruct := masterpayloads.FieldActionDetailResponse{}
 
-	//define base model
-	baseModelQuery := tx.Model(&entities)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+	baseModelQuery := tx.Model(&entities).
+		Where(masterentities.FieldActionEligibleVehicle{
+			FieldActionSystemNumber: Id,
+		})
+	filterQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, filterQuery)).Scan(&payloads).Rows()
 
-	if len(entities) == 0 {
+	if len(payloads) == 0 {
 		return pages, gorm.ErrRecordNotFound
 	}
 
@@ -111,7 +114,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.
 
 	defer rows.Close()
 
-	pages.Rows = entities
+	pages.Rows = payloads
 
 	return pages, nil
 }
@@ -136,18 +139,19 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB,
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := []masterentities.FieldActionEligibleVehicleItem{}
-	// response := []masterpayloads.FieldActionDetailResponse{}
+	payloads := []masterpayloads.FieldActionItemDetailResponse{}
+	// tableStruct := masterpayloads.FieldActionItemDetailResponse{}
 
-	//define base model
-	baseModelQuery := tx.Model(&entities)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+	// baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masterentities.FieldActionEligibleVehicle{FieldActionEligibleVehicleSystemNumber: Id})
+	baseModelQuery := tx.Model(&entities).
+		Where(masterentities.FieldActionEligibleVehicleItem{
+			FieldActionEligibleVehicleSystemNumber: Id,
+		})
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&payloads).Rows()
 
-	if len(entities) == 0 {
+	if len(payloads) == 0 {
 		return pages, gorm.ErrRecordNotFound
 	}
 
@@ -157,7 +161,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *g
 
 	defer rows.Close()
 
-	pages.Rows = entities
+	pages.Rows = payloads
 
 	return pages, nil
 }
@@ -221,7 +225,7 @@ func (r *FieldActionRepositoryImpl) PostFieldActionVehicleDetail(tx *gorm.DB, re
 	return true, nil
 }
 
-func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, headerId int, companyId int, id string) (bool, error) {
+func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, headerId int, id string) (bool, error) {
 
 	var entities masterentities.FieldActionEligibleVehicle
 	var entityToUpdate []masterentities.FieldActionEligibleVehicle
@@ -248,9 +252,9 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 		data := masterentities.FieldActionEligibleVehicle{
 			IsActive:                true,
 			FieldActionSystemNumber: headerId,
-			CompanyId:               companyId,
-			VehicleId:               value,
-			FieldActionHasTaken:     false,
+			// CompanyId:               companyId,
+			VehicleId:           value,
+			FieldActionHasTaken: false,
 		}
 
 		err := tx.Save(&data).Error
@@ -294,4 +298,82 @@ func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm
 
 	return true, nil
 
+}
+
+func (r *FieldActionRepositoryImpl) ChangeStatusFieldAction(tx *gorm.DB, id int) (bool, error) {
+	var entities masterentities.FieldAction
+
+	result := tx.Model(&entities).
+		Where("field_action_system_number = ?", id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = tx.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
+}
+
+func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, id int) (bool, error) {
+	var entities masterentities.FieldActionEligibleVehicle
+
+	result := tx.Model(&entities).
+		Where("field_action_eligible_vehicle_system_number = ?", id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = tx.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
+}
+
+func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicleItem(tx *gorm.DB, id int) (bool, error) {
+	var entities masterentities.FieldActionEligibleVehicleItem
+
+	result := tx.Model(&entities).
+		Where("field_action_eligible_vehicle_item_system_number = ?", id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = tx.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
 }

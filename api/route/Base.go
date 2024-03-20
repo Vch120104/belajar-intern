@@ -7,8 +7,6 @@ import (
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
 
-	_ "after-sales/docs"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"
@@ -350,4 +348,28 @@ func adaptHandler(h http.Handler) httprouter.Handle {
 
 func swaggerHandler() http.HandlerFunc {
 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
+}
+
+func FieldActionRouter(
+	FieldActionController mastercontroller.FieldActionController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/field-action/", FieldActionController.GetAllFieldAction)
+	router.GET("/field-action/header/by-id/:field_action_system_number", FieldActionController.GetFieldActionHeaderById)
+	router.GET("/field-action/vehicle-detail/all/by-id/:field_action_system_number", FieldActionController.GetAllFieldActionVehicleDetailById)
+	router.GET("/field-action/vehicle-detail/by-id/:field_action_eligible_vehicle_system_number", FieldActionController.GetFieldActionVehicleDetailById)
+	router.GET("/field-action/item-detail/all/by-id/:field_action_eligible_vehicle_system_number", FieldActionController.GetAllFieldActionVehicleItemDetailById)
+	router.GET("/field-action/item-detail/by-id/:field_action_eligible_vehicle_item_system_number", FieldActionController.GetFieldActionVehicleItemDetailById)
+	router.POST("/field-action/", FieldActionController.SaveFieldAction)
+	router.POST("/field-action/vehicle-detail/:field_action_system_number", FieldActionController.PostFieldActionVehicleDetail)
+	router.POST("/field-action/multi-vehicle-detail/:field_action_system_number", FieldActionController.PostMultipleVehicleDetail)
+	router.POST("/field-action/item-detail/:field_action_eligible_vehicle_system_number", FieldActionController.PostFieldActionVehicleItemDetail)
+	router.POST("/field-action/all-item-detail/:field_action_system_number", FieldActionController.PostVehicleItemIntoAllVehicleDetail)
+	router.PATCH("/field-action/header/by-id/:field_action_system_number", FieldActionController.ChangeStatusFieldAction)
+	router.PATCH("/field-action/vehicle-detail/by-id/:field_action_eligible_vehicle_system_number", FieldActionController.ChangeStatusFieldActionVehicle)
+	router.PATCH("/field-action/item-detail/by-id/:field_action_eligible_vehicle_item_system_number", FieldActionController.ChangeStatusFieldActionVehicleItem)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
 }
