@@ -33,5 +33,6 @@ func main() {
 		route.StartRouting(db)
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
+		migration.MigrateGG()
 	}
 }

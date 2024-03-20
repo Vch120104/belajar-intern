@@ -84,32 +84,29 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 	entities := masterentities.IncentiveMaster{}
 	response := masterpayloads.IncentiveMasterResponse{}
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Where(masterentities.IncentiveMaster{
-			IncentiveMasterId: Id,
+			IncentiveLevelId: Id,
 		}).
 		First(&response).
-		Rows()
+		Error
 
 	if err != nil {
 		return response, err
 	}
-
-	defer rows.Close()
 
 	return response, nil
 }
 
 func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest) (bool, error) {
 	entities := masterentities.IncentiveMaster{
-		IncentiveMasterId:          request.IncentiveMasterId,
-		IncentiveMasterLevel:       request.IncentiveMasterLevel,
-		IncentiveMasterDescription: request.IncentiveMasterDescription,
-		JobPositionId:              request.JobPositionId,
-		IncentiveMasterPercent:     request.IncentiveMasterPercent,
+		IncentiveLevelId:      request.IncentiveLevelId,
+		IncentiveLevelCode:    request.IncentiveLevelCode,
+		JobPositionId:         request.JobPositionId,
+		IncentiveLevelPercent: request.IncentiveLevelPercent,
 	}
 
-	if request.IncentiveMasterId == 0 {
+	if request.IncentiveLevelId == 0 {
 		// Jika IncentiveMasterId == 0, ini adalah operasi membuat data baru
 		err := tx.Create(&entities).Error
 		if err != nil {
@@ -118,7 +115,7 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 	} else {
 		// Jika IncentiveMasterId != 0, ini adalah operasi memperbarui data yang sudah ada
 		err := tx.Model(&masterentities.IncentiveMaster{}).
-			Where("incentive_master_id = ?", request.IncentiveMasterId).
+			Where("incentive_level_id = ?", request.IncentiveLevelId).
 			Updates(entities).Error
 		if err != nil {
 			return false, err
@@ -132,7 +129,7 @@ func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB,
 	var entities masterentities.IncentiveMaster
 
 	result := tx.Model(&entities).
-		Where("incentive_master_id = ?", Id).
+		Where("incentive_level_id = ?", Id).
 		First(&entities)
 
 	if result.Error != nil {

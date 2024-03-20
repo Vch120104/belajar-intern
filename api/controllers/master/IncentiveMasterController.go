@@ -38,10 +38,10 @@ func NewIncentiveMasterController(incentiveMasterService masterservice.Incentive
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
-// @Param incentive_master_id query string false "incentive_master_id"
-// @Param incentive_master_description query string false "incentive_master_description"
+// @Param incentive_level_id query string false "incentive_level_id"
+// @Param incentive_level_code query string false "incentive_level_code"
 // @Param job_position_name query string false "job_position_name"
-// @Param incentive_master_percent query float64 false "incentive_master_percent"
+// @Param incentive_level_percent query float64 false "incentive_level_percent"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
@@ -52,11 +52,11 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_incentive_master.incentive_master_id":          queryValues.Get("incentive_master_id"),
-		"mtr_incentive_master.incentive_master_description": queryValues.Get("incentive_master_description"),
-		"job_position_name":                                 queryValues.Get("job_position_name"),
-		"mtr_incentive_master.incentive_master_level":       queryValues.Get("incentive_master_level"),
-		"mtr_incentive_master.is_active":                    queryValues.Get("is_active"),
+		"mtr_aftersales_incentive.job_position_id":         queryValues.Get("job_position_id"),
+		"mtr_aftersales_incentive.incentive_level_code":    queryValues.Get("incentive_level_code"),
+		"job_position_name":                                queryValues.Get("job_position_name"),
+		"mtr_aftersales_incentive.incentive_level_percent": queryValues.Get("incentive_level_percent"),
+		"mtr_aftersales_incentive.is_active":               queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
@@ -78,15 +78,15 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master :  Incentive Master
-// @Param incentive_master_id path int true "incentive_master_id"
+// @Param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /incentive-master/{incentive_master_id} [get]
+// @Router /incentive-master/{incentive_level_id} [get]
 func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	incentiveMasterId, _ := strconv.Atoi(params.ByName("incentive_master_id"))
+	IncentiveLevelIds, _ := strconv.Atoi(params.ByName("incentive_level_id"))
 
-	result := r.IncentiveMasterService.GetIncentiveMasterById(incentiveMasterId)
+	result := r.IncentiveMasterService.GetIncentiveMasterById(IncentiveLevelIds)
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -108,7 +108,7 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 
 	create := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
 
-	if formRequest.IncentiveMasterId == 0 {
+	if formRequest.IncentiveLevelId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -122,15 +122,15 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Master
-// @param incentive_master_id path int true "incentive_master_id"
+// @param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /incentive-master/{incentive_master_id} [patch]
+// @Router /incentive-master/{incentive_level_id} [patch]
 func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 
-	incentiveMasterId, _ := strconv.Atoi(params.ByName("incentive_master_id"))
+	IncentiveLevelIds, _ := strconv.Atoi(params.ByName("incentive_level_id"))
 
-	response := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(incentiveMasterId))
+	response := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

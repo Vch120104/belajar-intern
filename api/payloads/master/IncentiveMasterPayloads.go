@@ -1,32 +1,26 @@
 package masterpayloads
 
 type IncentiveMasterResponse struct {
-	IsActive                   bool    `json:"is_active"`
-	IncentiveMasterId          int     `json:"incentive_master_id"`
-	IncentiveMasterLevel       int     `json:"incentive_master_level"`
-	IncentiveMasterValue       string  `json:"incentive_master_value"`
-	IncentiveMasterDescription string  `json:"incentive_master_description"`
-	JobPositionId              int     `json:"job_position_id"`
-	IncentiveMasterPercent     float64 `json:"incentive_master_percent"`
+	IncentiveLevelId      int     `json:"incentive_level_id"`
+	IsActive              bool    `json:"is_active"`
+	IncentiveLevelCode    int     `json:"incentive_level_code"`
+	JobPositionId         int     `json:"job_position_id"`
+	IncentiveLevelPercent float64 `json:"incentive_level_percent"`
 }
 
 type IncentiveMasterListResponse struct {
-	IsActive                   bool    `json:"is_active" parent_entity:"mtr_incentive_master"`
-	IncentiveMasterId          int     `json:"incentive_master_id" parent_entity:"mtr_incentive_master" main_table:"mtr_incentive_master"`
-	IncentiveMasterValue       string  `json:"incentive_master_value" parent_entity:"mtr_incentive_master"`
-	IncentiveMasterLevel       string  `json:"incentive_master_level" parent_entity:"mtr_incentive_master"`
-	IncentiveMasterDescription string  `json:"incentive_master_description" parent_entity:"mtr_incentive_master"`
-	JobPositionId              int     `json:"job_position_id" parent_entity:"mtr_incentive_master"`
-	IncentiveMasterPercent     float64 `json:"incentive_master_percent" parent_entity:"mtr_incentive_master"`
+	IsActive              bool    `json:"is_active" parent_entity:"mtr_aftersales_incentive"`
+	IncentiveLevelId      int     `json:"incentive_level_id" parent_entity:"mtr_aftersales_incentive" main_table:"mtr_aftersales_incentive"`
+	IncentiveLevelCode    int     `json:"incentive_level_code" parent_entity:"mtr_aftersales_incentive"`
+	JobPositionId         int     `json:"job_position_id" parent_entity:"mtr_aftersales_incentive"`
+	IncentiveLevelPercent float64 `json:"incentive_level_percent" parent_entity:"mtr_aftersales_incentive"`
 }
 
 type IncentiveMasterRequest struct {
-	IncentiveMasterId          int     `json:"incentive_master_id"`
-	IncentiveMasterLevel       int     `json:"incentive_master_level"`
-	IncentiveMasterValue       string  `json:"incentive_master_value"`
-	IncentiveMasterDescription string  `json:"incentive_master_description"`
-	JobPositionId              int     `json:"job_position_id"`
-	IncentiveMasterPercent     float64 `json:"incentive_master_percent"`
+	IncentiveLevelId      int     `json:"incentive_level_id"`
+	IncentiveLevelCode    int     `json:"incentive_level_code"`
+	JobPositionId         int     `json:"job_position_id"`
+	IncentiveLevelPercent float64 `json:"incentive_level_percent"`
 }
 
 type JobPositionResponse struct {

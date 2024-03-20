@@ -368,9 +368,9 @@ func IncentiveMasterRouter(
 	router := httprouter.New()
 
 	router.GET("/incentive-master/", IncentiveMasterController.GetAllIncentiveMaster)
-	router.GET("/incentive-master/:incentive_master_id", IncentiveMasterController.GetIncentiveMasterById)
+	router.GET("/incentive-master/:incentive_level_id", IncentiveMasterController.GetIncentiveMasterById)
 	router.POST("/incentive-master/", IncentiveMasterController.SaveIncentiveMaster)
-	router.PATCH("/incentive-master/:incentive_master_id", IncentiveMasterController.ChangeStatusIncentiveMaster)
+	router.PATCH("/incentive-master/:incentive_level_id", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
