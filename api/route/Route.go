@@ -145,6 +145,11 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
 
+	// Bom Master
+	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
+	BomService := masteritemserviceimpl.StartBomService(BomRepository, db)
+	BomController := masteritemcontroller.NewBomController(BomService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
@@ -170,6 +175,7 @@ func StartRouting(db *gorm.DB) {
 	priceListRouter := PriceListRouter(priceListController)
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
 	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
+	BomRouter := BomRouter(BomController)
 
 	mux := http.NewServeMux()
 	mux.Handle("/item-class/", itemClassRouter)
@@ -196,6 +202,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
 	mux.Handle("/incentive-master/", IncentiveMasterRouter)
+	mux.Handle("/bom/", BomRouter)
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
 		Handler: mux,

@@ -377,6 +377,21 @@ func IncentiveMasterRouter(
 	return router
 }
 
+func BomRouter(
+	BomController masteritemcontroller.BomController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/bom/", BomController.GetBomMasterList)
+	router.GET("/bom/:bom_master_id", BomController.GetBomMasterById)
+	router.POST("/bom/", BomController.SaveBomMaster)
+	router.PATCH("/bom/:bom_master_id", BomController.ChangeStatusBomMaster)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func SwaggerRouter() *httprouter.Router {
 	router := httprouter.New()
 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
