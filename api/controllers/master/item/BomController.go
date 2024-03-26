@@ -18,6 +18,7 @@ type BomController interface {
 	GetBomMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	SaveBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetBomDetailList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 
 type BomControllerImpl struct {
@@ -38,10 +39,10 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
-// @Param bom_master_code query string false "bom_master_code"
-// @Param bom_master_qty query string false "bom_master_qty"
+// @Param bom_master_id query string false "bom_master_id"
 // @Param bom_master_uom query string false "bom_master_uom"
-// @Param bom_master_effective_date query time false "bom_master_effective_date"
+// @Param bom_master_qty query int false "bom_master_qty"
+// @Param bom_master_effective_date query string false "bom_master_effective_date"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
@@ -50,17 +51,13 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	queryValues := request.URL.Query()
 
+	// Define query parameters
 	queryParams := map[string]string{
-		"is_active":                         queryValues.Get("is_active"),
-		"mtr_bom.bom_master_id":             queryValues.Get("bom_master_id"),
-		"mtr_bom.bom_master_effective_date": queryValues.Get("bom_master_effective_date"),
-		"mtr_bom.item_id":                   queryValues.Get("mtr_bom.item_id"), // Ambil nilai item_id tanpa mtr_bom.
+		"mtr_bom.item_id":       queryValues.Get("item_id"), // Ambil nilai item_id tanpa mtr_bom.
+		"mtr_bom.bom_master_id": queryValues.Get("bom_master_id"),
 	}
 
-	// // Get the value of bom_master_code from the URL query
-	// bomMasterCode := queryValues.Get("mtr_bom.item_id") // Ambil nilai item_id tanpa mtr_bom.
-	// log.Printf("Value of bom_master_code from URL query: %s", bomMasterCode)
-
+	// Extract pagination parameters
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -68,13 +65,19 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 		SortBy: queryValues.Get("sort_by"),
 	}
 
+	// Build filter condition based on query parameters
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	//log.Printf("Criteria created: %+v", criteria) // Add logging to display the created criteria
-
+	// Call service to get paginated data
 	paginatedData, totalPages, totalRows := r.BomService.GetBomMasterList(criteria, paginate)
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	// Construct the response
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		// If paginatedData is empty, return error response
+		payloads.NewHandleError(writer, "Data Not Found", http.StatusNotFound)
+	}
 }
 
 // @Summary Get Bom Master By ID
@@ -137,4 +140,53 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 	response := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get All Bom Detail
+// @Description REST API Bom Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Detail
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param is_active query string false "is_active" Enums(true, false)
+// @Param bom_detail_id query string false "bom_detail_id"
+// @Param bom_detail_uom query string false "bom_detail_uom"
+// @Param bom_detail_qty query int false "bom_detail_qty"
+// @Param bom_detail_costing_percent query string false "bom_detail_costing_percent"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /bom [get]
+func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	queryValues := request.URL.Query()
+
+	// Define query parameters
+	queryParams := map[string]string{
+		"mtr_bom_detail.bom_master_id": queryValues.Get("bom_master_id"), // Ambil nilai item_id tanpa mtr_bom.
+		"mtr_bom_detail.bom_detail_id": queryValues.Get("bom_detail_id"),
+	}
+
+	// Extract pagination parameters
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	// Build filter condition based on query parameters
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	// Call service to get paginated data
+	paginatedData, totalPages, totalRows := r.BomService.GetBomDetailList(criteria, paginate)
+
+	// Construct the response
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		// If paginatedData is empty, return error response
+		payloads.NewHandleError(writer, "Data Not Found", http.StatusNotFound)
+	}
 }

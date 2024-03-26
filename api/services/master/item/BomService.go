@@ -11,4 +11,5 @@ type BomService interface {
 	GetBomMasterById(id int) masteritempayloads.BomMasterRequest
 	SaveBomMaster(masteritempayloads.BomMasterRequest) bool
 	ChangeStatusBomMaster(Id int) bool
+	GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int)
 }

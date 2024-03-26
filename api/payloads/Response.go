@@ -29,25 +29,17 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func NewHandleError(w http.ResponseWriter, errorMessage string, statusCode int) {
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-	// Set the status code
-	w.WriteHeader(statusCode)
-	// Create the error response payload
-	errorResponse := ErrorResponse{Error: errorMessage}
-	// Convert the error response to JSON
-	jsonResponse, err := json.Marshal(errorResponse)
-	if err != nil {
-		// If there's an error in marshalling the JSON response, log it
-		http.Error(w, "Failed to marshal error response", http.StatusInternalServerError)
-		return
+// NewHandleError creates and returns a new error response
+func NewHandleError(writer http.ResponseWriter, errorMessage string, statusCode int) {
+	response := ErrorResponse{
+		Error: errorMessage,
 	}
-	// Write the JSON response to the response writer
-	_, err = w.Write(jsonResponse)
-	if err != nil {
-		// If there's an error in writing the response, log it
-		http.Error(w, "Failed to write response", http.StatusInternalServerError)
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(statusCode)
+
+	if err := json.NewEncoder(writer).Encode(response); err != nil {
+		http.Error(writer, "Failed to encode error response", http.StatusInternalServerError)
 		return
 	}
 }

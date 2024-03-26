@@ -6,10 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"log"
-	"reflect"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -20,81 +17,43 @@ func StartBomRepositoryImpl() masteritemrepository.BomRepository {
 	return &BomRepositoryImpl{}
 }
 
-func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
+func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	var responses []masteritempayloads.BomMasterListResponse
-	var getItemResponse []masteritempayloads.BomItemNameResponse
-	var c *gin.Context
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var ItemId string
-	responseStruct := reflect.TypeOf(masteritempayloads.BomMasterListResponse{})
-
-	// Memisahkan filter internal dan eksternal
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		}
-	}
-
-	// Membuat log untuk filter internal dan eksternal
-	// log.Printf("Filter internal: %+v", internalServiceFilter)
-	// log.Printf("Filter eksternal: %+v", externalServiceFilter)
-
-	// Mengambil nilai ItemId dari filter eksternal (jika ada)
-	for i := 0; i < len(externalServiceFilter); i++ {
-		if externalServiceFilter[i].ColumnField == "item_id" { // Ubah nama kolom sesuai dengan yang digunakan di database
-			ItemId = externalServiceFilter[i].ColumnValue
-			break
-		}
-	}
-
-	// Membuat log untuk nilai ItemId
-	//log.Printf("ItemId yang diperoleh: %s", ItemId)
 
 	// Define table struct
 	tableStruct := masteritempayloads.BomMasterListResponse{}
 	// Define join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	// Apply filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-	// Apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
 
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filters)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
 		return nil, 0, 0, err
 	}
-
 	defer rows.Close()
 
-	// Logging jumlah data dari tabel responses
-	log.Printf("Jumlah data dari tabel responses: %d", len(responses))
-
-	if len(responses) == 0 {
-		return nil, 0, 0, gorm.ErrRecordNotFound
+	// Convert responses to maps
+	responseMaps := make([]map[string]interface{}, 0)
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"is_active":                 response.IsActive,
+			"bom_master_id":             response.BomMasterId,
+			"bom_master_qty":            response.BomMasterQty,
+			"bom_master_uom":            response.BomMasterUom,
+			"bom_master_effective_date": response.BomMasterEffectiveDate,
+			"item_code":                 response.ItemCode,
+			"item_name":                 response.ItemName,
+		}
+		responseMaps = append(responseMaps, responseMap)
 	}
 
-	// Mendapatkan data dari URL ItemId
-	ItemUrl := "http://localhost:8000/item/?item_id=" + ItemId
-	log.Printf("Membuat permintaan ke URL: %s", ItemUrl)
-	if err := utils.Get(c, ItemUrl, &getItemResponse, nil); err != nil {
-		return nil, 0, 0, err
-	}
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
 
-	// Logging jumlah data dari URL item
-	log.Printf("Jumlah data dari URL item: %d", len(getItemResponse))
-
-	// Menggabungkan data dan melakukan paginasi
-	joinedData := utils.DataFrameInnerJoin(responses, getItemResponse, "ItemId")
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	return paginatedData, totalPages, totalRows, nil
 }
 
 func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempayloads.BomMasterRequest, error) {
@@ -119,30 +78,29 @@ func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayload
 
 	entities := masteritementities.Bom{
 		BomMasterId:            request.BomMasterId,
-		ItemId:                 request.ItemId,
-		BomDetailId:            request.BomDetailId,
+		BomMasterSeq:           request.BomMasterSeq,
 		BomMasterQty:           request.BomMasterQty,
 		BomMasterUom:           request.BomMasterUom,
 		BomMasterEffectiveDate: request.BomMasterEffectiveDate,
+		BomMasterChangeNumber:  request.BomMasterChangeNumber,
+		ItemId:                 request.ItemId,
 	}
 
 	if request.BomMasterId == 0 {
-		// Jika BomMasterId == 0, ini adalah operasi membuat data baru
 		err := tx.Create(&entities).Error
 		if err != nil {
-			return false, err
+			return false, err // Mengembalikan pesan kesalahan jika terjadi error saat membuat data baru
 		}
 	} else {
-		// Jika BomMasterId != 0, ini adalah operasi memperbarui data yang sudah ada
 		err := tx.Model(&masteritementities.Bom{}).
 			Where("bom_master_id = ?", request.BomMasterId).
 			Updates(entities).Error
 		if err != nil {
-			return false, err
+			return false, err // Mengembalikan pesan kesalahan jika terjadi error saat memperbarui data yang sudah ada
 		}
 	}
 
-	return true, nil
+	return true, nil // Mengembalikan true jika operasi berhasil tanpa error
 }
 
 func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (bool, error) {
@@ -169,4 +127,42 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (bool, er
 	}
 
 	return true, nil
+}
+
+func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
+	var responses []masteritempayloads.BomDetailListResponse
+
+	// Define table struct
+	tableStruct := masteritempayloads.BomDetailListResponse{}
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filters)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+
+	// Convert responses to maps
+	responseMaps := make([]map[string]interface{}, 0)
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"bom_detail_id":              response.BomDetailId,
+			"bom_detail_qty":             response.BomDetailQty,
+			"bom_detail_uom":             response.BomDetailUom,
+			"bom_detail_seq":             response.BomDetailSeq,
+			"bom_detail_remark":          response.BomDetailRemark,
+			"bom_detail_costing_percent": response.BomDetailCostingPct,
+		}
+		responseMaps = append(responseMaps, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
 }

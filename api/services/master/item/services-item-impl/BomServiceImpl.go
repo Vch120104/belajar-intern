@@ -72,3 +72,14 @@ func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) bool {
 	}
 	return results
 }
+
+func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
+	results, totalPages, totalRows, err := s.BomRepository.GetBomDetailList(tx, filterCondition, pages)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results, totalPages, totalRows
+}

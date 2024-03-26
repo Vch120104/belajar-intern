@@ -78,6 +78,7 @@ func Migrate() {
 		// // &masteritementities.PriceList{},
 		// // &masteritementities.ItemDetail{},
 		&masteritementities.Bom{},
+		&masteritementities.BomDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},
 		// &masteritementities.ItemSubstitute{},
