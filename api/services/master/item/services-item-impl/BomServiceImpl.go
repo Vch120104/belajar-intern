@@ -83,3 +83,14 @@ func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterConditio
 	}
 	return results, totalPages, totalRows
 }
+
+func (s *BomServiceImpl) GetBomDetailById(id int) []masteritempayloads.BomDetailRequest {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.BomRepository.GetBomDetailById(tx, id)
+
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
+}

@@ -19,6 +19,7 @@ type BomController interface {
 	SaveBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 	GetBomDetailList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetBomDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
 }
 
 type BomControllerImpl struct {
@@ -151,21 +152,18 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param bom_detail_id query string false "bom_detail_id"
-// @Param bom_detail_uom query string false "bom_detail_uom"
-// @Param bom_detail_qty query int false "bom_detail_qty"
-// @Param bom_detail_costing_percent query string false "bom_detail_costing_percent"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /bom [get]
+// @Router /bom-detail [get]
 func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	queryValues := request.URL.Query()
 
 	// Define query parameters
 	queryParams := map[string]string{
-		"mtr_bom_detail.bom_master_id": queryValues.Get("bom_master_id"), // Ambil nilai item_id tanpa mtr_bom.
-		"mtr_bom_detail.bom_detail_id": queryValues.Get("bom_detail_id"),
+		"mtr_bom_detail.bom_detail_id": queryValues.Get("bom_detail_id"), // Ambil nilai bom_detail_id tanpa mtr_bom_detail.
+		"mtr_bom_detail.bom_master_id": queryValues.Get("bom_master_id"),
 	}
 
 	// Extract pagination parameters
@@ -189,4 +187,22 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 		// If paginatedData is empty, return error response
 		payloads.NewHandleError(writer, "Data Not Found", http.StatusNotFound)
 	}
+}
+
+// @Summary Get Bom Detail By ID
+// @Description REST API Bom Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Detail
+// @Param bom_master_id path int true "bom_master_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /bom/{bom_master_id}/detail [get]
+func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+
+	bomDetailId, _ := strconv.Atoi(params.ByName("bom_master_id"))
+
+	result := r.BomService.GetBomDetailById(bomDetailId)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

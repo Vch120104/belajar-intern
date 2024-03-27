@@ -387,6 +387,18 @@ func BomRouter(
 	router.POST("/bom/", BomController.SaveBomMaster)
 	router.PATCH("/bom/:bom_master_id", BomController.ChangeStatusBomMaster)
 
+	// Router untuk bom detail dengan wildcard
+	router.GET("/bom/:bom_master_id/detail", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		bomMasterID := ps.ByName("bom_master_id")
+		if bomMasterID != "" {
+			// Jika ada bom_master_id yang diberikan, panggil fungsi untuk mendapatkan detail spesifik
+			BomController.GetBomDetailById(w, r, ps)
+		} else if bomMasterID == "all" {
+			// Jika tidak ada bom_master_id yang diberikan, panggil fungsi untuk mendapatkan semua detail
+			BomController.GetBomDetailList(w, r, ps)
+		}
+	})
+
 	router.PanicHandler = exceptions.ErrorHandler
 
 	return router

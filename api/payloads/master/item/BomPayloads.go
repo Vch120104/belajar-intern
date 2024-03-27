@@ -31,6 +31,7 @@ type BomMasterListResponse struct {
 
 type BomMasterRequest struct {
 	BomMasterId            int       `json:"bom_master_id"`
+	IsActive               bool      `json:"is_active"`
 	BomMasterSeq           int       `json:"bom_master_seq"`
 	BomMasterQty           int       `json:"bom_master_qty"`
 	BomMasterUom           string    `json:"bom_master_uom"`
@@ -45,12 +46,41 @@ type BomItemNameResponse struct {
 	ItemName string `json:"item_name"`
 }
 
+type BomDetail struct {
+	BomDetailId             int    `json:"bom_detail_id"`
+	BomDetailSeq            int    `json:"bom_detail_seq"`
+	BomDetailQty            int    `json:"bom_detail_qty"`
+	BomDetailUom            string `json:"bom_detail_uom"`
+	BomDetailRemark         string `json:"bom_detail_remark"`
+	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
+	// Isilah properti lainnya sesuai kebutuhan
+}
+
+type BomDetailResponse struct {
+	BomDetailId             int    `json:"bom_detail_id"`
+	BomDetailSeq            int    `json:"bom_detail_seq"`
+	BomDetailQty            int    `json:"bom_detail_qty"`
+	BomDetailUom            string `json:"bom_detail_uom"`
+	BomDetailRemark         string `json:"bom_detail_remark"`
+	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
+}
+
+type BomDetailRequest struct {
+	BomDetailId             int    `json:"bom_detail_id"`
+	BomMasterId             int    `json:"bom_master_id"`
+	BomDetailSeq            int    `json:"bom_detail_seq"`
+	BomDetailQty            int    `json:"bom_detail_qty"`
+	BomDetailUom            string `json:"bom_detail_uom"`
+	BomDetailRemark         string `json:"bom_detail_remark"`
+	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
+}
+
 type BomDetailListResponse struct {
-	BomDetailId         int    `json:"bom_detail_id" parent_entity:"mtr_bom_detail" main_table:"mtr_bom_detail"`
-	BomDetailSeq        int    `json:"bom_detail_seq" parent_entity:"mtr_bom_detail"`
-	BomDetailQty        int    `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
-	BomDetailUom        string `json:"bom_detail_uom" parent_entity:"mtr_bom_detail"`
-	BomMasterId         int    `json:"bom_master_id" parent_entity:"mtr_bom_detail" references:"mtr_bom"`
-	BomDetailRemark     string `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
-	BomDetailCostingPct string `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
+	BomDetailId             int    `json:"bom_detail_id" parent_entity:"mtr_bom_detail" main_table:"mtr_bom_detail"`
+	BomMasterId             int    `json:"bom_master_id" parent_entity:"bom_master_id"`
+	BomDetailSeq            int    `json:"bom_detail_seq" parent_entity:"mtr_bom_detail"`
+	BomDetailQty            int    `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
+	BomDetailUom            string `json:"bom_detail_uom" parent_entity:"mtr_bom_detail"`
+	BomDetailRemark         string `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
+	BomDetailCostingPercent int    `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
 }

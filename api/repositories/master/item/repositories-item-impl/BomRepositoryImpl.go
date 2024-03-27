@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
 
 	"gorm.io/gorm"
 )
@@ -156,7 +157,7 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 			"bom_detail_uom":             response.BomDetailUom,
 			"bom_detail_seq":             response.BomDetailSeq,
 			"bom_detail_remark":          response.BomDetailRemark,
-			"bom_detail_costing_percent": response.BomDetailCostingPct,
+			"bom_detail_costing_percent": response.BomDetailCostingPercent,
 		}
 		responseMaps = append(responseMaps, responseMap)
 	}
@@ -165,4 +166,42 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
+}
+
+// Implementasi yang diperbaiki di BomRepositoryImpl
+func (*BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritempayloads.BomDetailRequest, error) {
+	var entities []masteritementities.BomDetail
+
+	// Mengambil data berdasarkan id
+	err := tx.Where(&masteritementities.BomDetail{BomMasterId: id}).Find(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Jika tidak ada data yang ditemukan, kembalikan error not found
+			return nil, errors.New("data not found")
+		}
+		// Jika terjadi error lainnya, kembalikan error tersebut
+		return nil, err
+	}
+
+	// Jika tidak ada data yang ditemukan, kembalikan error not found
+	if len(entities) == 0 {
+		return nil, errors.New("data not found")
+	}
+
+	// Mengonversi data menjadi slice dari response
+	var response []masteritempayloads.BomDetailRequest
+	for _, entity := range entities {
+		response = append(response, masteritempayloads.BomDetailRequest{
+			BomDetailId:             entity.BomDetailId,
+			BomDetailSeq:            entity.BomDetailSeq,
+			BomDetailQty:            entity.BomDetailQty,
+			BomDetailUom:            entity.BomDetailUom,
+			BomDetailRemark:         entity.BomDetailRemark,
+			BomDetailCostingPercent: entity.BomDetailCostingPct,
+			// Isilah properti lainnya sesuai kebutuhan
+		})
+	}
+
+	// Mengembalikan response
+	return response, nil
 }

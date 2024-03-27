@@ -203,6 +203,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
 	mux.Handle("/incentive-master/", IncentiveMasterRouter)
 	mux.Handle("/bom/", BomRouter)
+
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
 		Handler: mux,
