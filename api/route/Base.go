@@ -134,10 +134,10 @@ func OperationGroupRouter(
 	router := chi.NewRouter()
 
 	router.Get("/", operationGroupController.GetAllOperationGroup)
-	router.Get("/operation-group/drop-down/", operationGroupController.GetAllOperationGroupIsActive)
-	router.Get("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
-	router.Post("/operation-group/", operationGroupController.SaveOperationGroup)
-	router.Patch("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.Get("/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.Post("/", operationGroupController.SaveOperationGroup)
+	router.Patch("/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
 
 	// router.PanicHandler = exceptions.ErrorHandler
 

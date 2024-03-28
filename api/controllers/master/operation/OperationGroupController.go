@@ -2,8 +2,10 @@ package masteroperationcontroller
 
 import (
 	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	"after-sales/api/validation"
 
-	jsonchecker "after-sales/api/json/json-checker"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -135,11 +137,16 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 		exceptionsss_test.NewEntityException(writer, request, err)
 		return
 	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	create, err := r.OperationGroupService.SaveOperationGroup(formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		helper_test.ReturnError(writer, request, err)
 		return
 	}
 

@@ -17,10 +17,12 @@ var (
 )
 
 func translateError(err error, trans ut.Translator) (errs []error) {
-	if err != nil {
+
+	if err == nil {
 		return nil
 	}
 	validatorErrs := err.(validator.ValidationErrors)
+
 	for _, e := range validatorErrs {
 		translatedErr := fmt.Errorf(e.Translate(trans))
 		errs = append(errs, translatedErr)
@@ -60,6 +62,7 @@ func ValidationForm(writer http.ResponseWriter, request *http.Request, form inte
 		}
 	} else if err != nil {
 		errorMsg := fmt.Sprintf("%v ", translateError(err, trans))
+		fmt.Println(err, " ++")
 		return &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    errorMsg,
