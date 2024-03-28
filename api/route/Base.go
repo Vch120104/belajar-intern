@@ -146,15 +146,15 @@ func OperationGroupRouter(
 
 func ItemClassRouter(
 	itemClassController masteritemcontroller.ItemClassController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/item-class/", itemClassController.GetAllItemClass)
-	router.GET("/item-class/pop-up/", itemClassController.GetAllItemClassLookup)
-	router.POST("/item-class/", itemClassController.SaveItemClass)
-	router.PATCH("/item-class/:item_class_id", itemClassController.ChangeStatusItemClass)
+	router.Get("/", itemClassController.GetAllItemClass)
+	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
+	router.Post("/", itemClassController.SaveItemClass)
+	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

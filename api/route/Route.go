@@ -168,7 +168,7 @@ func StartRouting(db *gorm.DB) {
 
 	mux := http.NewServeMux()
 	r := chi.NewRouter()
-	mux.Handle("/item-class/", itemClassRouter)
+	r.Mount("/item-class", itemClassRouter)
 	mux.Handle("/item-package/", itemPackageRouter)
 	mux.Handle("/item-package-detail/", itemPackageDetailRouter)
 	mux.Handle("/unit-of-measurement/", unitOfMeasurementRouter)

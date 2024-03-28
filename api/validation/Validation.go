@@ -17,7 +17,7 @@ var (
 )
 
 func translateError(err error, trans ut.Translator) (errs []error) {
-	if err != nil {
+	if err == nil {
 		return nil
 	}
 	validatorErrs := err.(validator.ValidationErrors)
