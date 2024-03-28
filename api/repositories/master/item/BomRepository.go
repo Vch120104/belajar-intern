@@ -15,4 +15,6 @@ type BomRepository interface {
 	ChangeStatusBomMaster(tx *gorm.DB, Id int) (bool, error)
 	GetBomDetailList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error)
 	GetBomDetailById(*gorm.DB, int) ([]masteritempayloads.BomDetailRequest, error)
+	SaveBomDetail(*gorm.DB, masteritempayloads.BomDetailRequest) (bool, error)
+	GetBomItemList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error)
 }

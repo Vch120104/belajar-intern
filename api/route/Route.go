@@ -18,7 +18,6 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
-
 	"net/http"
 
 	"gorm.io/gorm"
@@ -201,7 +200,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/warehouse-master/", WarehouseMaster)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
-	mux.Handle("/incentive-master/", IncentiveMasterRouter)
+	mux.Handle("/incentive/", IncentiveMasterRouter)
 	mux.Handle("/bom/", BomRouter)
 
 	server := http.Server{

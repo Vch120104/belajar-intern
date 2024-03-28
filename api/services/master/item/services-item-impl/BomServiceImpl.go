@@ -94,3 +94,24 @@ func (s *BomServiceImpl) GetBomDetailById(id int) []masteritempayloads.BomDetail
 	}
 	return results
 }
+
+func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) bool {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.BomRepository.SaveBomDetail(tx, req)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results
+}
+
+func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
+	results, totalPages, totalRows, err := s.BomRepository.GetBomItemList(tx, filterCondition, pages)
+	if err != nil {
+		panic(exceptions.NewNotFoundError(err.Error()))
+	}
+	return results, totalPages, totalRows
+}

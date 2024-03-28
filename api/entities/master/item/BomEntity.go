@@ -11,11 +11,11 @@ type Bom struct {
 	IsActive               bool        `gorm:"column:is_active;size:1;not null" json:"is_active"`
 	BomMasterSeq           int         `gorm:"column:bom_master_seq;size:30;not null" json:"bom_master_seq"`
 	BomMasterQty           int         `gorm:"column:bom_master_qty;size:30;not null" json:"bom_master_qty"`
-	BomMasterUom           string      `gorm:"column:bom_master_uom;size:30;not null" json:"bom_master_uom"`
 	BomMasterEffectiveDate time.Time   `gorm:"column:bom_master_effective_date;not null" json:"bom_master_effective_date"`
 	BomMasterChangeNumber  int         `gorm:"column:bom_master_change_number;size:30;default:0" json:"bom_master_change_number"`
-	Item                   Item        `gorm:"foreignKey:ItemId" json:"item"` //foreign key to mtr_item table
 	ItemId                 int         `gorm:"column:item_id;size:30;not null" json:"item_id"`
+	Item                   Item        `gorm:"foreignKey:ItemId" json:"item"` //foreign key to mtr_item table
+	BomMasterUom           string      `gorm:"column:bom_master_uom;size:30;not null" json:"bom_master_uom"`
 	BomDetail              []BomDetail `gorm:"foreignKey:BomMasterId" json:"detail_bom"`
 	//UomId                  int       `gorm:"column:uom_id;size:30;not null" json:"uom_id"`
 	//Uom                    Uom       `gorm:"foreignKey:UomID" json:"uom"` //foreign key to mtr_item to Uom table

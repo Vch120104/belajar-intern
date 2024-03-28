@@ -367,10 +367,10 @@ func IncentiveMasterRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/incentive-master/", IncentiveMasterController.GetAllIncentiveMaster)
-	router.GET("/incentive-master/:incentive_level_id", IncentiveMasterController.GetIncentiveMasterById)
-	router.POST("/incentive-master/", IncentiveMasterController.SaveIncentiveMaster)
-	router.PATCH("/incentive-master/:incentive_level_id", IncentiveMasterController.ChangeStatusIncentiveMaster)
+	router.GET("/incentive/", IncentiveMasterController.GetAllIncentiveMaster)
+	router.GET("/incentive/:incentive_level_id", IncentiveMasterController.GetIncentiveMasterById)
+	router.POST("/incentive/", IncentiveMasterController.SaveIncentiveMaster)
+	router.PATCH("/incentive/:incentive_level_id", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -382,22 +382,19 @@ func BomRouter(
 ) *httprouter.Router {
 	router := httprouter.New()
 
+	//bom master
 	router.GET("/bom/", BomController.GetBomMasterList)
 	router.GET("/bom/:bom_master_id", BomController.GetBomMasterById)
 	router.POST("/bom/", BomController.SaveBomMaster)
 	router.PATCH("/bom/:bom_master_id", BomController.ChangeStatusBomMaster)
 
-	// Router untuk bom detail dengan wildcard
-	router.GET("/bom/:bom_master_id/detail", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		bomMasterID := ps.ByName("bom_master_id")
-		if bomMasterID != "" {
-			// Jika ada bom_master_id yang diberikan, panggil fungsi untuk mendapatkan detail spesifik
-			BomController.GetBomDetailById(w, r, ps)
-		} else if bomMasterID == "all" {
-			// Jika tidak ada bom_master_id yang diberikan, panggil fungsi untuk mendapatkan semua detail
-			BomController.GetBomDetailList(w, r, ps)
-		}
-	})
+	//bom detail
+	//router.GET("/bom/all/detail", BomController.GetBomDetailList)
+	router.GET("/bom/:bom_master_id/detail", BomController.GetBomDetailById)
+	router.POST("/bom/:bom_master_id/detail", BomController.SaveBomDetail)
+
+	//bom lookup
+	router.GET("/bom/:bom_master_id/popup-item", BomController.GetBomItemList)
 
 	router.PanicHandler = exceptions.ErrorHandler
 

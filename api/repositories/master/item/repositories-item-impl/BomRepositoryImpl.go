@@ -47,6 +47,7 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 			"bom_master_effective_date": response.BomMasterEffectiveDate,
 			"item_code":                 response.ItemCode,
 			"item_name":                 response.ItemName,
+			"item_id":                   response.ItemId,
 		}
 		responseMaps = append(responseMaps, responseMap)
 	}
@@ -81,7 +82,6 @@ func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayload
 		BomMasterId:            request.BomMasterId,
 		BomMasterSeq:           request.BomMasterSeq,
 		BomMasterQty:           request.BomMasterQty,
-		BomMasterUom:           request.BomMasterUom,
 		BomMasterEffectiveDate: request.BomMasterEffectiveDate,
 		BomMasterChangeNumber:  request.BomMasterChangeNumber,
 		ItemId:                 request.ItemId,
@@ -153,6 +153,7 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 	for _, response := range responses {
 		responseMap := map[string]interface{}{
 			"bom_detail_id":              response.BomDetailId,
+			"bom_master_id":              response.BomMasterId,
 			"bom_detail_qty":             response.BomDetailQty,
 			"bom_detail_uom":             response.BomDetailUom,
 			"bom_detail_seq":             response.BomDetailSeq,
@@ -192,16 +193,83 @@ func (*BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritempay
 	var response []masteritempayloads.BomDetailRequest
 	for _, entity := range entities {
 		response = append(response, masteritempayloads.BomDetailRequest{
+			BomMasterId:             entity.BomMasterId,
 			BomDetailId:             entity.BomDetailId,
 			BomDetailSeq:            entity.BomDetailSeq,
 			BomDetailQty:            entity.BomDetailQty,
 			BomDetailUom:            entity.BomDetailUom,
 			BomDetailRemark:         entity.BomDetailRemark,
-			BomDetailCostingPercent: entity.BomDetailCostingPct,
+			BomDetailCostingPercent: entity.BomDetailCostingPercent,
 			// Isilah properti lainnya sesuai kebutuhan
 		})
 	}
 
 	// Mengembalikan response
 	return response, nil
+}
+
+func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (bool, error) {
+
+	entities := masteritementities.BomDetail{
+		BomDetailId:             request.BomDetailId,
+		BomMasterId:             request.BomMasterId,
+		BomDetailSeq:            request.BomDetailSeq,
+		BomDetailQty:            request.BomDetailQty,
+		BomDetailRemark:         request.BomDetailRemark,
+		BomDetailCostingPercent: request.BomDetailCostingPercent,
+	}
+
+	if request.BomDetailId == 0 {
+		err := tx.Create(&entities).Error
+		if err != nil {
+			return false, err // Mengembalikan pesan kesalahan jika terjadi error saat membuat data baru
+		}
+	} else {
+		err := tx.Model(&masteritementities.BomDetail{}).
+			Where("bom_detail_id = ?", request.BomDetailId).
+			Updates(entities).Error
+		if err != nil {
+			return false, err // Mengembalikan pesan kesalahan jika terjadi error saat memperbarui data yang sudah ada
+		}
+	}
+
+	return true, nil // Mengembalikan true jika operasi berhasil tanpa error
+}
+
+func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
+	var responses []masteritempayloads.BomItemLookup
+
+	// Define table struct
+	tableStruct := masteritempayloads.BomItemLookup{}
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filters)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+
+	// Convert responses to maps
+	responseMaps := make([]map[string]interface{}, 0)
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"item_code":       response.ItemCode,
+			"item_name":       response.ItemName,
+			"item_type":       response.ItemType,
+			"item_group_code": response.ItemGroupId,
+			"item_class_code": response.ItemClassCode,
+			"is_active":       response.IsActive,
+		}
+		responseMaps = append(responseMaps, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
 }
