@@ -10,6 +10,16 @@ type GetAllItemPackageResponse struct {
 	Description     string `json:"description" parent_entity:"mtr_item_package"`
 }
 
+type SaveItemPackageRequest struct {
+	ItemPackageId   int    `json:"item_package_id" `
+	IsActive        bool   `json:"is_active"`
+	ItemGroupId     int    `json:"item_group_id"`
+	ItemPackageCode string `json:"item_package_code"`
+	ItemPackageName string `json:"item_package_name"`
+	ItemPackageSet  bool   `json:"item_package_set"`
+	Description     string `json:"description"`
+}
+
 type GetItemGroupResponse struct {
 	ItemGroupId   int    `json:"item_group_id"`
 	ItemGroupCode string `json:"item_group_code"`

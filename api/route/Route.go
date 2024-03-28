@@ -21,6 +21,7 @@ import (
 
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 )
 
@@ -59,6 +60,16 @@ func StartRouting(db *gorm.DB) {
 	itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
 	itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db)
 	itemSubstituteController := masteritemcontroller.NewItemSubstituteController(itemSubstituteService)
+
+	// Item Package
+	itemPackageRepository := masteritemrepositoryimpl.StartItemPackageRepositoryImpl()
+	itemPackageService := masteritemserviceimpl.StartItemPackageService(itemPackageRepository, db)
+	itemPackageController := masteritemcontroller.NewItemPackageController(itemPackageService)
+
+	// Item Package Detail
+	itemPackageDetailRepository := masteritemrepositoryimpl.StartItemPackageDetailRepositoryImpl()
+	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db)
+	itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
 
 	// Operation Group
 	operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
@@ -132,6 +143,8 @@ func StartRouting(db *gorm.DB) {
 
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
+	itemPackageRouter := ItemPackageRouter(itemPackageController)
+	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
@@ -154,13 +167,17 @@ func StartRouting(db *gorm.DB) {
 	priceListRouter := PriceListRouter(priceListController)
 
 	mux := http.NewServeMux()
+	r := chi.NewRouter()
 	mux.Handle("/item-class/", itemClassRouter)
+	mux.Handle("/item-package/", itemPackageRouter)
+	mux.Handle("/item-package-detail/", itemPackageDetailRouter)
 	mux.Handle("/unit-of-measurement/", unitOfMeasurementRouter)
 	mux.Handle("/markup-master/", markupMasterRouter)
 	mux.Handle("/item-level/", itemLevelRouter)
 	mux.Handle("/item/", itemRouter)
 	mux.Handle("/price-list/", priceListRouter)
-	mux.Handle("/operation-group/", OperationGroupRouter)
+	// mux.Handle("/operation-group/", OperationGroupRouter)
+	r.Mount("/operation-group", OperationGroupRouter)
 	mux.Handle("/incentive-group/", IncentiveGroupRouter)
 	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
@@ -178,7 +195,7 @@ func StartRouting(db *gorm.DB) {
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
-		Handler: mux,
+		Handler: r,
 	}
 
 	err := server.ListenAndServe()
