@@ -260,15 +260,14 @@ func OperationSectionRouter(
 
 func OperationEntriesRouter(
 	operationEntriesController masteroperationcontroller.OperationEntriesController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/operation-entries/", operationEntriesController.GetAllOperationEntries)
-	router.GET("/operation-entries/:operation_entries_id", operationEntriesController.GetOperationEntriesByID)
-	router.GET("/operation-entries-by-name/", operationEntriesController.GetOperationEntriesName)
-	router.POST("/operation-entries/", operationEntriesController.SaveOperationEntries)
-	router.PATCH("/operation-entries/:operation_entries_id", operationEntriesController.ChangeStatusOperationEntries)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", operationEntriesController.GetAllOperationEntries)
+	router.Get("/by-id/{operation_entries_id}", operationEntriesController.GetOperationEntriesByID)
+	router.Get("/by-name", operationEntriesController.GetOperationEntriesName)
+	router.Post("/", operationEntriesController.SaveOperationEntries)
+	router.Patch("/{operation_entries_id}", operationEntriesController.ChangeStatusOperationEntries)
 
-	router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 
