@@ -15,7 +15,7 @@ type ItemSubstituteRepository interface {
 	GetByIdItemSubstituteDetail(*gorm.DB,int) (masteritempayloads.ItemSubstituteDetailGetPayloads, error)
 	SaveItemSubstitute(*gorm.DB,masteritempayloads.ItemSubstitutePostPayloads) (bool, error)
 	SaveItemSubstituteDetail(*gorm.DB,masteritempayloads.ItemSubstituteDetailPostPayloads,int) (bool, error)
-	ChangeStatusItemOperation(*gorm.DB,int) (bool, error)
+	ChangeStatusItemSubstitute(*gorm.DB,int) (bool, error)
 	DeactivateItemSubstituteDetail(*gorm.DB,string) (bool, error)
 	ActivateItemSubstituteDetail(*gorm.DB,string) (bool, error)
 }

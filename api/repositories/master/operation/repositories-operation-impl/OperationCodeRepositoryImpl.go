@@ -6,68 +6,85 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
 
 type OperationCodeRepositoryImpl struct {
-	myDB *gorm.DB
 }
 
-func StartOperationCodeRepositoryImpl(db *gorm.DB) masteroperationrepository.OperationCodeRepository {
-	return &OperationCodeRepositoryImpl{myDB: db}
+func StartOperationCodeRepositoryImpl() masteroperationrepository.OperationCodeRepository {
+	return &OperationCodeRepositoryImpl{}
 }
 
-func (r *OperationCodeRepositoryImpl) GetAllOperationCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
 	entities := []masteroperationentities.OperationCode{}
-	//define base model
-	baseModelQuery := r.myDB.Model(&entities)
-	//apply where query
+	var payloads []masteroperationpayloads.OperationCodeGetAll
+	baseModelQuery := tx.Model(&entities)
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
-
-	if len(entities) == 0 {
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Rows()
+	if len(payloads) == 0 {
 		return pages, gorm.ErrRecordNotFound
 	}
-
 	if err != nil {
 		return pages, err
 	}
-
 	defer rows.Close()
 
-	pages.Rows = entities
+	pages.Rows = payloads
 
 	return pages, nil
 }
 
-func (r *OperationCodeRepositoryImpl) WithTrx(trxHandle *gorm.DB) masteroperationrepository.OperationCodeRepository {
-	if trxHandle == nil {
-		log.Println("Transaction Database Not Found!")
-		return r
-	}
-	r.myDB = trxHandle
-	return r
-}
-
-func (r *OperationCodeRepositoryImpl) GetOperationCodeById(Id int32) (masteroperationpayloads.OperationCodeResponse, error) {
+func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, id int) (masteroperationpayloads.OperationCodeResponse, error) {
 	entities := masteroperationentities.OperationCode{}
 	response := masteroperationpayloads.OperationCodeResponse{}
-
-	rows, err := r.myDB.Model(&entities).
-		Where(masteroperationentities.OperationCode{
-			OperationId: Id,
-		}).
-		First(&response).
-		Rows()
-
+	rows, err := tx.Model(&entities).Where(masteroperationentities.OperationCode{OperationId: id}).First(&response).Rows()
 	if err != nil {
 		return response, err
 	}
-
 	defer rows.Close()
-
 	return response, nil
+}
+
+func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req masteroperationpayloads.OperationCodeSave) (bool, error) {
+	entities := masteroperationentities.OperationCode{
+		IsActive:                req.IsActive,
+		OperationCode:           req.OperationCode,
+		OperationName:           req.OperationName,
+		OperationUsingIncentive: req.OperationUsingIncentive,
+		OperationUsingActual:    req.OperationUsingActual,
+	}
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *OperationCodeRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, error) {
+	var entities masteroperationentities.OperationCode
+
+	result := tx.Model(&entities).
+		Where("operation_id = ?", id).
+		First(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
+
+	result = tx.Save(&entities)
+
+	if result.Error != nil {
+		return false, result.Error
+	}
+
+	return true, nil
 }

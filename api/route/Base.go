@@ -128,6 +128,20 @@ func ItemSubstituteRouter(
 	return router
 }
 
+func OperationCodeRouter(
+	operationCodeController masteroperationcontroller.OperationCodeController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/operation-code/", operationCodeController.GetAllOperationCode)
+	router.GET("/operation-code/by-id/:operation_id", operationCodeController.GetByIdOperationCode)
+	router.POST("/operation-code/", operationCodeController.SaveOperationCode)
+	router.PATCH("/operation-code/:operation_id", operationCodeController.ChangeStatusOperationCode)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) chi.Router {
@@ -354,6 +368,20 @@ func PriceListRouter(
 	router.GET("/price-list/pop-up/", priceListController.GetPriceListLookup)
 	router.POST("/price-list/", priceListController.SavePriceList)
 	router.PATCH("/price-list/:price_list_id", priceListController.ChangeStatusPriceList)
+
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func WarrantyFreeServiceRouter(
+	warrantyFreeServiceController mastercontroller.WarrantyFreeServiceController,
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/warranty-free-service/", warrantyFreeServiceController.GetAllWarrantyFreeService)
+	router.GET("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
+	router.POST("/warranty-free-service/", warrantyFreeServiceController.SaveWarrantyFreeService)
+	router.PATCH("/warranty-free-service/:warranty_free_services_id", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
