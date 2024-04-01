@@ -135,9 +135,9 @@ func OperationGroupRouter(
 
 	router.Get("/", operationGroupController.GetAllOperationGroup)
 	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.Get("/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.Get("/by-code/{operation_group_code}", operationGroupController.GetOperationGroupByCode)
 	router.Post("/", operationGroupController.SaveOperationGroup)
-	router.Patch("/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.Patch("/{operation_group_id}", operationGroupController.ChangeStatusOperationGroup)
 
 	// router.PanicHandler = exceptions.ErrorHandler
 
@@ -231,30 +231,27 @@ func ShiftScheduleRouter(
 
 func OperationSectionRouter(
 	operationSectionController masteroperationcontroller.OperationSectionController,
-) *httprouter.Router {
-	router := httprouter.New()
-
-	router.GET("/operation-section/", operationSectionController.GetAllOperationSectionList)
-	router.GET("/operation-section/by-id/:operation_section_id", operationSectionController.GetOperationSectionByID)
-	router.GET("/operation-section/by-name", operationSectionController.GetOperationSectionName)
-	router.GET("/operation-section/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
-	router.PUT("/operation-section/", operationSectionController.SaveOperationSection)
-	router.PATCH("/operation-section/:operation_section_id", operationSectionController.ChangeStatusOperationSection)
-	router.PanicHandler = exceptions.ErrorHandler
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", operationSectionController.GetAllOperationSectionList)
+	router.Get("/{operation_section_id}", operationSectionController.GetOperationSectionByID)
+	router.Get("/by-name", operationSectionController.GetOperationSectionName)
+	router.Get("/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
+	router.Post("/", operationSectionController.SaveOperationSection)
+	router.Patch("/{operation_section_id}", operationSectionController.ChangeStatusOperationSection)
 	return router
 }
 
 func OperationEntriesRouter(
 	operationEntriesController masteroperationcontroller.OperationEntriesController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/operation-entries/", operationEntriesController.GetAllOperationEntries)
-	router.GET("/operation-entries/:operation_entries_id", operationEntriesController.GetOperationEntriesByID)
-	router.GET("/operation-entries-by-name/", operationEntriesController.GetOperationEntriesName)
-	router.POST("/operation-entries/", operationEntriesController.SaveOperationEntries)
-	router.PATCH("/operation-entries/:operation_entries_id", operationEntriesController.ChangeStatusOperationEntries)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", operationEntriesController.GetAllOperationEntries)
+	router.Get("/{operation_entries_id}", operationEntriesController.GetOperationEntriesByID)
+	router.Get("/by-name/", operationEntriesController.GetOperationEntriesName)
+	router.Post("/", operationEntriesController.SaveOperationEntries)
+	router.Patch("/{operation_entries_id}", operationEntriesController.ChangeStatusOperationEntries)
 
-	router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 

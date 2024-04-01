@@ -7,7 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
-	"errors"
+
 	"net/http"
 	"strings"
 
@@ -155,16 +155,6 @@ func (*OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req mastero
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
-		}
-	}
-
-	if len(req.OperationGroupCode) > 2 {
-		// errMessage := "Operation Group Code max 2 characters"
-
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-
-			Err: errors.New(utils.BadRequestError),
 		}
 	}
 

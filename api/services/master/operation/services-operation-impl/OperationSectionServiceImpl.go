@@ -2,6 +2,7 @@ package masteroperationserviceimpl
 
 import (
 	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -26,41 +27,41 @@ func StartOperationSectionService(operationSectionRepo masteroperationrepository
 	}
 }
 
-func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetAllOperationSectionList(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) []masteroperationpayloads.OperationSectionCodeResponse {
+func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetSectionCodeByGroupId(tx, GroupId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
 
-	return results
+	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) masteroperationpayloads.OperationSectionNameResponse {
+func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) (masteroperationpayloads.OperationSectionNameResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetOperationSectionName(tx, group_id, section_code)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
 
-	return results
+	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) bool {
+func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -68,37 +69,37 @@ func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpa
 		_, err := s.operationSectionRepo.GetOperationSectionById(tx, req.OperationSectionId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
-	
+
 	if len(req.OperationSectionCode) > 3 {
 		panic(exceptions.NewBadRequestError("Operation Section Code max 3 characters"))
 	}
 	results, err := s.operationSectionRepo.SaveOperationSection(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) masteroperationpayloads.OperationSectionListResponse {
+func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) (masteroperationpayloads.OperationSectionListResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetOperationSectionById(tx, id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) bool {
+func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.ChangeStatusOperationSection(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
