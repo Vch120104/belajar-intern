@@ -135,9 +135,9 @@ func OperationGroupRouter(
 
 	router.Get("/", operationGroupController.GetAllOperationGroup)
 	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.Get("/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
+	router.Get("/by-code/{operation_group_code}", operationGroupController.GetOperationGroupByCode)
 	router.Post("/", operationGroupController.SaveOperationGroup)
-	router.Patch("/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.Patch("/{operation_group_id}", operationGroupController.ChangeStatusOperationGroup)
 
 	// router.PanicHandler = exceptions.ErrorHandler
 
