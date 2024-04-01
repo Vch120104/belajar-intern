@@ -289,15 +289,15 @@ func ForecastMasterRouter(
 
 func UnitOfMeasurementRouter(
 	unitOfMeasurementController masteritemcontroller.UnitOfMeasurementController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/unit-of-measurement/", unitOfMeasurementController.GetAllUnitOfMeasurement)
-	router.GET("/unit-of-measurement/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
-	router.GET("/unit-of-measurement/by-code/:uom_code", unitOfMeasurementController.GetUnitOfMeasurementByCode)
-	router.POST("/unit-of-measurement/", unitOfMeasurementController.SaveUnitOfMeasurement)
-	router.PATCH("/unit-of-measurement/:uom_id", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", unitOfMeasurementController.GetAllUnitOfMeasurement)
+	router.Get("/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
+	router.Get("/code/{uom_code}", unitOfMeasurementController.GetUnitOfMeasurementByCode)
+	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
+	router.Patch("/{uom_id}", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
