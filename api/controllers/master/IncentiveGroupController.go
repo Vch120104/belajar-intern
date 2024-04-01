@@ -98,13 +98,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 }
 
 func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request) {
-	incentiveGroupId, err := strconv.Atoi(chi.URLParam(request, "id"))
-	if err != nil {
-		exceptionsss_test.NewAppException(writer, request, &exceptionsss_test.BaseErrorResponse{
-			Err: err,
-		})
-		return
-	}
+	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "id"))
 	incentiveGroupResponse, errors := r.IncentiveGroupService.GetIncentiveGroupById(incentiveGroupId)
 
 	if errors != nil {

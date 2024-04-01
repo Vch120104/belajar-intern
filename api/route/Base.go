@@ -204,14 +204,14 @@ func IncentiveGroupRouter(
 
 func IncentiveGroupDetailRouter(
 	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/incentive-group-detail/by-header-id/", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
-	router.GET("/incentive-group-detail/by-detail-id/:incentive_group_detail_id", incentiveGroupDetailController.GetIncentiveGroupDetailById)
-	router.POST("/incentive-group-detail/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
+	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
+	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 

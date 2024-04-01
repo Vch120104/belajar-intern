@@ -41,6 +41,13 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterC
 		Scan(&IncentiveGroupResponse).
 		Error
 
+	if len(IncentiveGroupResponse) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
 	if err != nil {
 
 		return pages, &exceptionsss_test.BaseErrorResponse{
