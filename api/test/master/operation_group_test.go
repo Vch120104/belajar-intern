@@ -1,5 +1,15 @@
 package test
 
+import (
+	"after-sales/api/config"
+	"after-sales/api/payloads/pagination"
+	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
+	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
+	"after-sales/api/utils"
+	"fmt"
+	"testing"
+)
+
 // import (
 // 	"after-sales/api/config"
 // 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -96,5 +106,60 @@ package test
 // 		panic(err)
 // 	}
 
-// 	fmt.Println(get)
-// }
+//		fmt.Println(get)
+//	}
+func TestGetAllOperationGroup(t *testing.T) {
+	config.InitEnvConfigs(true, "")
+
+	db := config.InitDB()
+
+	filterCondition := []utils.FilterCondition{
+		{
+			ColumnField: "operation_group_description",
+			ColumnValue: "",
+		},
+	}
+
+	pages := pagination.Pagination{
+		Page:  0,
+		Limit: 10,
+	}
+
+	operationGroupRepo := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
+	operationGroupServ := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepo, db)
+
+	res, err := operationGroupServ.GetAllOperationGroup(filterCondition, pages)
+
+	if err != nil {
+		fmt.Print("err ", err)
+	}
+
+	fmt.Print("result ", res)
+
+	// entities := masteroperationentities.OperationGroup{}
+
+	// filterCondition := []utils.FilterCondition{
+	// 	{
+	// 		ColumnField: "operation_group_descriptiona",
+	// 		ColumnValue: "",
+	// 	},
+	// }
+
+	// pages := pagination.Pagination{
+	// 	Page:  0,
+	// 	Limit: 10,
+	// }
+
+	// baseModelQuery := db.Model(&entities)
+	// //apply where query
+	// whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	// //apply pagination and execute
+	// _, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+
+	// if err != nil {
+	// 	fmt.Print("err ", err)
+	// }
+
+	// fmt.Print("result ", entities)
+
+}

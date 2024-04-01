@@ -8,7 +8,6 @@ import (
 	"after-sales/api/utils"
 	"reflect"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +21,6 @@ func StartIncentiveMasterRepositoryImpl() masterrepository.IncentiveMasterReposi
 func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	var responses []masterpayloads.IncentiveMasterListResponse
 	var getJobPositionResponse []masterpayloads.JobPositionResponse
-	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var jobPositionId string
 	responseStruct := reflect.TypeOf(masterpayloads.IncentiveMasterListResponse{})
@@ -67,7 +65,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 
 	jobPositionUrl := "http://10.1.32.26:8000/general-service/api/general/job-position?job_position_id=" + jobPositionId
 
-	errUrlIncentiveMaster := utils.Get(c, jobPositionUrl, &getJobPositionResponse, nil)
+	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
 
 	if errUrlIncentiveMaster != nil {
 		return nil, 0, 0, errUrlIncentiveMaster

@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -89,7 +88,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 	var responses []masterpayloads.ForecastMasterListResponse
 	var getSupplierResponse []masterpayloads.SupplierResponse
 	var getOrderTypeResponse []masterpayloads.OrderTypeResponse
-	var c *gin.Context
+
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var supplierName string
 	var orderTypeName string
@@ -140,7 +139,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 	if supplierName != "" || orderTypeName != "" {
 		supplierUrl := "http://10.1.32.26:8000/general-service/api/general/filter-supplier-master?supplier_name=" + supplierName
 
-		errUrlSupplier := utils.Get(c, supplierUrl, &getSupplierResponse, nil)
+		errUrlSupplier := utils.Get(supplierUrl, &getSupplierResponse, nil)
 
 		if errUrlSupplier != nil {
 			return nil, 0, 0, errUrlSupplier
@@ -150,7 +149,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 		orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
 
-		errUrlOrderType := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
+		errUrlOrderType := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
 
 		if errUrlOrderType != nil {
 			return nil, 0, 0, errUrlOrderType

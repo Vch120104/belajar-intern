@@ -8,7 +8,6 @@ import (
 	"after-sales/api/utils"
 	"reflect"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +21,7 @@ func StartDiscountPercentRepositoryImpl() masteritemrepository.DiscountPercentRe
 func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	var responses []masteritempayloads.DiscountPercentListResponse
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
-	var c *gin.Context
+
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var orderTypeName string
 	responseStruct := reflect.TypeOf(masteritempayloads.DiscountPercentListResponse{})
@@ -67,7 +66,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
 
-	errUrlDiscountPercent := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
+	errUrlDiscountPercent := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
 
 	if errUrlDiscountPercent != nil {
 		return nil, 0, 0, errUrlDiscountPercent

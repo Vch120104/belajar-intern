@@ -7,6 +7,7 @@ import (
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/exceptions"
 
+	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"
@@ -143,29 +144,54 @@ func OperationCodeRouter(
 
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/operation-group/", operationGroupController.GetAllOperationGroup)
-	router.GET("/operation-group/drop-down", operationGroupController.GetAllOperationGroupIsActive)
-	router.GET("/operation-group/by-code/:operation_group_code", operationGroupController.GetOperationGroupByCode)
-	router.POST("/operation-group/", operationGroupController.SaveOperationGroup)
-	router.PATCH("/operation-group/:operation_group_id", operationGroupController.ChangeStatusOperationGroup)
+	router.Get("/", operationGroupController.GetAllOperationGroup)
+	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.Get("/by-code/{operation_group_code}", operationGroupController.GetOperationGroupByCode)
+	router.Post("/", operationGroupController.SaveOperationGroup)
+	router.Patch("/{operation_group_id}", operationGroupController.ChangeStatusOperationGroup)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
 
 func ItemClassRouter(
 	itemClassController masteritemcontroller.ItemClassController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", itemClassController.GetAllItemClass)
+	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
+	router.Post("/", itemClassController.SaveItemClass)
+	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemPackageRouter(
+	ItemPackageController masteritemcontroller.ItemPackageController,
 ) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/item-class/", itemClassController.GetAllItemClass)
-	router.GET("/item-class/pop-up/", itemClassController.GetAllItemClassLookup)
-	router.POST("/item-class/", itemClassController.SaveItemClass)
-	router.PATCH("/item-class/:item_class_id", itemClassController.ChangeStatusItemClass)
+	router.GET("/item-package/", ItemPackageController.GetAllItemPackage)
+	router.POST("/item-package/", ItemPackageController.SaveItemPackage)
+	router.GET("/item-package/by-id/:item_package_id", ItemPackageController.GetItemPackageById)
+	router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemPackageDetailRouter(
+	ItemPackageDetailController masteritemcontroller.ItemPackageDetailController,
+) *httprouter.Router {
+	router := httprouter.New()
+
+	router.GET("/item-package-detail/by-package-id/:item_package_id", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
@@ -277,15 +303,15 @@ func ForecastMasterRouter(
 
 func UnitOfMeasurementRouter(
 	unitOfMeasurementController masteritemcontroller.UnitOfMeasurementController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/unit-of-measurement/", unitOfMeasurementController.GetAllUnitOfMeasurement)
-	router.GET("/unit-of-measurement/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
-	router.GET("/unit-of-measurement/by-code/:uom_code", unitOfMeasurementController.GetUnitOfMeasurementByCode)
-	router.POST("/unit-of-measurement/", unitOfMeasurementController.SaveUnitOfMeasurement)
-	router.PATCH("/unit-of-measurement/:uom_id", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", unitOfMeasurementController.GetAllUnitOfMeasurement)
+	router.Get("/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
+	router.Get("/code/{uom_code}", unitOfMeasurementController.GetUnitOfMeasurementByCode)
+	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
+	router.Patch("/{uom_id}", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

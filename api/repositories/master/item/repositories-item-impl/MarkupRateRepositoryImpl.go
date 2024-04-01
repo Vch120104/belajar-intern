@@ -8,7 +8,6 @@ import (
 	"after-sales/api/utils"
 	"reflect"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +21,6 @@ func StartMarkupRateRepositoryImpl() masteritemrepository.MarkupRateRepository {
 func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	var responses []masteritempayloads.MarkupRateListResponse
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
-	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var orderTypeName string
 	responseStruct := reflect.TypeOf(masteritempayloads.MarkupRateListResponse{})
@@ -67,7 +65,7 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 
 	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
 
-	errUrlMarkupRate := utils.Get(c, orderTypeUrl, &getOrderTypeResponse, nil)
+	errUrlMarkupRate := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
 
 	if errUrlMarkupRate != nil {
 		return nil, 0, 0, errUrlMarkupRate
