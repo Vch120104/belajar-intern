@@ -199,25 +199,31 @@ func StartRouting(db *gorm.DB) {
 
 	mux.Handle("/item-package/", itemPackageRouter)
 	mux.Handle("/item-package-detail/", itemPackageDetailRouter)
-	mux.Handle("/markup-master/", markupMasterRouter)
 	mux.Handle("/item-level/", itemLevelRouter)
 	mux.Handle("/item/", itemRouter)
-	mux.Handle("/price-list/", priceListRouter)
+	mux.Handle("/item-substitute/", ItemSubstituteRouter)
+
 	mux.Handle("/incentive-group/", IncentiveGroupRouter)
 	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
+
 	mux.Handle("/operation-code/", OperationCodeRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
 	mux.Handle("/operation-key/", OperationKeyRouter)
 	mux.Handle("/operation-entries/", OperationEntriesRouter)
-	mux.Handle("/forecast-master/", ForecastMasterRouter)
-	mux.Handle("/item-substitute/", ItemSubstituteRouter)
+
 	mux.Handle("/discount-percent/", DiscountPercentRouter)
 	mux.Handle("/discount/", DiscountRouter)
+
 	mux.Handle("/markup-rate/", MarkupRateRouter)
+	mux.Handle("/markup-master/", markupMasterRouter)
+
 	mux.Handle("/warehouse-group/", WarehouseGroup)
 	mux.Handle("/warehouse-location/", WarehouseLocation)
 	mux.Handle("/warehouse-master/", WarehouseMaster)
+
+	mux.Handle("/forecast-master/", ForecastMasterRouter)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
+	mux.Handle("/price-list/", priceListRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
 
 	server := http.Server{
