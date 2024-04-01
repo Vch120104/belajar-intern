@@ -1,7 +1,7 @@
 package exceptionsss_test
 
 import (
-	jsonresponse "after-sales/api/json/json-response"
+	jsonresponse "after-sales/api/helper_testt/json/json-response"
 	"after-sales/api/utils"
 	"net/http"
 
@@ -83,7 +83,7 @@ func NewConflictException(writer http.ResponseWriter, request *http.Request, err
 		logrus.Info(err)
 		res := &BaseErrorResponse{
 			StatusCode: statusCode,
-			Message:    err.Err.Error(),
+			Message:    err.Message,
 			//Data:       err,
 		}
 

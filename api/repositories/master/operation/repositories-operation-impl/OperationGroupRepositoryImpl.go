@@ -9,6 +9,7 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"net/http"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -143,9 +144,17 @@ func (*OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req mastero
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 
