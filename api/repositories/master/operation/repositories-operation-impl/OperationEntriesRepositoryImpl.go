@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -120,6 +121,15 @@ func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, reque
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+		}
+	}
+	if len(request.OperationEntriesCode) > 6 {
+		// errMessage := "Operation Entries Code max 6 characters"
+
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+
+			Err: errors.New(utils.BadRequestError),
 		}
 	}
 
