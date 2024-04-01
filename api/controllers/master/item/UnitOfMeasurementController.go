@@ -2,12 +2,14 @@ package masteritemcontroller
 
 import (
 	exceptionsss_test "after-sales/api/expectionsss"
-	jsonchecker "after-sales/api/json/json-checker"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -138,10 +140,16 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 		return
 	}
 
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
 	create, err := r.unitofmeasurementservice.SaveUnitOfMeasurement(formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		helper_test.ReturnError(writer, request, err)
 		return
 	}
 

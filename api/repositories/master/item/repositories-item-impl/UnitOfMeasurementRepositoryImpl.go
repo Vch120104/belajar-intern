@@ -8,6 +8,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"net/http"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -126,9 +127,17 @@ func (r *UnitOfMeasurementRepositoryImpl) SaveUnitOfMeasurement(tx *gorm.DB,req 
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 
