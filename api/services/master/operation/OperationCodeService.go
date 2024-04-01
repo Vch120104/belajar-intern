@@ -7,6 +7,8 @@ import (
 )
 
 type OperationCodeService interface {
-	GetOperationCodeById(int32) (masteroperationpayloads.OperationCodeResponse, error)
-	GetAllOperationCode([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
+	GetOperationCodeById(int) masteroperationpayloads.OperationCodeResponse
+	GetAllOperationCode([]utils.FilterCondition, pagination.Pagination) pagination.Pagination
+	SaveOperationCode(masteroperationpayloads.OperationCodeSave) bool
+	ChangeStatusOperationCode(int) bool
 }

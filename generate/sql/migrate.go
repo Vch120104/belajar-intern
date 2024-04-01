@@ -6,7 +6,8 @@ import (
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
-	masteritementities "after-sales/api/entities/master/item"
+	// masteritementities "after-sales/api/entities/master/item"
+	masteroperationentities "after-sales/api/entities/master/operation"
 	// masterentities "after-sales/api/entities/master"
 	// masteroperationentities "after-sales/api/entities/master/operation"
 
@@ -67,7 +68,7 @@ func Migrate() {
 		// &masteroperationentities.OperationSection{},
 		// &masteroperationentities.OperationKey{},
 		// &masteroperationentities.OperationEntries{},
-		// &masteroperationentities.OperationCode{},
+		&masteroperationentities.OperationCode{},
 		// &masteroperationentities.OperationModelMapping{},
 		// &masteritementities.ItemClass{},
 		// &masteritementities.Discount{},
@@ -83,8 +84,8 @@ func Migrate() {
 		// &masteritementities.ItemSubstituteDetail{},
 		// &masterentities.ForecastMaster{},
 		// &masterentities.MovingCode{},
-		&masteritementities.ItemPackage{},
-		&masteritementities.ItemPackageDetail{},
+		// &masteritementities.ItemPackage{},
+		// &masteritementities.ItemPackageDetail{},
 		// &masterwarehouseentities.WarehouseGroup{},
 		// &masterwarehouseentities.WarehouseMaster{},
 		// &masterwarehouseentities.WarehouseLocation{},
