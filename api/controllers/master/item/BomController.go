@@ -10,18 +10,18 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type BomController interface {
-	GetBomMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetBomMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetBomDetailList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetBomDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveBomDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetBomItemList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetBomMasterById(writer http.ResponseWriter, request *http.Request)
+	GetBomMasterList(writer http.ResponseWriter, request *http.Request)
+	SaveBomMaster(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request)
+	GetBomDetailList(writer http.ResponseWriter, request *http.Request)
+	GetBomDetailById(writer http.ResponseWriter, request *http.Request)
+	SaveBomDetail(writer http.ResponseWriter, request *http.Request)
+	GetBomItemList(writer http.ResponseWriter, request *http.Request)
 }
 
 type BomControllerImpl struct {
@@ -52,7 +52,7 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom [get]
-func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	// Define query parameters
@@ -94,9 +94,9 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom/{bom_master_id} [get]
-func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request) {
 
-	bomMasterId, _ := strconv.Atoi(params.ByName("bom_master_id"))
+	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
 	result := r.BomService.GetBomMasterById(bomMasterId)
 
@@ -112,7 +112,7 @@ func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom [post]
-func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.BomMasterRequest
 	var message = ""
@@ -138,9 +138,9 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom/{bom_master_id} [patch]
-func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
 
-	bomMasterId, _ := strconv.Atoi(params.ByName("bom_master_id"))
+	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
 	response := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
 
@@ -161,7 +161,7 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom/all/detail [get]
-func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	// Define query parameters
@@ -202,9 +202,9 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom/{bom_master_id}/detail [get]
-func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request) {
 
-	bomDetailId, _ := strconv.Atoi(params.ByName("bom_master_id"))
+	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
 	result := r.BomService.GetBomDetailById(bomDetailId)
 
@@ -220,7 +220,7 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom/{bom_master_id}/detail [post]
-func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.BomDetailRequest
 	var message = ""
@@ -256,7 +256,7 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /bom/{bom_master_id}/popup-item [get]
-func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{

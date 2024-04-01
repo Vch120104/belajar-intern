@@ -390,39 +390,38 @@ func WarrantyFreeServiceRouter(
 
 func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/incentive/", IncentiveMasterController.GetAllIncentiveMaster)
-	router.GET("/incentive/:incentive_level_id", IncentiveMasterController.GetIncentiveMasterById)
-	router.POST("/incentive/", IncentiveMasterController.SaveIncentiveMaster)
-	router.PATCH("/incentive/:incentive_level_id", IncentiveMasterController.ChangeStatusIncentiveMaster)
+	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
+	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
+	router.Post("/", http.HandlerFunc(IncentiveMasterController.SaveIncentiveMaster))
+	router.Patch("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.ChangeStatusIncentiveMaster))
 
-	router.PanicHandler = exceptions.ErrorHandler
+	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
 
 func BomRouter(
 	BomController masteritemcontroller.BomController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
 	//bom master
-	router.GET("/bom/", BomController.GetBomMasterList)
-	router.GET("/bom/:bom_master_id", BomController.GetBomMasterById)
-	router.POST("/bom/", BomController.SaveBomMaster)
-	router.PATCH("/bom/:bom_master_id", BomController.ChangeStatusBomMaster)
+	router.Get("/", BomController.GetBomMasterList)
+	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
+	router.Post("/", BomController.SaveBomMaster)
+	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
 	//bom detail
-	//router.GET("/bom/all/detail", BomController.GetBomDetailList)
-	router.GET("/bom/:bom_master_id/detail", BomController.GetBomDetailById)
-	router.POST("/bom/:bom_master_id/detail", BomController.SaveBomDetail)
+	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
+	router.Post("/{bom_master_id}/detail", BomController.SaveBomDetail)
 
 	//bom lookup
-	router.GET("/bom/:bom_master_id/popup-item", BomController.GetBomItemList)
+	router.Get("/bom/{bom_master_id}/popup-item", BomController.GetBomItemList)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

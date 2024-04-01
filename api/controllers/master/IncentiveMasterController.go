@@ -10,14 +10,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type IncentiveMasterController interface {
-	GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request)
+	GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request)
+	SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 }
 
 type IncentiveMasterControllerImpl struct {
@@ -46,8 +46,8 @@ func NewIncentiveMasterController(incentiveMasterService masterservice.Incentive
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /incentive-master [get]
-func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Router / [get]
+func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
 
@@ -81,10 +81,10 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 // @Param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /incentive-master/{incentive_level_id} [get]
-func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Router /{incentive_level_id} [get]
+func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveLevelIds, _ := strconv.Atoi(params.ByName("incentive_level_id"))
+	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
 
 	result := r.IncentiveMasterService.GetIncentiveMasterById(IncentiveLevelIds)
 
@@ -99,8 +99,8 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /incentive-master [post]
-func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Router / [post]
+func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.IncentiveMasterRequest
 	var message = ""
@@ -125,10 +125,10 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 // @param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /incentive-master/{incentive_level_id} [patch]
-func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Router /{incentive_level_id} [patch]
+func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveLevelIds, _ := strconv.Atoi(params.ByName("incentive_level_id"))
+	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
 
 	response := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 

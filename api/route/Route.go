@@ -192,15 +192,17 @@ func StartRouting(db *gorm.DB) {
 	mux := http.NewServeMux()
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
+	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
+	r.Mount("/operation-group", OperationGroupRouter)
+	r.Mount("/incentive", IncentiveMasterRouter)
+	r.Mount("/bom", BomRouter)
+
 	mux.Handle("/item-package/", itemPackageRouter)
 	mux.Handle("/item-package-detail/", itemPackageDetailRouter)
-	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 	mux.Handle("/markup-master/", markupMasterRouter)
 	mux.Handle("/item-level/", itemLevelRouter)
 	mux.Handle("/item/", itemRouter)
 	mux.Handle("/price-list/", priceListRouter)
-	// mux.Handle("/operation-group/", OperationGroupRouter)
-	r.Mount("/operation-group", OperationGroupRouter)
 	mux.Handle("/incentive-group/", IncentiveGroupRouter)
 	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
 	mux.Handle("/operation-code/", OperationCodeRouter)
@@ -217,8 +219,6 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/warehouse-master/", WarehouseMaster)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
-	mux.Handle("/incentive/", IncentiveMasterRouter)
-	mux.Handle("/bom/", BomRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
