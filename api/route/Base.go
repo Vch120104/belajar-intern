@@ -186,16 +186,19 @@ func ItemPackageDetailRouter(
 
 func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
+	// router.Use(middlewares.SetupCorsMiddleware)
+	// router.Use(middlewares.SetupAuthMiddleware)
+	// router.Use(middleware.Recoverer)
 
-	router.GET("/incentive-group/", incentiveGroupController.GetAllIncentiveGroup)
-	router.GET("/incentive-group/drop-down/", incentiveGroupController.GetAllIncentiveGroupIsActive)
-	router.GET("/incentive-group/by-id/:incentive_group_id", incentiveGroupController.GetIncentiveGroupById)
-	router.POST("/incentive-group/", incentiveGroupController.SaveIncentiveGroup)
-	router.PATCH("/incentive-group/:incentive_group_id", incentiveGroupController.ChangeStatusIncentiveGroup)
+	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
+	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
+	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 

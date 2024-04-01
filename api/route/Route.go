@@ -178,7 +178,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/price-list/", priceListRouter)
 	// mux.Handle("/operation-group/", OperationGroupRouter)
 	r.Mount("/operation-group", OperationGroupRouter)
-	mux.Handle("/incentive-group/", IncentiveGroupRouter)
+	r.Mount("/incentive-group", IncentiveGroupRouter)
 	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
 	mux.Handle("/operation-key/", OperationKeyRouter)
