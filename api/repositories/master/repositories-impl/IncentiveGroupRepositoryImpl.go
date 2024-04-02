@@ -71,6 +71,13 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupIsActive(tx *gorm.DB)
 		Scan(&IncentiveGroupResponse).
 		Rows()
 
+	if len(IncentiveGroupResponse) == 0 {
+		return IncentiveGroupResponse, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
 	if err != nil {
 
 		return IncentiveGroupResponse, &exceptionsss_test.BaseErrorResponse{
@@ -143,7 +150,10 @@ func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, I
 	// 	First(&entities)
 
 	if result.Error != nil {
-		return false, nil
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if IncentiveGroupMapping.IsActive {
@@ -155,7 +165,10 @@ func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, I
 	result = tx.Save(&IncentiveGroupMapping)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: result.Error}
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil
