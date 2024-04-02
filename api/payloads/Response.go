@@ -23,6 +23,11 @@ type ResponsePagination struct {
 	Data       interface{} `json:"data"`
 }
 
+type ResponsePaginationHeader struct {
+	Header interface{} `json:"data"`
+	Data   ResponsePagination
+}
+
 // Deprecated: please change to the latest one without *gin.Context
 func HandleSuccess(c *gin.Context, data interface{}, message string, status int) {
 	res := Response{
