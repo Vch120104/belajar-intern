@@ -1,10 +1,8 @@
 package exceptions
 
 import (
-	"after-sales/api/helper"
+	"encoding/json"
 	"net/http"
-
-	"github.com/go-playground/validator/v10"
 )
 
 type BaseErrorResponse struct {
@@ -14,14 +12,9 @@ type BaseErrorResponse struct {
 	Err        string      `json:"error"`
 }
 
-func ErrorHandler(writer http.ResponseWriter, request *http.Request, err interface{}) {
+func ErrorHandler(writer http.ResponseWriter, err interface{}) {
 	baseError := &BaseErrorResponse{}
 	switch e := err.(type) {
-	case validator.ValidationErrors:
-		baseError.StatusCode = http.StatusBadRequest
-		baseError.Message = "Bad Request"
-		baseError.Data = e.Error()
-		baseError.Err = "Validation error"
 	case BadRequestError:
 		baseError.StatusCode = http.StatusBadRequest
 		baseError.Message = "Bad Request"
@@ -71,5 +64,5 @@ func ErrorHandler(writer http.ResponseWriter, request *http.Request, err interfa
 
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(baseError.StatusCode)
-	helper.WriteToResponseBody(writer, baseError)
+	json.NewEncoder(writer).Encode(baseError)
 }

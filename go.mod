@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-chi/render v1.0.3
 	github.com/go-gota/gota v0.12.0
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -17,7 +18,10 @@ require (
 	gorm.io/gorm v1.25.8
 )
 
-require github.com/google/uuid v1.5.0 // indirect
+require (
+	github.com/ajg/form v1.5.1 // indirect
+	github.com/google/uuid v1.5.0 // indirect
+)
 
 require (
 	github.com/bytedance/sonic v1.10.2 // indirect

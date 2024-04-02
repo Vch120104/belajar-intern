@@ -2,6 +2,7 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
+	"after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -90,7 +91,8 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 		Error
 
 	if err != nil {
-		return response, err
+		notFoundErr := exceptions.NewNotFoundError("incentive master not found")
+		panic(notFoundErr) // Panik jika 'incentive master' tidak ditemukan
 	}
 
 	return response, nil

@@ -4,8 +4,6 @@ import (
 	"after-sales/api/helper"
 	"encoding/json"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
@@ -42,31 +40,6 @@ func NewHandleError(writer http.ResponseWriter, errorMessage string, statusCode 
 		http.Error(writer, "Failed to encode error response", http.StatusInternalServerError)
 		return
 	}
-}
-
-// Deprecated: please change to the latest one without *gin.Context
-func HandleSuccess(c *gin.Context, data interface{}, message string, status int) {
-	res := Response{
-		StatusCode: status,
-		Message:    message,
-		Data:       data,
-	}
-
-	c.JSON(status, res)
-}
-
-// Deprecated: please change to the latest one without *gin.Context
-func HandleSuccessPagination(c *gin.Context, data interface{}, message string, status int, limit int, page int, totalRows int64, totalPages int) {
-	res := ResponsePagination{
-		StatusCode: status,
-		Message:    message,
-		Page:       page,
-		Limit:      limit,
-		TotalRows:  totalRows,
-		TotalPages: totalPages,
-		Data:       data,
-	}
-	c.JSON(status, res)
 }
 
 func NewHandleSuccess(writer http.ResponseWriter, data interface{}, message string, status int) {

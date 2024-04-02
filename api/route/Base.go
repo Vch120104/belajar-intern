@@ -6,6 +6,8 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
+	middleware "after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 
 	"net/http"
@@ -387,6 +389,8 @@ func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+	// Gunakan middleware NotFoundHandler
+	router.Use(middleware.NotFoundHandler)
 
 	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
 	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
@@ -402,6 +406,8 @@ func BomRouter(
 	BomController masteritemcontroller.BomController,
 ) chi.Router {
 	router := chi.NewRouter()
+	// Gunakan middleware NotFoundHandler
+	router.Use(middleware.NotFoundHandler)
 
 	//bom master
 	router.Get("/", BomController.GetBomMasterList)

@@ -2,6 +2,7 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	"after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -70,7 +71,8 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempaylo
 		Error
 
 	if err != nil {
-		return response, err
+		notFoundErr := exceptions.NewNotFoundError("Bom master not found")
+		panic(notFoundErr) // Panik jika 'incentive master' tidak ditemukan
 	}
 
 	return response, nil

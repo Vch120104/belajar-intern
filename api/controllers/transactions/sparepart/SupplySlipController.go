@@ -5,12 +5,10 @@ import (
 	"after-sales/api/payloads"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 
-	// "after-sales/api/middlewares"
-
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 )
 
@@ -20,28 +18,20 @@ type SupplySlipController struct {
 
 func StartSupplySlipRoutes(
 	db *gorm.DB,
-	r *gin.RouterGroup,
+	r chi.Router,
 	supplyslipservice transactionsparepartservice.SupplySlipService,
 ) {
 	supplySlipHandler := SupplySlipController{supplyslipservice: supplyslipservice}
-	r.GET("/supply-slip/:supply_system_number", supplySlipHandler.GetSupplySlipByID)
+	r.Get("/supply-slip/{supply_system_number}", supplySlipHandler.GetSupplySlipByID)
 }
 
-// @Summary Get Supply Slip By ID
-// @Description REST API Supply Slip
-// @Accept json
-// @Produce json
-// @Tags Transaction : Supply Slip
-// @Param supply_system_number path int true "supply_system_number"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/supply-slip/{supply_system_number} [get]
-func (r *SupplySlipController) GetSupplySlipByID(c *gin.Context) {
-	SupplySystemNumber, _ := strconv.Atoi(c.Param("supply_system_number"))
-	result, err := r.supplyslipservice.GetSupplySlipById(int32(SupplySystemNumber))
+// Get Supply Slip By ID
+func (r *SupplySlipController) GetSupplySlipByID(w http.ResponseWriter, req *http.Request) {
+	supplySystemNumber, _ := strconv.Atoi(chi.URLParam(req, "supply_system_number"))
+	result, err := r.supplyslipservice.GetSupplySlipById(int32(supplySystemNumber))
 	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
+		exceptions.NotFoundException(w, err.Error())
 		return
 	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(w, result, "Get Data Successfully!", http.StatusOK)
 }
