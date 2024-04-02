@@ -14,13 +14,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type IncentiveGroupDetailController interface {
-	GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request)
+	GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request)
+	SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request)
 }
 type IncentiveGroupDetailControllerImpl struct {
 	IncentiveGroupDetailService masterservice.IncentiveGroupDetailService
@@ -45,7 +45,7 @@ func NewIncentiveGroupDetailController(IncentiveGroupDetailService masterservice
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group-detail/by-header-id/ [get]
-func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	IncentiveGroupId, _ := strconv.Atoi(queryValues.Get("incentive_group_id"))
@@ -72,7 +72,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group-detail [post]
-func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.IncentiveGroupDetailRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -98,8 +98,8 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group-detail/by-detail-id/{incentive_group_detail_id} [get]
-func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	IncentiveGrouDetailId, _ := strconv.Atoi(params.ByName("incentive_group_detail_id"))
+func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request) {
+	IncentiveGrouDetailId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
 
 	result := r.IncentiveGroupDetailService.GetIncentiveGroupDetailById(IncentiveGrouDetailId)
 

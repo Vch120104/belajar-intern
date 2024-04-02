@@ -13,7 +13,7 @@ import (
 	masterwarehousegroupservice "after-sales/api/services/master/warehouse"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type WarehouseGroupControllerImpl struct {
@@ -21,10 +21,10 @@ type WarehouseGroupControllerImpl struct {
 }
 
 type WarehouseGroupController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService) WarehouseGroupController {
@@ -49,7 +49,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group [get]
-func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	page, _ := strconv.Atoi(queryValues.Get("page"))
@@ -81,9 +81,9 @@ func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, reques
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [get]
-func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
 
 	get := r.WarehouseGroupService.GetById(warehouseGroupId)
 
@@ -101,7 +101,7 @@ func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, reque
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group [post]
-func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	var message string
 	var formRequest masterwarehousegrouppayloads.GetWarehouseGroupResponse
@@ -129,9 +129,9 @@ func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request 
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [patch]
-func (r *WarehouseGroupControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseGroupControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
 
 	change_status := r.WarehouseGroupService.ChangeStatus(warehouseGroupId)
 

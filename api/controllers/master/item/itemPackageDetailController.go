@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemPackageDetailController interface {
-	GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPackageDetailControllerImpl struct {
@@ -25,9 +25,9 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 	}
 }
 
-func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	itemPackageId, _ := strconv.Atoi(params.ByName("item_package_id"))
+	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),

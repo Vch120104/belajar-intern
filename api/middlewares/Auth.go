@@ -3,49 +3,48 @@ package middlewares
 import (
 	"after-sales/api/exceptions"
 	"after-sales/api/securities"
-
-	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
-func SetupAuthenticationMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		err := securities.GetAuthentication(c)
+func SetupAuthenticationMiddleware() func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			err := securities.GetAuthentication(r)
 
-		if err != nil {
-			exceptions.AuthorizeException(c, err.Error())
-			c.Abort()
-			return
-		}
+			if err != nil {
+				exceptions.AuthorizeException(w, r, err.Error())
+				return
+			}
 
-		c.Next()
+			next.ServeHTTP(w, r)
+		})
 	}
 }
 
-// type AuthMiddleware struct {
-// 	Handler httprouter.Handle
-// }
+type AuthMiddleware struct {
+	Handler http.Handler
+}
 
-// func NewAuthMiddleware(handler httprouter.Handle) *AuthMiddleware {
-// 	return &AuthMiddleware{Handler: handler}
-// }
-// func (middleware *AuthMiddleware) ServeHTTP(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-// 	var services services.AuthService
-// 	writer.Header().Set("Access-Control-Allow-Origin", "*")
-// 	writer.Header().Set("Access-Control-Allow-Credentials", "true")
-// 	writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-// 	writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH")
+func NewAuthMiddleware(handler http.Handler) *AuthMiddleware {
+	return &AuthMiddleware{Handler: handler}
+}
 
-// 	if request.Method == "OPTIONS" {
-// 		writer.WriteHeader(http.StatusNoContent)
-// 		return
-// 	}
+func (middleware *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH")
 
-// 	err := securities.GetAuthentication(request, services)
-// 	if err != nil {
-// 		panic(exceptions.NewAuthorizationError("You don't have access"))
-// 	}
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 
-// 	// middleware.Handler.ServeHTTP(writer, request)
-// 	middleware.Handler(writer, request, params)
+	err := securities.GetAuthentication(r)
+	if err != nil {
+		exceptions.AuthorizeException(w, r, err.Error())
+		return
+	}
 
-// }
+	middleware.Handler.ServeHTTP(w, r)
+}

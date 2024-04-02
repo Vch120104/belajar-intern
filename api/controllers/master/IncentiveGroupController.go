@@ -10,15 +10,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type IncentiveGroupController interface {
-	GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllIncentiveGroupIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request)
+	GetAllIncentiveGroupIsActive(writer http.ResponseWriter, request *http.Request)
+	GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request)
+	SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request)
 }
 
 type IncentiveGroupControllerImpl struct {
@@ -46,7 +46,7 @@ func NewIncentiveGroupController(IncentiveGroupService masterservice.IncentiveGr
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group [get]
-func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
@@ -77,7 +77,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group/drop-down [get]
-func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result := r.IncentiveGroupService.GetAllIncentiveGroupIsActive()
 
@@ -93,8 +93,8 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group/by-id/{incentive_group_id} [get]
-func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	IncentiveGroupId, _ := strconv.Atoi(params.ByName("incentive_group_id"))
+func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request) {
+	IncentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
 
 	result := r.IncentiveGroupService.GetIncentiveGroupById(IncentiveGroupId)
 
@@ -110,7 +110,7 @@ func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.Respons
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group [post]
-func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.IncentiveGroupResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
@@ -135,9 +135,9 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group/{incentive_group_id} [patch]
-func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveGroupId, _ := strconv.Atoi(params.ByName("incentive_group_id"))
+	IncentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
 
 	response := r.IncentiveGroupService.ChangeStatusIncentiveGroup(int(IncentiveGroupId))
 

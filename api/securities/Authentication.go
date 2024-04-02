@@ -2,30 +2,31 @@ package securities
 
 import (
 	"after-sales/api/config"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/spf13/viper"
 )
 
-func GetAuthentication(c *gin.Context) error {
-	token, err := VerifyToken(c)
+func GetAuthentication(r *http.Request) error {
+	token, err := VerifyToken(r)
 
 	if err != nil {
 		return err
 	}
 
-	if _, ok := token.Claims.(jwt.Claims); !ok && !token.Valid {
-		return err
+	if !token.Valid {
+		return errors.New("invalid token")
 	}
 
 	return nil
 }
 
-func VerifyToken(c *gin.Context) (*jwt.Token, error) {
-	tokenString := ExtractToken(c)
+func VerifyToken(r *http.Request) (*jwt.Token, error) {
+	tokenString := ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -41,16 +42,15 @@ func VerifyToken(c *gin.Context) (*jwt.Token, error) {
 	return token, nil
 }
 
-func ExtractToken(c *gin.Context) string {
-	keys := c.Request.URL.Query()
+func ExtractToken(r *http.Request) string {
+	keys := r.URL.Query()
 	token := keys.Get("token")
 
 	if token != "" {
 		return token
 	}
 
-	c.Writer.Header()
-	authHeader := c.GetHeader("Authorization")
+	authHeader := r.Header.Get("Authorization")
 	bearerToken := strings.Split(authHeader, " ")
 
 	if len(bearerToken) == 2 {

@@ -10,13 +10,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemPackageController interface {
-	GetAllItemPackage(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveItemPackage(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetItemPackageById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllItemPackage(writer http.ResponseWriter, request *http.Request)
+	SaveItemPackage(writer http.ResponseWriter, request *http.Request)
+	GetItemPackageById(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPackageControllerImpl struct {
@@ -29,7 +29,7 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 	}
 }
 
-func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	internalFilterCondition := map[string]string{
@@ -59,16 +59,16 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
-func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWriter, request *http.Request) {
 
-	itemPackageId, _ := strconv.Atoi(params.ByName("item_package_id"))
+	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
 
 	result := r.ItemPackageService.GetItemPackageById(itemPackageId)
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageRequest
 	helper.ReadFromRequestBody(request, &formRequest)

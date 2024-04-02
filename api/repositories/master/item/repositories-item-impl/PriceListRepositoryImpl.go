@@ -144,7 +144,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.PriceList{
-			PriceListId: int32(Id),
+			PriceListId: int(Id),
 		}).
 		First(&response).
 		Rows()

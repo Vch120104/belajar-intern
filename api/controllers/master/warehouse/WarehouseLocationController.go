@@ -14,7 +14,7 @@ import (
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type WarehouseLocationControllerImpl struct {
@@ -22,10 +22,10 @@ type WarehouseLocationControllerImpl struct {
 }
 
 type WarehouseLocationController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseLocationController(WarehouseLocationService masterwarehouseservice.WarehouseLocationService) WarehouseLocationController {
@@ -52,7 +52,7 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location [get]
-func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	page, _ := strconv.Atoi(queryValues.Get("page"))
@@ -91,9 +91,9 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [get]
-func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseLocationId, _ := strconv.Atoi(params.ByName("warehouse_location_id"))
+	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
 
 	get := r.WarehouseLocationService.GetById(warehouseLocationId)
 
@@ -111,7 +111,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location [post]
-func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
 	var formRequest masterwarehousepayloads.GetWarehouseLocationResponse
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -138,9 +138,9 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [patch]
-func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseLocationId, _ := strconv.Atoi(params.ByName("warehouse_location_id"))
+	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
 
 	change_status := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 

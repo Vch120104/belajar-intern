@@ -189,7 +189,6 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
 	BomRouter := BomRouter(BomController)
 
-	mux := http.NewServeMux()
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
 	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
@@ -197,34 +196,34 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/bom", BomRouter)
 
-	mux.Handle("/item-package/", itemPackageRouter)
-	mux.Handle("/item-package-detail/", itemPackageDetailRouter)
-	mux.Handle("/item-level/", itemLevelRouter)
-	mux.Handle("/item/", itemRouter)
-	mux.Handle("/item-substitute/", ItemSubstituteRouter)
+	r.Mount("/item-package/", itemPackageRouter)
+	r.Mount("/item-package-detail/", itemPackageDetailRouter)
+	r.Mount("/item-level/", itemLevelRouter)
+	r.Mount("/item/", itemRouter)
+	r.Mount("/item-substitute/", ItemSubstituteRouter)
 
-	mux.Handle("/incentive-group/", IncentiveGroupRouter)
-	mux.Handle("/incentive-group-detail/", IncentiveGroupDetailRouter)
+	r.Mount("/incentive-group/", IncentiveGroupRouter)
+	r.Mount("/incentive-group-detail/", IncentiveGroupDetailRouter)
 
-	mux.Handle("/operation-code/", OperationCodeRouter)
-	mux.Handle("/operation-section/", OperationSectionRouter)
-	mux.Handle("/operation-key/", OperationKeyRouter)
+	r.Mount("/operation-code/", OperationCodeRouter)
+	r.Mount("/operation-section/", OperationSectionRouter)
+	r.Mount("/operation-key/", OperationKeyRouter)
 	r.Mount("/operation-entries", OperationEntriesRouter)
 
-	mux.Handle("/discount-percent/", DiscountPercentRouter)
-	mux.Handle("/discount/", DiscountRouter)
+	r.Mount("/discount-percent/", DiscountPercentRouter)
+	r.Mount("/discount/", DiscountRouter)
 
-	mux.Handle("/markup-rate/", MarkupRateRouter)
-	mux.Handle("/markup-master/", markupMasterRouter)
+	r.Mount("/markup-rate/", MarkupRateRouter)
+	r.Mount("/markup-master/", markupMasterRouter)
 
-	mux.Handle("/warehouse-group/", WarehouseGroup)
-	mux.Handle("/warehouse-location/", WarehouseLocation)
-	mux.Handle("/warehouse-master/", WarehouseMaster)
+	r.Mount("/warehouse-group/", WarehouseGroup)
+	r.Mount("/warehouse-location/", WarehouseLocation)
+	r.Mount("/warehouse-master/", WarehouseMaster)
 
-	mux.Handle("/forecast-master/", ForecastMasterRouter)
-	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
-	mux.Handle("/price-list/", priceListRouter)
-	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
+	r.Mount("/forecast-master/", ForecastMasterRouter)
+	r.Mount("/shift-schedule/", ShiftScheduleRouter)
+	r.Mount("/price-list/", priceListRouter)
+	r.Mount("/warranty-free-service/", warrantyFreeServiceRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,

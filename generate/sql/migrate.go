@@ -4,15 +4,10 @@ import (
 	"after-sales/api/config"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
-	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
-
-	// masteritementities "after-sales/api/entities/master/item"
-
-	masteritementities "after-sales/api/entities/master/item"
+	//masterwarehouseentities "after-sales/api/entities/master/warehouse"
+	//masteritementities "after-sales/api/entities/master/item"
 	// masterentities "after-sales/api/entities/master"
-	// masteroperationentities "after-sales/api/entities/master/operation"
 
-	// masterentities "after-sales/api/entities/master"
 	"time"
 
 	"fmt"
@@ -65,62 +60,41 @@ func Migrate() {
 	// 	}, DisableForeignKeyConstraintWhenMigrating: false})
 
 	db.AutoMigrate( // sesuai urutan foreign key
-		// &masteroperationentities.OperationGroup{},
-		// &masteroperationentities.OperationSection{},
-		// &masteroperationentities.OperationKey{},
-		// &masteroperationentities.OperationEntries{},
-		// &masteroperationentities.OperationCode{},
-		// &masteroperationentities.OperationModelMapping{},
-		// &masteritementities.ItemClass{},
-		// &masteritementities.Discount{},
-		// &masteritementities.MarkupMaster{},
-		// // &masteritementities.PrincipleBrandParent{},
-		// // &masteritementities.UomType{},
-		// // &masteritementities.Item{},
-		// // &masteritementities.PriceList{},
-		// // &masteritementities.ItemDetail{},
-		//&masteritementities.Bom{},
-		&masteritementities.BomDetail{},
-		// &masteritementities.DiscountPercent{},
-		// &masterentities.IncentiveGroup{},
-		// &masteritementities.ItemSubstitute{},
-		// // &masteritementities.ItemSubstituteDetail{},
-		// &masterentities.ForecastMaster{},
-		// &masterentities.MovingCode{},
-		&masteritementities.ItemPackage{},
-		&masteritementities.ItemPackageDetail{},
-		// &masterwarehouseentities.WarehouseGroup{},
-		// &masterwarehouseentities.WarehouseMaster{},
-		// &masterwarehouseentities.WarehouseLocation{},
-		// &masteroperationentities.OperationGroup{},
-		// &masteroperationentities.OperationSection{},
-		// &masteroperationentities.OperationKey{},
-		// &masteroperationentities.OperationEntries{},
-		// &masteroperationentities.OperationCode{},
-		// &masteroperationentities.OperationModelMapping{},
-		// &masteritementities.ItemClass{},
-		// &masteritementities.Discount{},
-		// &masteritementities.MarkupMaster{},
-		// // &masteritementities.PrincipleBrandParent{},
-		// // &masteritementities.UomType{},
-		// // &masteritementities.Uom{},
-		// // &masteritementities.Item{},
-		// // &masteritementities.PriceList{},
-		// // &masteritementities.ItemDetail{},
-		// &masteritementities.DiscountPercent{},
-		// &masterentities.IncentiveGroup{},
-		// &masterentities.ForecastMaster{},
-		// &masterentities.MovingCode{},
-		// &masterentities.ShiftSchedule{},
-		// &masterentities.IncentiveMaster{},
 
-		// &masterentities.IncentiveGroupDetail{},
-		// &masterentities.Package{},
-		// &masterentities.PackageDetail{},
-		// &masteroperationentities.OperationFrt{},
-		// // &masterwarehouseentities.WarehouseGroup{},
-		// &masterwarehouseentities.WarehouseMaster{},
-		// &masterwarehouseentities.WarehouseLocation{},
+	// &masterwarehouseentities.WarehouseGroup{},
+	// &masterwarehouseentities.WarehouseMaster{},
+	// &masterwarehouseentities.WarehouseLocation{},
+
+	// &masteroperationentities.OperationGroup{},
+	// &masteroperationentities.OperationSection{},
+	// &masteroperationentities.OperationKey{},
+	// &masteroperationentities.OperationEntries{},
+	// &masteroperationentities.OperationCode{},
+	// &masteroperationentities.OperationModelMapping{},
+	// &masteroperationentities.OperationFrt{},
+
+	//&masteritementities.MarkupMaster{},
+	//&masteritementities.DiscountPercent{},
+	//&masteritementities.ItemClass{},
+	//&masteritementities.PrincipleBrandParent{},
+	//&masteritementities.UomType{},
+	//&masteritementities.Uom{},
+	//&masteritementities.PriceList{},
+	//&masteritementities.Bom{},
+	//&masteritementities.BomDetail{},
+	//&masteritementities.Item{},
+	//&masteritementities.ItemDetail{},
+	//&masteritementities.ItemSubstitute{},
+	//&masteritementities.ItemSubstituteDetail{},
+	//&masteritementities.ItemPackage{},
+	//&masteritementities.ItemPackageDetail{},
+
+	// &masterentities.IncentiveGroup{},
+	// &masterentities.ForecastMaster{},
+	// &masterentities.MovingCode{},
+	// &masterentities.ShiftSchedule{},
+	// &masterentities.IncentiveMaster{},
+	// &masterentities.IncentiveGroupDetail{},
 
 	// &transactionentities.SupplySlip{},
 	// &transactionentities.SupplySlipDetail{},

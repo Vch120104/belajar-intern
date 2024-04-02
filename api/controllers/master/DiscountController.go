@@ -10,15 +10,15 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type DiscountController interface {
-	GetAllDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetDiscountByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllDiscount(writer http.ResponseWriter, request *http.Request)
+	GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request)
+	GetDiscountByCode(writer http.ResponseWriter, request *http.Request)
+	SaveDiscount(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request)
 }
 
 type DiscountControllerImpl struct {
@@ -46,7 +46,7 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount [get]
-func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryParams := map[string]string{
 		"is_active":                 query.Get("is_active"),
@@ -76,7 +76,7 @@ func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, requ
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-drop-down/ [get]
-func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result := r.discountservice.GetAllDiscountIsActive()
 
@@ -92,7 +92,7 @@ func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWrit
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-by-code/{discount_code} [get]
-func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 
 	operationGroupCode := query.Get("discount_code")
@@ -110,7 +110,7 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount [post]
-func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, request *http.Request) {
 
 	var requestForm masterpayloads.DiscountResponse
 	var message = ""
@@ -137,9 +137,9 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount/{discount_code_id} [patch]
-func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request) {
 
-	uomId, _ := strconv.Atoi(params.ByName("discount_code_id"))
+	uomId, _ := strconv.Atoi(chi.URLParam(request, "discount_code_id"))
 
 	response := r.discountservice.ChangeStatusDiscount(int(uomId))
 
