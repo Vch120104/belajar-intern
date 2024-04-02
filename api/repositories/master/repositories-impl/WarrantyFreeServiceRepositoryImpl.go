@@ -9,8 +9,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +24,6 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	var getBrandResponse []masterpayloads.BrandResponse
 	var getModelResponse []masterpayloads.UnitModelResponse
 	var getWarrantyFreeServiceTypeResponse []masterpayloads.WarrantyFreeServiceTypeResponse
-	var c *gin.Context
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var brandCode string
 	var modelCode string
@@ -81,7 +78,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand?page=0&limit=1000000&brand_code=" + brandCode
 
-	errUrlUnitBrand := utils.Get(c, unitBrandUrl, &getBrandResponse, nil)
+	errUrlUnitBrand := utils.Get(unitBrandUrl, &getBrandResponse, nil)
 
 	if errUrlUnitBrand != nil {
 		return nil, 0, 0, errUrlUnitBrand
@@ -93,7 +90,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=100000&model_code=" + modelCode
 
-	errUrlUnitModel := utils.Get(c, unitModelUrl, &getModelResponse, nil)
+	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
 	if errUrlUnitModel != nil {
 		return nil, 0, 0, errUrlUnitModel
@@ -105,7 +102,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	warrantyFreeServiceTypeUrl := "http://10.1.32.26:8000/general-service/api/general/warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
 
-	errUrlWarrantyFreeServiceType := utils.Get(c, warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
+	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
 
 	if errUrlWarrantyFreeServiceType != nil {
 		return nil, 0, 0, errUrlWarrantyFreeServiceType
@@ -121,7 +118,6 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.DB, Id int) (map[string]interface{}, error) {
 	entities := masterentities.WarrantyFreeService{}
 	response := masterpayloads.WarrantyFreeServiceResponse{}
-	var c *gin.Context
 	var getUnitBrandResponse masterpayloads.BrandResponse
 	var getUnitModelResponse masterpayloads.UnitModelResponse
 	var getUnitVariantResponse masterpayloads.UnitVariantResponse
@@ -144,7 +140,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(response.BrandId)
 
-	errUrlUnitBrand := utils.Get(c, unitBrandUrl, &getUnitBrandResponse, nil)
+	errUrlUnitBrand := utils.Get(unitBrandUrl, &getUnitBrandResponse, nil)
 
 	if errUrlUnitBrand != nil {
 		return nil, errUrlUnitBrand
@@ -156,7 +152,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(response.ModelId)
 
-	errUrlUnitModel := utils.Get(c, unitModelUrl, &getUnitModelResponse, nil)
+	errUrlUnitModel := utils.Get(unitModelUrl, &getUnitModelResponse, nil)
 
 	if errUrlUnitModel != nil {
 		return nil, errUrlUnitModel
@@ -168,7 +164,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	unitVariantUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-variant/" + strconv.Itoa(response.VariantId)
 
-	errUrlUnitVariant := utils.Get(c, unitVariantUrl, &getUnitVariantResponse, nil)
+	errUrlUnitVariant := utils.Get(unitVariantUrl, &getUnitVariantResponse, nil)
 
 	if errUrlUnitVariant != nil {
 		return nil, errUrlUnitVariant
@@ -180,7 +176,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	warrantyFreeServiceTypeUrl := "http://10.1.32.26:8000/general-service/api/general/warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
 
-	errUrlWarrantyFreeServiceType := utils.Get(c, warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
+	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
 
 	if errUrlWarrantyFreeServiceType != nil {
 		return nil, errUrlWarrantyFreeServiceType

@@ -130,14 +130,14 @@ func ItemSubstituteRouter(
 
 func OperationCodeRouter(
 	operationCodeController masteroperationcontroller.OperationCodeController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/operation-code/", operationCodeController.GetAllOperationCode)
-	router.GET("/operation-code/by-id/:operation_id", operationCodeController.GetByIdOperationCode)
-	router.POST("/operation-code/", operationCodeController.SaveOperationCode)
-	router.PATCH("/operation-code/:operation_id", operationCodeController.ChangeStatusOperationCode)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", operationCodeController.GetAllOperationCode)
+	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
+	router.Post("/", operationCodeController.SaveOperationCode)
+	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
