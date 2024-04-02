@@ -66,15 +66,15 @@ func WarehouseMasterRouter(
 
 func WarehouseGroupRouter(
 	warehouseGroupController masterwarehousecontroller.WarehouseGroupController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/warehouse-group/", warehouseGroupController.GetAll)
-	router.GET("/warehouse-group/:warehouse_group_id", warehouseGroupController.GetById)
-	router.POST("/warehouse-group/", warehouseGroupController.Save)
-	router.PATCH("/warehouse-group/:warehouse_group_id", warehouseGroupController.ChangeStatus)
+	router.Get("/", warehouseGroupController.GetAllWarehouseGroup)
+	router.Get("/by-id/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
+	router.Post("/", warehouseGroupController.SaveWarehouseGroup)
+	router.Patch("/{warehouse_group_id}", warehouseGroupController.ChangeStatusWarehouseGroup)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

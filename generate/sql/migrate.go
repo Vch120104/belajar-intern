@@ -4,10 +4,10 @@ import (
 	"after-sales/api/config"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
-	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
 	// masteritementities "after-sales/api/entities/master/item"
-	masteroperationentities "after-sales/api/entities/master/operation"
+	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterentities "after-sales/api/entities/master"
 	// masteroperationentities "after-sales/api/entities/master/operation"
 
@@ -68,16 +68,16 @@ func Migrate() {
 		// &masteroperationentities.OperationSection{},
 		// &masteroperationentities.OperationKey{},
 		// &masteroperationentities.OperationEntries{},
-		&masteroperationentities.OperationCode{},
+		// &masteroperationentities.OperationCode{},
 		// &masteroperationentities.OperationModelMapping{},
 		// &masteritementities.ItemClass{},
 		// &masteritementities.Discount{},
 		// &masteritementities.MarkupMaster{},
-		// // &masteritementities.PrincipleBrandParent{},
-		// // &masteritementities.UomType{},
-		// // &masteritementities.Item{},
-		// // &masteritementities.PriceList{},
-		// // &masteritementities.ItemDetail{},
+		// &masteritementities.PrincipleBrandParent{},
+		// &masteritementities.UomType{},
+		// &masteritementities.Item{},
+		// &masteritementities.PriceList{},
+		// &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},
 		// &masteritementities.ItemSubstitute{},
@@ -98,12 +98,12 @@ func Migrate() {
 		// &masteritementities.ItemClass{},
 		// &masteritementities.Discount{},
 		// &masteritementities.MarkupMaster{},
-		// // &masteritementities.PrincipleBrandParent{},
-		// // &masteritementities.UomType{},
-		// // &masteritementities.Uom{},
-		// // &masteritementities.Item{},
-		// // &masteritementities.PriceList{},
-		// // &masteritementities.ItemDetail{},
+		// &masteritementities.PrincipleBrandParent{},
+		// &masteritementities.UomType{},
+		// &masteritementities.Uom{},
+		// &masteritementities.Item{},
+		// &masteritementities.PriceList{},
+		// &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},
 		// &masterentities.ForecastMaster{},
@@ -114,7 +114,7 @@ func Migrate() {
 		// &masterentities.Package{},
 		// &masterentities.PackageDetail{},
 		// &masteroperationentities.OperationFrt{},
-		// // &masterwarehouseentities.WarehouseGroup{},
+		&masterwarehouseentities.WarehouseGroup{},
 		// &masterwarehouseentities.WarehouseMaster{},
 		// &masterwarehouseentities.WarehouseLocation{},
 

@@ -149,9 +149,9 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
 	// Warranty Free Service
-	warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
-	warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+	// warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	// warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
+	// warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
 
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -169,7 +169,7 @@ func StartRouting(db *gorm.DB) {
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
 	ItemSubstituteRouter := ItemSubstituteRouter(itemSubstituteController)
-	WarehouseGroup := WarehouseGroupRouter(warehouseGroupController)
+	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
@@ -178,7 +178,7 @@ func StartRouting(db *gorm.DB) {
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
-	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
+	// warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
 
 	mux := http.NewServeMux()
 	r := chi.NewRouter()
@@ -203,11 +203,11 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/discount-percent/", DiscountPercentRouter)
 	mux.Handle("/discount/", DiscountRouter)
 	mux.Handle("/markup-rate/", MarkupRateRouter)
-	mux.Handle("/warehouse-group/", WarehouseGroup)
+	r.Mount("/warehouse-group", WarehouseGroupRouter)
 	mux.Handle("/warehouse-location/", WarehouseLocation)
 	mux.Handle("/warehouse-master/", WarehouseMaster)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
-	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
+	// mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
