@@ -6,7 +6,7 @@ import (
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
-	// masteritementities "after-sales/api/entities/master/item"
+	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	// masterentities "after-sales/api/entities/master"
 	// masteroperationentities "after-sales/api/entities/master/operation"

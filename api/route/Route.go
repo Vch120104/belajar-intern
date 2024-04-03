@@ -204,7 +204,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/discount/", DiscountRouter)
 	mux.Handle("/markup-rate/", MarkupRateRouter)
 	mux.Handle("/warehouse-group/", WarehouseGroup)
-	mux.Handle("/warehouse-location/", WarehouseLocation)
+	r.Mount("/warehouse-location", WarehouseLocation)
 	mux.Handle("/warehouse-master/", WarehouseMaster)
 	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)

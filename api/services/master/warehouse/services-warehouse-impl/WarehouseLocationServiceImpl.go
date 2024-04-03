@@ -2,7 +2,7 @@ package masterwarehouseserviceimpl
 
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
@@ -26,7 +26,7 @@ func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.Wa
 	}
 }
 
-func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) bool {
+func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -34,58 +34,58 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetW
 		_, err := s.warehouseLocationRepo.GetById(tx, request.WarehouseLocationId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false,err
 		}
 	}
 
 	save, err := s.warehouseLocationRepo.Save(tx, request)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false,err
 	}
 
-	return save
+	return save,err
 }
 
-func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) masterwarehousepayloads.GetWarehouseLocationResponse {
+func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get,err
 	}
 
-	return get
+	return get,nil
 }
 
-func (s *WarehouseLocationServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) pagination.Pagination {
+func (s *WarehouseLocationServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseLocationRepo.GetAll(tx, request, pages)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get,err
 	}
 
-	return get
+	return get,nil
 }
 
-func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) masterwarehousepayloads.GetWarehouseLocationResponse {
+func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false,err
 	}
 
 	change_status, err := s.warehouseLocationRepo.ChangeStatus(tx, warehouseLocationId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return change_status,err
 	}
 
-	return change_status
+	return change_status,nil
 }
