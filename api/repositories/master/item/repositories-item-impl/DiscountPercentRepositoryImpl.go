@@ -2,6 +2,7 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	"after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -91,7 +92,8 @@ func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(tx *gorm.DB, Id i
 		Rows()
 
 	if err != nil {
-		return response, err
+		notFoundErr := exceptions.NewNotFoundError("Data not found")
+		panic(notFoundErr)
 	}
 
 	defer rows.Close()

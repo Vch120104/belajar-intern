@@ -196,34 +196,34 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/bom", BomRouter)
 
-	r.Mount("/item-package/", itemPackageRouter)
-	r.Mount("/item-package-detail/", itemPackageDetailRouter)
-	r.Mount("/item-level/", itemLevelRouter)
-	r.Mount("/item/", itemRouter)
-	r.Mount("/item-substitute/", ItemSubstituteRouter)
+	r.Mount("/item-package", itemPackageRouter)              //null
+	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
+	r.Mount("/item-level", itemLevelRouter)
+	r.Mount("/item", itemRouter) //error
+	r.Mount("/item-substitute", ItemSubstituteRouter)
 
-	r.Mount("/incentive-group/", IncentiveGroupRouter)
-	r.Mount("/incentive-group-detail/", IncentiveGroupDetailRouter)
+	r.Mount("/incentive-group", IncentiveGroupRouter)
+	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter) //method notalowed
 
-	r.Mount("/operation-code/", OperationCodeRouter)
-	r.Mount("/operation-section/", OperationSectionRouter)
-	r.Mount("/operation-key/", OperationKeyRouter)
+	r.Mount("/operation-code", OperationCodeRouter)
+	r.Mount("/operation-section", OperationSectionRouter)
+	r.Mount("/operation-key", OperationKeyRouter)
 	r.Mount("/operation-entries", OperationEntriesRouter)
 
-	r.Mount("/discount-percent/", DiscountPercentRouter)
-	r.Mount("/discount/", DiscountRouter)
+	r.Mount("/discount-percent", DiscountPercentRouter) //error
+	r.Mount("/discount", DiscountRouter)
 
-	r.Mount("/markup-rate/", MarkupRateRouter)
-	r.Mount("/markup-master/", markupMasterRouter)
+	r.Mount("/markup-rate", MarkupRateRouter) //error
+	r.Mount("/markup-master", markupMasterRouter)
 
-	r.Mount("/warehouse-group/", WarehouseGroup)
-	r.Mount("/warehouse-location/", WarehouseLocation)
-	r.Mount("/warehouse-master/", WarehouseMaster)
+	r.Mount("/warehouse-group", WarehouseGroup) //null
+	r.Mount("/warehouse-location", WarehouseLocation)
+	r.Mount("/warehouse-master", WarehouseMaster)
 
-	r.Mount("/forecast-master/", ForecastMasterRouter)
-	r.Mount("/shift-schedule/", ShiftScheduleRouter)
-	r.Mount("/price-list/", priceListRouter)
-	r.Mount("/warranty-free-service/", warrantyFreeServiceRouter)
+	r.Mount("/forecast-master", ForecastMasterRouter) //error
+	r.Mount("/shift-schedule", ShiftScheduleRouter)
+	r.Mount("/price-list", priceListRouter) //null
+	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,

@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"errors"
 	"reflect"
 
 	"gorm.io/gorm"
@@ -58,18 +59,20 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 		return nil, 0, 0, err
 	}
 
-	defer rows.Close()
-
 	if len(responses) == 0 {
-		return nil, 0, 0, gorm.ErrRecordNotFound
+		notFoundErr := exceptions.NewNotFoundError("No data found")
+		panic(notFoundErr)
 	}
+
+	defer rows.Close()
 
 	jobPositionUrl := "http://10.1.32.26:8000/general-service/api/general/job-position?job_position_id=" + jobPositionId
 
 	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
 
 	if errUrlIncentiveMaster != nil {
-		return nil, 0, 0, errUrlIncentiveMaster
+		serviceUnavailableErr := exceptions.NewServiceUnavailableError("Service Unavailable")
+		panic(serviceUnavailableErr)
 	}
 
 	joinedData := utils.DataFrameInnerJoin(responses, getJobPositionResponse, "JobPositionId")
@@ -110,6 +113,12 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 		// Jika IncentiveMasterId == 0, ini adalah operasi membuat data baru
 		err := tx.Create(&entities).Error
 		if err != nil {
+			// Check for duplicate entry error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				// If it's a duplicate entry error, panic duplicate
+				panic(exceptions.NewDuplicateError("Duplicate entry"))
+			}
+			// For other errors, return the error
 			return false, err
 		}
 	} else {

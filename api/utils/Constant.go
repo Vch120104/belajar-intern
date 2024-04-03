@@ -1,9 +1,6 @@
 package utils
 
-import (
-	"errors"
-	// "time"
-)
+// "time"
 
 // Status
 
@@ -56,11 +53,3 @@ func IntPtr(i int) *int {
 func StringPtr(str string) *string {
 	return &str
 }
-
-// Error
-var UnauthorizedError = errors.New(PermissionError)
-var IncorrectInputError = errors.New(BadRequestError)
-var NotFoundError = errors.New(GetDataNotFound)
-var ConflictError = errors.New(DataExists)
-var EntityError = errors.New(JsonError)
-var InternalServerError = errors.New(SomethingWrong)

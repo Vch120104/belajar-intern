@@ -76,3 +76,52 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 
 	return query
 }
+
+// tableStructs := []interface{}{User{}, Organization{}}
+// query := CreateJoinManyTable(db, tableStructs)
+func CreateJoinManyTable(db *gorm.DB, tables []interface{}) *gorm.DB {
+	var joinConditions []string
+
+	for _, tableStruct := range tables {
+		responseType := reflect.TypeOf(tableStruct)
+		mainTable := ""
+		referenceTable := ""
+
+		// Define main table
+		for i := 0; i < responseType.NumField(); i++ {
+			mainTable = responseType.Field(i).Tag.Get("main_table")
+			if mainTable != "" {
+				break
+			}
+		}
+
+		// Define reference table
+		for i := 0; i < responseType.NumField(); i++ {
+			if responseType.Field(i).Tag.Get("references") != "" {
+				referenceTable = responseType.Field(i).Tag.Get("references")
+				break
+			}
+		}
+
+		if mainTable != "" && referenceTable != "" {
+			for i := 0; i < responseType.NumField(); i++ {
+				joinConditions = append(joinConditions, fmt.Sprintf("%s.%s = %s.%s", mainTable, responseType.Field(i).Tag.Get("json"), referenceTable, responseType.Field(i).Tag.Get("json")))
+			}
+		}
+	}
+
+	// Query table with select
+	query := db
+
+	// Join tables
+	if len(joinConditions) > 0 {
+		joinStatement := strings.Join(joinConditions, " AND ")
+		for _, condition := range joinConditions {
+			query = query.Joins(fmt.Sprintf("JOIN %s ON %s", condition, joinStatement))
+		}
+	} else {
+		fmt.Println("Please verify the tableStructs")
+	}
+
+	return query
+}
