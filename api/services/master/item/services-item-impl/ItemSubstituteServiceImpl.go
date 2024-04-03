@@ -87,11 +87,11 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 	return result
 }
 
-func (s *ItemSubstituteServiceImpl) ChangeStatusItemOperation(id int) bool {
+func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) bool {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	result, err := s.itemSubstituteRepo.ChangeStatusItemOperation(tx, id)
+	result, err := s.itemSubstituteRepo.ChangeStatusItemSubstitute(tx, id)
 
 	if err != nil {
 		panic(exceptions.NewAppExceptionError(err.Error()))
