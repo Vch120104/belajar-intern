@@ -13,7 +13,7 @@ type ItemSubstituteService interface {
 	GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailGetPayloads
 	SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) bool
 	SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) bool
-	ChangeStatusItemOperation(id int) bool
+	ChangeStatusItemSubstitute (id int) bool
 	DeactivateItemSubstituteDetail(id string)bool
 	ActivateItemSubstituteDetail(id string)bool
 }
