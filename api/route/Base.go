@@ -18,15 +18,15 @@ import (
 /* Master */
 func DiscountPercentRouter(
 	discountPercentController masteritemcontroller.DiscountPercentController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/discount-percent/", discountPercentController.GetAllDiscountPercent)
-	router.GET("/discount-percent/:discount_percent_id", discountPercentController.GetDiscountPercentByID)
-	router.POST("/discount-percent/", discountPercentController.SaveDiscountPercent)
-	router.PATCH("/discount-percent/:discount_percent_id", discountPercentController.ChangeStatusDiscountPercent)
+	router.Get("/", discountPercentController.GetAllDiscountPercent)
+	router.Get("/{discount_percent_id}", discountPercentController.GetDiscountPercentByID)
+	router.Post("/", discountPercentController.SaveDiscountPercent)
+	router.Patch("/{discount_percent_id}", discountPercentController.ChangeStatusDiscountPercent)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
