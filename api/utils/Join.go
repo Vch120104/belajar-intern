@@ -8,6 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type JoinTable struct {
+	Table         string
+	Alias         string
+	ForeignKey    string
+	ReferenceKey  string
+	JoinCondition string
+}
+
 // CreateJoinSelectStatement generates a GORM database query for selecting columns from a main table and joining with reference tables.
 //
 // Parameters:
@@ -34,7 +42,7 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	var mainTable string
 	referenceTable := []string{}
 
-	//define primary key table
+	// Define main table
 	for i := 0; i < responseType.NumField(); i++ {
 		mainTable = responseType.Field(i).Tag.Get("main_table")
 		if mainTable != "" {
@@ -42,14 +50,14 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 		}
 	}
 
-	//deifne join table reference
+	// Define reference tables
 	for i := 0; i < responseType.NumField(); i++ {
 		if responseType.Field(i).Tag.Get("references") != "" {
 			referenceTable = append(referenceTable, responseType.Field(i).Tag.Get("references"))
 		}
 	}
 
-	//define select from table and Join table id
+	// Define select from table and Join table id
 	for i := 0; i < responseType.NumField(); i++ {
 		for _, value := range referenceTable {
 			if value == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "id") {
@@ -59,15 +67,15 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 		keyAttribute = append(keyAttribute, responseType.Field(i).Tag.Get("parent_entity")+"."+responseType.Field(i).Tag.Get("json"))
 	}
 
-	//query Table with select
+	// Query Table with select
 	query := db.Table(mainTable).Select(keyAttribute)
 
-	//join Table
+	// Join Tables
 	if len(joinTableId) > 0 {
 		for i := 0; i < len(referenceTable); i++ {
 			id := joinTableId[i]
-			referenceTable := referenceTable[i]
-			joinTable = append(joinTable, "join "+referenceTable+" on "+mainTable+"."+id+" = "+referenceTable+"."+id)
+			reference := referenceTable[i]
+			joinTable = append(joinTable, "join "+reference+" as "+reference+" on "+mainTable+"."+id+" = "+reference+"."+id)
 		}
 		query = query.Joins(strings.Join(joinTable, " "))
 	} else {
@@ -77,8 +85,14 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	return query
 }
 
-// tableStructs := []interface{}{User{}, Organization{}}
-// query := CreateJoinManyTable(db, tableStructs)
+// CreateJoinManyTable generates a GORM database query for joining multiple tables based on their relationships defined in their structures.
+//
+// Parameters:
+//   - db: A pointer to a GORM database query to which the join operations will be applied.
+//   - tables: A slice containing instances of structures representing tables' fields and their relationships.
+//
+// Returns:
+//   - result: A modified GORM database query with join operations based on the provided tables' structures and their relationships.
 func CreateJoinManyTable(db *gorm.DB, tables []interface{}) *gorm.DB {
 	var joinConditions []string
 
@@ -120,8 +134,16 @@ func CreateJoinManyTable(db *gorm.DB, tables []interface{}) *gorm.DB {
 			query = query.Joins(fmt.Sprintf("JOIN %s ON %s", condition, joinStatement))
 		}
 	} else {
-		fmt.Println("Please verify the tableStructs")
+		fmt.Println("Please verify the tables")
 	}
 
+	return query
+}
+
+func CreateJoin(tx *gorm.DB, mainTable, mainAlias string, joinTables ...JoinTable) *gorm.DB {
+	query := tx.Table(mainTable + " as " + mainAlias)
+	for _, join := range joinTables {
+		query = query.Joins(fmt.Sprintf("JOIN %s AS %s ON %s = %s", join.Table, join.Alias, join.ForeignKey, join.ReferenceKey))
+	}
 	return query
 }

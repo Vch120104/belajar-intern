@@ -416,11 +416,15 @@ func BomRouter(
 	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
 	//bom detail
+	router.Get("/all/detail", BomController.GetBomDetailList)
 	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
-	router.Post("/{bom_master_id}/detail", BomController.SaveBomDetail)
+	router.Post("/all/detail", BomController.SaveBomDetail)
+	//router.Put("/all/detail", BomController.SubmitBomDetail)
+
+	//router.Delete("/{bom_detail_id}/detail", BomController.SaveBomDetail)
 
 	//bom lookup
-	router.Get("/bom/{bom_master_id}/popup-item", BomController.GetBomItemList)
+	router.Get("/{bom_master_id}/popup-item", BomController.GetBomItemList)
 
 	////router.PanicHandler = exceptions.ErrorHandler
 

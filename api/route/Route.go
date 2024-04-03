@@ -196,10 +196,10 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/bom", BomRouter)
 
-	r.Mount("/item-package", itemPackageRouter)              //null
+	r.Mount("/item-package", itemPackageRouter)              //null value
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
 	r.Mount("/item-level", itemLevelRouter)
-	r.Mount("/item", itemRouter) //error
+	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
 
 	r.Mount("/incentive-group", IncentiveGroupRouter)
@@ -210,19 +210,19 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-key", OperationKeyRouter)
 	r.Mount("/operation-entries", OperationEntriesRouter)
 
-	r.Mount("/discount-percent", DiscountPercentRouter) //error
+	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
 	r.Mount("/discount", DiscountRouter)
 
-	r.Mount("/markup-rate", MarkupRateRouter) //error
+	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
 	r.Mount("/markup-master", markupMasterRouter)
 
-	r.Mount("/warehouse-group", WarehouseGroup) //null
+	r.Mount("/warehouse-group", WarehouseGroup) //null value
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/warehouse-master", WarehouseMaster)
 
-	r.Mount("/forecast-master", ForecastMasterRouter) //error
+	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	r.Mount("/shift-schedule", ShiftScheduleRouter)
-	r.Mount("/price-list", priceListRouter) //null
+	r.Mount("/price-list", priceListRouter) //null value
 	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
 
 	server := http.Server{
