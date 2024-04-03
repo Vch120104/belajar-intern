@@ -141,6 +141,11 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
+	// Deduction
+	DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
+	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db)
+	DeductionController := mastercontroller.NewDeductionController(DeductionService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -165,6 +170,7 @@ func StartRouting(db *gorm.DB) {
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
+	DeductionRouter := DeductionRouter(DeductionController)
 
 	mux := http.NewServeMux()
 	r := chi.NewRouter()
@@ -180,6 +186,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/incentive-group", IncentiveGroupRouter)
 	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
+	r.Mount("/deduction", DeductionRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
 	mux.Handle("/operation-key/", OperationKeyRouter)
 	mux.Handle("/operation-entries/", OperationEntriesRouter)

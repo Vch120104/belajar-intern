@@ -187,15 +187,29 @@ func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
 ) chi.Router {
 	router := chi.NewRouter()
-	// router.Use(middlewares.SetupCorsMiddleware)
-	// router.Use(middlewares.SetupAuthMiddleware)
-	// router.Use(middleware.Recoverer)
 
 	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
 	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
 	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func DeductionRouter(
+	DeductionController mastercontroller.DeductionController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", DeductionController.GetAllDeductionList)
+	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
+	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
+	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
+	router.Post("/detail", DeductionController.SaveDeductionDetail)
+	router.Post("/", DeductionController.SaveDeductionList)
+	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
 
 	// router.PanicHandler = exceptions.ErrorHandler
 	return router

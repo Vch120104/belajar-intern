@@ -118,21 +118,8 @@ func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.Respons
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/incentive-group [post]
 func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
-	// var formRequest masterpayloads.IncentiveGroupResponse
-	// helper_test.ReadFromRequestBody(request, &formRequest)
-	// var message = ""
-
-	// create := r.IncentiveGroupService.SaveIncentiveGroup(formRequest)
-
-	// if formRequest.IncentiveGroupId == 0 {
-	// 	message = "Create Data Successfully!"
-	// } else {
-	// 	message = "Update Data Successfully!"
-	// }
-
-	// payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
-
 	IncentiveGroupRequest := masterpayloads.IncentiveGroupResponse{}
+	var message string
 
 	err := jsonchecker.ReadFromRequestBody(request, &IncentiveGroupRequest)
 	if err != nil {
@@ -149,7 +136,14 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 		helper_test.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Create Approval Success", http.StatusCreated)
+
+	if IncentiveGroupRequest.IncentiveGroupId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 }
 
 // @Summary Change Status Incentive Group

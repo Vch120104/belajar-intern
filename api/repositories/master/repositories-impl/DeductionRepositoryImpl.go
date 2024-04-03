@@ -2,10 +2,13 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"net/http"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -17,32 +20,39 @@ func StartDeductionRepositoryImpl() masterrepository.DeductionRepository {
 	return &DeductionRepositoryImpl{}
 }
 
-func (r *DeductionRepositoryImpl) GetAllDeduction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *DeductionRepositoryImpl) GetAllDeduction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 
 	entities := []masterentities.DeductionList{}
+	response := []masterpayloads.DeductionListResponse{}
 
-	baseModelQuery := tx.Model(&entities)
+	baseModelQuery := tx.Model(&entities).Scan(&response)
 
 	wherequery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, wherequery)).Scan(&entities).Rows()
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, wherequery)).Scan(&response).Rows()
 
-	if len(entities) == 0 {
-		return pages, gorm.ErrRecordNotFound
+	if len(response) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	if err != nil {
-		return pages, err
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
 
-	pages.Rows = entities
+	pages.Rows = response
 
 	return pages, nil
 }
 
-func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterpayloads.DeductionListResponse, error) {
+func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterpayloads.DeductionListResponse, *exceptionsss_test.BaseErrorResponse) {
 
 	entities := masterentities.DeductionList{}
 
@@ -50,13 +60,16 @@ func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterp
 
 	rows, err := tx.Model(&entities).
 		Where(masterentities.DeductionList{
-			DeductionListId: int(Id),
+			DeductionListId: Id,
 		}).
 		First(&response).
 		Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -64,7 +77,7 @@ func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterp
 	return response, nil
 }
 
-func (r *DeductionRepositoryImpl) GetAllDeductionDetail(tx *gorm.DB, pages pagination.Pagination, Id int) (pagination.Pagination, error) {
+func (r *DeductionRepositoryImpl) GetAllDeductionDetail(tx *gorm.DB, pages pagination.Pagination, Id int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 
 	entities := []masterentities.DeductionDetail{}
 
@@ -78,11 +91,17 @@ func (r *DeductionRepositoryImpl) GetAllDeductionDetail(tx *gorm.DB, pages pagin
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&response).Rows()
 
 	if len(response) == 0 {
-		return pages, gorm.ErrRecordNotFound
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	if err != nil {
-		return pages, err
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -92,7 +111,7 @@ func (r *DeductionRepositoryImpl) GetAllDeductionDetail(tx *gorm.DB, pages pagin
 	return pages, nil
 }
 
-func (r *DeductionRepositoryImpl) GetByIdDeductionDetail(tx *gorm.DB, Id int) (masterpayloads.DeductionDetailResponse, error) {
+func (r *DeductionRepositoryImpl) GetByIdDeductionDetail(tx *gorm.DB, Id int) (masterpayloads.DeductionDetailResponse, *exceptionsss_test.BaseErrorResponse) {
 
 	entities := masterentities.DeductionDetail{}
 
@@ -100,34 +119,48 @@ func (r *DeductionRepositoryImpl) GetByIdDeductionDetail(tx *gorm.DB, Id int) (m
 
 	rows, err := tx.Model(&entities).Where(
 		masterentities.DeductionDetail{
-			DeductionDetailId: int(Id),
+			DeductionDetailId: Id,
 		}).First(&response).Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 	defer rows.Close()
 
 	return response, nil
 }
 
-func (r *DeductionRepositoryImpl) SaveDeductionList(tx *gorm.DB, request masterpayloads.DeductionListResponse) (masterpayloads.DeductionListResponse, error) {
+func (r *DeductionRepositoryImpl) SaveDeductionList(tx *gorm.DB, request masterpayloads.DeductionListResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	entities := masterentities.DeductionList{
 		DeductionName: request.DeductionName,
 		EffectiveDate: request.EffectiveDate,
 	}
 
-	result := tx.Where(entities).Assign(entities).FirstOrCreate(&entities)
+	err := tx.Where(entities).Assign(entities).FirstOrCreate(&entities).Error
 
-	if result.Error != nil {
-		return masterpayloads.DeductionListResponse{}, result.Error
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	}
 
-	return request, nil
+	return true, nil
 }
 
-func (r *DeductionRepositoryImpl) SaveDeductionDetail(tx *gorm.DB, request masterpayloads.DeductionDetailResponse) (masterpayloads.DeductionDetailResponse, error) {
+func (r *DeductionRepositoryImpl) SaveDeductionDetail(tx *gorm.DB, request masterpayloads.DeductionDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	condition := masterentities.DeductionDetail{
 		DeductionListId:      request.DeductionListId,
 		DeductionDetailLevel: request.DeductionDetailLevel,
@@ -140,24 +173,37 @@ func (r *DeductionRepositoryImpl) SaveDeductionDetail(tx *gorm.DB, request maste
 		DeductionPercent:     request.DeductionPercent,
 	}
 
-	result := tx.Where(entities).Assign(condition).FirstOrCreate(&entities)
+	err := tx.Where(entities).Assign(condition).FirstOrCreate(&entities).Error
 
-	if result.Error != nil {
-		return masterpayloads.DeductionDetailResponse{}, result.Error
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	}
-
-	return request, nil
+	return true, nil
 }
 
-func (*DeductionRepositoryImpl) ChangeStatusDeduction(tx *gorm.DB, Id int) (bool, error) {
+func (*DeductionRepositoryImpl) ChangeStatusDeduction(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masterentities.DeductionList
 
 	result := tx.Model(&entities).
-		Where("deduction_list_id = ?", Id).
+		Where(masterentities.DeductionList{DeductionListId: Id}).
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -169,7 +215,10 @@ func (*DeductionRepositoryImpl) ChangeStatusDeduction(tx *gorm.DB, Id int) (bool
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil

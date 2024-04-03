@@ -81,6 +81,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var incentiveGroupDetailRequest masterpayloads.IncentiveGroupDetailRequest
+	var message string
 
 	err := jsonchecker.ReadFromRequestBody(request, &incentiveGroupDetailRequest)
 	if err != nil {
@@ -98,7 +99,13 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, create, "Create Approval Success", http.StatusCreated)
+	if incentiveGroupDetailRequest.IncentiveGroupDetailId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 }
 
 // @Summary Get Incentive Group Detail By Id
