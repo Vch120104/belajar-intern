@@ -4,6 +4,7 @@ import (
 
 	// "after-sales/api/middlewares"
 
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -13,14 +14,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ForecastMasterController interface {
-	GetForecastMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetForecastMasterById(writer http.ResponseWriter, request *http.Request)
+	SaveForecastMaster(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request)
+	GetAllForecastMaster(writer http.ResponseWriter, request *http.Request)
 }
 type ForecastMasterControllerImpl struct {
 	ForecastMasterService masterservice.ForecastMasterService
@@ -41,11 +42,15 @@ func NewForecastMasterController(forecastMasterService masterservice.ForecastMas
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/forecast-master/{forecast_master_id} [get]
-func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.ResponseWriter, request *http.Request) {
 
-	ForecastMasterId, _ := strconv.Atoi(params.ByName("forecast_master_id"))
+	ForecastMasterId, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
 
-	result := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
+	result, err := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -59,13 +64,17 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/forecast-master [post]
-func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.ForecastMasterService.SaveForecastMaster(formRequest)
+	create, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
+	if err != nil {
+		exceptionsss_test.NewConflictException(writer, request, err)
+		return
+	}
 
 	if formRequest.ForecastMasterId == 0 {
 		message = "Create Data Successfully!"
@@ -85,11 +94,15 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/forecast-master/{forecast_master_id} [patch]
-func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
-	forecast_master_id, _ := strconv.Atoi(params.ByName("forecast_master_id"))
+	forecast_master_id, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
 
-	response := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
+	response, err := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
@@ -114,7 +127,7 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/forecast-master [get]
 
-func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
@@ -130,13 +143,17 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: params.ByName("sort_of"),
-		SortBy: params.ByName("sort_by"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
 	}
 	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
 
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }

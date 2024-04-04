@@ -289,14 +289,14 @@ func OperationKeyRouter(
 
 func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/forecast-master/", forecastMasterController.GetAllForecastMaster)
-	router.GET("/forecast-master/:forecast_master_id", forecastMasterController.GetForecastMasterById)
-	router.POST("/forecast-master/", forecastMasterController.SaveForecastMaster)
-	router.PATCH("/forecast-master/:forecast_master_id", forecastMasterController.ChangeStatusForecastMaster)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", forecastMasterController.GetAllForecastMaster)
+	router.Get("/by-id/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
+	router.Post("/", forecastMasterController.SaveForecastMaster)
+	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
