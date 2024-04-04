@@ -187,7 +187,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/item-substitute/", ItemSubstituteRouter)
 	r.Mount("/discount-percent", DiscountPercentRouter)
 	mux.Handle("/discount/", DiscountRouter)
-	mux.Handle("/markup-rate/", MarkupRateRouter)
+	r.Mount("/markup-rate", MarkupRateRouter)
 	mux.Handle("/warehouse-group/", WarehouseGroup)
 	mux.Handle("/warehouse-location/", WarehouseLocation)
 	mux.Handle("/warehouse-master/", WarehouseMaster)

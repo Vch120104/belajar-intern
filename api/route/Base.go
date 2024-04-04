@@ -96,15 +96,15 @@ func WarehouseLocationRouter(
 
 func MarkupRateRouter(
 	markupRateController masteritemcontroller.MarkupRateController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/markup-rate/", markupRateController.GetAllMarkupRate)
-	router.GET("/markup-rate/:markup_rate_id", markupRateController.GetMarkupRateByID)
-	router.POST("/markup-rate/", markupRateController.SaveMarkupRate)
-	router.PATCH("/markup-rate/:markup_rate_id", markupRateController.ChangeStatusMarkupRate)
+	router.Get("/", markupRateController.GetAllMarkupRate)
+	router.Get("/{markup_rate_id}", markupRateController.GetMarkupRateByID)
+	router.Post("/", markupRateController.SaveMarkupRate)
+	router.Patch("/{markup_rate_id}", markupRateController.ChangeStatusMarkupRate)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
