@@ -155,7 +155,7 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempaylo
 	var response masteritempayloads.BomMasterRequest
 
 	err := tx.Table("mtr_bom").
-		Select("mtr_bom.bom_master_id, mtr_bom.is_active, mtr_bom.bom_master_qty, mtr_bom.bom_master_uom, mtr_bom.bom_master_effective_date, mtr_bom.bom_master_change_number, mtr_item.item_code, mtr_item.item_name").
+		Select("mtr_bom.bom_master_id, mtr_bom.is_active, mtr_bom.bom_master_qty,  mtr_bom.bom_master_effective_date, mtr_bom.bom_master_change_number, mtr_item.item_code, mtr_item.item_name").
 		Joins("JOIN mtr_item ON mtr_bom.item_id = mtr_item.item_id").
 		Where("mtr_bom.bom_master_id = ?", id).
 		First(&response).
