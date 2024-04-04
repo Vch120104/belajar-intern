@@ -146,6 +146,11 @@ func StartRouting(db *gorm.DB) {
 	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db)
 	DeductionController := mastercontroller.NewDeductionController(DeductionService)
 
+	// Warranty Free Service
+	WarrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	WarrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(WarrantyFreeServiceRepository, db)
+	WarrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(WarrantyFreeServiceService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -171,6 +176,7 @@ func StartRouting(db *gorm.DB) {
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
 	DeductionRouter := DeductionRouter(DeductionController)
+	WarrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 
 	mux := http.NewServeMux()
 	r := chi.NewRouter()
@@ -187,6 +193,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/incentive-group", IncentiveGroupRouter)
 	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 	r.Mount("/deduction", DeductionRouter)
+	r.Mount("/warranty-free-service", WarrantyFreeServiceRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
 	mux.Handle("/operation-key/", OperationKeyRouter)
 	mux.Handle("/operation-entries/", OperationEntriesRouter)
