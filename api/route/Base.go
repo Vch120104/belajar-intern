@@ -5,13 +5,10 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
-	"after-sales/api/exceptions"
 
 	"github.com/go-chi/chi/v5"
 
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
 )
 
 /* Master */
@@ -68,10 +65,10 @@ func WarehouseGroupRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/", warehouseGroupController.GetAll)
-	router.Get("/{warehouse_group_id}", warehouseGroupController.GetById)
-	router.Post("/", warehouseGroupController.Save)
-	router.Patch("/{warehouse_group_id}", warehouseGroupController.ChangeStatus)
+	router.Get("/", warehouseGroupController.GetAllWarehouseGroup)
+	router.Get("/by-id/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
+	router.Post("/", warehouseGroupController.SaveWarehouseGroup)
+	router.Patch("/{warehouse_group_id}", warehouseGroupController.ChangeStatusWarehouseGroup)
 
 	//router.PanicHandler = exceptions.ErrorHandler
 
@@ -391,7 +388,6 @@ func IncentiveMasterRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	// Gunakan middleware NotFoundHandler
-	router.Use(middleware.NotFoundHandler)
 
 	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
 	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
@@ -408,7 +404,6 @@ func BomRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	// Gunakan middleware NotFoundHandler
-	router.Use(middleware.NotFoundHandler)
 
 	//bom master
 	router.Get("/", BomController.GetBomMasterList)

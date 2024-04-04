@@ -146,9 +146,9 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
 	// Warranty Free Service
-	warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
-	warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+	// warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	// warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
+	// warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
 
 	// Incentive Master
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
@@ -176,7 +176,7 @@ func StartRouting(db *gorm.DB) {
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
 	ItemSubstituteRouter := ItemSubstituteRouter(itemSubstituteController)
-	WarehouseGroup := WarehouseGroupRouter(warehouseGroupController)
+	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
