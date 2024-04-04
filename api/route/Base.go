@@ -5,8 +5,9 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+	"after-sales/api/exceptions"
 
-	middleware "after-sales/api/middlewares"
+	"github.com/go-chi/chi/v5"
 
 	"net/http"
 
@@ -131,11 +132,11 @@ func OperationCodeRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", operationCodeController.GetAllOperationCode)
-	router.Get("/by-id/{:}operation_id}", operationCodeController.GetByIdOperationCode)
+	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
