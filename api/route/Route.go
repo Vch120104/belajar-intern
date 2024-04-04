@@ -172,7 +172,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/item-package/", itemPackageRouter)
 	mux.Handle("/item-package-detail/", itemPackageDetailRouter)
 	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
-	mux.Handle("/markup-master/", markupMasterRouter)
+	r.Mount("/markup-master", markupMasterRouter)
 	mux.Handle("/item-level/", itemLevelRouter)
 	mux.Handle("/item/", itemRouter)
 	mux.Handle("/price-list/", priceListRouter)

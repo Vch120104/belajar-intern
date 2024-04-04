@@ -304,14 +304,14 @@ func UnitOfMeasurementRouter(
 
 func MarkupMasterRouter(
 	markupMasterController masteritemcontroller.MarkupMasterController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/markup-master/", markupMasterController.GetMarkupMasterList)
-	router.GET("/markup-master/by-code/:markup_master_code", markupMasterController.GetMarkupMasterByCode)
-	router.POST("/markup-master/", markupMasterController.SaveMarkupMaster)
-	router.PATCH("/markup-master/:markup_master_id", markupMasterController.ChangeStatusMarkupMaster)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", markupMasterController.GetMarkupMasterList)
+	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
+	router.Post("/", markupMasterController.SaveMarkupMaster)
+	router.Patch("/{markup_master_id}", markupMasterController.ChangeStatusMarkupMaster)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
