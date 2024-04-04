@@ -146,9 +146,9 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
 	// Warranty Free Service
-	// warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-	// warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
-	// warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+	warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
+	warrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
 
 	// Incentive Master
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
@@ -185,7 +185,7 @@ func StartRouting(db *gorm.DB) {
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
-	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
+	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreeServiceController)
 	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
 	BomRouter := BomRouter(BomController)
 
@@ -216,9 +216,10 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
 	r.Mount("/markup-master", markupMasterRouter)
 
-	r.Mount("/warehouse-group", WarehouseGroup) //null value
+	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/warehouse-master", WarehouseMaster)
+	r.Mount("/warehouse-free-service",warrantyFreeServiceRouter)
 
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	r.Mount("/shift-schedule", ShiftScheduleRouter)
