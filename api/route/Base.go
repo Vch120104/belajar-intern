@@ -228,6 +228,23 @@ func IncentiveGroupDetailRouter(
 	return router
 }
 
+func IncentiveMasterRouter(
+	IncentiveMasterController mastercontroller.IncentiveMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	// Gunakan middleware NotFoundHandler
+	// router.Use(middleware.NotFoundHandler)
+
+	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
+	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
+	router.Post("/", http.HandlerFunc(IncentiveMasterController.SaveIncentiveMaster))
+	router.Patch("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.ChangeStatusIncentiveMaster))
+
+	////router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func ShiftScheduleRouter(
 	ShiftScheduleController mastercontroller.ShiftScheduleController,
 ) *httprouter.Router {

@@ -151,6 +151,11 @@ func StartRouting(db *gorm.DB) {
 	WarrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(WarrantyFreeServiceRepository, db)
 	WarrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(WarrantyFreeServiceService)
 
+	// Incentive Master
+	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
+	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
+	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -158,6 +163,7 @@ func StartRouting(db *gorm.DB) {
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
+	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
@@ -192,6 +198,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/incentive-group", IncentiveGroupRouter)
 	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
+	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/deduction", DeductionRouter)
 	r.Mount("/warranty-free-service", WarrantyFreeServiceRouter)
 	mux.Handle("/operation-section/", OperationSectionRouter)
