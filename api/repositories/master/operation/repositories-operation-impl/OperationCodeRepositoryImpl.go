@@ -21,7 +21,7 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCon
 	entities := []masteroperationentities.OperationCode{}
 	var payloads []masteroperationpayloads.OperationCodeGetAll
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilter(tx, filterCondition)
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Rows()
 	if len(payloads) == 0 {
 		return pages, gorm.ErrRecordNotFound
