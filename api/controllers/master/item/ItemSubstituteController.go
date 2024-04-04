@@ -213,7 +213,7 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 
 	ItemSubstituteId, _ := strconv.Atoi(params.ByName("item_substitute_id"))
 
-	response := r.ItemSubstituteService.ChangeStatusItemOperation(ItemSubstituteId)
+	response := r.ItemSubstituteService.ChangeStatusItemSubstitute(ItemSubstituteId)
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
