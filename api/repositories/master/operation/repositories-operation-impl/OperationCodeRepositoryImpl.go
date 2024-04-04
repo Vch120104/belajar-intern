@@ -21,10 +21,11 @@ func StartOperationCodeRepositoryImpl() masteroperationrepository.OperationCodeR
 	return &OperationCodeRepositoryImpl{}
 }
 
-func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB,filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masteroperationentities.OperationCode{}
-	// var payloads []masteroperationpayloads.OperationCodeGetAll
+	//define base model
 	baseModelQuery := tx.Model(&entities)
+	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 	if len(entities) == 0 {
@@ -46,14 +47,21 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCon
 	return pages, nil
 }
 
-func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, id int) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{}
 	response := masteroperationpayloads.OperationCodeResponse{}
-	rows, err := tx.Model(&entities).Where(masteroperationentities.OperationCode{OperationId: id}).First(&response).Rows()
+
+	rows, err := tx.Model(&entities).
+		Where(masteroperationentities.OperationCode{
+			OperationId: Id,
+		}).
+		First(&response).
+		Rows()
+
 	if err != nil {
 		return response, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err: err,
 		}
 	}
 
