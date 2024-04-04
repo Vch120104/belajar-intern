@@ -81,11 +81,11 @@ func WarehouseLocationRouter(
 	router := chi.NewRouter()
 
 	router.Get("/", warehouseLocationController.GetAll)
-	router.Get("/{warehouse_location_id}", warehouseLocationController.GetById)
+	router.Get("/by-id/{warehouse_location_id}", warehouseLocationController.GetById)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
