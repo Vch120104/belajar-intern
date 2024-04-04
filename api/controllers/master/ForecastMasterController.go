@@ -4,6 +4,7 @@ import (
 
 	// "after-sales/api/middlewares"
 
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -45,7 +46,11 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 
 	ForecastMasterId, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
 
-	result := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
+	result, err := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -65,7 +70,11 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.ForecastMasterService.SaveForecastMaster(formRequest)
+	create, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
+	if err != nil {
+		exceptionsss_test.NewConflictException(writer, request, err)
+		return
+	}
 
 	if formRequest.ForecastMasterId == 0 {
 		message = "Create Data Successfully!"
@@ -89,7 +98,11 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 
 	forecast_master_id, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
 
-	response := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
+	response, err := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
@@ -136,7 +149,11 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
 
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }

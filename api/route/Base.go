@@ -8,13 +8,9 @@ import (
 
 	middleware "after-sales/api/middlewares"
 
-	"github.com/go-chi/chi/v5"
-	"after-sales/api/exceptions"
-
-	"github.com/go-chi/chi/v5"
-	httpSwagger "github.com/swaggo/http-swagger"
-
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
 /* Master */
@@ -293,11 +289,11 @@ func ForecastMasterRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", forecastMasterController.GetAllForecastMaster)
-	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
+	router.Get("/by-id/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
 	router.Post("/", forecastMasterController.SaveForecastMaster)
 	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
