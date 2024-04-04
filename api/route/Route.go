@@ -206,7 +206,7 @@ func StartRouting(db *gorm.DB) {
 	mux.Handle("/warehouse-group/", WarehouseGroup)
 	mux.Handle("/warehouse-location/", WarehouseLocation)
 	mux.Handle("/warehouse-master/", WarehouseMaster)
-	mux.Handle("/shift-schedule/", ShiftScheduleRouter)
+	r.Mount("/shift-schedule", ShiftScheduleRouter)
 	mux.Handle("/warranty-free-service/", warrantyFreeServiceRouter)
 
 	server := http.Server{

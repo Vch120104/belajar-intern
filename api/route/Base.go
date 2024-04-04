@@ -228,17 +228,17 @@ func IncentiveGroupDetailRouter(
 
 func ShiftScheduleRouter(
 	ShiftScheduleController mastercontroller.ShiftScheduleController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/shift-schedule/", ShiftScheduleController.GetAllShiftSchedule)
-	// router.GET("/shift-schedule/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
-	// router.GET("/shift-schedule/by-code/:operation_group_code", ShiftScheduleController.GetShiftScheduleByCode)
-	router.POST("/shift-schedule/", ShiftScheduleController.SaveShiftSchedule)
-	router.GET("/shift-schedule/:shift_schedule_id", ShiftScheduleController.GetShiftScheduleById)
-	router.PATCH("/shift-schedule/:shift_schedule_id", ShiftScheduleController.ChangeStatusShiftSchedule)
+	router.Get("/", ShiftScheduleController.GetAllShiftSchedule)
+	// router.Get("/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
+	// router.Get("/by-code/{operation_group_code}", ShiftScheduleController.GetShiftScheduleByCode)
+	router.Post("/", ShiftScheduleController.SaveShiftSchedule)
+	router.Get("/by-id/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
+	router.Patch("/{shift_schedule_id}", ShiftScheduleController.ChangeStatusShiftSchedule)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
