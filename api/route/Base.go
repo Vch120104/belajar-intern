@@ -9,6 +9,10 @@ import (
 	middleware "after-sales/api/middlewares"
 
 	"github.com/go-chi/chi/v5"
+	"after-sales/api/exceptions"
+
+	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"net/http"
 )
@@ -230,13 +234,13 @@ func ShiftScheduleRouter(
 	router := chi.NewRouter()
 
 	router.Get("/", ShiftScheduleController.GetAllShiftSchedule)
-	// router.Get("/shift-schedule/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
-	// router.Get("/shift-schedule/by-code/:operation_group_code", ShiftScheduleController.GetShiftScheduleByCode)
+	// router.Get("/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
+	// router.Get("/by-code/{operation_group_code}", ShiftScheduleController.GetShiftScheduleByCode)
 	router.Post("/", ShiftScheduleController.SaveShiftSchedule)
-	router.Get("/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
+	router.Get("/by-id/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
 	router.Patch("/{shift_schedule_id}", ShiftScheduleController.ChangeStatusShiftSchedule)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

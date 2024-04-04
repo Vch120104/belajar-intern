@@ -1,6 +1,7 @@
 package mastercontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -83,7 +84,11 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.ShiftScheduleService.GetAllShiftSchedule(filterCondition, pagination)
+	result,err := r.ShiftScheduleService.GetAllShiftSchedule(filterCondition, pagination)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -114,9 +119,13 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [get]
 func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseWriter, request *http.Request) {
 
-	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request,"shift_schedule_id"))
 
-	result := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
+	result,err := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -136,7 +145,11 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.ShiftScheduleService.SaveShiftSchedule(formRequest)
+	create,err := r.ShiftScheduleService.SaveShiftSchedule(formRequest)
+	if err != nil {
+		exceptionsss_test.NewConflictException(writer, request, err)
+		return
+	}
 
 	if formRequest.ShiftScheduleId == 0 {
 		message = "Create Data Successfully!"
@@ -158,9 +171,12 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 // @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [patch]
 func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
-	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request,"shift_schedule_id"))
 
-	response := r.ShiftScheduleService.ChangeStatusShiftSchedule(int(ShiftScheduleId))
-
+	response,err := r.ShiftScheduleService.ChangeStatusShiftSchedule(int(ShiftScheduleId))
+	if err != nil {
+		exceptionsss_test.NewConflictException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
