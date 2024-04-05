@@ -78,9 +78,9 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 			joinTable = append(joinTable, "join "+reference+" as "+reference+" on "+mainTable+"."+id+" = "+reference+"."+id)
 		}
 		query = query.Joins(strings.Join(joinTable, " "))
-	} else {
-		fmt.Print("Please troubleshoot tableStruct")
-	}
+	} //else {
+	// 	//fmt.Print("Please troubleshoot tableStruct")
+	// }
 
 	return query
 }
