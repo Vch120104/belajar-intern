@@ -1,8 +1,11 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/validation"
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
@@ -65,7 +68,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	itemLevelName := queryValues.Get("item_level_name")
 	isActive := queryValues.Get("is_active")
 
-	get := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
+	get, err := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
 		ItemLevel:       itemLevel,
 		ItemClassCode:   itemClassCode,
 		ItemLevelParent: itemLevelParent,
@@ -78,6 +81,11 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 		SortBy: sortBy,
 		Page:   page,
 	})
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
@@ -96,7 +104,12 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 
 	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
 
-	get := r.itemLevelService.GetById(itemLevelId)
+	get, err := r.itemLevelService.GetById(itemLevelId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
@@ -114,11 +127,25 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritemlevelpayloads.SaveItemLevelRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
-	create := r.itemLevelService.Save(formRequest)
+	create, err := r.itemLevelService.Save(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemLevelId == 0 {
 		message = "Create Data Successfully!"
@@ -143,7 +170,12 @@ func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, reque
 
 	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
 
-	response := r.itemLevelService.ChangeStatus(int(itemLevelId))
+	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

@@ -61,7 +61,7 @@ func (*OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCon
 	if len(entities) == 0 {
 		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 	defer rows.Close()

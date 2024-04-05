@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -24,28 +24,28 @@ func StartMarkupMasterService(markupRepo masteritemrepository.MarkupMasterReposi
 	}
 }
 
-func (s *MarkupMasterServiceImpl) GetMarkupMasterList(filter []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *MarkupMasterServiceImpl) GetMarkupMasterList(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupMasterList(tx, filter, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *MarkupMasterServiceImpl) GetMarkupMasterById(id int) masteritempayloads.MarkupMasterResponse {
+func (s *MarkupMasterServiceImpl) GetMarkupMasterById(id int) (masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupMasterById(tx, id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *MarkupMasterServiceImpl) SaveMarkupMaster(req masteritempayloads.MarkupMasterResponse) bool {
+func (s *MarkupMasterServiceImpl) SaveMarkupMaster(req masteritempayloads.MarkupMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -53,39 +53,39 @@ func (s *MarkupMasterServiceImpl) SaveMarkupMaster(req masteritempayloads.Markup
 		_, err := s.markupRepo.GetMarkupMasterById(tx, req.MarkupMasterId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
 
 	results, err := s.markupRepo.SaveMarkupMaster(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return results
+	return results, nil
 }
-func (s *MarkupMasterServiceImpl) ChangeStatusMasterMarkupMaster(Id int) bool {
+func (s *MarkupMasterServiceImpl) ChangeStatusMasterMarkupMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.markupRepo.GetMarkupMasterById(tx, Id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
 	results, err := s.markupRepo.ChangeStatusMasterMarkupMaster(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return true, nil
 }
-func (s *MarkupMasterServiceImpl) GetMarkupMasterByCode(markupCode string) masteritempayloads.MarkupMasterResponse {
+func (s *MarkupMasterServiceImpl) GetMarkupMasterByCode(markupCode string) (masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.markupRepo.GetMarkupMasterByCode(tx, markupCode)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 
 }

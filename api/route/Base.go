@@ -349,11 +349,11 @@ func MarkupMasterRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", markupMasterController.GetMarkupMasterList)
-	router.Get("/by-code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
+	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
 	router.Post("/", markupMasterController.SaveMarkupMaster)
 	router.Patch("/{markup_master_id}", markupMasterController.ChangeStatusMarkupMaster)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
@@ -367,7 +367,7 @@ func ItemLevelRouter(
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

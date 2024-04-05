@@ -1,19 +1,24 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
 	masteritemservice "after-sales/api/services/master/item"
 
-	"github.com/go-chi/chi/v5"
 	// "after-sales/api/middlewares"
+
 	// "strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type MarkupRateController interface {
@@ -70,7 +75,12 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows := r.MarkupRateService.GetAllMarkupRate(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.MarkupRateService.GetAllMarkupRate(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
@@ -88,7 +98,12 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 
 	markupRateId, _ := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
 
-	result := r.MarkupRateService.GetMarkupRateById(markupRateId)
+	result, err := r.MarkupRateService.GetMarkupRateById(markupRateId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -105,10 +120,25 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.MarkupRateRequest
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.MarkupRateService.SaveMarkupRate(formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.MarkupRateService.SaveMarkupRate(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.MarkupRateId == 0 {
 		message = "Create Data Successfully!"
@@ -132,7 +162,12 @@ func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWr
 
 	markupRateId, _ := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
 
-	response := r.MarkupRateService.ChangeStatusMarkupRate(int(markupRateId))
+	response, err := r.MarkupRateService.ChangeStatusMarkupRate(int(markupRateId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
