@@ -318,14 +318,14 @@ func MarkupMasterRouter(
 
 func ItemLevelRouter(
 	itemLevelController masteritemcontroller.ItemLevelController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/item-level/", itemLevelController.GetAll)
-	router.GET("/item-level/:item_level_id", itemLevelController.GetById)
-	router.POST("/item-level/", itemLevelController.Save)
-	router.PATCH("/item-level/:item_level_id", itemLevelController.ChangeStatus)
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", itemLevelController.GetAll)
+	router.Get("/{item_level_id}", itemLevelController.GetById)
+	router.Post("/", itemLevelController.Save)
+	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
-	router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

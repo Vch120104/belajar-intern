@@ -1,7 +1,11 @@
 package masteritemrepositoryimpl
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
+	"net/http"
+	"strings"
+
 	// masteritemlevelservice "after-sales/api/services/master/item_level"
 	masteritementities "after-sales/api/entities/master/item"
 	masteritemlevelpayloads "after-sales/api/payloads/master/item"
@@ -17,7 +21,7 @@ func StartItemLevelRepositoryImpl() masteritemlevelrepo.ItemLevelRepository {
 	return &ItemLevelImpl{}
 }
 
-func (r *ItemLevelImpl) GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *ItemLevelImpl) GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	var entities []masteritementities.ItemLevel
 	var itemLevelResponse []masteritemlevelpayloads.GetAllItemLevelResponse
 
@@ -41,7 +45,10 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetA
 		Rows()
 
 	if err != nil {
-		return pages, err
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -50,7 +57,7 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetA
 	return pages, nil
 }
 
-func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, error) {
+func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptionsss_test.BaseErrorResponse) {
 
 	var entities masteritementities.ItemLevel
 	var itemLevelResponse masteritemlevelpayloads.GetItemLevelResponseById
@@ -64,7 +71,10 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpa
 		Rows()
 
 	if err != nil {
-		return itemLevelResponse, err
+		return itemLevelResponse, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -72,7 +82,7 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpa
 	return itemLevelResponse, nil
 }
 
-func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, error) {
+func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
@@ -87,13 +97,24 @@ func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveIt
 	err := tx.Save(&itemLevelEntities).Error
 
 	if err != nil {
-		return false, err
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	}
 
 	return true, nil
 }
 
-func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, error) {
+func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masteritementities.ItemLevel
 
 	result := tx.Model(&entities).
@@ -101,7 +122,10 @@ func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, error) {
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -113,7 +137,10 @@ func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, error) {
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil
