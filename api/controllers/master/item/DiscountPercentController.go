@@ -1,12 +1,15 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -67,7 +70,12 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
@@ -85,7 +93,12 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 
 	discountPercentId, _ := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
 
-	result := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
+	result, err := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -102,10 +115,25 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.DiscountPercentResponse
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.DiscountPercentService.SaveDiscountPercent(formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.DiscountPercentService.SaveDiscountPercent(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.DiscountPercentId == 0 {
 		message = "Create Data Successfully!"
@@ -129,7 +157,12 @@ func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.
 
 	discountPercentId, _ := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
 
-	response := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
+	response, err := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

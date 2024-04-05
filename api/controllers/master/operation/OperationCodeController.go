@@ -1,7 +1,9 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -62,8 +64,12 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.operationCodeService.GetAllOperationCode(filterCondition, pagination)
+	result, err := r.operationCodeService.GetAllOperationCode(filterCondition, pagination)
 
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
@@ -77,13 +83,16 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-code/by-id/{operation_id} [get]
 func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseWriter, request *http.Request) {
-	OperationIdStr := chi.URLParam(request, "operation_id")
+	OperationIdStr, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
 
-	operationId, _ := strconv.Atoi(OperationIdStr)
+	result, err := r.operationCodeService.GetOperationCodeById(int(OperationIdStr))
 
-	result := r.operationCodeService.GetOperationCodeById(operationId)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Operation Code
@@ -97,10 +106,19 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 // @Router /aftersales-service/api/aftersales/operation-code/ [post]
 func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationCodeSave
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	var message = ""
 
-	create := r.operationCodeService.SaveOperationCode(formRequest)
+	create, err := r.operationCodeService.SaveOperationCode(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.OperationId == 0 {
 		message = "Create Data Successfully!"
@@ -122,9 +140,14 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 // @Router /aftersales-service/api/aftersales/operation-code/{operation_id} [patch]
 func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request) {
 
-	OperationId, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
+	OperationId, _ := strconv.Atoi(chi.URLParam(request,"operation_id"))
 
-	response := r.operationCodeService.ChangeStatusOperationCode(OperationId)
+	response, err := r.operationCodeService.ChangeStatusOperationCode(OperationId)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -25,58 +25,65 @@ func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *
 	}
 }
 
-func (s *DiscountServiceImpl) GetAllDiscountIsActive() []masterpayloads.DiscountResponse {
+func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetAllDiscountIsActive(tx)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *DiscountServiceImpl) GetDiscountById(id int) masterpayloads.DiscountResponse {
+func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetDiscountById(tx, id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *DiscountServiceImpl) GetDiscountByCode(Code string) masterpayloads.DiscountResponse {
+func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetDiscountByCode(tx, Code)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetAllDiscount(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) bool {
+func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	_, err := s.discountRepo.GetDiscountById(tx, Id)
+
+	if err != nil {
+		return false, err
+	}
+
 	results, err := s.discountRepo.ChangeStatusDiscount(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return true, nil
 }
 
-func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) bool {
+func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -84,13 +91,13 @@ func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) 
 		_, err := s.discountRepo.GetDiscountById(tx, req.DiscountCodeId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
-	
+
 	results, err := s.discountRepo.SaveDiscount(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }

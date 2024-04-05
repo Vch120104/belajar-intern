@@ -1,6 +1,7 @@
 package masteritemcontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -74,14 +75,14 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows := r.BomService.GetBomMasterList(criteria, paginate)
+	paginatedData, totalPages, totalRows,err := r.BomService.GetBomMasterList(criteria, paginate)
 
 	// Construct the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		payloads.NewHandleError(writer, "Data Not Found", http.StatusNotFound)
+		exceptionsss_test.NewNotFoundException(writer, request, err)
 	}
 }
 
@@ -98,8 +99,11 @@ func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	result := r.BomService.GetBomMasterById(bomMasterId)
-
+	result,err := r.BomService.GetBomMasterById(bomMasterId)
+	if err != nil{
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -118,8 +122,11 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.BomService.SaveBomMaster(formRequest)
-
+	create,err := r.BomService.SaveBomMaster(formRequest)
+	if err != nil{
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	if formRequest.BomMasterId == 0 {
 		message = "Create Data Successfully!"
 	} else {
@@ -142,8 +149,11 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	response := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
-
+	response,err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
+	if err != nil{
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
@@ -182,14 +192,15 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows := r.BomService.GetBomDetailList(criteria, paginate)
+	paginatedData, totalPages, totalRows,err := r.BomService.GetBomDetailList(criteria, paginate)
 
 	// Construct the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		payloads.NewHandleError(writer, "Data Not Found", http.StatusNotFound)
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
 	}
 }
 
@@ -206,8 +217,11 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 
 	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	result := r.BomService.GetBomDetailById(bomDetailId)
-
+	result,err := r.BomService.GetBomDetailById(bomDetailId)
+	if err != nil{
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -226,8 +240,11 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.BomService.SaveBomDetail(formRequest)
-
+	create,err := r.BomService.SaveBomDetail(formRequest)
+	if err != nil{
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	if formRequest.BomDetailId == 0 {
 		message = "Create Data Successfully!"
 	} else {
@@ -281,13 +298,14 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows := r.BomService.GetBomItemList(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.BomService.GetBomItemList(criteria, paginate)
 
 	// Construct the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		payloads.NewHandleError(writer, "Data Not Found", http.StatusNotFound)
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
 	}
 }

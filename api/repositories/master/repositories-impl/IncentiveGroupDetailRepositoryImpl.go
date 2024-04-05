@@ -2,10 +2,13 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
+	"net/http"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -16,21 +19,30 @@ func StartIncentiveGroupDetailRepositoryImpl() masterrepository.IncentiveGroupDe
 	return &IncentiveGroupDetailRepositoryImpl{}
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masterentities.IncentiveGroupDetail{}
 	response := []masterpayloads.IncentiveGroupDetailResponse{}
 	//define base model
-	baseModelQuery := tx.Model(&entities).Where("mtr_incentive_group_detail.incentive_group_id = ?", headerId)
+	query := tx.
+		Model(&entities).
+		Where(masterentities.IncentiveGroupDetail{IncentiveGroupId: headerId}).
+		Scan(&response)
 
 	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&response).Rows()
+	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Rows()
 
 	if len(response) == 0 {
-		return pages, gorm.ErrRecordNotFound
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	if err != nil {
-		return pages, err
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -40,7 +52,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	return pages, nil
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gorm.DB, Id int) (masterpayloads.IncentiveGroupDetailResponse, error) {
+func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gorm.DB, Id int) (masterpayloads.IncentiveGroupDetailResponse, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.IncentiveGroupDetail{}
 	response := masterpayloads.IncentiveGroupDetailResponse{}
 
@@ -52,7 +64,10 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 		Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -60,7 +75,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 	return response, nil
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.IncentiveGroupDetailRequest) (bool, error) {
+func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.IncentiveGroupDetail{
 		IsActive:               req.IsActive,
 		IncentiveGroupDetailId: req.IncentiveGroupDetailId,
@@ -70,10 +85,14 @@ func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.D
 		TargetPercent:          req.TargetPercent,
 	}
 
-	err := tx.Save(&entities).Error
+	err := tx.Create(&entities).Error
 
 	if err != nil {
-		return false, err
+		logrus.Info(err)
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
 	}
 
 	return true, nil

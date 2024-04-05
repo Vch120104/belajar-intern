@@ -145,20 +145,25 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
+	// Bom Master
+	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
+	BomService := masteritemserviceimpl.StartBomService(BomRepository, db)
+	BomController := masteritemcontroller.NewBomController(BomService)
+
+	// Deduction
+	DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
+	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db)
+	DeductionController := mastercontroller.NewDeductionController(DeductionService)
+
 	// Warranty Free Service
-	warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
-	warrantyFreerController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+	WarrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	WarrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(WarrantyFreeServiceRepository, db)
+	WarrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(WarrantyFreeServiceService)
 
 	// Incentive Master
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
-
-	// Bom Master
-	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
-	BomService := masteritemserviceimpl.StartBomService(BomRepository, db)
-	BomController := masteritemcontroller.NewBomController(BomService)
 
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -167,6 +172,7 @@ func StartRouting(db *gorm.DB) {
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
+	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
 	OperationCodeRouter := OperationCodeRouter(operationCodeController)
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
@@ -176,7 +182,7 @@ func StartRouting(db *gorm.DB) {
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
 	ItemSubstituteRouter := ItemSubstituteRouter(itemSubstituteController)
-	WarehouseGroup := WarehouseGroupRouter(warehouseGroupController)
+	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
@@ -185,21 +191,24 @@ func StartRouting(db *gorm.DB) {
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
-	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreerController)
-	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
+	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
+	DeductionRouter := DeductionRouter(DeductionController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
 	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
+	r.Mount("/markup-master", markupMasterRouter)
+	r.Mount("/item-level", itemLevelRouter)
+	// mux.Handle("/operation-group/", OperationGroupRouter)
 	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/bom", BomRouter)
+	r.Mount("/deduction", DeductionRouter)
 
 	r.Mount("/item-package", itemPackageRouter)              //null value
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
-	r.Mount("/item-level", itemLevelRouter)
-	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
+	r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
 
 	r.Mount("/incentive-group", IncentiveGroupRouter)
@@ -214,11 +223,11 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/discount", DiscountRouter)
 
 	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
-	r.Mount("/markup-master", markupMasterRouter)
 
-	r.Mount("/warehouse-group", WarehouseGroup) //null value
+	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/warehouse-master", WarehouseMaster)
+	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
 
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	r.Mount("/shift-schedule", ShiftScheduleRouter)

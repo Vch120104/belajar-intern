@@ -1,6 +1,7 @@
 package masterwarehousecontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 
@@ -65,7 +66,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 	warehouseLocationDetailName := queryValues.Get("warehouse_location_detail_name")
 	isActive := queryValues.Get("is_active")
 
-	get := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
+	get, err := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
 		WarehouseLocationCode:       warehouseLocationName,
 		WarehouseLocationName:       warehouseLocationCode,
 		WarehouseLocationDetailName: warehouseLocationDetailName,
@@ -77,6 +78,11 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 		SortBy: sortBy,
 		Page:   page,
 	})
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
@@ -95,8 +101,12 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 
 	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
 
-	get := r.WarehouseLocationService.GetById(warehouseLocationId)
+	get, err := r.WarehouseLocationService.GetById(warehouseLocationId)
 
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
 }
@@ -116,7 +126,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 	var formRequest masterwarehousepayloads.GetWarehouseLocationResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	save := r.WarehouseLocationService.Save(formRequest)
+	save, err := r.WarehouseLocationService.Save(formRequest)
 
 	if formRequest.WarehouseLocationId == 0 {
 		message = "Create Data Successfully!"
@@ -124,6 +134,10 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 		message = "Update Data Successfully!"
 	}
 
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 
 }
@@ -142,8 +156,12 @@ func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWrite
 
 	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
 
-	change_status := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
+	change_status, err := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
 }

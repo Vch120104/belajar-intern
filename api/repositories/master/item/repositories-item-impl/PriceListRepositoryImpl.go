@@ -204,10 +204,6 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bo
 
 	result = tx.Save(&entities)
 
-	if result.Error != nil {
-		return false, result.Error
-	}
-
 	return true, nil
 }
 

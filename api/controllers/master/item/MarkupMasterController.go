@@ -1,8 +1,11 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -12,9 +15,11 @@ import (
 
 	"after-sales/api/utils"
 
-	"github.com/go-chi/chi/v5"
 	// "after-sales/api/middlewares"
+
 	// "strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type MarkupMasterController interface {
@@ -66,7 +71,12 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
+	result, err := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -84,7 +94,12 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 
 	markupMasterCode := chi.URLParam(request, "markup_master_code")
 
-	result := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
+	result, err := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -101,11 +116,25 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.MarkupMasterResponse
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
-	create := r.markupMasterService.SaveMarkupMaster(formRequest)
+	create, err := r.markupMasterService.SaveMarkupMaster(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.MarkupMasterId == 0 {
 		message = "Create Data Successfully!"
@@ -129,7 +158,12 @@ func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.Respon
 
 	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
 
-	response := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
+	response, err := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
