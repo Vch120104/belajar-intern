@@ -7,8 +7,6 @@ import (
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
 	"github.com/go-chi/chi/v5"
-
-	"net/http"
 )
 
 /* Master */
@@ -245,10 +243,10 @@ func IncentiveMasterRouter(
 	// Gunakan middleware NotFoundHandler
 	// router.Use(middleware.NotFoundHandler)
 
-	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
-	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
-	router.Post("/", http.HandlerFunc(IncentiveMasterController.SaveIncentiveMaster))
-	router.Patch("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.ChangeStatusIncentiveMaster))
+	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
+	router.Get("/{incentive_level_id}",IncentiveMasterController.GetIncentiveMasterById)
+	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
+	router.Patch("/{incentive_level_id}",IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	////router.PanicHandler = exceptions.ErrorHandler
 
