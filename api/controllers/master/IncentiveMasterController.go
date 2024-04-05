@@ -2,6 +2,7 @@ package mastercontroller
 
 import (
 	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -68,7 +69,11 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows := r.IncentiveMasterService.GetAllIncentiveMaster(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.IncentiveMasterService.GetAllIncentiveMaster(criteria, paginate)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
@@ -86,7 +91,11 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 
 	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
 
-	result := r.IncentiveMasterService.GetIncentiveMasterById(IncentiveLevelIds)
+	result, err := r.IncentiveMasterService.GetIncentiveMasterById(IncentiveLevelIds)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -103,10 +112,14 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.IncentiveMasterRequest
-	var message = ""
+	var message string
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+	create, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.IncentiveLevelId == 0 {
 		message = "Create Data Successfully!"
@@ -130,7 +143,11 @@ func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.
 
 	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
 
-	response := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
+	response, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

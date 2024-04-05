@@ -145,20 +145,25 @@ func StartRouting(db *gorm.DB) {
 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
+	// Bom Master
+	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
+	BomService := masteritemserviceimpl.StartBomService(BomRepository, db)
+	BomController := masteritemcontroller.NewBomController(BomService)
+
+	// Deduction
+	DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
+	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db)
+	DeductionController := mastercontroller.NewDeductionController(DeductionService)
+
 	// Warranty Free Service
-	warrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-	warrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(warrantyFreeServiceRepository, db)
-	warrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(warrantyFreeServiceService)
+	WarrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
+	WarrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(WarrantyFreeServiceRepository, db)
+	WarrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(WarrantyFreeServiceService)
 
 	// Incentive Master
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
-
-	// Bom Master
-	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
-	BomService := masteritemserviceimpl.StartBomService(BomRepository, db)
-	BomController := masteritemcontroller.NewBomController(BomService)
 
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -167,6 +172,7 @@ func StartRouting(db *gorm.DB) {
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
+	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
 	OperationCodeRouter := OperationCodeRouter(operationCodeController)
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
@@ -185,9 +191,9 @@ func StartRouting(db *gorm.DB) {
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
-	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(warrantyFreeServiceController)
-	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
+	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
+	DeductionRouter := DeductionRouter(DeductionController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
@@ -195,6 +201,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/bom", BomRouter)
+	r.Mount("/deduction", DeductionRouter)
 
 	r.Mount("/item-package", itemPackageRouter)              //null value
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
@@ -219,7 +226,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/warehouse-master", WarehouseMaster)
-	r.Mount("/warehouse-free-service",warrantyFreeServiceRouter)
+	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
 
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	r.Mount("/shift-schedule", ShiftScheduleRouter)

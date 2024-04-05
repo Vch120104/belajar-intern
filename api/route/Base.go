@@ -32,12 +32,11 @@ func DiscountRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", discountController.GetAllDiscount)
-	router.Get("/drop-down/", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code/{discount_code}", discountController.GetDiscountByCode)
+	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
+	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-id/{id}", discountController.GetDiscountById)
 	router.Post("/", discountController.SaveDiscount)
-	router.Patch("/{discount_code_id}", discountController.ChangeStatusDiscount)
-
-	//router.PanicHandler = exceptions.ErrorHandler
+	router.Patch("/{id}", discountController.ChangeStatusDiscount)
 
 	return router
 }
@@ -200,12 +199,29 @@ func IncentiveGroupRouter(
 	router := chi.NewRouter()
 
 	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down/", incentiveGroupController.GetAllIncentiveGroupIsActive)
-	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
-	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
+	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func DeductionRouter(
+	DeductionController mastercontroller.DeductionController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", DeductionController.GetAllDeductionList)
+	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
+	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
+	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
+	router.Post("/detail", DeductionController.SaveDeductionDetail)
+	router.Post("/", DeductionController.SaveDeductionList)
+	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
+
+	// router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 
@@ -214,11 +230,28 @@ func IncentiveGroupDetailRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/by-header-id/", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
-	router.Get("/by-detail-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
+	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
+	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
 	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func IncentiveMasterRouter(
+	IncentiveMasterController mastercontroller.IncentiveMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	// Gunakan middleware NotFoundHandler
+	// router.Use(middleware.NotFoundHandler)
+
+	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
+	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
+	router.Post("/", http.HandlerFunc(IncentiveMasterController.SaveIncentiveMaster))
+	router.Patch("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.ChangeStatusIncentiveMaster))
+
+	////router.PanicHandler = exceptions.ErrorHandler
+
 	return router
 }
 
@@ -378,23 +411,7 @@ func WarrantyFreeServiceRouter(
 	router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
 	router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
 
-	//router.PanicHandler = exceptions.ErrorHandler
-
-	return router
-}
-
-func IncentiveMasterRouter(
-	IncentiveMasterController mastercontroller.IncentiveMasterController,
-) chi.Router {
-	router := chi.NewRouter()
-	// Gunakan middleware NotFoundHandler
-
-	router.Get("/", http.HandlerFunc(IncentiveMasterController.GetAllIncentiveMaster))
-	router.Get("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.GetIncentiveMasterById))
-	router.Post("/", http.HandlerFunc(IncentiveMasterController.SaveIncentiveMaster))
-	router.Patch("/{incentive_level_id}", http.HandlerFunc(IncentiveMasterController.ChangeStatusIncentiveMaster))
-
-	////router.PanicHandler = exceptions.ErrorHandler
+	// router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

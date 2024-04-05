@@ -2,6 +2,7 @@ package mastercontroller
 
 import (
 	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -50,7 +51,11 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows := r.WarrantyFreeServiceService.GetAllWarrantyFreeService(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.WarrantyFreeServiceService.GetAllWarrantyFreeService(criteria, paginate)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
@@ -59,7 +64,11 @@ func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer ht
 
 	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
 
-	result := r.WarrantyFreeServiceService.GetWarrantyFreeServiceById(warrantyFreeServiceId)
+	result, err := r.WarrantyFreeServiceService.GetWarrantyFreeServiceById(warrantyFreeServiceId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
@@ -68,9 +77,13 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 
 	var formRequest masterpayloads.WarrantyFreeServiceRequest
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
 
-	create := r.WarrantyFreeServiceService.SaveWarrantyFreeService(formRequest)
+	create, err := r.WarrantyFreeServiceService.SaveWarrantyFreeService(formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.WarrantyFreeServicesId == 0 {
 		message = "Create Data Successfully!"
@@ -85,7 +98,11 @@ func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writ
 
 	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
 
-	response := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(int(warrantyFreeServiceId))
+	response, err := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(int(warrantyFreeServiceId))
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

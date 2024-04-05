@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -24,49 +24,49 @@ func StartIncentiveMasterService(IncentiveMasterRepo masterrepository.IncentiveM
 	}
 }
 
-func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.IncentiveMasterRepo.GetAllIncentiveMaster(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, totalPages, totalRows, err
 	}
-	return results, totalPages, totalRows
+	return results, totalPages, totalRows, nil
 }
 
-func (s *IncentiveMasterServiceImpl) GetIncentiveMasterById(id int) masterpayloads.IncentiveMasterResponse {
+func (s *IncentiveMasterServiceImpl) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveMasterRepo.GetIncentiveMasterById(tx, id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.IncentiveMasterRequest) bool {
+func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.IncentiveMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveMasterRepo.SaveIncentiveMaster(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *IncentiveMasterServiceImpl) ChangeStatusIncentiveMaster(Id int) bool {
+func (s *IncentiveMasterServiceImpl) ChangeStatusIncentiveMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.IncentiveMasterRepo.GetIncentiveMasterById(tx, Id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
 	results, err := s.IncentiveMasterRepo.ChangeStatusIncentiveMaster(tx, Id)
 	if err != nil {
-		return results
+		return results, err
 	}
-	return true
+	return true, nil
 }
