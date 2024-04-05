@@ -144,7 +144,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.PriceList{
-			PriceListId: int32(Id),
+			PriceListId: int(Id),
 		}).
 		First(&response).
 		Rows()
@@ -203,10 +203,6 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bo
 	}
 
 	result = tx.Save(&entities)
-
-	if result.Error != nil {
-		return false, result.Error
-	}
 
 	return true, nil
 }

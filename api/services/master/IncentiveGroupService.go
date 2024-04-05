@@ -1,15 +1,16 @@
 package masterservice
 
 import (
-	masterpayloads "after-sales/api/payloads/master" 
+	exceptionsss_test "after-sales/api/expectionsss"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 )
 
 type IncentiveGroupService interface {
-	GetAllIncentiveGroup([]utils.FilterCondition,  pagination.Pagination) pagination.Pagination
-	GetAllIncentiveGroupIsActive() []masterpayloads.IncentiveGroupResponse
-	GetIncentiveGroupById(int) masterpayloads.IncentiveGroupResponse
-	SaveIncentiveGroup(masterpayloads.IncentiveGroupResponse) bool
-	ChangeStatusIncentiveGroup(int) bool
+	GetAllIncentiveGroup([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
+	GetAllIncentiveGroupIsActive() ([]masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse)
+	GetIncentiveGroupById(int) (masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse)
+	SaveIncentiveGroup(masterpayloads.IncentiveGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse)
+	ChangeStatusIncentiveGroup(int) (bool, *exceptionsss_test.BaseErrorResponse)
 }

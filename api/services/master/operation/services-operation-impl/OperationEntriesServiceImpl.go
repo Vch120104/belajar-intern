@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -24,62 +24,61 @@ func StartOperationEntriesService(operationEntriesRepo masteroperationrepository
 	}
 }
 
-func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetAllOperationEntries(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) masteroperationpayloads.OperationEntriesResponse {
+func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesById(tx, id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) masteroperationpayloads.OperationEntriesResponse {
+func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesName(tx, request)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) bool {
+func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	
 	if req.OperationEntriesId != 0 {
 		_, err := s.operationEntriesRepo.GetOperationEntriesById(tx, req.OperationEntriesId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
 
 	results, err := s.operationEntriesRepo.SaveOperationEntries(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) bool {
+func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return true, nil
 }

@@ -2,9 +2,8 @@ package payloads
 
 import (
 	"after-sales/api/helper"
+	"encoding/json"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Response struct {
@@ -23,29 +22,24 @@ type ResponsePagination struct {
 	Data       interface{} `json:"data"`
 }
 
-// Deprecated: please change to the latest one without *gin.Context
-func HandleSuccess(c *gin.Context, data interface{}, message string, status int) {
-	res := Response{
-		StatusCode: status,
-		Message:    message,
-		Data:       data,
-	}
-
-	c.JSON(status, res)
+// ErrorResponse represents the structure of an error response
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
-// Deprecated: please change to the latest one without *gin.Context
-func HandleSuccessPagination(c *gin.Context, data interface{}, message string, status int, limit int, page int, totalRows int64, totalPages int) {
-	res := ResponsePagination{
-		StatusCode: status,
-		Message:    message,
-		Page:       page,
-		Limit:      limit,
-		TotalRows:  totalRows,
-		TotalPages: totalPages,
-		Data:       data,
+// NewHandleError creates and returns a new error response
+func NewHandleError(writer http.ResponseWriter, errorMessage string, statusCode int) {
+	response := ErrorResponse{
+		Error: errorMessage,
 	}
-	c.JSON(status, res)
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(statusCode)
+
+	if err := json.NewEncoder(writer).Encode(response); err != nil {
+		http.Error(writer, "Failed to encode error response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func NewHandleSuccess(writer http.ResponseWriter, data interface{}, message string, status int) {

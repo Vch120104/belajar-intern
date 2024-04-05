@@ -1,19 +1,20 @@
 package exceptions
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"net/http"
 )
-// Deprecated: please change to the latest one without *gin.Context
-//
-func EntityException(c *gin.Context, message string) {
+
+func EntityException(w http.ResponseWriter, message string) {
 	res := OldError{
 		Success: false,
 		Message: message,
-		Data: nil,
+		Data:    nil,
 	}
 
-	c.JSON(http.StatusUnprocessableEntity, res)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	json.NewEncoder(w).Encode(res)
 }
 
 type EntityError struct {

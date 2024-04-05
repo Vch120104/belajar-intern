@@ -127,7 +127,7 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req
 	return true, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id int) (bool, error) {
+func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, error) {
 	var entities masteritementities.ItemSubstitute
 
 	result := tx.Model(&entities).

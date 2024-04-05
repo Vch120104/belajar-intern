@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 // const serverUrl = "http://10.1.32.26:8000/general-service"
@@ -26,17 +24,15 @@ type APIPaginationResponse struct {
 	TotalRows  int64       `json:"total_rows"`
 }
 
-// Deprecated: please change to the latest one without *gin.Context
 // get data from url
-func Get(c *gin.Context, url string, data interface{}, body interface{}) error {
+func Get(url string, data interface{}, body interface{}) error {
 	client := &http.Client{}
 	var buf bytes.Buffer
 
 	// Jika ada parameter Body/body request untuk getnya
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		exceptions.EntityException(c, "Error Entity Body!")
-		return err
+		panic(exceptions.NewBadRequestError(err.Error()))
 	}
 
 	var responseBody APIResponse
@@ -44,8 +40,7 @@ func Get(c *gin.Context, url string, data interface{}, body interface{}) error {
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
 	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return err
+		panic(exceptions.NewNotFoundError(err.Error()))
 	}
 
 	newResponse, err := client.Do(newRequest)
@@ -72,24 +67,22 @@ func Get(c *gin.Context, url string, data interface{}, body interface{}) error {
 	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
 
 	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return err
+		panic(exceptions.NewBadRequestError(err.Error()))
 	}
 
 	return nil
 }
 
-// Deprecated: please change to the latest one without *gin.Context
 // get data from url with pagination, the returned data is in form of APIPaginationResponse
-func GetWithPagination(c *gin.Context, url string, pagination APIPaginationResponse, body interface{}) (APIPaginationResponse, error) {
+func GetWithPagination(url string, pagination APIPaginationResponse, body interface{}) (APIPaginationResponse, error) {
 	client := &http.Client{}
 	var buf bytes.Buffer
 
 	// Jika ada parameter Body
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		exceptions.EntityException(c, "Error Entity Body!")
-		return pagination, err
+		panic(exceptions.NewBadRequestError(err.Error()))
+
 	}
 
 	var responseBody APIPaginationResponse
@@ -97,15 +90,15 @@ func GetWithPagination(c *gin.Context, url string, pagination APIPaginationRespo
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
 	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return pagination, err
+		panic(exceptions.NewBadRequestError(err.Error()))
+
 	}
 
 	newResponse, err := client.Do(newRequest)
 
 	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return pagination, err
+		panic(exceptions.NewBadRequestError(err.Error()))
+
 	}
 
 	defer newResponse.Body.Close()
@@ -128,8 +121,7 @@ func GetWithPagination(c *gin.Context, url string, pagination APIPaginationRespo
 	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
 
 	if err != nil {
-		exceptions.AppException(c, err.Error())
-		return pagination, err
+		panic(exceptions.NewBadRequestError(err.Error()))
 	}
 
 	return responseBody, err

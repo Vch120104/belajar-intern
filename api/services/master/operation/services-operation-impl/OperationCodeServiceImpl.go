@@ -1,35 +1,66 @@
 package masteroperationserviceimpl
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
+	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
+
+	"gorm.io/gorm"
 )
 
 type OperationCodeServiceImpl struct {
 	operationCodeRepo masteroperationrepository.OperationCodeRepository
+	DB                *gorm.DB
 }
 
-func StartOperationCodeService(operationCodeRepo masteroperationrepository.OperationCodeRepository) masteroperationservice.OperationCodeService {
+func StartOperationCodeService(operationCodeRepo masteroperationrepository.OperationCodeRepository, db *gorm.DB) masteroperationservice.OperationCodeService {
 	return &OperationCodeServiceImpl{
 		operationCodeRepo: operationCodeRepo,
+		DB:                db,
 	}
 }
 
-func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
-	results, err := s.operationCodeRepo.GetAllOperationCode(filterCondition, pages)
+func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationCodeRepo.GetAllOperationCode(tx, filterCondition, pages)
 	if err != nil {
-		return pages, err
+		return results,err
 	}
-	return results, nil
+	return results,nil
 }
 
-func (s *OperationCodeServiceImpl) GetOperationCodeById(id int32) (masteroperationpayloads.OperationCodeResponse, error) {
-	results, err := s.operationCodeRepo.GetOperationCodeById(id)
+func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperationpayloads.OperationCodeResponse,*exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationCodeRepo.GetOperationCodeById(tx, id)
 	if err != nil {
-		return results, err
+		return results,err
 	}
-	return results, nil
+	return results,nil
+}
+
+func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (bool,*exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.operationCodeRepo.SaveOperationCode(tx, req)
+	if err != nil {
+		return result,err
+	}
+	return result,nil
+}
+
+func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (bool,*exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Statement.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.operationCodeRepo.ChangeStatusItemSubstitute(tx, id)
+
+	if err != nil {
+		return result,err
+	}
+	return result,nil
 }

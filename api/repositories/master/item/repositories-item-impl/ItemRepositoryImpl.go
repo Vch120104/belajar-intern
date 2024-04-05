@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -48,7 +47,7 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[string]string) ([]map[string]interface{}, error) {
 	var paginationResponse utils.APIPaginationResponse
-	var c *gin.Context
+
 	var multiIds []string
 	var responses []masteritempayloads.ItemLookup
 	var getItemGroupResponse []masteritempayloads.ItemGroupResponse
@@ -71,7 +70,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		rows, err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Rows()
 
 		groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_code=" + queryParams["item_group_code"]
-		errUrlItemGroup := utils.Get(c, groupServiceUrl, &getItemGroupResponse, nil)
+		errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
 		if errUrlItemGroup != nil {
 			return nil, errUrlItemGroup
@@ -94,7 +93,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		}
 
 		supplierServiceUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-multi-id/" + strings.Join(multiIds, ",")
-		errUrlSupplierMaster := utils.Get(c, supplierServiceUrl, &getSupplierMasterResponse, nil)
+		errUrlSupplierMaster := utils.Get(supplierServiceUrl, &getSupplierMasterResponse, nil)
 		if errUrlSupplierMaster != nil {
 			return nil, errUrlSupplierMaster
 		}
@@ -123,7 +122,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 	u.RawQuery = q.Encode()
 	supplierDescUrl = u.String()
 
-	paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(c, supplierDescUrl, paginationResponse, nil)
+	paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(supplierDescUrl, paginationResponse, nil)
 	if errUrlSupplierMasterLookup != nil {
 		return nil, errUrlSupplierMasterLookup
 	}
@@ -193,7 +192,6 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	var getAtpmSupplierCodeOrderResponse masteritempayloads.AtpmSupplierCodeOrderResponse
 	// var getPersonInChargeResponse masteritempayloads.PersonInChargeResponse
 	var getAtpmWarrantyClaimTypeResponse masteritempayloads.AtpmWarrantyClaimTypeResponse
-	var c *gin.Context
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.Item{
@@ -206,7 +204,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	defer rows.Close()
 
 	//FK Luar with mtr_item_group common-general service
-	errUrlItemGroup := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/item-group/"+strconv.Itoa(response.ItemGroupId), &getItemGroupResponse, nil)
+	errUrlItemGroup := utils.Get("http://10.1.32.26:8000/general-service/api/general/item-group/"+strconv.Itoa(response.ItemGroupId), &getItemGroupResponse, nil)
 
 	if errUrlItemGroup != nil {
 		return nil, err
@@ -215,7 +213,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	firstJoin := utils.DataFrameLeftJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.ItemGroupResponse{getItemGroupResponse}, "ItemGroupId")
 
 	//FK luar with mtr_supplier general service
-	errUrlSupplierMaster := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.SupplierId), &getSupplierMasterResponse, nil)
+	errUrlSupplierMaster := utils.Get("http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.SupplierId), &getSupplierMasterResponse, nil)
 
 	if errUrlSupplierMaster != nil {
 		return nil, err
@@ -223,7 +221,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masteritempayloads.SupplierMasterResponse{getSupplierMasterResponse}, "SupplierId")
 	//FK luar with storage_type general service
-	errUrlStorageType := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/storage-type/"+strconv.Itoa(response.StorageTypeId), &getStorageTypeResponse, nil)
+	errUrlStorageType := utils.Get("http://10.1.32.26:8000/general-service/api/general/storage-type/"+strconv.Itoa(response.StorageTypeId), &getStorageTypeResponse, nil)
 
 	if errUrlStorageType != nil {
 		return nil, err
@@ -231,7 +229,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masteritempayloads.StorageTypeResponse{getStorageTypeResponse}, "StorageTypeId")
 	//FK luar with mtr_warranty_claim_type common service
-	errUrlWarrantyClaimType := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/warranty-claim-type/"+strconv.Itoa(response.AtpmWarrantyClaimTypeId), &getAtpmWarrantyClaimTypeResponse, nil)
+	errUrlWarrantyClaimType := utils.Get("http://10.1.32.26:8000/general-service/api/general/warranty-claim-type/"+strconv.Itoa(response.AtpmWarrantyClaimTypeId), &getAtpmWarrantyClaimTypeResponse, nil)
 
 	if errUrlWarrantyClaimType != nil {
 		return thirdJoin, err
@@ -239,7 +237,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	fourthJoin := utils.DataFrameLeftJoin(thirdJoin, []masteritempayloads.AtpmWarrantyClaimTypeResponse{getAtpmWarrantyClaimTypeResponse}, "AtpmWarrantyClaimTypeId")
 	//FK luar with mtr_special_movement common service
-	errUrlSpecialMovement := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/special-movement/"+strconv.Itoa(response.SpecialMovementId), &getSpecialMovementResponse, nil)
+	errUrlSpecialMovement := utils.Get("http://10.1.32.26:8000/general-service/api/general/special-movement/"+strconv.Itoa(response.SpecialMovementId), &getSpecialMovementResponse, nil)
 
 	if errUrlSpecialMovement != nil {
 		return fourthJoin, err
@@ -247,7 +245,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	fifthJoin := utils.DataFrameLeftJoin(fourthJoin, []masteritempayloads.SpecialMovementResponse{getSpecialMovementResponse}, "SpecialMovementId")
 	//FK luar with mtr_supplier general service atpm_supplier_id
-	errUrlAtpmSupplier := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierId), &getAtpmSupplierResponse, nil)
+	errUrlAtpmSupplier := utils.Get("http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierId), &getAtpmSupplierResponse, nil)
 
 	if errUrlAtpmSupplier != nil {
 		return fifthJoin, err
@@ -255,7 +253,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	sixthJoin := utils.DataFrameLeftJoin(fifthJoin, []masteritempayloads.AtpmSupplierResponse{getAtpmSupplierResponse}, "AtpmSupplierId")
 	//FK luar with mtr_supplier general service atpm_supplier_code_order_id
-	errUrlAtpmSupplierCodeOrder := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierCodeOrderId), &getAtpmSupplierCodeOrderResponse, nil)
+	errUrlAtpmSupplierCodeOrder := utils.Get("http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierCodeOrderId), &getAtpmSupplierCodeOrderResponse, nil)
 
 	if errUrlAtpmSupplierCodeOrder != nil {
 		return sixthJoin, err

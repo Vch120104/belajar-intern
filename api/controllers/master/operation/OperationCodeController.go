@@ -1,83 +1,79 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
-
-	// "after-sales/api/middlewares"
-
+	masteroperationpayloads "after-sales/api/payloads/master/operation"
+	"after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
+	"after-sales/api/utils"
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"github.com/go-chi/chi/v5"
 )
 
-
-
-type OperationCodeController struct {
-	operationcodeservice masteroperationservice.OperationCodeService
+type OperationCodeController interface {
+	GetAllOperationCode(writer http.ResponseWriter, request *http.Request)
+	GetByIdOperationCode(writer http.ResponseWriter, request *http.Request)
+	SaveOperationCode(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request)
 }
 
-func StartOperationCodeRoutes(
-	db *gorm.DB,
-	r *gin.RouterGroup,
-	operationcodeservice masteroperationservice.OperationCodeService,
-) {
-	operationCodeHandler := OperationCodeController{operationcodeservice: operationcodeservice}
-	r.GET("/operation-code/:operation_id", middlewares.DBTransactionMiddleware(db), operationCodeHandler.GetOperationCodeByID)
+type OperationCodeControllerImpl struct {
+	operationCodeService masteroperationservice.OperationCodeService
 }
 
-// // @Summary Get All Operation Code
-// // @Description REST API Operation Code
-// // @Accept json
-// // @Produce json
-// // @Tags Operation Code
-// // @Param page query string true "page"
-// // @Param limit query string true "limit"
-// // @Param operation_group_code query string false "operation_group_code"
-// // @Param operation_group_description query string false "operation_group_description"
-// // @Param is_active query string false "is_active" Enums(true, false)
-// // @Param sort_by query string false "sort_by"
-// // @Param sort_of query string false "sort_of"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// // @Router /aftersales-service/api/aftersales/operation-code [get]
-// func (r *OperationGroupController) GetAllOperationCode(c *gin.Context) {
-// 	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-// 	queryParams := map[string]string{
-// 		"operation_group_code":        c.Query("operation_group_code"),
-// 		"operation_group_description": c.Query("operation_group_description"),
-// 		"is_active":                   c.Query("is_active"),
-// 	}
+func NewOperationCodeController(operationCodeservice masteroperationservice.OperationCodeService) OperationCodeController {
+	return &OperationCodeControllerImpl{
+		operationCodeService: operationCodeservice,
+	}
+}
 
-// 	pagination := pagination.Pagination{
-// 		Limit:  utils.GetQueryInt(c, "limit"),
-// 		Page:   utils.GetQueryInt(c, "page"),
-// 		SortOf: c.Query("sort_of"),
-// 		SortBy: c.Query("sort_by"),
-// 	}
+// @Summary Get All OPeration Code
+// @Description REST API Operation Code
+// @Accept json
+// @Produce json
+// @Tags Master : Operation Code
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param operation_code query string false "operation_code"
+// @Param operation_name query string false "operation_name"
+// @Param is_active query string false "is_active" Enums(true,false)
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/operation-code [get]
+func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
 
-// 	filterCondition := utils.BuildFilterCondition(queryParams)
+	queryParams := map[string]string{
+		"is_active":      queryValues.Get("is_active"),
+		"operation_code": queryValues.Get("operation_code"),
+		"operation_name": queryValues.Get("operation_name"),
+	}
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
-// 	result, err := r.operationgroupservice.WithTrx(trxHandle).GetAllOperationGroup(filterCondition, pagination)
+	filterCondition := utils.BuildFilterCondition(queryParams)
 
-// 	if err != nil {
-// 		exceptions.AppException(c, err.Error())
-// 		return
-// 	}
+	result, err := r.operationCodeService.GetAllOperationCode(filterCondition, pagination)
 
-// 	if result.Rows == nil {
-// 		exceptions.NotFoundException(c, "Nothing matching request")
-// 		return
-// 	}
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
 
-// 	payloads.HandleSuccessPagination(c, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
-// }
-
-// @Summary Get Operation Code By ID
+// @Summary Get Operation Code By Id
 // @Description REST API Operation Code
 // @Accept json
 // @Produce json
@@ -85,13 +81,73 @@ func StartOperationCodeRoutes(
 // @Param operation_id path int true "operation_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-code/{operation_id} [get]
-func (r *OperationCodeController) GetOperationCodeByID(c *gin.Context) {
-	operationId, _ := strconv.Atoi(c.Param("operation_id"))
-	result, err := r.operationcodeservice.GetOperationCodeById(int32(operationId))
+// @Router /aftersales-service/api/aftersales/operation-code/by-id/{operation_id} [get]
+func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseWriter, request *http.Request) {
+	OperationIdStr, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
+
+	result, err := r.operationCodeService.GetOperationCodeById(int(OperationIdStr))
+
 	if err != nil {
-		exceptions.NotFoundException(c, err.Error())
+		exceptionsss_test.NewBadRequestException(writer, request, err)
 		return
 	}
-	payloads.HandleSuccess(c, result, "Get Data Successfully!", http.StatusOK)
+
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
+}
+
+// @Summary Save Operation Code
+// @Description REST API Operation Code
+// @Accept json
+// @Produce json
+// @Tags Master : Operation Code
+// @param reqBody body masteroperationpayloads.OperationCodeSave true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/operation-code/ [post]
+func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteroperationpayloads.OperationCodeSave
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+	var message = ""
+
+	create, err := r.operationCodeService.SaveOperationCode(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	if formRequest.OperationId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+// @Summary Change Status Patch Operation Code
+// @Description REST API Patch Operation Code
+// @Accept json
+// @Produce json
+// @Tags Master : Operation Code
+// @param operation_id path int true "operation_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Router /aftersales-service/api/aftersales/operation-code/{operation_id} [patch]
+func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request) {
+
+	OperationId, _ := strconv.Atoi(chi.URLParam(request,"operation_id"))
+
+	response, err := r.operationCodeService.ChangeStatusOperationCode(OperationId)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

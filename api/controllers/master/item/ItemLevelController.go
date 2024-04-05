@@ -1,8 +1,11 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/validation"
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
@@ -13,14 +16,14 @@ import (
 	masteritemlevelservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemLevelController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLevelControllerImpl struct {
@@ -52,7 +55,7 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Param is_active query bool false "Is Active"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level [get]
-func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	page, _ := strconv.Atoi(queryValues.Get("page"))
 	limit, _ := strconv.Atoi(queryValues.Get("limit"))
@@ -65,7 +68,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	itemLevelName := queryValues.Get("item_level_name")
 	isActive := queryValues.Get("is_active")
 
-	get := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
+	get, err := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
 		ItemLevel:       itemLevel,
 		ItemClassCode:   itemClassCode,
 		ItemLevelParent: itemLevelParent,
@@ -78,6 +81,11 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 		SortBy: sortBy,
 		Page:   page,
 	})
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
@@ -92,11 +100,16 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level-by-id [get]
-func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	itemLevelId, _ := strconv.Atoi(params.ByName("item_level_id"))
+	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
 
-	get := r.itemLevelService.GetById(itemLevelId)
+	get, err := r.itemLevelService.GetById(itemLevelId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
@@ -111,14 +124,28 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level [post]
-func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritemlevelpayloads.SaveItemLevelRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
-	create := r.itemLevelService.Save(formRequest)
+	create, err := r.itemLevelService.Save(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemLevelId == 0 {
 		message = "Create Data Successfully!"
@@ -139,11 +166,16 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
-func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	itemLevelId, _ := strconv.Atoi(params.ByName("item_level_id"))
+	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
 
-	response := r.itemLevelService.ChangeStatus(int(itemLevelId))
+	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

@@ -9,6 +9,7 @@ type ItemClass struct {
 	ItemGroupID   int    `gorm:"column:item_group_id;size:30;not null;" json:"item_group_id"` //FK with mtr_item_group common-general service
 	LineTypeID    int    `gorm:"column:line_type_id;size:30;not null" json:"line_type_id"`    //FK with mtr_line_type common-general service
 	ItemClassName string `gorm:"column:item_class_name;not null"  json:"item_class_name"`
+	Item          Item   `gorm:"foreignKey:item_class_id;references:item_class_id"`
 }
 
 func (*ItemClass) TableName() string {

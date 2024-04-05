@@ -1,22 +1,25 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemClassController interface {
-	GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllItemClass(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveItemClass(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request)
+	GetAllItemClass(writer http.ResponseWriter, request *http.Request)
+	SaveItemClass(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
 }
 type ItemClassControllerImpl struct {
 	ItemClassService masteritemservice.ItemClassService
@@ -46,7 +49,7 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-class/pop-up [get]
-func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"mtr_item_class.is_active":       queryValues.Get("is_active"),
@@ -64,7 +67,12 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result := r.ItemClassService.GetAllItemClass(criteria)
+	result, err := r.ItemClassService.GetAllItemClass(criteria)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	paginatedData, totalPages, totalRows := utils.DataFramePaginate(result, page, limit, utils.SnaketoPascalCase(sortOf), sortBy)
 
@@ -85,7 +93,7 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-class/ [get]
-func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"mtr_item_class.is_active":       queryValues.Get("is_active"),
@@ -98,7 +106,12 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result := r.ItemClassService.GetAllItemClass(criteria)
+	result, err := r.ItemClassService.GetAllItemClass(criteria)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "success", 200)
 }
@@ -112,14 +125,29 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-class [post]
-func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemClassResponse
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
 
-	create := r.ItemClassService.SaveItemClass(formRequest)
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.ItemClassService.SaveItemClass(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemClassId == 0 {
 		message = "Create Data Successfully!"
@@ -139,11 +167,16 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-class/{item_class_id} [patch]
-func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request) {
 
-	itemclassGroupId, _ := strconv.Atoi(params.ByName("item_class_id"))
+	itemclassGroupId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
 
-	response := r.ItemClassService.ChangeStatusItemClass(int(itemclassGroupId))
+	response, err := r.ItemClassService.ChangeStatusItemClass(int(itemclassGroupId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

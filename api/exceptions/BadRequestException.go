@@ -1,25 +1,29 @@
 package exceptions
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"net/http"
 )
-// Deprecated: please change to the latest one without *gin.Context
-//
-func BadRequestException(c *gin.Context, message string) {
-	res := OldError{
-		Success: false,
-		Message: message,
-		Data: nil,
+
+// BadRequestException menangani kasus exception ketika permintaan tidak valid
+func BadRequestException(w http.ResponseWriter, message string) {
+	errResponse := CustomError{
+		StatusCode: http.StatusBadRequest,
+		Message:    "Bad Request",
+		Error:      message,
 	}
 
-	c.JSON(http.StatusBadRequest, res)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	json.NewEncoder(w).Encode(errResponse)
 }
 
+// BadRequestError adalah struktur untuk kesalahan permintaan yang tidak valid
 type BadRequestError struct {
 	Error string
 }
 
+// NewBadRequestError membuat instance baru dari BadRequestError
 func NewBadRequestError(error string) BadRequestError {
 	return BadRequestError{Error: error}
 }

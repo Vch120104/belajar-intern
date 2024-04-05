@@ -1,6 +1,7 @@
 package masterwarehousecontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 
@@ -14,7 +15,7 @@ import (
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type WarehouseLocationControllerImpl struct {
@@ -22,10 +23,10 @@ type WarehouseLocationControllerImpl struct {
 }
 
 type WarehouseLocationController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseLocationController(WarehouseLocationService masterwarehouseservice.WarehouseLocationService) WarehouseLocationController {
@@ -52,7 +53,7 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location [get]
-func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	page, _ := strconv.Atoi(queryValues.Get("page"))
@@ -65,7 +66,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 	warehouseLocationDetailName := queryValues.Get("warehouse_location_detail_name")
 	isActive := queryValues.Get("is_active")
 
-	get := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
+	get, err := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
 		WarehouseLocationCode:       warehouseLocationName,
 		WarehouseLocationName:       warehouseLocationCode,
 		WarehouseLocationDetailName: warehouseLocationDetailName,
@@ -77,6 +78,11 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 		SortBy: sortBy,
 		Page:   page,
 	})
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
@@ -91,12 +97,16 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [get]
-func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseLocationId, _ := strconv.Atoi(params.ByName("warehouse_location_id"))
+	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
 
-	get := r.WarehouseLocationService.GetById(warehouseLocationId)
+	get, err := r.WarehouseLocationService.GetById(warehouseLocationId)
 
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
 }
@@ -111,12 +121,12 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location [post]
-func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
 	var formRequest masterwarehousepayloads.GetWarehouseLocationResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	save := r.WarehouseLocationService.Save(formRequest)
+	save, err := r.WarehouseLocationService.Save(formRequest)
 
 	if formRequest.WarehouseLocationId == 0 {
 		message = "Create Data Successfully!"
@@ -124,6 +134,10 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 		message = "Update Data Successfully!"
 	}
 
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 
 }
@@ -138,12 +152,16 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [patch]
-func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseLocationId, _ := strconv.Atoi(params.ByName("warehouse_location_id"))
+	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
 
-	change_status := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
+	change_status, err := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
 }

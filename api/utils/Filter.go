@@ -48,10 +48,12 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	}
 
 	for i := 0; i < len(columnValue); i++ {
-		if strings.Contains(columnName[i], "is_active") {
-			n := map[string]string{"true": "1", "false": "0", "Active": "1"} //kurang inactive/disable apalah
+
+		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
+			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
 			columnValue[i] = n[columnValue[i]]
 		}
+
 		condition := columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
 		queryWhere = append(queryWhere, condition)
 	}

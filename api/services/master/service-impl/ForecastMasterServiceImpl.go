@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -24,17 +24,17 @@ func StartForecastMasterService(ForecastMasterRepo masterrepository.ForecastMast
 	}
 }
 
-func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) masterpayloads.ForecastMasterResponse {
+func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) (masterpayloads.ForecastMasterResponse,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ForecastMasterRepo.GetForecastMasterById(tx, id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results,err
 	}
-	return results
+	return results,nil
 }
 
-func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.ForecastMasterResponse) bool {
+func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.ForecastMasterResponse) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -42,41 +42,41 @@ func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.Foreca
 		_, err := s.ForecastMasterRepo.GetForecastMasterById(tx, req.ForecastMasterId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false,err
 		}
 	}
 
 	results, err := s.ForecastMasterRepo.SaveForecastMaster(tx, req)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false,err
 	}
-	return results
+	return results,nil
 }
 
-func (s *ForecastMasterServiceImpl) ChangeStatusForecastMaster(Id int) bool {
+func (s *ForecastMasterServiceImpl) ChangeStatusForecastMaster(Id int) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.ForecastMasterRepo.GetForecastMasterById(tx, Id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false,err
 	}
 
 	results, err := s.ForecastMasterRepo.ChangeStatusForecastMaster(tx, Id)
 	if err != nil {
-		return results
+		return results,nil
 	}
-	return true
+	return true,nil
 }
 
-func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ForecastMasterRepo.GetAllForecastMaster(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results,0,0,err
 	}
-	return results, totalPages, totalRows
+	return results, totalPages, totalRows,nil
 }

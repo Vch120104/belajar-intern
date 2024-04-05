@@ -1,19 +1,25 @@
 package exceptions
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"net/http"
 )
-// Deprecated: please change to the latest one without *gin.Context
-//
-func AuthorizeException(c *gin.Context, message string) {
-	res := OldError{
+
+type ErrorResponse struct {
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+func AuthorizeException(w http.ResponseWriter, r *http.Request, message string) {
+	res := ErrorResponse{
 		Success: false,
 		Message: message,
-		Data: nil,
 	}
 
-	c.JSON(http.StatusUnauthorized, res)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(res)
 }
 
 type AuthorizationError struct {

@@ -1,23 +1,26 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type DiscountPercentController interface {
-	GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request)
+	GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request)
+	SaveDiscountPercent(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request)
 }
 type DiscountPercentControllerImpl struct {
 	DiscountPercentService masteritemservice.DiscountPercentService
@@ -46,7 +49,7 @@ func NewDiscountPercentController(discountPercentService masteritemservice.Disco
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-percent [get]
-func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
 
@@ -67,7 +70,12 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
@@ -81,11 +89,16 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [get]
-func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request) {
 
-	discountPercentId, _ := strconv.Atoi(params.ByName("discount_percent_id"))
+	discountPercentId, _ := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
 
-	result := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
+	result, err := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -99,13 +112,28 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-percent [post]
-func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.DiscountPercentResponse
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.DiscountPercentService.SaveDiscountPercent(formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.DiscountPercentService.SaveDiscountPercent(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.DiscountPercentId == 0 {
 		message = "Create Data Successfully!"
@@ -125,11 +153,16 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/discount-percent/{discount_percent_id} [patch]
-func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
-	discountPercentId, _ := strconv.Atoi(params.ByName("discount_percent_id"))
+	discountPercentId, _ := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
 
-	response := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
+	response, err := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

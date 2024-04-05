@@ -1,24 +1,27 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type UnitOfMeasurementController interface {
-	GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
+	GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request)
+	GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request)
+	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 }
 
 type UnitOfMeasurementControllerImpl struct {
@@ -47,7 +50,7 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [get]
-func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"mtr_uom.is_active":          queryValues.Get("is_active"),
@@ -65,7 +68,12 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
+	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -78,9 +86,14 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-drop-down [get]
-func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request) {
 
-	result := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
+	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -94,10 +107,15 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement-by-code/{uom_code} [get]
-func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request) {
 
-	operationGroupCode := params.ByName("uom_code")
-	result := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(operationGroupCode)
+	uomCode := chi.URLParam(request, "uom_code")
+	result, err := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(uomCode)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -111,14 +129,29 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement [post]
-func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.UomResponse
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptionsss_test.NewEntityException(writer, request, err)
+		return
+	}
 
-	create := r.unitofmeasurementservice.SaveUnitOfMeasurement(formRequest)
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.unitofmeasurementservice.SaveUnitOfMeasurement(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.UomId == 0 {
 		message = "Create Data Successfully!"
@@ -138,11 +171,16 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/unit-of-measurement/{uom_id} [patch]
-func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
-	uomId, _ := strconv.Atoi(params.ByName("uom_id"))
+	uomId, _ := strconv.Atoi(chi.URLParam(request, "uom_id"))
 
-	response := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
+	response, err := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
