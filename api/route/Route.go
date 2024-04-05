@@ -208,8 +208,7 @@ func StartRouting(db *gorm.DB) {
 
 	r.Mount("/item-package", itemPackageRouter)              //null value
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
-	r.Mount("/item-level", itemLevelRouter)
-	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
+	r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
 
 	r.Mount("/incentive-group", IncentiveGroupRouter)
@@ -224,7 +223,6 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/discount", DiscountRouter)
 
 	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
-	r.Mount("/markup-master", markupMasterRouter)
 
 	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
 	r.Mount("/warehouse-location", WarehouseLocation)
