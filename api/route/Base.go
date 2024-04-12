@@ -184,9 +184,7 @@ func ItemPackageDetailRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/item-package-detail/by-package-id/:item_package_id", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
-
-	//router.PanicHandler = exceptions.ErrorHandler
+	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
 
 	return router
 }
@@ -244,9 +242,9 @@ func IncentiveMasterRouter(
 	// router.Use(middleware.NotFoundHandler)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
-	router.Get("/{incentive_level_id}",IncentiveMasterController.GetIncentiveMasterById)
+	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
-	router.Patch("/{incentive_level_id}",IncentiveMasterController.ChangeStatusIncentiveMaster)
+	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	////router.PanicHandler = exceptions.ErrorHandler
 
@@ -431,16 +429,35 @@ func BomRouter(
 	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
 	router.Post("/all/detail", BomController.SaveBomDetail)
 	//router.Put("/all/detail", BomController.SubmitBomDetail)
-
 	//router.Delete("/{bom_detail_id}/detail", BomController.SaveBomDetail)
 
 	//bom lookup
 	router.Get("/{bom_master_id}/popup-item", BomController.GetBomItemList)
 
-	////router.PanicHandler = exceptions.ErrorHandler
-
 	return router
 }
+
+// func FieldActionRouter(
+// 	FieldActionController mastercontroller.FieldActionController,
+// ) chi.Router {
+// 	router := chi.NewRouter()
+// 	router.Get("/", FieldActionController.GetAllFieldAction)
+// 	router.Get("/header/by-id/{field_action_system_number}", FieldActionController.GetFieldActionHeaderById)
+// 	router.Get("/vehicle-detail/all/by-id/{field_action_system_number}", FieldActionController.GetAllFieldActionVehicleDetailById)
+// 	router.Get("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetFieldActionVehicleDetailById)
+// 	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemDetailById)
+// 	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.GetFieldActionVehicleItemDetailById)
+// 	router.Post("/", FieldActionController.SaveFieldAction)
+// 	router.Post("/vehicle-detail/{field_action_system_number}", FieldActionController.PostFieldActionVehicleDetail)
+// 	router.Post("/multi-vehicle-detail/{field_action_system_number}", FieldActionController.PostMultipleVehicleDetail)
+// 	router.Post("/item-detail/{field_action_eligible_vehicle_system_number}", FieldActionController.PostFieldActionVehicleItemDetail)
+// 	router.Post("/all-item-detail/{field_action_system_number}", FieldActionController.PostVehicleItemIntoAllVehicleDetail)
+// 	router.Patch("/header/by-id/{field_action_system_number}", FieldActionController.ChangeStatusFieldAction)
+// 	router.Patch("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.ChangeStatusFieldActionVehicle)
+// 	router.Patch("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
+
+// 	return router
+// }
 
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()

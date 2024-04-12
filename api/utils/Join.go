@@ -34,6 +34,56 @@ type JoinTable struct {
 //	}
 //	tableStruct := User{}
 //	query := CreateJoinSelectStatement(db, tableStruct)
+// func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
+// 	keyAttribute := []string{}
+// 	responseType := reflect.TypeOf(tableStruct)
+// 	joinTable := []string{}
+// 	var joinTableId []string
+// 	var mainTable string
+// 	referenceTable := []string{}
+
+// 	// Define main table
+// 	for i := 0; i < responseType.NumField(); i++ {
+// 		mainTable = responseType.Field(i).Tag.Get("main_table")
+// 		if mainTable != "" {
+// 			break
+// 		}
+// 	}
+
+// 	// Define reference tables
+// 	for i := 0; i < responseType.NumField(); i++ {
+// 		if responseType.Field(i).Tag.Get("references") != "" {
+// 			referenceTable = append(referenceTable, responseType.Field(i).Tag.Get("references"))
+// 		}
+// 	}
+
+// 	// Define select from table and Join table id
+// 	for i := 0; i < responseType.NumField(); i++ {
+// 		for _, value := range referenceTable {
+// 			if value == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "id") {
+// 				joinTableId = append(joinTableId, responseType.Field(i).Tag.Get("json"))
+// 			}
+// 		}
+// 		keyAttribute = append(keyAttribute, responseType.Field(i).Tag.Get("parent_entity")+"."+responseType.Field(i).Tag.Get("json"))
+// 	}
+
+// 	// Query Table with select
+// 	query := db.Table(mainTable).Select(keyAttribute)
+
+// 	// Join Tables
+// 	if len(joinTableId) > 0 {
+// 		for i := 0; i < len(referenceTable); i++ {
+// 			id := joinTableId[i]
+// 			reference := referenceTable[i]
+// 			joinTable = append(joinTable, "join "+reference+" as "+reference+" on "+mainTable+"."+id+" = "+reference+"."+id)
+// 		}
+// 		query = query.Joins(strings.Join(joinTable, " "))
+// 	} else {
+// 		fmt.Print("Please troubleshoot tableStruct")
+// 	}
+
+//		return query
+//	}
 func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	keyAttribute := []string{}
 	responseType := reflect.TypeOf(tableStruct)
@@ -42,7 +92,7 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	var mainTable string
 	referenceTable := []string{}
 
-	// Define main table
+	// Define primary table
 	for i := 0; i < responseType.NumField(); i++ {
 		mainTable = responseType.Field(i).Tag.Get("main_table")
 		if mainTable != "" {
@@ -50,14 +100,14 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 		}
 	}
 
-	// Define reference tables
+	// Define join reference tables
 	for i := 0; i < responseType.NumField(); i++ {
 		if responseType.Field(i).Tag.Get("references") != "" {
 			referenceTable = append(referenceTable, responseType.Field(i).Tag.Get("references"))
 		}
 	}
 
-	// Define select from table and Join table id
+	// Define select from table and join table id
 	for i := 0; i < responseType.NumField(); i++ {
 		for _, value := range referenceTable {
 			if value == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "id") {
@@ -74,13 +124,13 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	if len(joinTableId) > 0 {
 		for i := 0; i < len(referenceTable); i++ {
 			id := joinTableId[i]
-			reference := referenceTable[i]
+			reference := referenceTable[i] // Fix typo in variable name
 			joinTable = append(joinTable, "join "+reference+" as "+reference+" on "+mainTable+"."+id+" = "+reference+"."+id)
 		}
 		query = query.Joins(strings.Join(joinTable, " "))
-	} //else {
-	// 	//fmt.Print("Please troubleshoot tableStruct")
-	// }
+	} else {
+		fmt.Print("Please troubleshoot tableStruct")
+	}
 
 	return query
 }
@@ -145,5 +195,52 @@ func CreateJoin(tx *gorm.DB, mainTable, mainAlias string, joinTables ...JoinTabl
 	for _, join := range joinTables {
 		query = query.Joins(fmt.Sprintf("JOIN %s AS %s ON %s = %s", join.Table, join.Alias, join.ForeignKey, join.ReferenceKey))
 	}
+	return query
+}
+
+func NewCreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
+	keyAttribute := []string{}
+	responseType := reflect.TypeOf(tableStruct)
+	joinTable := make(map[string]bool) // Map to track joined tables
+	var mainTable string
+	referenceTable := []string{}
+
+	// Define primary table
+	for i := 0; i < responseType.NumField(); i++ {
+		mainTable = responseType.Field(i).Tag.Get("main_table")
+		if mainTable != "" {
+			break
+		}
+	}
+
+	// Define join reference tables
+	for i := 0; i < responseType.NumField(); i++ {
+		if responseType.Field(i).Tag.Get("references") != "" {
+			referenceTable = append(referenceTable, responseType.Field(i).Tag.Get("references"))
+		}
+	}
+
+	// Define select from table
+	for i := 0; i < responseType.NumField(); i++ {
+		keyAttribute = append(keyAttribute, responseType.Field(i).Tag.Get("parent_entity")+"."+responseType.Field(i).Tag.Get("json"))
+	}
+
+	// Query Table with select
+	query := db.Table(mainTable).Select(keyAttribute)
+
+	// Join Tables
+	for _, reference := range referenceTable {
+		field, found := responseType.FieldByName(reference)
+		if found {
+			id := field.Tag.Get("json")
+			if id != "" {
+				if !joinTable[reference] {
+					joinTable[reference] = true // Mark table as joined
+					query = query.Joins("join " + reference + " as " + reference + " on " + mainTable + "." + id + " = " + reference + "." + id)
+				}
+			}
+		}
+	}
+
 	return query
 }

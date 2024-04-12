@@ -188,21 +188,17 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, error) {
 	var entities masteritementities.PriceList
 
-	result := tx.Model(&entities).
-		Where("price_list_id = ?", Id).
-		First(&entities)
-
-	if result.Error != nil {
+	if result := tx.Model(&entities).Where("price_list_id = ?", Id).First(&entities); result.Error != nil {
 		return false, result.Error
 	}
 
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
+	// Toggle the IsActive field
+	entities.IsActive = !entities.IsActive
 
-	result = tx.Save(&entities)
+	// Save the updated entity
+	if err := tx.Save(&entities).Error; err != nil {
+		return false, err
+	}
 
 	return true, nil
 }

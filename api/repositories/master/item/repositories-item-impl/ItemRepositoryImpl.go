@@ -26,21 +26,26 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 	var responses []masteritempayloads.ItemLookup
 	tableStruct := masteritempayloads.ItemLookup{}
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	// Create the base query
+	baseQuery := tx.Model(&masteritempayloads.ItemLookup{})
 
+	// Apply joins
+	joinTable := utils.NewCreateJoinSelectStatement(baseQuery, tableStruct)
+
+	// Apply filters
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
+	// Scan the results into responses
 	rows, err := whereQuery.Scan(&responses).Rows()
-
 	if err != nil {
 		return responses, err
 	}
+	defer rows.Close()
 
+	// Check if any records were found
 	if len(responses) == 0 {
 		return responses, gorm.ErrRecordNotFound
 	}
-
-	defer rows.Close()
 
 	return responses, nil
 }

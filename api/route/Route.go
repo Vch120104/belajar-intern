@@ -165,6 +165,11 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
 
+	//Field Action
+	// FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
+	// FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db)
+	// FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -194,45 +199,54 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
+	//FieldActionRouter := FieldActionRouter(FieldActionController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
 	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
+	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
 	r.Mount("/markup-master", markupMasterRouter)
+	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
 	r.Mount("/item-level", itemLevelRouter)
-	// mux.Handle("/operation-group/", OperationGroupRouter)
-	r.Mount("/operation-group", OperationGroupRouter)
-	r.Mount("/incentive", IncentiveMasterRouter)
-	r.Mount("/bom", BomRouter)
-	r.Mount("/deduction", DeductionRouter)
-
-	r.Mount("/item-package", itemPackageRouter)              //null value
-	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
-	r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
+	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
-
-	r.Mount("/incentive-group", IncentiveGroupRouter)
-	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter) //method notalowed
-
-	r.Mount("/operation-code", OperationCodeRouter)
+	//r.Mount("/item-location", ItemLocationRouter)
+	r.Mount("/item-package", itemPackageRouter)
+	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound masih error
+	r.Mount("/price-list", priceListRouter)                  //null value
+	//r.Mount("/item-model-mapping", ItemModelMappingRouter)
+	//r.Mount("/import-item", ImportItemRouter)
+	r.Mount("/bom", BomRouter)
+	//r.Mount("/item-import", ItemImportRouter)
+	//r.Mount("/purchase-price", PurchasePriceRouter)
+	//r.Mount("/landed-cost", LandedCostRouter)
+	//r.Mount("/import-duty", ImportDutyRouter)
+	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/operation-section", OperationSectionRouter)
 	r.Mount("/operation-key", OperationKeyRouter)
 	r.Mount("/operation-entries", OperationEntriesRouter)
-
-	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
-	r.Mount("/discount", DiscountRouter)
-
-	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
-
-	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
-	r.Mount("/warehouse-location", WarehouseLocation)
+	r.Mount("/operation-code", OperationCodeRouter)
+	//r.Mount("/operation", OperationRouter)
+	//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+	r.Mount("/warehouse-group", WarehouseGroupRouter)
 	r.Mount("/warehouse-master", WarehouseMaster)
-	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
-
+	//r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
+	r.Mount("/warehouse-location", WarehouseLocation)
+	//r.Mount("/moving-code", MovingCodeRouter)
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
+	//r.Mount("/agreement", AgreementRouter)
+	//r.Mount("/campaign", CampaignRouter)
+	//r.Mount("/package", PackageRouter)
+	//r.Mount("/skill-level", SkillLevelRouter)
 	r.Mount("/shift-schedule", ShiftScheduleRouter)
-	r.Mount("/price-list", priceListRouter) //null value
-	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
+	r.Mount("/incentive", IncentiveMasterRouter)
+	//r.Mount("/work-info-massage", WorkInfoRouter)
+	//r.Mount("/field-action", fieldActionRouter)
+	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
+	r.Mount("/discount", DiscountRouter)
+	r.Mount("/incentive-group", IncentiveGroupRouter)
+	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
+	r.Mount("/deduction", DeductionRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
