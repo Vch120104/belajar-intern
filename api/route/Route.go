@@ -66,9 +66,9 @@ func StartRouting(db *gorm.DB) {
 	itemPackageController := masteritemcontroller.NewItemPackageController(itemPackageService)
 
 	// Item Package Detail
-	itemPackageDetailRepository := masteritemrepositoryimpl.StartItemPackageDetailRepositoryImpl()
-	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db)
-	itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
+	// itemPackageDetailRepository := masteritemrepositoryimpl.StartItemPackageDetailRepositoryImpl()
+	// itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db)
+	// itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
 
 	// Operation Group
 	operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
@@ -168,7 +168,7 @@ func StartRouting(db *gorm.DB) {
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
-	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
+	// itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
@@ -206,9 +206,9 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/bom", BomRouter)
 	r.Mount("/deduction", DeductionRouter)
 
-	r.Mount("/item-package", itemPackageRouter)              //null value
-	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
-	r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
+	r.Mount("/item-package", itemPackageRouter) //null value
+	// r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
+	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
 
 	r.Mount("/incentive-group", IncentiveGroupRouter)
