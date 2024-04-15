@@ -113,8 +113,8 @@ func ItemSubstituteRouter(
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
-	router.Patch("/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
-	router.Patch("/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
+	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 
 	//router.PanicHandler = exceptions.ErrorHandler
 
@@ -244,9 +244,9 @@ func IncentiveMasterRouter(
 	// router.Use(middleware.NotFoundHandler)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
-	router.Get("/{incentive_level_id}",IncentiveMasterController.GetIncentiveMasterById)
+	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
-	router.Patch("/{incentive_level_id}",IncentiveMasterController.ChangeStatusIncentiveMaster)
+	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	////router.PanicHandler = exceptions.ErrorHandler
 
@@ -306,10 +306,10 @@ func OperationKeyRouter(
 
 	router.Get("/{operation_key_id}", operationKeyController.GetOperationKeyByID)
 	router.Get("/", operationKeyController.GetAllOperationKeyList)
-	router.Get("/operation-key-name/", operationKeyController.GetOperationKeyName)
+	router.Get("/operation-key-name", operationKeyController.GetOperationKeyName)
 	router.Post("/", operationKeyController.SaveOperationKey)
 	router.Patch("/{operation_key_id}", operationKeyController.ChangeStatusOperationKey)
-	//router.PanicHandler = exceptions.ErrorHandler
+
 	return router
 }
 
@@ -391,11 +391,9 @@ func PriceListRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	router.Get("/", priceListController.GetPriceList)
-	router.Get("/pop-up/", priceListController.GetPriceListLookup)
+	router.Get("/pop-up", priceListController.GetPriceListLookup)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
-
-	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

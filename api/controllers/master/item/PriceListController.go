@@ -1,10 +1,14 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemservice "after-sales/api/services/master/item"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 	"time"
@@ -64,7 +68,12 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 		ItemClassId:   itemClassId,
 	}
 
-	result := r.pricelistservice.GetPriceList(priceListRequest)
+	result, err := r.pricelistservice.GetPriceList(priceListRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -119,7 +128,11 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 		AtpmSyncronizeTime:  atpmSyncronizeTime,
 	}
 
-	result := r.pricelistservice.GetPriceList(priceListRequest)
+	result, err := r.pricelistservice.GetPriceList(priceListRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -138,9 +151,26 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 	var formRequest masteritempayloads.PriceListResponse
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
-	create := r.pricelistservice.SavePriceList(formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.pricelistservice.SavePriceList(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.PriceListId == 0 {
 		message = "Create Data Successfully!"
@@ -164,7 +194,12 @@ func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWrit
 
 	PriceListId, _ := strconv.Atoi(chi.URLParam(request, "price_list_id"))
 
-	response := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+	response, err := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }

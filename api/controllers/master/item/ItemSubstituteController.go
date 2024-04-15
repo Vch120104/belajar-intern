@@ -1,7 +1,10 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -69,8 +72,12 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination)
+	result, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination)
 
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
@@ -88,7 +95,12 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.Respons
 
 	ItemSubstituteId, _ := strconv.Atoi(ItemSubstituteIdStr)
 
-	result := r.ItemSubstituteService.GetByIdItemSubstitute(ItemSubstituteId)
+	result, err := r.ItemSubstituteService.GetByIdItemSubstitute(ItemSubstituteId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -122,7 +134,11 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result := r.ItemSubstituteService.GetAllItemSubstituteDetail(pagination, ItemSubstituteId)
+	result, err := r.ItemSubstituteService.GetAllItemSubstituteDetail(pagination, ItemSubstituteId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -141,7 +157,12 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.R
 
 	ItemSubstituteDetailId, _ := strconv.Atoi(ItemSubstituteDetailIdStr)
 
-	result := r.ItemSubstituteService.GetByIdItemSubstituteDetail(ItemSubstituteDetailId)
+	result, err := r.ItemSubstituteService.GetByIdItemSubstituteDetail(ItemSubstituteDetailId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -157,10 +178,20 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.R
 // @Router /aftersales-service/api/aftersales/item-substitute/ [post]
 func (r *ItemSubstituteControllerImpl) SaveItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemSubstitutePostPayloads
-	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.ItemSubstituteService.SaveItemSubstitute(formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.ItemSubstituteService.SaveItemSubstitute(formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemSubstituteId == 0 {
 		message = "Create Data Successfully!"
@@ -186,10 +217,20 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 	ItemSubstituteDetailIdStr := chi.URLParam(request, "item_substitute_id")
 
 	ItemSubstituteDetailId, _ := strconv.Atoi(ItemSubstituteDetailIdStr)
-	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
-	create := r.ItemSubstituteService.SaveItemSubstituteDetail(formRequest, ItemSubstituteDetailId)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.ItemSubstituteService.SaveItemSubstituteDetail(formRequest, ItemSubstituteDetailId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemSubstituteDetailId == 0 {
 		message = "Create Data Successfully!"
@@ -213,7 +254,12 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 
 	ItemSubstituteId, _ := strconv.Atoi(chi.URLParam(request, "item_substitute_id"))
 
-	response := r.ItemSubstituteService.ChangeStatusItemSubstitute(ItemSubstituteId)
+	response, err := r.ItemSubstituteService.ChangeStatusItemOperation(ItemSubstituteId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
@@ -230,7 +276,12 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("item_substitute_detail_id")
-	response := r.ItemSubstituteService.ActivateItemSubstituteDetail(queryId)
+	response, err := r.ItemSubstituteService.ActivateItemSubstituteDetail(queryId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
@@ -246,6 +297,12 @@ func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.
 func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("item_substitute_detail_id")
-	response := r.ItemSubstituteService.DeactivateItemSubstituteDetail(queryId)
+	response, err := r.ItemSubstituteService.DeactivateItemSubstituteDetail(queryId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
