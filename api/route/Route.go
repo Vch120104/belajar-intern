@@ -85,6 +85,11 @@ func StartRouting(db *gorm.DB) {
 	IncentiveGroupDetailService := masterserviceimpl.StartIncentiveGroupDetailService(IncentiveGroupDetailRepository, db)
 	IncentiveGroupDetailController := mastercontroller.NewIncentiveGroupDetailController(IncentiveGroupDetailService)
 
+	// MovingCode
+	MovingCodeRepository := masterrepositoryimpl.StartMovingCodeRepositoryImpl()
+	MovingCodeService := masterserviceimpl.StartMovingCodeService(MovingCodeRepository, db)
+	MovingCodeController := mastercontroller.NewMovingCodeController(MovingCodeService)
+
 	// ForecastMaster
 	forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
@@ -109,6 +114,11 @@ func StartRouting(db *gorm.DB) {
 	operationKeyRepository := masteroperationrepositoryimpl.StartOperationKeyRepositoryImpl()
 	operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository, db)
 	operationKeyController := masteroperationcontroller.NewOperationKeyController(operationKeyService)
+
+	// Skill Level
+	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
+	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db)
+	SkillLevelController := mastercontroller.NewSkillLevelController(SkillLevelService)
 
 	// Shift Schedule
 	ShiftScheduleRepository := masterrepositoryimpl.StartShiftScheduleRepositoryImpl()
@@ -166,9 +176,9 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
 
 	//Field Action
-	// FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
-	// FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db)
-	// FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
+	FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
+	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db)
+	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -182,6 +192,7 @@ func StartRouting(db *gorm.DB) {
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
+	MovingCodeRouter := MovingCodeRouter(MovingCodeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
 	DiscountRouter := DiscountRouter(discountController)
@@ -190,16 +201,17 @@ func StartRouting(db *gorm.DB) {
 	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
+	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
 	unitOfMeasurementRouter := UnitOfMeasurementRouter(unitOfMeasurementController)
 	markupMasterRouter := MarkupMasterRouter(markupMasterController)
 	itemLevelRouter := ItemLevelRouter(itemLevelController)
 	itemRouter := ItemRouter(itemController)
 	priceListRouter := PriceListRouter(priceListController)
+	FieldActionRouter := FieldActionRouter(FieldActionController)
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
-	//FieldActionRouter := FieldActionRouter(FieldActionController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
@@ -213,7 +225,7 @@ func StartRouting(db *gorm.DB) {
 	//r.Mount("/item-location", ItemLocationRouter)
 	r.Mount("/item-package", itemPackageRouter)
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound masih error
-	r.Mount("/price-list", priceListRouter)                  //null value
+	r.Mount("/price-list", priceListRouter)
 	//r.Mount("/item-model-mapping", ItemModelMappingRouter)
 	//r.Mount("/import-item", ImportItemRouter)
 	r.Mount("/bom", BomRouter)
@@ -232,16 +244,16 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/warehouse-master", WarehouseMaster)
 	//r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
 	r.Mount("/warehouse-location", WarehouseLocation)
-	//r.Mount("/moving-code", MovingCodeRouter)
+	r.Mount("/moving-code", MovingCodeRouter)
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	//r.Mount("/agreement", AgreementRouter)
 	//r.Mount("/campaign", CampaignRouter)
 	//r.Mount("/package", PackageRouter)
-	//r.Mount("/skill-level", SkillLevelRouter)
+	r.Mount("/skill-level", SkillLevelRouter)
 	r.Mount("/shift-schedule", ShiftScheduleRouter)
 	r.Mount("/incentive", IncentiveMasterRouter)
 	//r.Mount("/work-info-massage", WorkInfoRouter)
-	//r.Mount("/field-action", fieldActionRouter)
+	r.Mount("/field-action", FieldActionRouter)
 	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
 	r.Mount("/discount", DiscountRouter)
 	r.Mount("/incentive-group", IncentiveGroupRouter)
