@@ -232,6 +232,24 @@ func BomRouter(
 	return router
 }
 
+func LandedCostMasterRouter(
+	LandedCostMaster masteritemcontroller.LandedCostMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+
+	router.Get("/", LandedCostMaster.GetAllLandedCostMaster)
+	router.Get("/{landed_cost_id}", LandedCostMaster.GetByIdLandedCost)
+	router.Post("/", LandedCostMaster.SaveLandedCostMaster)
+	router.Patch("/activate/", LandedCostMaster.ActivateLandedCostMaster)
+	router.Patch("/deactivate/", LandedCostMaster.DeactivateLandedCostmaster)
+
+	return router
+}
+
 func OperationGroupRouter(
 	operationGroupController masteroperationcontroller.OperationGroupController,
 ) chi.Router {

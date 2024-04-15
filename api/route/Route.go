@@ -70,6 +70,11 @@ func StartRouting(db *gorm.DB) {
 	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db)
 	itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
 
+	// // Landed Cost
+	LandedCostRepository := masteritemrepositoryimpl.StartLandedCostMasterRepositoryImpl()
+	LandedCostService := masteritemserviceimpl.StartLandedCostMasterService(LandedCostRepository, db)
+	LandedCostController := masteritemcontroller.NewLandedCostMasterController(LandedCostService)
+
 	// Operation Group
 	operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
 	operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
@@ -185,6 +190,7 @@ func StartRouting(db *gorm.DB) {
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
 	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
+	LandedCostMasterRouter := LandedCostMasterRouter(LandedCostController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
 	IncentiveGroupDetailRouter := IncentiveGroupDetailRouter(IncentiveGroupDetailController)
 	IncentiveMasterRouter := IncentiveMasterRouter(IncentiveMasterController)
@@ -231,7 +237,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/bom", BomRouter)
 	//r.Mount("/item-import", ItemImportRouter)
 	//r.Mount("/purchase-price", PurchasePriceRouter)
-	//r.Mount("/landed-cost", LandedCostRouter)
+	r.Mount("/landed-cost", LandedCostMasterRouter)
 	//r.Mount("/import-duty", ImportDutyRouter)
 	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/operation-section", OperationSectionRouter)
@@ -254,7 +260,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/incentive", IncentiveMasterRouter)
 	//r.Mount("/work-info-massage", WorkInfoRouter)
 	r.Mount("/field-action", FieldActionRouter)
-	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
+	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
 	r.Mount("/discount", DiscountRouter)
 	r.Mount("/incentive-group", IncentiveGroupRouter)
 	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
