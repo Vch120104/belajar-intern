@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
+	"errors"
 
 	"net/http"
 	"strings"
@@ -61,7 +62,7 @@ func (*OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCon
 	if len(entities) == 0 {
 		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 	defer rows.Close()

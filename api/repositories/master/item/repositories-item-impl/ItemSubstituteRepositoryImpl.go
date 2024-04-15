@@ -2,10 +2,13 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
+	"net/http"
 	"strings"
 
 	"gorm.io/gorm"
@@ -18,7 +21,7 @@ func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepo
 	return &ItemSubstituteRepositoryImpl{}
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masteritementities.ItemSubstitute{}
 	payloads := []masteritempayloads.ItemSubstitutePayloads{}
 	tableStruct := masteritempayloads.ItemSubstitutePayloads{}
@@ -27,14 +30,20 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Rows()
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
 	if len(payloads) == 0 {
-		return pages, gorm.ErrRecordNotFound
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
 	}
 
-	if err != nil {
-		return pages, err
-	}
 	defer rows.Close()
 
 	pages.Rows = payloads
@@ -42,7 +51,7 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	return pages, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (masteritempayloads.ItemSubstitutePayloads, error) {
+func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (masteritempayloads.ItemSubstitutePayloads, *exceptionsss_test.BaseErrorResponse) {
 	response := masteritempayloads.ItemSubstitutePayloads{}
 	tableStruct := masteritempayloads.ItemSubstitutePayloads{}
 	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masteritementities.ItemSubstitute{ItemSubstituteId: id})
@@ -50,13 +59,24 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int
 	rows, err := baseModelQuery.First(&response).Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
+
+	if response != (masteritempayloads.ItemSubstitutePayloads{}) {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
 	defer rows.Close()
 	return response, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, error) {
+func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masteritementities.ItemSubstituteDetail{}
 	payloads := []masteritempayloads.ItemSubstituteDetailPayloads{}
 	tableStruct := masteritempayloads.ItemSubstituteDetailPayloads{}
@@ -64,14 +84,19 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteId: id})
 
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&payloads).Rows()
-
-	if len(payloads) == 0 {
-		return pages, gorm.ErrRecordNotFound
-	}
-
 	if err != nil {
-		return pages, err
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
+	if len(payloads) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
 	defer rows.Close()
 
 	pages.Rows = payloads
@@ -79,22 +104,31 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 	return pages, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstituteDetail(tx *gorm.DB, id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, error) {
+func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstituteDetail(tx *gorm.DB, id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, *exceptionsss_test.BaseErrorResponse) {
 	response := masteritempayloads.ItemSubstituteDetailGetPayloads{}
 	tableStruct := masteritempayloads.ItemSubstituteDetailPayloads{}
 	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteId: id})
 
-
 	rows, err := baseModelQuery.First(&response).Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
+	if response != (masteritempayloads.ItemSubstituteDetailGetPayloads{}) {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
 	defer rows.Close()
 	return response, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req masteritempayloads.ItemSubstitutePostPayloads) (bool, error) {
+func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req masteritempayloads.ItemSubstitutePostPayloads) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.ItemSubstitute{
 		SubstituteTypeCode: req.SubstituteTypeCode,
 		ItemSubstituteId:   req.ItemSubstituteId,
@@ -104,13 +138,16 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, err
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	return true, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, error) {
+func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.ItemSubstituteDetail{
 		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
 		ItemId:                 req.ItemId,
@@ -121,13 +158,16 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, err
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	return true, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id int) (bool, error) {
+func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 
 	result := tx.Model(&entities).
@@ -135,7 +175,10 @@ func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -147,46 +190,61 @@ func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) DeactivateItemSubstituteDetail(tx *gorm.DB, id string) (bool, error) {
+func (r *ItemSubstituteRepositoryImpl) DeactivateItemSubstituteDetail(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteritementities.ItemSubstituteDetail
 		err := tx.Model(&entityToUpdate).Where("item_substitute_detail_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, err
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
 		}
 
 		entityToUpdate.IsActive = false
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, result.Error
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
 		}
 	}
 
 	return true, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) ActivateItemSubstituteDetail(tx *gorm.DB, id string) (bool, error) {
+func (r *ItemSubstituteRepositoryImpl) ActivateItemSubstituteDetail(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteritementities.ItemSubstituteDetail
 		err := tx.Model(&entityToUpdate).Where("item_substitute_detail_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, err
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
 		}
 
 		entityToUpdate.IsActive = true
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, result.Error
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
 		}
 	}
 

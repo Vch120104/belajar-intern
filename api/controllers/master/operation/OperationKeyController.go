@@ -1,23 +1,27 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
-	"after-sales/api/utils"
 	masteroperationservice "after-sales/api/services/master/operation"
+	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
-	"github.com/julienschmidt/httprouter"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type OperationKeyController interface {
-	GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetOperationKeyByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetOperationKeyName(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request)
+	GetOperationKeyByID(writer http.ResponseWriter, request *http.Request)
+	GetOperationKeyName(writer http.ResponseWriter, request *http.Request)
+	SaveOperationKey(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationKeyControllerImpl struct {
@@ -29,8 +33,6 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 		operationkeyservice: operationKeyService,
 	}
 }
-
-
 
 // @Summary Get All Operation Key
 // @Description REST API Operation Key
@@ -51,7 +53,7 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key [get]
-func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request) {
 
 	query := request.URL.Query()
 	queryParams := map[string]string{
@@ -73,7 +75,12 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result := r.operationkeyservice.GetAllOperationKeyList(criteria, pagination)
+	result, err := r.operationkeyservice.GetAllOperationKeyList(criteria, pagination)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -87,9 +94,14 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [get]
-func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	operationKeyId, _ := strconv.Atoi(params.ByName("operation_key_id"))
-	result := r.operationkeyservice.GetOperationKeyById(operationKeyId)
+func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request) {
+	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
+	result, err := r.operationkeyservice.GetOperationKeyById(operationKeyId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -105,18 +117,23 @@ func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWri
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key-name [get]
-func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 
 	operationGroupId := utils.NewGetQueryInt(query, "operation_group_id")
 	operationSectionId := utils.NewGetQueryInt(query, "operation_section_id")
 	keyCode := query.Get("operation_key_code")
 
-	result := r.operationkeyservice.GetOperationKeyName(masteroperationpayloads.OperationKeyRequest{
-		OperationGroupId:   int32(operationGroupId),
-		OperationSectionId: int32(operationSectionId),
+	result, err := r.operationkeyservice.GetOperationKeyName(masteroperationpayloads.OperationKeyRequest{
+		OperationGroupId:   int(operationGroupId),
+		OperationSectionId: int(operationSectionId),
 		OperationKeyCode:   keyCode,
 	})
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -130,13 +147,30 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key [post]
-func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter, request *http.Request) {
 	var requestForm masteroperationpayloads.OperationKeyResponse
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &requestForm)
+	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
 
-	create := r.operationkeyservice.SaveOperationKey(requestForm)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, requestForm)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.operationkeyservice.SaveOperationKey(requestForm)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if requestForm.OperationKeyId == 0 {
 		message = "Create Data Successfully!"
@@ -156,10 +190,15 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [patch]
-func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	operationKeyId, _ := strconv.Atoi(params.ByName("operation_key_id"))
+func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request) {
+	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
 
-	response := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
+	response, err := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

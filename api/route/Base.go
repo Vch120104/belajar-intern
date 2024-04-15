@@ -111,19 +111,17 @@ func MarkupRateRouter(
 
 func ItemSubstituteRouter(
 	itemSubstituteController masteritemcontroller.ItemSubstituteController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/item-substitute/", itemSubstituteController.GetAllItemSubstitute)
-	router.GET("/item-substitute/header/by-id/:item_substitute_id", itemSubstituteController.GetByIdItemSubstitute)
-	router.GET("/item-substitute/detail/all/by-id/:item_substitute_id", itemSubstituteController.GetAllItemSubstituteDetail)
-	router.GET("/item-substitute/detail/by-id/:item_substitute_detail_id", itemSubstituteController.GetByIdItemSubstituteDetail)
-	router.POST("/item-substitute/", itemSubstituteController.SaveItemSubstitute)
-	router.POST("/item-substitute/detail/:item_substitute_id", itemSubstituteController.SaveItemSubstituteDetail)
-	router.PATCH("/item-substitute/header/by-id/:item_substitute_id", itemSubstituteController.ChangeStatusItemSubstitute)
-	router.PATCH("/item-substitute/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
-	router.PATCH("/item-substitute/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
-
-	router.PanicHandler = exceptions.ErrorHandler
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", itemSubstituteController.GetAllItemSubstitute)
+	router.Get("/header/by-id/{item_substitute_id}", itemSubstituteController.GetByIdItemSubstitute)
+	router.Get("/detail/all/by-id/{item_substitute_id}", itemSubstituteController.GetAllItemSubstituteDetail)
+	router.Get("/detail/by-id/{item_substitute_detail_id}", itemSubstituteController.GetByIdItemSubstituteDetail)
+	router.Post("/", itemSubstituteController.SaveItemSubstitute)
+	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
+	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
+	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 
 	return router
 }
@@ -161,25 +159,23 @@ func ItemClassRouter(
 
 func ItemPackageRouter(
 	ItemPackageController masteritemcontroller.ItemPackageController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/item-package/", ItemPackageController.GetAllItemPackage)
-	router.POST("/item-package/", ItemPackageController.SaveItemPackage)
-	router.GET("/item-package/by-id/:item_package_id", ItemPackageController.GetItemPackageById)
-	router.PanicHandler = exceptions.ErrorHandler
+	router.Get("/", ItemPackageController.GetAllItemPackage)
+	router.Post("/", ItemPackageController.SaveItemPackage)
+	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 
 	return router
 }
 
 func ItemPackageDetailRouter(
 	ItemPackageDetailController masteritemcontroller.ItemPackageDetailController,
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/item-package-detail/by-package-id/:item_package_id", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
-
-	router.PanicHandler = exceptions.ErrorHandler
+	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
 
 	return router
 }
@@ -236,7 +232,7 @@ func OperationSectionRouter(
 	router.Get("/", operationSectionController.GetAllOperationSectionList)
 	router.Get("/{operation_section_id}", operationSectionController.GetOperationSectionByID)
 	router.Get("/by-name", operationSectionController.GetOperationSectionName)
-	router.Get("/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
+	router.Get("/code-by-group-id/{operation_group_id}", operationSectionController.GetSectionCodeByGroupId)
 	router.Post("/", operationSectionController.SaveOperationSection)
 	router.Patch("/{operation_section_id}", operationSectionController.ChangeStatusOperationSection)
 	return router
@@ -244,29 +240,30 @@ func OperationSectionRouter(
 
 func OperationEntriesRouter(
 	operationEntriesController masteroperationcontroller.OperationEntriesController,
-) chi.Router {
-	router := chi.NewRouter()
-	router.Get("/", operationEntriesController.GetAllOperationEntries)
-	router.Get("/{operation_entries_id}", operationEntriesController.GetOperationEntriesByID)
-	router.Get("/by-name/", operationEntriesController.GetOperationEntriesName)
-	router.Post("/", operationEntriesController.SaveOperationEntries)
-	router.Patch("/{operation_entries_id}", operationEntriesController.ChangeStatusOperationEntries)
+) *httprouter.Router {
+	router := httprouter.New()
+	router.GET("/operation-entries/", operationEntriesController.GetAllOperationEntries)
+	router.GET("/operation-entries/:operation_entries_id", operationEntriesController.GetOperationEntriesByID)
+	router.GET("/operation-entries-by-name/", operationEntriesController.GetOperationEntriesName)
+	router.POST("/operation-entries/", operationEntriesController.SaveOperationEntries)
+	router.PATCH("/operation-entries/:operation_entries_id", operationEntriesController.ChangeStatusOperationEntries)
 
+	router.PanicHandler = exceptions.ErrorHandler
 	return router
 }
 
 func OperationKeyRouter(
 	operationKeyController masteroperationcontroller.OperationKeyController,
 
-) *httprouter.Router {
-	router := httprouter.New()
+) chi.Router {
+	router := chi.NewRouter()
 
-	router.GET("/operation-key/:operation_key_id", operationKeyController.GetOperationKeyByID)
-	router.GET("/operation-key/", operationKeyController.GetAllOperationKeyList)
-	router.GET("/operation-key-name/", operationKeyController.GetOperationKeyName)
-	router.POST("/operation-key/", operationKeyController.SaveOperationKey)
-	router.PATCH("/operation-key/:operation_key_id", operationKeyController.ChangeStatusOperationKey)
-	router.PanicHandler = exceptions.ErrorHandler
+	router.Get("/{operation_key_id}", operationKeyController.GetOperationKeyByID)
+	router.Get("/", operationKeyController.GetAllOperationKeyList)
+	router.Get("/operation-key-name", operationKeyController.GetOperationKeyName)
+	router.Post("/", operationKeyController.SaveOperationKey)
+	router.Patch("/{operation_key_id}", operationKeyController.ChangeStatusOperationKey)
+
 	return router
 }
 
@@ -329,30 +326,26 @@ func ItemLevelRouter(
 
 func ItemRouter(
 	itemController masteritemcontroller.ItemController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/item/", itemController.GetAllItem)
-	router.GET("/item/pop-up/", itemController.GetAllItemLookup)
-	router.GET("/item/multi-id/:item_ids", itemController.GetItemWithMultiId)
-	router.GET("/item/by-code/:item_code", itemController.GetItemByCode)
-	router.POST("/item/", itemController.SaveItem)
-	router.PATCH("/item/:item_id", itemController.ChangeStatusItem)
-
-	router.PanicHandler = exceptions.ErrorHandler
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", itemController.GetAllItem)
+	router.Get("/pop-up/", itemController.GetAllItemLookup)
+	router.Get("/multi-id/{item_id}", itemController.GetItemWithMultiId)
+	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
+	router.Post("/", itemController.SaveItem)
+	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 
 	return router
 }
 
 func PriceListRouter(
 	priceListController masteritemcontroller.PriceListController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/price-list/", priceListController.GetPriceList)
-	router.GET("/price-list/pop-up/", priceListController.GetPriceListLookup)
-	router.POST("/price-list/", priceListController.SavePriceList)
-	router.PATCH("/price-list/:price_list_id", priceListController.ChangeStatusPriceList)
-
-	router.PanicHandler = exceptions.ErrorHandler
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", priceListController.GetPriceList)
+	router.Get("/pop-up", priceListController.GetPriceListLookup)
+	router.Post("/", priceListController.SavePriceList)
+	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
 
 	return router
 }
