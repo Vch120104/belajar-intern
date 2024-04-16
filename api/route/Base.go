@@ -412,6 +412,20 @@ func WarrantyFreeServiceRouter(
 	return router
 }
 
+func SkillLevelRouter(
+	SkillLevelController mastercontroller.SkillLevelController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", SkillLevelController.GetAllSkillLevel)
+	router.Get("/{skill_level_id}", SkillLevelController.GetSkillLevelByID)
+	router.Post("/", SkillLevelController.SaveSkillLevel)
+	router.Patch("/{skill_level_id}", SkillLevelController.ChangeStatusSkillLevel)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func BomRouter(
 	BomController masteritemcontroller.BomController,
 ) chi.Router {
