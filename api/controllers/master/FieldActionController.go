@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	// masterpayloads "after-sales/api/payloads/master"
+	helper_test "after-sales/api/helper_testt"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
@@ -15,27 +16,27 @@ import (
 	// "after-sales/api/middlewares"
 
 	"net/http"
-	// "strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
+	// "strconv"
 )
 
 type FieldActionController interface {
-	GetAllFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	PostMultipleVehicleDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	PostVehicleItemIntoAllVehicleDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusFieldActionVehicle(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusFieldActionVehicleItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllFieldAction(writer http.ResponseWriter, request *http.Request)
+	GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request)
+	GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request)
+	GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request)
+	GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request)
+	GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request)
+	PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request)
+	PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request)
+	PostMultipleVehicleDetail(writer http.ResponseWriter, request *http.Request)
+	PostVehicleItemIntoAllVehicleDetail(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusFieldAction(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusFieldActionVehicle(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusFieldActionVehicleItem(writer http.ResponseWriter, request *http.Request)
 
-	SaveFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	SaveFieldAction(writer http.ResponseWriter, request *http.Request)
 }
 type FieldActionControllerImpl struct {
 	FieldActionService masterservice.FieldActionService
@@ -56,7 +57,7 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 // @Param limit query string true "limit"
 // @Param field_action_system_number query string false "field_action_system_number"
 // @Param field_action_document_number query string false "field_action_document_number"
-// @Param approval_value query string false "approval_value"
+// @Param approval_status_id query string false "approval_status_id"
 // @Param brand_id query string false "brand_id"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param sort_by query string false "sort_by"
@@ -64,14 +65,14 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/field-action [get]
-func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"field_action_system_number":   queryValues.Get("field_action_system_number"),
 		"field_action_document_number": queryValues.Get("field_action_document_number"),
 		"brand_id":                     queryValues.Get("brand_id"),
-		"approval_value":               queryValues.Get("approval_value"),
+		"approval_status_id":           queryValues.Get("approval_status_id"),
 	}
 
 	pagination := pagination.Pagination{
@@ -83,9 +84,13 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.FieldActionService.GetAllFieldAction(filterCondition, pagination)
+	result, totalPages, totalRows, err := r.FieldActionService.GetAllFieldAction(filterCondition, pagination)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Save Field Action
@@ -97,13 +102,17 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/field-action [post]
-func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.FieldActionResponse
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
 
-	create := r.FieldActionService.SaveFieldAction(formRequest)
+	create, err := r.FieldActionService.SaveFieldAction(formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.FieldActionSystemNumber == 0 {
 		message = "Create Data Successfully!"
@@ -123,12 +132,14 @@ func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, 
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/field-action/by-id/{field_action_system_number} [get]
-func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	FieldActionIdStr := params.ByName("field_action_system_number")
+func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request) {
+	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 
-	FieldActionId, _ := strconv.Atoi(FieldActionIdStr)
-
-	result := r.FieldActionService.GetFieldActionHeaderById(FieldActionId)
+	result, err := r.FieldActionService.GetFieldActionHeaderById(FieldActionId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -148,11 +159,10 @@ func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.Respons
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/field-action/vehicle/by-id/{field_action_system_number} [get]
-func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	FieldActionIdStr := params.ByName("field_action_system_number")
-	FieldActionId, _ := strconv.Atoi(FieldActionIdStr)
+	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 
 	queryParams := map[string]string{
 		"vehicle_id": queryValues.Get("vehicle_id"),
@@ -166,7 +176,11 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer ht
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.FieldActionService.GetAllFieldActionVehicleDetailById(FieldActionId, pagination, filterCondition)
+	result, err := r.FieldActionService.GetAllFieldActionVehicleDetailById(FieldActionId, pagination, filterCondition)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -180,21 +194,22 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer ht
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.Error
 // @Router /aftersales-service/api/aftersales/item-substitute/detail/by-id/{item_substitute_id} [get]
-func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	FieldActionVehicleDetailIdStr := params.ByName("field_action_eligible_vehicle_system_number")
+func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
+	FieldActionVehicleDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
 
-	FieldActionVehicleDetailId, _ := strconv.Atoi(FieldActionVehicleDetailIdStr)
-
-	result := r.FieldActionService.GetFieldActionVehicleDetailById(FieldActionVehicleDetailId)
+	result, err := r.FieldActionService.GetFieldActionVehicleDetailById(FieldActionVehicleDetailId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	FieldActionVehicleDetailIdStr := params.ByName("field_action_eligible_vehicle_system_number")
-	FieldActionVehicleDetailId, _ := strconv.Atoi(FieldActionVehicleDetailIdStr)
+	FieldActionVehicleDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
 
 	// queryParams := map[string]string{
 	// 	"vehicle_id": queryValues.Get("vehicle_id"),
@@ -208,30 +223,38 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 
 	// filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
+	result, err := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
-func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	FieldActionVehicleItemDetailIdStr := params.ByName("field_action_eligible_vehicle_item_system_number")
+func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
+	FieldActionVehicleItemDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
 
-	FieldActionVehicleItemDetailId, _ := strconv.Atoi(FieldActionVehicleItemDetailIdStr)
-
-	result := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId)
+	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.FieldActionItemDetailResponse
-	FIeldActionVehicleDetailIdStr := params.ByName("field_action_eligible_vehicle_system_number")
-
-	FIeldActionVehicleDetailId, _ := strconv.Atoi(FIeldActionVehicleDetailIdStr)
+	FIeldActionVehicleDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
 
-	create := r.FieldActionService.PostFieldActionVehicleItemDetail(FIeldActionVehicleDetailId, formRequest)
+	create, err := r.FieldActionService.PostFieldActionVehicleItemDetail(FIeldActionVehicleDetailId, formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.FieldActionEligibleVehicleItemSystemNumber == 0 {
 		message = "Create Data Successfully!"
@@ -242,15 +265,17 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.FieldActionDetailResponse
-	FieldActionIdStr := params.ByName("field_action_system_number")
-
-	FieldActionId, _ := strconv.Atoi(FieldActionIdStr)
+	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
 
-	create := r.FieldActionService.PostFieldActionVehicleDetail(FieldActionId, formRequest)
+	create, err := r.FieldActionService.PostFieldActionVehicleDetail(FieldActionId, formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.FieldActionSystemNumber == 0 {
 		message = "Create Data Successfully!"
@@ -261,21 +286,24 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.Res
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	var formRequest masterpayloads.FieldActionDetailResponse
 
-	FieldActionIdStr := params.ByName("field_action_system_number")
-	FieldActionId, _ := strconv.Atoi(FieldActionIdStr)
+	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 
 	// CompanyIdStr := params.ByName("company_id")
 	// CompanyId, _ := strconv.Atoi(CompanyIdStr)
 	queryId := queryValues.Get("multi_id")
 
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
 
-	create := r.FieldActionService.PostMultipleVehicleDetail(FieldActionId, queryId)
+	create, err := r.FieldActionService.PostMultipleVehicleDetail(FieldActionId, queryId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.FieldActionSystemNumber == 0 {
 		message = "Create Data Successfully!"
@@ -286,17 +314,20 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	// queryValues := request.URL.Query()
 	var formRequest masterpayloads.FieldActionItemDetailResponse
 
-	FieldActionHeaderIdStr := params.ByName("field_action_system_number")
-	FieldActionHeaderId, _ := strconv.Atoi(FieldActionHeaderIdStr)
+	FieldActionHeaderId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
 
-	create := r.FieldActionService.PostVehicleItemIntoAllVehicleDetail(FieldActionHeaderId, formRequest)
+	create, err := r.FieldActionService.PostVehicleItemIntoAllVehicleDetail(FieldActionHeaderId, formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.FieldActionEligibleVehicleItemSystemNumber == 0 {
 		message = "Create Data Successfully!"
@@ -307,29 +338,40 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.ResponseWriter, request *http.Request) {
 
-	FieldActionId, _ := strconv.Atoi(params.ByName("field_action_system_number"))
+	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
 
-	response := r.FieldActionService.ChangeStatusFieldAction(FieldActionId)
-
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
-}
-
-func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-
-	FieldActionVehicleId, _ := strconv.Atoi(params.ByName("field_action_eligible_vehicle_system_number"))
-
-	response := r.FieldActionService.ChangeStatusFieldActionVehicle(FieldActionVehicleId)
+	response, err := r.FieldActionService.ChangeStatusFieldAction(FieldActionId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicleItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.ResponseWriter, request *http.Request) {
 
-	FieldActionVehicleItemId, _ := strconv.Atoi(params.ByName("field_action_eligible_vehicle_item_system_number"))
+	FieldActionVehicleId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
 
-	response := r.FieldActionService.ChangeStatusFieldActionVehicleItem(FieldActionVehicleItemId)
+	response, err := r.FieldActionService.ChangeStatusFieldActionVehicle(FieldActionVehicleId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicleItem(writer http.ResponseWriter, request *http.Request) {
+	FieldActionVehicleItemId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
+
+	response, err := r.FieldActionService.ChangeStatusFieldActionVehicleItem(FieldActionVehicleItemId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

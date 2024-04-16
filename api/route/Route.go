@@ -165,6 +165,11 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
 
+	// Field Action
+	FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
+	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db)
+	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -194,6 +199,7 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
+	FieldActionRouter := FieldActionRouter(FieldActionController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
@@ -228,6 +234,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/warehouse-master", WarehouseMaster)
 	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
+	r.Mount("/field-action", FieldActionRouter)
 
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	r.Mount("/shift-schedule", ShiftScheduleRouter)

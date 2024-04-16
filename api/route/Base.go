@@ -223,6 +223,30 @@ func DeductionRouter(
 	return router
 }
 
+func FieldActionRouter(
+	FieldActionController mastercontroller.FieldActionController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", FieldActionController.GetAllFieldAction)
+	router.Get("/{id}", FieldActionController.GetFieldActionHeaderById)
+	router.Get("/vehicle-detail-list/{field_action_system_number}", FieldActionController.GetAllFieldActionVehicleDetailById)
+	router.Get("/vehicle-detail/{field_action_eligible_vehicle_system_number}", FieldActionController.GetFieldActionVehicleDetailById)
+	router.Get("/vehicle-item-list/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemDetailById)
+	router.Get("/vehicle-item/{field_action_eligible_vehicle_item_system_number}", FieldActionController.GetFieldActionVehicleItemDetailById)
+	router.Post("/", FieldActionController.SaveFieldAction)
+	router.Post("/vehicle-item", FieldActionController.PostFieldActionVehicleItemDetail)
+	router.Post("/vehicle-detail", FieldActionController.PostFieldActionVehicleDetail)
+	router.Post("/multi-vehicle-detail", FieldActionController.PostMultipleVehicleDetail)
+	router.Post("/item-into-vehicl-detail", FieldActionController.PostVehicleItemIntoAllVehicleDetail)
+	router.Patch("/{field_action_system_number}", FieldActionController.ChangeStatusFieldAction)
+	router.Patch("/vehicle-detail/{field_action_eligible_vehicle_system_number}", FieldActionController.ChangeStatusFieldActionVehicle)
+	router.Patch("/vehicle-item/{field_action_eligible_vehicle_item_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
 func IncentiveGroupDetailRouter(
 	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
 ) chi.Router {
@@ -244,9 +268,9 @@ func IncentiveMasterRouter(
 	// router.Use(middleware.NotFoundHandler)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
-	router.Get("/{incentive_level_id}",IncentiveMasterController.GetIncentiveMasterById)
+	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
-	router.Patch("/{incentive_level_id}",IncentiveMasterController.ChangeStatusIncentiveMaster)
+	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	////router.PanicHandler = exceptions.ErrorHandler
 

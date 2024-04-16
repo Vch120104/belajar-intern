@@ -7,8 +7,7 @@ var CreateFieldActionTable = "mtr_field_action"
 type FieldAction struct {
 	IsActive                  bool      `gorm:"column:is_active;not null;default:true"        json:"is_active"`
 	FieldActionSystemNumber   int       `gorm:"column:field_action_system_number;size:30;not null;primaryKey"        json:"field_action_system_number"`
-	// approval value from mtr_approval_status not mtr_record_status
-	ApprovalValue             int       `gorm:"column:approval_value;size:30;not null"        json:"approval_value"`
+	ApprovalStatusId          int       `gorm:"column:approval_value;size:30;not null"        json:"approval_value"`
 	BrandId                   int       `gorm:"column:brand_id;size:30;not null"        json:"brand_id"`
 	FieldActionDocumentNumber string    `gorm:"column:field_action_document_number;size:30;not null"        json:"field_action_document_number"`
 	FieldActionName           string    `gorm:"column:field_action_name;size:100;not null"        json:"field_action_name"`
