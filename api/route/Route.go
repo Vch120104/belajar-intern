@@ -165,6 +165,11 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
 
+	// Skill Level
+	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
+	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db)
+	SkillLevelController := mastercontroller.NewSkillLevelController(SkillLevelService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -194,6 +199,7 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
+	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
@@ -233,6 +239,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/shift-schedule", ShiftScheduleRouter)
 	r.Mount("/price-list", priceListRouter) //null value
 	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
+	r.Mount("/skill-level", SkillLevelRouter)
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
