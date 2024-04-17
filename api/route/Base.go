@@ -174,6 +174,7 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
@@ -184,8 +185,11 @@ func ItemPackageDetailRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/item-package-detail/by-package-id/:item_package_id", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
-
+	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
+	router.Get("/{item_package_detail_id}", ItemPackageDetailController.GetItemPackageDetailById)
+	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
+	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetailByItemPackageId)
+	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
 	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
