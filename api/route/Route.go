@@ -125,6 +125,11 @@ func StartRouting(db *gorm.DB) {
 	operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository, db)
 	operationKeyController := masteroperationcontroller.NewOperationKeyController(operationKeyService)
 
+	// operation model mapping
+	operationModelMappingRepository := masteroperationrepositoryimpl.StartOperationModelMappingRepositoryImpl()
+	operationModelMappingService := masteroperationserviceimpl.StartOperationModelMappingService(operationModelMappingRepository, db)
+	operationModelMappingController := masteroperationcontroller.NewOperationModelMappingController(operationModelMappingService)
+
 	// Skill Level
 	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
 	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db)
@@ -203,6 +208,7 @@ func StartRouting(db *gorm.DB) {
 	OperationSectionRouter := OperationSectionRouter(operationSectionController)
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
+	OperationModelMappingRouter := OperationModelMappingRouter(operationModelMappingController)
 	MovingCodeRouter := MovingCodeRouter(MovingCodeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
@@ -232,7 +238,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/markup-master", markupMasterRouter)
 	r.Mount("/markup-rate", MarkupRateRouter)
 	r.Mount("/item-level", itemLevelRouter)
-	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
+	r.Mount("/item", itemRouter)
 	r.Mount("/item-substitute", ItemSubstituteRouter)
 	r.Mount("/item-location", ItemLocationRouter)
 	r.Mount("/item-package", itemPackageRouter)
@@ -250,6 +256,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-key", OperationKeyRouter)
 	r.Mount("/operation-entries", OperationEntriesRouter)
 	r.Mount("/operation-code", OperationCodeRouter)
+	r.Mount("/operation-model-mapping", OperationModelMappingRouter)
 	//r.Mount("/operation", OperationRouter)
 	//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
 	r.Mount("/warehouse-group", WarehouseGroupRouter)

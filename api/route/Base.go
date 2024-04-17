@@ -360,6 +360,33 @@ func OperationCodeRouter(
 	return router
 }
 
+func OperationModelMappingRouter(
+	operationModelMappingController masteroperationcontroller.OperationModelMappingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+
+	router.Get("/", operationModelMappingController.GetOperationModelMappingLookup)
+	router.Get("/operation-frt/{operation_model_mapping_id}", operationModelMappingController.GetAllOperationFrt)
+	router.Get("/operation-document-requirement/{operation_model_mapping_id}", operationModelMappingController.GetAllOperationDocumentRequirement)
+	router.Get("/by-id/{operation_model_mapping_id}", operationModelMappingController.GetOperationModelMappingById)
+	router.Get("/operation-frt/by-id/{operation_frt_id}", operationModelMappingController.GetOperationFrtById)
+	router.Get("/operation-document-requirement/by-id/{operation_document_requirement_id}", operationModelMappingController.GetOperationDocumentRequirementById)
+	router.Post("/", operationModelMappingController.SaveOperationModelMapping)
+	router.Post("/operation-frt", operationModelMappingController.SaveOperationModelMappingFrt)
+	router.Post("/operation-document-requirement", operationModelMappingController.SaveOperationModelMappingDocumentRequirement)
+	router.Patch("/{operation_model_mapping_id}", operationModelMappingController.ChangeStatusOperationModelMapping)
+	router.Patch("/operation-frt/activate/{operation_frt_id}", operationModelMappingController.ActivateOperationFrt)
+	router.Patch("/operation-frt/deactivate/{operation_frt_id}", operationModelMappingController.DeactivateOperationFrt)
+	router.Patch("/operation-document-requirement/deactivate/{operation_model_mapping_id}", operationModelMappingController.DeactivateOperationDocumentRequirement)
+	router.Patch("/operation-document-requirement/activate/{operation_model_mapping_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
+
+	return router
+}
+
 func WarehouseGroupRouter(
 	warehouseGroupController masterwarehousecontroller.WarehouseGroupController,
 ) chi.Router {
