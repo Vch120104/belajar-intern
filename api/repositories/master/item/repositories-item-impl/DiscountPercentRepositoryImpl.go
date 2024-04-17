@@ -55,14 +55,27 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
 
+	// Execute the query
+	rows, err := whereQuery.Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
+	}
+	defer rows.Close()
+
+	// Scan the results into the responses slice
+	for rows.Next() {
+		var response masteritempayloads.DiscountPercentListResponse
+		if err := rows.Scan(&response.IsActive, &response.DiscountPercentId, &response.DiscountCodeId, &response.DiscountCodeValue, &response.DiscountCodeDescription, &response.OrderTypeId, &response.Discount); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		responses = append(responses, response)
 	}
 
 	if len(responses) == 0 {
@@ -72,12 +85,9 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 		}
 	}
 
-	defer rows.Close()
-
+	// Fetch order type data
 	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
-
 	errUrlDiscountPercent := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
-
 	if errUrlDiscountPercent != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -85,8 +95,10 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 		}
 	}
 
+	// Perform inner join with order type data
 	joinedData := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
 
+	// Paginate the joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil

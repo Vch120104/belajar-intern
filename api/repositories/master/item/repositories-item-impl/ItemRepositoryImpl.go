@@ -24,23 +24,32 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 
 func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
 	var responses []masteritempayloads.ItemLookup
-	tableStruct := masteritempayloads.ItemLookup{}
 
 	// Create the base query
 	baseQuery := tx.Model(&masteritempayloads.ItemLookup{})
 
 	// Apply joins
-	joinTable := utils.NewCreateJoinSelectStatement(baseQuery, tableStruct)
+	baseQuery = baseQuery.
+		Joins("JOIN mtr_item_class ON mtr_item.item_class_id = mtr_item_class.item_class_id")
 
 	// Apply filters
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(baseQuery, filterCondition)
 
-	// Scan the results into responses
-	rows, err := whereQuery.Scan(&responses).Rows()
+	// Execute the query
+	rows, err := whereQuery.Rows()
 	if err != nil {
 		return responses, err
 	}
 	defer rows.Close()
+
+	// Scan the results into responses
+	for rows.Next() {
+		var response masteritempayloads.ItemLookup
+		if err := rows.Scan(&response); err != nil {
+			return responses, err
+		}
+		responses = append(responses, response)
+	}
 
 	// Check if any records were found
 	if len(responses) == 0 {

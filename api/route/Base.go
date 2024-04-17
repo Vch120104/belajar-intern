@@ -437,7 +437,7 @@ func ForecastMasterRouter(
 	router.Use(middleware.Recoverer)
 
 	router.Get("/", forecastMasterController.GetAllForecastMaster)
-	router.Get("/by-id/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
+	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
 	router.Post("/", forecastMasterController.SaveForecastMaster)
 	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
 

@@ -88,9 +88,9 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	keyAttribute := []string{}
 	responseType := reflect.TypeOf(tableStruct)
 	joinTable := []string{}
-	var joinTableId []string
+	var joinTableIds []string
 	var mainTable string
-	referenceTable := []string{}
+	referenceTable := map[string]bool{} // Use map to store unique referenced tables
 
 	// Define primary table
 	for i := 0; i < responseType.NumField(); i++ {
@@ -102,16 +102,17 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 
 	// Define join reference tables
 	for i := 0; i < responseType.NumField(); i++ {
-		if responseType.Field(i).Tag.Get("references") != "" {
-			referenceTable = append(referenceTable, responseType.Field(i).Tag.Get("references"))
+		ref := responseType.Field(i).Tag.Get("references")
+		if ref != "" {
+			referenceTable[ref] = true // Store unique referenced tables in the map
 		}
 	}
 
 	// Define select from table and join table id
 	for i := 0; i < responseType.NumField(); i++ {
-		for _, value := range referenceTable {
-			if value == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "id") {
-				joinTableId = append(joinTableId, responseType.Field(i).Tag.Get("json"))
+		for ref := range referenceTable {
+			if ref == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "id") {
+				joinTableIds = append(joinTableIds, responseType.Field(i).Tag.Get("json"))
 			}
 		}
 		keyAttribute = append(keyAttribute, responseType.Field(i).Tag.Get("parent_entity")+"."+responseType.Field(i).Tag.Get("json"))
@@ -121,11 +122,10 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	query := db.Table(mainTable).Select(keyAttribute)
 
 	// Join Tables
-	if len(joinTableId) > 0 {
-		for i := 0; i < len(referenceTable); i++ {
-			id := joinTableId[i]
-			reference := referenceTable[i] // Fix typo in variable name
-			joinTable = append(joinTable, "join "+reference+" as "+reference+" on "+mainTable+"."+id+" = "+reference+"."+id)
+	if len(joinTableIds) > 0 {
+		for ref := range referenceTable {
+			joinCondition := "join " + ref + " as " + ref + " on " + mainTable + "." + joinTableIds[0] + " = " + ref + "." + joinTableIds[0]
+			joinTable = append(joinTable, joinCondition)
 		}
 		query = query.Joins(strings.Join(joinTable, " "))
 	} else {

@@ -99,95 +99,89 @@ func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, I
 }
 
 func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	var responses []masterpayloads.ForecastMasterListResponse
-	var getSupplierResponse []masterpayloads.SupplierResponse
-	var getOrderTypeResponse []masterpayloads.OrderTypeResponse
+	// Define variables
+	var (
+		responses             []masterpayloads.ForecastMasterListResponse
+		getSupplierResponse   []masterpayloads.SupplierResponse
+		getOrderTypeResponse  []masterpayloads.OrderTypeResponse
+		internalServiceFilter []utils.FilterCondition
+		supplierName          string
+		orderTypeName         string
+		responseStruct        = reflect.TypeOf(masterpayloads.ForecastMasterListResponse{})
+	)
 
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var supplierName string
-	var orderTypeName string
-	responseStruct := reflect.TypeOf(masterpayloads.ForecastMasterListResponse{})
-
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
+	// Apply internal and external service filters
+	for _, fc := range filterCondition {
+		var flag bool
 		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
+			if fc.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, fc)
 				flag = true
 				break
 			}
 		}
 		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
+			if strings.Contains(fc.ColumnField, "supplier_name") {
+				supplierName = fc.ColumnValue
+			} else {
+				orderTypeName = fc.ColumnValue
+			}
 		}
 	}
 
-	//apply external services filter
-
-	for i := 0; i < len(externalServiceFilter); i++ {
-		if strings.Contains(externalServiceFilter[i].ColumnField, "supplier_name") {
-			supplierName = externalServiceFilter[i].ColumnValue
-		} else {
-			orderTypeName = externalServiceFilter[i].ColumnValue
-		}
-	}
-	// define table struct
+	// Define table struct
 	tableStruct := masterpayloads.ForecastMasterListResponse{}
-	//define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
 
-	if err != nil {
+	// Create join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply internal service filter
+	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+
+	// Execute query
+	if err := whereQuery.Scan(&responses).Error; err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
+	// Check if no records found
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        gorm.ErrRecordNotFound,
 		}
 	}
 
+	// Handle supplier and order type filters
 	if supplierName != "" || orderTypeName != "" {
-		supplierUrl := "http://10.1.32.26:8000/general-service/api/general/filter-supplier-master?supplier_name=" + supplierName
-
-		errUrlSupplier := utils.Get(supplierUrl, &getSupplierResponse, nil)
-
-		if errUrlSupplier != nil {
+		supplierURL := "http://10.1.32.26:8000/general-service/api/general/filter-supplier-master?supplier_name=" + supplierName
+		if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errUrlSupplier,
+				Err:        err,
 			}
 		}
 
 		joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
 
-		orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
-
-		errUrlOrderType := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
-
-		if errUrlOrderType != nil {
+		orderTypeURL := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
+		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errUrlOrderType,
+				Err:        err,
 			}
 		}
 
-		joinedData2 := utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
-		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
-		return dataPaginate, totalPages, totalRows, nil
+		joinedData = utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
 
+		// Paginate data
+		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+		return dataPaginate, totalPages, totalRows, nil
 	}
 
+	// Paginate data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 	return dataPaginate, totalPages, totalRows, nil
-
 }
