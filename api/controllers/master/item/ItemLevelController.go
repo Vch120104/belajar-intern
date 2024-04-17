@@ -53,7 +53,7 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Param item_level_code query string false "Item Level Code"
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/item-level [get]
 func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -98,7 +98,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/item-level-by-id [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
@@ -122,7 +122,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Security BearerAuth
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/item-level [post]
 func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
@@ -164,7 +164,7 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 

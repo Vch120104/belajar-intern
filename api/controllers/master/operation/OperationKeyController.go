@@ -48,7 +48,7 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key [get]
 func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request) {
 
@@ -84,7 +84,7 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Tags Master : Operation Key
 // @Param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [get]
 func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request) {
 	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
@@ -102,7 +102,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWri
 // @Param operation_section_id query int true "operation_section_id"
 // @Param operation_key_code query string true "operation_key_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key-name [get]
 func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
@@ -127,7 +127,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 // @Tags Master : Operation Key
 // @param reqBody body masteroperationpayloads.OperationKeyResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key [post]
 func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter, request *http.Request) {
 	var requestForm masteroperationpayloads.OperationKeyResponse
@@ -153,7 +153,7 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 // @Tags Master : Operation Key
 // @param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [patch]
 func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request) {
 	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))

@@ -37,7 +37,7 @@ func NewMovingCodeController(MovingCodeService masterservice.MovingCodeService) 
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/moving-code [get]
 func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -61,7 +61,7 @@ func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, 
 // @Tags Master : Moving Code
 // @param reqBody body masterpayloads.MovingCodeResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/moving-code [post]
 func (r *MovingCodeControllerImpl) SaveMovingCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.MovingCodeRequest
@@ -86,7 +86,7 @@ func (r *MovingCodeControllerImpl) SaveMovingCode(writer http.ResponseWriter, re
 // @Tags Master : Moving Code
 // @param moving_code_id path int true "moving_code_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/moving-code/priority-increase/{moving_code_id} [patch]
 func (r *MovingCodeControllerImpl) ChangePriorityMovingCode(writer http.ResponseWriter, request *http.Request) {
 
@@ -104,7 +104,7 @@ func (r *MovingCodeControllerImpl) ChangePriorityMovingCode(writer http.Response
 // @Tags Master : Moving Code
 // @param moving_code_id path int true "moving_code_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/moving-code/activation/{moving_code_id} [patch]
 func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
 

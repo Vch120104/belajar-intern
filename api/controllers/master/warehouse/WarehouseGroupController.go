@@ -49,7 +49,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Param warehouse_group_name query string false "Warehouse Group Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/warehouse-group [get]
 func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -84,7 +84,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Security BearerAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [get]
 func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -106,7 +106,7 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 // @Security BearerAuth
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/warehouse-group [post]
 func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -137,7 +137,7 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Security BearerAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [patch]
 func (r *WarehouseGroupControllerImpl) ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 

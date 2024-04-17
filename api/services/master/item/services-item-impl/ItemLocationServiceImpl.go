@@ -29,7 +29,7 @@ func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.Fil
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocation(tx, filterCondition, pages)
 	if err != nil {
-		return results, 0, 0, err
+		return results, totalPages, totalRows, err
 	}
 	return results, totalPages, totalRows, nil
 }

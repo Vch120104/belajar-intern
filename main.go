@@ -7,6 +7,12 @@ import (
 	"os"
 )
 
+// @title DMS-Aftersales Service
+// @version 1.0
+// @description Your API Description
+// @host localhost:8000
+// @BasePath /
+// @schemes http
 func main() {
 	args := os.Args
 	env := ""
@@ -33,6 +39,5 @@ func main() {
 		route.StartRouting(db)
 		// redis := config.InitRedis()
 		// route.CreateHandler(db, env, redis)
-		migration.MigrateGG()
 	}
 }

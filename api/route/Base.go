@@ -6,6 +6,7 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/middlewares"
+	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -143,9 +144,12 @@ func ItemLocationRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
-
+	//master
 	router.Get("/", ItemLocationController.GetAllItemLocation)
 	router.Post("/", ItemLocationController.SaveItemLocation)
+
+	//detail
+	//router.Get("/{item_location_id}/detail", ItemLocationController.GetAllItemLocationDetail)
 
 	return router
 }
@@ -610,18 +614,31 @@ func DeductionRouter(
 	return router
 }
 
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
+func swaggerIndexHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./public/index.html")
+}
 
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
+func SwaggerRouter() chi.Router {
+	router := chi.NewRouter()
 
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }
+	// Use middleware
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+
+	// Serve Swagger UI index.html
+	router.Get("/swagger/index.html", swaggerIndexHandler)
+	router.Get("/swagger/", swaggerIndexHandler)
+
+	// Serve static files
+	fileServer := http.StripPrefix("/swagger/", http.FileServer(http.Dir("./public")))
+	router.Get("/swagger/*", func(w http.ResponseWriter, r *http.Request) {
+		fileServer.ServeHTTP(w, r)
+	})
+
+	// Serve Swagger JSON
+	router.Get("/docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./docs/swagger.json")
+	})
+
+	return router
+}

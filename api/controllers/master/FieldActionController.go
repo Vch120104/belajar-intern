@@ -62,7 +62,7 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/field-action [get]
 func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter, request *http.Request) {
 
@@ -95,7 +95,7 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 // @Tags Master : Field Action
 // @Param reqBody body masterpayloads.FieldActionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/field-action [post]
 func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, request *http.Request) {
 
@@ -121,7 +121,7 @@ func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, 
 // @Tags Master : Field Action
 // @Param field_action_system_number path int true "field_action_system_number"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/field-action/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request) {
 	FieldActionIdStr := chi.URLParam(request, "field_action_system_number")
@@ -146,7 +146,7 @@ func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.Respons
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/field-action/vehicle/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -178,7 +178,7 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer ht
 // @Tags Master : Item Substitute
 // @Param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/item-substitute/detail/by-id/{item_substitute_id} [get]
 func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
 	FieldActionVehicleDetailIdStr := chi.URLParam(request, "field_action_eligible_vehicle_system_number")

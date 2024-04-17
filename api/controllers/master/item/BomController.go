@@ -54,8 +54,8 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /bom [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router / [get]
 func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -96,7 +96,7 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 // @Tags Master : Bom Master
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /{bom_master_id} [get]
 func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request) {
 
@@ -117,7 +117,7 @@ func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request
 // @Tags Master : Bom Master
 // @param reqBody body masteritempayloads.BomMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router / [put]
 func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -146,7 +146,7 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @Tags Master : Bom Master
 // @param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /{bom_master_id} [patch]
 func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -172,8 +172,8 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /bom/all/detail [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /all/detail [get]
 func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -214,7 +214,7 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 // @Tags Master : Bom Detail
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /{bom_master_id}/detail [get]
 func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request) {
 
@@ -235,7 +235,7 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 // @Tags Master : Bom Detail
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /{bom_master_id}/detail [get]
 func (r *BomControllerImpl) GetBomDetailByIds(writer http.ResponseWriter, request *http.Request) {
 
@@ -261,7 +261,7 @@ func (r *BomControllerImpl) GetBomDetailByIds(writer http.ResponseWriter, reques
 // @Tags Master : Bom Detail
 // @param reqBody body masteritempayloads.BomDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /{bom_detail_id}/detail [put]
 func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *http.Request) {
 
@@ -300,7 +300,7 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /{bom_master_id}/popup-item [get]
 func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()

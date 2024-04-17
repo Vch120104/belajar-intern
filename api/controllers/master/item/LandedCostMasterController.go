@@ -43,8 +43,8 @@ func NewLandedCostMasterController(LandedCostService masteritemservice.LandedCos
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/landed-cost-master [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router / [get]
 func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -73,8 +73,8 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 // @Tags Master : Landed Cost Master
 // @Param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/landed-cost-master/{landed_cost_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /{landed_cost_id} [get]
 func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseWriter, request *http.Request) {
 	LandedCostIdstr := chi.URLParam(request, "landed_cost_id")
 
@@ -92,8 +92,8 @@ func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseW
 // @Tags Master : Landed Cost Master
 // @param reqBody body masteritempayloads.LandedCostMasterPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/landed-cost-master/ [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router / [post]
 func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.LandedCostMasterPayloads
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -117,8 +117,8 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 // @Tags Master : Landed Cost Master
 // @param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/landed-cost-master/activate/[patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /  [patch]
 func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("landed_cost_id")
@@ -133,8 +133,8 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 // @Tags Master : Landed Cost Master
 // @param landed_cost_id path int true "landed_cost_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/landed-cost-master/deactivate/by-id/ [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /by-id/ [patch]
 func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("landed_cost_id")

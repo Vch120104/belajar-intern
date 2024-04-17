@@ -36,11 +36,27 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Execute query
-	if err := whereQuery.Find(&responses).Error; err != nil {
+	rows, err := whereQuery.Rows()
+	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
 		}
 		return nil, err
+	}
+	defer rows.Close()
+
+	// Iterate over rows and scan into responses
+	for rows.Next() {
+		var item masteritempayloads.ItemLookup
+		if err := tx.ScanRows(rows, &item); err != nil {
+			return nil, err
+		}
+		responses = append(responses, item)
+	}
+
+	// Check if no records found
+	if len(responses) == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return responses, nil
