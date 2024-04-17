@@ -126,7 +126,7 @@ func ItemRouter(
 	router.Use(middleware.Recoverer)
 
 	router.Get("/", itemController.GetAllItem)
-	router.Get("/pop-up/", itemController.GetAllItemLookup)
+	router.Get("/pop-up", itemController.GetAllItemLookup)
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Post("/", itemController.SaveItem)
