@@ -29,8 +29,9 @@ type ErrorResponse struct {
 
 // NewHandleError creates and returns a new error response
 func NewHandleError(writer http.ResponseWriter, errorMessage string, statusCode int) {
-	response := ErrorResponse{
-		Error: errorMessage,
+	response := Response{
+		StatusCode: statusCode,
+		Message:    errorMessage,
 	}
 
 	writer.Header().Set("Content-Type", "application/json")

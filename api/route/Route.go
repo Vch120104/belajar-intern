@@ -55,6 +55,11 @@ func StartRouting(db *gorm.DB) {
 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db)
 	itemClassController := masteritemcontroller.NewItemClassController(itemClassService)
 
+	// Item Location
+	ItemLocationRepository := masteritemrepositoryimpl.StartItemLocationRepositoryImpl()
+	ItemLocationService := masteritemserviceimpl.StartItemLocationService(ItemLocationRepository, db)
+	ItemLocationController := masteritemcontroller.NewItemLocationController(ItemLocationService)
+
 	// Item Substitute
 	itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
 	itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db)
@@ -204,6 +209,7 @@ func StartRouting(db *gorm.DB) {
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
 	ItemSubstituteRouter := ItemSubstituteRouter(itemSubstituteController)
+	ItemLocationRouter := ItemLocationRouter(ItemLocationController)
 	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
@@ -228,7 +234,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/item-level", itemLevelRouter)
 	r.Mount("/item", itemRouter) //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
-	//r.Mount("/item-location", ItemLocationRouter)
+	r.Mount("/item-location", ItemLocationRouter)
 	r.Mount("/item-package", itemPackageRouter)
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound masih error
 	r.Mount("/price-list", priceListRouter)

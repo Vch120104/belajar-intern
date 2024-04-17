@@ -50,8 +50,8 @@ func (r *SkillLevelRepositoryImpl) GetAllSkillLevel(tx *gorm.DB, filterCondition
 }
 
 func (r *SkillLevelRepositoryImpl) GetSkillLevelById(tx *gorm.DB, Id int) (masterpayloads.SkillLevelResponse, *exceptionsss_test.BaseErrorResponse) {
-	var entities masterentities.SkillLevel
-	var response masterpayloads.SkillLevelResponse
+	entities := masterentities.SkillLevel{}
+	response := masterpayloads.SkillLevelResponse{}
 
 	rows, err := tx.Model(&entities).
 		Where(masterentities.SkillLevel{
@@ -98,9 +98,9 @@ func (r *SkillLevelRepositoryImpl) GetSkillLevelByCode(tx *gorm.DB, Code string)
 func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.SkillLevel{
 		IsActive:              req.IsActive,
-		SkillLevelId:          req.SkillLevelCodeId,
-		SkillLevelCode:        req.SkillLevelCodeValue,
-		SkillLevelDescription: req.SkillLevelCodeDescription,
+		SkillLevelId:          req.SkillLevelId,
+		SkillLevelCode:        req.SkillLevelCode,
+		SkillLevelDescription: req.SkillLevelDescription,
 	}
 
 	err := tx.Save(&entities).Error

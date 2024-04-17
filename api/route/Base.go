@@ -135,6 +135,21 @@ func ItemRouter(
 	return router
 }
 
+func ItemLocationRouter(
+	ItemLocationController masteritemcontroller.ItemLocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+
+	router.Get("/", ItemLocationController.GetAllItemLocation)
+	router.Post("/", ItemLocationController.SaveItemLocation)
+
+	return router
+}
+
 func ItemSubstituteRouter(
 	itemSubstituteController masteritemcontroller.ItemSubstituteController,
 ) chi.Router {
@@ -222,12 +237,12 @@ func BomRouter(
 	//bom detail
 	router.Get("/all/detail", BomController.GetBomDetailList)
 	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
+	router.Get("/all/detail/{bom_detail_id}", BomController.GetBomDetailByIds)
 	router.Post("/all/detail", BomController.SaveBomDetail)
-	//router.Put("/all/detail", BomController.SubmitBomDetail)
-	//router.Delete("/{bom_detail_id}/detail", BomController.SaveBomDetail)
+	router.Delete("/all/detail/{bom_detail_id}", BomController.DeleteBomDetail)
 
 	//bom lookup
-	router.Get("/{bom_master_id}/popup-item", BomController.GetBomItemList)
+	router.Get("/popup-item", BomController.GetBomItemList)
 
 	return router
 }
@@ -439,9 +454,9 @@ func SkillLevelRouter(
 	router.Use(middleware.Recoverer)
 
 	router.Get("/", SkillLevelController.GetAllSkillLevel)
+	router.Get("/{skill_level_id}", SkillLevelController.GetSkillLevelById)
 	router.Post("/", SkillLevelController.SaveSkillLevel)
-	router.Get("/by-id/{shift_schedule_id}", SkillLevelController.GetSkillLevelById)
-	router.Patch("/{shift_schedule_id}", SkillLevelController.ChangeStatusSkillLevel)
+	router.Patch("/{skill_level_id}", SkillLevelController.ChangeStatusSkillLevel)
 
 	return router
 }

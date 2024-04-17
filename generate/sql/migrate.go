@@ -74,7 +74,10 @@ func Migrate() {
 		// &masteritementities.PrincipleBrandParent{},
 		// &masteritementities.UomType{},
 		// &masteritementities.Item{},
-		&masteritementities.PriceList{},
+		// &masteritementities.PriceList{},
+		&masteritementities.ItemLocationDetail{},
+		&masteritementities.ItemLocation{},
+
 		// &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},

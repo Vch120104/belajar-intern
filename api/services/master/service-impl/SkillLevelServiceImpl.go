@@ -67,8 +67,8 @@ func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResp
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	if req.SkillLevelCodeId != 0 {
-		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelCodeId)
+	if req.SkillLevelId != 0 {
+		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
 
 		if err != nil {
 			return false, err

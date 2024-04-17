@@ -13,7 +13,6 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -80,18 +79,15 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 }
 
 func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter, request *http.Request) {
-	SkillLevelId, errr := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
-	if errr != nil {
-		fmt.Print(errr)
-		return
-	}
-	SkillLevelResponse, errors := r.SkillLevelService.GetSkillLevelById(int(SkillLevelId))
+	skillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
-	if errors != nil {
-		helper_test.ReturnError(writer, request, errors)
+	result, err := r.SkillLevelService.GetSkillLevelById(skillLevelId)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, SkillLevelResponse, utils.GetDataSuccess, http.StatusOK)
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Skill Level
@@ -105,27 +101,28 @@ func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter,
 // @Router /skill-level [post]
 func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, request *http.Request) {
 
-	var requestForm masterpayloads.SkillLevelResponse
+	var formRequest masterpayloads.SkillLevelResponse
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message string
 
-	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
 	if err != nil {
 		exceptionsss_test.NewEntityException(writer, request, err)
 		return
 	}
-	err = validation.ValidationForm(writer, request, requestForm)
+	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
 		exceptionsss_test.NewBadRequestException(writer, request, err)
 		return
 	}
 
-	create, err := r.SkillLevelService.SaveSkillLevel(requestForm)
+	create, err := r.SkillLevelService.SaveSkillLevel(formRequest)
+
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return
 	}
 
-	if requestForm.SkillLevelCodeId == 0 {
+	if formRequest.SkillLevelId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
