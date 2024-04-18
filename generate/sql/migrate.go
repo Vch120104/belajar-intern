@@ -119,6 +119,8 @@ func Migrate() {
 	// &masteroperationentities.OperationCode{},
 	// &masteroperationentities.OperationModelMapping{},
 	// &masteroperationentities.OperationFrt{},
+	// &masteroperationentities.LabourSellingPrice{},
+	// &masteroperationentities.LabourSellingPriceDetail{},
 
 	//&masteritementities.MarkupMaster{},
 	//&masteritementities.DiscountPercent{},

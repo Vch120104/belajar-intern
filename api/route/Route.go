@@ -170,6 +170,12 @@ func StartRouting(db *gorm.DB) {
 	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db)
 	SkillLevelController := mastercontroller.NewSkillLevelController(SkillLevelService)
 
+	// Labour Selling Price
+	LabourSellingPriceRepository := masteroperationrepositoryimpl.StartLabourSellingPriceRepositoryImpl()
+	LabourSellingPriceService := masteroperationserviceimpl.StartLabourSellingPriceService(LabourSellingPriceRepository, db)
+	LabourSellingPriceController := masteroperationcontroller.NewLabourSellingPriceController(LabourSellingPriceService)
+	LabourSellingPriceDetailController := masteroperationcontroller.NewLabourSellingPriceDetailController(LabourSellingPriceService)
+
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -200,6 +206,8 @@ func StartRouting(db *gorm.DB) {
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
+	LabourSellingPriceRouter := LabourSellingPriceRouter(LabourSellingPriceController)
+	LabourSellingPriceDetailRouter := LabourSellingPriceDetailRouter(LabourSellingPriceDetailController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
@@ -224,6 +232,8 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-section", OperationSectionRouter)
 	r.Mount("/operation-key", OperationKeyRouter)
 	r.Mount("/operation-entries", OperationEntriesRouter)
+	r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+	r.Mount("/labour-selling-price-detail", LabourSellingPriceDetailRouter)
 
 	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
 	r.Mount("/discount", DiscountRouter)

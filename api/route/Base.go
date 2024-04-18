@@ -454,6 +454,34 @@ func BomRouter(
 	return router
 }
 
+func LabourSellingPriceRouter(
+	LabourSellingPriceController masteroperationcontroller.LabourSellingPriceController,
+) chi.Router {
+	router := chi.NewRouter()
+	// router.Get("/", LabourSellingPriceController.GetAllLabourSellingPrice)
+	// router.Get("/{skill_level_id}", LabourSellingPriceController.GetLabourSellingPriceByID)
+	router.Post("/", LabourSellingPriceController.SaveLabourSellingPrice)
+	// router.Patch("/{skill_level_id}", LabourSellingPriceController.ChangeStatusLabourSellingPrice)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func LabourSellingPriceDetailRouter(
+	LabourSellingPriceDetailController masteroperationcontroller.LabourSellingPriceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+	// router.Get("/", LabourSellingPriceController.GetAllLabourSellingPrice)
+	// router.Get("/{skill_level_id}", LabourSellingPriceController.GetLabourSellingPriceByID)
+	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
+	// router.Patch("/{skill_level_id}", LabourSellingPriceController.ChangeStatusLabourSellingPrice)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()
 // 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
