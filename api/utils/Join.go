@@ -100,6 +100,11 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 		}
 	}
 
+	if mainTable == "" {
+		fmt.Println("Please specify main_table in the struct tags")
+		return nil
+	}
+
 	// Define join reference tables
 	for i := 0; i < responseType.NumField(); i++ {
 		ref := responseType.Field(i).Tag.Get("references")
@@ -129,7 +134,7 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 		}
 		query = query.Joins(strings.Join(joinTable, " "))
 	} else {
-		fmt.Print("Please troubleshoot tableStruct")
+		fmt.Println("No join tables found")
 	}
 
 	return query

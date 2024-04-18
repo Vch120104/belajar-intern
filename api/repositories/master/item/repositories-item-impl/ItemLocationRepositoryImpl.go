@@ -2,14 +2,15 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -23,61 +24,85 @@ func StartItemLocationRepositoryImpl() masteritemrepository.ItemLocationReposito
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	var responses []masteritempayloads.ItemLocationResponse
+	var responses []masteritempayloads.ItemLocationRequest
+	var getWarehouseGroupResponse masteritempayloads.ItemLocWarehouseGroupResponse
+	var getItemResponse []masteritempayloads.ItemLocResponse
 	var internalServiceFilter []utils.FilterCondition
+	var warehouseGroupId int
+
 	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationResponse{})
 
-	// Loop through filterCondition to separate internal service filters
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
+	// Filter internal service conditions
+	for _, condition := range filterCondition {
 		for j := 0; j < responseStruct.NumField(); j++ {
-			// Check if the filter condition matches the parent_entity.json format
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
+			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, condition)
 				break
-			}
-		}
-		if !flag {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        errors.New("invalid filter condition"),
 			}
 		}
 	}
 
-	// Define table struct
-	tableStruct := masteritempayloads.ItemLocationResponse{}
-
-	// Define join table
+	// Apply internal service filter conditions
+	tableStruct := masteritempayloads.ItemLocationRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	// Apply filter
 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
 
-	// Execute and scan query
-	rows, err := whereQuery.Scan(&responses).Rows()
+	// Fetch data from database
+	err := whereQuery.Scan(&responses).Error
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// Paginate data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+	// Check if responses are empty
+	if len(responses) == 0 {
+		notFoundErr := exceptions.NewNotFoundError("No data found")
+		panic(notFoundErr)
+	}
+
+	// Extract warehouse group ID from the first response
+	warehouseGroupId = responses[0].WarehouseGroupId
+
+	// Fetch warehouse group data from external service
+	warehouseGroupUrl := "http://localhost:8000/warehouse-group/by-id/" + strconv.Itoa(warehouseGroupId)
+	err = utils.Get(warehouseGroupUrl, &getWarehouseGroupResponse, nil)
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Fetch item data from external service
+	itemIds := make([]string, len(responses))
+	for i, resp := range responses {
+		itemIds[i] = strconv.Itoa(resp.ItemId)
+	}
+	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
+	err = utils.Get(itemUrl, &getItemResponse, nil)
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Perform inner join between item location responses, warehouse group response, and item response
+	joinedData := utils.DataFrameInnerJoin(responses, []masteritempayloads.ItemLocWarehouseGroupResponse{getWarehouseGroupResponse}, "WarehouseGroupId")
+	joinedData = utils.DataFrameInnerJoin(joinedData, getItemResponse, "ItemId")
+
+	// Paginate the joined data
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
 
 func (r *ItemLocationRepositoryImpl) SaveItemLocation(tx *gorm.DB, request masteritempayloads.ItemLocationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.ItemLocation{
-		WarehouseGroupId:   request.WarehouseGroupId,
-		WarehouseGroupCode: request.WarehouseGroupCode,
-		ItemId:             request.ItemId,
-		ItemCode:           request.ItemCode,
-		ItemName:           request.ItemName,
+		WarehouseGroupId: request.WarehouseGroupId,
+		ItemId:           request.ItemId,
 	}
 
 	err := tx.Save(&entities).Error
