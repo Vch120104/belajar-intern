@@ -45,6 +45,11 @@ func StartRouting(db *gorm.DB) {
 	itemService := masteritemserviceimpl.StartItemService(itemRepository, db)
 	itemController := masteritemcontroller.NewItemController(itemService)
 
+	// Item Model Mapping
+	itemModelMappingRepository := masteritemrepositoryimpl.StartItemModelMappingRepositoryImpl()
+	itemModelMappingService := masteritemserviceimpl.StartItemModelMappingService(itemModelMappingRepository, db)
+	itemModelMappingController := masteritemcontroller.NewItemModelMappingController(itemModelMappingService)
+
 	// PriceList
 	priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl()
 	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db)
@@ -168,6 +173,7 @@ func StartRouting(db *gorm.DB) {
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
+	itemModelMappingRouter := ItemModelMappingRouter(itemModelMappingController)
 	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	IncentiveGroupRouter := IncentiveGroupRouter(IncentiveGroupController)
@@ -210,7 +216,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
 	r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 	r.Mount("/item-substitute", ItemSubstituteRouter)
-
+	r.Mount("/item-model-mapping", itemModelMappingRouter)
 	r.Mount("/incentive-group", IncentiveGroupRouter)
 	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter) //method notalowed
 

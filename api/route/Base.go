@@ -195,6 +195,19 @@ func ItemPackageDetailRouter(
 	return router
 }
 
+func ItemModelMappingRouter(
+	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", ItemModelMappingController.CreateItemModelMapping)
+	router.Get("/{item_id}", ItemModelMappingController.GetItemModelMappingByItemId)
+	router.Patch("/{item_detail_id}", ItemModelMappingController.UpdateItemModelMapping)
+	//router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
 ) chi.Router {
