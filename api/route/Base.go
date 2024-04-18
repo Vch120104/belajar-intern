@@ -144,12 +144,15 @@ func ItemLocationRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+
 	//master
 	router.Get("/", ItemLocationController.GetAllItemLocation)
 	router.Post("/", ItemLocationController.SaveItemLocation)
+	router.Get("/{item_location_id}", ItemLocationController.GetItemLocationById)
 
 	//detail
-	//router.Get("/{item_location_id}/detail", ItemLocationController.GetAllItemLocationDetail)
+	router.Get("/all/detail", ItemLocationController.GetAllItemLocationDetail)
+	router.Get("/popup-location", ItemLocationController.PopupItemLocation)
 
 	return router
 }

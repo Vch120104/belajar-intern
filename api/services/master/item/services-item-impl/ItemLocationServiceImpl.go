@@ -43,3 +43,33 @@ func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLo
 	}
 	return results, nil
 }
+
+func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.ItemLocationRepo.GetItemLocationById(tx, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocationDetail(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.ItemLocationRepo.PopupItemLocation(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}

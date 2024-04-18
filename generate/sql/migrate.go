@@ -75,8 +75,9 @@ func Migrate() {
 		// &masteritementities.UomType{},
 		// &masteritementities.Item{},
 		// &masteritementities.PriceList{},
-		&masteritementities.ItemLocationDetail{},
-		&masteritementities.ItemLocation{},
+		&masteritementities.ItemLocationSource{},
+		//&masteritementities.ItemLocationDetail{},
+		//&masteritementities.ItemLocation{},
 
 		// &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},

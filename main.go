@@ -36,8 +36,8 @@ func main() {
 		config.InitEnvConfigs(false, env)
 		db := config.InitDB()
 		config.InitLogger(db)
+		config.InitRedis()
 		route.StartRouting(db)
-		// redis := config.InitRedis()
-		// route.CreateHandler(db, env, redis)
+
 	}
 }

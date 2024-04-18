@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -123,4 +124,112 @@ func (r *ItemLocationRepositoryImpl) SaveItemLocation(tx *gorm.DB, request maste
 	}
 
 	return true, nil
+}
+
+func (r *ItemLocationRepositoryImpl) GetItemLocationById(tx *gorm.DB, Id int) (masteritempayloads.ItemLocationRequest, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteritementities.ItemLocation{}
+	response := masteritempayloads.ItemLocationRequest{}
+
+	err := tx.Model(&entities).
+		Where(masteritementities.ItemLocation{
+			ItemLocationId: Id,
+		}).
+		First(&response).
+		Error
+
+	if err != nil {
+		return masteritempayloads.ItemLocationRequest{}, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("data not found"),
+		}
+	}
+
+	return response, nil
+}
+
+func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	var responses []masteritempayloads.ItemLocationDetailResponse
+	var getItemResponse []masteritempayloads.ItemLocResponse
+	var internalServiceFilter []utils.FilterCondition
+
+	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationDetailResponse{})
+
+	// Filter internal service conditions
+	for _, condition := range filterCondition {
+		for j := 0; j < responseStruct.NumField(); j++ {
+			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, condition)
+				break
+			}
+		}
+	}
+
+	// Apply internal service filter conditions
+	tableStruct := masteritempayloads.ItemLocationDetailRequest{}
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+
+	// Fetch data from database
+	err := whereQuery.Scan(&responses).Error
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Check if responses are empty
+	if len(responses) == 0 {
+		notFoundErr := exceptions.NewNotFoundError("No data found")
+		panic(notFoundErr)
+	}
+
+	// Fetch item data from external service
+	itemIds := make([]string, len(responses))
+	for i, resp := range responses {
+		itemIds[i] = strconv.Itoa(resp.ItemId)
+	}
+	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
+	err = utils.Get(itemUrl, &getItemResponse, nil)
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Perform inner join between item location responses, warehouse group response, and item response
+	joinedData := utils.DataFrameInnerJoin(responses, getItemResponse, "ItemId")
+
+	// Paginate the joined data
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+
+	return dataPaginate, totalPages, totalRows, nil
+}
+
+func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	var responses []masteritempayloads.ItemLocSourceResponse
+
+	// Fetch data from database with joins and conditions
+	err := tx.Table("mtr_item_location_source").Where(filterCondition).Find(&responses).Error
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Check if responses are empty
+	if len(responses) == 0 {
+		notFoundErr := exceptions.NewNotFoundError("No data found")
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        notFoundErr,
+		}
+	}
+
+	// Perform pagination
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+
+	return dataPaginate, totalPages, totalRows, nil
 }
