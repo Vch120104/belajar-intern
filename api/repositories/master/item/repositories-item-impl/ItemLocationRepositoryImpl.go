@@ -41,7 +41,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 		if !flag {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Err:        errors.New("Invalid filter condition"),
+				Err:        errors.New("invalid filter condition"),
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
@@ -26,7 +27,14 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB)
 func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition) []masteritempayloads.ItemLookup {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetAllItem(tx, filterCondition)
+	// Definisikan parameter pagination
+	paginate := pagination.Pagination{
+		Limit: 10, // Sesuaikan dengan nilai limit yang diinginkan
+		Page:  1,  // Sesuaikan dengan halaman yang diinginkan
+	}
+
+	// Panggil metode GetAllItem dari repository dengan argumen yang sesuai
+	results, _, err := s.itemRepo.GetAllItem(tx, filterCondition, paginate)
 	if err != nil {
 		panic(exceptions.NewNotFoundError(err.Error()))
 	}

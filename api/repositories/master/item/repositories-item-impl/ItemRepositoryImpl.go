@@ -3,6 +3,7 @@ package masteritemrepositoryimpl
 import (
 	masteritementities "after-sales/api/entities/master/item"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
@@ -23,25 +24,35 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, paginate pagination.Pagination) ([]masteritempayloads.ItemLookup, int64, error) {
 	// Define variables
 	var (
 		responses   []masteritempayloads.ItemLookup
 		tableStruct = masteritempayloads.ItemLookup{}
 		baseQuery   = tx.Model(&masteritempayloads.ItemLookup{})
+		totalRows   int64
 	)
 
 	// Apply joins and filters
 	joinTable := utils.CreateJoinSelectStatement(baseQuery, tableStruct)
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
+	// Get total number of rows for pagination
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination
+	offset := (paginate.Page - 1) * paginate.Limit
+	whereQuery = whereQuery.Offset(offset).Limit(paginate.Limit)
+
 	// Execute query
 	rows, err := whereQuery.Rows()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, gorm.ErrRecordNotFound
+			return nil, 0, gorm.ErrRecordNotFound
 		}
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -49,17 +60,17 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 	for rows.Next() {
 		var item masteritempayloads.ItemLookup
 		if err := tx.ScanRows(rows, &item); err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		responses = append(responses, item)
 	}
 
 	// Check if no records found
 	if len(responses) == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, 0, gorm.ErrRecordNotFound
 	}
 
-	return responses, nil
+	return responses, totalRows, nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[string]string) ([]map[string]interface{}, error) {

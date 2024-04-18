@@ -87,7 +87,7 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 	// Define join tables
 	joinTables := []utils.JoinTable{
 		{Table: "mtr_item", Alias: "item", ForeignKey: "bom.item_id", ReferenceKey: "item.item_id"},
-		{Table: "mtr_uom", Alias: "uom", ForeignKey: "item.unit_of_measurement_selling_id", ReferenceKey: "uom.uom_id"},
+		{Table: "mtr_uom", Alias: "uom", ForeignKey: "item.unit_of_measurement_type_id", ReferenceKey: "uom.uom_id"},
 	}
 
 	// Create join query
@@ -164,7 +164,7 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempaylo
 	err := tx.Table("mtr_bom").
 		Select("mtr_bom.bom_master_id, mtr_bom.is_active, mtr_bom.bom_master_qty,  mtr_bom.bom_master_effective_date, mtr_bom.bom_master_change_number, mtr_item.item_code, mtr_item.item_name, mtr_item.item_id,mtr_uom.uom_description").
 		Joins("JOIN mtr_item ON mtr_bom.item_id = mtr_item.item_id").
-		Joins("JOIN mtr_uom ON mtr_uom.uom_id = mtr_item.unit_of_measurement_selling_id").
+		Joins("JOIN mtr_uom ON mtr_uom.uom_id = mtr_item.unit_of_measurement_type_id").
 		Where("mtr_bom.bom_master_id = ?", id).
 		First(&response).
 		Error
@@ -253,7 +253,7 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 		Select("bom.bom_master_id, bom.is_active, bom.bom_master_effective_date, bom.bom_master_qty, det.bom_detail_seq, item.item_code, item.item_name, iclas.item_class_code, lt.line_type_name, det.bom_detail_costing_percent, det.bom_detail_remark, det.bom_detail_qty , det.bom_detail_id,uom.uom_description").
 		Joins("left join mtr_bom_detail as det ON bom.bom_master_id = det.bom_master_id").
 		Joins("INNER join mtr_item as item ON bom.item_id = item.item_id").
-		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_selling_id  = uom.uom_id").
+		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_type_id  = uom.uom_id").
 		Joins("INNER join mtr_item_class as iclas ON item.item_class_id = iclas.item_class_id").
 		Joins("INNER join dms_microservices_general_dev.dbo.mtr_line_type as lt ON iclas.line_type_id = lt.line_type_id")
 
@@ -306,7 +306,7 @@ func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritemp
 		Select("bom.bom_master_id, bom.is_active, bom.bom_master_effective_date, bom.bom_master_qty, det.bom_detail_seq, item.item_code, item.item_name, iclas.item_class_code, lt.line_type_name, det.bom_detail_costing_percent, det.bom_detail_remark , det.bom_detail_qty , det.bom_detail_id,uom.uom_description").
 		Joins("left join mtr_bom_detail as det ON bom.bom_master_id = det.bom_master_id").
 		Joins("INNER join mtr_item as item ON bom.item_id = item.item_id").
-		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_selling_id  = uom.uom_id").
+		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_type_id  = uom.uom_id").
 		Joins("INNER join mtr_item_class as iclas ON item.item_class_id = iclas.item_class_id").
 		Joins("INNER join dms_microservices_general_dev.dbo.mtr_line_type as lt ON iclas.line_type_id = lt.line_type_id").
 		Where("bom.bom_master_id = ?", id).
@@ -330,7 +330,7 @@ func (r *BomRepositoryImpl) GetBomDetailByIds(tx *gorm.DB, id int) ([]masteritem
 		Select("bom.bom_master_id, bom.is_active, bom.bom_master_effective_date, bom.bom_master_qty, det.bom_detail_seq, item.item_code, item.item_name, iclas.item_class_code, lt.line_type_name, det.bom_detail_costing_percent, det.bom_detail_remark , det.bom_detail_qty , det.bom_detail_id,uom.uom_description").
 		Joins("left join mtr_bom_detail as det ON bom.bom_master_id = det.bom_master_id").
 		Joins("INNER join mtr_item as item ON bom.item_id = item.item_id").
-		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_selling_id  = uom.uom_id").
+		Joins("INNER join mtr_uom as uom ON item.unit_of_measurement_type_id  = uom.uom_id").
 		Joins("INNER join mtr_item_class as iclas ON item.item_class_id = iclas.item_class_id").
 		Joins("INNER join dms_microservices_general_dev.dbo.mtr_line_type as lt ON iclas.line_type_id = lt.line_type_id").
 		Where("det.bom_detail_id = ?", id).
