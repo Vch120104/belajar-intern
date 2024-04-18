@@ -236,7 +236,7 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_master_id}/detail [get]
+// @Router /{bom_detail_id}/detail [get]
 func (r *BomControllerImpl) GetBomDetailByIds(writer http.ResponseWriter, request *http.Request) {
 
 	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
@@ -339,6 +339,15 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 	}
 }
 
+// @Summary Delete Bom Detail
+// @Description REST API Bom Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Detail
+// @param reqBody body masteritempayloads.BomDetailResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /{bom_detail_id}/detail [delete]
 func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request *http.Request) {
 
 	bomDetailID := chi.URLParam(request, "bom_detail_id")

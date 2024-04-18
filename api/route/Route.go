@@ -257,7 +257,6 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/operation-entries", OperationEntriesRouter)
 	r.Mount("/operation-code", OperationCodeRouter)
 	r.Mount("/operation-model-mapping", OperationModelMappingRouter)
-	//r.Mount("/operation", OperationRouter)
 	//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
 	r.Mount("/warehouse-group", WarehouseGroupRouter)
 	r.Mount("/warehouse-master", WarehouseMaster)

@@ -97,8 +97,16 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Incentive Group ID
+// @Description REST API Incentive Group
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Group
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /{incentive_group_id} [get]
 func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request) {
-	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
 	incentiveGroupResponse, errors := r.IncentiveGroupService.GetIncentiveGroupById(incentiveGroupId)
 
 	if errors != nil {

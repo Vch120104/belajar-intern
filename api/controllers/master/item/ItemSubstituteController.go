@@ -82,7 +82,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 // @Param item_substitute_id path int true "item_substitute_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /by-id/{item_substitute_id} [get]
+// @Router /header/by-id/{item_substitute_id} [get]
 func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	ItemSubstituteIdStr := chi.URLParam(request, "item_substitute_id")
 
@@ -108,7 +108,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.Respons
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /header/by-id/{item_substitute_id} [get]
+// @Router /detail/all/by-id/{item_substitute_id} [get]
 func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -135,7 +135,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 // @Param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /by-id/{item_substitute_id} [get]
+// @Router /detail/by-id/{item_substitute_detail_id} [get]
 func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	ItemSubstituteDetailIdStr := chi.URLParam(request, "item_substitute_detail_id")
 
