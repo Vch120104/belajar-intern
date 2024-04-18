@@ -148,13 +148,16 @@ func (r *ItemLocationRepositoryImpl) GetItemLocationById(tx *gorm.DB, Id int) (m
 }
 
 func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// Inisialisasi variabel untuk menyimpan respons dari database dan layanan eksternal
 	var responses []masteritempayloads.ItemLocationDetailResponse
 	var getItemResponse []masteritempayloads.ItemLocResponse
-	var internalServiceFilter []utils.FilterCondition
+	var getItemLocResponse []masteritempayloads.ItemLocSourceRequest
 
+	// Mendapatkan struktur dari tipe data ItemLocationDetailResponse
 	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationDetailResponse{})
 
-	// Filter internal service conditions
+	// Filter kondisi internal
+	var internalServiceFilter []utils.FilterCondition
 	for _, condition := range filterCondition {
 		for j := 0; j < responseStruct.NumField(); j++ {
 			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
@@ -164,44 +167,64 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 		}
 	}
 
-	// Apply internal service filter conditions
+	// Menerapkan filter kondisi internal
 	tableStruct := masteritempayloads.ItemLocationDetailRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
 
-	// Fetch data from database
-	err := whereQuery.Scan(&responses).Error
-	if err != nil {
+	// Mengambil data dari database
+	if err := whereQuery.Scan(&responses).Error; err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	// Check if responses are empty
+	// Jika respons dari database kosong, kembalikan error
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
-		panic(notFoundErr)
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+		}
 	}
 
-	// Fetch item data from external service
-	itemIds := make([]string, len(responses))
-	for i, resp := range responses {
-		itemIds[i] = strconv.Itoa(resp.ItemId)
+	// Mengambil data item dari layanan eksternal
+	var itemIds []string
+	for _, resp := range responses {
+		itemIds = append(itemIds, strconv.Itoa(resp.ItemId))
 	}
 	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
-	err = utils.Get(itemUrl, &getItemResponse, nil)
-	if err != nil {
+	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	// Perform inner join between item location responses, warehouse group response, and item response
-	joinedData := utils.DataFrameInnerJoin(responses, getItemResponse, "ItemId")
+	// Mengambil data lokasi item dari layanan eksternal
+	var itemLocIds []string
+	for _, resp := range responses {
+		if resp.ItemLocationSourceId != 0 {
+			itemLocIds = append(itemLocIds, strconv.Itoa(resp.ItemLocationSourceId))
+		}
+	}
 
-	// Paginate the joined data
+	// Mengambil data item location source dari layanan eksternal
+	for _, id := range itemLocIds {
+		itemLocSourceURL := "http://localhost:8000/item-location/popup-location?item_location_source_id=" + id
+		if err := utils.Get(itemLocSourceURL, &getItemLocResponse, nil); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	// Melakukan inner join antara respons lokasi item, respons lokasi item eksternal, dan respons item
+	joinedData := utils.DataFrameInnerJoin(responses, getItemLocResponse, "ItemLocationSourceId")
+	joinedData = utils.DataFrameInnerJoin(joinedData, getItemResponse, "ItemId")
+
+	// Mem-paginate data yang telah di-join
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
@@ -211,7 +234,14 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 	var responses []masteritempayloads.ItemLocSourceResponse
 
 	// Fetch data from database with joins and conditions
-	err := tx.Table("mtr_item_location_source").Where(filterCondition).Find(&responses).Error
+	query := tx.Table("mtr_item_location_source")
+
+	// Apply filter conditions
+	for _, condition := range filterCondition {
+		query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
+	}
+
+	err := query.Find(&responses).Error
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -232,4 +262,31 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
+}
+
+func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, request masteritempayloads.ItemLocationDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteritementities.ItemLocationDetail{
+		ItemId:                     request.ItemId,
+		ItemLocationId:             request.ItemLocationId,
+		ItemLocationDetailSourceId: request.ItemLocationSourceId,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
 }
