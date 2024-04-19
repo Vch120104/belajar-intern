@@ -7,18 +7,21 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type PriceListServiceImpl struct {
 	priceListRepo masteritemrepository.PriceListRepository
 	DB            *gorm.DB
+	RedisClient   *redis.Client // Redis client
 }
 
-func StartPriceListService(priceListRepo masteritemrepository.PriceListRepository, db *gorm.DB) masteritemservice.PriceListService {
+func StartPriceListService(priceListRepo masteritemrepository.PriceListRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.PriceListService {
 	return &PriceListServiceImpl{
 		priceListRepo: priceListRepo,
 		DB:            db,
+		RedisClient:   redisClient,
 	}
 }
 

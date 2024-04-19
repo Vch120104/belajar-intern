@@ -30,32 +30,32 @@ func StartRouting(db *gorm.DB) {
 
 	// Unit Measurement
 	unitOfMeasurementRepository := masteritemrepositoryimpl.StartUnitOfMeasurementRepositoryImpl()
-	unitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(unitOfMeasurementRepository, db)
+	unitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(unitOfMeasurementRepository, db, rdb)
 	unitOfMeasurementController := masteritemcontroller.NewUnitOfMeasurementController(unitOfMeasurementService)
 
 	// Markup Master
 	markupMasterRepository := masteritemrepositoryimpl.StartMarkupMasterRepositoryImpl()
-	markupMasterService := masteritemserviceimpl.StartMarkupMasterService(markupMasterRepository, db)
+	markupMasterService := masteritemserviceimpl.StartMarkupMasterService(markupMasterRepository, db, rdb)
 	markupMasterController := masteritemcontroller.NewMarkupMasterController(markupMasterService)
 
 	// Item Level
 	itemLevelRepository := masteritemrepositoryimpl.StartItemLevelRepositoryImpl()
-	itemLevelService := masteritemserviceimpl.StartItemLevelService(itemLevelRepository, db)
+	itemLevelService := masteritemserviceimpl.StartItemLevelService(itemLevelRepository, db, rdb)
 	itemLevelController := masteritemcontroller.NewItemLevelController(itemLevelService)
 
 	// Item
 	itemRepository := masteritemrepositoryimpl.StartItemRepositoryImpl()
-	itemService := masteritemserviceimpl.StartItemService(itemRepository, db)
+	itemService := masteritemserviceimpl.StartItemService(itemRepository, db, rdb)
 	itemController := masteritemcontroller.NewItemController(itemService)
 
 	// PriceList
 	priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl()
-	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db)
+	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db, rdb)
 	priceListController := masteritemcontroller.NewPriceListController(priceListService)
 
 	// Item Class
 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl()
-	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db)
+	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db, rdb)
 	itemClassController := masteritemcontroller.NewItemClassController(itemClassService)
 
 	// Item Location
@@ -65,112 +65,112 @@ func StartRouting(db *gorm.DB) {
 
 	// Item Substitute
 	itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
-	itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db)
+	itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db, rdb)
 	itemSubstituteController := masteritemcontroller.NewItemSubstituteController(itemSubstituteService)
 
 	// Item Package
 	itemPackageRepository := masteritemrepositoryimpl.StartItemPackageRepositoryImpl()
-	itemPackageService := masteritemserviceimpl.StartItemPackageService(itemPackageRepository, db)
+	itemPackageService := masteritemserviceimpl.StartItemPackageService(itemPackageRepository, db, rdb)
 	itemPackageController := masteritemcontroller.NewItemPackageController(itemPackageService)
 
 	// Item Package Detail
 	itemPackageDetailRepository := masteritemrepositoryimpl.StartItemPackageDetailRepositoryImpl()
-	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db)
+	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db, rdb)
 	itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
 
 	// // Landed Cost
 	LandedCostRepository := masteritemrepositoryimpl.StartLandedCostMasterRepositoryImpl()
-	LandedCostService := masteritemserviceimpl.StartLandedCostMasterService(LandedCostRepository, db)
+	LandedCostService := masteritemserviceimpl.StartLandedCostMasterService(LandedCostRepository, db, rdb)
 	LandedCostController := masteritemcontroller.NewLandedCostMasterController(LandedCostService)
 
 	// Operation Group
 	operationGroupRepository := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-	operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db)
+	operationGroupService := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepository, db, rdb)
 	operationGroupController := masteroperationcontroller.NewOperationGroupController(operationGroupService)
 
 	// Incentive Group
 	IncentiveGroupRepository := masterrepositoryimpl.StartIncentiveGroupRepositoryImpl()
-	IncentiveGroupService := masterserviceimpl.StartIncentiveGroupService(IncentiveGroupRepository, db)
+	IncentiveGroupService := masterserviceimpl.StartIncentiveGroupService(IncentiveGroupRepository, db, rdb)
 	IncentiveGroupController := mastercontroller.NewIncentiveGroupController(IncentiveGroupService)
 
 	// IncentiveGroupDetail
 	IncentiveGroupDetailRepository := masterrepositoryimpl.StartIncentiveGroupDetailRepositoryImpl()
-	IncentiveGroupDetailService := masterserviceimpl.StartIncentiveGroupDetailService(IncentiveGroupDetailRepository, db)
+	IncentiveGroupDetailService := masterserviceimpl.StartIncentiveGroupDetailService(IncentiveGroupDetailRepository, db, rdb)
 	IncentiveGroupDetailController := mastercontroller.NewIncentiveGroupDetailController(IncentiveGroupDetailService)
 
 	// MovingCode
 	MovingCodeRepository := masterrepositoryimpl.StartMovingCodeRepositoryImpl()
-	MovingCodeService := masterserviceimpl.StartMovingCodeService(MovingCodeRepository, db)
+	MovingCodeService := masterserviceimpl.StartMovingCodeService(MovingCodeRepository, db, rdb)
 	MovingCodeController := mastercontroller.NewMovingCodeController(MovingCodeService)
 
 	// ForecastMaster
 	forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
-	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
+	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db, rdb)
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
 	// operation code
 	operationCodeRepository := masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
-	operationCodeService := masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository, db)
+	operationCodeService := masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository, db, rdb)
 	operationCodeController := masteroperationcontroller.NewOperationCodeController(operationCodeService)
 
 	// Operation Section
 	operationSectionRepository := masteroperationrepositoryimpl.StartOperationSectionRepositoryImpl()
-	operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository, db)
+	operationSectionService := masteroperationserviceimpl.StartOperationSectionService(operationSectionRepository, db, rdb)
 	operationSectionController := masteroperationcontroller.NewOperationSectionController(operationSectionService)
 
 	//OperationEntries
 	operationEntriesRepository := masteroperationrepositoryimpl.StartOperationEntriesRepositoryImpl()
-	operationEntriesService := masteroperationserviceimpl.StartOperationEntriesService(operationEntriesRepository, db)
+	operationEntriesService := masteroperationserviceimpl.StartOperationEntriesService(operationEntriesRepository, db, rdb)
 	operationEntriesController := masteroperationcontroller.NewOperationEntriesController(operationEntriesService)
 
 	// Operation Key
 	operationKeyRepository := masteroperationrepositoryimpl.StartOperationKeyRepositoryImpl()
-	operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository, db)
+	operationKeyService := masteroperationserviceimpl.StartOperationKeyService(operationKeyRepository, db, rdb)
 	operationKeyController := masteroperationcontroller.NewOperationKeyController(operationKeyService)
 
 	// operation model mapping
 	operationModelMappingRepository := masteroperationrepositoryimpl.StartOperationModelMappingRepositoryImpl()
-	operationModelMappingService := masteroperationserviceimpl.StartOperationModelMappingService(operationModelMappingRepository, db)
+	operationModelMappingService := masteroperationserviceimpl.StartOperationModelMappingService(operationModelMappingRepository, db, rdb)
 	operationModelMappingController := masteroperationcontroller.NewOperationModelMappingController(operationModelMappingService)
 
 	// Skill Level
 	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
-	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db)
+	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db, rdb)
 	SkillLevelController := mastercontroller.NewSkillLevelController(SkillLevelService)
 
 	// Shift Schedule
 	ShiftScheduleRepository := masterrepositoryimpl.StartShiftScheduleRepositoryImpl()
-	ShiftScheduleService := masterserviceimpl.StartShiftScheduleService(ShiftScheduleRepository, db)
+	ShiftScheduleService := masterserviceimpl.StartShiftScheduleService(ShiftScheduleRepository, db, rdb)
 	ShiftScheduleController := mastercontroller.NewShiftScheduleController(ShiftScheduleService)
 
 	// Discount Percent
 	discountPercentRepository := masteritemrepositoryimpl.StartDiscountPercentRepositoryImpl()
-	discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db)
+	discountPercentService := masteritemserviceimpl.StartDiscountPercentService(discountPercentRepository, db, rdb)
 	discountPercentController := masteritemcontroller.NewDiscountPercentController(discountPercentService)
 
 	// Discount
 	discountRepository := masterrepositoryimpl.StartDiscountRepositoryImpl()
-	discountService := masterserviceimpl.StartDiscountService(discountRepository, db)
+	discountService := masterserviceimpl.StartDiscountService(discountRepository, db, rdb)
 	discountController := mastercontroller.NewDiscountController(discountService)
 
 	// Markup Rate
 	markupRateRepository := masteritemrepositoryimpl.StartMarkupRateRepositoryImpl()
-	markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db)
+	markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db, rdb)
 	markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
 
 	// Warehouse Group
 	warehouseGroupRepository := masterwarehouserepositoryimpl.OpenWarehouseGroupImpl()
-	warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository, db)
+	warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository, db, rdb)
 	warehouseGroupController := masterwarehousecontroller.NewWarehouseGroupController(warehouseGroupService)
 
 	// Warehouse Location
 	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
-	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db)
+	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db, rdb)
 	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
 
 	// Warehouse Master
 	warehouseMasterRepository := masterwarehouserepositoryimpl.OpenWarehouseMasterImpl()
-	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db)
+	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db, rdb)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
 
 	// Bom Master
@@ -185,7 +185,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Warranty Free Service
 	WarrantyFreeServiceRepository := masterrepositoryimpl.StartWarrantyFreeServiceRepositoryImpl()
-	WarrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(WarrantyFreeServiceRepository, db)
+	WarrantyFreeServiceService := masterserviceimpl.StartWarrantyFreeServiceService(WarrantyFreeServiceRepository, db, rdb)
 	WarrantyFreeServiceController := mastercontroller.NewWarrantyFreeServiceController(WarrantyFreeServiceService)
 
 	// Incentive Master
@@ -195,7 +195,7 @@ func StartRouting(db *gorm.DB) {
 
 	//Field Action
 	FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
-	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db)
+	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
 	// Master

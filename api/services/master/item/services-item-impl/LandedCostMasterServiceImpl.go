@@ -9,18 +9,21 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type LandedCostMasterServiceImpl struct {
 	LandedCostMasterRepo masteritemrepository.LandedCostMasterRepository
 	DB                   *gorm.DB
+	RedisClient          *redis.Client // Redis client
 }
 
-func StartLandedCostMasterService(LandedCostMasterRepo masteritemrepository.LandedCostMasterRepository, db *gorm.DB) masteritemservice.LandedCostMasterService {
+func StartLandedCostMasterService(LandedCostMasterRepo masteritemrepository.LandedCostMasterRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.LandedCostMasterService {
 	return &LandedCostMasterServiceImpl{
 		LandedCostMasterRepo: LandedCostMasterRepo,
 		DB:                   db,
+		RedisClient:          redisClient,
 	}
 }
 

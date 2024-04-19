@@ -9,18 +9,21 @@ import (
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type OperationModelMappingServiceImpl struct {
 	operationModelMappingRepo masteroperationrepository.OperationModelMappingRepository
 	DB                        *gorm.DB
+	RedisClient               *redis.Client // Redis client
 }
 
-func StartOperationModelMappingService(operationModelMappingRepo masteroperationrepository.OperationModelMappingRepository, db *gorm.DB) masteroperationservice.OperationModelMappingService {
+func StartOperationModelMappingService(operationModelMappingRepo masteroperationrepository.OperationModelMappingRepository, db *gorm.DB, redisClient *redis.Client) masteroperationservice.OperationModelMappingService {
 	return &OperationModelMappingServiceImpl{
 		operationModelMappingRepo: operationModelMappingRepo,
 		DB:                        db,
+		RedisClient:               redisClient,
 	}
 }
 

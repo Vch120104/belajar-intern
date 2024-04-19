@@ -10,18 +10,21 @@ import (
 
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type SkillLevelServiceImpl struct {
 	SkillLevelRepo masterrepository.SkillLevelRepository
 	DB             *gorm.DB
+	RedisClient    *redis.Client // Redis client
 }
 
-func StartSkillLevelService(SkillLevelRepo masterrepository.SkillLevelRepository, db *gorm.DB) masterservice.SkillLevelService {
+func StartSkillLevelService(SkillLevelRepo masterrepository.SkillLevelRepository, db *gorm.DB, redisClient *redis.Client) masterservice.SkillLevelService {
 	return &SkillLevelServiceImpl{
 		SkillLevelRepo: SkillLevelRepo,
 		DB:             db,
+		RedisClient:    redisClient,
 	}
 }
 

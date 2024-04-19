@@ -8,18 +8,21 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type MovingCodeServiceImpl struct {
 	MovingCodeRepository masterrepository.MovingCodeRepository
 	DB                   *gorm.DB
+	RedisClient          *redis.Client // Redis client
 }
 
-func StartMovingCodeService(MovingCodeRepository masterrepository.MovingCodeRepository, db *gorm.DB) masterservice.MovingCodeService {
+func StartMovingCodeService(MovingCodeRepository masterrepository.MovingCodeRepository, db *gorm.DB, redisClient *redis.Client) masterservice.MovingCodeService {
 	return &MovingCodeServiceImpl{
 		MovingCodeRepository: MovingCodeRepository,
 		DB:                   db,
+		RedisClient:          redisClient,
 	}
 }
 

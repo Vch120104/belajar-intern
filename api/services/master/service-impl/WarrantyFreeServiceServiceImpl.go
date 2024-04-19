@@ -9,18 +9,21 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type WarrantyFreeServiceServiceImpl struct {
 	warrantyFreeServiceRepo masterrepository.WarrantyFreeServiceRepository
 	DB                      *gorm.DB
+	RedisClient             *redis.Client // Redis client
 }
 
-func StartWarrantyFreeServiceService(warrantyFreeServiceRepo masterrepository.WarrantyFreeServiceRepository, db *gorm.DB) masterservice.WarrantyFreeServiceService {
+func StartWarrantyFreeServiceService(warrantyFreeServiceRepo masterrepository.WarrantyFreeServiceRepository, db *gorm.DB, redisClient *redis.Client) masterservice.WarrantyFreeServiceService {
 	return &WarrantyFreeServiceServiceImpl{
 		warrantyFreeServiceRepo: warrantyFreeServiceRepo,
 		DB:                      db,
+		RedisClient:             redisClient,
 	}
 }
 
