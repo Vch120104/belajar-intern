@@ -153,8 +153,8 @@ func ItemLocationRouter(
 	//detail
 	router.Get("/all/detail", ItemLocationController.GetAllItemLocationDetail)
 	router.Get("/popup-location", ItemLocationController.PopupItemLocation)
-	router.Post("/detail", ItemLocationController.AddItemLocation)
-	//router.Delete("/all/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
+	router.Post("/all/detail", ItemLocationController.AddItemLocation)
+	router.Delete("/all/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
 
 	return router
 }

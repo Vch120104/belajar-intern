@@ -9,18 +9,21 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type ItemLocationServiceImpl struct {
 	ItemLocationRepo masteritemrepository.ItemLocationRepository
 	DB               *gorm.DB
+	RedisClient      *redis.Client // Redis client
 }
 
-func StartItemLocationService(ItemLocationRepo masteritemrepository.ItemLocationRepository, db *gorm.DB) masteritemservice.ItemLocationService {
+func StartItemLocationService(ItemLocationRepo masteritemrepository.ItemLocationRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.ItemLocationService {
 	return &ItemLocationServiceImpl{
 		ItemLocationRepo: ItemLocationRepo,
 		DB:               db,
+		RedisClient:      redisClient,
 	}
 }
 
@@ -82,4 +85,15 @@ func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.Filt
 		return results, totalPages, totalRows, err
 	}
 	return results, totalPages, totalRows, nil
+}
+
+// DeleteItemLocation deletes an item location by ID
+func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.ItemLocationRepo.DeleteItemLocation(tx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

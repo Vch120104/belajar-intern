@@ -22,7 +22,7 @@ type ItemLocationController interface {
 	GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request)
 	PopupItemLocation(writer http.ResponseWriter, request *http.Request)
 	AddItemLocation(writer http.ResponseWriter, request *http.Request)
-	//DeleteItemLocation(writer http.ResponseWriter, request *http.Request)
+	DeleteItemLocation(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLocationControllerImpl struct {
@@ -154,9 +154,9 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 // @Router /{item_location_id} [get]
 func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+	ItemLocationIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
 
-	result, err := r.ItemLocationService.GetItemLocationById(IncentiveLevelIds)
+	result, err := r.ItemLocationService.GetItemLocationById(ItemLocationIds)
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return
@@ -238,4 +238,33 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 	}
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+// @Summary Delete Item Location By ID
+// @Description REST API  Item Location
+// @Accept json
+// @Produce json
+// @Tags Master :  Item Location
+// @Param item_location_detail_id path int true "item_location_detail_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /all/detail/{item_location_detail_id} [get]
+func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWriter, request *http.Request) {
+	// Mendapatkan ID item lokasi dari URL
+	itemLocationID, err := strconv.Atoi(chi.URLParam(request, "item_location_detail_id"))
+	if err != nil {
+		// Jika gagal mendapatkan ID dari URL, kirim respons error
+		payloads.NewHandleError(writer, "Invalid item location ID", http.StatusBadRequest)
+		return
+	}
+
+	// Memanggil service untuk menghapus item lokasi
+	if deleteErr := r.ItemLocationService.DeleteItemLocation(itemLocationID); deleteErr != nil {
+		// Jika terjadi kesalahan saat menghapus, kirim respons error
+		exceptionsss_test.NewNotFoundException(writer, request, deleteErr)
+		return
+	}
+
+	// Jika berhasil, kirim respons berhasil
+	payloads.NewHandleSuccess(writer, nil, "Item location deleted successfully", http.StatusOK)
 }

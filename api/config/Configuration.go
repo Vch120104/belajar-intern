@@ -27,7 +27,8 @@ type setupDatabase struct {
 	Port              string `mapstructure:"SERVER_PORT"`
 	JWTKey            string `mapstructure:"JWT_KEY"`
 	ClientOrigin      string `mapstructure:"CLIENT_ORIGIN"`
-	ClientRedis       string `mapstructure:"CLIENT_REDIS"`
+	ClientRedis       string `mapstructure:"REDIS_HOST"`
+	PortRedis         string `mapstructure:"REDIS_PORT"`
 	GeneralServiceUrl string `mapstructure:"GENERAL_SERVICE"`
 	SalesServiceUrl   string `mapstructure:"SALES_SERVICE"`
 	ReportServiceUrl  string `mapstructure:"REPORT_SERVICE"`

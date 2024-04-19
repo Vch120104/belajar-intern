@@ -290,3 +290,20 @@ func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, request master
 
 	return true, nil
 }
+
+// DeleteItemLocation deletes an item location by ID
+func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	entities := masteritementities.ItemLocationDetail{}
+
+	// Menghapus data berdasarkan ID
+	err := tx.Where("item_location_detail_id = ?", Id).Delete(&entities).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Jika data berhasil dihapus, kembalikan nil untuk error
+	return nil
+}

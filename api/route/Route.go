@@ -25,6 +25,9 @@ import (
 )
 
 func StartRouting(db *gorm.DB) {
+	// Initialize Redis client
+	rdb := config.InitRedis()
+
 	// Unit Measurement
 	unitOfMeasurementRepository := masteritemrepositoryimpl.StartUnitOfMeasurementRepositoryImpl()
 	unitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(unitOfMeasurementRepository, db)
@@ -57,7 +60,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Item Location
 	ItemLocationRepository := masteritemrepositoryimpl.StartItemLocationRepositoryImpl()
-	ItemLocationService := masteritemserviceimpl.StartItemLocationService(ItemLocationRepository, db)
+	ItemLocationService := masteritemserviceimpl.StartItemLocationService(ItemLocationRepository, db, rdb)
 	ItemLocationController := masteritemcontroller.NewItemLocationController(ItemLocationService)
 
 	// Item Substitute
@@ -172,12 +175,12 @@ func StartRouting(db *gorm.DB) {
 
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
-	BomService := masteritemserviceimpl.StartBomService(BomRepository, db)
+	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
 	BomController := masteritemcontroller.NewBomController(BomService)
 
 	// Deduction
 	DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
-	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db)
+	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db, rdb)
 	DeductionController := mastercontroller.NewDeductionController(DeductionService)
 
 	// Warranty Free Service
@@ -187,7 +190,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Incentive Master
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
-	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db)
+	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db, rdb)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
 
 	//Field Action
@@ -232,6 +235,7 @@ func StartRouting(db *gorm.DB) {
 	DeductionRouter := DeductionRouter(DeductionController)
 
 	r := chi.NewRouter()
+	// Route untuk setiap versi API
 	r.Mount("/item-class", itemClassRouter)
 	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 	r.Mount("/discount-percent", DiscountPercentRouter)
