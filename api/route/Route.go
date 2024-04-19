@@ -283,7 +283,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/deduction", DeductionRouter)
 
 	// Tambahkan routing untuk Swagger di akhir
-	r.Mount("/swagger", SwaggerRouter())
+	r.Mount("/", SwaggerRouter())
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,

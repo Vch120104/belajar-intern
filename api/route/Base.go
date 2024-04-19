@@ -6,10 +6,10 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/middlewares"
-	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 /* Master */
@@ -646,10 +646,6 @@ func DeductionRouter(
 	return router
 }
 
-func swaggerIndexHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./public/index.html")
-}
-
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
@@ -658,19 +654,9 @@ func SwaggerRouter() chi.Router {
 	router.Use(middleware.Recoverer)
 
 	// Serve Swagger UI index.html
-	router.Get("/swagger/index.html", swaggerIndexHandler)
-	router.Get("/swagger/", swaggerIndexHandler)
-
-	// Serve static files
-	fileServer := http.StripPrefix("/swagger/", http.FileServer(http.Dir("./public")))
-	router.Get("/swagger/*", func(w http.ResponseWriter, r *http.Request) {
-		fileServer.ServeHTTP(w, r)
-	})
-
-	// Serve Swagger JSON
-	router.Get("/docs/swagger.json", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./docs/swagger.json")
-	})
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/swagger/doc.json"), //The url pointing to API definition
+	))
 
 	return router
 }
