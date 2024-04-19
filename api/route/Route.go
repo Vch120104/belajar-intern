@@ -169,6 +169,10 @@ func StartRouting(db *gorm.DB) {
 	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
 	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db)
 	SkillLevelController := mastercontroller.NewSkillLevelController(SkillLevelService)
+	// Campaign Master
+	CampaignMasterRepository := masterrepositoryimpl.StartCampaignMasterRepositoryImpl()
+	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository,db)
+	CampaignMasterController := mastercontroller.NewCampaignMasterController(CampaignMasterService)
 
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -200,12 +204,14 @@ func StartRouting(db *gorm.DB) {
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
+	CampaignMasterRouter := CampaignMasterRouter(CampaignMasterController)
 
 	r := chi.NewRouter()
 	r.Mount("/item-class", itemClassRouter)
 	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 	r.Mount("/markup-master", markupMasterRouter)
 	r.Mount("/item-level", itemLevelRouter)
+	r.Mount("/campaign-master",CampaignMasterRouter)
 	// mux.Handle("/operation-group/", OperationGroupRouter)
 	r.Mount("/operation-group", OperationGroupRouter)
 	r.Mount("/incentive", IncentiveMasterRouter)

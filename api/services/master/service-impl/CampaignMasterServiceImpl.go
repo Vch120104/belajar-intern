@@ -17,7 +17,7 @@ type CampaignMasterServiceImpl struct {
 	DB                 *gorm.DB
 }
 
-func startCampaignMasterService(CampaignMasterRepo masterrepository.CampaignMasterRepository, db *gorm.DB) masterservice.CampaignMasterService {
+func StartCampaignMasterService(CampaignMasterRepo masterrepository.CampaignMasterRepository, db *gorm.DB) masterservice.CampaignMasterService {
 	return &CampaignMasterServiceImpl{
 		CampaignMasterRepo: CampaignMasterRepo,
 		DB:                 db,
@@ -42,6 +42,16 @@ func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.
 		return false,err
 	}
 	return true,nil
+}
+
+func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromHistory(id int, idhead int)(bool,*exceptionsss_test.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:= s.CampaignMasterRepo.PostCampaignMasterDetailFromHistory(tx,id,idhead)
+	if err != nil{
+		return result,err
+	}
+	return result,nil
 }
 
 func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int)(bool, *exceptionsss_test.BaseErrorResponse){
@@ -74,7 +84,7 @@ func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string)(b
 	return result,nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int)(masterpayloads.CampaignMasterResponse,*exceptionsss_test.BaseErrorResponse){
+func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int)([]map[string]interface{},*exceptionsss_test.BaseErrorResponse){
 	tx:= s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result,err := s.CampaignMasterRepo.GetByIdCampaignMaster(tx,id)
@@ -94,24 +104,24 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int)(masterpa
 	return result,nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName()([]masterpayloads.GetHistory,*exceptionsss_test.BaseErrorResponse){
+func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagination.Pagination)(pagination.Pagination,*exceptionsss_test.BaseErrorResponse){
 	tx:=s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err:=s.CampaignMasterRepo.GetAllCampaignMasterCodeAndName(tx)
+	result,err:=s.CampaignMasterRepo.GetAllCampaignMasterCodeAndName(tx,pages)
 	if err != nil{
 		return result,err
 	}
 	return result,nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition,pages pagination.Pagination)([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse){
+func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition,pages pagination.Pagination)(pagination.Pagination, *exceptionsss_test.BaseErrorResponse){
 	tx:=s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,totalPages,totalRows,err:= s.CampaignMasterRepo.GetAllCampaignMaster(tx,filtercondition,pages)
+	result,err:= s.CampaignMasterRepo.GetAllCampaignMaster(tx,filtercondition,pages)
 	if err != nil{
-		return result,0,0,err
+		return result,err
 	}
-	return result,totalPages,totalRows,nil
+	return result,nil
 }
 
 func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int)(pagination.Pagination, *exceptionsss_test.BaseErrorResponse){
@@ -123,3 +133,14 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.
 	}
 	return result,nil
 }
+
+func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req masterpayloads.CampaignMasterDetailPayloads)(bool,*exceptionsss_test.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:=s.CampaignMasterRepo.UpdateCampaignMasterDetail(tx,id,req)
+	if err!= nil{
+		return false,err
+	}
+	return result,nil
+}
+ 

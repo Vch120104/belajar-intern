@@ -1,15 +1,15 @@
 package masterrepositoryimpl
 
 import (
-	masterentities "after-sales/api/entities/master"
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	"errors"
+	"fmt"
 	"net/http"
-	"reflect"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -23,8 +23,16 @@ func StartCampaignMasterRepositoryImpl() masterrepository.CampaignMasterReposito
 }
 
 func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req masterpayloads.CampaignMasterPost) (bool, *exceptionsss_test.BaseErrorResponse) {
-	entities := masterentities.CampaignMaster{
+	var entity mastercampaignmasterentities.CampaignMaster
+
+	result,_ := tx.Model(&entity).Where("campaign_code =?",req.CampaignCode).First(&entity).Rows()
+	if result!=nil{
+		return true,nil
+	}
+
+	entities := &mastercampaignmasterentities.CampaignMaster{
 		IsActive:           req.IsActive,
+		CampaignId:         req.CampaignId,
 		CampaignCode:       req.CampaignCode,
 		CampaignName:       req.CampaignName,
 		BrandId:            req.BrandId,
@@ -33,6 +41,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req maste
 		CampaignPeriodTo:   req.CampaignPeriodTo,
 		Remark:             req.Remark,
 		AppointmentOnly:    req.AppointmentOnly,
+		TaxId:              req.TaxId,
+		CompanyId:          req.CompanyId,
+		WarehouseGroupId:   req.WarehouseGroupId,
 	}
 	err := tx.Save(entities).Error
 	if err != nil {
@@ -71,43 +82,87 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req maste
 // 	return true, nil
 // }
 
+func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromHistory(tx *gorm.DB,id int,idhead int)(bool,*exceptionsss_test.BaseErrorResponse){
+	var entity []mastercampaignmasterentities.CampaignMasterDetail
+
+	result:=tx.Model(&entity).Where("campaign_id = ?",id).Find(&entity)
+	if result.Error!= nil{
+		return false, &exceptionsss_test.BaseErrorResponse{
+            StatusCode: http.StatusNotFound,
+            Err:        result.Error,
+        }
+	}
+	for _,entities := range entity{
+		newEntity:= mastercampaignmasterentities.CampaignMasterDetail{
+		IsActive:           entities.IsActive,
+		CampaignDetailId:   0,
+		CampaignId:         idhead,
+		LineTypeId:         entities.LineTypeId,
+		Quantity:           entities.Quantity,
+		OperationItemCode:  entities.OperationItemCode,
+		OperationItemPrice: entities.OperationItemPrice,
+		ShareBillTo:        entities.ShareBillTo,
+		DiscountPercent:    entities.DiscountPercent,
+		SharePercent:       entities.SharePercent,
+		
+	}
+	err := tx.Create(&newEntity).Error
+
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+		}
+	}
+	results:= r.UpdateTotalCampaignMaster(tx,idhead)
+	if !results{
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+		}
+	return true,nil
+}
+
 func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req masterpayloads.CampaignMasterDetailPayloads) (bool, *exceptionsss_test.BaseErrorResponse) {
-	var result float64
-	entities := masterentities.CampaignMasterDetail{
-		IsActive:          req.IsActive,
-		CampaignId:        req.CampaignId,
-		LineTypeId:        req.LineTypeId,
-		Quantity:          req.Quantity,
-		OperationItemCode: req.OperationItemCode,
+	entities := &mastercampaignmasterentities.CampaignMasterDetail{
+		IsActive:           req.IsActive,
+		CampaignDetailId:   req.CampaignDetailId,
+		CampaignId:         req.CampaignId,
+		LineTypeId:         req.LineTypeId,
+		Quantity:           req.Quantity,
+		OperationItemCode:  req.OperationItemCode,
 		OperationItemPrice: req.OperationItemPrice,
-		DiscountPercent:   req.DiscountPercent,
-		SharePercent:      req.SharePercent,
+		ShareBillTo:        req.ShareBillTo,
+		DiscountPercent:    req.DiscountPercent,
+		SharePercent:       req.SharePercent,
+		
 	}
-	err := tx.Save(entities).Error
+	err := tx.Create(entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{}
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
-
-	err = tx.Table("campaign_master").Select("campaign_masters.total").Where("campaign_master.campaign_id = ?", req.CampaignId).Scan(&result).Error
-	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{}
-	}
-
-	totalValue := result + float64(req.OperationItemPrice)
-	success := r.UpdateTotalCampaignMaster(tx, req.CampaignId, totalValue)
-	if !success {
-		return false, &exceptionsss_test.BaseErrorResponse{}
+	result := r.UpdateTotalCampaignMaster(tx, req.CampaignId)
+	if !result {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 	return true, nil
 }
 
-func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, id int)(bool,*exceptionsss_test.BaseErrorResponse){
-	var entities masterentities.CampaignMaster
+func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+	var entities mastercampaignmasterentities.CampaignMaster
 
 	result := tx.
 		Model(&entities).
-		Where(masterentities.CampaignMaster{CampaignId: id}).
+		Where(mastercampaignmasterentities.CampaignMaster{CampaignId: id}).
 		First(&entities)
 
 	if result.Error != nil {
@@ -160,108 +215,97 @@ func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, i
 // 	return true, nil
 // }
 
-	
 func (r *CampaignMasterRepositoryImpl) DeactivateCampaignMasterDetail(tx *gorm.DB, ids string) (bool, *exceptionsss_test.BaseErrorResponse) {
-    var result float64
 	idSlice := strings.Split(ids, ",")
 
-	for _, Ids := range idSlice {
-		var entityToUpdate masterentities.CampaignMasterDetail
-		err := tx.Model(&entityToUpdate).Where("campaign_detail_id = ?", Ids).First(&entityToUpdate).Error
-		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		err = tx.Table("campaign_master").Select("campaign_masters.total").Where("campaign_master_details.id = ?", entityToUpdate.CampaignId).Scan(&result).Error
-		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{}
-		}
-
-		totalValue := result - float64(entityToUpdate.OperationItemPrice)
-		success := r.UpdateTotalCampaignMaster(tx, entityToUpdate.CampaignId, totalValue)
-		if !success {
-			return false, &exceptionsss_test.BaseErrorResponse{}
-		}
-
-
-
-
-		entityToUpdate.IsActive = false
-		result := tx.Save(&entityToUpdate)
+	for _, Id := range idSlice {
+		var entityToUpdate mastercampaignmasterentities.CampaignMasterDetail
+		result := tx.Model(&entityToUpdate).Where("campaign_detail_id = ?", Id).First(&entityToUpdate).Update("is_active",false)
 		if result.Error != nil {
 			return false, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        result.Error,
 			}
 		}
+		
+		results := r.UpdateTotalCampaignMaster(tx, entityToUpdate.CampaignId)
+		if !results {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
+		}
 	}
-
 	return true, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) ActivateCampaignMasterDetail(tx *gorm.DB, ids string) (bool, *exceptionsss_test.BaseErrorResponse) {
-    var result float64
 	idSlice := strings.Split(ids, ",")
 
-	for _, Ids := range idSlice {
-		var entityToUpdate masterentities.CampaignMasterDetail
-		err := tx.Model(&entityToUpdate).Where("campaign_detail_id = ?", Ids).First(&entityToUpdate).Error
-		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		err = tx.Table("campaign_master").Select("campaign_masters.total").Where("campaign_master_details.id = ?", entityToUpdate.CampaignId).Scan(&result).Error
-		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{}
-		}
-
-		totalValue := result + float64(entityToUpdate.OperationItemPrice)
-		success := r.UpdateTotalCampaignMaster(tx, entityToUpdate.CampaignId, totalValue)
-		if !success {
-			return false, &exceptionsss_test.BaseErrorResponse{}
-		}
-
-		entityToUpdate.IsActive = true
-		result := tx.Save(&entityToUpdate)
+	for _, id := range idSlice {
+		var entityToUpdate mastercampaignmasterentities.CampaignMasterDetail
+		result := tx.Model(&entityToUpdate).Where("campaign_detail_id = ?", id).First(&entityToUpdate).Update("is_active",true)
 		if result.Error != nil {
 			return false, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        result.Error,
 			}
 		}
+		results := r.UpdateTotalCampaignMaster(tx, entityToUpdate.CampaignId)
+		if !results {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
+		}
 	}
-
 	return true, nil
 }
-func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int) (masterpayloads.CampaignMasterResponse, *exceptionsss_test.BaseErrorResponse) {
-	entities := masterentities.CampaignMaster{}
-	payloads := masterpayloads.CampaignMasterResponse{}
-	rows, err := tx.Model(&entities).Where(masterentities.CampaignMaster{
+
+func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+	entities:=  mastercampaignmasterentities.CampaignMaster{}
+	payloads:=masterpayloads.CampaignMasterResponse{}
+	var modelresponse masterpayloads.GetModelResponse
+	var brandresponse masterpayloads.GetBrandResponse
+	err := tx.Model(&entities).Where(mastercampaignmasterentities.CampaignMaster{
 		CampaignId: id,
-	}).First(&payloads).Rows()
+	}).First(&payloads).Error
 	if err != nil {
-		return payloads, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+	brandIdUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/"+strconv.Itoa(payloads.BrandId)
+	errUrlBrandId := utils.Get(brandIdUrl,&brandresponse,nil)
+	if errUrlBrandId != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlBrandId,
+		}
+	}
+	BrandJoinData := utils.DataFrameInnerJoin([]masterpayloads.CampaignMasterResponse{payloads},[]masterpayloads.GetBrandResponse{brandresponse},"BrandId")
 
-	defer rows.Close()
+	modelIdUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/"+strconv.Itoa(payloads.ModelId)
+	errUrlModelId:= utils.Get(modelIdUrl,&modelresponse,nil)
+	if errUrlModelId != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlModelId,
+		}
+	}
+	ModelIdJoinData := utils.DataFrameInnerJoin(BrandJoinData,[]masterpayloads.GetModelResponse{modelresponse},"ModelId")
 
-	return payloads, nil
+	fmt.Printf("BrandJoinData: %+v\n", BrandJoinData)
+	fmt.Printf("ModelIdJoinData: %+v\n", ModelIdJoinData)
+
+	return ModelIdJoinData, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, id int) (masterpayloads.CampaignMasterDetailPayloads, *exceptionsss_test.BaseErrorResponse) {
-	entities := masterentities.CampaignMasterDetail{}
+	entities := mastercampaignmasterentities.CampaignMasterDetail{}
 	payloads := masterpayloads.CampaignMasterDetailPayloads{}
-	rows, err := tx.Model(&entities).Where(masterentities.CampaignMasterDetail{
-		CampaignDetailId: id,
-	}).First(&payloads).Rows()
+	rows, err := tx.Model(&entities).Where("campaign_detail_id = ?",id).First(&payloads).Rows()
 	if err != nil {
 		return payloads, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -274,103 +318,61 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	return payloads, nil
 }
 
-func(r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(tx *gorm.DB)([]masterpayloads.GetHistory,*exceptionsss_test.BaseErrorResponse){
-	var responses []masterpayloads.GetHistory
-
-	err:=tx.Find(&responses).Error
-	if err != nil{
-		return responses,&exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	CampaignMasterMapping := []mastercampaignmasterentities.CampaignMaster{}
+	CampaignMasterResponse := []masterpayloads.GetHistory{}
+	query := tx.Model(mastercampaignmasterentities.CampaignMaster{}).Scan(&CampaignMasterResponse)
+	err := query.Scopes(pagination.Paginate(&CampaignMasterMapping, &pages, query)).Scan(&CampaignMasterResponse).Error
+	if len(CampaignMasterResponse) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-	return responses,nil
-}
-
-func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	entities := masterentities.CampaignMaster{}
-	var GetModelResponse []masterpayloads.GetModelResponse
-	var responses []masterpayloads.CampaignMasterResponse
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var modelCode string
-	var modelName string
-	responseStruct := reflect.TypeOf(masterpayloads.CampaignMasterListReponse{})
-
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		}
-	}
-
-	for i := 0; i < len(externalServiceFilter); i++ {
-		if externalServiceFilter[i].ColumnField == "model_code" {
-			modelCode = externalServiceFilter[i].ColumnValue
-		}
-		if externalServiceFilter[i].ColumnField == "model_name" {
-			modelName = externalServiceFilter[i].ColumnValue
-		}
-	}
-
-	BaseModelQuery := tx.Model(&entities).Scan(&responses)
-	WhereQuery := utils.ApplyFilter(BaseModelQuery, internalServiceFilter)
-
-	rows, err := BaseModelQuery.Scopes(pagination.Paginate(&entities, &pages, WhereQuery)).Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+
+		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+	pages.Rows = CampaignMasterResponse
+	return pages, nil
+}
 
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	entities := mastercampaignmasterentities.CampaignMaster{}
+	payloads := []masterpayloads.CampaignMasterResponse{}
+	baseModelQuery := tx.Model(&entities).Scan(&payloads)
+
+	Wherequery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, Wherequery)).Scan(&payloads).Rows()
+
+	if len(payloads) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-	modelUrl := "http://127.0.0.1:8000/api/sales/unit-model-codename/?"
-	if modelCode != "" {
-		modelUrl += "model_code=" + modelCode
-		if modelName != "" {
-			modelUrl += "&"
-		}
-	}
-	if modelName != "" {
-		modelUrl += "model_name=" + modelName
-	}
-
-	errUrlmodel := utils.Get(modelUrl, &GetModelResponse, nil)
-
-	if errUrlmodel != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlmodel,
+			Err:        err,
 		}
 	}
-
-	joinedData := utils.DataFrameInnerJoin(responses, GetModelResponse, "OrderTypeId")
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	defer rows.Close()
+	pages.Rows = payloads
+	return pages, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
-	entities := []masterentities.CampaignMasterDetail{}
+	entities := []mastercampaignmasterentities.CampaignMasterDetail{}
 	response := []masterpayloads.CampaignMasterDetailPayloads{}
 
-	BaseModelQuery := tx.Model(&entities).Where(masterentities.CampaignMasterDetail{
+	BaseModelQuery := tx.Model(&entities).Where(mastercampaignmasterentities.CampaignMasterDetail{
 		CampaignId: id,
 	})
 	rows, err := BaseModelQuery.Scopes(pagination.Paginate(&entities, &pages, BaseModelQuery)).Scan(&response).Rows()
@@ -395,16 +397,56 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 	return pages, nil
 }
 
-func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id int, value float64) (bool) {
-	err := tx.Model(&masterentities.CampaignMaster{}).Where(masterentities.CampaignMaster{
+func(r *CampaignMasterRepositoryImpl) UpdateCampaignMasterDetail(tx *gorm.DB,id int,req masterpayloads.CampaignMasterDetailPayloads)(bool,*exceptionsss_test.BaseErrorResponse){
+	var entities mastercampaignmasterentities.CampaignMasterDetail
+
+	result := tx.Model(&entities).Where("campaign_detail_id = ?",id).First(&entities)
+	if result.Error != nil{
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        result.Error,
+		}
+	}
+
+	update:= tx.Model(&entities).Where("campaign_detail_id = ?",id).Updates(req)
+	if update.Error != nil {
+        return false, &exceptionsss_test.BaseErrorResponse{
+            StatusCode: http.StatusInternalServerError,
+            Err:        update.Error,
+        }
+    }
+
+	results:= r.UpdateTotalCampaignMaster(tx,req.CampaignId)
+	if !results{
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        result.Error,
+		}
+	}
+
+    return true, nil
+
+}
+
+func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id int) bool {
+	var entities []mastercampaignmasterentities.CampaignMasterDetail
+	var entity mastercampaignmasterentities.CampaignMaster
+	var value float64
+	result := tx.Model(&entities).Where(mastercampaignmasterentities.CampaignMasterDetail{
 		CampaignId: id,
-	}).UpdateColumns(map[string]interface{}{
-		"total":           value,
-		"total_vat":       value / 10,
-		"total_after_vat": value + value/10,
-	}).Error
-	if err != nil {
+	}).Find(&entities)
+	if result.Error != nil {
 		return false
 	}
-	return true
+	for _, detail := range entities {
+		if !detail.IsActive {
+			continue
+		} else {
+			value += detail.Quantity * detail.OperationItemPrice * ((1 - (detail.DiscountPercent/100)))
+		}
+	}
+	result = tx.Model(&entity).Where(mastercampaignmasterentities.CampaignMaster{
+		CampaignId: id,
+	}).Update("total",value)
+	return result.Error == nil
 }

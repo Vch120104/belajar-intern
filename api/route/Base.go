@@ -454,6 +454,29 @@ func BomRouter(
 	return router
 }
 
+func CampaignMasterRouter(
+	campaignmastercontroller mastercontroller.CampaignMasterController,
+)chi.Router{
+	router:=chi.NewRouter()
+	//campaign master header
+	router.Get("/",campaignmastercontroller.GetAllCampaignMaster)
+	router.Get("/{campaign_id}",campaignmastercontroller.GetByIdCampaignMaster)
+	router.Get("/history",campaignmastercontroller.GetAllCampaignMasterCodeAndName)
+	router.Post("/",campaignmastercontroller.SaveCampaignMaster)
+	router.Patch("/{campaign_id}",campaignmastercontroller.ChangeStatusCampaignMaster)
+
+	//campaign master detail
+	router.Get("/detail/{campaign_id}",campaignmastercontroller.GetAllCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}",campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Post("/detail",campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}",campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
+	router.Patch("/detail/deactivate/{campaign_detail_id}",campaignmastercontroller.DeactivateCampaignMasterDetail)
+	router.Patch("/detail/activate/{campaign_detail_id}",campaignmastercontroller.ActivateCampaignMasterDetail)
+	router.Put("/detail/update/{campaign_detail_id}",campaignmastercontroller.UpdateCampaignMasterDetail)
+
+	return router
+}
+
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()
 // 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
