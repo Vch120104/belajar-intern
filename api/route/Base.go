@@ -459,7 +459,7 @@ func LabourSellingPriceRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 	// router.Get("/", LabourSellingPriceController.GetAllLabourSellingPrice)
-	// router.Get("/{skill_level_id}", LabourSellingPriceController.GetLabourSellingPriceByID)
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceController.GetLabourSellingPriceById)
 	router.Post("/", LabourSellingPriceController.SaveLabourSellingPrice)
 	// router.Patch("/{skill_level_id}", LabourSellingPriceController.ChangeStatusLabourSellingPrice)
 
@@ -472,7 +472,7 @@ func LabourSellingPriceDetailRouter(
 	LabourSellingPriceDetailController masteroperationcontroller.LabourSellingPriceDetailController,
 ) chi.Router {
 	router := chi.NewRouter()
-	// router.Get("/", LabourSellingPriceController.GetAllLabourSellingPrice)
+	router.Get("/by-master-id/{header_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
 	// router.Get("/{skill_level_id}", LabourSellingPriceController.GetLabourSellingPriceByID)
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
 	// router.Patch("/{skill_level_id}", LabourSellingPriceController.ChangeStatusLabourSellingPrice)

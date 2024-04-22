@@ -5,7 +5,10 @@ import (
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
+	"after-sales/api/payloads/pagination"
+	"after-sales/api/utils"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -18,7 +21,117 @@ func StartLabourSellingPriceRepositoryImpl() masteroperationrepository.LabourSel
 	return &LabourSellingPriceRepositoryImpl{}
 }
 
+func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteroperationentities.LabourSellingPrice{}
+	response := masteroperationpayloads.LabourSellingPriceResponse{}
+	var getUnitBrandResponse masteroperationpayloads.BrandLabourSellingPriceResponse
+	var getjobTypeResponse masteroperationpayloads.JobTypeLabourSellingPriceResponse
 
+	rows, err := tx.Model(&entities).
+		Where(masteroperationentities.LabourSellingPrice{
+			LabourSellingPriceId: Id,
+		}).
+		First(&response).
+		Rows()
+
+	if err != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	// join with mtr_brand on sales service
+
+	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(response.BrandId)
+
+	errUrlUnitBrand := utils.Get(unitBrandUrl, &getUnitBrandResponse, nil)
+
+	if errUrlUnitBrand != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlUnitBrand,
+		}
+	}
+
+	joinedData1 := utils.DataFrameInnerJoin([]masteroperationpayloads.LabourSellingPriceResponse{response}, []masteroperationpayloads.BrandLabourSellingPriceResponse{getUnitBrandResponse}, "BrandId")
+
+	//join with mtr_job_type on general service
+
+	jobTypeUrl := "http://10.1.32.26:8000/general-service/api/general/job-type/" + strconv.Itoa(response.JobTypeId)
+
+	errUrljobType := utils.Get(jobTypeUrl, &getjobTypeResponse, nil)
+
+	if errUrljobType != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrljobType,
+		}
+	}
+
+	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masteroperationpayloads.JobTypeLabourSellingPriceResponse{getjobTypeResponse}, "JobTypeId")
+
+	result := joinedData2[0]
+
+	return result, nil
+}
+
+func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	entities := []masteroperationentities.LabourSellingPriceDetail{}
+	responses := []masteroperationpayloads.LabourSellingPriceDetailResponse{}
+	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
+	//define base model
+	query := tx.
+		Model(&entities).
+		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId}).
+		Scan(&responses)
+
+	//apply pagination and execute
+	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&responses).Rows()
+
+	if len(responses) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	for _, response := range responses{
+		response.ModelId
+	}
+
+	// join with mtr_unit_model
+
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(responses.ModelId)
+
+	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
+
+	if errUrlUnitModel != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinedData1 := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+
+	pages.Rows = responses
+
+
+
+	return pages, nil
+}
 
 func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 

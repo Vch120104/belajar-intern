@@ -7,11 +7,16 @@ import (
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	masteroperationservice "after-sales/api/services/master/operation"
+	"after-sales/api/utils"
 	"after-sales/api/validation"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type LabourSellingPriceController interface {
+	GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request)
 	SaveLabourSellingPrice(writer http.ResponseWriter, request *http.Request)
 }
 type LabourSellingPriceControllerImpl struct {
@@ -22,6 +27,19 @@ func NewLabourSellingPriceController(LabourSellingPriceService masteroperationse
 	return &LabourSellingPriceControllerImpl{
 		LabourSellingPriceService: LabourSellingPriceService,
 	}
+}
+
+func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request) {
+
+	labourSellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+
+	result, err := r.LabourSellingPriceService.GetLabourSellingPriceById(labourSellingPriceId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
 func (r *LabourSellingPriceControllerImpl) SaveLabourSellingPrice(writer http.ResponseWriter, request *http.Request) {
