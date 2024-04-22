@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -16,7 +17,7 @@ func ValidationForm(form interface{}) string {
 	err := validate.Struct(form)
 
 	if err != nil {
-		for _, err := range err.(validator.ValidationErrors){
+		for _, err := range err.(validator.ValidationErrors) {
 			if err.Tag() == "required" {
 				msg = fmt.Sprintf("%s cant be empty", err.Field())
 			} else if err.Tag() == "min" {

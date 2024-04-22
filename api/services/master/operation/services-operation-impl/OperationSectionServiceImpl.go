@@ -11,18 +11,21 @@ import (
 
 	// "after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type OperationSectionServiceImpl struct {
 	operationSectionRepo masteroperationrepository.OperationSectionRepository
 	DB                   *gorm.DB
+	RedisClient          *redis.Client // Redis client
 }
 
-func StartOperationSectionService(operationSectionRepo masteroperationrepository.OperationSectionRepository, db *gorm.DB) masteroperationservice.OperationSectionService {
+func StartOperationSectionService(operationSectionRepo masteroperationrepository.OperationSectionRepository, db *gorm.DB, redisClient *redis.Client) masteroperationservice.OperationSectionService {
 	return &OperationSectionServiceImpl{
 		operationSectionRepo: operationSectionRepo,
 		DB:                   db,
+		RedisClient:          redisClient,
 	}
 }
 
@@ -71,7 +74,7 @@ func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpa
 			panic(exceptions.NewNotFoundError(err.Error()))
 		}
 	}
-	
+
 	if len(req.OperationSectionCode) > 3 {
 		panic(exceptions.NewBadRequestError("Operation Section Code max 3 characters"))
 	}

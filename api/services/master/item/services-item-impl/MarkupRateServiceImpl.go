@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -9,64 +9,76 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type MarkupRateServiceImpl struct {
-	markupRepo masteritemrepository.MarkupRateRepository
-	DB         *gorm.DB
+	markupRepo  masteritemrepository.MarkupRateRepository
+	DB          *gorm.DB
+	RedisClient *redis.Client // Redis client
 }
 
-func StartMarkupRateService(markupRepo masteritemrepository.MarkupRateRepository, db *gorm.DB) masteritemservice.MarkupRateService {
+func StartMarkupRateService(markupRepo masteritemrepository.MarkupRateRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.MarkupRateService {
 	return &MarkupRateServiceImpl{
-		markupRepo: markupRepo,
-		DB:         db,
+		markupRepo:  markupRepo,
+		DB:          db,
+		RedisClient: redisClient,
 	}
 }
 
-func (s *MarkupRateServiceImpl) GetAllMarkupRate(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+func (s *MarkupRateServiceImpl) GetAllMarkupRate(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.markupRepo.GetAllMarkupRate(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, totalPages, totalRows, err
 	}
-	return results, totalPages, totalRows
+	return results, totalPages, totalRows, nil
 }
 
-func (s *MarkupRateServiceImpl) GetMarkupRateById(id int) masteritempayloads.MarkupRateResponse {
+func (s *MarkupRateServiceImpl) GetMarkupRateById(id int) (masteritempayloads.MarkupRateResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupRateById(tx, id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRateRequest) bool {
+func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRateRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+
+	if req.MarkupRateId != 0 {
+		_, err := s.markupRepo.GetMarkupRateById(tx, req.MarkupRateId)
+
+		if err != nil {
+			return false, err
+		}
+	}
+
 	results, err := s.markupRepo.SaveMarkupRate(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) bool {
+func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.markupRepo.GetMarkupRateById(tx, Id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
 	results, err := s.markupRepo.ChangeStatusMarkupRate(tx, Id)
 	if err != nil {
-		return results
+		return results, err
 	}
-	return true
+	return true, nil
 }

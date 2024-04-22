@@ -5,9 +5,8 @@ import (
 
 	"reflect"
 
-	"gorm.io/gorm"
-
 	"github.com/go-gota/gota/dataframe"
+	"gorm.io/gorm"
 )
 
 type Pagination struct {

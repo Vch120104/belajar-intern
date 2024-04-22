@@ -3,14 +3,14 @@ package securities
 import (
 	"after-sales/api/payloads"
 	"fmt"
+	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-func ExtractAuthToken(c *gin.Context) (*payloads.UserDetail, error) {
-	token, err := VerifyToken(c)
+func ExtractAuthToken(w http.ResponseWriter, r *http.Request) (*payloads.UserDetail, error) {
+	token, err := VerifyToken(r)
 	if err != nil {
 		return nil, err
 	}
@@ -28,9 +28,6 @@ func ExtractAuthToken(c *gin.Context) (*payloads.UserDetail, error) {
 
 		roles, _ := strconv.Atoi(role)
 		userIDs, _ := strconv.Atoi(userId)
-		if err != nil {
-			return nil, err
-		}
 
 		authDetail := payloads.UserDetail{
 			UserId:      int32(userIDs),
@@ -45,5 +42,5 @@ func ExtractAuthToken(c *gin.Context) (*payloads.UserDetail, error) {
 		return &authDetail, nil
 	}
 
-	return nil, err
+	return nil, fmt.Errorf("invalid token")
 }

@@ -2,13 +2,14 @@ package masteritemrepository
 
 import (
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 
 	"gorm.io/gorm"
 )
 
 type ItemRepository interface {
-	GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error)
+	GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, paginate pagination.Pagination) ([]masteritempayloads.ItemLookup, int64, error)
 	GetAllItemLookup(*gorm.DB, map[string]string) ([]map[string]interface{}, error)
 	GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, error)
 	GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, error)

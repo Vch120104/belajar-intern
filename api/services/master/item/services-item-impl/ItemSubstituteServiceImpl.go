@@ -9,18 +9,21 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type ItemSubstituteServiceImpl struct {
 	itemSubstituteRepo masteritemrepository.ItemSubstituteRepository
 	Db                 *gorm.DB
+	RedisClient        *redis.Client // Redis client
 }
 
-func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubstituteRepository, db *gorm.DB) masteritemservice.ItemSubstituteService {
+func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubstituteRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.ItemSubstituteService {
 	return &ItemSubstituteServiceImpl{
 		itemSubstituteRepo: itemSubstituteRepo,
 		Db:                 db,
+		RedisClient:        redisClient,
 	}
 }
 
@@ -80,7 +83,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req,id)
+	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req, id)
 	if err != nil {
 		panic(exceptions.NewAppExceptionError(err.Error()))
 	}

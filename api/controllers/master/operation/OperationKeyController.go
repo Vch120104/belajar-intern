@@ -5,19 +5,20 @@ import (
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
-	"after-sales/api/utils"
 	masteroperationservice "after-sales/api/services/master/operation"
+	"after-sales/api/utils"
 	"net/http"
 	"strconv"
-	"github.com/julienschmidt/httprouter"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type OperationKeyController interface {
-	GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetOperationKeyByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetOperationKeyName(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request)
+	GetOperationKeyByID(writer http.ResponseWriter, request *http.Request)
+	GetOperationKeyName(writer http.ResponseWriter, request *http.Request)
+	SaveOperationKey(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationKeyControllerImpl struct {
@@ -29,8 +30,6 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 		operationkeyservice: operationKeyService,
 	}
 }
-
-
 
 // @Summary Get All Operation Key
 // @Description REST API Operation Key
@@ -49,9 +48,9 @@ func NewOperationKeyController(operationKeyService masteroperationservice.Operat
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key [get]
-func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.ResponseWriter, request *http.Request) {
 
 	query := request.URL.Query()
 	queryParams := map[string]string{
@@ -85,10 +84,10 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Tags Master : Operation Key
 // @Param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [get]
-func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	operationKeyId, _ := strconv.Atoi(params.ByName("operation_key_id"))
+func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request) {
+	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
 	result := r.operationkeyservice.GetOperationKeyById(operationKeyId)
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -103,9 +102,9 @@ func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWri
 // @Param operation_section_id query int true "operation_section_id"
 // @Param operation_key_code query string true "operation_key_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key-name [get]
-func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 
 	operationGroupId := utils.NewGetQueryInt(query, "operation_group_id")
@@ -128,9 +127,9 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 // @Tags Master : Operation Key
 // @param reqBody body masteroperationpayloads.OperationKeyResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key [post]
-func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter, request *http.Request) {
 	var requestForm masteroperationpayloads.OperationKeyResponse
 	var message = ""
 
@@ -154,10 +153,10 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 // @Tags Master : Operation Key
 // @param operation_key_id path int true "operation_key_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [patch]
-func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	operationKeyId, _ := strconv.Atoi(params.ByName("operation_key_id"))
+func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request) {
+	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
 
 	response := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
 

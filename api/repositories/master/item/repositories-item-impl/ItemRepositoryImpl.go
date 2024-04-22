@@ -3,15 +3,16 @@ package masteritemrepositoryimpl
 import (
 	masteritementities "after-sales/api/entities/master/item"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"log"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -23,37 +24,66 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, error) {
-	var responses []masteritempayloads.ItemLookup
-	tableStruct := masteritempayloads.ItemLookup{}
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, paginate pagination.Pagination) ([]masteritempayloads.ItemLookup, int64, error) {
+	// Define variables
+	var (
+		responses   []masteritempayloads.ItemLookup
+		tableStruct = masteritempayloads.ItemLookup{}
+		baseQuery   = tx.Model(&masteritempayloads.ItemLookup{})
+		totalRows   int64
+	)
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
+	// Apply joins and filters
+	joinTable := utils.CreateJoinSelectStatement(baseQuery, tableStruct)
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	rows, err := whereQuery.Scan(&responses).Rows()
+	// Get total number of rows for pagination
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return nil, 0, err
+	}
 
+	// Apply pagination
+	offset := (paginate.Page - 1) * paginate.Limit
+	whereQuery = whereQuery.Offset(offset).Limit(paginate.Limit)
+
+	// Execute query
+	rows, err := whereQuery.Rows()
 	if err != nil {
-		return responses, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, gorm.ErrRecordNotFound
+		}
+		return nil, 0, err
 	}
-
-	if len(responses) == 0 {
-		return responses, gorm.ErrRecordNotFound
-	}
-
 	defer rows.Close()
 
-	return responses, nil
+	// Iterate over rows and scan into responses
+	for rows.Next() {
+		var item masteritempayloads.ItemLookup
+		if err := tx.ScanRows(rows, &item); err != nil {
+			return nil, 0, err
+		}
+		responses = append(responses, item)
+	}
+
+	// Check if no records found
+	if len(responses) == 0 {
+		return nil, 0, gorm.ErrRecordNotFound
+	}
+
+	return responses, totalRows, nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[string]string) ([]map[string]interface{}, error) {
-	var paginationResponse utils.APIPaginationResponse
-	var c *gin.Context
-	var multiIds []string
-	var responses []masteritempayloads.ItemLookup
-	var getItemGroupResponse []masteritempayloads.ItemGroupResponse
-	var getSupplierMasterResponse []masteritempayloads.SupplierMasterResponse
-	tableStruct := masteritempayloads.ItemLookup{}
+	var (
+		paginationResponse        utils.APIPaginationResponse
+		multiIds                  []string
+		responses                 []masteritempayloads.ItemLookup
+		getItemGroupResponse      []masteritempayloads.ItemGroupResponse
+		getSupplierMasterResponse []masteritempayloads.SupplierMasterResponse
+		tableStruct               = masteritempayloads.ItemLookup{}
+	)
+
+	// Count the non-empty query parameters
 	count := 0
 	for _, value := range queryParams {
 		if value != "" {
@@ -61,24 +91,30 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		}
 	}
 
+	// Check if the required parameters are present for pagination
 	if count == 2 && queryParams["limit"] != "" && queryParams["page"] != "" {
 		page, _ := strconv.Atoi(queryParams["page"])
 		limit, _ := strconv.Atoi(queryParams["limit"])
 
+		// Apply joins and execute query
 		joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-		//execute
 		rows, err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Rows()
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
 
+		// Get item group data
 		groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_code=" + queryParams["item_group_code"]
-		errUrlItemGroup := utils.Get(c, groupServiceUrl, &getItemGroupResponse, nil)
-
+		errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 		if errUrlItemGroup != nil {
 			return nil, errUrlItemGroup
 		}
 
+		// Join item group data with responses
 		joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
+		// Extract unique supplier IDs
 		for _, item := range responses {
 			idStr := strconv.Itoa(item.SupplierId)
 			duplicate := false
@@ -93,25 +129,21 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 			}
 		}
 
+		// Get supplier master data
 		supplierServiceUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-multi-id/" + strings.Join(multiIds, ",")
-		errUrlSupplierMaster := utils.Get(c, supplierServiceUrl, &getSupplierMasterResponse, nil)
+		errUrlSupplierMaster := utils.Get(supplierServiceUrl, &getSupplierMasterResponse, nil)
 		if errUrlSupplierMaster != nil {
 			return nil, errUrlSupplierMaster
 		}
 
+		// Join supplier master data with joined data
 		joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getSupplierMasterResponse, "SupplierId")
-
-		if err != nil {
-			return joinedDataSecond, err
-		}
-
-		defer rows.Close()
 
 		return joinedDataSecond, nil
 	}
 
+	// If pagination parameters are not present, fetch data without pagination
 	supplierDescUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-for-item-master"
-
 	u, err := url.Parse(supplierDescUrl)
 	if err != nil {
 		return nil, err
@@ -123,7 +155,8 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 	u.RawQuery = q.Encode()
 	supplierDescUrl = u.String()
 
-	paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(c, supplierDescUrl, paginationResponse, nil)
+	// Fetch data with pagination from the URL
+	paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(supplierDescUrl, paginationResponse, nil)
 	if errUrlSupplierMasterLookup != nil {
 		return nil, errUrlSupplierMasterLookup
 	}
@@ -193,7 +226,6 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	var getAtpmSupplierCodeOrderResponse masteritempayloads.AtpmSupplierCodeOrderResponse
 	// var getPersonInChargeResponse masteritempayloads.PersonInChargeResponse
 	var getAtpmWarrantyClaimTypeResponse masteritempayloads.AtpmWarrantyClaimTypeResponse
-	var c *gin.Context
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.Item{
@@ -206,7 +238,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	defer rows.Close()
 
 	//FK Luar with mtr_item_group common-general service
-	errUrlItemGroup := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/item-group/"+strconv.Itoa(response.ItemGroupId), &getItemGroupResponse, nil)
+	errUrlItemGroup := utils.Get("http://10.1.32.26:8000/general-service/api/general/item-group/"+strconv.Itoa(response.ItemGroupId), &getItemGroupResponse, nil)
 
 	if errUrlItemGroup != nil {
 		return nil, err
@@ -215,7 +247,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	firstJoin := utils.DataFrameLeftJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.ItemGroupResponse{getItemGroupResponse}, "ItemGroupId")
 
 	//FK luar with mtr_supplier general service
-	errUrlSupplierMaster := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.SupplierId), &getSupplierMasterResponse, nil)
+	errUrlSupplierMaster := utils.Get("http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.SupplierId), &getSupplierMasterResponse, nil)
 
 	if errUrlSupplierMaster != nil {
 		return nil, err
@@ -223,7 +255,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masteritempayloads.SupplierMasterResponse{getSupplierMasterResponse}, "SupplierId")
 	//FK luar with storage_type general service
-	errUrlStorageType := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/storage-type/"+strconv.Itoa(response.StorageTypeId), &getStorageTypeResponse, nil)
+	errUrlStorageType := utils.Get("http://10.1.32.26:8000/general-service/api/general/storage-type/"+strconv.Itoa(response.StorageTypeId), &getStorageTypeResponse, nil)
 
 	if errUrlStorageType != nil {
 		return nil, err
@@ -231,7 +263,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masteritempayloads.StorageTypeResponse{getStorageTypeResponse}, "StorageTypeId")
 	//FK luar with mtr_warranty_claim_type common service
-	errUrlWarrantyClaimType := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/warranty-claim-type/"+strconv.Itoa(response.AtpmWarrantyClaimTypeId), &getAtpmWarrantyClaimTypeResponse, nil)
+	errUrlWarrantyClaimType := utils.Get("http://10.1.32.26:8000/general-service/api/general/warranty-claim-type/"+strconv.Itoa(response.AtpmWarrantyClaimTypeId), &getAtpmWarrantyClaimTypeResponse, nil)
 
 	if errUrlWarrantyClaimType != nil {
 		return thirdJoin, err
@@ -239,7 +271,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	fourthJoin := utils.DataFrameLeftJoin(thirdJoin, []masteritempayloads.AtpmWarrantyClaimTypeResponse{getAtpmWarrantyClaimTypeResponse}, "AtpmWarrantyClaimTypeId")
 	//FK luar with mtr_special_movement common service
-	errUrlSpecialMovement := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/special-movement/"+strconv.Itoa(response.SpecialMovementId), &getSpecialMovementResponse, nil)
+	errUrlSpecialMovement := utils.Get("http://10.1.32.26:8000/general-service/api/general/special-movement/"+strconv.Itoa(response.SpecialMovementId), &getSpecialMovementResponse, nil)
 
 	if errUrlSpecialMovement != nil {
 		return fourthJoin, err
@@ -247,7 +279,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	fifthJoin := utils.DataFrameLeftJoin(fourthJoin, []masteritempayloads.SpecialMovementResponse{getSpecialMovementResponse}, "SpecialMovementId")
 	//FK luar with mtr_supplier general service atpm_supplier_id
-	errUrlAtpmSupplier := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierId), &getAtpmSupplierResponse, nil)
+	errUrlAtpmSupplier := utils.Get("http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierId), &getAtpmSupplierResponse, nil)
 
 	if errUrlAtpmSupplier != nil {
 		return fifthJoin, err
@@ -255,7 +287,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 
 	sixthJoin := utils.DataFrameLeftJoin(fifthJoin, []masteritempayloads.AtpmSupplierResponse{getAtpmSupplierResponse}, "AtpmSupplierId")
 	//FK luar with mtr_supplier general service atpm_supplier_code_order_id
-	errUrlAtpmSupplierCodeOrder := utils.Get(c, "http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierCodeOrderId), &getAtpmSupplierCodeOrderResponse, nil)
+	errUrlAtpmSupplierCodeOrder := utils.Get("http://10.1.32.26:8000/general-service/api/general/supplier-master/"+strconv.Itoa(response.AtpmSupplierCodeOrderId), &getAtpmSupplierCodeOrderResponse, nil)
 
 	if errUrlAtpmSupplierCodeOrder != nil {
 		return sixthJoin, err
