@@ -21,6 +21,15 @@ func StartLabourSellingPriceRepositoryImpl() masteroperationrepository.LabourSel
 	return &LabourSellingPriceRepositoryImpl{}
 }
 
+func isNotInList(list []int, value int) bool {
+    for _, v := range list {
+        if v == value {
+            return false
+        }
+    }
+    return true
+}
+
 func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteroperationentities.LabourSellingPrice{}
 	response := masteroperationpayloads.LabourSellingPriceResponse{}
@@ -108,20 +117,21 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 
 	defer rows.Close()
 
-	id_model := 0
-	id_variant := 0
+	models_ids := []int{}
+	variant_ids := []int{}
 
 	for _, response := range responses {
-		if id_model != response.ModelId {
-			id_model = response.ModelId
-			str := strconv.Itoa(id_model)
+		if isNotInList(models_ids, response.ModelId) {
+			str := strconv.Itoa(response.ModelId)
 			ModelIds += str + ","
+			models_ids = append(models_ids, response.ModelId)
 		}
-		if id_variant != response.VariantId {
-			id_variant = response.VariantId
-			str := strconv.Itoa(id_variant)
+		if isNotInList(variant_ids, response.VariantId) {
+			str := strconv.Itoa(response.VariantId)
 			VariantIds += str + ","
+			variant_ids = append(variant_ids, response.VariantId)
 		}
+		
 	}
 
 	// join with mtr_unit_model
