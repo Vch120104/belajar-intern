@@ -256,6 +256,29 @@ func BomRouter(
 	return router
 }
 
+func PurchasePriceRouter(
+	PurchasePriceController masteritemcontroller.PurchasePriceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+
+	//master
+	router.Get("/", PurchasePriceController.GetAllPurchasePrice)
+	router.Get("/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
+	router.Post("/", PurchasePriceController.SavePurchasePrice)
+
+	//detail
+	//router.Get("/all/detail", ItemLocationController.GetAllItemLocationDetail)
+	//router.Get("/popup-location", ItemLocationController.PopupItemLocation)
+	//router.Post("/all/detail", ItemLocationController.AddItemLocation)
+	///router.Delete("/all/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
+
+	return router
+}
+
 func LandedCostMasterRouter(
 	LandedCostMaster masteritemcontroller.LandedCostMasterController,
 ) chi.Router {
