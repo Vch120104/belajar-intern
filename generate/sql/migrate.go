@@ -23,7 +23,7 @@ import (
 
 func Migrate() {
 	config.InitEnvConfigs(false, "")
-	logEntry := fmt.Sprintf("Auto Migrating...")
+	logEntry := "Auto Migrating..."
 
 	dsn := fmt.Sprintf(
 		`%s://%s:%s@%s:%v?database=%s`,
@@ -76,9 +76,10 @@ func Migrate() {
 		// &masteritementities.Item{},
 		// &masteritementities.PriceList{},
 		//&masteritementities.ItemLocationSource{},
-		&masteritementities.ItemLocationDetail{},
-		&masteritementities.ItemLocation{},
-
+		//&masteritementities.ItemLocationDetail{},
+		//&masteritementities.ItemLocation{},
+		//&masteritementities.PurchasePrice{},
+		&masteritementities.PurchasePriceDetail{},
 		// &masteritementities.ItemDetail{},
 		// &masteritementities.DiscountPercent{},
 		// &masterentities.IncentiveGroup{},
@@ -156,9 +157,9 @@ func Migrate() {
 	)
 
 	if db != nil && db.Error != nil {
-		fmt.Sprintf("%s %s with error %s", logEntry, "Failed", db.Error)
+		log.Printf("%s Failed with error %s", logEntry, db.Error)
 		panic(err)
 	}
 
-	fmt.Sprintf("%s %s", logEntry, "Success")
+	log.Printf("%s Success", logEntry)
 }

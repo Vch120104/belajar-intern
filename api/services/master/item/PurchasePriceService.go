@@ -8,11 +8,11 @@ import (
 )
 
 type PurchasePriceService interface {
-	//DeletePurchasePrice(id int) *exceptionsss_test.BaseErrorResponse
+	DeletePurchasePrice(id int) *exceptionsss_test.BaseErrorResponse
 	GetPurchasePriceById(id int) (masteritempayloads.PurchasePriceRequest, *exceptionsss_test.BaseErrorResponse)
 	SavePurchasePrice(masteritempayloads.PurchasePriceRequest) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	//GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	//PopupPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	//AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
+	ChangeStatusPurchasePrice(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
 }

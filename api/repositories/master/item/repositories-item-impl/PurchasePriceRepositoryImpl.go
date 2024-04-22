@@ -8,7 +8,9 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -57,7 +59,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		)
 
 		// Scan the row into PurchasePriceRequest struct
-		if err := rows.Scan(&purchasePriceReq.PurchasePriceId, &purchasePriceReq.SupplierId, &purchasePriceReq.CurrencyId, &purchasePriceReq.PurchasePriceEffectiveDate); err != nil {
+		if err := rows.Scan(&purchasePriceReq.PurchasePriceId, &purchasePriceReq.SupplierId, &purchasePriceReq.CurrencyId, &purchasePriceReq.PurchasePriceEffectiveDate, &purchasePriceReq.IsActive); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
@@ -95,6 +97,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			CurrencyCode:               getCurrencyResponse.CurrencyCode,
 			CurrencyName:               getCurrencyResponse.CurrencyName,
 			PurchasePriceEffectiveDate: purchasePriceReq.PurchasePriceEffectiveDate,
+			IsActive:                   purchasePriceReq.IsActive,
 		}
 
 		// Append PurchasePriceResponse to the slice
@@ -115,6 +118,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 			"currency_code":                 response.CurrencyCode,
 			"currency_name":                 response.CurrencyName,
 			"purchase_price_effective_date": response.PurchasePriceEffectiveDate,
+			"is_active":                     response.IsActive,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -127,6 +131,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 func (r *PurchasePriceRepositoryImpl) SavePurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.PurchasePrice{
+		IsActive:                   request.IsActive,
 		SupplierId:                 request.SupplierId,
 		CurrencyId:                 request.CurrencyId,
 		PurchasePriceEffectiveDate: request.PurchasePriceEffectiveDate,
@@ -173,163 +178,146 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int) 
 	return response, nil
 }
 
-// func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-// 	// Inisialisasi variabel untuk menyimpan respons dari database dan layanan eksternal
-// 	var responses []masteritempayloads.PurchasePriceDetailResponse
-// 	var getItemResponse []masteritempayloads.ItemLocResponse
-// 	var getItemLocResponse []masteritempayloads.ItemLocSourceRequest
+func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// Inisialisasi variabel untuk menyimpan respons dari database dan layanan eksternal
+	var responses []masteritempayloads.PurchasePriceDetailResponse
+	var getItemResponse []masteritempayloads.PurchasePriceItemResponse
 
-// 	// Mendapatkan struktur dari tipe data PurchasePriceDetailResponse
-// 	responseStruct := reflect.TypeOf(masteritempayloads.PurchasePriceDetailResponse{})
+	// Mendapatkan struktur dari tipe data PurchasePriceDetailResponse
+	responseStruct := reflect.TypeOf(masteritempayloads.PurchasePriceDetailResponse{})
 
-// 	// Filter kondisi internal
-// 	var internalServiceFilter []utils.FilterCondition
-// 	for _, condition := range filterCondition {
-// 		for j := 0; j < responseStruct.NumField(); j++ {
-// 			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-// 				internalServiceFilter = append(internalServiceFilter, condition)
-// 				break
-// 			}
-// 		}
-// 	}
+	// Filter kondisi internal
+	var internalServiceFilter []utils.FilterCondition
+	for _, condition := range filterCondition {
+		for j := 0; j < responseStruct.NumField(); j++ {
+			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, condition)
+				break
+			}
+		}
+	}
 
-// 	// Menerapkan filter kondisi internal
-// 	tableStruct := masteritempayloads.PurchasePriceDetailRequest{}
-// 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-// 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+	// Menerapkan filter kondisi internal
+	tableStruct := masteritempayloads.PurchasePriceDetailRequest{}
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
 
-// 	// Mengambil data dari database
-// 	if err := whereQuery.Scan(&responses).Error; err != nil {
-// 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
+	// Mengambil data dari database
+	if err := whereQuery.Scan(&responses).Error; err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-// 	// Jika respons dari database kosong, kembalikan error
-// 	if len(responses) == 0 {
-// 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Message:    "Data not found",
-// 		}
-// 	}
+	// Jika respons dari database kosong, kembalikan error
+	if len(responses) == 0 {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+		}
+	}
 
-// 	// Mengambil data item dari layanan eksternal
-// 	var itemIds []string
-// 	for _, resp := range responses {
-// 		itemIds = append(itemIds, strconv.Itoa(resp.ItemId))
-// 	}
-// 	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
-// 	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
-// 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
+	// Mengambil data item dari layanan eksternal
+	var itemIds []string
+	for _, resp := range responses {
+		itemIds = append(itemIds, strconv.Itoa(resp.ItemId))
+	}
+	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
+	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-// 	// Mengambil data lokasi item dari layanan eksternal
-// 	var itemLocIds []string
-// 	for _, resp := range responses {
-// 		if resp.PurchasePriceSourceId != 0 {
-// 			itemLocIds = append(itemLocIds, strconv.Itoa(resp.PurchasePriceSourceId))
-// 		}
-// 	}
+	// Melakukan inner join antara respons lokasi item, respons lokasi item eksternal, dan respons item
+	joinedData := utils.DataFrameInnerJoin(responses, getItemResponse, "ItemId")
 
-// 	// Mengambil data item location source dari layanan eksternal
-// 	for _, id := range itemLocIds {
-// 		itemLocSourceURL := "http://localhost:8000/item-location/popup-location?item_location_source_id=" + id
-// 		if err := utils.Get(itemLocSourceURL, &getItemLocResponse, nil); err != nil {
-// 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        err,
-// 			}
-// 		}
-// 	}
+	// Mem-paginate data yang telah di-join
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
-// 	// Melakukan inner join antara respons lokasi item, respons lokasi item eksternal, dan respons item
-// 	joinedData := utils.DataFrameInnerJoin(responses, getItemLocResponse, "PurchasePriceSourceId")
-// 	joinedData = utils.DataFrameInnerJoin(joinedData, getItemResponse, "ItemId")
+	return dataPaginate, totalPages, totalRows, nil
+}
 
-// 	// Mem-paginate data yang telah di-join
-// 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteritementities.PurchasePriceDetail{
+		ItemId:          request.ItemId,
+		PurchasePriceId: request.PurchasePriceId,
+		PurchasePrice:   request.PurchasePrice,
+	}
 
-// 	return dataPaginate, totalPages, totalRows, nil
-// }
+	err := tx.Save(&entities).Error
 
-// func (r *PurchasePriceRepositoryImpl) PopupPurchasePrice(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-// 	var responses []masteritempayloads.ItemLocSourceResponse
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
 
-// 	// Fetch data from database with joins and conditions
-// 	query := tx.Table("mtr_item_location_source")
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
 
-// 	// Apply filter conditions
-// 	for _, condition := range filterCondition {
-// 		query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
-// 	}
+	return true, nil
+}
 
-// 	err := query.Find(&responses).Error
-// 	if err != nil {
-// 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
+// DeletePurchasePrice deletes an item location by ID
+func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	entities := masteritementities.PurchasePriceDetail{}
 
-// 	// Check if responses are empty
-// 	if len(responses) == 0 {
-// 		notFoundErr := exceptions.NewNotFoundError("No data found")
-// 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        notFoundErr,
-// 		}
-// 	}
+	// Menghapus data berdasarkan ID
+	err := tx.Where("purchase_price_detail_id = ?", Id).Delete(&entities).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-// 	// Perform pagination
-// 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+	// Jika data berhasil dihapus, kembalikan nil untuk error
+	return nil
+}
 
-// 	return dataPaginate, totalPages, totalRows, nil
-// }
+func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+	var entity masteritementities.PurchasePrice
 
-// func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
-// 	entities := masteritementities.PurchasePriceDetail{
-// 		ItemId:                      request.ItemId,
-// 		PurchasePriceId:             request.PurchasePriceId,
-// 		PurchasePriceDetailSourceId: request.PurchasePriceSourceId,
-// 	}
+	// Cari entitas berdasarkan ID
+	result := tx.Model(&entity).
+		Where("purchase_price_id = ?", Id).
+		First(&entity)
 
-// 	err := tx.Save(&entities).Error
+	// Periksa apakah entitas ditemukan
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("purchase price with ID %d not found", Id),
+			}
+		}
+		// Jika ada galat lain, kembalikan galat internal server
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
 
-// 	if err != nil {
-// 		if strings.Contains(err.Error(), "duplicate") {
-// 			return false, &exceptionsss_test.BaseErrorResponse{
-// 				StatusCode: http.StatusConflict,
-// 				Err:        err,
-// 			}
-// 		} else {
+	// Ubah status entitas
+	entity.IsActive = !entity.IsActive
 
-// 			return false, &exceptionsss_test.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Err:        err,
-// 			}
-// 		}
-// 	}
+	// Simpan perubahan
+	result = tx.Save(&entity)
+	if result.Error != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
 
-// 	return true, nil
-// }
-
-// // DeletePurchasePrice deletes an item location by ID
-// func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
-// 	entities := masteritementities.PurchasePriceDetail{}
-
-// 	// Menghapus data berdasarkan ID
-// 	err := tx.Where("item_location_detail_id = ?", Id).Delete(&entities).Error
-// 	if err != nil {
-// 		return &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
-
-// 	// Jika data berhasil dihapus, kembalikan nil untuk error
-// 	return nil
-// }
+	return true, nil
+}

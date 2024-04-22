@@ -269,12 +269,12 @@ func PurchasePriceRouter(
 	router.Get("/", PurchasePriceController.GetAllPurchasePrice)
 	router.Get("/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
 	router.Post("/", PurchasePriceController.SavePurchasePrice)
+	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
-	//router.Get("/all/detail", ItemLocationController.GetAllItemLocationDetail)
-	//router.Get("/popup-location", ItemLocationController.PopupItemLocation)
-	//router.Post("/all/detail", ItemLocationController.AddItemLocation)
-	///router.Delete("/all/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
+	router.Get("/all/detail", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Post("/all/detail", PurchasePriceController.AddPurchasePrice)
+	router.Delete("/all/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
 
 	return router
 }
