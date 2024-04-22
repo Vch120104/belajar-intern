@@ -34,14 +34,14 @@ func (s *LabourSellingPriceServiceImpl) GetLabourSellingPriceById(Id int) (map[s
 	return results, nil
 }
 
-func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(headerId int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.labourSellingPriceRepo.GetAllSellingPriceDetailByHeaderId(tx, headerId, pages)
+	results, totalPages, totalRows, err := s.labourSellingPriceRepo.GetAllSellingPriceDetailByHeaderId(tx, headerId, pages)
 	if err != nil {
-		return results, err
+		return results, totalPages, totalRows, err
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPrice(req masteroperationpayloads.LabourSellingPriceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {

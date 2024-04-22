@@ -41,13 +41,13 @@ func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeade
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, err := r.LabourSellingPriceService.GetAllSellingPriceDetailByHeaderId(sellingPriceId, pagination)
+	paginatedData, totalPages, totalRows, err := r.LabourSellingPriceService.GetAllSellingPriceDetailByHeaderId(sellingPriceId, pagination)
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 }
 
 func (r *LabourSellingPriceDetailControllerImpl) SaveLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request) {

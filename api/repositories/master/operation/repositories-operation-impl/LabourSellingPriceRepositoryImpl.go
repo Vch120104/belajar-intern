@@ -4,8 +4,8 @@ import (
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
-	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/payloads/pagination"
+	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
 	"net/http"
 	"strconv"
@@ -78,28 +78,29 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 	return result, nil
 }
 
-func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx *gorm.DB, headerId int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masteroperationentities.LabourSellingPriceDetail{}
 	responses := []masteroperationpayloads.LabourSellingPriceDetailResponse{}
 	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
+	var ModelIds string
+	var VariantIds string
 	//define base model
 	query := tx.
 		Model(&entities).
-		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId}).
-		Scan(&responses)
+		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId})
 
 	//apply pagination and execute
-	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&responses).Rows()
+	rows, err := query.Scan(&responses).Rows()
 
 	if len(responses) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -107,30 +108,40 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 
 	defer rows.Close()
 
-	for _, response := range responses{
-		response.ModelId
+	id_model := 0
+	id_variant := 0
+
+	for _, response := range responses {
+		if id_model != response.ModelId {
+			id_model = response.ModelId
+			str := strconv.Itoa(id_model)
+			ModelIds += str + ","
+		}
+		if id_variant != response.VariantId {
+			id_variant = response.VariantId
+			str := strconv.Itoa(id_variant)
+			VariantIds += str + ","
+		}
 	}
 
 	// join with mtr_unit_model
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(responses.ModelId)
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model-multi-id/" + ModelIds
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
 	if errUrlUnitModel != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errUrlUnitModel,
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+	joinedData1 := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
 
-	pages.Rows = responses
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
 
-
-
-	return pages, nil
+	return dataPaginate, totalPages, totalRows, nil
 }
 
 func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
