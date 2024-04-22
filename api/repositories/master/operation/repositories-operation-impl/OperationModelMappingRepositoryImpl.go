@@ -1,6 +1,7 @@
 package masteroperationrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"errors"
@@ -134,7 +135,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 
 	// Fetch brand data
 	var brandResponses []masteroperationpayloads.BrandResponse
-	brandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand?page=0&limit=10"
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-brand?page=0&limit=10"
 	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
 	if errUrlBrand != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -145,7 +146,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 
 	// Fetch model data
 	var modelResponses []masteroperationpayloads.ModelResponse
-	modelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=10"
+	modelUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-model?page=0&limit=10"
 	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
 	if errUrlModel != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{

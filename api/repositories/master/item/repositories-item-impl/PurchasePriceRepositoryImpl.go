@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -67,7 +68,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 
 		// Fetch Supplier data from external service
-		SupplierURL := "http://10.1.32.26:8000/general-service/api/general/supplier-master/" + strconv.Itoa(purchasePriceReq.SupplierId)
+		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/supplier-master/" + strconv.Itoa(purchasePriceReq.SupplierId)
 		//fmt.Println("Fetching Supplier data from:", SupplierURL)
 		var getSupplierResponse masteritempayloads.PurchasePriceSupplierResponse
 		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
@@ -78,7 +79,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 
 		// Fetch Currency data from external service
-		CurrencyURL := "http://localhost:5020/currency-code/" + strconv.Itoa(purchasePriceReq.CurrencyId)
+		CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "/currency-code/" + strconv.Itoa(purchasePriceReq.CurrencyId)
 		//fmt.Println("Fetching Currency data from:", CurrencyURL)
 		var getCurrencyResponse masteritempayloads.CurrencyResponse
 		if err := utils.Get(CurrencyURL, &getCurrencyResponse, nil); err != nil {
@@ -223,7 +224,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, fil
 	for _, resp := range responses {
 		itemIds = append(itemIds, strconv.Itoa(resp.ItemId))
 	}
-	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
+	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "/item/multi-id/" + strings.Join(itemIds, ",")
 	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

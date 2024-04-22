@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
@@ -67,7 +68,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 	warehouseGroupId = responses[0].WarehouseGroupId
 
 	// Fetch warehouse group data from external service
-	warehouseGroupUrl := "http://localhost:8000/warehouse-group/by-id/" + strconv.Itoa(warehouseGroupId)
+	warehouseGroupUrl := config.EnvConfigs.AfterSalesServiceUrl + "/warehouse-group/by-id/" + strconv.Itoa(warehouseGroupId)
 	err = utils.Get(warehouseGroupUrl, &getWarehouseGroupResponse, nil)
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -81,7 +82,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 	for i, resp := range responses {
 		itemIds[i] = strconv.Itoa(resp.ItemId)
 	}
-	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
+	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "/item/multi-id/" + strings.Join(itemIds, ",")
 	err = utils.Get(itemUrl, &getItemResponse, nil)
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -193,7 +194,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 	for _, resp := range responses {
 		itemIds = append(itemIds, strconv.Itoa(resp.ItemId))
 	}
-	itemUrl := "http://localhost:8000/item/multi-id/" + strings.Join(itemIds, ",")
+	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "/item/multi-id/" + strings.Join(itemIds, ",")
 	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -211,7 +212,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 
 	// Mengambil data item location source dari layanan eksternal
 	for _, id := range itemLocIds {
-		itemLocSourceURL := "http://localhost:8000/item-location/popup-location?item_location_source_id=" + id
+		itemLocSourceURL := config.EnvConfigs.AfterSalesServiceUrl + "/item-location/popup-location?item_location_source_id=" + id
 		if err := utils.Get(itemLocSourceURL, &getItemLocResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,

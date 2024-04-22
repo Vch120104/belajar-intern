@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -86,7 +87,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 	}
 
 	// Fetch order type data
-	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
+	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/order-type-filter?order_type_name=" + orderTypeName
 	errUrlDiscountPercent := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
 	if errUrlDiscountPercent != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
