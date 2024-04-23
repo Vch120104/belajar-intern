@@ -104,7 +104,7 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 // @Router /aftersales-service/api/aftersales/field-action [post]
 func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, request *http.Request) {
 
-	var formRequest masterpayloads.FieldActionResponse
+	var formRequest masterpayloads.FieldActionRequest
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message string
 
@@ -277,7 +277,7 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.Res
 		return
 	}
 
-	if formRequest.FieldActionSystemNumber == 0 {
+	if formRequest.FieldActionEligibleVehicleSystemNumber == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -305,7 +305,7 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 		return
 	}
 
-	if formRequest.FieldActionSystemNumber == 0 {
+	if formRequest.FieldActionEligibleVehicleSystemNumber == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"

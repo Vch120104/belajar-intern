@@ -12,7 +12,7 @@ import (
 
 type FieldActionRepository interface {
 	GetAllFieldAction(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionResponse) (bool, *exceptionsss_test.BaseErrorResponse)
+	SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptionsss_test.BaseErrorResponse)
 
 	GetFieldActionHeaderById(tx *gorm.DB, Id int) (masterpayloads.FieldActionResponse, *exceptionsss_test.BaseErrorResponse)
 	GetAllFieldActionVehicleDetailById(tx *gorm.DB, Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)

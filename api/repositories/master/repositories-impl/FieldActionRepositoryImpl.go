@@ -27,9 +27,9 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	var responses []masterpayloads.FieldActionResponse
 	var getStatusResponse []masterpayloads.ApprovalStatusResponse
-	// var getChassisResponse []masterpayloads.VehicleChassisResponse
+	var getChassisResponse []masterpayloads.VehicleChassisResponse
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	// var chassisNumber string
+	var chassisNumber string
 	var approvalCode string
 	responseStruct := reflect.TypeOf(masterpayloads.FieldActionResponse{})
 
@@ -79,18 +79,18 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 		}
 	}
 
-	// chassisNumberUrl := "http://10.1.32.26:8000/sales-service/api/sales/vehicle-master?page=0&limit=10&vehicle_chassis_number=" + chassisNumber
+	chassisNumberUrl := "http://10.1.32.26:8000/sales-service/api/sales/vehicle-master?page=0&limit=10&vehicle_chassis_number=" + chassisNumber
 
-	// errUrlchassisNumber := utils.Get(chassisNumberUrl, &getChassisResponse, nil)
+	errUrlchassisNumber := utils.Get(chassisNumberUrl, &getChassisResponse, nil)
 
-	// if errUrlchassisNumber != nil {
-	// 	return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
+	if errUrlchassisNumber != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
-	// joinedData1 := utils.DataFrameInnerJoin(responses, getChassisResponse, "vehicle_id")
+	joinedData1 := utils.DataFrameInnerJoin(responses, getChassisResponse, "vehicle_id")
 
 	ApprovalStatusUrl := "http://10.1.32.26:8000/general-service/api/general/approval-status?approval_status_description=" + approvalCode
 
@@ -103,14 +103,14 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(responses, getStatusResponse, "approval_status_id")
+	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getStatusResponse, "ApprovalStatusId")
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.FieldAction{
 		IsActive:                  req.IsActive,
 		FieldActionSystemNumber:   req.FieldActionSystemNumber,

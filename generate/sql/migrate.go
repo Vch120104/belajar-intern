@@ -8,7 +8,7 @@ import (
 
 	// masteritementities "after-sales/api/entities/master/item"
 	// masteroperationentities "after-sales/api/entities/master/operation"
-	// masterentities "after-sales/api/entities/master"
+	masterentities "after-sales/api/entities/master"
 
 	"time"
 
@@ -62,10 +62,10 @@ func Migrate() {
 	// 	}, DisableForeignKeyConstraintWhenMigrating: false})
 
 	db.AutoMigrate( // sesuai urutan foreign key
-	// &masteroperationentities.OperationGroup{},
-	// &masterentities.FieldAction{},
-	// &masterentities.FieldActionEligibleVehicle{},
-	// &masterentities.FieldActionEligibleVehicleItem{},
+		// &masteroperationentities.OperationGroup{},
+		&masterentities.FieldAction{},
+		&masterentities.FieldActionEligibleVehicle{},
+		&masterentities.FieldActionEligibleVehicleItem{},
 	// &masteroperationentities.OperationSection{},
 	// &masteroperationentities.OperationKey{},
 	// &masteroperationentities.OperationEntries{},

@@ -38,7 +38,7 @@ func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.Filte
 	return results, totalPages, totalRows, nil
 }
 
-func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.SaveFieldAction(tx, req)

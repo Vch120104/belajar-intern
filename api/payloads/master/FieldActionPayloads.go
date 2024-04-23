@@ -2,7 +2,7 @@ package masterpayloads
 
 import "time"
 
-type FieldActionResponse struct {
+type FieldActionRequest struct {
 	IsActive                  bool      `json:"is_active" parent_entity:"mtr_field_action"`
 	FieldActionSystemNumber   int       `json:"field_action_system_number" parent_entity:"mtr_field_action"`
 	ApprovalStatusId          int       `json:"approval_status_id" parent_entity:"mtr_field_action"`
@@ -15,6 +15,21 @@ type FieldActionResponse struct {
 	RemarkPopup               string    `json:"remark_popup" parent_entity:"mtr_field_action"`
 	IsCritical                bool      `json:"is_critical" parent_entity:"mtr_field_action"`
 	RemarkInvoice             string    `json:"remark_invoice" parent_entity:"mtr_field_action"`
+}
+
+type FieldActionResponse struct {
+	IsActive                  bool   `json:"is_active" parent_entity:"mtr_field_action"`
+	FieldActionSystemNumber   int    `json:"field_action_system_number" parent_entity:"mtr_field_action"`
+	ApprovalStatusId          int    `json:"approval_status_id" parent_entity:"mtr_field_action"`
+	BrandId                   int    `json:"brand_id" parent_entity:"mtr_field_action"`
+	FieldActionDocumentNumber string `json:"field_action_document_number" parent_entity:"mtr_field_action"`
+	FieldActionName           string `json:"field_action_name" parent_entity:"mtr_field_action"`
+	FieldActionPeriodFrom     string `json:"field_action_period_from" parent_entity:"mtr_field_action"`
+	FieldActionPeriodTo       string `json:"field_action_period_to" parent_entity:"mtr_field_action"`
+	IsNeverExpired            bool   `json:"is_never_expired" parent_entity:"mtr_field_action"`
+	RemarkPopup               string `json:"remark_popup" parent_entity:"mtr_field_action"`
+	IsCritical                bool   `json:"is_critical" parent_entity:"mtr_field_action"`
+	RemarkInvoice             string `json:"remark_invoice" parent_entity:"mtr_field_action"`
 }
 
 type FieldActionDetailResponse struct {
