@@ -1,6 +1,7 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
@@ -156,7 +157,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 	// Handle supplier and order type filters
 	if supplierName != "" || orderTypeName != "" {
-		supplierURL := "http://10.1.32.26:8000/general-service/api/general/filter-supplier-master?supplier_name=" + supplierName
+		supplierURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/filter-supplier-master?supplier_name=" + supplierName
 		if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
@@ -166,7 +167,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 		joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
 
-		orderTypeURL := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
+		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/order-type-filter?order_type_name=" + orderTypeName
 		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
