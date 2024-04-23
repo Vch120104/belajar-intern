@@ -58,7 +58,7 @@ func Get(url string, data interface{}, body interface{}) error {
 
 	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
-		return nil
+		return exceptions.NewNotFoundError(newResponse.Status)
 		// c.JSON(newResponse.StatusCode, gin.H{"error": "Failed to fetch data from the external API"})
 		// return err
 	}
