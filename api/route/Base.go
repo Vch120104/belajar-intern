@@ -231,7 +231,8 @@ func MovingCodeRouter(
 
 	router.Post("/", MovingCodeController.CreateMovingCode)
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
-	router.Patch("/{moving_code_id}", MovingCodeController.UpdateMovingCode)
+	router.Patch("/update/{moving_code_id}", MovingCodeController.UpdateMovingCode)
+	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
 	//router.PanicHandler = exceptions.ErrorHandler
