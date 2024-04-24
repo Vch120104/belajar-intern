@@ -224,6 +224,21 @@ func ItemModelMappingRouter(
 	return router
 }
 
+func MovingCodeRouter(
+	MovingCodeController mastercontroller.MovingCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", MovingCodeController.CreateMovingCode)
+	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
+	router.Patch("/{moving_code_id}", MovingCodeController.UpdateMovingCode)
+	router.Get("/", MovingCodeController.GetAllMovingCode)
+	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	//router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
 ) chi.Router {

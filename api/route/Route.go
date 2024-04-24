@@ -100,6 +100,11 @@ func StartRouting(db *gorm.DB) {
 	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db)
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+	// ForecastMaster
+	movingCodeRepository := masterrepositoryimpl.StartMovingCodeRepositoryImpl()
+	movingCodeService := masterserviceimpl.StartMovingCodeServiceImpl(movingCodeRepository, db)
+	movingCodeController := mastercontroller.NewMovingCodeController(movingCodeService)
+
 	// operation code
 	operationCodeRepository := masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
 	operationCodeService := masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository, db)
@@ -193,6 +198,7 @@ func StartRouting(db *gorm.DB) {
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
+	movingCodeRouter := MovingCodeRouter(movingCodeController)
 	ItemSubstituteRouter := ItemSubstituteRouter(itemSubstituteController)
 	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
@@ -217,7 +223,7 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/incentive", IncentiveMasterRouter)
 	r.Mount("/bom", BomRouter)
 	r.Mount("/deduction", DeductionRouter)
-
+	r.Mount("/moving-code", movingCodeRouter)
 	r.Mount("/item-package", itemPackageRouter)              //null value
 	r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
 	r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
