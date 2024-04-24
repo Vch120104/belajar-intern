@@ -276,9 +276,25 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 
 // UpdateMovingCode implements masterrepository.MovingCodeRepository.
 func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+
+	model := masterentities.MovingCode{}
+	if err := tx.Model(&model).Where(masterentities.MovingCode{MovingCodeId: req.MovingCodeId}).First(&model).Error; err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if model == (masterentities.MovingCode{}) {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
 	entities := masterentities.MovingCode{
-		CompanyId:             req.CompanyId,
 		MovingCodeId:          req.MovingCodeId,
+		MovingCodeDescription: req.MovingCodeDescription,
 		MinimumQuantityDemand: req.MinimumQuantityDemand,
 		AgingMonthFrom:        req.AgingMonthFrom,
 		AgingMonthTo:          req.AgingMonthTo,
@@ -289,7 +305,7 @@ func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpaylo
 		Remark:                req.Remark,
 	}
 
-	err := tx.Updates(&entities).Error
+	err := tx.Updates(&entities).Where(masterentities.MovingCode{MovingCodeId: req.MovingCodeId}).Error
 
 	if err != nil {
 
