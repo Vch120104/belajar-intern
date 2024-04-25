@@ -432,6 +432,24 @@ func WarehouseGroupRouter(
 	return router
 }
 
+func WarehouseLocationDefinitionRouter(
+	WarehouseLocationDefinitionController masterwarehousecontroller.WarehouseLocationDefinitionController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+
+	router.Get("/", WarehouseLocationDefinitionController.GetAll)
+	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
+	router.Post("/", WarehouseLocationDefinitionController.Save)
+	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
+	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
+
+	return router
+}
+
 func WarehouseMasterRouter(
 	warehouseMasterController masterwarehousecontroller.WarehouseMasterController,
 ) chi.Router {

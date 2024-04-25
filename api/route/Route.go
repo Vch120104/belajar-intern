@@ -169,6 +169,11 @@ func StartRouting(db *gorm.DB) {
 	warehouseGroupController := masterwarehousecontroller.NewWarehouseGroupController(warehouseGroupService)
 
 	// Warehouse Location
+	WarehouseLocationDefinitionRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationDefinitionImpl()
+	WarehouseLocationDefinitionService := masterwarehouseserviceimpl.OpenWarehouseLocationDefinitionService(WarehouseLocationDefinitionRepository, db, rdb)
+	WarehouseLocationDefinitionController := masterwarehousecontroller.NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService)
+
+	// Warehouse Location
 	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
 	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db, rdb)
 	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
@@ -227,6 +232,7 @@ func StartRouting(db *gorm.DB) {
 	ItemLocationRouter := ItemLocationRouter(ItemLocationController)
 	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
+	WarehouseLocationDefinition := WarehouseLocationDefinitionRouter(WarehouseLocationDefinitionController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
@@ -270,7 +276,7 @@ func StartRouting(db *gorm.DB) {
 	//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
 	r.Mount("/warehouse-group", WarehouseGroupRouter)
 	r.Mount("/warehouse-master", WarehouseMaster)
-	//r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
+	r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/moving-code", MovingCodeRouter)
 	r.Mount("/forecast-master", ForecastMasterRouter)
