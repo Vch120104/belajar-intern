@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/utils"
@@ -59,12 +58,7 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.itemservice.GetAllItem(criteria)
-
-	if err != nil {
-		helper_test.ReturnError(writer, request, err)
-		return
-	}
+	result := r.itemservice.GetAllItem(criteria)
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -106,12 +100,7 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 		"page":            queryValues.Get("page"),
 	}
 
-	result, err := r.itemservice.GetAllItemLookup(queryParams)
-
-	if err != nil {
-		helper_test.ReturnError(writer, request, err)
-		return
-	}
+	result := r.itemservice.GetAllItemLookup(queryParams)
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, 0, 0, int64(0), 0)
 }
@@ -121,22 +110,17 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
-// @Param item_ids path string true "item_id"
+// @Param item_ids path string true "item_ids"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /multi-id/{item_ids} [get]
 func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, request *http.Request) {
 
-	item_ids := chi.URLParam(request, "item_id")
+	item_ids := chi.URLParam(request, "item_ids")
 
 	sliceOfString := strings.Split(item_ids, ",")
 
-	result, err := r.itemservice.GetItemWithMultiId(sliceOfString)
-
-	if err != nil {
-		helper_test.ReturnError(writer, request, err)
-		return
-	}
+	result := r.itemservice.GetItemWithMultiId(sliceOfString)
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -154,12 +138,7 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 
 	itemCode := chi.URLParam(request, "item_code")
 
-	result, err := r.itemservice.GetItemCode(itemCode)
-
-	if err != nil {
-		helper_test.ReturnError(writer, request, err)
-		return
-	}
+	result := r.itemservice.GetItemCode(itemCode)
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -180,12 +159,7 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create, err := r.itemservice.SaveItem(formRequest)
-
-	if err != nil {
-		helper_test.ReturnError(writer, request, err)
-		return
-	}
+	create := r.itemservice.SaveItem(formRequest)
 
 	if formRequest.ItemId == 0 {
 		message = "Create Data Successfully!"
@@ -209,12 +183,7 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 
 	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
 
-	response, err := r.itemservice.ChangeStatusItem(int(ItemId))
-
-	if err != nil {
-		helper_test.ReturnError(writer, request, err)
-		return
-	}
+	response := r.itemservice.ChangeStatusItem(int(ItemId))
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
