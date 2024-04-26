@@ -84,6 +84,11 @@ func StartRouting(db *gorm.DB) {
 	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db, rdb)
 	itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
 
+	// Item Import
+	ItemImportRepository := masteritemrepositoryimpl.StartItemImportRepositoryImpl()
+	ItemImportService := masteritemserviceimpl.StartItemImportService(ItemImportRepository, db)
+	ItemImportController := masteritemcontroller.NewItemImportController(ItemImportService)
+
 	// Purchase Price
 	PurchasePriceRepository := masteritemrepositoryimpl.StartPurchasePriceRepositoryImpl()
 	PurchasePriceService := masteritemserviceimpl.StartPurchasePriceService(PurchasePriceRepository, db, rdb)
@@ -214,12 +219,11 @@ func StartRouting(db *gorm.DB) {
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
-	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
 	ItemModelMappingRouter := ItemModelMappingRouter(ItemModelMappingController)
 	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
-	//ItemImportRouter := ItemImportRouter(ItemImportController)
+	itemImportRouter := ItemImportRouter(ItemImportController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	PurchasePriceRouter := PurchasePriceRouter(PurchasePriceController)
 	LandedCostMasterRouter := LandedCostMasterRouter(LandedCostController)
@@ -273,7 +277,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/item-model-mapping", ItemModelMappingRouter)
 		//r.Mount("/import-item", ImportItemRouter)
 		r.Mount("/bom", BomRouter)
-		//r.Mount("/item-import", ItemImportRouter)
+		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/purchase-price", PurchasePriceRouter)
 		r.Mount("/landed-cost", LandedCostMasterRouter)
 		//r.Mount("/import-duty", ImportDutyRouter)

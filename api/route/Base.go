@@ -222,6 +222,25 @@ func ItemPackageDetailRouter(
 	return router
 }
 
+func ItemImportRouter(
+	ItemImportController masteritemcontroller.ItemImportController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemImportController.GetAllItemImport)
+	router.Get("/{item_import_id}", ItemImportController.GetItemImportbyId)
+	router.Post("/", ItemImportController.SaveItemImport)
+	router.Patch("/", ItemImportController.UpdateItemImport)
+	// router.Get("/{item_import_id}", ItemImportController.GetItemPackageById)
+
+	return router
+}
+
 func ItemModelMappingRouter(
 	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
 ) chi.Router {
