@@ -85,7 +85,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetById(tx *gorm.DB, Id int)
 
 func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	var responses []masterwarehousepayloads.WarehouseLocationDefinitionResponse
-	var getWhLevelResponse []masterwarehousepayloads.WarehouseLocationDefinitionLevelRequest
+	var getWhLevelResponse []masterwarehousepayloads.WarehouseLocationDefinitionLevelResponse
 	var internalServiceFilter []utils.FilterCondition
 	var warehouseLocationDefinitionLevelId int
 
@@ -133,9 +133,6 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 			Err:        err,
 		}
 	}
-
-	// Perform inner join between warehouse location definition responses and warehouse location definition level response
-	//joinedData := utils.DataFrameInnerJoin(responses, getWhLevelResponse, "WarehouseLocationDefinitionLevelId")
 
 	// Paginate the joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
