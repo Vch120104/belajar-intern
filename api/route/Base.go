@@ -22,6 +22,7 @@ func ItemClassRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
@@ -39,6 +40,7 @@ func UnitOfMeasurementRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", unitOfMeasurementController.GetAllUnitOfMeasurement)
 	router.Get("/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
@@ -57,6 +59,7 @@ func DiscountPercentRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", discountPercentController.GetAllDiscountPercent)
 	router.Get("/{discount_percent_id}", discountPercentController.GetDiscountPercentByID)
@@ -74,6 +77,7 @@ func MarkupMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", markupMasterController.GetMarkupMasterList)
 	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
@@ -91,6 +95,7 @@ func MarkupRateRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", markupRateController.GetAllMarkupRate)
 	router.Get("/{markup_rate_id}", markupRateController.GetMarkupRateByID)
@@ -108,6 +113,7 @@ func ItemLevelRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLevelController.GetAll)
 	router.Get("/{item_level_id}", itemLevelController.GetById)
@@ -125,6 +131,7 @@ func ItemRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemController.GetAllItem)
 	router.Get("/pop-up", itemController.GetAllItemLookup)
@@ -144,6 +151,7 @@ func ItemLocationRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	//master
 	router.Get("/", ItemLocationController.GetAllItemLocation)
@@ -167,6 +175,7 @@ func ItemSubstituteRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemSubstituteController.GetAllItemSubstitute)
 	router.Get("/header/by-id/{item_substitute_id}", itemSubstituteController.GetByIdItemSubstitute)
@@ -189,6 +198,7 @@ func ItemPackageRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
@@ -205,6 +215,7 @@ func ItemPackageDetailRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
 
@@ -219,6 +230,7 @@ func PriceListRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", priceListController.GetPriceList)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
@@ -236,6 +248,7 @@ func BomRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	//bom master
 	router.Get("/", BomController.GetBomMasterList)
@@ -264,6 +277,7 @@ func PurchasePriceRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	//master
 	router.Get("/", PurchasePriceController.GetAllPurchasePrice)
@@ -287,6 +301,7 @@ func LandedCostMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", LandedCostMaster.GetAllLandedCostMaster)
 	router.Get("/{landed_cost_id}", LandedCostMaster.GetByIdLandedCost)
@@ -305,6 +320,7 @@ func OperationGroupRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationGroupController.GetAllOperationGroup)
 	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
@@ -323,6 +339,7 @@ func OperationSectionRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationSectionController.GetAllOperationSectionList)
 	router.Get("/by-id/{operation_section_id}", operationSectionController.GetOperationSectionByID)
@@ -343,6 +360,7 @@ func OperationKeyRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{operation_key_id}", operationKeyController.GetOperationKeyByID)
 	router.Get("/", operationKeyController.GetAllOperationKeyList)
@@ -361,6 +379,7 @@ func OperationEntriesRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationEntriesController.GetAllOperationEntries)
 	router.Get("/by-id/{operation_entries_id}", operationEntriesController.GetOperationEntriesByID)
@@ -379,6 +398,7 @@ func OperationCodeRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
@@ -396,6 +416,7 @@ func OperationModelMappingRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationModelMappingController.GetOperationModelMappingLookup)
 	router.Get("/operation-frt/{operation_model_mapping_id}", operationModelMappingController.GetAllOperationFrt)
@@ -423,6 +444,7 @@ func WarehouseGroupRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseGroupController.GetAllWarehouseGroup)
 	router.Get("/by-id/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
@@ -440,6 +462,7 @@ func WarehouseLocationDefinitionRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WarehouseLocationDefinitionController.GetAll)
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
@@ -458,6 +481,7 @@ func WarehouseMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/by-id/{warehouse_id}", warehouseMasterController.GetById)
@@ -478,6 +502,7 @@ func WarehouseLocationRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseLocationController.GetAll)
 	router.Get("/by-id/{warehouse_location_id}", warehouseLocationController.GetById)
@@ -495,6 +520,7 @@ func MovingCodeRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Post("/", MovingCodeController.SaveMovingCode)
@@ -512,6 +538,7 @@ func ForecastMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", forecastMasterController.GetAllForecastMaster)
 	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
@@ -529,6 +556,7 @@ func SkillLevelRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", SkillLevelController.GetAllSkillLevel)
 	router.Get("/{skill_level_id}", SkillLevelController.GetSkillLevelById)
@@ -546,6 +574,7 @@ func ShiftScheduleRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", ShiftScheduleController.GetAllShiftSchedule)
 	// router.Get("/drop-down", ShiftScheduleController.GetAllShiftScheduleIsActive)
@@ -565,6 +594,7 @@ func IncentiveMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
 	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
@@ -582,6 +612,7 @@ func FieldActionRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", FieldActionController.GetAllFieldAction)
 	router.Get("/header/by-id/{field_action_system_number}", FieldActionController.GetFieldActionHeaderById)
@@ -609,6 +640,7 @@ func WarrantyFreeServiceRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warrantyFreeServiceController.GetAllWarrantyFreeService)
 	router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
@@ -626,6 +658,7 @@ func DiscountRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", discountController.GetAllDiscount)
 	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
@@ -645,6 +678,7 @@ func IncentiveGroupRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
 	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
@@ -663,6 +697,7 @@ func IncentiveGroupDetailRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
 	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
@@ -693,6 +728,7 @@ func SwaggerRouter() chi.Router {
 	// Use middleware
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	// Serve Swagger UI index.html
 	router.Get("/swagger/*", httpSwagger.Handler(

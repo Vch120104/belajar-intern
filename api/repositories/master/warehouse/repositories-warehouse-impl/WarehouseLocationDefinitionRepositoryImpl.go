@@ -3,7 +3,6 @@ package masterwarehouserepositoryimpl
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 
-	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -94,7 +93,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	// Filter internal service conditions
 	for _, condition := range filterCondition {
 		for j := 0; j < responseStruct.NumField(); j++ {
-			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+			if condition.ColumnField == responseStruct.Field(j).Tag.Get("json") {
 				internalServiceFilter = append(internalServiceFilter, condition)
 				break
 			}
@@ -123,9 +122,11 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 
 	// Extract warehouse location definition level ID from the first response
 	warehouseLocationDefinitionLevelId = responses[0].WarehouseLocationDefinitionLevelId
+	//fmt.Println("Warehouse Location Definition Level ID:", warehouseLocationDefinitionLevelId)
 
 	// Fetch warehouse location definition level data from external service
-	whLevelUrl := config.EnvConfigs.AfterSalesServiceUrl + "/warehouse-location-definition/popup-level?warehouse_location_definition_level_id=" + strconv.Itoa(warehouseLocationDefinitionLevelId)
+	whLevelUrl := "http://localhost:8000/v1/warehouse-location-definition/popup-level?warehouse_location_definition_level_id=" + strconv.Itoa(warehouseLocationDefinitionLevelId)
+	//fmt.Println("Warehouse Location Definition Level URL:", whLevelUrl)
 	err = utils.Get(whLevelUrl, &getWhLevelResponse, nil)
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -134,8 +135,17 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 		}
 	}
 
+	// Print the retrieved data
+	//fmt.Println("Warehouse Location Definition Level Response:")
+	for _, item := range getWhLevelResponse {
+		fmt.Printf("%+v\n", item)
+	}
+
+	// Perform inner join between warehouse location definition responses and warehouse location definition level response
+	joinedData := utils.DataFrameInnerJoin(responses, getWhLevelResponse, "WarehouseLocationDefinitionLevelId")
+
 	// Paginate the joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }

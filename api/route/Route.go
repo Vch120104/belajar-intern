@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gorm.io/gorm"
 )
 
@@ -298,6 +299,9 @@ func StartRouting(db *gorm.DB) {
 
 		// Tambahkan routing untuk Swagger di akhir
 		r.Mount("/", SwaggerRouter())
+
+		//prometheus route
+		r.Mount("/metrics", promhttp.Handler())
 	})
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
