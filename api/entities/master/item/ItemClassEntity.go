@@ -4,12 +4,12 @@ var CreateItemClassTable = "mtr_item_class"
 
 type ItemClass struct {
 	IsActive      bool   `gorm:"column:is_active;not null;default:true" json:"is_active"`
+	ItemId        int    `gorm:"column:item_id;type:int;size:30"        json:"item_id"`
 	ItemClassId   int    `gorm:"column:item_class_id;size:30;primaryKey"  json:"item_class_id"`
 	ItemClassCode string `gorm:"column:item_class_code;index:idx_item_class_code;unique;type:varchar(10)" json:"item_class_code"`
 	ItemGroupID   int    `gorm:"column:item_group_id;size:30;not null;" json:"item_group_id"` //FK with mtr_item_group common-general service
 	LineTypeID    int    `gorm:"column:line_type_id;size:30;not null" json:"line_type_id"`    //FK with mtr_line_type common-general service
 	ItemClassName string `gorm:"column:item_class_name;not null"  json:"item_class_name"`
-	Item          Item   `gorm:"foreignKey:item_class_id;references:item_class_id"`
 }
 
 func (*ItemClass) TableName() string {

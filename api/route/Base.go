@@ -184,8 +184,55 @@ func ItemSubstituteRouter(
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
-	router.Patch("/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
-	router.Patch("/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
+	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
+
+	//router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func OperationCodeRouter(
+	operationCodeController masteroperationcontroller.OperationCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", operationCodeController.GetAllOperationCode)
+	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
+	router.Post("/", operationCodeController.SaveOperationCode)
+	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
+
+	// router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func OperationGroupRouter(
+	operationGroupController masteroperationcontroller.OperationGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", operationGroupController.GetAllOperationGroup)
+	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.Get("/by-code/{operation_group_code}", operationGroupController.GetOperationGroupByCode)
+	router.Post("/", operationGroupController.SaveOperationGroup)
+	router.Patch("/{operation_group_id}", operationGroupController.ChangeStatusOperationGroup)
+
+	// //router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemClassRouter(
+	itemClassController masteritemcontroller.ItemClassController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", itemClassController.GetAllItemClass)
+	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
+	router.Post("/", itemClassController.SaveItemClass)
+	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
+
+	// //router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
@@ -203,6 +250,8 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
+	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
@@ -212,12 +261,58 @@ func ItemPackageDetailRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
+	router.Get("/{item_package_detail_id}", ItemPackageDetailController.GetItemPackageDetailById)
+	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
+	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetailByItemPackageId)
+	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
+	//router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemImportRouter(
+	ItemImportController masteritemcontroller.ItemImportController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", ItemImportController.GetAllItemImport)
+	router.Get("/{item_import_id}", ItemImportController.GetItemImportbyId)
+	router.Post("/", ItemImportController.SaveItemImport)
+	router.Patch("/", ItemImportController.UpdateItemImport)
+	// router.Get("/{item_import_id}", ItemImportController.GetItemPackageById)
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
+
+	return router
+}
+
+func ItemModelMappingRouter(
+	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", ItemModelMappingController.CreateItemModelMapping)
+	router.Get("/{item_id}", ItemModelMappingController.GetItemModelMappingByItemId)
+	router.Patch("/{item_detail_id}", ItemModelMappingController.UpdateItemModelMapping)
+	//router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
+func ItemModelMappingRouter(
+	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", ItemModelMappingController.CreateItemModelMapping)
+	router.Get("/{item_id}", ItemModelMappingController.GetItemModelMappingByItemId)
+	router.Patch("/{item_detail_id}", ItemModelMappingController.UpdateItemModelMapping)
+	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

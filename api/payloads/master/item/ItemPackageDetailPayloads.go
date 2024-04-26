@@ -12,6 +12,20 @@ type ItemPackageDetailResponse struct {
 	Quantity            float64 `json:"quantity" parent_entity:"mtr_item_package_detail"`
 }
 
+type SaveItemPackageDetail struct {
+	IsActive            bool    `json:"is_active"`
+	ItemPackageDetailId int     `json:"item_package_detail_id"`
+	ItemPackageId       int     `json:"item_package_id"`
+	ItemId              int     `json:"item_id"`
+	ItemClassId         int     `json:"item_class_id"`
+	Quantity            float64 `json:"quantity"`
+}
+
+type UpdateitemPackageDetail struct {
+	ItemPackageDetailId int     `json:"item_package_detail_id"`
+	Quantity            float64 `json:"quantity"`
+}
+
 type ItemPackageDetailPayload struct {
 	GetAllItemPackageResponse GetAllItemPackageResponse
 	ItemPackageDetailResponse []ItemPackageDetailResponse

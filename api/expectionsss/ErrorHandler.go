@@ -120,7 +120,7 @@ func NewNotFoundException(writer http.ResponseWriter, request *http.Request, err
 		logrus.Info(err)
 		res := &BaseErrorResponse{
 			StatusCode: statusCode,
-			Message:    err.Err.Error(),
+			Message:    err.Message,
 			//Data:       err,
 		}
 

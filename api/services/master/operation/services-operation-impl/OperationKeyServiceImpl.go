@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -27,38 +27,38 @@ func StartOperationKeyService(operationKeyRepo masteroperationrepository.Operati
 	}
 }
 
-func (s *OperationKeyServiceImpl) GetAllOperationKeyList(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *OperationKeyServiceImpl) GetAllOperationKeyList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.GetAllOperationKeyList(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationKeyServiceImpl) GetOperationKeyById(id int) masteroperationpayloads.OperationkeyListResponse {
+func (s *OperationKeyServiceImpl) GetOperationKeyById(id int) (masteroperationpayloads.OperationkeyListResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.GetOperationKeyById(tx, id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationKeyServiceImpl) GetOperationKeyName(req masteroperationpayloads.OperationKeyRequest) masteroperationpayloads.OperationKeyNameResponse {
+func (s *OperationKeyServiceImpl) GetOperationKeyName(req masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.GetOperationKeyName(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.OperationKeyResponse) bool {
+func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.OperationKeyResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -67,23 +67,23 @@ func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.O
 		_, err := s.operationKeyRepo.GetOperationKeyById(tx, req.OperationKeyId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
 
 	results, err := s.operationKeyRepo.SaveOperationKey(tx, req)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *OperationKeyServiceImpl) ChangeStatusOperationKey(Id int) bool {
+func (s *OperationKeyServiceImpl) ChangeStatusOperationKey(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.ChangeStatusOperationKey(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return results
+	return results, nil
 }

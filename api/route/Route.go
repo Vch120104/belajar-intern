@@ -49,6 +49,11 @@ func StartRouting(db *gorm.DB) {
 	itemService := masteritemserviceimpl.StartItemService(itemRepository, db, rdb)
 	itemController := masteritemcontroller.NewItemController(itemService)
 
+	// Item Model Mapping
+	ItemModelMappingRepository := masteritemrepositoryimpl.StartItemModelMappingRepositoryImpl()
+	ItemModelMappingService := masteritemserviceimpl.StartItemModelMappingService(ItemModelMappingRepository, db)
+	ItemModelMappingController := masteritemcontroller.NewItemModelMappingController(ItemModelMappingService)
+
 	// PriceList
 	priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl()
 	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db, rdb)
@@ -212,7 +217,9 @@ func StartRouting(db *gorm.DB) {
 	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
+	ItemModelMappingRouter := ItemModelMappingRouter(ItemModelMappingController)
 	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
+	//ItemImportRouter := ItemImportRouter(ItemImportController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	PurchasePriceRouter := PurchasePriceRouter(PurchasePriceController)
 	LandedCostMasterRouter := LandedCostMasterRouter(LandedCostController)
@@ -263,7 +270,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/item-package", itemPackageRouter)
 		r.Mount("/item-package-detail", itemPackageDetailRouter)
 		r.Mount("/price-list", priceListRouter)
-		//r.Mount("/item-model-mapping", ItemModelMappingRouter)
+		r.Mount("/item-model-mapping", ItemModelMappingRouter)
 		//r.Mount("/import-item", ImportItemRouter)
 		r.Mount("/bom", BomRouter)
 		//r.Mount("/item-import", ItemImportRouter)
