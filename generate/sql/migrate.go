@@ -62,11 +62,11 @@ func Migrate() {
 	db.AutoMigrate( // sesuai urutan foreign key
 		&masteroperationentities.OperationModelMapping{},
 		&masteroperationentities.OperationFrt{},
-		&masteroperationentities.OperationCode{},
 		&masteroperationentities.OperationGroup{},
 		&masteroperationentities.OperationSection{},
 		&masteroperationentities.OperationKey{},
 		&masteroperationentities.OperationEntries{},
+		&masteroperationentities.OperationCode{},
 
 		&masterwarehouseentities.WarehouseGroup{},
 		&masterwarehouseentities.WarehouseMaster{},
@@ -117,7 +117,6 @@ func Migrate() {
 		&masterentities.FieldActionEligibleVehicleItem{},
 		&masterentities.FieldActionEligibleVehicle{},
 		&masterentities.FieldAction{},
-
 		&masterentities.Discount{},
 	// &transactionentities.SupplySlip{},
 	// &transactionentities.SupplySlipDetail{},
