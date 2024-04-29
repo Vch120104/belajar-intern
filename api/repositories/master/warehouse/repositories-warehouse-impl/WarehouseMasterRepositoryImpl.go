@@ -100,31 +100,75 @@ func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []st
 }
 
 func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, error) {
-
 	var entities []masterwarehouseentities.WarehouseMaster
-	var warehouseMasterResponse []masterwarehousepayloads.GetAllWarehouseMasterResponse
+	var warehouseMasterResponses []masterwarehousepayloads.GetAllWarehouseMasterResponse
 
-	tempRows := tx.
-		Model(&masterwarehouseentities.WarehouseGroup{}).
-		Where("warehouse_name like ?", "%"+request.WarehouseName+"%").
-		Where("warehouse_code like ?", "%"+request.WarehouseCode+"%")
-
-	if request.IsActive != "" {
-		tempRows = tempRows.Where("is_active = ?", request.IsActive)
-	}
-
-	rows, err := tempRows.
-		Scopes(pagination.Paginate(entities, &pages, tempRows)).
-		Scan(&warehouseMasterResponse).
-		Rows()
-
+	// Query untuk mengambil semua entitas gudang sesuai permintaan
+	err := tx.Where(&request).
+		Find(&entities).
+		Error
 	if err != nil {
-		return pages, err
+		return pagination.Pagination{}, err
 	}
 
-	defer rows.Close()
+	for _, entity := range entities {
+		var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterResponse
 
-	pages.Rows = warehouseMasterResponse
+		// Salin data entitas gudang ke respons
+		warehouseMasterResponse.IsActive = *entity.IsActive
+		warehouseMasterResponse.WarehouseId = entity.WarehouseId
+		warehouseMasterResponse.WarehouseCostingType = entity.WarehouseCostingType
+		warehouseMasterResponse.WarehouseKaroseri = *entity.WarehouseKaroseri
+		warehouseMasterResponse.WarehouseNegativeStock = *entity.WarehouseNegativeStock
+		warehouseMasterResponse.WarehouseReplishmentIndicator = *entity.WarehouseReplishmentIndicator
+		warehouseMasterResponse.WarehouseContact = entity.WarehouseContact
+		warehouseMasterResponse.WarehouseCode = entity.WarehouseCode
+		warehouseMasterResponse.AddressId = entity.AddressId
+		warehouseMasterResponse.BrandId = entity.BrandId
+		warehouseMasterResponse.SupplierId = entity.SupplierId
+		warehouseMasterResponse.UserId = entity.UserId
+		warehouseMasterResponse.WarehouseSalesAllow = *entity.WarehouseSalesAllow
+		warehouseMasterResponse.WarehouseInTransit = *entity.WarehouseInTransit
+		warehouseMasterResponse.WarehouseName = entity.WarehouseName
+		warehouseMasterResponse.WarehouseDetailName = entity.WarehouseDetailName
+		warehouseMasterResponse.WarehouseTransitDefault = entity.WarehouseTransitDefault
+
+		// Ambil detail alamat dari layanan API
+		addressURL := "http://10.1.32.26:8000/general-service/api/general/address/" + strconv.Itoa(entity.AddressId)
+		if err := utils.Get(addressURL, &warehouseMasterResponse.AddressDetails, nil); err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		// Ambil detail merek dari layanan API
+		brandURL := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(entity.BrandId)
+		if err := utils.Get(brandURL, &warehouseMasterResponse.BrandDetails, nil); err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		// Ambil detail pemasok dari layanan API
+		supplierURL := "http://10.1.32.26:8000/general-service/api/general/supplier-master/" + strconv.Itoa(entity.SupplierId)
+		if err := utils.Get(supplierURL, &warehouseMasterResponse.SupplierDetails, nil); err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		// Ambil detail pengguna dari layanan API
+		userURL := "http://10.1.32.26:8000/general-service/api/general/user-details/" + strconv.Itoa(entity.UserId)
+		if err := utils.Get(userURL, &warehouseMasterResponse.UserDetails, nil); err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		// Ambil detail posisi pekerjaan dari layanan API
+		jobPositionURL := "http://10.1.32.26:8000/general-service/api/general/job-position/" + strconv.Itoa(warehouseMasterResponse.UserDetails.JobPositionId)
+		if err := utils.Get(jobPositionURL, &warehouseMasterResponse.JobPositionDetails, nil); err != nil {
+			return pagination.Pagination{}, err
+		}
+
+		// Tambahkan respons ke daftar respons
+		warehouseMasterResponses = append(warehouseMasterResponses, warehouseMasterResponse)
+	}
+
+	// Setel hasil respons dan kembalikan
+	pages.Rows = warehouseMasterResponses
 	return pages, nil
 }
 

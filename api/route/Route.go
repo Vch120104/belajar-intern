@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gorm.io/gorm"
 )
 
@@ -47,6 +48,11 @@ func StartRouting(db *gorm.DB) {
 	itemRepository := masteritemrepositoryimpl.StartItemRepositoryImpl()
 	itemService := masteritemserviceimpl.StartItemService(itemRepository, db, rdb)
 	itemController := masteritemcontroller.NewItemController(itemService)
+
+	// Item Model Mapping
+	ItemModelMappingRepository := masteritemrepositoryimpl.StartItemModelMappingRepositoryImpl()
+	ItemModelMappingService := masteritemserviceimpl.StartItemModelMappingService(ItemModelMappingRepository, db)
+	ItemModelMappingController := masteritemcontroller.NewItemModelMappingController(ItemModelMappingService)
 
 	// PriceList
 	priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl()
@@ -77,6 +83,11 @@ func StartRouting(db *gorm.DB) {
 	itemPackageDetailRepository := masteritemrepositoryimpl.StartItemPackageDetailRepositoryImpl()
 	itemPackageDetailService := masteritemserviceimpl.StartItemPackageDetailService(itemPackageDetailRepository, db, rdb)
 	itemPackageDetailController := masteritemcontroller.NewItemPackageDetailController(itemPackageDetailService)
+
+	// Item Import
+	ItemImportRepository := masteritemrepositoryimpl.StartItemImportRepositoryImpl()
+	ItemImportService := masteritemserviceimpl.StartItemImportService(ItemImportRepository, db)
+	ItemImportController := masteritemcontroller.NewItemImportController(ItemImportService)
 
 	// Purchase Price
 	PurchasePriceRepository := masteritemrepositoryimpl.StartPurchasePriceRepositoryImpl()
@@ -169,6 +180,11 @@ func StartRouting(db *gorm.DB) {
 	warehouseGroupController := masterwarehousecontroller.NewWarehouseGroupController(warehouseGroupService)
 
 	// Warehouse Location
+	WarehouseLocationDefinitionRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationDefinitionImpl()
+	WarehouseLocationDefinitionService := masterwarehouseserviceimpl.OpenWarehouseLocationDefinitionService(WarehouseLocationDefinitionRepository, db, rdb)
+	WarehouseLocationDefinitionController := masterwarehousecontroller.NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService)
+
+	// Warehouse Location
 	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
 	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db, rdb)
 	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
@@ -203,10 +219,11 @@ func StartRouting(db *gorm.DB) {
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
-	// Master
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
+	ItemModelMappingRouter := ItemModelMappingRouter(ItemModelMappingController)
 	itemPackageDetailRouter := ItemPackageDetailRouter(itemPackageDetailController)
+	itemImportRouter := ItemImportRouter(ItemImportController)
 	OperationGroupRouter := OperationGroupRouter(operationGroupController)
 	PurchasePriceRouter := PurchasePriceRouter(PurchasePriceController)
 	LandedCostMasterRouter := LandedCostMasterRouter(LandedCostController)
@@ -227,6 +244,7 @@ func StartRouting(db *gorm.DB) {
 	ItemLocationRouter := ItemLocationRouter(ItemLocationController)
 	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
+	WarehouseLocationDefinition := WarehouseLocationDefinitionRouter(WarehouseLocationDefinitionController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
@@ -242,55 +260,60 @@ func StartRouting(db *gorm.DB) {
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
-	r.Mount("/item-class", itemClassRouter)
-	r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
-	r.Mount("/discount-percent", DiscountPercentRouter)
-	r.Mount("/markup-master", markupMasterRouter)
-	r.Mount("/markup-rate", MarkupRateRouter)
-	r.Mount("/item-level", itemLevelRouter)
-	r.Mount("/item", itemRouter)
-	r.Mount("/item-substitute", ItemSubstituteRouter)
-	r.Mount("/item-location", ItemLocationRouter)
-	r.Mount("/item-package", itemPackageRouter)
-	r.Mount("/item-package-detail", itemPackageDetailRouter)
-	r.Mount("/price-list", priceListRouter)
-	//r.Mount("/item-model-mapping", ItemModelMappingRouter)
-	//r.Mount("/import-item", ImportItemRouter)
-	r.Mount("/bom", BomRouter)
-	//r.Mount("/item-import", ItemImportRouter)
-	r.Mount("/purchase-price", PurchasePriceRouter)
-	r.Mount("/landed-cost", LandedCostMasterRouter)
-	//r.Mount("/import-duty", ImportDutyRouter)
-	r.Mount("/operation-group", OperationGroupRouter)
-	r.Mount("/operation-section", OperationSectionRouter)
-	r.Mount("/operation-key", OperationKeyRouter)
-	r.Mount("/operation-entries", OperationEntriesRouter)
-	r.Mount("/operation-code", OperationCodeRouter)
-	r.Mount("/operation-model-mapping", OperationModelMappingRouter)
-	//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
-	r.Mount("/warehouse-group", WarehouseGroupRouter)
-	r.Mount("/warehouse-master", WarehouseMaster)
-	//r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
-	r.Mount("/warehouse-location", WarehouseLocation)
-	r.Mount("/moving-code", MovingCodeRouter)
-	r.Mount("/forecast-master", ForecastMasterRouter)
-	//r.Mount("/agreement", AgreementRouter)
-	//r.Mount("/campaign", CampaignRouter)
-	//r.Mount("/package", PackageRouter)
-	r.Mount("/skill-level", SkillLevelRouter)
-	r.Mount("/shift-schedule", ShiftScheduleRouter)
-	r.Mount("/incentive", IncentiveMasterRouter)
-	//r.Mount("/work-info-massage", WorkInfoRouter)
-	r.Mount("/field-action", FieldActionRouter)
-	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
-	r.Mount("/discount", DiscountRouter)
-	r.Mount("/incentive-group", IncentiveGroupRouter)
-	r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
-	r.Mount("/deduction", DeductionRouter)
+	r.Route("/v1", func(r chi.Router) {
+		// Tambahkan routing untuk setiap versi di sini
+		r.Mount("/item-class", itemClassRouter)
+		r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
+		r.Mount("/discount-percent", DiscountPercentRouter)
+		r.Mount("/markup-master", markupMasterRouter)
+		r.Mount("/markup-rate", MarkupRateRouter)
+		r.Mount("/item-level", itemLevelRouter)
+		r.Mount("/item", itemRouter)
+		r.Mount("/item-substitute", ItemSubstituteRouter)
+		r.Mount("/item-location", ItemLocationRouter)
+		r.Mount("/item-package", itemPackageRouter)
+		r.Mount("/item-package-detail", itemPackageDetailRouter)
+		r.Mount("/price-list", priceListRouter)
+		r.Mount("/item-model-mapping", ItemModelMappingRouter)
+		//r.Mount("/import-item", ImportItemRouter)
+		r.Mount("/bom", BomRouter)
+		r.Mount("/item-import", itemImportRouter)
+		r.Mount("/purchase-price", PurchasePriceRouter)
+		r.Mount("/landed-cost", LandedCostMasterRouter)
+		//r.Mount("/import-duty", ImportDutyRouter)
+		r.Mount("/operation-group", OperationGroupRouter)
+		r.Mount("/operation-section", OperationSectionRouter)
+		r.Mount("/operation-key", OperationKeyRouter)
+		r.Mount("/operation-entries", OperationEntriesRouter)
+		r.Mount("/operation-code", OperationCodeRouter)
+		r.Mount("/operation-model-mapping", OperationModelMappingRouter)
+		//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+		r.Mount("/warehouse-group", WarehouseGroupRouter)
+		r.Mount("/warehouse-master", WarehouseMaster)
+		r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
+		r.Mount("/warehouse-location", WarehouseLocation)
+		r.Mount("/moving-code", MovingCodeRouter)
+		r.Mount("/forecast-master", ForecastMasterRouter)
+		//r.Mount("/agreement", AgreementRouter)
+		//r.Mount("/campaign", CampaignRouter)
+		//r.Mount("/package", PackageRouter)
+		r.Mount("/skill-level", SkillLevelRouter)
+		r.Mount("/shift-schedule", ShiftScheduleRouter)
+		r.Mount("/incentive", IncentiveMasterRouter)
+		//r.Mount("/work-info-massage", WorkInfoRouter)
+		r.Mount("/field-action", FieldActionRouter)
+		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
+		r.Mount("/discount", DiscountRouter)
+		r.Mount("/incentive-group", IncentiveGroupRouter)
+		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
+		r.Mount("/deduction", DeductionRouter)
 
-	// Tambahkan routing untuk Swagger di akhir
-	r.Mount("/", SwaggerRouter())
+		// Tambahkan routing untuk Swagger di akhir
+		r.Mount("/", SwaggerRouter())
 
+		//prometheus route
+		r.Mount("/metrics", promhttp.Handler())
+	})
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
 		Handler: r,

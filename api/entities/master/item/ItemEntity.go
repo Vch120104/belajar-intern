@@ -5,15 +5,15 @@ var CreateItemTable = "mtr_item"
 type Item struct {
 	IsActive                     bool                `gorm:"column:is_active;type:bool;not null"        json:"is_active"`
 	ItemId                       int                 `gorm:"column:item_id;type:int;size:30;primaryKey"        json:"item_id"`
-	ItemCode                     string              `gorm:"column:item_code;type:varchar(20);unique;not null"        json:"item_code"`
+	ItemCode                     string              `gorm:"column:item_code;size:20;unique;not null"        json:"item_code"`
 	ItemClassId                  int                 `gorm:"column:item_class_id;type:int;size:30;not null"        json:"item_class_id"`
-	ItemName                     string              `gorm:"column:item_name;type:varchar(100);null"        json:"item_name"`
+	ItemName                     string              `gorm:"column:item_name;size:100;null"        json:"item_name"`
 	ItemGroupId                  int                 `gorm:"column:item_group_id;type:int;size:30;not null"        json:"item_group_id"`
-	ItemType                     string              `gorm:"column:item_type;type:char(1);null"        json:"item_type"`
-	ItemLevel1                   string              `gorm:"column:item_level_1;type:varchar(10);null"        json:"item_level_1"`
-	ItemLevel2                   string              `gorm:"column:item_level_2;type:varchar(10);null"        json:"item_level_2"`
-	ItemLevel3                   string              `gorm:"column:item_level_3;type:varchar(10);null"        json:"item_level_3"`
-	ItemLevel4                   string              `gorm:"column:item_level_4;type:varchar(10);null"        json:"item_level_4"`
+	ItemType                     string              `gorm:"column:item_type;size:1;null"        json:"item_type"`
+	ItemLevel1                   string              `gorm:"column:item_level_1;size:10;null"        json:"item_level_1"`
+	ItemLevel2                   string              `gorm:"column:item_level_2;size:10;null"        json:"item_level_2"`
+	ItemLevel3                   string              `gorm:"column:item_level_3;size:10;null"        json:"item_level_3"`
+	ItemLevel4                   string              `gorm:"column:item_level_4;size:10;null"        json:"item_level_4"`
 	SupplierId                   int                 `gorm:"column:supplier_id;type:int;size:30;not null"        json:"supplier_id"`
 	UnitOfMeasurementTypeId      int                 `gorm:"column:unit_of_measurement_type_id;type:int;size:30;not null"        json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int                 `gorm:"column:unit_of_measurement_selling_id;type:int;size:30;null"        json:"unit_of_measurement_selling_id"`
@@ -33,7 +33,7 @@ type Item struct {
 	Weight                       float64             `gorm:"column:weight;null"        json:"weight"`
 	UnitOfMeasurementWeight      string              `gorm:"column:unit_of_measurement_weight;type:char(3);null"        json:"unit_of_measurement_weight"`
 	StorageTypeId                int                 `gorm:"column:storage_type_id;type:int;size:30;not null"        json:"storage_type_id"`
-	Remark                       string              `gorm:"column:remark;type:varchar(512);null"        json:"remark"`
+	Remark                       string              `gorm:"column:remark;size:512;null"        json:"remark"`
 	AtpmWarrantyClaimTypeId      int                 `gorm:"column:atpm_warranty_claim_type_id;type:int;size:30;null"        json:"atpm_warranty_claim_type_id"`
 	LastPrice                    float64             `gorm:"column:last_price;null"        json:"last_price"`
 	UseDiscDecentralize          string              `gorm:"column:use_disc_decentralize;type:char(1);null"        json:"use_disc_decentralize"`
@@ -45,22 +45,23 @@ type Item struct {
 	IsTechnicalDefect            string              `gorm:"column:is_technical_defect;type:char(1);null"        json:"is_technical_defect"`
 	IsMandatory                  bool                `gorm:"column:is_mandatory;null"        json:"is_mandatory"`
 	MinimumOrderQty              float64             `gorm:"column:minimum_order_qty;null"        json:"minimum_order_qty"`
-	HarmonizedNo                 string              `gorm:"column:harmonized_no;type:varchar(10);null"        json:"harmonized_no"`
+	HarmonizedNo                 string              `gorm:"column:harmonized_no;size:10;null"        json:"harmonized_no"`
 	AtpmSupplierId               int                 `gorm:"column:atpm_supplier_id;type:int;size:30;not null"        json:"atpm_supplier_id"`
 	AtpmVendorSuppliability      string              `gorm:"column:atpm_vendor_suppliability;type:char(1);null"        json:"atpm_vendor_suppliability"`
 	PmsItem                      string              `gorm:"column:pms_item;type:char(1);null"        json:"pms_item"`
-	Regulation                   string              `gorm:"column:regulation;type:varchar(25);null"        json:"regulation"`
+	Regulation                   string              `gorm:"column:regulation;size:25;null"        json:"regulation"`
 	AutoPickWms                  string              `gorm:"column:auto_pick_wms;type:char(1);null"        json:"auto_pick_wms"`
 	GmmCatalogCode               int                 `gorm:"column:gmm_catalog_code;type:int;size:30;null"        json:"gmm_catalog_code"`
 	PrincipalBrandParentId       int                 `gorm:"column:principal_brand_parent_id;type:int;size:30;not null" json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        string              `gorm:"column:proportional_supply_WMS;type:char(1);null"        json:"proportional_supply_WMS"`
-	Remark2                      string              `gorm:"column:remark2;type:varchar(512);null"        json:"remark2"`
-	Remark3                      string              `gorm:"column:remark3;type:varchar(512);null"        json:"remark3"`
+	Remark2                      string              `gorm:"column:remark2;size:512;null"        json:"remark2"`
+	Remark3                      string              `gorm:"column:remark3;size:512;null"        json:"remark3"`
 	SourceTypeId                 int                 `gorm:"column:source_type_id;type:int;size:30;null"        json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int                 `gorm:"column:atpm_supplier_code_order_id;type:int;size:30;null"        json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int                 `gorm:"column:person_in_charge_id;type:int;size:30;null"        json:"person_in_charge_id"`
 	ItemPackageDetail            []ItemPackageDetail `gorm:"foreignKey:item_id;references:item_id"`
-	ItemClass                    *ItemClass
+	ItemImport                   []ItemImport        `gorm:"foreignKey:item_id;references:item_id"`
+	ItemClass                    ItemClass           `gorm:"foreignKey:item_id;references:item_id"`
 }
 
 func (*Item) TableName() string {

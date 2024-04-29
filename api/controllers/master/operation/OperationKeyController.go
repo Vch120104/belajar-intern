@@ -1,12 +1,15 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -72,7 +75,12 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result := r.operationkeyservice.GetAllOperationKeyList(criteria, pagination)
+	result, err := r.operationkeyservice.GetAllOperationKeyList(criteria, pagination)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -88,7 +96,12 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Router /aftersales-service/api/aftersales/operation-key/{operation_key_id} [get]
 func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request) {
 	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
-	result := r.operationkeyservice.GetOperationKeyById(operationKeyId)
+	result, err := r.operationkeyservice.GetOperationKeyById(operationKeyId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -111,11 +124,16 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 	operationSectionId := utils.NewGetQueryInt(query, "operation_section_id")
 	keyCode := query.Get("operation_key_code")
 
-	result := r.operationkeyservice.GetOperationKeyName(masteroperationpayloads.OperationKeyRequest{
-		OperationGroupId:   int32(operationGroupId),
-		OperationSectionId: int32(operationSectionId),
+	result, err := r.operationkeyservice.GetOperationKeyName(masteroperationpayloads.OperationKeyRequest{
+		OperationGroupId:   int(operationGroupId),
+		OperationSectionId: int(operationSectionId),
 		OperationKeyCode:   keyCode,
 	})
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -133,9 +151,26 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 	var requestForm masteroperationpayloads.OperationKeyResponse
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &requestForm)
+	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
 
-	create := r.operationkeyservice.SaveOperationKey(requestForm)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, requestForm)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.operationkeyservice.SaveOperationKey(requestForm)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if requestForm.OperationKeyId == 0 {
 		message = "Create Data Successfully!"
@@ -158,7 +193,12 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request) {
 	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
 
-	response := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
+	response, err := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

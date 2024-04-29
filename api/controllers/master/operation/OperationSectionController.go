@@ -1,6 +1,7 @@
 package masteroperationcontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 
 	"after-sales/api/payloads"
@@ -64,14 +65,19 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 	}
 
 	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(query, "page_limit"),
+		Limit:  utils.NewGetQueryInt(query, "limit"),
 		Page:   utils.NewGetQueryInt(query, "page"),
 		SortOf: query.Get("sort_of"),
 		SortBy: query.Get("sort_by"),
 	}
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.operationsectionservice.GetAllOperationSectionList(filterCondition, pagination)
+	result, err := r.operationsectionservice.GetAllOperationSectionList(filterCondition, pagination)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -89,7 +95,11 @@ func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.Res
 
 	operationSectionId, _ := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
 
-	result := r.operationsectionservice.GetOperationSectionById(int(operationSectionId))
+	result, err := r.operationsectionservice.GetOperationSectionById(int(operationSectionId))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -107,7 +117,12 @@ func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.Res
 
 	groupId, _ := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
 
-	result := r.operationsectionservice.GetSectionCodeByGroupId(groupId)
+	result, err := r.operationsectionservice.GetSectionCodeByGroupId(groupId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -128,7 +143,11 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 	operationGroupId := utils.NewGetQueryInt(query, "operation_group_id")
 	section_code := query.Get("operation_section_code")
 
-	result := r.operationsectionservice.GetOperationSectionName(operationGroupId, section_code)
+	result, err := r.operationsectionservice.GetOperationSectionName(operationGroupId, section_code)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -148,7 +167,12 @@ func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.Respon
 
 	var message = ""
 
-	create := r.operationsectionservice.SaveOperationSection(formRequest)
+	create, err := r.operationsectionservice.SaveOperationSection(formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	if formRequest.OperationSectionId == 0 {
 		message = "Create Data Successfully!"
@@ -172,7 +196,12 @@ func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer htt
 
 	operationSectionId, _ := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
 
-	response := r.operationsectionservice.ChangeStatusOperationSection(int(operationSectionId))
+	response, err := r.operationsectionservice.ChangeStatusOperationSection(int(operationSectionId))
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -27,99 +27,99 @@ func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubs
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) masteritempayloads.ItemSubstitutePayloads {
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (masteritempayloads.ItemSubstitutePayloads, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.Pagination, id int) pagination.Pagination {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, pages, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) masteritempayloads.ItemSubstituteDetailGetPayloads {
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstituteDetail(tx, id)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) bool {
+func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	result, err := s.itemSubstituteRepo.SaveItemSubstitute(tx, req)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) bool {
+func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) bool {
+func (s *ItemSubstituteServiceImpl) ChangeStatusItemOperation(id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	result, err := s.itemSubstituteRepo.ChangeStatusItemSubstitute(tx, id)
+	result, err := s.itemSubstituteRepo.ChangeStatusItemOperation(tx, id)
 
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) bool {
+func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	result, err := s.itemSubstituteRepo.DeactivateItemSubstituteDetail(tx, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) bool {
+func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	result, err := s.itemSubstituteRepo.ActivateItemSubstituteDetail(tx, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return result, err
 	}
-	return result
+	return result, nil
 }
