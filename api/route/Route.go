@@ -5,10 +5,8 @@ import (
 	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
-	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
-
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
-
+	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
@@ -18,6 +16,11 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+
+	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
+	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
+	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
+
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -219,6 +222,12 @@ func StartRouting(db *gorm.DB) {
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
+	//transaction
+	//workorder
+	WorkOrderRepository := transactionworkshoprepositoryimpl.OpenWorkOrderRepositoryImpl()
+	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
+	WorkOrderController := transactionworksopcontroller.NewWorkOrderController(WorkOrderService)
+
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
 	ItemModelMappingRouter := ItemModelMappingRouter(ItemModelMappingController)
@@ -257,6 +266,8 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
+
+	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -307,6 +318,9 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group", IncentiveGroupRouter)
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
+
+		//transaction route
+		r.Mount("/work-order", WorkOrderRouter)
 
 		// Tambahkan routing untuk Swagger di akhir
 		r.Mount("/", SwaggerRouter())

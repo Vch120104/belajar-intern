@@ -5,6 +5,7 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
 	"github.com/go-chi/chi/v5"
@@ -750,6 +751,16 @@ func DeductionRouter(
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
+
+	return router
+}
+
+func WorkOrderRouter(
+	WorkOrderController transactionworkshopcontroller.WorkOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/", WorkOrderController.GetAll)
 
 	return router
 }
