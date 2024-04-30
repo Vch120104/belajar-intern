@@ -32,6 +32,7 @@ func StartRouting(db *gorm.DB) {
 	// Initialize Redis client
 	rdb := config.InitRedis()
 
+	/* Master */
 	// Unit Measurement
 	unitOfMeasurementRepository := masteritemrepositoryimpl.StartUnitOfMeasurementRepositoryImpl()
 	unitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(unitOfMeasurementRepository, db, rdb)
@@ -222,12 +223,13 @@ func StartRouting(db *gorm.DB) {
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
-	//transaction
-	//workorder
+	/* Transaction */
+	//Work order
 	WorkOrderRepository := transactionworkshoprepositoryimpl.OpenWorkOrderRepositoryImpl()
 	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
 	WorkOrderController := transactionworksopcontroller.NewWorkOrderController(WorkOrderService)
 
+	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
 	ItemModelMappingRouter := ItemModelMappingRouter(ItemModelMappingController)
@@ -267,12 +269,14 @@ func StartRouting(db *gorm.DB) {
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
 
+	/* Transaction */
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
-		// Tambahkan routing untuk setiap versi di sini
+		// Tambahkan routing untuk v1 versi di sini
+		/* Master */
 		r.Mount("/item-class", itemClassRouter)
 		r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 		r.Mount("/discount-percent", DiscountPercentRouter)
@@ -319,15 +323,19 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
 
-		//transaction route
+		/* Transaction */
 		r.Mount("/work-order", WorkOrderRouter)
 
-		// Tambahkan routing untuk Swagger di akhir
-		r.Mount("/", SwaggerRouter())
+	})
 
-		//prometheus route
+	// Route untuk utilities
+	r.Route("/utilities", func(r chi.Router) {
+		// Route untuk Swagger
+		r.Mount("/swagger", SwaggerRouter())
+		// Route untuk Prometheus metrics
 		r.Mount("/metrics", promhttp.Handler())
 	})
+
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
 		Handler: r,

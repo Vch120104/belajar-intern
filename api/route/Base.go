@@ -760,7 +760,12 @@ func WorkOrderRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/", WorkOrderController.GetAll)
+	//router.Get("/new", WorkOrderController.New)
+	router.Get("/search", WorkOrderController.GetAll)
+	//router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
+	//router.Put("/void", WorkOrderController.Void)
+	//router.Put("/submit", WorkOrderController.UpdateHeader)
+	//router.Put("/close", WorkOrderController.CloseHeader)
 
 	return router
 }
@@ -775,7 +780,7 @@ func SwaggerRouter() chi.Router {
 
 	// Serve Swagger UI index.html
 	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8000/swagger/doc.json"), //The url pointing to API definition
+		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
 	))
 
 	return router
