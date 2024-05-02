@@ -3,6 +3,7 @@ package masteritemrepositoryimpl
 import (
 	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
+	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -272,9 +273,27 @@ func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request mast
 func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
 	entities := masteritementities.PurchasePriceDetail{}
 
+	// Cek apakah data dengan ID yang diberikan ada atau tidak
+	result := tx.Where("purchase_price_detail_id = ?", Id).First(&entities)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		// Jika data tidak ditemukan, kirim respons data not found
+		notFoundErr := exceptions.NewNotFoundError("Purchase price detail not found")
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        notFoundErr,
+		}
+	} else if result.Error != nil {
+		// Jika terjadi kesalahan lain saat mencari data, kirim respons kesalahan internal server
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
 	// Menghapus data berdasarkan ID
-	err := tx.Where("purchase_price_detail_id = ?", Id).Delete(&entities).Error
+	err := tx.Delete(&entities).Error
 	if err != nil {
+		// Jika terjadi kesalahan saat menghapus data, kirim respons kesalahan internal server
 		return &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,

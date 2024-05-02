@@ -128,6 +128,11 @@ func StartRouting(db *gorm.DB) {
 	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db, rdb)
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
+	// Agreement
+	AgreementRepository := masterrepositoryimpl.StartAgreementRepositoryImpl()
+	AgreementService := masterserviceimpl.StartAgreementService(AgreementRepository, db, rdb)
+	AgreementController := mastercontroller.NewAgreementController(AgreementService)
+
 	// operation code
 	operationCodeRepository := masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
 	operationCodeService := masteroperationserviceimpl.StartOperationCodeService(operationCodeRepository, db, rdb)
@@ -248,6 +253,7 @@ func StartRouting(db *gorm.DB) {
 	OperationModelMappingRouter := OperationModelMappingRouter(operationModelMappingController)
 	MovingCodeRouter := MovingCodeRouter(MovingCodeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
+	AgreementRouter := AgreementRouter(AgreementController)
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
@@ -309,7 +315,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/warehouse-location", WarehouseLocation)
 		r.Mount("/moving-code", MovingCodeRouter)
 		r.Mount("/forecast-master", ForecastMasterRouter)
-		//r.Mount("/agreement", AgreementRouter)
+		r.Mount("/agreement", AgreementRouter)
 		//r.Mount("/campaign", CampaignRouter)
 		//r.Mount("/package", PackageRouter)
 		r.Mount("/skill-level", SkillLevelRouter)

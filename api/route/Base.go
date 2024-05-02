@@ -160,10 +160,10 @@ func ItemLocationRouter(
 	router.Post("/", ItemLocationController.SaveItemLocation)
 
 	//detail
-	router.Get("/all/detail", ItemLocationController.GetAllItemLocationDetail)
+	router.Get("/detail/all", ItemLocationController.GetAllItemLocationDetail)
 	router.Get("/popup-location", ItemLocationController.PopupItemLocation)
-	router.Post("/all/detail", ItemLocationController.AddItemLocation)
-	router.Delete("/all/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
+	router.Post("/detail", ItemLocationController.AddItemLocation)
+	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
 
 	return router
 }
@@ -290,11 +290,12 @@ func BomRouter(
 	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
 	//bom detail
-	router.Get("/all/detail", BomController.GetBomDetailList)
+	// Detail
+	router.Get("/detail/all", BomController.GetBomDetailList)
 	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
-	router.Get("/all/detail/{bom_detail_id}", BomController.GetBomDetailByIds)
-	router.Post("/all/detail", BomController.SaveBomDetail)
-	router.Delete("/all/detail/{bom_detail_id}", BomController.DeleteBomDetail)
+	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailByIds)
+	router.Post("/detail", BomController.SaveBomDetail)
+	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
 
 	//bom lookup
 	router.Get("/popup-item", BomController.GetBomItemList)
@@ -319,9 +320,9 @@ func PurchasePriceRouter(
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
-	router.Get("/all/detail", PurchasePriceController.GetAllPurchasePriceDetail)
-	router.Post("/all/detail", PurchasePriceController.AddPurchasePrice)
-	router.Delete("/all/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
+	router.Get("/detail/all", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
+	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
 
 	return router
 }
@@ -581,6 +582,24 @@ func ForecastMasterRouter(
 	return router
 }
 
+func AgreementRouter(
+	AgreementController mastercontroller.AgreementController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", AgreementController.GetAllAgreement)
+	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
+	router.Post("/", AgreementController.SaveAgreement)
+	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
+
+	return router
+}
+
 func SkillLevelRouter(
 	SkillLevelController mastercontroller.SkillLevelController,
 ) chi.Router {
@@ -761,7 +780,9 @@ func WorkOrderRouter(
 	router := chi.NewRouter()
 
 	router.Get("/search", WorkOrderController.GetAll)
-	router.Get("/", WorkOrderController.New)
+	router.Get("/normal", WorkOrderController.New)
+	router.Get("/booking", WorkOrderController.NewBooking)
+	router.Get("/affiliated", WorkOrderController.NewAffiliated)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)
@@ -780,7 +801,7 @@ func SwaggerRouter() chi.Router {
 	router.Use(middlewares.MetricsMiddleware)
 
 	// Serve Swagger UI index.html
-	router.Get("/swagger/*", httpSwagger.Handler(
+	router.Get("/docs/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
 	))
 

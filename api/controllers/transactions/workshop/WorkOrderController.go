@@ -18,6 +18,8 @@ type WorkOrderControllerImpl struct {
 type WorkOrderController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	New(writer http.ResponseWriter, request *http.Request)
+	NewBooking(writer http.ResponseWriter, request *http.Request)
+	NewAffiliated(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Submit(writer http.ResponseWriter, request *http.Request)
@@ -58,6 +60,14 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 }
 
 func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
+	// Create new work order
+}
+
+func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request *http.Request) {
+	// Create new work order
+}
+
+func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
 }
 

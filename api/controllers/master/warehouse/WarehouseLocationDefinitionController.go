@@ -54,7 +54,7 @@ func NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-location-definition [get]
+// @Router /warehouse-location-definition [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -92,7 +92,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Param warehouse_location_definition_id path int true "warehouse_location_definition_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-location-definition/{warehouse_location_definition_id} [get]
+// @Router /{warehouse_location_definition_id} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
@@ -113,10 +113,10 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.Response
 // @Produce json
 // @Tags Master : Warehouse Location
 // @Security BearerAuth
-// @param reqBody body masterwarehousepayloads.GetWarehouseLocationDefinitionResponse true "Form Request"
+// @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-location [post]
+// @Router / [post]
 func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
 	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
@@ -147,7 +147,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @Param warehouse_location_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-location/{warehouse_location_id} [patch]
+// @Router /{warehouse_location_id} [patch]
 func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))

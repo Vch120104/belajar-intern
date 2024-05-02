@@ -47,7 +47,7 @@ func NewPurchasePriceController(PurchasePriceService masteritemservice.PurchaseP
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /item-location [get]
+// @Router / [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
