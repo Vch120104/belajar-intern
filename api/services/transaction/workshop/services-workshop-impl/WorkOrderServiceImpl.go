@@ -27,21 +27,6 @@ func OpenWorkOrderServiceImpl(WorkOrderRepo transactionworkshoprepository.WorkOr
 	}
 }
 
-func (s *WorkOrderServiceImpl) WithTrx(Trxhandle *gorm.DB) transactionworkshopservice.WorkOrderService {
-	s.structWorkOrderRepo = s.structWorkOrderRepo.WithTrx(Trxhandle)
-	return s
-}
-
-func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
-	save, err := s.structWorkOrderRepo.Save(request)
-
-	if err != nil {
-		return false, err
-	}
-
-	return save, nil
-}
-
 func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -50,4 +35,60 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 		return results, totalPages, totalRows, err
 	}
 	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.New(tx, request)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.GetById(tx, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.Save(request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) *exceptionsss_test.BaseErrorResponse {
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.Submit(tx, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) Void(tx *gorm.DB, id int) *exceptionsss_test.BaseErrorResponse {
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.Void(tx, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptionsss_test.BaseErrorResponse {
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.CloseOrder(tx, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

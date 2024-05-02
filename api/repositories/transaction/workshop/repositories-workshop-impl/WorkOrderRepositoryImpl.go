@@ -8,7 +8,6 @@ import (
 
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/utils"
-	"log"
 
 	"gorm.io/gorm"
 )
@@ -19,35 +18,6 @@ type WorkOrderRepositoryImpl struct {
 
 func OpenWorkOrderRepositoryImpl() transactionworkshoprepository.WorkOrderRepository {
 	return &WorkOrderRepositoryImpl{}
-}
-
-func (r *WorkOrderRepositoryImpl) WithTrx(Trxhandle *gorm.DB) transactionworkshoprepository.WorkOrderRepository {
-	if Trxhandle == nil {
-		log.Println("Transaction Database Not Found")
-		return r
-	}
-
-	// Wrap the provided database handle with a transaction interceptor
-	trx := Trxhandle.Session(&gorm.Session{SkipDefaultTransaction: true})
-
-	// Register a callback for after each transaction commit
-	trx.Callback().Create().After("gorm:commit_or_rollback_transaction").Register("log_transaction_commit", func(tx *gorm.DB) {
-		// Log the transaction details or perform any other action
-		log.Println("Transaction Committed Successfully")
-	})
-
-	r.DB = trx
-	return r
-}
-
-func (r *WorkOrderRepositoryImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
-	var WorkOrderEntities = transactionworkshopentities.WorkOrder{}
-	rows, err := r.DB.Model(&WorkOrderEntities).Save(&WorkOrderEntities).Rows()
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-	return true, nil
 }
 
 func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
@@ -118,4 +88,144 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(workOrderResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	// Create a new instance of WorkOrderRepositoryImpl
+	repo := &WorkOrderRepositoryImpl{
+		DB: tx,
+	}
+
+	// Save the work order
+	success, err := repo.Save(request)
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{Message: "Failed to save work order"}
+	}
+
+	return success, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+	}
+
+	// Convert entity to payload
+	payload := transactionworkshoppayloads.WorkOrderRequest{
+		BatchSystemNumber:             entity.BatchSystemNumber,
+		WorkOrderSystemNumber:         entity.WorkOrderSystemNumber,
+		WorkOrderDate:                 entity.WorkOrderDate,
+		WorkOrderTypeId:               entity.WorkOrderTypeId,
+		WorkOrderServiceSite:          entity.WorkOrderServiceSite,
+		BrandId:                       entity.BrandId,
+		ModelId:                       entity.ModelId,
+		VariantId:                     entity.VariantId,
+		VehicleId:                     entity.VehicleId,
+		BilltoCustomerId:              entity.BilltoCustomerId,
+		WorkOrderStatusEra:            entity.WorkOrderStatusEra,
+		WorkOrderEraNo:                entity.WorkOrderEraNo,
+		WorkOrderEraExpiredDate:       entity.WorkOrderEraExpiredDate,
+		QueueSystemNumber:             entity.QueueSystemNumber,
+		WorkOrderArrivalTime:          entity.WorkOrderArrivalTime,
+		WorkOrderCurrentMileage:       entity.WorkOrderCurrentMileage,
+		WorkOrderStatusStoring:        entity.WorkOrderStatusStoring,
+		WorkOrderRemark:               entity.WorkOrderRemark,
+		WorkOrderStatusUnregistered:   entity.WorkOrderStatusUnregistered,
+		WorkOrderProfitCenter:         entity.WorkOrderProfitCenter,
+		WorkOrderDealerRepCode:        entity.WorkOrderDealerRepCode,
+		CampaignId:                    entity.CampaignId,
+		AgreementId:                   entity.AgreementId,
+		ServiceRequestSystemNumber:    entity.ServiceRequestSystemNumber,
+		EstimationSystemNumber:        entity.EstimationSystemNumber,
+		ContractSystemNumber:          entity.ContractSystemNumber,
+		CompanyId:                     entity.CompanyId,
+		DealerRepresentativeId:        entity.DealerRepresentativeId,
+		Titleprefix:                   entity.Titleprefix,
+		NameCust:                      entity.NameCust,
+		PhoneCust:                     entity.PhoneCust,
+		MobileCust:                    entity.MobileCust,
+		MobileCustAlternative:         entity.MobileCustAlternative,
+		MobileCustDriver:              entity.MobileCustDriver,
+		ContactVia:                    entity.ContactVia,
+		WorkOrderStatusInsurance:      entity.WorkOrderStatusInsurance,
+		WorkOrderInsurancePolicyNo:    entity.WorkOrderInsurancePolicyNo,
+		WorkOrderInsuranceExpiredDate: entity.WorkOrderInsuranceExpiredDate,
+		WorkOrderInsuranceClaimNo:     entity.WorkOrderInsuranceClaimNo,
+		WorkOrderInsurancePic:         entity.WorkOrderInsurancePic,
+		WorkOrderInsuranceWONumber:    entity.WorkOrderInsuranceWONumber,
+		WorkOrderInsuranceOwnRisk:     entity.WorkOrderInsuranceOwnRisk,
+	}
+
+	return payload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
+	var WorkOrderEntities = transactionworkshopentities.WorkOrder{}
+	err := r.DB.Model(&WorkOrderEntities).Create(&WorkOrderEntities).Error
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	// Retrieve the work order by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+	}
+
+	// Perform the necessary operations to submit the work order
+	// ...
+
+	// Save the updated work order
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated work order"}
+	}
+
+	return nil
+}
+
+func (r *WorkOrderRepositoryImpl) Void(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	// Retrieve the work order by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+	}
+
+	// Perform the necessary operations to void the work order
+	// ...
+
+	// Save the updated work order
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated work order"}
+	}
+
+	return nil
+}
+
+func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	// Retrieve the work order by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+	}
+
+	// Perform the necessary operations to close the work order
+	// ...
+
+	// Save the updated work order
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated work order"}
+	}
+
+	return nil
 }

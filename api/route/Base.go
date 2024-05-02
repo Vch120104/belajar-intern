@@ -760,12 +760,13 @@ func WorkOrderRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	//router.Get("/new", WorkOrderController.New)
 	router.Get("/search", WorkOrderController.GetAll)
-	//router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
-	//router.Put("/void", WorkOrderController.Void)
-	//router.Put("/submit", WorkOrderController.UpdateHeader)
-	//router.Put("/close", WorkOrderController.CloseHeader)
+	router.Get("/", WorkOrderController.New)
+	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
+	router.Put("/{id}", WorkOrderController.Save)
+	router.Post("/submit", WorkOrderController.Submit)
+	router.Delete("/{id}", WorkOrderController.Void)
+	router.Put("/close/{id}", WorkOrderController.CloseOrder)
 
 	return router
 }

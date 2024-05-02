@@ -16,21 +16,19 @@ type WorkOrderControllerImpl struct {
 }
 
 type WorkOrderController interface {
-	WithTrx(writer http.ResponseWriter, request *http.Request)
 	GetAll(writer http.ResponseWriter, request *http.Request)
+	New(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
+	Submit(writer http.ResponseWriter, request *http.Request)
+	Void(writer http.ResponseWriter, request *http.Request)
+	CloseOrder(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrderService) WorkOrderController {
 	return &WorkOrderControllerImpl{
 		WorkOrderService: WorkOrderService,
 	}
-}
-
-// WithTrx handles the transaction for all work orders
-func (r *WorkOrderControllerImpl) WithTrx(writer http.ResponseWriter, request *http.Request) {
-	// This function can be implemented to handle transaction-related logic if needed
-	// For now, it's empty
 }
 
 // GetAll gets all work orders
@@ -59,6 +57,16 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
+	// Create new work order
+}
+
+// WithTrx handles the transaction for all work orders
+func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
+	// This function can be implemented to handle transaction-related logic if needed
+	// For now, it's empty
+}
+
 // Save saves a new work order
 func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	// Mendekode payload request ke struct WorkOrderRequest
@@ -83,4 +91,16 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	} else {
 		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
 	}
+}
+
+func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
+	// Create new work order
+}
+
+func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
+	// Cancel work order
+}
+
+func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request *http.Request) {
+	// Close work order
 }

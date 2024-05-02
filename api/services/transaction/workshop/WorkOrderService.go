@@ -10,7 +10,11 @@ import (
 )
 
 type WorkOrderService interface {
-	WithTrx(Trxhandle *gorm.DB) WorkOrderService
-	Save(transactionworkshoppayloads.WorkOrderRequest) (bool, error)
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse)
+	Save(transactionworkshoppayloads.WorkOrderRequest) (bool, error)
+	Submit(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse
+	Void(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse
+	CloseOrder(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse
 }

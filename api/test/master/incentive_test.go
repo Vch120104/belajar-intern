@@ -9,8 +9,6 @@ import (
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	"fmt"
-	"reflect"
-	"runtime"
 
 	"after-sales/api/utils"
 	"encoding/json"
@@ -18,7 +16,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/shirou/gopsutil/cpu"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -107,11 +104,6 @@ func TestGetIncentiveMasterById(t *testing.T) {
 }
 
 func BenchmarkGetIncentiveMasterById(b *testing.B) {
-	fmt.Println("goos:", runtime.GOOS)
-	fmt.Println("goarch:", runtime.GOARCH)
-	fmt.Println("pkg:", reflect.TypeOf(b).PkgPath())
-	fmt.Println("cpu:", cpuInfo())
-
 	config.InitEnvConfigs(true, "")
 	db := config.InitDB()
 	rdb := config.InitRedis()
@@ -122,18 +114,10 @@ func BenchmarkGetIncentiveMasterById(b *testing.B) {
 
 	b.Run("GetIncentiveMasterById", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := IncentiveMasterService.GetIncentiveMasterById(3)
+			_, err := IncentiveMasterService.GetIncentiveMasterById(1)
 			if err != nil {
 				b.Fatalf("Error: %v", err)
 			}
 		}
 	})
-}
-
-func cpuInfo() string {
-	info, _ := cpu.Info()
-	if len(info) > 0 {
-		return info[0].ModelName
-	}
-	return "Unknown"
 }

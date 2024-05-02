@@ -12,7 +12,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/prometheus/client_golang v1.19.0
 	github.com/redis/go-redis/v9 v9.3.0
-	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.9.0
@@ -29,7 +28,6 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect
@@ -44,9 +42,6 @@ require (
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggo/files/v2 v2.0.0 // indirect
 	github.com/swaggo/swag v1.16.3 // indirect
-	github.com/tklauser/go-sysconf v0.3.14 // indirect
-	github.com/tklauser/numcpus v0.8.0 // indirect
-	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 )
 
