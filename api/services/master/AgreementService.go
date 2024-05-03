@@ -8,7 +8,7 @@ import (
 )
 
 type AgreementService interface {
-	GetAgreementById(int) (masterpayloads.AgreementResponse, *exceptionsss_test.BaseErrorResponse)
+	GetAgreementById(int) (masterpayloads.AgreementRequest, *exceptionsss_test.BaseErrorResponse)
 	SaveAgreement(masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse)
 	ChangeStatusAgreement(int) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)

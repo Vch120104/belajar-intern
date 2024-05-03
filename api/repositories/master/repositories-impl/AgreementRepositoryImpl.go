@@ -8,9 +8,9 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"fmt"
 	"net/http"
-	"reflect"
-	"strings"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -22,15 +22,15 @@ func StartAgreementRepositoryImpl() masterrepository.AgreementRepository {
 	return &AgreementRepositoryImpl{}
 }
 
-func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int) (masterpayloads.AgreementRequest, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.Agreement{}
-	response := masterpayloads.AgreementResponse{}
+	response := masterpayloads.AgreementRequest{}
 
 	err := tx.Model(&entities).
 		Where(masterentities.Agreement{
 			AgreementId: AgreementId,
 		}).
-		First(&response).
+		First(&entities).
 		Error
 
 	if err != nil {
@@ -39,6 +39,19 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 			Err:        err,
 		}
 	}
+
+	// Copying values from entities to response
+	response.AgreementId = entities.AgreementId
+	response.AgreementCode = entities.AgreementCode
+	response.IsActive = entities.IsActive
+	response.BrandId = entities.BrandId
+	response.CustomerId = entities.CustomerId
+	response.ProfitCenterId = entities.ProfitCenterId
+	response.AgreementDateFrom = entities.AgreementDateFrom
+	response.AgreementDateTo = entities.AgreementDateTo
+	response.DealerId = entities.DealerId
+	response.TopId = entities.TopId
+	response.AgreementRemark = entities.AgreementRemark
 
 	return response, nil
 }
@@ -66,7 +79,7 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (bo
 	var entities masterentities.Agreement
 
 	result := tx.Model(&entities).
-		Where("forecast_master_id = ?", Id).
+		Where("agreement_id = ?", Id).
 		First(&entities)
 
 	if result.Error != nil {
@@ -95,89 +108,129 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (bo
 }
 
 func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	// Define variables
-	var (
-		responses             []masterpayloads.AgreementListResponse
-		getSupplierResponse   []masterpayloads.SupplierResponse
-		getOrderTypeResponse  []masterpayloads.OrderTypeResponse
-		internalServiceFilter []utils.FilterCondition
-		supplierName          string
-		orderTypeName         string
-		responseStruct        = reflect.TypeOf(masterpayloads.AgreementListResponse{})
-	)
-
-	// Apply internal and external service filters
-	for _, fc := range filterCondition {
-		var flag bool
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if fc.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, fc)
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			if strings.Contains(fc.ColumnField, "supplier_name") {
-				supplierName = fc.ColumnValue
-			} else {
-				orderTypeName = fc.ColumnValue
-			}
-		}
-	}
+	// Define a slice to hold Agreement responses
+	var responses []masterpayloads.AgreementRequest
 
 	// Define table struct
-	tableStruct := masterpayloads.AgreementListResponse{}
+	tableStruct := masterpayloads.AgreementRequest{}
 
-	// Create join table
+	// Define join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	// Apply internal service filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Execute query
-	if err := whereQuery.Scan(&responses).Error; err != nil {
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
+	defer rows.Close()
 
-	// Check if no records found
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        gorm.ErrRecordNotFound,
-		}
-	}
+	// Define a slice to hold Agreement responses
+	var convertedResponses []masterpayloads.AgreementResponse
 
-	// Handle supplier and order type filters
-	if supplierName != "" || orderTypeName != "" {
-		supplierURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/filter-supplier-master?supplier_name=" + supplierName
-		if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
+	// Iterate over rows
+	for rows.Next() {
+		// Define variables to hold row data
+		var (
+			AgreementReq masterpayloads.AgreementRequest
+			AgreementRes masterpayloads.AgreementResponse
+		)
+
+		// Scan the row into PurchasePriceRequest struct
+		if err := rows.Scan(
+			&AgreementReq.AgreementId,
+			&AgreementReq.AgreementCode,
+			&AgreementReq.IsActive,
+			&AgreementReq.BrandId,
+			&AgreementReq.CustomerId,
+			&AgreementReq.ProfitCenterId,
+			&AgreementReq.AgreementDateFrom,
+			&AgreementReq.AgreementDateTo,
+			&AgreementReq.DealerId,
+			&AgreementReq.TopId,
+			&AgreementReq.AgreementRemark); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
+				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 
-		joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
-
-		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/order-type-filter?order_type_name=" + orderTypeName
-		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
+		// Fetch Customer data from external service
+		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/customer/" + strconv.Itoa(AgreementReq.CustomerId)
+		fmt.Println("Fetching Customer data from:", CustomerURL)
+		var getCustomerResponse masterpayloads.AgreementCustomerResponse
+		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
+				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 
-		joinedData = utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
+		// Fetch Company data from external service
+		CompanyURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/company/" + strconv.Itoa(AgreementReq.DealerId)
+		fmt.Println("Fetching Brand data from:", CompanyURL)
+		var getCompanyResponse masterpayloads.AgreementCompanyResponse
+		if err := utils.Get(CompanyURL, &getCompanyResponse, nil); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		// Create AgreementResponse
+		AgreementRes = masterpayloads.AgreementResponse{
+			AgreementId:       AgreementReq.AgreementId,
+			AgreementCode:     AgreementReq.AgreementCode,
+			IsActive:          AgreementReq.IsActive,
+			BrandId:           AgreementReq.BrandId,
+			CustomerId:        AgreementReq.CustomerId,
+			CustomerName:      getCustomerResponse.CustomerName,
+			CustomerCode:      getCustomerResponse.CustomerCode,
+			ProfitCenterId:    AgreementReq.ProfitCenterId,
+			AgreementDateFrom: AgreementReq.AgreementDateFrom,
+			AgreementDateTo:   AgreementReq.AgreementDateTo,
+			DealerId:          AgreementReq.DealerId,
+			DealerName:        getCompanyResponse.CompanyName,
+			DealerCode:        getCompanyResponse.CompanyCode,
+			TopId:             AgreementReq.TopId,
+			AgreementRemark:   AgreementReq.AgreementRemark,
+		}
 
-		// Paginate data
-		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-		return dataPaginate, totalPages, totalRows, nil
+		// Append PurchasePriceResponse to the slice
+		convertedResponses = append(convertedResponses, AgreementRes)
 	}
 
-	// Paginate data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
-	return dataPaginate, totalPages, totalRows, nil
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over convertedResponses and convert them to maps
+	for _, response := range convertedResponses {
+		responseMap := map[string]interface{}{
+			"agreement_id":        response.AgreementId,
+			"agreement_code":      response.AgreementCode,
+			"customer_id":         response.CustomerId,
+			"customer_name":       response.CustomerName,
+			"customer_code":       response.CustomerCode,
+			"profit_center_id":    response.ProfitCenterId,
+			"agreement_date_from": response.AgreementDateFrom,
+			"agreement_date_to":   response.AgreementDateTo,
+			"dealer_id":           response.DealerId,
+			"dealer_name":         response.DealerName,
+			"dealer_code":         response.DealerCode,
+			"top_id":              response.TopId,
+			"agreement_remark":    response.AgreementRemark,
+			"brand_id":            response.BrandId,
+			"is_active":           response.IsActive,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
 }

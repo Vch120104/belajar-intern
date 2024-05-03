@@ -27,7 +27,7 @@ func StartAgreementService(AgreementRepo masterrepository.AgreementRepository, d
 	}
 }
 
-func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.AgreementResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.AgreementRequest, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.AgreementRepo.GetAgreementById(tx, id)

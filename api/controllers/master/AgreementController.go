@@ -126,19 +126,14 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/agreement/ [get]
-
+// @Router /v1/agreement [get]
 func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"supplier_name": queryValues.Get("supplier_name"),
-		"mtr_moving_code.moving_code_description":           queryValues.Get("moving_code_description"),
-		"order_type_name":                                   queryValues.Get("order_type_name"),
-		"mtr_forecast_master.forecast_master_lead_time":     queryValues.Get("forecast_master_lead_time"),
-		"mtr_forecast_master.forecast_master_safety_factor": queryValues.Get("forecast_master_safety_factor"),
-		"mtr_forecast_master.forecast_master_order_cycle":   queryValues.Get("forecast_master_order_cycle"),
-		"mtr_forecast_master.is_active":                     queryValues.Get("is_active"),
+		"mtr_agreement.agreement_id": queryValues.Get("agreement_id"),
+		"mtr_agreement.brand_id":     queryValues.Get("brand_id"),
+		"mtr_agreement.customer_id":  queryValues.Get("customer_id"),
 	}
 
 	paginate := pagination.Pagination{
