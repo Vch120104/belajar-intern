@@ -20,8 +20,9 @@ import (
 	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
 	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
-
 	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -334,13 +335,11 @@ func StartRouting(db *gorm.DB) {
 
 	})
 
-	// Route untuk utilities
-	r.Route("/utilities", func(r chi.Router) {
-		// Route untuk Swagger
-		r.Mount("/swagger", SwaggerRouter())
-		// Route untuk Prometheus metrics
-		r.Mount("/metrics", promhttp.Handler())
-	})
+	// Route untuk Swagger
+	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
+
+	// Route untuk Prometheus metrics
+	r.Mount("/metrics", promhttp.Handler())
 
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,

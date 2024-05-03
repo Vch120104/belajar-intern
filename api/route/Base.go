@@ -8,9 +8,12 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
+	_ "after-sales/docs"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 /* Master */
@@ -795,14 +798,9 @@ func WorkOrderRouter(
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
-	// Use middleware
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	// Serve Swagger UI index.html
-	router.Get("/docs/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"), //The url pointing to API definition
+	// Izinkan akses ke Swagger di /aftersales-service/docs
+	router.Get("/aftersales-service/docs/v1/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server aktual Anda
 	))
 
 	return router

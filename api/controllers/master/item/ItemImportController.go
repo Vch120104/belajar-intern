@@ -28,6 +28,15 @@ type ItemImportControllerImpl struct {
 }
 
 // GetItemImportbyId implements ItemImportController.
+// @Summary Get Item Import By ID
+// @Description Retrieve an item import by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Import
+// @Param item_import_id path int true "Item Import ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-import/{item_import_id} [get]
 func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter, request *http.Request) {
 
 	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_import_id"))
@@ -43,6 +52,22 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 }
 
 // GetAllItemImport implements ItemImportController.
+// @Summary Get All Item Imports
+// @Description Retrieve all item imports with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Master : Item Import
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param item_code query string false "Item code"
+// @Param item_name query string false "Item name"
+// @Param supplier_code query string false "Supplier code"
+// @Param supplier_name query string false "Supplier name"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-import [get]
 func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -77,6 +102,15 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 }
 
 // SaveItemImport implements ItemImportController.
+// @Summary Save Item Import
+// @Description Create a new item import
+// @Accept json
+// @Produce json
+// @Tags Master : Item Import
+// @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-import/save [post]
 func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritementities.ItemImport
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -104,6 +138,15 @@ func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, re
 }
 
 // UpdateItemImport implements ItemImportController.
+// @Summary Update Item Import
+// @Description Update an existing item import
+// @Accept json
+// @Produce json
+// @Tags Master : Item Import
+// @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-import/update [put]
 func (r *ItemImportControllerImpl) UpdateItemImport(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritementities.ItemImport
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)

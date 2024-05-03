@@ -41,7 +41,7 @@ func NewForecastMasterController(forecastMasterService masterservice.ForecastMas
 // @Param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{forecast_master_id} [get]
+// @Router /v1/forecast-master/{forecast_master_id} [get]
 func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.ResponseWriter, request *http.Request) {
 
 	ForecastMasterId, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
@@ -63,7 +63,7 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 // @param reqBody body masterpayloads.ForecastMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/forecast-master/ [post]
 func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.ForecastMasterResponse
@@ -93,7 +93,7 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 // @param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{forecast_master_id} [patch]
+// @Router /v1/forecast-master/{forecast_master_id} [patch]
 func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
 	forecast_master_id, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
@@ -125,7 +125,7 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [get]
+// @Router /v1/forecast-master/ [get]
 
 func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters

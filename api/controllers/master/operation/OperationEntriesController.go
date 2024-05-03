@@ -52,7 +52,7 @@ func NewOperationEntriesController(operationEntriesService masteroperationservic
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/operation-entries [get]
+// @Router /v1/operation-entries/ [get]
 func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.ResponseWriter, request *http.Request) {
 
 	query := request.URL.Query()
@@ -89,7 +89,7 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 // @Param operation_entries_id path int true "operation_entries_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/operation-entries/{operation_entries_id} [get]
+// @Router /v1/operation-entries/{operation_entries_id} [get]
 func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.ResponseWriter, request *http.Request) {
 
 	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
@@ -111,7 +111,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.Res
 // @Param operation_entries_code query string true "operation_entries_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/operation-entries-by-name [get]
+// @Router /v1/operation-entries/by-name [get]
 func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.ResponseWriter, request *http.Request) {
 
 	query := request.URL.Query()
@@ -142,7 +142,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.Res
 // @param reqBody body masteroperationpayloads.OperationEntriesResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/operation-entries [post]
+// @Router /v1/operation-entries/ [post]
 func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.ResponseWriter, request *http.Request) {
 
 	var requestForm masteroperationpayloads.OperationEntriesResponse
@@ -173,7 +173,7 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 // @param operation_entries_id path int true "operation_entries_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/operation-entries/{operation_entries_id} [patch]
+// @Router /v1/operation-entries/{operation_entries_id} [patch]
 func (r *OperationEntriesControllerImpl) ChangeStatusOperationEntries(writer http.ResponseWriter, request *http.Request) {
 	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
 

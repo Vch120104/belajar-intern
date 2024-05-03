@@ -3,11 +3,12 @@ package migration
 import (
 	"after-sales/api/config"
 
-	//masterentities "after-sales/api/entities/master"
+	masterentities "after-sales/api/entities/master"
 	//masteritementities "after-sales/api/entities/master/item"
 	//masteroperationentities "after-sales/api/entities/master/operation"
 	//masterwarehouseentities "after-sales/api/entities/master/warehouse"
-	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+
+	//transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
 
@@ -119,10 +120,11 @@ func Migrate() {
 		// &masterentities.FieldActionEligibleVehicle{},
 		// &masterentities.FieldAction{},
 		// &masterentities.Discount{},
+		&masterentities.Agreement{},
 
 		// &transactionentities.SupplySlip{},
 		// &transactionentities.SupplySlipDetail{},
-		&transactionworkshopentities.WorkOrder{},
+		// &transactionworkshopentities.WorkOrder{},
 		// &transactionentities.ServiceLog{},
 		// &transactionworkshopentities.BookingEstimation{},
 	)

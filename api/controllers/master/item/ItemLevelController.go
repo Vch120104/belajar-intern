@@ -41,7 +41,6 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -54,7 +53,7 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-level [get]
+// @Router /v1/item-level/ [get]
 func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	page, _ := strconv.Atoi(queryValues.Get("page"))
@@ -95,11 +94,10 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-level-by-id [get]
+// @Router /v1/item-level/by-id/{item_level_id} [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
@@ -119,11 +117,10 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-level [post]
+// @Router /v1/item-level/ [post]
 func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritemlevelpayloads.SaveItemLevelRequest
@@ -161,11 +158,10 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
+// @Router /v1/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
 	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))

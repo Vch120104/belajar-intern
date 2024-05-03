@@ -41,8 +41,7 @@ func NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService
 // @Description Get All Warehouse Location
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Location
-// @Security BearerAuth
+// @Tags Master : Warehouse Location Definition
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -54,7 +53,7 @@ func NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /warehouse-location-definition [get]
+// @Router /v1/warehouse-location-definition/ [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -87,12 +86,11 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Description Get Warehouse Location By Id
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Location
-// @Security BearerAuth
+// @Tags Master : Warehouse Location Definition
 // @Param warehouse_location_definition_id path int true "warehouse_location_definition_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{warehouse_location_definition_id} [get]
+// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
@@ -111,12 +109,11 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.Response
 // @Description Save Warehouse Location
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Location
-// @Security BearerAuth
+// @Tags Master : Warehouse Location Definition
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/warehouse-location-definition/ [post]
 func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
 	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
@@ -142,12 +139,11 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @Description Change Warehouse Location Status By Id
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Location
-// @Security BearerAuth
-// @Param warehouse_location_id path int true "Warehouse Location Id"
+// @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_definition_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{warehouse_location_id} [patch]
+// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [patch]
 func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
@@ -166,7 +162,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 // @Description REST API Warehouse Location Popup
 // @Accept json
 // @Produce json
-// @Tags Master : Warehouse Location Popup
+// @Tags Master : Warehouse Location Definition
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param warehouse_location_definition_level_id query string false "warehouse_location_definition_level_id"
@@ -174,7 +170,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /popup-level [get]
+// @Router /v1/warehouse-location-definition/popup-level [get]
 func (r *WarehouseLocationDefinitionControllerImpl) PopupWarehouseLocationLevel(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 

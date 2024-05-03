@@ -34,14 +34,14 @@ func NewAgreementController(AgreementService masterservice.AgreementService) Agr
 }
 
 // @Summary Get Agreement By Id
-// @Description REST API Agreement
+// @Description Retrieve an agreement by its ID
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
-// @Param agreement_id path int true "agreement_id"
+// @Param agreement_id path int true "Agreement ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{agreement_id} [get]
+// @Router /v1/agreement/{agreement_id} [get]
 func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, request *http.Request) {
 
 	AgreementId, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
@@ -56,14 +56,14 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 }
 
 // @Summary Save Agreement
-// @Description REST API Agreement
+// @Description Create or update an agreement
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
-// @param reqBody body masterpayloads.AgreementResponse true "Form Request"
+// @Param reqBody body masterpayloads.AgreementResponse true "Agreement Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/agreement/ [post]
 func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.AgreementResponse
@@ -86,14 +86,14 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 }
 
 // @Summary Change Status Agreement
-// @Description REST API Agreement
+// @Description Change the status of an agreement
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
-// @param agreement_id path int true "agreement_id"
+// @Param agreement_id path int true "Agreement ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{agreement_id} [patch]
+// @Router /v1/agreement/{agreement_id} [patch]
 func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request) {
 
 	agreement_id, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
@@ -107,25 +107,26 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-// @Summary Get All Agreement
-// @Description REST API Agreement
+// @Summary Get All Agreements
+// @Description Retrieve all agreements with optional filtering and pagination
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param is_active query string false "is_active" Enums(true, false)
-// @Param supplier_name query string false "supplier_name"
-// @Param moving_code_description query string false "moving_code_description"
-// @Param order_type_name query string false "order_type_name"
-// @Param forecast_master_lead_time query float64 false "forecast_master_lead_time"
-// @Param forecast_master_safety_factor query float64 false "forecast_master_safety_factor"
-// @Param forecast_master_order_cycle query float64 false "forecast_master_order_cycle"
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param is_active query string false "Agreement status"
+// @Param supplier_name query string false "Supplier name"
+// @Param agreement_code query string false "Agreement code"
+// @Param brand_id query string false "Brand ID"
+// @Param customer_id query string false "Customer ID"
+// @Param profit_center_id query string false "Profit center ID"
+// @Param dealer_id query string false "Dealer ID"
+// @Param top_id query string false "Top ID"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [get]
+// @Router /v1/agreement/ [get]
 
 func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
