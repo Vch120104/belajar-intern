@@ -58,9 +58,17 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 
 func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.Agreement{
-		IsActive:    req.IsActive,
-		AgreementId: req.AgreementId,
-		CustomerId:  req.CustomerId,
+		AgreementCode:     req.AgreementCode,
+		BrandId:           req.BrandId,
+		DealerId:          req.DealerId,
+		TopId:             req.TopId,
+		AgreementDateFrom: req.AgreementDateFrom,
+		AgreementDateTo:   req.AgreementDateTo,
+		AgreementRemark:   req.AgreementRemark,
+		ProfitCenterId:    req.ProfitCenterId,
+		IsActive:          req.IsActive,
+		AgreementId:       req.AgreementId,
+		CustomerId:        req.CustomerId,
 	}
 
 	err := tx.Save(&entities).Error
@@ -161,7 +169,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 		}
 
 		// Fetch Customer data from external service
-		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/customer/" + strconv.Itoa(AgreementReq.CustomerId)
+		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "api/general/customer/" + strconv.Itoa(AgreementReq.CustomerId)
 		fmt.Println("Fetching Customer data from:", CustomerURL)
 		var getCustomerResponse masterpayloads.AgreementCustomerResponse
 		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
@@ -172,8 +180,8 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 		}
 
 		// Fetch Company data from external service
-		CompanyURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/company/" + strconv.Itoa(AgreementReq.DealerId)
-		fmt.Println("Fetching Brand data from:", CompanyURL)
+		CompanyURL := config.EnvConfigs.GeneralServiceUrl + "api/general/company/" + strconv.Itoa(AgreementReq.DealerId)
+		fmt.Println("Fetching Company data from:", CompanyURL)
 		var getCompanyResponse masterpayloads.AgreementCompanyResponse
 		if err := utils.Get(CompanyURL, &getCompanyResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -233,4 +241,112 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) *exceptionsss_test.BaseErrorResponse {
+	entities := masterentities.AgreementDiscountGroupDetail{
+		AgreementId:                    AgreementId,
+		AgreementDiscountGroupDetailId: req.AgreementDiscountGroupId,
+		AgreementSelection:             req.AgreementSelection,
+		AgreementOrderType:             req.AgreementLineTypeId,
+		AgreementDiscountMarkupId:      req.AgreementDiscountMarkup,
+		AgreementDiscount:              req.AgreementDiscount,
+		AgreementDetailRemarks:         req.AgreementDetailRemaks,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteDiscountGroup(tx *gorm.DB, AgreementId int, DiscountGroupId int) *exceptionsss_test.BaseErrorResponse {
+	var entities masterentities.AgreementDiscountGroupDetail
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_group_id = ?", AgreementId, DiscountGroupId).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return nil
+}
+
+func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, req masterpayloads.ItemDiscountRequest) *exceptionsss_test.BaseErrorResponse {
+	entities := masterentities.AgreementItemDetail{
+		AgreementId: AgreementId,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteItemDiscount(tx *gorm.DB, AgreementId int, ItemDiscountId int) *exceptionsss_test.BaseErrorResponse {
+	var entities masterentities.AgreementItemDetail
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_item_id = ?", AgreementId, ItemDiscountId).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return nil
+}
+
+func (r *AgreementRepositoryImpl) AddDiscountValue(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse {
+	entities := masterentities.AgreementDiscount{
+		AgreementId: AgreementId,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return nil
+}
+
+func (r *AgreementRepositoryImpl) DeleteDiscountValue(tx *gorm.DB, AgreementId int, DiscountValueId int) *exceptionsss_test.BaseErrorResponse {
+	var entities masterentities.AgreementDiscount
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_id = ?", AgreementId, DiscountValueId).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return nil
 }

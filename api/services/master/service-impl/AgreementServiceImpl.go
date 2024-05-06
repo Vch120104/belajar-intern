@@ -83,3 +83,63 @@ func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCon
 	}
 	return results, totalPages, totalRows, nil
 }
+
+func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.DiscountGroupRequest) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.AddDiscountGroup(tx, id, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.DeleteDiscountGroup(tx, id, discountGroupId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDiscountRequest) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.AddItemDiscount(tx, id, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.DeleteItemDiscount(tx, id, itemDiscountId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.AddDiscountValue(tx, id, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.DeleteDiscountValue(tx, id, discountValueId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

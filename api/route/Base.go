@@ -318,7 +318,7 @@ func PurchasePriceRouter(
 
 	//master
 	router.Get("/", PurchasePriceController.GetAllPurchasePrice)
-	router.Get("/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
+	router.Get("/by-id/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
 	router.Post("/", PurchasePriceController.SavePurchasePrice)
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
@@ -599,6 +599,13 @@ func AgreementRouter(
 	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
+
+	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
+	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
+	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
+	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
 
 	return router
 }

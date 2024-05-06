@@ -14,4 +14,10 @@ type AgreementRepository interface {
 	SaveAgreement(*gorm.DB, masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse)
 	ChangeStatusAgreement(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	AddDiscountGroup(*gorm.DB, int, masterpayloads.DiscountGroupRequest) *exceptionsss_test.BaseErrorResponse
+	DeleteDiscountGroup(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
+	AddItemDiscount(*gorm.DB, int, masterpayloads.ItemDiscountRequest) *exceptionsss_test.BaseErrorResponse
+	DeleteItemDiscount(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
+	AddDiscountValue(*gorm.DB, int, masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse
+	DeleteDiscountValue(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
 }

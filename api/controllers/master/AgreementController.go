@@ -22,7 +22,14 @@ type AgreementController interface {
 	SaveAgreement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request)
 	GetAllAgreement(writer http.ResponseWriter, request *http.Request)
+	AddDiscountGroup(writer http.ResponseWriter, request *http.Request)
+	DeleteDiscountGroup(writer http.ResponseWriter, request *http.Request)
+	AddItemDiscount(writer http.ResponseWriter, request *http.Request)
+	DeleteItemDiscount(writer http.ResponseWriter, request *http.Request)
+	AddDiscountValue(writer http.ResponseWriter, request *http.Request)
+	DeleteDiscountValue(writer http.ResponseWriter, request *http.Request)
 }
+
 type AgreementControllerImpl struct {
 	AgreementService masterservice.AgreementService
 }
@@ -152,4 +159,142 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Add Discount Group
+// @Description Add a new discount group to an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param reqBody body masterpayloads.DiscountGroupRequest true "Discount Group Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group [post]
+func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	var groupRequest masterpayloads.DiscountGroupRequest
+	helper.ReadFromRequestBody(request, &groupRequest)
+
+	if err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Discount group added successfully", http.StatusOK)
+}
+
+// @Summary Delete Discount Group
+// @Description Delete a discount group from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_discount_group_id path int true "Group ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group/{agreement_discount_group_id} [delete]
+func (r *AgreementControllerImpl) DeleteDiscountGroup(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+
+	if err := r.AgreementService.DeleteDiscountGroup(int(agreementID), int(groupID)); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Discount group deleted successfully", http.StatusOK)
+}
+
+// @Summary Add Item Discount
+// @Description Add a new item discount to an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param reqBody body masterpayloads.ItemDiscountRequest true "Item Discount Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item [post]
+func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	var itemRequest masterpayloads.ItemDiscountRequest
+	helper.ReadFromRequestBody(request, &itemRequest)
+
+	if err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Item discount added successfully", http.StatusOK)
+}
+
+// @Summary Delete Item Discount
+// @Description Delete an item discount from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_item_id path int true "Item ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item/{agreement_item_id} [delete]
+func (r *AgreementControllerImpl) DeleteItemDiscount(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+
+	if err := r.AgreementService.DeleteItemDiscount(int(agreementID), int(itemID)); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Item discount deleted successfully", http.StatusOK)
+}
+
+// @Summary Add Discount Value
+// @Description Add a new discount value to an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param reqBody body masterpayloads.DiscountValueRequest true "Discount Value Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value [post]
+func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	var valueRequest masterpayloads.DiscountValueRequest
+	helper.ReadFromRequestBody(request, &valueRequest)
+
+	if err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Discount value added successfully", http.StatusOK)
+}
+
+// @Summary Delete Discount Value
+// @Description Delete a discount value from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_discount_id path int true "Value ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value/{agreement_discount_id} [delete]
+func (r *AgreementControllerImpl) DeleteDiscountValue(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+
+	if err := r.AgreementService.DeleteDiscountValue(int(agreementID), int(valueID)); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Discount value deleted successfully", http.StatusOK)
 }

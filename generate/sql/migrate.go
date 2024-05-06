@@ -121,6 +121,9 @@ func Migrate() {
 		// &masterentities.FieldAction{},
 		// &masterentities.Discount{},
 		&masterentities.Agreement{},
+		&masterentities.AgreementDiscount{},
+		&masterentities.AgreementDiscountGroupDetail{},
+		&masterentities.AgreementItemDetail{},
 
 		// &transactionentities.SupplySlip{},
 		// &transactionentities.SupplySlipDetail{},
