@@ -23,6 +23,19 @@ func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository
 	}
 }
 
+// GetItemLevelDropDown implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.structItemLevelRepo.GetItemLevelDropDown(tx, itemLevel)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
+}
+
 func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

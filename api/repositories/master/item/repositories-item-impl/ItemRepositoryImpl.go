@@ -4,13 +4,12 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -53,106 +52,140 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 	return responses, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[string]string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
-	var paginationResponse utils.APIPaginationResponse
+func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// var paginationResponse utils.APIPaginationResponse
 
-	var multiIds []string
-	var responses []masteritempayloads.ItemLookup
-	var getItemGroupResponse []masteritempayloads.ItemGroupResponse
-	var getSupplierMasterResponse []masteritempayloads.SupplierMasterResponse
-	tableStruct := masteritempayloads.ItemLookup{}
-	count := 0
-	for _, value := range queryParams {
-		if value != "" {
-			count++
-		}
-	}
+	// var multiIds []string
+	// var responses []masteritempayloads.ItemLookup
+	// var getItemGroupResponse []masteritempayloads.ItemGroupResponse
+	// var getSupplierMasterResponse []masteritempayloads.SupplierMasterResponse
+	// tableStruct := masteritempayloads.ItemLookup{}
+	// count := 0
 
-	if count == 2 && queryParams["limit"] != "" && queryParams["page"] != "" {
-		page, _ := strconv.Atoi(queryParams["page"])
-		limit, _ := strconv.Atoi(queryParams["limit"])
+	// var externalQueryFirst bool
 
-		joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	// var supplierCode string
+	// var supplierName string
 
-		//execute
-		rows, err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Rows()
+	// for _, value := range externalFilterCondition {
 
-		groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_code=" + queryParams["item_group_code"]
-		errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
+	// 	if value.ColumnField == "supplier_code" {
+	// 		supplierCode = value.ColumnValue
+	// 	} else if value.ColumnField == "supplier_name" {
+	// 		supplierName = value.ColumnValue
+	// 	}
 
-		if errUrlItemGroup != nil {
-			return nil, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
+	// 	if value.ColumnValue != "" {
+	// 		externalQueryFirst = true
 
-		joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+	// 	}
+	// }
 
-		for _, item := range responses {
-			idStr := strconv.Itoa(item.SupplierId)
-			duplicate := false
-			for _, existingID := range multiIds {
-				if existingID == idStr {
-					duplicate = true
-					break
-				}
-			}
-			if !duplicate {
-				multiIds = append(multiIds, idStr)
-			}
-		}
+	// for i := 1; i < 10; i++ {
 
-		supplierServiceUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-multi-id/" + strings.Join(multiIds, ",")
-		errUrlSupplierMaster := utils.Get(supplierServiceUrl, &getSupplierMasterResponse, nil)
-		if errUrlSupplierMaster != nil {
-			return nil, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
+	// }
+	// if externalQueryFirst {
 
-		joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getSupplierMasterResponse, "SupplierId")
+	// 	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/supplier-master?page=" + strconv.Itoa(pages.Page) + " &limit=" + strconv.Itoa(pages.Limit) + " &supplier_code=" + supplierCode + "&supplier_name=" + supplierName
 
-		if err != nil {
-			return nil, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
+	// } else {
 
-		defer rows.Close()
+	// 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-		return joinedDataSecond, nil
-	}
+	// }
 
-	supplierDescUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-for-item-master"
+	// for _, value := range queryParams {
+	// 	if value != "" {
+	// 		count++
+	// 	}
+	// }
 
-	u, err := url.Parse(supplierDescUrl)
-	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-	q := u.Query()
-	for key, value := range queryParams {
-		q.Set(key, value)
-	}
-	u.RawQuery = q.Encode()
-	supplierDescUrl = u.String()
+	// if count == 2 && queryParams["limit"] != "" && queryParams["page"] != "" {
+	// 	page, _ := strconv.Atoi(queryParams["page"])
+	// 	limit, _ := strconv.Atoi(queryParams["limit"])
 
-	paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(supplierDescUrl, paginationResponse, nil)
-	if errUrlSupplierMasterLookup != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
+	// 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	dataSlice, _ := paginationRes.Data.([]map[string]interface{})
+	// 	//execute
+	// 	err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Error
 
-	return dataSlice, nil
+	// 	if err != nil {
+	// 		fmt.Print(err)
+	// 		return nil, &exceptionsss_test.BaseErrorResponse{
+	// 			StatusCode: http.StatusInternalServerError,
+	// 			Err:        err,
+	// 		}
+	// 	}
+
+	// 	groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_code=" + queryParams["item_group_code"]
+	// 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
+
+	// 	if errUrlItemGroup != nil {
+	// 		return nil, &exceptionsss_test.BaseErrorResponse{
+	// 			StatusCode: http.StatusInternalServerError,
+	// 			Err:        errUrlItemGroup,
+	// 		}
+	// 	}
+
+	// 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+
+	// 	for _, item := range responses {
+	// 		idStr := strconv.Itoa(item.SupplierId)
+	// 		duplicate := false
+	// 		for _, existingID := range multiIds {
+	// 			if existingID == idStr {
+	// 				duplicate = true
+	// 				break
+	// 			}
+	// 		}
+	// 		if !duplicate {
+	// 			multiIds = append(multiIds, idStr)
+	// 		}
+	// 	}
+
+	// 	supplierServiceUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-multi-id/" + strings.Join(multiIds, ",")
+	// 	errUrlSupplierMaster := utils.Get(supplierServiceUrl, &getSupplierMasterResponse, nil)
+	// 	if errUrlSupplierMaster != nil {
+	// 		return nil, &exceptionsss_test.BaseErrorResponse{
+	// 			StatusCode: http.StatusInternalServerError,
+	// 			Err:        errUrlSupplierMaster,
+	// 		}
+	// 	}
+
+	// 	joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getSupplierMasterResponse, "SupplierId")
+
+	// 	return joinedDataSecond, nil
+	// }
+
+	// supplierDescUrl := "http://10.1.32.26:8000/general-service/api/general/supplier-master-for-item-master"
+
+	// u, err := url.Parse(supplierDescUrl)
+	// if err != nil {
+	// 	return nil, &exceptionsss_test.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Err:        err,
+	// 	}
+	// }
+	// q := u.Query()
+	// for key, value := range queryParams {
+	// 	q.Set(key, value)
+	// }
+	// u.RawQuery = q.Encode()
+	// supplierDescUrl = u.String()
+
+	// paginationRes, errUrlSupplierMasterLookup := utils.GetWithPagination(supplierDescUrl, paginationResponse, nil)
+	// if errUrlSupplierMasterLookup != nil {
+	// 	return nil, &exceptionsss_test.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Err:        err,
+	// 	}
+	// }
+
+	// dataSlice, _ := paginationRes.Data.([]map[string]interface{})
+
+	// return dataSlice, nil
+	panic("unimplemented")
+
 }
 
 func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {

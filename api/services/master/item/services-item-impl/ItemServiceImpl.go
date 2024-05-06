@@ -4,6 +4,7 @@ import (
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
@@ -33,14 +34,14 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition) ([
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemLookup(queryParams map[string]string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetAllItemLookup(tx, queryParams)
+	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, internalFilterCondition, externalFilterCondition, pages)
 	if err != nil {
-		return results, err
+		return results, totalPages, totalRows, err
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {

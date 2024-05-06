@@ -327,8 +327,8 @@ func OperationSectionRouter(
 	router.Get("/", operationSectionController.GetAllOperationSectionList)
 	router.Get("/by-id/{operation_section_id}", operationSectionController.GetOperationSectionByID)
 	router.Get("/by-name", operationSectionController.GetOperationSectionName)
-	router.Get("/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
-	router.Put("/", operationSectionController.SaveOperationSection)
+	router.Get("/code-by-group-id/{operation_group_id}", operationSectionController.GetSectionCodeByGroupId)
+	router.Post("/", operationSectionController.SaveOperationSection)
 	router.Patch("/{operation_section_id}", operationSectionController.ChangeStatusOperationSection)
 	//router.PanicHandler = exceptions.ErrorHandler
 	return router
@@ -351,6 +351,7 @@ func OperationKeyRouter(
 	operationKeyController masteroperationcontroller.OperationKeyController,
 
 ) chi.Router {
+
 	router := chi.NewRouter()
 
 	router.Get("/{operation_key_id}", operationKeyController.GetOperationKeyByID)
@@ -411,6 +412,7 @@ func ItemLevelRouter(
 	router := chi.NewRouter()
 	router.Get("/", itemLevelController.GetAll)
 	router.Get("/{item_level_id}", itemLevelController.GetById)
+	router.Get("/drop-down/{item_level}", itemLevelController.GetItemLevelDropDown)
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
