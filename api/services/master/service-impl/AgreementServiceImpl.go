@@ -143,3 +143,63 @@ func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) 
 	}
 	return nil
 }
+
+func (s *AgreementServiceImpl) GetAllDiscountGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.AgreementRepo.GetAllDiscountGroup(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *AgreementServiceImpl) GetAllItemDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.AgreementRepo.GetAllItemDiscount(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *AgreementServiceImpl) GetAllDiscountValue(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.AgreementRepo.GetAllDiscountValue(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *AgreementServiceImpl) GetDiscountGroupAgreementById(agreementID, groupID int) (masterpayloads.DiscountGroupRequest, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.AgreementRepo.GetDiscountGroupAgreementById(tx, agreementID, groupID)
+	if err != nil {
+		return masterpayloads.DiscountGroupRequest{}, err
+	}
+	return result, nil
+}
+
+func (s *AgreementServiceImpl) GetDiscountItemAgreementById(agreementID, itemID int) (masterpayloads.ItemDiscountRequest, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.AgreementRepo.GetDiscountItemAgreementById(tx, agreementID, itemID)
+	if err != nil {
+		return masterpayloads.ItemDiscountRequest{}, err
+	}
+	return result, nil
+}
+
+func (s *AgreementServiceImpl) GetDiscountValueAgreementById(agreementID, valueID int) (masterpayloads.DiscountValueRequest, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.AgreementRepo.GetDiscountValueAgreementById(tx, agreementID, valueID)
+	if err != nil {
+		return masterpayloads.DiscountValueRequest{}, err
+	}
+	return result, nil
+}

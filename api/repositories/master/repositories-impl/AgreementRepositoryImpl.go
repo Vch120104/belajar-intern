@@ -357,3 +357,348 @@ func (r *AgreementRepositoryImpl) DeleteDiscountValue(tx *gorm.DB, AgreementId i
 
 	return nil
 }
+
+func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// Define a slice to hold Agreement responses
+	var responses []masterpayloads.DiscountGroupRequest
+
+	// Define table struct
+	tableStruct := masterpayloads.DiscountGroupRequest{}
+
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	// Define a slice to hold Agreement responses
+	var convertedResponses []masterpayloads.DiscountGroupResponse
+
+	// Iterate over rows
+	for rows.Next() {
+		// Define variables to hold row data
+
+		var (
+			DiscountGroupReq masterpayloads.DiscountGroupRequest
+			DiscountGroupRes masterpayloads.DiscountGroupResponse
+		)
+
+		// Scan the row into PurchasePriceRequest struct
+		if err := rows.Scan(
+			&DiscountGroupReq.AgreementDiscountGroupId,
+			&DiscountGroupReq.AgreementId,
+			&DiscountGroupReq.AgreementSelection,
+			&DiscountGroupReq.AgreementLineTypeId,
+			&DiscountGroupReq.AgreementDiscountMarkup,
+			&DiscountGroupReq.AgreementDiscount,
+			&DiscountGroupReq.AgreementDetailRemaks); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		// Create AgreementResponse
+		DiscountGroupRes = masterpayloads.DiscountGroupResponse{
+			AgreementDiscountGroupId: DiscountGroupReq.AgreementDiscountGroupId,
+			AgreementId:              DiscountGroupReq.AgreementId,
+			AgreementSelection:       DiscountGroupReq.AgreementSelection,
+			AgreementLineTypeId:      DiscountGroupReq.AgreementLineTypeId,
+			AgreementDiscountMarkup:  DiscountGroupReq.AgreementDiscountMarkup,
+			AgreementDiscount:        DiscountGroupReq.AgreementDiscount,
+			AgreementDetailRemaks:    DiscountGroupReq.AgreementDetailRemaks,
+		}
+
+		// Append PurchasePriceResponse to the slice
+		convertedResponses = append(convertedResponses, DiscountGroupRes)
+
+	}
+
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over convertedResponses and convert them to maps
+	for _, response := range convertedResponses {
+		responseMap := map[string]interface{}{
+			"agreement_discount_group_id": response.AgreementDiscountGroupId,
+			"agreement_id":                response.AgreementId,
+			"agreement_selection":         response.AgreementSelection,
+			"agreement_line_type_id":      response.AgreementLineTypeId,
+			"agreement_discount_markup":   response.AgreementDiscountMarkup,
+			"agreement_discount":          response.AgreementDiscount,
+			"agreement_detail_remarks":    response.AgreementDetailRemaks,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *AgreementRepositoryImpl) GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// Define a slice to hold Agreement responses
+	var responses []masterpayloads.ItemDiscountRequest
+
+	// Define table struct
+	tableStruct := masterpayloads.ItemDiscountRequest{}
+
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	// Define a slice to hold Agreement responses
+	var convertedResponses []masterpayloads.ItemDiscountResponse
+
+	// Iterate over rows
+	for rows.Next() {
+		// Define variables to hold row data
+		var (
+			ItemDiscountReq masterpayloads.ItemDiscountRequest
+			ItemDiscountRes masterpayloads.ItemDiscountResponse
+		)
+
+		// Scan the row into PurchasePriceRequest struct
+		if err := rows.Scan(
+			&ItemDiscountReq.AgreementItemId,
+			&ItemDiscountReq.AgreementId,
+			&ItemDiscountReq.LineTypeId,
+			&ItemDiscountReq.AgreementItemOperationId,
+			&ItemDiscountReq.MinValue,
+			&ItemDiscountReq.AgreementRemark); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		// Create AgreementResponse
+		ItemDiscountRes = masterpayloads.ItemDiscountResponse{
+			AgreementItemId:          ItemDiscountReq.AgreementItemId,
+			AgreementId:              ItemDiscountReq.AgreementId,
+			LineTypeId:               ItemDiscountReq.LineTypeId,
+			AgreementItemOperationId: ItemDiscountReq.AgreementItemOperationId,
+			MinValue:                 ItemDiscountReq.MinValue,
+			AgreementRemark:          ItemDiscountReq.AgreementRemark,
+		}
+
+		// Append PurchasePriceResponse to the slice
+		convertedResponses = append(convertedResponses, ItemDiscountRes)
+	}
+
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over convertedResponses and convert them to maps
+	for _, response := range convertedResponses {
+		responseMap := map[string]interface{}{
+			"agreement_item_id":           response.AgreementItemId,
+			"agreement_id":                response.AgreementId,
+			"line_type_id":                response.LineTypeId,
+			"agreement_item_operation_id": response.AgreementItemOperationId,
+			"min_value":                   response.MinValue,
+			"agreement_remark":            response.AgreementRemark,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// Define a slice to hold Agreement responses
+	var responses []masterpayloads.DiscountValueRequest
+
+	// Define table struct
+	tableStruct := masterpayloads.DiscountValueRequest{}
+
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	// Define a slice to hold Agreement responses
+	var convertedResponses []masterpayloads.DiscountValueResponse
+
+	// Iterate over rows
+	for rows.Next() {
+		// Define variables to hold row data
+		var (
+			DiscountValueReq masterpayloads.DiscountValueRequest
+			DiscountValueRes masterpayloads.DiscountValueResponse
+		)
+
+		// Scan the row into PurchasePriceRequest struct
+
+		if err := rows.Scan(
+			&DiscountValueReq.AgreementDiscountId,
+			&DiscountValueReq.AgreementId,
+			&DiscountValueReq.LineTypeId,
+			&DiscountValueReq.MinValue,
+			&DiscountValueReq.DiscountPercent,
+			&DiscountValueReq.DiscountRemarks); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		// Create AgreementResponse
+		DiscountValueRes = masterpayloads.DiscountValueResponse{
+			AgreementDiscountId: DiscountValueReq.AgreementDiscountId,
+			AgreementId:         DiscountValueReq.AgreementId,
+			LineTypeId:          DiscountValueReq.LineTypeId,
+			MinValue:            DiscountValueReq.MinValue,
+			DiscountPercent:     DiscountValueReq.DiscountPercent,
+			DiscountRemarks:     DiscountValueReq.DiscountRemarks,
+		}
+
+		// Append PurchasePriceResponse to the slice
+		convertedResponses = append(convertedResponses, DiscountValueRes)
+	}
+
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over convertedResponses and convert them to maps
+	for _, response := range convertedResponses {
+		responseMap := map[string]interface{}{
+			"agreement_discount_id": response.AgreementDiscountId,
+			"agreement_id":          response.AgreementId,
+			"line_type_id":          response.LineTypeId,
+			"min_value":             response.MinValue,
+			"discount_percent":      response.DiscountPercent,
+			"discount_remarks":      response.DiscountRemarks,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountGroupAgreementById(tx *gorm.DB, DiscountGroupId, AgreementId int) (masterpayloads.DiscountGroupRequest, *exceptionsss_test.BaseErrorResponse) {
+	entities := masterentities.AgreementDiscountGroupDetail{}
+	response := masterpayloads.DiscountGroupRequest{}
+
+	err := tx.Model(&entities).
+		Where(masterentities.AgreementDiscountGroupDetail{
+			AgreementDiscountGroupId: DiscountGroupId,
+			AgreementId:              AgreementId,
+		}).
+		First(&entities).
+		Error
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.AgreementId = entities.AgreementId
+	response.AgreementSelection = entities.AgreementSelection
+	response.AgreementLineTypeId = entities.AgreementOrderType
+	response.AgreementDiscountMarkup = entities.AgreementDiscountMarkupId
+	response.AgreementDiscount = entities.AgreementDiscount
+	response.AgreementDetailRemaks = entities.AgreementDetailRemarks
+
+	return response, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, ItemDiscountId, AgreementId int) (masterpayloads.ItemDiscountRequest, *exceptionsss_test.BaseErrorResponse) {
+	entities := masterentities.AgreementItemDetail{}
+	response := masterpayloads.ItemDiscountRequest{}
+
+	err := tx.Model(&entities).
+		Where(masterentities.AgreementItemDetail{
+			AgreementItemId: ItemDiscountId,
+			AgreementId:     AgreementId,
+		}).
+		First(&entities).
+		Error
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.AgreementItemId = entities.AgreementItemId
+	response.AgreementId = entities.AgreementId
+	response.LineTypeId = entities.LineTypeId
+	response.AgreementItemOperationId = entities.AgreementItemOperationId
+	response.MinValue = entities.MinValue
+	response.AgreementRemark = entities.AgreementRemark
+
+	return response, nil
+}
+
+func (r *AgreementRepositoryImpl) GetDiscountValueAgreementById(tx *gorm.DB, DiscountValueId, AgreementId int) (masterpayloads.DiscountValueRequest, *exceptionsss_test.BaseErrorResponse) {
+	entities := masterentities.AgreementDiscount{}
+	response := masterpayloads.DiscountValueRequest{}
+
+	err := tx.Model(&entities).
+		Where(masterentities.AgreementDiscount{
+			AgreementDiscountId: DiscountValueId,
+			AgreementId:         AgreementId,
+		}).
+		First(&entities).
+		Error
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.AgreementDiscountId = entities.AgreementDiscountId
+	response.AgreementId = entities.AgreementId
+	response.LineTypeId = entities.LineTypeId
+	response.MinValue = entities.MinValue
+	response.DiscountPercent = entities.DiscountPercent
+	response.DiscountRemarks = entities.DiscountRemarks
+
+	return response, nil
+}

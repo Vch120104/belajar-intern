@@ -18,4 +18,10 @@ type AgreementService interface {
 	DeleteItemDiscount(int, int) *exceptionsss_test.BaseErrorResponse
 	AddDiscountValue(int, masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse
 	DeleteDiscountValue(int, int) *exceptionsss_test.BaseErrorResponse
+	GetAllDiscountGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetAllItemDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetAllDiscountValue(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetDiscountGroupAgreementById(int, int) (masterpayloads.DiscountGroupRequest, *exceptionsss_test.BaseErrorResponse)
+	GetDiscountItemAgreementById(int, int) (masterpayloads.ItemDiscountRequest, *exceptionsss_test.BaseErrorResponse)
+	GetDiscountValueAgreementById(int, int) (masterpayloads.DiscountValueRequest, *exceptionsss_test.BaseErrorResponse)
 }

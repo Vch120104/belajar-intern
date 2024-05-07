@@ -20,4 +20,10 @@ type AgreementRepository interface {
 	DeleteItemDiscount(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
 	AddDiscountValue(*gorm.DB, int, masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse
 	DeleteDiscountValue(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
+	GetDiscountGroupAgreementById(*gorm.DB, int, int) (masterpayloads.DiscountGroupRequest, *exceptionsss_test.BaseErrorResponse)
+	GetDiscountItemAgreementById(*gorm.DB, int, int) (masterpayloads.ItemDiscountRequest, *exceptionsss_test.BaseErrorResponse)
+	GetDiscountValueAgreementById(*gorm.DB, int, int) (masterpayloads.DiscountValueRequest, *exceptionsss_test.BaseErrorResponse)
+	GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 }

@@ -600,10 +600,18 @@ func AgreementRouter(
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
+	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+
+	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+
+	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
 
