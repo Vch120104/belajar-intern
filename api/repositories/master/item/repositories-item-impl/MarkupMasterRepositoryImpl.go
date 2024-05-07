@@ -74,6 +74,21 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(tx *gorm.DB,Id int) (ma
 	return response, nil
 }
 
+func (r *MarkupMasterRepositoryImpl) GetAllMarkupMasterIsActive(tx *gorm.DB) ([]masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+	var MarkupMasters []masteritementities.MarkupMaster
+	response := []masteritempayloads.MarkupMasterResponse{}
+
+	err := tx.Model(&MarkupMasters).Where("is_active = 'true'").Scan(&response).Error
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
 func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB,req masteritempayloads.MarkupMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.MarkupMaster{
 		IsActive:                req.IsActive,
