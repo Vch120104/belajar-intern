@@ -254,6 +254,22 @@ func ItemModelMappingRouter(
 	return router
 }
 
+func MovingCodeRouter(
+	MovingCodeController mastercontroller.MovingCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", MovingCodeController.CreateMovingCode)
+	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
+	router.Patch("/update", MovingCodeController.UpdateMovingCode)
+	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
+	router.Get("/", MovingCodeController.GetAllMovingCode)
+	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	//router.PanicHandler = exceptions.ErrorHandler
+
+	return router
+}
+
 func PriceListRouter(
 	priceListController masteritemcontroller.PriceListController,
 ) chi.Router {
@@ -376,8 +392,8 @@ func OperationSectionRouter(
 	router.Get("/", operationSectionController.GetAllOperationSectionList)
 	router.Get("/by-id/{operation_section_id}", operationSectionController.GetOperationSectionByID)
 	router.Get("/by-name", operationSectionController.GetOperationSectionName)
-	router.Get("/code-by-group-id", operationSectionController.GetSectionCodeByGroupId)
-	router.Put("/", operationSectionController.SaveOperationSection)
+	router.Get("/code-by-group-id/{operation_group_id}", operationSectionController.GetSectionCodeByGroupId)
+	router.Post("/", operationSectionController.SaveOperationSection)
 	router.Patch("/{operation_section_id}", operationSectionController.ChangeStatusOperationSection)
 
 	return router
@@ -544,24 +560,6 @@ func WarehouseLocationRouter(
 	return router
 }
 
-func MovingCodeRouter(
-	MovingCodeController mastercontroller.MovingCodeController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/", MovingCodeController.GetAllMovingCode)
-	router.Post("/", MovingCodeController.SaveMovingCode)
-	router.Patch("/priority-increase/{moving_code_id}", MovingCodeController.ChangePriorityMovingCode)
-	router.Patch("/activation/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
-
-	return router
-}
-
 func ForecastMasterRouter(
 	forecastMasterController mastercontroller.ForecastMasterController,
 ) chi.Router {
@@ -622,16 +620,15 @@ func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
+	// Gunakan middleware NotFoundHandler
+	// router.Use(middleware.NotFoundHandler)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
 	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
 	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
+
+	////router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }

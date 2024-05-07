@@ -12,5 +12,6 @@ type ItemLevelRepository interface {
 	Save(*gorm.DB, masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetById(*gorm.DB, int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptionsss_test.BaseErrorResponse)
 	GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
+	GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptionsss_test.BaseErrorResponse)
 	ChangeStatus(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
 }
