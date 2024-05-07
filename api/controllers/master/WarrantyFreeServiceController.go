@@ -30,6 +30,23 @@ func NewWarrantyFreeServiceController(warrantyFreeServiceService masterservice.W
 	}
 }
 
+// @Summary Get All Warranty Free Services
+// @Description Retrieve all warranty free services with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Master : Warranty Free Service
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param is_active query string false "Is active" Enums(true,false)
+// @Param effective_date query string false "Effective date"
+// @Param brand_code query string false "Brand code"
+// @Param model_code query string false "Model code"
+// @Param warranty_free_service_type_code query string false "Warranty free service type code"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warranty-free-service/ [get]
 func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -60,6 +77,15 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+// @Summary Get Warranty Free Service By ID
+// @Description Retrieve a warranty free service by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Warranty Free Service
+// @Param warranty_free_services_id path int true "Warranty Free Service ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warranty-free-service/{warranty_free_services_id} [get]
 func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request) {
 
 	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
@@ -73,6 +99,15 @@ func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer ht
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Warranty Free Service
+// @Description Create or update a warranty free service
+// @Accept json
+// @Produce json
+// @Tags Master : Warranty Free Service
+// @Param reqBody body masterpayloads.WarrantyFreeServiceRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warranty-free-service/ [post]
 func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.WarrantyFreeServiceRequest
@@ -94,6 +129,15 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Change Status Warranty Free Service
+// @Description Change the status of a warranty free service
+// @Accept json
+// @Produce json
+// @Tags Master : Warranty Free Service
+// @Param warranty_free_services_id path int true "Warranty Free Service ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warranty-free-service/{warranty_free_services_id} [patch]
 func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
 	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))

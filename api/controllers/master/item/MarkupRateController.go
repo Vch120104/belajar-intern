@@ -53,7 +53,7 @@ func NewMarkupRateController(markupRateService masteritemservice.MarkupRateServi
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-rate [get]
+// @Router /v1/markup-rate/ [get]
 func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -93,7 +93,7 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 // @Param markup_rate_id path int true "markup_rate_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [get]
+// @Router /v1/markup-rate/{markup_rate_id} [get]
 func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter, request *http.Request) {
 
 	markupRateId, _ := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
@@ -116,7 +116,7 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 // @param reqBody body masteritempayloads.MarkupRateRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-rate [post]
+// @Router /v1/markup-rate/ [post]
 func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.MarkupRateRequest
@@ -157,7 +157,7 @@ func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, re
 // @param markup_rate_id path int true "markup_rate_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-rate/{markup_rate_id} [patch]
+// @Router /v1/markup-rate/{markup_rate_id} [patch]
 func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request) {
 
 	markupRateId, _ := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))

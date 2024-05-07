@@ -53,7 +53,7 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-master [get]
+// @Router /v1/markup-master/ [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -89,7 +89,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 // @Param markup_master_code path string true "markup_master_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-master-by-code/{markup_master_code} [get]
+// @Router /v1/markup-master/by-code/{markup_master_code} [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request) {
 
 	markupMasterCode := chi.URLParam(request, "markup_master_code")
@@ -112,7 +112,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 // @param reqBody body masteritempayloads.MarkupMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-master [post]
+// @Router /v1/markup-master/ [post]
 func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.MarkupMasterResponse
@@ -153,7 +153,7 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/markup-master/{markup_master_id} [patch]
+// @Router /v1/markup-master/{markup_master_id} [patch]
 func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
 	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))

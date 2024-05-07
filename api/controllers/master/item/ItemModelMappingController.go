@@ -27,6 +27,17 @@ type ItemModelMappingControllerImpl struct {
 }
 
 // GetItemModelMappingByItemId implements ItemModelMappingController.
+// @Summary Get Item Model Mapping By Item Id
+// @Description REST API to get item model mapping by item id
+// @Accept json
+// @Produce json
+// @Tags Master : Item Model Mapping
+// @Param item_id path int true "Item ID"
+// @Param page query int false "Page number"
+// @Param limit query int false "Items per page"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-model-mapping/{item_id} [get]
 func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
@@ -47,6 +58,15 @@ func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http
 }
 
 // UpdateItemModelMapping implements ItemModelMappingController.
+// @Summary Update Item Model Mapping
+// @Description REST API to update item model mapping
+// @Accept json
+// @Produce json
+// @Tags Master : Item Model Mapping
+// @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-model-mapping/ [put]
 func (r *ItemModelMappingControllerImpl) UpdateItemModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.CreateItemModelMapping
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -74,6 +94,15 @@ func (r *ItemModelMappingControllerImpl) UpdateItemModelMapping(writer http.Resp
 }
 
 // CreateItemModelMapping implements ItemModelMappingController.
+// @Summary Create Item Model Mapping
+// @Description REST API to create item model mapping
+// @Accept json
+// @Produce json
+// @Tags Master : Item Model Mapping
+// @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-model-mapping/ [post]
 func (r *ItemModelMappingControllerImpl) CreateItemModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.CreateItemModelMapping
 

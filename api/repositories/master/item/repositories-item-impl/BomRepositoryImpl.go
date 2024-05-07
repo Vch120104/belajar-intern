@@ -21,62 +21,6 @@ func StartBomRepositoryImpl() masteritemrepository.BomRepository {
 	return &BomRepositoryImpl{}
 }
 
-// pake ini klo ada filter condition tapi masih error di endpoint item jadi belum pake filtercondition dulu
-// func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
-// 	var responses []masteritempayloads.BomMasterListResponse
-// 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-
-// 	// Categorize filter conditions into internal and external filters
-// 	internalServiceFilter, externalServiceFilter = utils.DefineInternalExternalFilter(filterCondition, masteritempayloads.BomMasterListResponse{})
-
-// 	// Apply external service filter
-// 	var itemId string
-// 	for i := 0; i < len(externalServiceFilter); i++ {
-// 		itemId = externalServiceFilter[i].ColumnValue
-// 	}
-
-// 	// Define table struct
-// 	tableStruct := masteritempayloads.BomMasterListResponse{}
-// 	// Define join table
-// 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-// 	// Apply internal service filter
-// 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-// 	// Execute query
-// 	rows, err := whereQuery.Find(&responses).Rows()
-
-// 	if err != nil {
-// 		log.Println("Failed to scan rows:", err)
-// 		return nil, 0, 0, err
-// 	}
-// 	defer rows.Close()
-
-// 	if len(responses) == 0 {
-// 		errNotFound := gorm.ErrRecordNotFound
-// 		log.Println("Records not found:", errNotFound)
-// 		return nil, 0, 0, errNotFound
-// 	}
-
-// 	itemURL := "http://example.com/api/item?itemId=" + itemId
-
-// 	// Retrieve item data from external service
-// 	var itemResponse []masteritempayloads.ItemResponse
-// 	errURL := utils.Get(itemURL, &itemResponse, nil)
-// 	if errURL != nil {
-// 		log.Println("Failed to retrieve item data:", errURL)
-// 		return nil, 0, 0, errURL
-// 	}
-
-// 	// Perform inner join
-// 	joinedData := utils.DataFrameInnerJoin(responses, itemResponse, "ItemId")
-
-// 	// Perform pagination
-// 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-// 	return dataPaginate, totalPages, totalRows, nil
-// }
-
-//
-
 func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	var responses []map[string]interface{}
 

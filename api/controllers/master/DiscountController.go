@@ -53,7 +53,7 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /discount [get]
+// @Router /v1/discount [get]
 func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryParams := map[string]string{
@@ -87,7 +87,7 @@ func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, requ
 // @Tags Master : Discount
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /discount-drop-down/ [get]
+// @Router /v1/discount/drop-down/ [get]
 func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.discountservice.GetAllDiscountIsActive()
@@ -99,6 +99,15 @@ func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Discount By ID
+// @Description REST API Discount
+// @Accept json
+// @Produce json
+// @Tags Master : Discount
+// @Param id path string true "id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/discount/by-id/{id} [get]
 func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, request *http.Request) {
 	discountId, errr := strconv.Atoi(chi.URLParam(request, "id"))
 	if errr != nil {
@@ -122,7 +131,7 @@ func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, req
 // @Param discount_code path string true "discount_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /discount-by-code/{discount_code} [get]
+// @Router /v1/discount/by-code/{discount_code} [get]
 func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	// discountCode, _ := strconv.Atoi(chi.URLParam(request, "discount_code"))
@@ -145,7 +154,7 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 // @param reqBody body masterpayloads.DiscountResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /discount [post]
+// @Router /v1/discount [post]
 func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, request *http.Request) {
 
 	var requestForm masterpayloads.DiscountResponse
@@ -185,7 +194,7 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 // @param discount_code_id path int true "discount_code_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /discount/{discount_code_id} [patch]
+// @Router /v1/discount/{discount_code_id} [patch]
 func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request) {
 	discountId, _ := strconv.Atoi(chi.URLParam(request, "id"))
 

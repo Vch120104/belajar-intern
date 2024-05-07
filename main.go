@@ -7,12 +7,11 @@ import (
 	"os"
 )
 
-// @title DMS-Aftersales Service
-// @version 1.0
-// @description Your API Description
-// @host localhost:8000
-// @BasePath /
-// @schemes http
+// @title DMS After-Sales API
+// @version v1
+// @license AGPLv3
+// @description This is a DMS After-Sales API Server.
+
 func main() {
 	args := os.Args
 	env := ""

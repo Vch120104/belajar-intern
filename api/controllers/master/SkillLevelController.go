@@ -51,7 +51,7 @@ func NewSkillLevelController(SkillLevelService masterservice.SkillLevelService) 
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /skill-level [get]
+// @Router /v1/skill-level/ [get]
 func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryParams := map[string]string{
@@ -78,6 +78,15 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Skill Level By Id
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @param skill_level_id path int true "skill_level_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/skill-level/{skill_level_id} [get]
 func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter, request *http.Request) {
 	skillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
@@ -98,7 +107,7 @@ func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter,
 // @param reqBody body masterpayloads.SkillLevelResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /skill-level [post]
+// @Router /v1/skill-level/ [post]
 func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.SkillLevelResponse
@@ -139,7 +148,7 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 // @param skill_level_id path int true "skill_level_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /skill-level/{skill_level_id} [patch]
+// @Router /v1/skill-level/{skill_level_id} [patch]
 func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWriter, request *http.Request) {
 	SkillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
