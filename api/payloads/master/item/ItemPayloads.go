@@ -122,8 +122,8 @@ type ItemLookup struct {
 	ItemCode      string `json:"item_code" parent_entity:"mtr_item"`
 	ItemName      string `json:"item_name" parent_entity:"mtr_item"`
 	ItemType      string `json:"item_type" parent_entity:"mtr_item"`
-	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                   //fk luar mtr_item_group -> item_group_name
-	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class"` //fk dalam item_class_id -> ItemClassName
+	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name
+	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
 	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class"`
 	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"` //fk luar mtr_supplier, supplier_code dan supplier_name
 }

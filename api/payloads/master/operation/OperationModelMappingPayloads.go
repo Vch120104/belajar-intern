@@ -11,6 +11,15 @@ type OperationModelMappingResponse struct {
 	OperationPdi            bool `json:"operation_pdi"`
 }
 
+type OperationModelMappingFrtRequest struct {
+	IsActive                bool    `json:"is_active"`
+	OperationModelMappingId int     `json:"operation_model_mapping_id"`
+	OperationFrtId          int     `json:"operation_frt_id"`
+	VariantId               int     `json:"variant_id"`
+	FrtHour                 float64 `json:"frt_hour"`
+	FrtHourExpress          float64 `json:"frt_hour_2express"`
+}
+
 type OperationModelMappingRequest struct {
 	BrandId                 int  `json:"brand_id"`
 	ModelId                 int  `json:"model_id"`
@@ -18,6 +27,14 @@ type OperationModelMappingRequest struct {
 	OperationUsingIncentive bool `json:"operation_using_incentive"`
 	OperationUsingActual    bool `json:"operation_using_actual"`
 	OperationPdi            bool `json:"operation_pdi"`
+}
+
+type OperationModelMappingDocumentRequirementRequest struct {
+	IsActive                                bool   `json:"is_active"`
+	OperationModelMappingId                 int    `json:"operation_model_mapping_id"`
+	OperationDocumentRequirementId          int    `json:"operation_document_requirement_id"`
+	Line                                    int    `json:"line"`
+	OperationDocumentRequirementDescription string `json:"operation_document_requirement_description"`
 }
 
 type OperationModelMappingLookup struct {
@@ -31,9 +48,9 @@ type OperationModelMappingLookup struct {
 }
 
 type OperationModelModelBrandOperationCodeRequest struct {
-	BrandId                 int  `json:"brand_id"`
-	ModelId                 int  `json:"model_id"`
-	OperationId             int  `json:"operation_id"`
+	BrandId     int `json:"brand_id"`
+	ModelId     int `json:"model_id"`
+	OperationId int `json:"operation_id"`
 }
 
 // SELECT

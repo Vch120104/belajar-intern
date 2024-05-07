@@ -1,6 +1,9 @@
 package mastercontroller
 
 import (
+
+	// "after-sales/api/helper"
+
 	exceptionsss_test "after-sales/api/expectionsss"
 	helper_test "after-sales/api/helper_testt"
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
@@ -14,24 +17,41 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	// "github.com/julienschmidt/httprouter"
 )
 
 type SkillLevelController interface {
 	GetAllSkillLevel(writer http.ResponseWriter, request *http.Request)
-	GetSkillLevelByID(writer http.ResponseWriter, request *http.Request)
+	GetSkillLevelById(writer http.ResponseWriter, request *http.Request)
 	SaveSkillLevel(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusSkillLevel(writer http.ResponseWriter, request *http.Request)
 }
+
 type SkillLevelControllerImpl struct {
 	SkillLevelService masterservice.SkillLevelService
 }
 
-func NewSkillLevelController(skillLevelService masterservice.SkillLevelService) SkillLevelController {
+func NewSkillLevelController(SkillLevelService masterservice.SkillLevelService) SkillLevelController {
 	return &SkillLevelControllerImpl{
-		SkillLevelService: skillLevelService,
+		SkillLevelService: SkillLevelService,
 	}
 }
 
+// @Summary Get All Skill Level
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param is_active query string false "is_active" Enums(true, false)
+// @Param skill_level_code query string false "skill_level_code"
+// @Param skill_level_description query string false "skill_level_description"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/skill-level/ [get]
 func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryParams := map[string]string{
@@ -58,8 +78,16 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
-func (r *SkillLevelControllerImpl) GetSkillLevelByID(writer http.ResponseWriter, request *http.Request) {
-
+// @Summary Skill Level By Id
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @param skill_level_id path int true "skill_level_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/skill-level/{skill_level_id} [get]
+func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter, request *http.Request) {
 	skillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
 	result, err := r.SkillLevelService.GetSkillLevelById(skillLevelId)
@@ -71,6 +99,15 @@ func (r *SkillLevelControllerImpl) GetSkillLevelByID(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Skill Level
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @param reqBody body masterpayloads.SkillLevelResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/skill-level/ [post]
 func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.SkillLevelResponse
@@ -103,10 +140,19 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Change Status Skill Level
+// @Description REST API Skill Level
+// @Accept json
+// @Produce json
+// @Tags Master : Skill Level
+// @param skill_level_id path int true "skill_level_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/skill-level/{skill_level_id} [patch]
 func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWriter, request *http.Request) {
-	skillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
+	SkillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
-	response, err := r.SkillLevelService.ChangeStatusSkillLevel(int(skillLevelId))
+	response, err := r.SkillLevelService.ChangeStatusSkillLevel(int(SkillLevelId))
 
 	if err != nil {
 		exceptionsss_test.NewBadRequestException(writer, request, err)

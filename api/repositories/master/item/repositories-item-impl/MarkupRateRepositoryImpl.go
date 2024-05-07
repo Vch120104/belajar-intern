@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -54,14 +55,30 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
 
+	// Execute the query
+	rows, err := whereQuery.Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
+	}
+	defer rows.Close()
+
+	// Initialize responses slice with 0 length
+	responses = make([]masteritempayloads.MarkupRateListResponse, 0)
+
+	// Scan the results into the responses slice
+	for rows.Next() {
+		var response masteritempayloads.MarkupRateListResponse
+		if err := rows.Scan(&response.IsActive, &response.MarkupRateId, &response.MarkupMasterId, &response.MarkupMasterCode, &response.MarkupMasterDescription, &response.OrderTypeId, &response.MarkupRate); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		responses = append(responses, response)
 	}
 
 	if len(responses) == 0 {
@@ -71,12 +88,9 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 		}
 	}
 
-	defer rows.Close()
-
-	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
-
+	// Fetch order type data
+	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/order-type-filter?order_type_name=" + orderTypeName
 	errUrlMarkupRate := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
-
 	if errUrlMarkupRate != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -84,8 +98,10 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 		}
 	}
 
+	// Perform inner join with order type data
 	joinedData := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
 
+	// Paginate the joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil

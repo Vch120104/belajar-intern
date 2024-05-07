@@ -61,7 +61,7 @@ func Paginate(value interface{}, pagination *Pagination, db *gorm.DB) func(db *g
 	}
 }
 
-func NewDataFramePaginate(rows interface{}, pagination *Pagination) (result []map[string]interface{}, totalPages int, totalRows int) {
+func NewDataFramePaginate(rows any, pagination *Pagination) (result []map[string]interface{}, totalPages int, totalRows int) {
 	var df dataframe.DataFrame
 	tpy, _ := reflect.TypeOf(rows), reflect.ValueOf(rows)
 

@@ -1,6 +1,7 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
@@ -71,7 +72,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 
 	defer rows.Close()
 
-	jobPositionUrl := "http://10.1.32.26:8000/general-service/api/general/job-position?job_position_id=" + jobPositionId
+	jobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/job-position?job_position_id=" + jobPositionId
 
 	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
 

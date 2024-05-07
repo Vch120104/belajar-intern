@@ -34,6 +34,24 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 	}
 }
 
+// @Summary Get All Item Packages
+// @Description Retrieve all item packages with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package
+// @Param item_package_code query string false "Item Package Code"
+// @Param item_package_name query string false "Item Package Name"
+// @Param item_package_set query string false "Item Package Set"
+// @Param description query string false "Description"
+// @Param is_active query string false "Is Active"
+// @Param item_group_code query string false "Item Group Code"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package/ [get]
 func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -69,6 +87,15 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+// @Summary Get Item Package By ID
+// @Description Retrieve an item package by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package
+// @Param item_package_id path int true "Item Package ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package/{item_package_id} [get]
 func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWriter, request *http.Request) {
 
 	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
@@ -82,6 +109,15 @@ func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Save Item Package
+// @Description Create or update an item package
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package
+// @Param reqBody body masteritempayloads.SaveItemPackageRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package/ [post]
 func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageRequest
@@ -115,6 +151,15 @@ func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Change Status Item Package
+// @Description Change the status of an item package by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package
+// @Param item_package_id path int true "Item Package ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package/{item_package_id} [patch]
 func (r *ItemPackageControllerImpl) ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request) {
 
 	PriceListId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))

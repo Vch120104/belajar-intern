@@ -43,7 +43,6 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Master
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -52,8 +51,8 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 // @Param warehouse_code query string false "Warehouse Code"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/ [get]
 func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	page, _ := strconv.Atoi(queryValues.Get("page"))
@@ -83,10 +82,9 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Master
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/drop-down [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/drop-down [get]
 func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	get := r.WarehouseMasterService.GetAllIsActive()
@@ -99,11 +97,10 @@ func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Master
-// @Security BearerAuth
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/by-id/{warehouse_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/by-id/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
@@ -118,11 +115,10 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Master
-// @Security BearerAuth
 // @Param warehouse_code path string true "warehouse_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/by-code/{warehouse_code} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/by-code/{warehouse_code} [get]
 func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, request *http.Request) {
 
 	code := chi.URLParam(request, "warehouse_code")
@@ -140,8 +136,8 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 // @Tags Master : Warehouse Master
 // @Param warehouse_ids path string true "warehouse_ids"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/multi-id/{warehouse_ids} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/multi-id/{warehouse_ids} [get]
 func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request) {
 
 	warehouse_ids := chi.URLParam(request, "warehouse_ids")
@@ -158,11 +154,10 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Master
-// @Security BearerAuth
 // @param reqBody body masterwarehousepayloads.GetWarehouseMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/ [post]
 func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
 
@@ -186,11 +181,10 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Master
-// @Security BearerAuth
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-master/{warehouse_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/{warehouse_id} [patch]
 func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))

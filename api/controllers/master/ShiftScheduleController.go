@@ -48,8 +48,8 @@ func NewShiftScheduleController(ShiftScheduleService masterservice.ShiftSchedule
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/shift-schedule [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/shift-schedule/ [get]
 func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -84,7 +84,7 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result,err := r.ShiftScheduleService.GetAllShiftSchedule(filterCondition, pagination)
+	result, err := r.ShiftScheduleService.GetAllShiftSchedule(filterCondition, pagination)
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
@@ -99,7 +99,7 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // // @Produce json
 // // @Tags Master : Shift Schedule
 // // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.Error
+// // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // // @Router /aftersales-service/api/aftersales/shift-schedule/drop-down [get]
 // func (r *ShiftScheduleControllerImpl) GetAllShiftScheduleIsActive(writer http.ResponseWriter, request *http.Request) {
 
@@ -115,13 +115,13 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // @Tags Master : Shift Schedule
 // @Param shift_schedule_id path string true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/shift-schedule/{shift_schedule_id} [get]
 func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseWriter, request *http.Request) {
 
-	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request,"shift_schedule_id"))
+	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
 
-	result,err := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
+	result, err := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
@@ -137,15 +137,15 @@ func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseW
 // @Tags Master : Shift Schedule
 // @param reqBody body masterpayloads.ShiftScheduleResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/shift-schedule [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/shift-schedule/ [post]
 func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.ShiftScheduleResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create,err := r.ShiftScheduleService.SaveShiftSchedule(formRequest)
+	create, err := r.ShiftScheduleService.SaveShiftSchedule(formRequest)
 	if err != nil {
 		exceptionsss_test.NewConflictException(writer, request, err)
 		return
@@ -167,13 +167,13 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 // @Tags Master : Shift Schedule
 // @param shift_schedule_id path int true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/shift-schedule/{shift_schedule_id} [patch]
 func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
-	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request,"shift_schedule_id"))
+	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
 
-	response,err := r.ShiftScheduleService.ChangeStatusShiftSchedule(int(ShiftScheduleId))
+	response, err := r.ShiftScheduleService.ChangeStatusShiftSchedule(int(ShiftScheduleId))
 	if err != nil {
 		exceptionsss_test.NewConflictException(writer, request, err)
 		return

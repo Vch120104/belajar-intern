@@ -14,7 +14,7 @@ type SaveItemPackageRequest struct {
 	ItemPackageId   int    `json:"item_package_id" `
 	IsActive        bool   `json:"is_active"`
 	ItemGroupId     int    `json:"item_group_id" validate:"required"`
-	ItemPackageCode string `json:"item_package_code" validate:"required, max=15"`
+	ItemPackageCode string `json:"item_package_code" validate:"required,max=15"`
 	ItemPackageName string `json:"item_package_name"`
 	ItemPackageSet  bool   `json:"item_package_set"`
 	Description     string `json:"description"`
