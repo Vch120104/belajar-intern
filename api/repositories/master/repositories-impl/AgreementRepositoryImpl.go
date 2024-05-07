@@ -245,13 +245,12 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 
 func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) *exceptionsss_test.BaseErrorResponse {
 	entities := masterentities.AgreementDiscountGroupDetail{
-		AgreementId:                    AgreementId,
-		AgreementDiscountGroupDetailId: req.AgreementDiscountGroupId,
-		AgreementSelection:             req.AgreementSelection,
-		AgreementOrderType:             req.AgreementLineTypeId,
-		AgreementDiscountMarkupId:      req.AgreementDiscountMarkup,
-		AgreementDiscount:              req.AgreementDiscount,
-		AgreementDetailRemarks:         req.AgreementDetailRemaks,
+		AgreementId:               AgreementId,
+		AgreementSelection:        req.AgreementSelection,
+		AgreementOrderType:        req.AgreementLineTypeId,
+		AgreementDiscountMarkupId: req.AgreementDiscountMarkup,
+		AgreementDiscount:         req.AgreementDiscount,
+		AgreementDetailRemarks:    req.AgreementDetailRemaks,
 	}
 
 	err := tx.Save(&entities).Error
@@ -285,7 +284,11 @@ func (r *AgreementRepositoryImpl) DeleteDiscountGroup(tx *gorm.DB, AgreementId i
 
 func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, req masterpayloads.ItemDiscountRequest) *exceptionsss_test.BaseErrorResponse {
 	entities := masterentities.AgreementItemDetail{
-		AgreementId: AgreementId,
+		AgreementId:              AgreementId,
+		LineTypeId:               req.LineTypeId,
+		AgreementItemOperationId: req.AgreementItemOperationId,
+		MinValue:                 req.MinValue,
+		AgreementRemark:          req.AgreementRemark,
 	}
 
 	err := tx.Save(&entities).Error
@@ -319,7 +322,11 @@ func (r *AgreementRepositoryImpl) DeleteItemDiscount(tx *gorm.DB, AgreementId in
 
 func (r *AgreementRepositoryImpl) AddDiscountValue(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse {
 	entities := masterentities.AgreementDiscount{
-		AgreementId: AgreementId,
+		AgreementId:     AgreementId,
+		LineTypeId:      req.LineTypeId,
+		MinValue:        req.MinValue,
+		DiscountPercent: req.DiscountPercent,
+		DiscountRemarks: req.DiscountRemarks,
 	}
 
 	err := tx.Save(&entities).Error
