@@ -209,6 +209,12 @@ func StartRouting(db *gorm.DB) {
 	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
 	BomController := masteritemcontroller.NewBomController(BomService)
 
+	//package master
+	PackageMasterRepository:=masterrepositoryimpl.StartPackageMasterRepositoryImpl()
+	PackageMasterService  :=masterserviceimpl.StartPackageMasterService(PackageMasterRepository,db)
+	PackageMasterController:=mastercontroller.NewPackageMasterController(PackageMasterService)
+
+
 	// Deduction
 	DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
 	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db, rdb)
@@ -275,6 +281,7 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
+	PackageMasterRouter:=PackageMasterRouter(PackageMasterController)
 
 	/* Transaction */
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
@@ -329,7 +336,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group", IncentiveGroupRouter)
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
-		r.Mount("/skill-level",SkillLevelRouter)
+		r.Mount("/package-master",PackageMasterRouter)
 		/* Transaction */
 		r.Mount("/work-order", WorkOrderRouter)
 
