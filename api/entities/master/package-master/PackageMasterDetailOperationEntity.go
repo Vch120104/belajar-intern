@@ -18,7 +18,7 @@ type PackageMasterDetailOperation struct {
 	FrtQuantity              float64 `gorm:"column:frt_quantity;not null;" json:"frt_quantity"`
 	Sequence                 int     `gorm:"column:sequesnce;size:30;not null;default:0" json:"sequence"`
 	TransactionTypeId        int     `gorm:"column:workorder_transaction_type_id;size:30;not null;default:0" json:"workorder_transaction_type_id"`
-	JobTypeId                int     `gorm:"column:job_type_id;size:30;not null;defult:0" json:"job_type_id"`
+	JobTypeId                int     `gorm:"column:job_type_id;size:30;not null;default:0" json:"job_type_id"`
 }
 
 func (*PackageMasterDetailOperation) TableName() string {

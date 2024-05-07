@@ -463,9 +463,8 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 
 func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailBodyshop(tx *gorm.DB, req masterpayloads.PackageMasterDetailOperationBodyshop, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var rowsAffected int64
-	if err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where(masterpackagemasterentity.PackageMasterDetailOperation{
-		PackageId: req.PackageId,
-	}).Count(&rowsAffected).Error; err != nil {
+	err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?",id).Count(&rowsAffected).Error
+	if err != nil {
 		tx.Rollback()
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -480,11 +479,11 @@ func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailBodyshop(tx *gorm.D
 		OperationId:              req.OperationId,
 		Sequence:                 int(rowsAffected) + 1,
 	}
-	err := tx.Save(&entities).Error
-	if err != nil {
+	err2 := tx.Save(&entities).Error
+	if err2 != nil {
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        err2,
 		}
 	}
 	return true, nil
