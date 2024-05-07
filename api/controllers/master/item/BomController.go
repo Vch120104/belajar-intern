@@ -47,15 +47,13 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param bom_master_id query string false "bom_master_id"
-// @Param bom_master_uom query string false "bom_master_uom"
-// @Param bom_master_qty query int false "bom_master_qty"
-// @Param item_name query int false "item_name"
+// @Param item_name query string false "item_name"
 // @Param bom_master_effective_date query string false "bom_master_effective_date"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [get]
+// @Router /v1/bom/ [get]
 func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -97,7 +95,7 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_master_id} [get]
+// @Router /v1/bom/{bom_master_id} [get]
 func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request) {
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
@@ -118,7 +116,7 @@ func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request
 // @param reqBody body masteritempayloads.BomMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [put]
+// @Router /v1/bom/ [put]
 func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.BomMasterRequest
@@ -147,7 +145,7 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_master_id} [patch]
+// @Router /v1/bom/{bom_master_id} [patch]
 func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
@@ -169,11 +167,12 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param bom_detail_id query string false "bom_detail_id"
+// @Param bom_master_id query string false "bom_master_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /all/detail [get]
+// @Router /v1/bom/detail [get]
 func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -215,7 +214,7 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_master_id}/detail [get]
+// @Router /v1/bom/detail/{bom_master_id} [get]
 func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request) {
 
 	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
@@ -228,15 +227,16 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// @Summary Get Bom Detail By IDs
-// @Description REST API Bom Details
+// @Summary Get Bom Detail By ID
+// @Description REST API Bom Detail
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Detail
 // @Param bom_master_id path int true "bom_master_id"
+// @Param bom_detail_id path int true "bom_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_detail_id}/detail [get]
+// @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [get]
 func (r *BomControllerImpl) GetBomDetailByIds(writer http.ResponseWriter, request *http.Request) {
 
 	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
@@ -254,15 +254,17 @@ func (r *BomControllerImpl) GetBomDetailByIds(writer http.ResponseWriter, reques
 	}
 }
 
-// @Summary Save Bom Detail
+// @Summary Update Bom Detail
 // @Description REST API Bom Detail
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Detail
-// @param reqBody body masteritempayloads.BomDetailResponse true "Form Request"
+// @Param bom_master_id path int true "bom_master_id"
+// @Param bom_detail_id path int true "bom_detail_id"
+// @Param reqBody body masteritempayloads.BomDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_detail_id}/detail [put]
+// @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [put]
 func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.BomDetailRequest
@@ -301,7 +303,7 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_master_id}/popup-item [get]
+// @Router /v1/bom/popup-item [get]
 func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -344,10 +346,11 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Detail
-// @param reqBody body masteritempayloads.BomDetailResponse true "Form Request"
+// @Param bom_master_id path int true "bom_master_id"
+// @Param bom_detail_id path int true "bom_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{bom_detail_id}/detail [delete]
+// @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [delete]
 func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request *http.Request) {
 
 	bomDetailID := chi.URLParam(request, "bom_detail_id")

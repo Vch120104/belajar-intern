@@ -47,7 +47,7 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Tags Master : Price List
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/price-list/get-all-lookup [get]
+// @Router /v1/price-list/lookup [get]
 func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
@@ -97,7 +97,7 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 // @Tags Master : Price List
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/price-list/get-all [get]
+// @Router /v1/price-list/ [get]
 func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
@@ -145,7 +145,7 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 // @param reqBody body masteritempayloads.PriceListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/price-list [post]
+// @Router /v1/price-list/ [post]
 func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.PriceListResponse
@@ -189,7 +189,7 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 // @param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/price-list/{price_list_id} [patch]
+// @Router /v1/price-list/{price_list_id} [patch]
 func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request) {
 
 	PriceListId, _ := strconv.Atoi(chi.URLParam(request, "price_list_id"))

@@ -49,7 +49,7 @@ func NewShiftScheduleController(ShiftScheduleService masterservice.ShiftSchedule
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/shift-schedule [get]
+// @Router /v1/shift-schedule/ [get]
 func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -116,7 +116,7 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // @Param shift_schedule_id path string true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [get]
+// @Router /v1/shift-schedule/{shift_schedule_id} [get]
 func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseWriter, request *http.Request) {
 
 	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
@@ -138,7 +138,7 @@ func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseW
 // @param reqBody body masterpayloads.ShiftScheduleResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/shift-schedule [post]
+// @Router /v1/shift-schedule/ [post]
 func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.ShiftScheduleResponse
@@ -168,7 +168,7 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 // @param shift_schedule_id path int true "shift_schedule_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/shift-schedule/{shift_schedule_id} [patch]
+// @Router /v1/shift-schedule/{shift_schedule_id} [patch]
 func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
 	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))

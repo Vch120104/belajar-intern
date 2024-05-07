@@ -48,7 +48,7 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-class/pop-up [get]
+// @Router /v1/item-class/pop-up [get]
 func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -92,7 +92,7 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 // @Param line_type_code query string false "line_type_code"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-class/ [get]
+// @Router /v1/item-class/ [get]
 func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -124,7 +124,7 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 // @param reqBody body masteritempayloads.ItemClassResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-class [post]
+// @Router /v1/item-class/ [post]
 func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemClassResponse
@@ -166,7 +166,7 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 // @param item_class_id path int true "item_class_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-class/{item_class_id} [patch]
+// @Router /v1/item-class/{item_class_id} [patch]
 func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request) {
 
 	itemclassGroupId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))

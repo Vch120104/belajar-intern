@@ -47,7 +47,7 @@ func NewPurchasePriceController(PurchasePriceService masteritemservice.PurchaseP
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /item-location [get]
+// @Router /v1/purchase-price [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -80,11 +80,11 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master :Purchase Price
+// @Tags Master : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/purchase-price [post]
 func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.PurchasePriceRequest
@@ -109,11 +109,11 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 // @Description REST API  Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master :  Purchase Price
+// @Tags Master : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{purchase_price_id} [get]
+// @Router /v1/purchase-price/by-id/{purchase_price_id} [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseWriter, request *http.Request) {
 
 	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
@@ -135,7 +135,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{purchase_price_id} [patch]
+// @Router /v1/purchase-price/{purchase_price_id} [patch]
 func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
 	PurchasePricesId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
@@ -152,16 +152,17 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 // @Description REST API Purchase Price Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Purchase Price Detail
+// @Tags Master : Purchase Price
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
+// @Param purchase_price_id path int true "purchase_price_id"
 // @Param purchase_price_detail_id query string false "purchase_price_detail_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{purchase_price_id}/detail [get]
+// @Router /v1/purchase-price/{purchase_price_id}/detail  [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -197,11 +198,11 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master :Purchase Price
+// @Tags Master : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/purchase-price/detail [post]
 func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.PurchasePriceDetailRequest
@@ -226,11 +227,11 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Description REST API  Purchase Price
 // @Accept json
 // @Produce json
-// @Tags Master :  Purchase Price
+// @Tags Master : Purchase Price
 // @Param purchase_price_detail_id path int true "purchase_price_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /all/detail/{purchase_price_detail_id} [get]
+// @Router /v1/purchase-price/all/detail/{purchase_price_detail_id} [get]
 func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
 	PurchasePriceID, err := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id"))

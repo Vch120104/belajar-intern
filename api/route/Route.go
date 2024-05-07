@@ -5,10 +5,8 @@ import (
 	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
-	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
-
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
-
+	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
@@ -18,7 +16,13 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+
+	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
+	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
+	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -29,6 +33,7 @@ func StartRouting(db *gorm.DB) {
 	// Initialize Redis client
 	rdb := config.InitRedis()
 
+	/* Master */
 	// Unit Measurement
 	unitOfMeasurementRepository := masteritemrepositoryimpl.StartUnitOfMeasurementRepositoryImpl()
 	unitOfMeasurementService := masteritemserviceimpl.StartUnitOfMeasurementService(unitOfMeasurementRepository, db, rdb)
@@ -123,6 +128,11 @@ func StartRouting(db *gorm.DB) {
 	forecastMasterRepository := masterrepositoryimpl.StartForecastMasterRepositoryImpl()
 	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db, rdb)
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
+
+	// Agreement
+	AgreementRepository := masterrepositoryimpl.StartAgreementRepositoryImpl()
+	AgreementService := masterserviceimpl.StartAgreementService(AgreementRepository, db, rdb)
+	AgreementController := mastercontroller.NewAgreementController(AgreementService)
 
 	// operation code
 	operationCodeRepository := masteroperationrepositoryimpl.StartOperationCodeRepositoryImpl()
@@ -219,6 +229,13 @@ func StartRouting(db *gorm.DB) {
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
+	/* Transaction */
+	//Work order
+	WorkOrderRepository := transactionworkshoprepositoryimpl.OpenWorkOrderRepositoryImpl()
+	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
+	WorkOrderController := transactionworksopcontroller.NewWorkOrderController(WorkOrderService)
+
+	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
 	ItemModelMappingRouter := ItemModelMappingRouter(ItemModelMappingController)
@@ -237,6 +254,7 @@ func StartRouting(db *gorm.DB) {
 	OperationModelMappingRouter := OperationModelMappingRouter(operationModelMappingController)
 	MovingCodeRouter := MovingCodeRouter(MovingCodeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
+	AgreementRouter := AgreementRouter(AgreementController)
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
@@ -258,10 +276,14 @@ func StartRouting(db *gorm.DB) {
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
 
+	/* Transaction */
+	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
+
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
-		// Tambahkan routing untuk setiap versi di sini
+		// Tambahkan routing untuk v1 versi di sini
+		/* Master */
 		r.Mount("/item-class", itemClassRouter)
 		r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 		r.Mount("/discount-percent", DiscountPercentRouter)
@@ -294,7 +316,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/warehouse-location", WarehouseLocation)
 		r.Mount("/moving-code", MovingCodeRouter)
 		r.Mount("/forecast-master", ForecastMasterRouter)
-		//r.Mount("/agreement", AgreementRouter)
+		r.Mount("/agreement", AgreementRouter)
 		//r.Mount("/campaign", CampaignRouter)
 		//r.Mount("/package", PackageRouter)
 		r.Mount("/skill-level", SkillLevelRouter)
@@ -308,12 +330,17 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
 
-		// Tambahkan routing untuk Swagger di akhir
-		r.Mount("/", SwaggerRouter())
+		/* Transaction */
+		r.Mount("/work-order", WorkOrderRouter)
 
-		//prometheus route
-		r.Mount("/metrics", promhttp.Handler())
 	})
+
+	// Route untuk Swagger
+	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
+
+	// Route untuk Prometheus metrics
+	r.Mount("/metrics", promhttp.Handler())
+
 	server := http.Server{
 		Addr:    config.EnvConfigs.ClientOrigin,
 		Handler: r,

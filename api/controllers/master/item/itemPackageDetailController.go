@@ -34,6 +34,15 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 	}
 }
 
+// @Summary Change Status Item Package Detail
+// @Description Change the status of an item package detail by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package Detail
+// @Param item_package_detail_id path int true "Item Package Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package-detail/{item_package_detail_id} [patch]
 func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
 
@@ -47,6 +56,19 @@ func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer h
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
 
+// @Summary Get Item Package Detail By Item Package ID
+// @Description Retrieve all item package details by their package ID with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package Detail
+// @Param item_package_id path int true "Item Package ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package-detail/package/{item_package_id} [get]
 func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
@@ -68,6 +90,15 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(wr
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Item Package Detail By ID
+// @Description Retrieve an item package detail by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package Detail
+// @Param item_package_detail_id path int true "Item Package Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package-detail/{item_package_detail_id} [get]
 func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.ResponseWriter, request *http.Request) {
 
 	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
@@ -82,6 +113,15 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.R
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Create Item Package Detail By Item Package ID
+// @Description Create a new item package detail under a specific package ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package Detail
+// @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package-detail/package [post]
 func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageDetail
@@ -109,6 +149,15 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
 }
 
+// @Summary Update Item Package Detail By Item Package ID
+// @Description Update an existing item package detail under a specific package ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item Package Detail
+// @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-package-detail/package [put]
 func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageDetail

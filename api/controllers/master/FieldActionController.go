@@ -63,7 +63,7 @@ func NewFieldActionController(FieldActionService masterservice.FieldActionServic
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/field-action [get]
+// @Router /v1/field-action/ [get]
 func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
@@ -96,7 +96,7 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 // @Param reqBody body masterpayloads.FieldActionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/field-action [post]
+// @Router /v1/field-action/ [post]
 func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.FieldActionResponse
@@ -122,7 +122,7 @@ func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, 
 // @Param field_action_system_number path int true "field_action_system_number"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/field-action/by-id/{field_action_system_number} [get]
+// @Router /v1/field-action/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request) {
 	FieldActionIdStr := chi.URLParam(request, "field_action_system_number")
 
@@ -133,21 +133,19 @@ func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.Respons
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// @Summary Get All Field Action Vehicle Detail By Id
-// @Description REST API Field Action Vehicle Detail
+// @Summary Get All Field Action Vehicle Item Detail By Id
+// @Description REST API Field Action Vehicle Item Detail
 // @Accept json
 // @Produce json
 // @Tags Master : Field Action
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param item_id query string false "item_id"
-// @Param effective_date query string false "effective_date"
-// @Param is_active query string false "is_active" Enums(true,false)
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
+// @Param field_action_system_number path int true "Field Action Eligible Vehicle System Number" // Define the path parameter
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/field-action/vehicle/by-id/{field_action_system_number} [get]
+// @Router /v1/field-action/vehicle-detail/all/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -175,11 +173,18 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer ht
 // @Description REST API Field Action Vehicle Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Item Substitute
-// @Param item_substitute_detail_id path int true "item_substitute_detail_id"
+// @Tags Master : Field Action
+// @Param field_action_system_number path int true "Field Action System Number" // Define the path parameter
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param item_id query string false "Item ID"
+// @Param effective_date query string false "Effective Date"
+// @Param is_active query string false "Is Active" Enums(true, false)
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/item-substitute/detail/by-id/{item_substitute_id} [get]
+// @Router /v1/field-action/vehicle/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
 	FieldActionVehicleDetailIdStr := chi.URLParam(request, "field_action_eligible_vehicle_system_number")
 
@@ -190,6 +195,19 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get All Field Action Vehicle Item Detail By Id
+// @Description REST API Field Action Vehicle Item Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param field_action_eligible_vehicle_system_number path int true "Field Action Vehicle Detail ID"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/vehicle-item/all/{field_action_eligible_vehicle_system_number} [get]
 func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -213,6 +231,19 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
+// @Summary Get All Field Action Vehicle Item Detail By Id
+// @Description REST API Field Action Vehicle Item Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param field_action_eligible_vehicle_item_system_number path int true "Field Action Vehicle Detail ID"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/vehicle-item/by-id/{field_action_eligible_vehicle_item_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	FieldActionVehicleItemDetailIdStr := chi.URLParam(request, "field_action_eligible_vehicle_item_system_number")
 
@@ -223,6 +254,16 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer h
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Post Field Action Vehicle Item Detail
+// @Description REST API Field Action Vehicle Item Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_eligible_vehicle_system_number path int true "Field Action Eligible Vehicle System Number" // Define the path parameter
+// @Param reqBody body masterpayloads.FieldActionItemDetailResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/vehicle-item/{field_action_eligible_vehicle_system_number} [post]
 func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.FieldActionItemDetailResponse
 	FIeldActionVehicleDetailIdStr := chi.URLParam(request, "field_action_eligible_vehicle_system_number")
@@ -242,6 +283,16 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Post Field Action Vehicle Detail
+// @Description REST API Field Action Vehicle Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_system_number path int true "Field Action System Number"
+// @Param reqBody body masterpayloads.FieldActionDetailResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/vehicle/{field_action_system_number} [post]
 func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.FieldActionDetailResponse
 	FieldActionIdStr := chi.URLParam(request, "field_action_system_number")
@@ -261,6 +312,17 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.Res
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Post Multiple Vehicle Detail
+// @Description REST API Field Action Vehicle Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_system_number path int true "Field Action System Number"
+// @Param multi_id query string true "Multiple IDs separated by comma"
+// @Param reqBody body masterpayloads.FieldActionDetailResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/multiple-vehicle-detail/{field_action_system_number} [post]
 func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	var formRequest masterpayloads.FieldActionDetailResponse
@@ -286,6 +348,16 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Post Vehicle Item Into All Vehicle Detail
+// @Description REST API Field Action Vehicle Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_system_number path int true "Field Action System Number" // Define the path parameter
+// @Param reqBody body masterpayloads.FieldActionItemDetailResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/all-item-detail/{field_action_system_number} [post]
 func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	// queryValues := request.URL.Query()
 	var formRequest masterpayloads.FieldActionItemDetailResponse
@@ -307,6 +379,15 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+// @Summary Change Status Field Action
+// @Description REST API Field Action
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_system_number path int true "Field Action System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/status/{field_action_system_number} [put]
 func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.ResponseWriter, request *http.Request) {
 
 	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
@@ -316,6 +397,16 @@ func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.Response
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
+// @Summary Change Status Field Action Vehicle
+// @Description REST API Field Action Vehicle
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_eligible_vehicle_system_number path int true "Field Action Eligible Vehicle System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/vehicle/status/{field_action_eligible_vehicle_system_number} [put]
+
 func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.ResponseWriter, request *http.Request) {
 
 	FieldActionVehicleId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
@@ -324,6 +415,16 @@ func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.R
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
+
+// @Summary Change Status Field Action Vehicle Item
+// @Description REST API Field Action Vehicle Item
+// @Accept json
+// @Produce json
+// @Tags Master : Field Action
+// @Param field_action_eligible_vehicle_item_system_number path int true "Field Action Eligible Vehicle Item System Number"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/field-action/vehicle-item/status/{field_action_eligible_vehicle_item_system_number} [put]
 
 func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicleItem(writer http.ResponseWriter, request *http.Request) {
 

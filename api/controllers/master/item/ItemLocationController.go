@@ -39,7 +39,7 @@ func NewItemLocationController(ItemLocationService masteritemservice.ItemLocatio
 // @Description REST API Item Location Popup
 // @Accept json
 // @Produce json
-// @Tags Master : Item Location Popup
+// @Tags Master : Item Location
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_location_source_id query string false "item_location_source_id"
@@ -47,7 +47,7 @@ func NewItemLocationController(ItemLocationService masteritemservice.ItemLocatio
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /popup-location [get]
+// @Router /v1/popup-location [get]
 func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -87,7 +87,7 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /item-location [get]
+// @Router /v1/item-location [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -118,11 +118,11 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 // @Description REST API Item Location
 // @Accept json
 // @Produce json
-// @Tags Master :Item Location
+// @Tags Master : Item Location
 // @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/item-location/ [post]
 func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemLocationRequest
@@ -147,11 +147,11 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 // @Description REST API  Item Location
 // @Accept json
 // @Produce json
-// @Tags Master :  Item Location
+// @Tags Master : Item Location
 // @Param item_location_id path int true "item_location_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{item_location_id} [get]
+// @Router /v1/item-location/{item_location_id} [get]
 func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWriter, request *http.Request) {
 
 	ItemLocationIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
@@ -169,16 +169,17 @@ func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWri
 // @Description REST API Item Location Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Item Location Detail
+// @Tags Master : Item Location
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param item_location_detail_id query string false "item_location_detail_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
+// @Param item_location_id path int true "item_location_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /{item_location_id}/detail [get]
+// @Router /v1/item-location/detail/{item_location_id} [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -215,11 +216,11 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Description REST API Item Location
 // @Accept json
 // @Produce json
-// @Tags Master :Item Location
+// @Tags Master : Item Location
 // @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router / [post]
+// @Router /v1/item-location/detail [post]
 func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemLocationDetailRequest
@@ -244,11 +245,11 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 // @Description REST API  Item Location
 // @Accept json
 // @Produce json
-// @Tags Master :  Item Location
+// @Tags Master : Item Location
 // @Param item_location_detail_id path int true "item_location_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /all/detail/{item_location_detail_id} [get]
+// @Router /v1/item-location/all/detail/{item_location_detail_id} [get]
 func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
 	itemLocationID, err := strconv.Atoi(chi.URLParam(request, "item_location_detail_id"))

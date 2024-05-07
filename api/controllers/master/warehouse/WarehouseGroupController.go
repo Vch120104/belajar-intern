@@ -40,7 +40,6 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -50,7 +49,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-group [get]
+// @Router /v1/warehouse-group/ [get]
 func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -81,11 +80,10 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [get]
+// @Router /v1/warehouse-group/{warehouse_group_id} [get]
 func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
 	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
@@ -103,11 +101,10 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-group [post]
+// @Router /v1/warehouse-group/warehouse-group [post]
 func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
 	var message string
@@ -134,11 +131,10 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [patch]
+// @Router /v1/warehouse-group/{warehouse_group_id} [patch]
 func (r *WarehouseGroupControllerImpl) ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
 	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
