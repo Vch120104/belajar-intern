@@ -11,7 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/redis/go-redis/v9 v9.3.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.17.0
 	github.com/swaggo/http-swagger/v2 v2.0.2
