@@ -2,6 +2,8 @@ package migration
 
 import (
 	"after-sales/api/config"
+	// masterentities "after-sales/api/entities/master"
+	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -82,6 +84,9 @@ func Migrate() {
 		// &masteritementities.ItemSubstituteDetail{},
 		// &masterentities.ForecastMaster{},
 		// &masterentities.MovingCode{},
+		// &mastercampaignmasterentities.CampaignMaster{},
+		// &mastercampaignmasterentities.CampaignMasterDetail{},
+		// &masterentities.PackageMaster{},
 		// &masteritementities.ItemPackage{},
 		// &masteritementities.ItemPackageDetail{},
 		// &masterwarehouseentities.WarehouseGroup{},

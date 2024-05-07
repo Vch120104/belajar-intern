@@ -454,6 +454,7 @@ func BomRouter(
 	return router
 }
 
+
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()
 // 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
