@@ -48,7 +48,7 @@ func (s *MarkupMasterServiceImpl) GetMarkupMasterById(id int) (masteritempayload
 	return results, nil
 }
 
-func (s *MarkupMasterServiceImpl) GetAllMarkupMasterIsActive() ([]masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *MarkupMasterServiceImpl) GetAllMarkupMasterIsActive() ([]masteritempayloads.MarkupMasterDropDownResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetAllMarkupMasterIsActive(tx)
