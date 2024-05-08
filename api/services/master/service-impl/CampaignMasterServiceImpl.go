@@ -143,4 +143,24 @@ func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req maste
 	}
 	return result,nil
 }
+
+func (s *CampaignMasterServiceImpl) GetAllPackageMasterToCopy(pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:= s.CampaignMasterRepo.GetAllPackageMasterToCopy(tx,pages)
+	if err != nil{
+		return result,err
+	}
+	return result,nil
+}
+
+func (s *CampaignMasterServiceImpl) SelectFromPackageMaster(id int, idhead int) (bool, *exceptionsss_test.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:=s.CampaignMasterRepo.SelectFromPackageMaster(tx,id,idhead)
+	if err != nil{
+		return false,err 
+	}
+	return result,nil
+}
  

@@ -474,6 +474,10 @@ func CampaignMasterRouter(
 	router.Patch("/detail/activate/{campaign_detail_id}",campaignmastercontroller.ActivateCampaignMasterDetail)
 	router.Put("/detail/update/{campaign_detail_id}",campaignmastercontroller.UpdateCampaignMasterDetail)
 
+	//from package master
+	router.Get("/package",campaignmastercontroller.GetAllPackageMasterToCopy)
+	router.Get("/package-copy/{package_id}/{campaign_id}",campaignmastercontroller.SelectFromPackageMaster)
+	
 	return router
 }
 

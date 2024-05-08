@@ -28,6 +28,8 @@ type CampaignMasterController interface {
 	GetAllCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
+	GetAllPackageMasterToCopy(writer http.ResponseWriter, request *http.Request)
+	SelectFromPackageMaster(writer http.ResponseWriter, request *http.Request)
 }
 
 type CampaignMasterControllerImpl struct {
@@ -236,5 +238,35 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 		return
 	}
 	message = "Update Data Successfully!"
+	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)
+}
+
+func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.ResponseWriter, request *http.Request){
+	queryValues:=request.URL.Query()
+	
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	result,err:=r.CampaignMasterService.GetAllPackageMasterToCopy(pagination)
+	if err!= nil{
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *CampaignMasterControllerImpl) SelectFromPackageMaster(writer http.ResponseWriter, request *http.Request){
+	var message=""
+	PackageMaster,_ := strconv.Atoi(chi.URLParam(request,"package_id"))
+	CampaignMasterId,_ := strconv.Atoi(chi.URLParam(request,"campaign_detail_id"))
+
+	result,err:=r.CampaignMasterService.SelectFromPackageMaster(PackageMaster,CampaignMasterId)
+	if err!= nil{
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)
 }

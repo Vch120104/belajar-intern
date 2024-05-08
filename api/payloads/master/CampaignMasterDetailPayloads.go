@@ -1,7 +1,6 @@
 package masterpayloads
 
 type CampaignMasterDetailPayloads struct {
-	IsActive           bool    `json:"is_active"`
 	CampaignDetailId   int     `json:"campaign_detail_id"`
 	CampaignId         int     `json:"campaign_id"`
 	LineTypeId         int     `json:"line_type_id"`

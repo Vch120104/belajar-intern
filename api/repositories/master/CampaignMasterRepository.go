@@ -22,4 +22,6 @@ type CampaignMasterRepository interface {
 	GetAllCampaignMaster(*gorm.DB,[]utils.FilterCondition,pagination.Pagination)(pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
 	GetAllCampaignMasterDetail(*gorm.DB,pagination.Pagination,int)(pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
 	UpdateCampaignMasterDetail(*gorm.DB,int,masterpayloads.CampaignMasterDetailPayloads)(bool,*exceptionsss_test.BaseErrorResponse)
+	GetAllPackageMasterToCopy(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
+	SelectFromPackageMaster(tx *gorm.DB, id int, idhead int) (bool, *exceptionsss_test.BaseErrorResponse)
 }
