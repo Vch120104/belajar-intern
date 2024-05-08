@@ -335,7 +335,6 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
 		r.Mount("/warehouse-location", WarehouseLocation)
 		r.Mount("/warehouse-master", WarehouseMaster)
-		r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 		r.Mount("/shift-schedule", ShiftScheduleRouter)
 		r.Mount("/price-list", priceListRouter) //null value
 		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
