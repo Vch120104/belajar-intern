@@ -25,6 +25,7 @@ import (
 type MarkupMasterController interface {
 	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request)
 	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request)
+	GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request)
 	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request)
 }
@@ -95,6 +96,18 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 	markupMasterCode := chi.URLParam(request, "markup_master_code")
 
 	result, err := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request) {
+
+	result, err := r.markupMasterService.GetAllMarkupMasterIsActive()
 
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)

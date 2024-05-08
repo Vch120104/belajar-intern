@@ -1,7 +1,9 @@
 package pagination
 
 import (
+	"fmt"
 	"math"
+	"strings"
 
 	"reflect"
 
@@ -35,8 +37,8 @@ func (p *Pagination) GetPage() int {
 }
 
 func (p *Pagination) GetSortOf() string {
-	if p.SortBy == "" {
-		p.SortBy = "asc"
+	if p.SortOf == "" {
+		p.SortOf = "asc"
 	}
 	return p.SortOf
 }
@@ -61,6 +63,14 @@ func Paginate(value interface{}, pagination *Pagination, db *gorm.DB) func(db *g
 	}
 }
 
+func toCamelCase(s string) string {
+	words := strings.Split(s, "_")
+	for i, word := range words {
+		words[i] = strings.Title(word)
+	}
+	return strings.Join(words, "")
+}
+
 func NewDataFramePaginate(rows any, pagination *Pagination) (result []map[string]interface{}, totalPages int, totalRows int) {
 	var df dataframe.DataFrame
 	tpy, _ := reflect.TypeOf(rows), reflect.ValueOf(rows)
@@ -74,7 +84,19 @@ func NewDataFramePaginate(rows any, pagination *Pagination) (result []map[string
 	totalRows = df.Nrow()
 	if pagination.GetSortBy() != "" {
 		if pagination.GetSortBy() == "desc" {
-			df = df.Arrange(dataframe.RevSort(pagination.GetSortOf()))
+			sortOf := pagination.GetSortOf()
+
+			if strings.Contains(sortOf, "_") {
+				sortOf = toCamelCase(sortOf)
+			}
+			dfSorted := df.Arrange(dataframe.RevSort(sortOf))
+
+			if dfSorted.Err != nil {
+				fmt.Println("Error sorting DataFrame in descending order:", dfSorted.Err)
+			} else {
+				df = dfSorted
+			}
+
 		} else {
 			df = df.Arrange(dataframe.Sort(pagination.GetSortOf()))
 		}
