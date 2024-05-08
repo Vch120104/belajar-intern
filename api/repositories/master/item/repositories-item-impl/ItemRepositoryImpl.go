@@ -25,13 +25,15 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, paginate pagination.Pagination) ([]masteritempayloads.ItemLookup, int64, error) {
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, error) {
 	// Define variables
 	var (
-		responses   []masteritempayloads.ItemLookup
-		tableStruct = masteritempayloads.ItemLookup{}
-		baseQuery   = tx.Model(&masteritempayloads.ItemLookup{})
-		totalRows   int64
+		responses    []masteritempayloads.ItemLookup
+		tableStruct  = masteritempayloads.ItemLookup{}
+		baseQuery    = tx.Model(&masteritempayloads.ItemLookup{})
+		totalRows    int64
+		mapResponses []map[string]interface{}
+		totalPages   int
 	)
 
 	// Apply joins and filters
@@ -40,38 +42,44 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 
 	// Get total number of rows for pagination
 	if err := whereQuery.Count(&totalRows).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
+
+	// Calculate offset and limit
+	offset := int64((pages.Page - 1) * pages.Limit)
+	if offset < 0 {
+		offset = 0
+	}
+	limit := pages.Limit
+
+	// Convert offset to int
+	intOffset := int(offset)
 
 	// Apply pagination
-	offset := (paginate.Page - 1) * paginate.Limit
-	whereQuery = whereQuery.Offset(offset).Limit(paginate.Limit)
+	whereQuery = whereQuery.Offset(intOffset).Limit(limit)
 
 	// Execute query
-	rows, err := whereQuery.Rows()
-	if err != nil {
+	if err := whereQuery.Find(&responses).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, 0, gorm.ErrRecordNotFound
+			return nil, 0, 0, gorm.ErrRecordNotFound
 		}
-		return nil, 0, err
+		return nil, 0, 0, err
 	}
-	defer rows.Close()
 
-	// Iterate over rows and scan into responses
-	for rows.Next() {
-		var item masteritempayloads.ItemLookup
-		if err := tx.ScanRows(rows, &item); err != nil {
-			return nil, 0, err
+	// Convert responses to map format
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"item_id":   response.ItemId,
+			"item_name": response.ItemName,
+			// Add other fields as needed
 		}
-		responses = append(responses, item)
+		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Check if no records found
-	if len(responses) == 0 {
-		return nil, 0, gorm.ErrRecordNotFound
-	}
+	// Paginate the response data
+	paginatedData, totalPages, _ := pagination.NewDataFramePaginate(mapResponses, &pages)
 
-	return responses, totalRows, nil
+	return paginatedData, totalPages, int(totalRows), nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[string]string) ([]map[string]interface{}, error) {

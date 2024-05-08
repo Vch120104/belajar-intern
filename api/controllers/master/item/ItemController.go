@@ -1,9 +1,11 @@
 package masteritemcontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 	"strconv"
 	"strings"
@@ -38,11 +40,15 @@ func NewItemController(ItemService masteritemservice.ItemService) ItemController
 // @Accept json
 // @Produce json
 // @Tags Master : Item
+// @Param page query string true "page"
+// @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
 // @Param item_name query string false "item_name"
 // @Param item_type query string false "item_type"
 // @Param is_active query string false "is_active"
 // @Param item_class_code query string false "item_class_code"
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /v1/item [get]
@@ -56,11 +62,22 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 		"mtr_item.is_active":             queryValues.Get("is_active"),
 	}
 
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result := r.itemservice.GetAllItem(criteria)
+	paginatedData, totalPages, totalRows, err := r.itemservice.GetAllItem(criteria, paginate)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 
-	payloads.NewHandleSuccess(writer, result, "success", 200)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get All Item Lookup
@@ -100,8 +117,11 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 		"page":            queryValues.Get("page"),
 	}
 
-	result := r.itemservice.GetAllItemLookup(queryParams)
-
+	result, err := r.itemservice.GetAllItemLookup(queryParams)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, 0, 0, int64(0), 0)
 }
 
@@ -120,8 +140,11 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 
 	sliceOfString := strings.Split(item_ids, ",")
 
-	result := r.itemservice.GetItemWithMultiId(sliceOfString)
-
+	result, err := r.itemservice.GetItemWithMultiId(sliceOfString)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
@@ -138,8 +161,11 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 
 	itemCode := chi.URLParam(request, "item_code")
 
-	result := r.itemservice.GetItemCode(itemCode)
-
+	result, err := r.itemservice.GetItemCode(itemCode)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -159,8 +185,11 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.itemservice.SaveItem(formRequest)
-
+	create, err := r.itemservice.SaveItem(formRequest)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	if formRequest.ItemId == 0 {
 		message = "Create Data Successfully!"
 	} else {
@@ -183,7 +212,10 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 
 	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
 
-	response := r.itemservice.ChangeStatusItem(int(ItemId))
-
+	response, err := r.itemservice.ChangeStatusItem(int(ItemId))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }

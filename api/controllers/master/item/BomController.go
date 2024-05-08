@@ -286,10 +286,10 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 }
 
 // @Summary Get All Bom Item Lookup
-// @Description REST API Item
+// @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master : Bom Detail
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
