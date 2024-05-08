@@ -3,7 +3,9 @@ package masteritemrepositoryimpl
 import (
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	// masteritemlevelservice "after-sales/api/services/master/item_level"
@@ -19,6 +21,27 @@ type ItemLevelImpl struct {
 
 func StartItemLevelRepositoryImpl() masteritemlevelrepo.ItemLevelRepository {
 	return &ItemLevelImpl{}
+}
+
+// GetItemLevelDropDown implements masteritemrepository.ItemLevelRepository.
+func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	model := masteritementities.ItemLevel{}
+	result := []masteritemlevelpayloads.GetItemLevelDropdownResponse{}
+
+	itemlevelInt, _ := strconv.Atoi(itemLevel)
+
+	fmt.Print("adawd", itemlevelInt)
+
+	err := tx.Model(&model).Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemlevelInt - 1)}).Scan(&result).Error
+
+	if err != nil {
+		return result, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return result, nil
 }
 
 func (r *ItemLevelImpl) GetAll(tx *gorm.DB, request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {

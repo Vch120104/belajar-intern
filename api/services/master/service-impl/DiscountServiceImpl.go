@@ -10,18 +10,21 @@ import (
 
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type DiscountServiceImpl struct {
 	discountRepo masterrepository.DiscountRepository
 	DB           *gorm.DB
+	RedisClient  *redis.Client // Redis client
 }
 
-func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *gorm.DB) masterservice.DiscountService {
+func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *gorm.DB, redisClient *redis.Client) masterservice.DiscountService {
 	return &DiscountServiceImpl{
 		discountRepo: discountRepo,
 		DB:           db,
+		RedisClient:  redisClient,
 	}
 }
 

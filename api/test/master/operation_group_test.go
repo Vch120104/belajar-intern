@@ -108,9 +108,11 @@ import (
 
 //		fmt.Println(get)
 //	}
+
 func TestGetAllOperationGroup(t *testing.T) {
 	config.InitEnvConfigs(true, "")
-
+	// Initialize Redis client
+	rdb := config.InitRedis()
 	db := config.InitDB()
 
 	filterCondition := []utils.FilterCondition{
@@ -126,7 +128,7 @@ func TestGetAllOperationGroup(t *testing.T) {
 	}
 
 	operationGroupRepo := masteroperationrepositoryimpl.StartOperationGroupRepositoryImpl()
-	operationGroupServ := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepo, db)
+	operationGroupServ := masteroperationserviceimpl.StartOperationGroupService(operationGroupRepo, db, rdb)
 
 	res, err := operationGroupServ.GetAllOperationGroup(filterCondition, pages)
 

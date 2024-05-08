@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -14,14 +15,13 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var rdb *redis.Client
-
 func InitDB() *gorm.DB {
-	var err error = nil
 	var db *gorm.DB = nil
 	val := url.Values{}
 	val.Add("parseTime", "True")
 	val.Add("loc", "Asia/Jakarta")
+
+	var err error
 
 	if strings.Contains(EnvConfigs.DBDriver, "postgre") {
 		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=Asia/Shanghai", EnvConfigs.DBHost, EnvConfigs.DBUser, EnvConfigs.DBPass, EnvConfigs.DBName, EnvConfigs.DBPort)
@@ -41,8 +41,12 @@ func InitDB() *gorm.DB {
 	}
 
 	sqlDB, err := db.DB()
-	err = sqlDB.Ping()
+	if err != nil {
+		log.Fatal("Error connecting to database ", err)
+		return nil
+	}
 
+	err = sqlDB.Ping()
 	if err != nil {
 		log.Fatal("Request Timeout ", err)
 		return nil
@@ -59,10 +63,19 @@ func InitDB() *gorm.DB {
 }
 
 func InitRedis() *redis.Client {
-	rdb = redis.NewClient(&redis.Options{
-		Addr:     EnvConfigs.ClientRedis,
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     EnvConfigs.ClientRedis + ":" + EnvConfigs.PortRedis,
 		Password: "",
 		DB:       0,
 	})
+
+	// Menguji koneksi Redis
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Fatalf("Failed to connect to Redis: %v", err)
+	}
+
+	log.Info("Connected Redis -- running in -- " + EnvConfigs.ClientRedis + ":" + EnvConfigs.PortRedis)
+
 	return rdb
 }

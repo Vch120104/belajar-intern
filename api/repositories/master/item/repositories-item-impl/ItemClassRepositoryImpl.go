@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -75,7 +76,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	defer rows.Close()
 
-	groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_name=" + groupName
+	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/filter-item-group?item_group_name=" + groupName
 
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
@@ -88,7 +89,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
-	lineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type?line_type_code=" + lineTypeCode
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/line-type?line_type_code=" + lineTypeCode
 
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 

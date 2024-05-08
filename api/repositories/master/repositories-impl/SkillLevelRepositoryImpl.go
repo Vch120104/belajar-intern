@@ -20,7 +20,7 @@ func StartSkillLevelRepositoryImpl() masterrepository.SkillLevelRepository {
 	return &SkillLevelRepositoryImpl{}
 }
 
-func (r *SkillLevelRepositoryImpl) GetAllSkilllevel(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *SkillLevelRepositoryImpl) GetAllSkillLevel(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.SkillLevel{}
 	responses := []masterpayloads.SkillLevelResponse{}
 
@@ -73,13 +73,35 @@ func (r *SkillLevelRepositoryImpl) GetSkillLevelById(tx *gorm.DB, Id int) (maste
 	return response, nil
 }
 
-func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, request masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *SkillLevelRepositoryImpl) GetSkillLevelByCode(tx *gorm.DB, Code string) (masterpayloads.SkillLevelResponse, *exceptionsss_test.BaseErrorResponse) {
+	entities := masterentities.SkillLevel{}
+	response := masterpayloads.SkillLevelResponse{}
 
+	rows, err := tx.Model(&entities).
+		Where(masterentities.SkillLevel{
+			SkillLevelCode: Code,
+		}).
+		First(&response).
+		Rows()
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	return response, nil
+}
+
+func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.SkillLevel{
-		IsActive:              request.IsActive,
-		SkillLevelId:          request.SkillLevelId,
-		SkillLevelCode:        request.SkillLevelCode,
-		SkillLevelDescription: request.SkillLevelDescription,
+		IsActive:              req.IsActive,
+		SkillLevelId:          req.SkillLevelId,
+		SkillLevelCode:        req.SkillLevelCode,
+		SkillLevelDescription: req.SkillLevelDescription,
 	}
 
 	err := tx.Save(&entities).Error

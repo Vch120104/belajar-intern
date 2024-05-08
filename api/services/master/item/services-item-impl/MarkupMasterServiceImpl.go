@@ -9,18 +9,21 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	redis "github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type MarkupMasterServiceImpl struct {
-	markupRepo masteritemrepository.MarkupMasterRepository
-	DB         *gorm.DB
+	markupRepo  masteritemrepository.MarkupMasterRepository
+	DB          *gorm.DB
+	RedisClient *redis.Client // Redis client
 }
 
-func StartMarkupMasterService(markupRepo masteritemrepository.MarkupMasterRepository, db *gorm.DB) masteritemservice.MarkupMasterService {
+func StartMarkupMasterService(markupRepo masteritemrepository.MarkupMasterRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.MarkupMasterService {
 	return &MarkupMasterServiceImpl{
-		markupRepo: markupRepo,
-		DB:         db,
+		markupRepo:  markupRepo,
+		DB:          db,
+		RedisClient: redisClient,
 	}
 }
 
@@ -39,6 +42,16 @@ func (s *MarkupMasterServiceImpl) GetMarkupMasterById(id int) (masteritempayload
 	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupMasterById(tx, id)
 
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *MarkupMasterServiceImpl) GetAllMarkupMasterIsActive() ([]masteritempayloads.MarkupMasterDropDownResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.markupRepo.GetAllMarkupMasterIsActive(tx)
 	if err != nil {
 		return results, err
 	}

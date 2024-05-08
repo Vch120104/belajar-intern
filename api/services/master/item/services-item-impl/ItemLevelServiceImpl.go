@@ -8,19 +8,35 @@ import (
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	masteritemlevelservice "after-sales/api/services/master/item"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type ItemLevelServiceImpl struct {
 	structItemLevelRepo masteritemlevelrepo.ItemLevelRepository
 	DB                  *gorm.DB
+	RedisClient         *redis.Client // Redis client
 }
 
-func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository, db *gorm.DB) masteritemlevelservice.ItemLevelService {
+func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository, db *gorm.DB, redisClient *redis.Client) masteritemlevelservice.ItemLevelService {
 	return &ItemLevelServiceImpl{
 		structItemLevelRepo: itemlevelrepo,
 		DB:                  db,
+		RedisClient:         redisClient,
 	}
+}
+
+// GetItemLevelDropDown implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.structItemLevelRepo.GetItemLevelDropDown(tx, itemLevel)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
 }
 
 func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse) {

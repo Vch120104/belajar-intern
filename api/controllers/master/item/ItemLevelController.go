@@ -24,6 +24,7 @@ type ItemLevelController interface {
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
+	GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLevelControllerImpl struct {
@@ -36,12 +37,26 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 	}
 }
 
+// GetItemLevelDropDown implements ItemLevelController.
+func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request) {
+	itemLevelId := chi.URLParam(request, "item_level")
+
+	get, err := r.itemLevelService.GetItemLevelDropDown(itemLevelId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+
+}
+
 // @Summary Get All Item Level
 // @Description Get All Item Level
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -53,8 +68,8 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Param item_level_code query string false "Item Level Code"
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-level/ [get]
 func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	page, _ := strconv.Atoi(queryValues.Get("page"))
@@ -95,11 +110,10 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level-by-id [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-level/by-id/{item_level_id} [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
@@ -119,11 +133,10 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-level/ [post]
 func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritemlevelpayloads.SaveItemLevelRequest
@@ -161,11 +174,10 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
 	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))

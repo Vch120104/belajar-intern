@@ -40,8 +40,8 @@ func NewForecastMasterController(forecastMasterService masterservice.ForecastMas
 // @Tags Master : Forecast Master
 // @Param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/forecast-master/{forecast_master_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/forecast-master/{forecast_master_id} [get]
 func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.ResponseWriter, request *http.Request) {
 
 	ForecastMasterId, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
@@ -62,8 +62,8 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 // @Tags Master : Forecast Master
 // @param reqBody body masterpayloads.ForecastMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/forecast-master [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/forecast-master/ [post]
 func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.ForecastMasterResponse
@@ -92,8 +92,8 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 // @Tags Master : Forecast Master
 // @param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/forecast-master/{forecast_master_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/forecast-master/{forecast_master_id} [patch]
 func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
 	forecast_master_id, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
@@ -124,8 +124,8 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/forecast-master [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/forecast-master/ [get]
 
 func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters

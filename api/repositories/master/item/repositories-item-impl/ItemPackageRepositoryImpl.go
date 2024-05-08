@@ -54,7 +54,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 
@@ -65,11 +65,12 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 	if errUrlItemPackage != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 
 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponses, "ItemGroupId")
+
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil

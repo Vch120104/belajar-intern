@@ -1,84 +1,183 @@
 package masteritemrepositoryimpl
 
-// import (
-// 	masteritementities "after-sales/api/entities/master/item"
-// 	exceptionsss_test "after-sales/api/expectionsss"
-// 	masteritempayloads "after-sales/api/payloads/master/item"
-// 	"after-sales/api/payloads/pagination"
-// 	masteritemrepository "after-sales/api/repositories/master/item"
-// 	"net/http"
+import (
+	masteritementities "after-sales/api/entities/master/item"
+	exceptionsss_test "after-sales/api/expectionsss"
+	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
+	masteritemrepository "after-sales/api/repositories/master/item"
+	"errors"
+	"net/http"
+	"strings"
 
-// 	"gorm.io/gorm"
-// )
+	"gorm.io/gorm"
+)
 
-// type ItemPackageDetailRepositoryImpl struct {
-// }
+type ItemPackageDetailRepositoryImpl struct {
+}
 
-// func StartItemPackageDetailRepositoryImpl() masteritemrepository.ItemPackageDetailRepository {
-// 	return &ItemPackageDetailRepositoryImpl{}
-// }
+// ChangeStatusItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
+func (r *ItemPackageDetailRepositoryImpl) ChangeStatusItemPackageDetail(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+	var entities masteritementities.ItemPackageDetail
 
-// func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx *gorm.DB, itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	result := tx.Model(&entities).
+		Where("item_package_detail_id = ?", id).
+		First(&entities)
 
-// 	// entities := masteritementities.ItemPackageDetail{}
-// 	model := masteritementities.ItemPackage{}
-// 	var responses []masteritempayloads.ItemPackageDetailResponse
-// 	// tableStruct := masteritempayloads.ItemPackageDetailResponse{}
+	if result.Error != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
 
-// 	query := tx.Model(&model).
-// 		Select(
-// 			"item_package_detail_id",
-// 			"ItemPackageDetail.is_active is_active",
-// 			"ItemPackageDetail.item_package_id item_package_id",
-// 			"ItemPackageDetail__Item.item_id item_id",
-// 			"ItemPackageDetail__Item.item_code item_code",
-// 			"ItemPackageDetail__Item.item_name item_name",
-// 			"ItemPackageDetail__Item.item_class_id item_class_id",
-// 			"ItemPackageDetail__Item__ItemClass.item_class_code item_class_code",
-// 			"ItemPackageDetail.quantity quantity",
-// 		).
-// 		Joins("ItemPackageDetail", tx.Select("1")).
-// 		Joins("ItemPackageDetail.Item", tx.Select("1")).
-// 		Joins("ItemPackageDetail.Item.ItemClass", tx.Select("1"))
+	if entities.IsActive {
+		entities.IsActive = false
+	} else {
+		entities.IsActive = true
+	}
 
-// 	rows, err := query.Scopes(pagination.Paginate(&model, &pages, query)).Scan(&responses).Rows()
+	result = tx.Save(&entities)
 
-// 	if err != nil {
-// 		return pages, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
+	if result.Error != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
 
-// 	if len(responses) == 0 {
-// 		return pages, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
+	return true, nil
+}
 
-// 	defer rows.Close()
+func StartItemPackageDetailRepositoryImpl() masteritemrepository.ItemPackageDetailRepository {
+	return &ItemPackageDetailRepositoryImpl{}
+}
 
-// 	pages.Rows = responses
+func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx *gorm.DB, itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 
-// 	return pages, nil
-// }
+	// entities := masteritementities.ItemPackageDetail{}
+	model := masteritementities.ItemPackage{}
+	var responses []masteritempayloads.ItemPackageDetailResponse
+	// tableStruct := masteritempayloads.ItemPackageDetailResponse{}
 
-// func (r *ItemPackageDetailRepositoryImpl) SaveItemPackageDetailByItemPackageId(tx *gorm.DB, itemPackageId int, req masteritempayloads.ItemSubstitutePostPayloads) (bool, *exceptionsss_test.BaseErrorResponse) {
-// 	entities := masteritementities.ItemSubstitute{
-// 		SubstituteTypeCode: req.SubstituteTypeCode,
-// 		ItemSubstituteId:   req.ItemSubstituteId,
-// 		EffectiveDate:      req.EffectiveDate,
-// 		ItemId:             req.ItemId,
-// 	}
-// 	err := tx.Save(&entities).Error
+	query := tx.Model(&model).
+		Select(
+			"item_package_detail_id",
+			"ItemPackageDetail.is_active is_active",
+			"ItemPackageDetail.item_package_id item_package_id",
+			"ItemPackageDetail__Item.item_id item_id",
+			"ItemPackageDetail__Item.item_code item_code",
+			"ItemPackageDetail__Item.item_name item_name",
+			"ItemPackageDetail__Item.item_class_id item_class_id",
+			"ItemPackageDetail__Item__ItemClass.item_class_code item_class_code",
+			"ItemPackageDetail.quantity quantity",
+		).
+		InnerJoins("ItemPackageDetail", tx.Select("1")).
+		InnerJoins("ItemPackageDetail.Item", tx.Select("1")).
+		InnerJoins("ItemPackageDetail.Item.ItemClass", tx.Select("1"))
 
-// 	if err != nil {
-// 		return false, &exceptionsss_test.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
+	rows, err := query.Scopes(pagination.Paginate(&model, &pages, query)).Scan(&responses).Rows()
 
-// 	return true, nil
-// }
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
+	defer rows.Close()
+
+	pages.Rows = responses
+
+	return pages, nil
+}
+
+func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailById(tx *gorm.DB, itemPackageDetailId int) (masteritempayloads.ItemPackageDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+	model := masteritementities.ItemPackage{}
+	response := masteritempayloads.ItemPackageDetailResponse{}
+
+	query := tx.Model(&model).
+		Select(
+			"item_package_detail_id",
+			"ItemPackageDetail.is_active is_active",
+			"ItemPackageDetail.item_package_id item_package_id",
+			"ItemPackageDetail__Item.item_id item_id",
+			"ItemPackageDetail__Item.item_code item_code",
+			"ItemPackageDetail__Item.item_name item_name",
+			"ItemPackageDetail__Item.item_class_id item_class_id",
+			"ItemPackageDetail__Item__ItemClass.item_class_code item_class_code",
+			"ItemPackageDetail.quantity quantity",
+		).
+		InnerJoins("ItemPackageDetail", tx.Where(masteritementities.ItemPackageDetail{
+			ItemPackageDetailId: itemPackageDetailId,
+		})).
+		InnerJoins("ItemPackageDetail.Item", tx.Select("1")).
+		InnerJoins("ItemPackageDetail.Item.ItemClass", tx.Select("1"))
+
+	rows, err := query.First(&response).Rows()
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	return response, nil
+}
+
+func (r *ItemPackageDetailRepositoryImpl) CreateItemPackageDetailByItemPackageId(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptionsss_test.BaseErrorResponse) {
+
+	entities := masteritementities.ItemPackageDetail{
+		IsActive:      req.IsActive,
+		ItemPackageId: req.ItemPackageId,
+		ItemId:        req.ItemId,
+		Quantity:      req.Quantity,
+	}
+
+	err := tx.Create(&entities).Error
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+func (r *ItemPackageDetailRepositoryImpl) UpdateItemPackageDetailByItemPackageId(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteritementities.ItemPackageDetail{
+		ItemPackageDetailId: req.ItemPackageDetailId,
+		Quantity:            req.Quantity,
+	}
+
+	err := tx.Updates(&entities).Error
+
+	if err != nil {
+
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}

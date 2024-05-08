@@ -42,12 +42,12 @@ func NewIncentiveGroupDetailController(IncentiveGroupDetailService masterservice
 // @Tags Master : Incentive Group Detail
 // @Param page query string true "page"
 // @Param limit query string true "limit"
-// @Param incentive_group_id path string true "incentive_group_id"
+// @Param id path int true "incentive_group_id"  // Update this line
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/incentive-group-detail/by-header-id/ [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/incentive-group-detail/by-header-id/{id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	IncentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "id"))
@@ -73,11 +73,11 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 // @Accept json
 // @Produce json
 // @Tags Master : Incentive Group Detail
-// @param reqBody body masterpayloads.IncentiveGroupDetailResponse true "Form Request"
-// @param incentive_group_id_detail path int true "incentive_group_id_detail"
+// @Param reqBody body masterpayloads.IncentiveGroupDetailResponse true "Form Request"
+// @Param incentive_group_id_detail path int true "incentive_group_id_detail"  // Update this line
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/incentive-group-detail [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/incentive-group-detail/{incentive_group_id_detail} [post]
 func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var incentiveGroupDetailRequest masterpayloads.IncentiveGroupDetailRequest
@@ -115,8 +115,8 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 // @Tags Master : Incentive Group Detail
 // @Param incentive_group_detail_id path string true "incentive_group_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/incentive-group-detail/by-detail-id/{incentive_group_detail_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/incentive-group-detail/by-detail-id/{incentive_group_detail_id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request) {
 	// IncentiveGrouDetailId, _ := strconv.Atoi(params.ByName("incentive_group_detail_id"))
 	IncentiveGrouDetailId, err := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))

@@ -9,18 +9,21 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type ShiftScheduleServiceImpl struct {
 	ShiftScheduleRepo masterrepository.ShiftScheduleRepository
 	DB                *gorm.DB
+	RedisClient       *redis.Client // Redis client
 }
 
-func StartShiftScheduleService(ShiftScheduleRepo masterrepository.ShiftScheduleRepository, db *gorm.DB) masterservice.ShiftScheduleService {
+func StartShiftScheduleService(ShiftScheduleRepo masterrepository.ShiftScheduleRepository, db *gorm.DB, redisClient *redis.Client) masterservice.ShiftScheduleService {
 	return &ShiftScheduleServiceImpl{
 		ShiftScheduleRepo: ShiftScheduleRepo,
 		DB:                db,
+		RedisClient:       redisClient,
 	}
 }
 
@@ -36,14 +39,14 @@ func StartShiftScheduleService(ShiftScheduleRepo masterrepository.ShiftScheduleR
 // 	return get
 // }
 
-func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.ShiftScheduleResponse,*exceptionsss_test.BaseErrorResponse) {
+func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.ShiftScheduleResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, id)
 	if err != nil {
-		return results,err
+		return results, err
 	}
-	return results,nil
+	return results, nil
 }
 
 // func (s *ShiftScheduleServiceImpl) GetShiftScheduleByCode(Code string) masterpayloads.ShiftScheduleResponse {
@@ -56,34 +59,34 @@ func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.
 // 	return results
 // }
 
-func (s *ShiftScheduleServiceImpl) GetAllShiftSchedule(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse) {
+func (s *ShiftScheduleServiceImpl) GetAllShiftSchedule(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ShiftScheduleRepo.GetAllShiftSchedule(tx, filterCondition, pages)
 	if err != nil {
-		return results,err
+		return results, err
 	}
-	return results,nil
+	return results, nil
 }
 
-func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool,*exceptionsss_test.BaseErrorResponse) {
+func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, oprId)
 
 	if err != nil {
-		return false,err
+		return false, err
 	}
 
 	results, err := s.ShiftScheduleRepo.ChangeStatusShiftSchedule(tx, oprId)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return results,nil
+	return results, nil
 }
 
-func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftScheduleResponse) (bool,*exceptionsss_test.BaseErrorResponse) {
+func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftScheduleResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -91,13 +94,13 @@ func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftSch
 		_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, req.ShiftScheduleId)
 
 		if err != nil {
-			return false,err
+			return false, err
 		}
 	}
 
 	results, err := s.ShiftScheduleRepo.SaveShiftSchedule(tx, req)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return results,nil
+	return results, nil
 }

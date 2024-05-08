@@ -9,18 +9,21 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type UnitOfMeasurementServiceImpl struct {
 	unitOfMeasurementRepo masteritemrepository.UnitOfMeasurementRepository
 	DB                    *gorm.DB
+	RedisClient           *redis.Client // Redis client
 }
 
-func StartUnitOfMeasurementService(unitOfMeasurementRepo masteritemrepository.UnitOfMeasurementRepository, db *gorm.DB) masteritemservice.UnitOfMeasurementService {
+func StartUnitOfMeasurementService(unitOfMeasurementRepo masteritemrepository.UnitOfMeasurementRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.UnitOfMeasurementService {
 	return &UnitOfMeasurementServiceImpl{
 		unitOfMeasurementRepo: unitOfMeasurementRepo,
 		DB:                    db,
+		RedisClient:           redisClient,
 	}
 }
 

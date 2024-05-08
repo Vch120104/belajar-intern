@@ -9,18 +9,21 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type IncentiveGroupServiceImpl struct {
 	IncentiveGroupRepository masterrepository.IncentiveGroupRepository
 	DB                       *gorm.DB
+	RedisClient              *redis.Client // Redis client
 }
 
-func StartIncentiveGroupService(IncentiveGroupRepository masterrepository.IncentiveGroupRepository, db *gorm.DB) masterservice.IncentiveGroupService {
+func StartIncentiveGroupService(IncentiveGroupRepository masterrepository.IncentiveGroupRepository, db *gorm.DB, redisClient *redis.Client) masterservice.IncentiveGroupService {
 	return &IncentiveGroupServiceImpl{
 		IncentiveGroupRepository: IncentiveGroupRepository,
 		DB:                       db,
+		RedisClient:              redisClient,
 	}
 }
 
