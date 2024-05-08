@@ -12,6 +12,7 @@ import (
 
 	masteritemservice "after-sales/api/services/master/item"
 	"net/http"
+	"net/url"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -99,30 +100,30 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/item/pop-up [get]
+// @Router /v1/item/lookup [get]
 func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"item_code":       queryValues.Get("item_code"),
-		"item_name":       queryValues.Get("item_name"),
-		"item_type":       queryValues.Get("item_type"),
-		"item_group_code": queryValues.Get("item_group_code"),
-		"item_class_code": queryValues.Get("item_class_code"),
-		"supplier_code":   queryValues.Get("supplier_code"),
-		"supplier_name":   queryValues.Get("supplier_name"),
-		"is_active":       queryValues.Get("is_active"),
-		"sort_of":         queryValues.Get("sort_of"),
-		"sort_by":         queryValues.Get("sort_by"),
-		"limit":           queryValues.Get("limit"),
-		"page":            queryValues.Get("page"),
+		"mtr_item.item_group_id": queryValues.Get("item_group_id"),
+		"mtr_item.item_class_id": queryValues.Get("item_class_id"),
 	}
 
-	result, err := r.itemservice.GetAllItemLookup(queryParams)
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, totalPages, totalRows, err := r.itemservice.GetAllItemLookup(criteria, paginate)
+
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, 0, 0, int64(0), 0)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Item With MultiId
@@ -161,7 +162,10 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 
 	itemCode := chi.URLParam(request, "item_code")
 
-	result, err := r.itemservice.GetItemCode(itemCode)
+	// Melakukan URL encoding pada item_code
+	encodedItemCode := url.PathEscape(itemCode)
+
+	result, err := r.itemservice.GetItemCode(encodedItemCode)
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return

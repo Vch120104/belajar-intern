@@ -9,6 +9,7 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"net/http"
+	"net/url"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -41,17 +42,17 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemLookup(queryParams map[string]string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemLookup(queryParams []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetAllItemLookup(tx, queryParams)
+	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, queryParams, pages)
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    err.Error(),
 		}
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
@@ -81,9 +82,12 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 }
 
 func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+	// Melakukan URL encoding pada parameter code
+	encodedCode := url.PathEscape(code)
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetItemCode(tx, code)
+	results, err := s.itemRepo.GetItemCode(tx, encodedCode) // Menggunakan kode yang telah diencode
 	if err != nil {
 		return nil, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

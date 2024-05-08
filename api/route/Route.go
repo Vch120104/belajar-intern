@@ -305,34 +305,30 @@ func StartRouting(db *gorm.DB) {
 		//r.Mount("/work-info-massage", WorkInfoRouter)
 		r.Mount("/field-action", FieldActionRouter)
 		r.Mount("/item-level", itemLevelRouter)
-		// mux.Handle("/operation-group/", OperationGroupRouter)
 		r.Mount("/operation-group", OperationGroupRouter)
 		r.Mount("/incentive", IncentiveMasterRouter)
 		r.Mount("/bom", BomRouter)
 		r.Mount("/deduction", DeductionRouter)
-		r.Mount("/item-package", itemPackageRouter)              //null value
-		r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
-		r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
+		r.Mount("/item-package", itemPackageRouter)
+		r.Mount("/item-package-detail", itemPackageDetailRouter)
+		r.Mount("/item", itemRouter)
 		r.Mount("/item-substitute", ItemSubstituteRouter)
 		r.Mount("/item-model-mapping", ItemModelMappingRouter)
 		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/incentive-group", IncentiveGroupRouter)
-		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter) //method notalowed
+		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/operation-code", OperationCodeRouter)
 		r.Mount("/operation-section", OperationSectionRouter)
 		r.Mount("/operation-key", OperationKeyRouter)
 		r.Mount("/operation-entries", OperationEntriesRouter)
 		r.Mount("/discount", DiscountRouter)
-		r.Mount("/markup-rate", MarkupRateRouter)         //error Could not get response
-		r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
+		r.Mount("/markup-rate", MarkupRateRouter)
+		r.Mount("/warehouse-group", WarehouseGroupRouter)
 		r.Mount("/warehouse-location", WarehouseLocation)
 		r.Mount("/warehouse-master", WarehouseMaster)
-		r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 		r.Mount("/shift-schedule", ShiftScheduleRouter)
-		r.Mount("/price-list", priceListRouter) //null value
+		r.Mount("/price-list", priceListRouter)
 		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
-		//prometheus route
-		r.Mount("/metrics", promhttp.Handler())
 
 		/* Transaction */
 		r.Mount("/work-order", WorkOrderRouter)

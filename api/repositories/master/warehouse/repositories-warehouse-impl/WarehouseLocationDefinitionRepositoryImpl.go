@@ -3,6 +3,7 @@ package masterwarehouserepositoryimpl
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 
+	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -125,7 +126,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	//fmt.Println("Warehouse Location Definition Level ID:", warehouseLocationDefinitionLevelId)
 
 	// Fetch warehouse location definition level data from external service
-	whLevelUrl := "http://localhost:8000/v1/warehouse-location-definition/popup-level?warehouse_location_definition_level_id=" + strconv.Itoa(warehouseLocationDefinitionLevelId)
+	whLevelUrl := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-location-definition/popup-level?warehouse_location_definition_level_id=" + strconv.Itoa(warehouseLocationDefinitionLevelId)
 	//fmt.Println("Warehouse Location Definition Level URL:", whLevelUrl)
 	err = utils.Get(whLevelUrl, &getWhLevelResponse, nil)
 	if err != nil {
