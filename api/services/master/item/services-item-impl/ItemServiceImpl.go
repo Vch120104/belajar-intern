@@ -2,7 +2,6 @@ package masteritemserviceimpl
 
 import (
 	exceptionsss_test "after-sales/api/expectionsss"
-	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -45,7 +44,7 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 func (s *ItemServiceImpl) GetAllItemLookup(queryParams map[string]string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, internalFilterCondition, externalFilterCondition, pages)
+	results, err := s.itemRepo.GetAllItemLookup(tx, queryParams)
 	if err != nil {
 		return nil, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -55,7 +54,6 @@ func (s *ItemServiceImpl) GetAllItemLookup(queryParams map[string]string) ([]map
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
 func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -67,10 +65,8 @@ func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, 
 		}
 	}
 	return result, nil
-	return result, nil
 }
 
-func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
 func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -82,10 +78,8 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 		}
 	}
 	return result, nil
-	return result, nil
 }
 
-func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
 func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -97,10 +91,8 @@ func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *e
 		}
 	}
 	return results, nil
-	return results, nil
 }
 
-func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -123,10 +115,8 @@ func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, *
 		}
 	}
 	return results, nil
-	return results, nil
 }
 
-func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -146,6 +136,5 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.Bas
 			Message:    err.Error(),
 		}
 	}
-	return results, nil
 	return results, nil
 }
