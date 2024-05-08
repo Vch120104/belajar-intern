@@ -1,12 +1,15 @@
 package mastercontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -15,102 +18,136 @@ import (
 
 type MovingCodeController interface {
 	GetAllMovingCode(writer http.ResponseWriter, request *http.Request)
-	SaveMovingCode(writer http.ResponseWriter, request *http.Request)
-	ChangePriorityMovingCode(writer http.ResponseWriter, request *http.Request)
+	PushMovingCodePriority(writer http.ResponseWriter, request *http.Request)
+	CreateMovingCode(writer http.ResponseWriter, request *http.Request)
+	UpdateMovingCode(writer http.ResponseWriter, request *http.Request)
+	GetMovingCodebyId(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request)
 }
+
 type MovingCodeControllerImpl struct {
 	MovingCodeService masterservice.MovingCodeService
+}
+
+// ChangeStatusMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+
+	response, err := r.MovingCodeService.ChangeStatusMovingCode(id)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
+}
+
+// CreateMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masterpayloads.MovingCodeListRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.MovingCodeService.CreateMovingCode(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
+}
+
+// GetAllMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: "Priority",
+		SortBy: "asc",
+	}
+
+	paginatedData, totalPages, totalRows, err := r.MovingCodeService.GetAllMovingCode(paginate)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+
+}
+
+// GetMovingCodebyId implements MovingCodeController.
+func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter, request *http.Request) {
+	movingCodeId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+
+	result, err := r.MovingCodeService.GetMovingCodebyId(movingCodeId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// PushMovingCodePriority implements MovingCodeController.
+func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWriter, request *http.Request) {
+	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+	result, err := r.MovingCodeService.PushMovingCodePriority(itemPackageId)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Push Priority Successfull!", http.StatusOK)
+}
+
+// UpdateMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) UpdateMovingCode(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masterpayloads.MovingCodeListRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.MovingCodeService.UpdateMovingCode(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Update Data Successfully!", http.StatusOK)
 }
 
 func NewMovingCodeController(MovingCodeService masterservice.MovingCodeService) MovingCodeController {
 	return &MovingCodeControllerImpl{
 		MovingCodeService: MovingCodeService,
 	}
-}
-
-// @Summary Get All Moving Code
-// @Description REST API Moving Code
-// @Accept json
-// @Produce json
-// @Tags Master : Moving Code
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/moving-code/ [get]
-func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	pagination := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: "asc",
-		SortBy: "priority",
-	}
-
-	result := r.MovingCodeService.GetAllMovingCode(pagination)
-
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
-}
-
-// @Summary Save Moving Code
-// @Description REST API Moving Code
-// @Accept json
-// @Produce json
-// @Tags Master : Moving Code
-// @param reqBody body masterpayloads.MovingCodeResponse true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/moving-code/ [post]
-func (r *MovingCodeControllerImpl) SaveMovingCode(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masterpayloads.MovingCodeRequest
-	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
-
-	create := r.MovingCodeService.SaveMovingCode(formRequest)
-
-	if formRequest.MovingCodeId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
-}
-
-// @Summary Change Status Moving Code
-// @Description REST API Moving Code
-// @Accept json
-// @Produce json
-// @Tags Master : Moving Code
-// @param moving_code_id path int true "moving_code_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/moving-code/priority-increase/{moving_code_id} [patch]
-func (r *MovingCodeControllerImpl) ChangePriorityMovingCode(writer http.ResponseWriter, request *http.Request) {
-
-	MovingCodeId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
-
-	response := r.MovingCodeService.ChangePriorityMovingCode(int(MovingCodeId))
-
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
-}
-
-// @Summary Change Status Moving Code
-// @Description REST API Moving Code
-// @Accept json
-// @Produce json
-// @Tags Master : Moving Code
-// @param moving_code_id path int true "moving_code_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/moving-code/activation/{moving_code_id} [patch]
-func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
-
-	MovingCodeId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
-
-	response := r.MovingCodeService.ChangeStatusMovingCode(int(MovingCodeId))
-
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

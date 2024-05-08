@@ -21,6 +21,11 @@ type GetItemLevelResponse struct {
 	ItemLevelName   string `json:"item_level_name"`
 }
 
+type GetItemLevelDropdownResponse struct {
+	ItemLevelId     int    `json:"item_level_id"`
+	ItemLevelParent string `json:"item_level_parent"`
+}
+
 type GetItemLevelResponseById struct {
 	IsActive        bool   `json:"is_active"`
 	ItemLevelId     int    `json:"item_level_id"`
