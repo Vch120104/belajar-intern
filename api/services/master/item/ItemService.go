@@ -15,4 +15,8 @@ type ItemService interface {
 	GetItemCode(string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse)
 	SaveItem(masteritempayloads.ItemResponse) (bool, *exceptionsss_test.BaseErrorResponse)
 	ChangeStatusItem(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetItemDetailById(int, int) (masteritempayloads.ItemDetailRequest, *exceptionsss_test.BaseErrorResponse)
+	AddItemDetail(int, masteritempayloads.ItemDetailRequest) *exceptionsss_test.BaseErrorResponse
+	DeleteItemDetail(int, int) *exceptionsss_test.BaseErrorResponse
 }

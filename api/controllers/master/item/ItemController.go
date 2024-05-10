@@ -24,6 +24,10 @@ type ItemController interface {
 	GetItemByCode(writer http.ResponseWriter, request *http.Request)
 	SaveItem(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItem(writer http.ResponseWriter, request *http.Request)
+	GetAllItemDetail(writer http.ResponseWriter, request *http.Request)
+	GetItemDetailById(writer http.ResponseWriter, request *http.Request)
+	AddItemDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteItemDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
@@ -222,4 +226,112 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
+}
+
+// @Summary Get All Detail Item
+// @Description Retrieve all detail items from an items by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item
+// @Param item_id path int true "Item ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/{item_id}/detail [get]
+func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"mtr_item.item_id":               queryValues.Get("item_id"),
+		"mtr_item_detail.item_detail_id": queryValues.Get("item_detail_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	data, totalPages, totalRows, err := r.itemservice.GetAllItemDetail(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Get Detail Item By Id
+// @Description Retrieve a detail item from an item by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item
+// @Param item_id path int true "Item ID"
+// @Param item_detail_id path int true "Item Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/{item_id}/detail/{item_detail_id} [get]
+func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, request *http.Request) {
+	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+
+	result, err := r.itemservice.GetItemDetailById(int(itemID), int(itemDetailID))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Add Item Detail
+// @Description Add a new item detail to an item by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item
+// @Param item_id path int true "Item ID"
+// @Param reqBody body masteritempayloads.ItemDetailRequest true "Item Detail Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/{item_id}/detail [post]
+func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *http.Request) {
+	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	var itemRequest masteritempayloads.ItemDetailRequest
+	helper.ReadFromRequestBody(request, &itemRequest)
+
+	if err := r.itemservice.AddItemDetail(int(itemID), itemRequest); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Item detail added successfully", http.StatusOK)
+}
+
+// @Summary Delete Item Detail
+// @Description Delete an item detail from an item by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Item
+// @Param item_id path int true "Item ID"
+// @Param item_detail_id path int true "Item Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/{item_id}/detail/{item_detail_id} [delete]
+func (r *ItemControllerImpl) DeleteItemDetail(writer http.ResponseWriter, request *http.Request) {
+	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+
+	if err := r.itemservice.DeleteItemDetail(int(itemID), int(itemDetailID)); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Item detail deleted successfully", http.StatusOK)
 }

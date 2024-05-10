@@ -142,3 +142,43 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.Bas
 	}
 	return results, nil
 }
+
+func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.itemRepo.GetAllItemDetail(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masteritempayloads.ItemDetailRequest, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetItemDetailById(tx, itemID, itemDetailID)
+	if err != nil {
+		return masteritempayloads.ItemDetailRequest{}, err
+	}
+	return result, nil
+}
+
+func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.itemRepo.AddItemDetail(tx, id, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptionsss_test.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.itemRepo.DeleteItemDetail(tx, id, itemDetailID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

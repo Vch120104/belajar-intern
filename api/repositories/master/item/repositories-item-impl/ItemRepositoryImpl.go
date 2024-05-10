@@ -3,6 +3,7 @@ package masteritemrepositoryimpl
 import (
 	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -11,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -434,71 +436,6 @@ func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, error)
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, error) {
-	// var responses []masteritempayloads.ItemDetailResponse
-	entities := []masteritementities.ItemClass{}
-	var responses []masteritempayloads.ItemClassResponse
-	// var getLineTypeResponse []masteritempayloads.LineTypeResponse
-	// var getItemGroupResponse []masteritempayloads.ItemGroupResponse
-	// var c *gin.Context
-	// var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	// var groupName, lineTypeCode string
-	// responseStruct := reflect.TypeOf(masteritempayloads.ItemClassResponse{})
-
-	// for i := 0; i < len(filterCondition); i++ {
-	// 	flag := false
-	// 	for j := 0; j < responseStruct.NumField(); j++ {
-	// 		if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-	// 			internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-	// 			flag = true
-	// 			break
-	// 		}
-	// 		if !flag {
-	// 			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-	// 		}
-	// 	}
-	// }
-
-	// //apply external services filter
-	// for i := 0; i < len(externalServiceFilter); i++ {
-	// 	if strings.Contains(externalServiceFilter[i].ColumnField, "line_type_code") {
-	// 		lineTypeCode = externalServiceFilter[i].ColumnValue
-	// 	} else {
-	// 		groupName = externalServiceFilter[i].ColumnValue
-	// 	}
-	// }
-
-	//define base model
-	baseModelQuery := tx.Model(&entities)
-	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//whereQuery := utils.ApplyFilter(baseModelQuery, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	if len(responses) == 0 {
-		return nil, gorm.ErrRecordNotFound
-	}
-
-	// groupServiceUrl := ""
-
-	// errUrlItemGroup := utils.Get(c, groupServiceUrl, &getItemGroupResponse, nil)
-
-	// if errUrlItemGroup != nil {
-	// 	return nil, errUrlItemGroup
-	// }
-
-	// joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
-
-	return nil, nil
-}
-
 func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempayloads.ItemDetailResponse) (bool, error) {
 	entities := masteritementities.ItemDetail{
 		IsActive:     request.IsActive,
@@ -518,4 +455,144 @@ func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempaylo
 	}
 
 	return true, nil
+}
+
+func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// Define a slice to hold Item Detail responses
+	var responses []masteritempayloads.ItemDetailResponse
+
+	// Define table struct
+	tableStruct := masteritempayloads.ItemDetailRequest{}
+
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over rows
+	for rows.Next() {
+		// Define variables to hold row data
+		var ItemDetailRes masteritempayloads.ItemDetailRequest
+
+		// Scan the row into ItemDetailResponse struct
+		if err := rows.Scan(
+			&ItemDetailRes.ItemDetailId,
+			&ItemDetailRes.ItemId,
+			&ItemDetailRes.BrandId,
+			&ItemDetailRes.MillageEvery,
+			&ItemDetailRes.ModelId,
+			&ItemDetailRes.IsActive,
+			&ItemDetailRes.ReturnEvery,
+			&ItemDetailRes.VariantId); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		// Convert DiscountGroupResponse to map
+		responseMap := map[string]interface{}{
+			"item_id":        ItemDetailRes.ItemId,
+			"item_detail_id": ItemDetailRes.ItemDetailId,
+			"brand_id":       ItemDetailRes.BrandId,
+			"model_id":       ItemDetailRes.ModelId,
+			"variant_id":     ItemDetailRes.VariantId,
+			"is_active":      ItemDetailRes.IsActive,
+			"millage_every":  ItemDetailRes.MillageEvery,
+			"return_every":   ItemDetailRes.ReturnEvery,
+		}
+
+		// Append responseMap to the slice
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *ItemRepositoryImpl) GetItemDetailById(tx *gorm.DB, ItemId, ItemDetailId int) (masteritempayloads.ItemDetailRequest, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteritementities.ItemDetail{}
+	response := masteritempayloads.ItemDetailRequest{}
+
+	err := tx.Model(&entities).
+		Where(masteritementities.ItemDetail{
+			ItemDetailId: ItemDetailId,
+			ItemId:       ItemId,
+		}).
+		First(&entities).
+		Error
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.ItemDetailId = entities.ItemDetailId
+	response.ItemId = entities.ItemId
+	response.BrandId = entities.BrandId
+	response.ModelId = entities.ModelId
+	response.VariantId = entities.VariantId
+	response.MillageEvery = entities.MillageEvery
+	response.ReturnEvery = entities.ReturnEvery
+	response.IsActive = entities.IsActive
+
+	return response, nil
+}
+
+func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailRequest) *exceptionsss_test.BaseErrorResponse {
+	entities := masteritementities.ItemDetail{
+		ItemId:       ItemId,
+		BrandId:      req.BrandId,
+		ModelId:      req.ModelId,
+		VariantId:    req.VariantId,
+		MillageEvery: req.MillageEvery,
+		ReturnEvery:  req.ReturnEvery,
+		IsActive:     req.IsActive,
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return nil
+}
+
+func (r *ItemRepositoryImpl) DeleteItemDetail(tx *gorm.DB, ItemId int, ItemDetailId int) *exceptionsss_test.BaseErrorResponse {
+	var entities masteritementities.ItemDetail
+
+	result := tx.Model(&entities).
+		Where("item_id = ? AND item_detail_id = ?", ItemId, ItemDetailId).
+		Delete(&entities)
+
+	if result.Error != nil {
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return nil
 }
