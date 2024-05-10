@@ -1,4 +1,3 @@
-
 package masterpayloads
 
 type PackageMasterDetailItem struct {
@@ -28,8 +27,8 @@ type PackageMasterCombinedData struct {
 	PackageDetailItemId        int     `json:"package_detail_item_id"`
 	PackageId                  int     `json:"package_id"`
 	LineTypeId                 int     `json:"line_type_id"`
-	ItemOperationCode          string  `json:"item_operation_code"`
-	ItemOperationName          string  `json:"item_operation_name"`
+	ItemId                     int     `json:"item_id"`
+	OperationId                int     `json:"operation_id"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id"`
 	JobTypeId                  int     `json:"job_type_id"`
@@ -48,7 +47,7 @@ type PackageMasterDetailWorkshop struct {
 	IsActive                   bool    `json:"is_active"`
 	PackageDetailItemId        int     `json:"package_detail_item_id"`
 	PackageId                  int     `json:"package_id"`
-	LineTypeId                 int     `json:"line_type_id"`	
+	LineTypeId                 int     `json:"line_type_id"`
 	ItemOperationId            int     `json:"item_operation_id"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id"`
