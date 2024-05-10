@@ -2,6 +2,8 @@ package migration
 
 import (
 	"after-sales/api/config"
+	// masterentities "after-sales/api/entities/master"
+	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 
 	masterentities "after-sales/api/entities/master"
 	//masteritementities "after-sales/api/entities/master/item"
@@ -69,7 +71,26 @@ func Migrate() {
 		// &masteroperationentities.OperationKey{},
 		// &masteroperationentities.OperationEntries{},
 		// &masteroperationentities.OperationCode{},
-
+		// &masteroperationentities.OperationModelMapping{},
+		// &masteritementities.ItemClass{},
+		// &masteritementities.Discount{},
+		// &masteritementities.MarkupMaster{},
+		// &masteritementities.PrincipleBrandParent{},
+		// &masteritementities.UomType{},
+		// &masteritementities.Item{},
+		// &masteritementities.PriceList{},
+		// &masteritementities.ItemDetail{},
+		// &masteritementities.DiscountPercent{},
+		// &masterentities.IncentiveGroup{},
+		// &masteritementities.ItemSubstitute{},
+		// &masteritementities.ItemSubstituteDetail{},
+		// &masterentities.ForecastMaster{},
+		// &masterentities.MovingCode{},
+		// &mastercampaignmasterentities.CampaignMaster{},
+		// &mastercampaignmasterentities.CampaignMasterDetail{},
+		// &masterentities.PackageMaster{},
+		// &masteritementities.ItemPackage{},
+		// &masteritementities.ItemPackageDetail{},
 		// &masterwarehouseentities.WarehouseGroup{},
 		// &masterwarehouseentities.WarehouseMaster{},
 		// &masterwarehouseentities.WarehouseLocation{},
@@ -124,7 +145,6 @@ func Migrate() {
 		&masterentities.AgreementDiscount{},
 		&masterentities.AgreementDiscountGroupDetail{},
 		&masterentities.AgreementItemDetail{},
-
 		// &transactionentities.SupplySlip{},
 		// &transactionentities.SupplySlipDetail{},
 		// &transactionworkshopentities.WorkOrder{},

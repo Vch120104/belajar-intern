@@ -49,6 +49,24 @@ func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterC
 	return results, nil
 }
 
+func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	if req.SkillLevelId != 0 {
+		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
+		if err != nil {
+			return false, err
+		}
+	}
+
+	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}
+
 func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -64,23 +82,4 @@ func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exception
 		return results, err
 	}
 	return true, nil
-}
-
-func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-
-	if req.SkillLevelId != 0 {
-		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
-
-		if err != nil {
-			return false, err
-		}
-	}
-
-	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
-	if err != nil {
-		return results, err
-	}
-	return results, nil
 }
