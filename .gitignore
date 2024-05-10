@@ -78,3 +78,4 @@ yarn-error.log*
 next-env.d.ts
 
 */webapp-service/
+.air.toml

@@ -2,8 +2,11 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
+	"errors"
+	"net/http"
 	"strconv"
 
 	"gorm.io/gorm"
@@ -16,7 +19,7 @@ func StartPriceListRepositoryImpl() masteritemrepository.PriceListRepository {
 	return &PriceListRepositoryImpl{}
 }
 
-func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error) {
+func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
 	var responses []masteritempayloads.PriceListResponse
 
 	tempRows := tx.
@@ -55,7 +58,17 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request master
 		Rows()
 
 	if err != nil {
-		return responses, err
+		return responses, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		return responses, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
 	}
 
 	defer rows.Close()
@@ -63,7 +76,7 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request master
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, error) {
+func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
 	var responses []masteritempayloads.PriceListResponse
 	var idMaps = make(map[string][]string)
 
@@ -123,7 +136,17 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 		Rows()
 
 	if err != nil {
-		return responses, err
+		return responses, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		return responses, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
 	}
 
 	for _, response := range responses {
@@ -138,19 +161,29 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListResponse, error) {
+func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.PriceList{}
 	response := masteritempayloads.PriceListResponse{}
 
 	rows, err := tx.Model(&entities).
 		Where(masteritementities.PriceList{
-			PriceListId: int32(Id),
+			PriceListId: Id,
 		}).
 		First(&response).
 		Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if response != (masteritempayloads.PriceListResponse{}) {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -158,7 +191,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	return response, nil
 }
 
-func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, error) {
+func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.PriceList{
 		IsActive:            request.IsActive,
 		PriceListId:         request.PriceListId,
@@ -179,13 +212,16 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, err
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
 	}
 
 	return true, nil
 }
 
-func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, error) {
+func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masteritementities.PriceList
 
 	result := tx.Model(&entities).
@@ -193,7 +229,10 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bo
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -205,7 +244,10 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bo
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil

@@ -2,10 +2,12 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"net/http"
 
 	"gorm.io/gorm"
 )
@@ -17,7 +19,7 @@ func StartShiftScheduleRepositoryImpl() masterrepository.ShiftScheduleRepository
 	return &ShiftScheduleRepositoryImpl{}
 }
 
-func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masterentities.ShiftSchedule{}
 	//define base model
 	baseModelQuery := tx.Model(&entities)
@@ -27,11 +29,17 @@ func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondi
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
 	if len(entities) == 0 {
-		return pages, gorm.ErrRecordNotFound
+		return pages,  &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	if err != nil {
-		return pages, err
+		return pages,  &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -54,7 +62,7 @@ func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondi
 // 	return response, nil
 // }
 
-func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (masterpayloads.ShiftScheduleResponse, error) {
+func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (masterpayloads.ShiftScheduleResponse, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.ShiftSchedule{}
 	response := masterpayloads.ShiftScheduleResponse{}
 
@@ -66,7 +74,10 @@ func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (m
 		Rows()
 
 	if err != nil {
-		return response, err
+		return response,  &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -94,7 +105,7 @@ func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (m
 // 	return response, nil
 // }
 
-func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpayloads.ShiftScheduleResponse) (bool, error) {
+func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpayloads.ShiftScheduleResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.ShiftSchedule{
 		IsActive:        req.IsActive,
 		ShiftScheduleId: req.ShiftScheduleId,
@@ -120,13 +131,16 @@ func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpay
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, err
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
 	}
 
 	return true, nil
 }
 
-func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id int) (bool, error) {
+func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masterentities.ShiftSchedule
 
 	result := tx.Model(&entities).
@@ -134,7 +148,10 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false,  &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -146,7 +163,10 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false,  &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil

@@ -1,12 +1,15 @@
 package masterwarehouseserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	"after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
+	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	// "after-sales/api/utils"
 )
@@ -14,75 +17,77 @@ import (
 type WarehouseGroupServiceImpl struct {
 	warehouseGroupRepo masterwarehouserepository.WarehouseGroupRepository
 	DB                 *gorm.DB
+	RedisClient        *redis.Client // Redis client
 }
 
-func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.WarehouseGroupRepository, db *gorm.DB) masterwarehouseservice.WarehouseGroupService {
+func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.WarehouseGroupRepository, db *gorm.DB, redisClient *redis.Client) masterwarehouseservice.WarehouseGroupService {
 	return &WarehouseGroupServiceImpl{
 		warehouseGroupRepo: warehouseGroup,
 		DB:                 db,
+		RedisClient:        redisClient,
 	}
 }
 
-func (s *WarehouseGroupServiceImpl) Save(request masterwarehousepayloads.GetWarehouseGroupResponse) bool {
+func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	if request.WarehouseGroupId != 0 {
-		_, err := s.warehouseGroupRepo.GetById(tx, request.WarehouseGroupId)
+		_, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, request.WarehouseGroupId)
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
 
-	save, err := s.warehouseGroupRepo.Save(tx, request)
+	save, err := s.warehouseGroupRepo.SaveWarehouseGroup(tx, request)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
-	return save
+	return save, nil
 }
 
-func (s *WarehouseGroupServiceImpl) GetById(warehouseGroupId int) masterwarehousepayloads.GetWarehouseGroupResponse {
+func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	get, err := s.warehouseGroupRepo.GetById(tx, warehouseGroupId)
+	get, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
 
-	return get
+	return get, nil
 }
 
-func (s *WarehouseGroupServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseGroupRequest) []masterwarehousepayloads.GetWarehouseGroupResponse {
+func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	get, err := s.warehouseGroupRepo.GetAll(tx, request)
+	get, err := s.warehouseGroupRepo.GetAllWarehouseGroup(tx, filterCondition, pages)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
 
-	return get
+	return get, nil
 }
 
-func (s *WarehouseGroupServiceImpl) ChangeStatus(warehouseGroupId int) masterwarehousepayloads.GetWarehouseGroupResponse {
+func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	_, err := s.warehouseGroupRepo.GetById(tx, warehouseGroupId)
+	_, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
-	change_status, err := s.warehouseGroupRepo.ChangeStatus(tx, warehouseGroupId)
+	change_status, err := s.warehouseGroupRepo.ChangeStatusWarehouseGroup(tx, warehouseGroupId)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return change_status, err
 	}
 
-	return change_status
+	return change_status, nil
 }

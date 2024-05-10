@@ -1,25 +1,41 @@
 package exceptions
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"net/http"
 )
-// Deprecated: please change to the latest one without *gin.Context
-//
-func NotFoundException(c *gin.Context, message string) {
-	res := OldError{
-		Success: false,
-		Message: message,
-		Data: nil,
+
+// CustomError represents a custom error response structure
+type CustomError struct {
+	StatusCode int    `json:"status_code"`
+	Message    string `json:"message"`
+	Error      string `json:"error"`
+}
+
+// NotFoundError represents the not found error
+type NotFoundError struct {
+	Message string
+}
+
+// Implementasi metode Error untuk NotFoundError
+func (e NotFoundError) Error() string {
+	return e.Message
+}
+
+// NewNotFoundError creates a new NotFoundError instance
+func NewNotFoundError(message string) NotFoundError {
+	return NotFoundError{Message: message}
+}
+
+// NotFoundException handles the not found exception
+func NotFoundException(w http.ResponseWriter, message string) {
+	errResponse := CustomError{
+		StatusCode: http.StatusNotFound,
+		Message:    "Not Found",
+		Error:      message,
 	}
 
-	c.JSON(http.StatusNotFound, res)
-}
-
-type NotFoundError struct {
-	Error string
-}
-
-func NewNotFoundError(error string) NotFoundError {
-	return NotFoundError{Error: error}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotFound)
+	json.NewEncoder(w).Encode(errResponse)
 }

@@ -1,25 +1,26 @@
 package exceptions
 
 import (
-	"github.com/gin-gonic/gin"
+	"encoding/json"
 	"net/http"
 )
 
 type OldError struct {
-	Success bool `json:"Success"`
-	Message string `json:"Message"`
-	Data interface{} `json:"Data"`
+	Success bool        `json:"Success"`
+	Message string      `json:"Message"`
+	Data    interface{} `json:"Data"`
 }
-// Deprecated: please change to the latest one without *gin.Context
-//
-func AppException(c *gin.Context, message string) {
+
+func AppException(w http.ResponseWriter, message string) {
 	res := OldError{
 		Success: false,
 		Message: message,
-		Data: nil,
+		Data:    nil,
 	}
 
-	c.JSON(http.StatusInternalServerError, res)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(res)
 }
 
 type AppExceptionError struct {

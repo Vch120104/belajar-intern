@@ -1,48 +1,51 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type PriceListServiceImpl struct {
 	priceListRepo masteritemrepository.PriceListRepository
 	DB            *gorm.DB
+	RedisClient   *redis.Client // Redis client
 }
 
-func StartPriceListService(priceListRepo masteritemrepository.PriceListRepository, db *gorm.DB) masteritemservice.PriceListService {
+func StartPriceListService(priceListRepo masteritemrepository.PriceListRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.PriceListService {
 	return &PriceListServiceImpl{
 		priceListRepo: priceListRepo,
 		DB:            db,
+		RedisClient:   redisClient,
 	}
 }
 
-func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) []masteritempayloads.PriceListResponse {
+func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceList(tx, request)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *PriceListServiceImpl) GetPriceListById(Id int) masteritempayloads.PriceListResponse {
+func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceListById(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceListResponse) bool {
+func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceListResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -50,30 +53,30 @@ func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceLis
 		_, err := s.priceListRepo.GetPriceListById(tx, int(request.PriceListId))
 
 		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
+			return false, err
 		}
 	}
 
 	result, err := s.priceListRepo.SavePriceList(tx, request)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return result
+	return result, nil
 }
 
-func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) bool {
+func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	_, err := s.priceListRepo.GetPriceListById(tx, Id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
 	result, err := s.priceListRepo.ChangeStatusPriceList(tx, Id)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return result
+	return result, nil
 }

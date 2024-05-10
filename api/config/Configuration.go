@@ -18,16 +18,23 @@ type Configuration struct {
 }
 
 type setupDatabase struct {
-	DBDriver     string `mapstructure:"DB_DRIVER"`
-	DBUser       string `mapstructure:"DB_USER"`
-	DBPass       string `mapstructure:"DB_PASS"`
-	DBName       string `mapstructure:"DB_NAME"`
-	DBHost       string `mapstructure:"DB_HOST"`
-	DBPort       int    `mapstructure:"DB_PORT"`
-	Port         string `mapstructure:"SERVER_PORT"`
-	JWTKey       string `mapstructure:"JWT_KEY"`
-	ClientOrigin string `mapstructure:"CLIENT_ORIGIN"`
-	ClientRedis  string `mapstructure:"CLIENT_REDIS"`
+	DBDriver             string `mapstructure:"DB_DRIVER"`
+	DBUser               string `mapstructure:"DB_USER"`
+	DBPass               string `mapstructure:"DB_PASS"`
+	DBName               string `mapstructure:"DB_NAME"`
+	DBHost               string `mapstructure:"DB_HOST"`
+	DBPort               int    `mapstructure:"DB_PORT"`
+	Port                 string `mapstructure:"SERVER_PORT"`
+	JWTKey               string `mapstructure:"JWT_KEY"`
+	ClientOrigin         string `mapstructure:"CLIENT_ORIGIN"`
+	ClientRedis          string `mapstructure:"REDIS_HOST"`
+	PortRedis            string `mapstructure:"REDIS_PORT"`
+	GeneralServiceUrl    string `mapstructure:"GENERAL_SERVICE"`
+	SalesServiceUrl      string `mapstructure:"SALES_SERVICE"`
+	AfterSalesServiceUrl string `mapstructure:"AFTERSALES_SERVICE"`
+	ReportServiceUrl     string `mapstructure:"REPORT_SERVICE"`
+	FinanceServiceUrl    string `mapstructure:"FINANCE_SERVICE"`
+	CommonServiceUrl     string `mapstructure:"COMMON_SERVICE"`
 }
 
 var EnvConfigs *setupDatabase

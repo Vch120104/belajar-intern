@@ -2,13 +2,13 @@ package transactionworkshopcontroller
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/middlewares"
 	"after-sales/api/payloads"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"gorm.io/gorm"
 )
 
@@ -18,42 +18,54 @@ type BookingEstimationController struct {
 
 func OpenBookingEstimationRoutes(
 	db *gorm.DB,
-	r *gin.RouterGroup,
+	r chi.Router,
 	bookingEstimationService transactionworkshopservice.BookingEstimationService,
 ) {
 	handler := BookingEstimationController{
 		bookingEstimationService: bookingEstimationService,
 	}
 
-	r.POST("/save-booking-estimation", middlewares.DBTransactionMiddleware(db), handler.Save)
+	r.Post("/save-booking-estimation", func(w http.ResponseWriter, req *http.Request) {
+		handler.Save(w, req, db)
+	})
 }
 
-// @Summary Save Booking Estimation
-// @Description Save Booking Estimation
-// @Accept json
-// @Produce json
-// @Tags Master : Booking Estimation
-// @Security BearerAuth
-// @param reqBody body transactionworkshoppayloads.SaveBookingEstimationRequest true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/save-booking-estimation [post]
-func (r *BookingEstimationController) Save(c *gin.Context) {
-	trxHandle := c.MustGet("db_trx").(*gorm.DB)
-	requestBody := transactionworkshoppayloads.SaveBookingEstimationRequest{}
+// Save Booking Estimation
+func (r *BookingEstimationController) Save(w http.ResponseWriter, req *http.Request, db *gorm.DB) {
+	trxHandle := db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			trxHandle.Rollback()
+		}
+	}()
 
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		exceptions.EntityException(c, err.Error())
+	var requestBody transactionworkshoppayloads.SaveBookingEstimationRequest
+
+	if err := req.ParseForm(); err != nil {
+		exceptions.EntityException(w, err.Error())
+		return
+	}
+
+	if err := req.ParseMultipartForm(10 << 20); err != nil {
+		exceptions.EntityException(w, err.Error())
+		return
+	}
+
+	if err := render.Decode(req, &requestBody); err != nil {
+		exceptions.EntityException(w, err.Error())
 		return
 	}
 
 	save, err := r.bookingEstimationService.WithTrx(trxHandle).Save(requestBody)
-
 	if err != nil {
-		exceptions.AppException(c, err.Error())
+		exceptions.AppException(w, err.Error())
 		return
 	}
 
-	payloads.HandleSuccess(c, save, "Insert Successfully", http.StatusOK)
+	if err := trxHandle.Commit().Error; err != nil {
+		exceptions.AppException(w, err.Error())
+		return
+	}
 
+	payloads.NewHandleSuccess(w, save, "Insert Successfully", http.StatusOK)
 }

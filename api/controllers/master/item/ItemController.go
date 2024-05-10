@@ -2,8 +2,10 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 	"strconv"
 	"strings"
@@ -11,16 +13,16 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemController interface {
-	GetAllItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetAllItemLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetItemByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllItem(writer http.ResponseWriter, request *http.Request)
+	GetAllItemLookup(writer http.ResponseWriter, request *http.Request)
+	GetItemWithMultiId(writer http.ResponseWriter, request *http.Request)
+	GetItemByCode(writer http.ResponseWriter, request *http.Request)
+	SaveItem(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusItem(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
@@ -44,9 +46,9 @@ func NewItemController(ItemService masteritemservice.ItemService) ItemController
 // @Param is_active query string false "is_active"
 // @Param item_class_code query string false "item_class_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item/ [get]
-func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item [get]
+func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"mtr_item.item_code":             queryValues.Get("item_code"),
@@ -58,7 +60,12 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result := r.itemservice.GetAllItem(criteria)
+	result, err := r.itemservice.GetAllItem(criteria)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -81,28 +88,43 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item/pop-up [get]
-func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/pop-up [get]
+func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	queryParams := map[string]string{
+
+	internalFilterCondition := map[string]string{
 		"item_code":       queryValues.Get("item_code"),
 		"item_name":       queryValues.Get("item_name"),
 		"item_type":       queryValues.Get("item_type"),
 		"item_group_code": queryValues.Get("item_group_code"),
 		"item_class_code": queryValues.Get("item_class_code"),
-		"supplier_code":   queryValues.Get("supplier_code"),
-		"supplier_name":   queryValues.Get("supplier_name"),
 		"is_active":       queryValues.Get("is_active"),
-		"sort_of":         queryValues.Get("sort_of"),
-		"sort_by":         queryValues.Get("sort_by"),
-		"limit":           queryValues.Get("limit"),
-		"page":            queryValues.Get("page"),
+	}
+	externalFilterCondition := map[string]string{
+
+		"supplier_code": queryValues.Get("supplier_code"),
+		"supplier_name": queryValues.Get("supplier_name"),
 	}
 
-	result := r.itemservice.GetAllItemLookup(queryParams)
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, 0, 0, int64(0), 0)
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
+
+	result, totalPages, totalRows, err := r.itemservice.GetAllItemLookup(internalCriteria, externalCriteria, paginate)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Item With MultiId
@@ -110,17 +132,22 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Item
-// @Param item_ids path string true "item_ids"
+// @Param item_ids path string true "item_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-multi-id/{item_ids} [get]
-func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/multi-id/{item_ids} [get]
+func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, request *http.Request) {
 
-	item_ids := params.ByName("item_ids")
+	item_ids := chi.URLParam(request, "item_id")
 
 	sliceOfString := strings.Split(item_ids, ",")
 
-	result := r.itemservice.GetItemWithMultiId(sliceOfString)
+	result, err := r.itemservice.GetItemWithMultiId(sliceOfString)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -132,13 +159,18 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 // @Tags Master : Item
 // @Param item_code path string true "item_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item/{item_code} [get]
-func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/by-code/{item_code} [get]
+func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *http.Request) {
 
-	itemCode := params.ByName("item_code")
+	itemCode := chi.URLParam(request, "item_code")
 
-	result := r.itemservice.GetItemCode(itemCode)
+	result, err := r.itemservice.GetItemCode(itemCode)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -150,16 +182,21 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 // @Tags Master : Item
 // @param reqBody body masteritempayloads.ItemRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item [post]
-func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/save [post]
+func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemResponse
 	var message = ""
 
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create := r.itemservice.SaveItem(formRequest)
+	create, err := r.itemservice.SaveItem(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemId == 0 {
 		message = "Create Data Successfully!"
@@ -177,13 +214,18 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 // @Tags Master : Item
 // @param item_id path int true "item_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item/{item_id} [patch]
-func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/item/status/{item_id} [patch]
+func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, request *http.Request) {
 
-	ItemId, _ := strconv.Atoi(params.ByName("item_id"))
+	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
 
-	response := r.itemservice.ChangeStatusItem(int(ItemId))
+	response, err := r.itemservice.ChangeStatusItem(int(ItemId))
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }

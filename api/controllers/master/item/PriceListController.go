@@ -1,22 +1,26 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptionsss_test "after-sales/api/expectionsss"
+
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemservice "after-sales/api/services/master/item"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type PriceListController interface {
-	GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetPriceListLookup(writer http.ResponseWriter, request *http.Request)
+	GetPriceList(writer http.ResponseWriter, request *http.Request)
+	SavePriceList(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request)
 }
 
 type PriceListControllerImpl struct {
@@ -42,9 +46,9 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Produce json
 // @Tags Master : Price List
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list/get-all-lookup [get]
-func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/price-list/lookup [get]
+func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
 	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
@@ -56,15 +60,20 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode: PriceListCode,
-		CompanyId:     int32(companyId),
-		BrandId:       int32(brandId),
-		CurrencyId:    int32(currencyId),
+		CompanyId:     companyId,
+		BrandId:       brandId,
+		CurrencyId:    currencyId,
 		EffectiveDate: effectiveDate,
-		ItemGroupId:   int32(itemGroupId),
-		ItemClassId:   int32(itemClassId),
+		ItemGroupId:   itemGroupId,
+		ItemClassId:   itemClassId,
 	}
 
-	result := r.pricelistservice.GetPriceList(priceListRequest)
+	result, err := r.pricelistservice.GetPriceList(priceListRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -87,9 +96,9 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 // @Produce json
 // @Tags Master : Price List
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list/get-all [get]
-func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/price-list/ [get]
+func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
 	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
@@ -106,20 +115,24 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode:       PriceListCode,
-		CompanyId:           int32(companyId),
-		BrandId:             int32(brandId),
-		CurrencyId:          int32(currencyId),
+		CompanyId:           companyId,
+		BrandId:             brandId,
+		CurrencyId:          currencyId,
 		EffectiveDate:       effectiveDate,
-		ItemId:              int32(itemId),
-		ItemGroupId:         int32(itemGroupId),
-		ItemClassId:         int32(itemClassId),
+		ItemId:              itemId,
+		ItemGroupId:         itemGroupId,
+		ItemClassId:         itemClassId,
 		PriceListAmount:     priceListAmount,
 		PriceListModifiable: priceListModifiable,
 		AtpmSyncronize:      atpmSyncronize,
 		AtpmSyncronizeTime:  atpmSyncronizeTime,
 	}
 
-	result := r.pricelistservice.GetPriceList(priceListRequest)
+	result, err := r.pricelistservice.GetPriceList(priceListRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -131,16 +144,33 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 // @Tags Master : Price List
 // @param reqBody body masteritempayloads.PriceListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list [post]
-func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/price-list/ [post]
+func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.PriceListResponse
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
-	create := r.pricelistservice.SavePriceList(formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.pricelistservice.SavePriceList(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.PriceListId == 0 {
 		message = "Create Data Successfully!"
@@ -158,13 +188,18 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 // @Tags Master : Price List
 // @param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list/{price_list_id} [patch]
-func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/price-list/{price_list_id} [patch]
+func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request) {
 
-	PriceListId, _ := strconv.Atoi(params.ByName("price_list_id"))
+	PriceListId, _ := strconv.Atoi(chi.URLParam(request, "price_list_id"))
 
-	response := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+	response, err := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }

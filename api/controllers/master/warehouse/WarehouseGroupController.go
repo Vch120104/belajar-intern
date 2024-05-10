@@ -1,6 +1,7 @@
 package masterwarehousecontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
@@ -8,12 +9,13 @@ import (
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
 	masterwarehousegrouppayloads "after-sales/api/payloads/master/warehouse"
+	"after-sales/api/payloads/pagination"
 
 	// masteritemlevelrepo "after-sales/api/repositories/master/item_level"
 	masterwarehousegroupservice "after-sales/api/services/master/warehouse"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type WarehouseGroupControllerImpl struct {
@@ -21,10 +23,10 @@ type WarehouseGroupControllerImpl struct {
 }
 
 type WarehouseGroupController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService) WarehouseGroupController {
@@ -38,7 +40,6 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -47,28 +48,31 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Param warehouse_group_name query string false "Warehouse Group Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-group [get]
-func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-group/ [get]
+func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	isActive := queryValues.Get("is_active")
-	warehouseGroupCode := queryValues.Get("warehouse_group_code")
-	warehouseGroupName := queryValues.Get("warehouse_group_name")
+	query_params := map[string]string{
+		"is_active":            queryValues.Get("is_active"),
+		"warehouse_group_code": queryValues.Get("warehuuse_group_code"),
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+	}
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
-	get := r.WarehouseGroupService.GetAll(masterwarehousegrouppayloads.GetAllWarehouseGroupRequest{
-		IsActive:           isActive,
-		WarehouseGroupCode: warehouseGroupCode,
-		WarehouseGroupName: warehouseGroupName,
-	})
+	filterCondition := utils.BuildFilterCondition(query_params)
 
-	result, totalPages, totalRows := utils.DataFramePaginate(get, page, limit, sortOf, sortBy)
-
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, limit, page, int64(totalRows), totalPages)
+	get, err := r.WarehouseGroupService.GetAllWarehouseGroup(filterCondition, pagination)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
 
 // @Summary Get Warehouse Group By Id
@@ -76,17 +80,18 @@ func (r *WarehouseGroupControllerImpl) GetAll(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [get]
-func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-group/{warehouse_group_id} [get]
+func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
 
-	get := r.WarehouseGroupService.GetById(warehouseGroupId)
-
+	get, err := r.WarehouseGroupService.GetByIdWarehouseGroup(int(warehouseGroupId))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
 }
@@ -96,19 +101,21 @@ func (r *WarehouseGroupControllerImpl) GetById(writer http.ResponseWriter, reque
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-group [post]
-func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-group/warehouse-group [post]
+func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
 	var message string
 	var formRequest masterwarehousegrouppayloads.GetWarehouseGroupResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	save := r.WarehouseGroupService.Save(formRequest)
-
+	save, err := r.WarehouseGroupService.SaveWarehouseGroup(formRequest)
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	if formRequest.WarehouseGroupId == 0 {
 		message = "Create Data Successfully!"
 	} else {
@@ -124,17 +131,19 @@ func (r *WarehouseGroupControllerImpl) Save(writer http.ResponseWriter, request 
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Group
-// @Security BearerAuth
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/warehouse-group/{warehouse_group_id} [patch]
-func (r *WarehouseGroupControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-group/{warehouse_group_id} [patch]
+func (r *WarehouseGroupControllerImpl) ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(params.ByName("warehouse_group_id"))
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
 
-	change_status := r.WarehouseGroupService.ChangeStatus(warehouseGroupId)
-
+	change_status, err := r.WarehouseGroupService.ChangeStatusWarehouseGroup(int(warehouseGroupId))
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
 }

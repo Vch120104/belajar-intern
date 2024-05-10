@@ -3,10 +3,10 @@ package masteroperationpayloads
 type OperationKeyResponse struct {
 	IsActive                bool   `json:"is_active"`
 	OperationKeyId          int    `json:"operation_key_id"`
-	OperationKeyCode        string `json:"operation_key_code"`
-	OperationGroupId        int    `json:"operation_group_id"`
-	OperationSectionId      int    `json:"operation_section_id"`
-	OperationKeyDescription string `json:"operation_key_description"`
+	OperationKeyCode        string `json:"operation_key_code" validate:"required,max=5"`
+	OperationGroupId        int    `json:"operation_group_id" validate:"required"`
+	OperationSectionId      int    `json:"operation_section_id" validate:"required"`
+	OperationKeyDescription string `json:"operation_key_description" validate:"required"`
 }
 
 type OperationkeyListResponse struct {
@@ -24,8 +24,8 @@ type OperationkeyListResponse struct {
 
 type OperationKeyRequest struct {
 	OperationKeyCode        string `json:"operation_key_code"`
-	OperationGroupId        int32  `json:"operation_group_id"`
-	OperationSectionId      int32  `json:"operation_section_id"`
+	OperationGroupId        int    `json:"operation_group_id"`
+	OperationSectionId      int    `json:"operation_section_id"`
 	OperationKeyDescription string `json:"operation_key_description"`
 }
 

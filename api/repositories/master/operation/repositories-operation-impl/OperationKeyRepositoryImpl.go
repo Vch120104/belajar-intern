@@ -2,11 +2,13 @@ package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
 	"log"
+	"net/http"
 	"time"
 
 	"gorm.io/gorm"
@@ -20,7 +22,7 @@ func StartOperationKeyRepositoryImpl() masteroperationrepository.OperationKeyRep
 	return &OperationKeyRepositoryImpl{}
 }
 
-func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteroperationentities.OperationKey{}
 	var responses []masteroperationpayloads.OperationkeyListResponse
 
@@ -35,12 +37,18 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 	//apply pagination and execute
 	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
-	if len(responses) == 0 {
-		return pages, gorm.ErrRecordNotFound
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
-	if err != nil {
-		return pages, err
+	if len(responses) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -50,7 +58,7 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 	return pages, nil
 }
 
-func (r *OperationKeyRepositoryImpl) GetOperationKeyById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationkeyListResponse, error) {
+func (r *OperationKeyRepositoryImpl) GetOperationKeyById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationkeyListResponse, *exceptionsss_test.BaseErrorResponse) {
 	response := masteroperationpayloads.OperationkeyListResponse{}
 
 	joinTable := utils.CreateJoinSelectStatement(tx, response)
@@ -60,7 +68,10 @@ func (r *OperationKeyRepositoryImpl) GetOperationKeyById(tx *gorm.DB, Id int) (m
 	rows, err := whereQuery.First(&response).Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -68,7 +79,7 @@ func (r *OperationKeyRepositoryImpl) GetOperationKeyById(tx *gorm.DB, Id int) (m
 	return response, nil
 }
 
-// func (r *OperationKeyRepositoryImpl) GetOperationKeyCode(request masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyCodeResponse, error) {
+// func (r *OperationKeyRepositoryImpl) GetOperationKeyCode(request masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyCodeResponse, *exceptionsss_test.BaseErrorResponse) {
 // 	entities := masteroperationentities.OperationKey{}
 // 	response := masteroperationpayloads.OperationKeyCodeResponse{}
 
@@ -89,7 +100,7 @@ func (r *OperationKeyRepositoryImpl) GetOperationKeyById(tx *gorm.DB, Id int) (m
 // 	return response, nil
 // }
 
-func (r *OperationKeyRepositoryImpl) GetOperationKeyName(tx *gorm.DB, request masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, error) {
+func (r *OperationKeyRepositoryImpl) GetOperationKeyName(tx *gorm.DB, request masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, *exceptionsss_test.BaseErrorResponse) {
 	tableStruct := masteroperationpayloads.OperationKeyNameResponse{}
 	newLogger := logger.New(
 		log.New(log.Writer(), "\r\n", log.LstdFlags),
@@ -112,7 +123,10 @@ func (r *OperationKeyRepositoryImpl) GetOperationKeyName(tx *gorm.DB, request ma
 	rows, err := WhereQuery.First(&tableStruct).Rows()
 
 	if err != nil {
-		return tableStruct, err
+		return tableStruct, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -120,7 +134,7 @@ func (r *OperationKeyRepositoryImpl) GetOperationKeyName(tx *gorm.DB, request ma
 	return tableStruct, nil
 }
 
-func (r *OperationKeyRepositoryImpl) SaveOperationKey(tx *gorm.DB, request masteroperationpayloads.OperationKeyResponse) (bool, error) {
+func (r *OperationKeyRepositoryImpl) SaveOperationKey(tx *gorm.DB, request masteroperationpayloads.OperationKeyResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteroperationentities.OperationKey{
 		IsActive:                request.IsActive,
 		OperationKeyId:          request.OperationKeyId,
@@ -133,13 +147,16 @@ func (r *OperationKeyRepositoryImpl) SaveOperationKey(tx *gorm.DB, request maste
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, err
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
 	}
 
 	return true, nil
 }
 
-func (r *OperationKeyRepositoryImpl) ChangeStatusOperationKey(tx *gorm.DB, Id int) (bool, error) {
+func (r *OperationKeyRepositoryImpl) ChangeStatusOperationKey(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masteroperationentities.OperationKey
 
 	result := tx.Model(&entities).
@@ -147,7 +164,10 @@ func (r *OperationKeyRepositoryImpl) ChangeStatusOperationKey(tx *gorm.DB, Id in
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	// Toggle the IsActive value
@@ -160,7 +180,10 @@ func (r *OperationKeyRepositoryImpl) ChangeStatusOperationKey(tx *gorm.DB, Id in
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil
