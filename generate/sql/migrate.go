@@ -2,8 +2,10 @@ package migration
 
 import (
 	"after-sales/api/config"
+	// masterentities "after-sales/api/entities/master"
+	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 
-	masteritementities "after-sales/api/entities/master/item"
+	masterentities "after-sales/api/entities/master"
 	//masteritementities "after-sales/api/entities/master/item"
 	//masteroperationentities "after-sales/api/entities/master/operation"
 	//masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -69,7 +71,26 @@ func Migrate() {
 		// &masteroperationentities.OperationKey{},
 		// &masteroperationentities.OperationEntries{},
 		// &masteroperationentities.OperationCode{},
-
+		// &masteroperationentities.OperationModelMapping{},
+		// &masteritementities.ItemClass{},
+		// &masteritementities.Discount{},
+		// &masteritementities.MarkupMaster{},
+		// &masteritementities.PrincipleBrandParent{},
+		// &masteritementities.UomType{},
+		// &masteritementities.Item{},
+		// &masteritementities.PriceList{},
+		// &masteritementities.ItemDetail{},
+		// &masteritementities.DiscountPercent{},
+		// &masterentities.IncentiveGroup{},
+		// &masteritementities.ItemSubstitute{},
+		// &masteritementities.ItemSubstituteDetail{},
+		// &masterentities.ForecastMaster{},
+		// &masterentities.MovingCode{},
+		// &mastercampaignmasterentities.CampaignMaster{},
+		// &mastercampaignmasterentities.CampaignMasterDetail{},
+		// &masterentities.PackageMaster{},
+		// &masteritementities.ItemPackage{},
+		// &masteritementities.ItemPackageDetail{},
 		// &masterwarehouseentities.WarehouseGroup{},
 		// &masterwarehouseentities.WarehouseMaster{},
 		// &masterwarehouseentities.WarehouseLocation{},
@@ -120,11 +141,10 @@ func Migrate() {
 		// &masterentities.FieldActionEligibleVehicle{},
 		// &masterentities.FieldAction{},
 		// &masterentities.Discount{},
-		// &masterentities.Agreement{},
-		// &masterentities.AgreementDiscount{},
-		// &masterentities.AgreementDiscountGroupDetail{},
-		// &masterentities.AgreementItemDetail{},
-		&masteritementities.UomItem{},
+		&masterentities.Agreement{},
+		&masterentities.AgreementDiscount{},
+		&masterentities.AgreementDiscountGroupDetail{},
+		&masterentities.AgreementItemDetail{},
 		// &transactionentities.SupplySlip{},
 		// &transactionentities.SupplySlipDetail{},
 		// &transactionworkshopentities.WorkOrder{},
