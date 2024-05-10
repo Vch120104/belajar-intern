@@ -72,7 +72,6 @@ func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResp
 
 	if req.SkillLevelId != 0 {
 		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
-
 		if err != nil {
 			return false, err
 		}
@@ -80,7 +79,7 @@ func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResp
 
 	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
 	if err != nil {
-		return results, err
+		return false, err
 	}
 	return results, nil
 }
