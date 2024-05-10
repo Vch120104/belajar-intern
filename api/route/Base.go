@@ -809,6 +809,28 @@ func WorkOrderRouter(
 	return router
 }
 
+func PackageMasterRouter(
+	PackageMasterController mastercontroller.PackageMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", PackageMasterController.GetAllPackageMaster)
+	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
+	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
+	router.Get("/detail/{package_id}/{package_detail_id}/{line_type_id}", PackageMasterController.GetByIdPackageMasterDetail)
+	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
+
+	router.Post("/", PackageMasterController.SavepackageMaster)
+	router.Post("/bodyshop/{package_id}",PackageMasterController.SavePackageMasterDetailBodyshop)
+	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+
+	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
+	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
+	router.Patch("/detail/deactivate/{package_id}/{package_detail_id}", PackageMasterController.DeactivateMultiIdPackageMasterDetail)
+
+	return router
+}
+
+
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
@@ -819,3 +841,24 @@ func SwaggerRouter() chi.Router {
 
 	return router
 }
+
+
+
+
+			
+
+// func SwaggerRouter() chi.Router {
+// 	router := chi.NewRouter()
+// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
+// 	return router
+// }
+
+// func adaptHandler(h http.Handler) chi.Handle {
+// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+// 		h.ServeHTTP(w, r)
+// 	}
+// }
+
+// func swaggerHandler() http.HandlerFunc {
+// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
+// }

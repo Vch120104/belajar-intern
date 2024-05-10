@@ -8,6 +8,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"net/http"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -106,9 +107,17 @@ func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayload
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 
