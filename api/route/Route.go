@@ -209,6 +209,12 @@ func StartRouting(db *gorm.DB) {
 	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
 	BomController := masteritemcontroller.NewBomController(BomService)
 
+	//package master
+	PackageMasterRepository:=masterrepositoryimpl.StartPackageMasterRepositoryImpl()
+	PackageMasterService  :=masterserviceimpl.StartPackageMasterService(PackageMasterRepository,db)
+	PackageMasterController:=mastercontroller.NewPackageMasterController(PackageMasterService)
+
+
 	// Deduction
 	DeductionRepository := masterrepositoryimpl.StartDeductionRepositoryImpl()
 	DeductionService := masterserviceimpl.StartDeductionService(DeductionRepository, db, rdb)
@@ -223,7 +229,7 @@ func StartRouting(db *gorm.DB) {
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db, rdb)
 	IncentiveMasterController := mastercontroller.NewIncentiveMasterController(IncentiveMasterService)
-
+	// Master
 	//Field Action
 	FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
@@ -275,6 +281,7 @@ func StartRouting(db *gorm.DB) {
 	warrantyFreeServiceRouter := WarrantyFreeServiceRouter(WarrantyFreeServiceController)
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
+	PackageMasterRouter:=PackageMasterRouter(PackageMasterController)
 
 	/* Transaction */
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
@@ -310,6 +317,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive", IncentiveMasterRouter)
 		r.Mount("/bom", BomRouter)
 		r.Mount("/deduction", DeductionRouter)
+		r.Mount("/package-master",PackageMasterRouter)
 		r.Mount("/item-package", itemPackageRouter)              //null value
 		r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
 		r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
@@ -341,6 +349,21 @@ func StartRouting(db *gorm.DB) {
 	// Route untuk Swagger
 	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
 
+	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
+	r.Mount("/discount", DiscountRouter)
+
+	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
+
+	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
+	r.Mount("/warehouse-location", WarehouseLocation)
+	r.Mount("/warehouse-master", WarehouseMaster)
+	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
+
+	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
+	r.Mount("/shift-schedule", ShiftScheduleRouter)
+	r.Mount("/price-list", priceListRouter) //null value
+	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
+	r.Mount("/skill-level", SkillLevelRouter)
 	// Route untuk Prometheus metrics
 	r.Mount("/metrics", promhttp.Handler())
 
