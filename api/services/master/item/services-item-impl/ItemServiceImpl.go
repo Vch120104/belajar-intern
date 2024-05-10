@@ -27,10 +27,32 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB,
 	}
 }
 
-func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, *exceptionsss_test.BaseErrorResponse) {
+// GetUomDropDown implements masteritemservice.ItemService.
+func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetAllItem(tx, filterCondition)
+	results, err := s.itemRepo.GetUomDropDown(tx, uomTypeId)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+// GetUomTypeDropDown implements masteritemservice.ItemService.
+func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetUomTypeDropDown(tx)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetAllItem(tx, filterCondition, pages)
 	if err != nil {
 		return results, err
 	}
@@ -47,7 +69,7 @@ func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.Filte
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemById(tx, Id)
@@ -77,7 +99,7 @@ func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *e
 	return results, nil
 }
 
-func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
