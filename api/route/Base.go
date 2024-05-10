@@ -796,7 +796,7 @@ func WorkOrderRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/search", WorkOrderController.GetAll)
+	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal", WorkOrderController.New)
 	router.Get("/booking", WorkOrderController.NewBooking)
 	router.Get("/affiliated", WorkOrderController.NewAffiliated)
@@ -820,7 +820,7 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}",PackageMasterController.SavePackageMasterDetailBodyshop)
+	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
 	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
@@ -829,7 +829,6 @@ func PackageMasterRouter(
 
 	return router
 }
-
 
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
@@ -841,11 +840,6 @@ func SwaggerRouter() chi.Router {
 
 	return router
 }
-
-
-
-
-			
 
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()
