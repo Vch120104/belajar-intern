@@ -82,7 +82,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	profitCenterUrl := "http://10.1.32.26:8000/general-service/api/general/profit-center?page=0&limit=10&profit_center_code=" + profitCenter
+	profitCenterUrl := "http://10.1.32.26:8000/general-service/v1/profit-center?page=0&limit=10&profit_center_code=" + profitCenter
 
 	errProfitcenterUrl := utils.Get(profitCenterUrl, &getProfitResponse, nil)
 
@@ -95,7 +95,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	joinedData1 := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
@@ -108,7 +108,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
 
-	VariantModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-variant?page=0&limit=10&variant_code=" + variantCode
+	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant?page=0&limit=10&variant_code=" + variantCode
 
 	errUrlVariantModel := utils.Get(VariantModelUrl, &getVariantResponse, nil)
 
@@ -137,8 +137,8 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 		}
 	}
 	defer rows.Close()
-	profitCenterUrl := "http://127.0.0.1:8000/api/general/profit-center/" + strconv.Itoa(entityOperation.LineTypeId)
-	errLineTypeUrl := utils.Get(profitCenterUrl, &getlinetype, nil)
+	LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type?line_type_id=" + strconv.Itoa(entityOperation.LineTypeId)
+	errLineTypeUrl := utils.Get(LineTypeUrl, &getlinetype, nil)
 	if errLineTypeUrl != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -151,14 +151,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 }
 
 func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	var entities masterentities.PackageMaster
-	var itementities masterpackagemasterentity.PackageMasterDetailItem
-	var Operationentities masterpackagemasterentity.PackageMasterDetailOperation
-	var entityItem masterpayloads.PackageMasterDetailItem
-	var entityOperation masterpayloads.PackageMasterDetailOperation
-	var entitybodyshop masterpayloads.PackageMasterDetailOperationBodyshop
+	var entities []masterentities.PackageMaster
+	var itementities []masterpackagemasterentity.PackageMasterDetailItem
+	var Operationentities []masterpackagemasterentity.PackageMasterDetailOperation
+	var entitybodyshop []masterpayloads.PackageMasterDetailOperationBodyshop
 	var payloadheader masterpayloads.PackageMasterResponse
-	var getlinetype masterpayloads.LineTypeCode
+	// var getlinetype []masterpayloads.LineTypeCode
+	var GetCombinedData []masterpayloads.PackageMasterCombinedData
+	// var joinedData []map[string]interface{} 
 	rows, err := tx.Model(&entities).Where(masterentities.PackageMaster{
 		PackageId: id,
 	}).Scan(&payloadheader).Rows()
@@ -170,8 +170,8 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 	}
 	defer rows.Close()
 
-	if payloadheader.ProfitCenterId == 14 { //harus diganti sesuai dengan i profit center bodyshop
-		rows, err := tx.Model(&Operationentities).Where(masterpackagemasterentity.PackageMasterDetailOperation{
+	if payloadheader.ProfitCenterId == 14 {
+		rowsOperation, err := tx.Model(&Operationentities).Where(masterpackagemasterentity.PackageMasterDetailOperation{
 			PackageId: id,
 		}).Scan(&entitybodyshop).Rows()
 		if err != nil {
@@ -180,61 +180,54 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 				Err:        err,
 			}
 		}
-		defer rows.Close()
-		profitCenterUrl := "http://127.0.0.1:8000/api/general/profit-center/" + strconv.Itoa(entityOperation.LineTypeId)
-		errLineTypeUrl := utils.Get(profitCenterUrl, &getlinetype, nil)
-		if errLineTypeUrl != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		joinedData1 := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
-		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
-		return dataPaginate, totalPages, totalRows, nil
+		defer rowsOperation.Close()
+
+		// Use rowsOperation for further processing
 	} else {
-		rows, err := tx.Model(&Operationentities).Where(masterpackagemasterentity.PackageMasterDetailOperation{
+		rowsOperation, err := tx.Model(&Operationentities).Select("is_active, package_detail_operation_id, package_id, line_type_id, operation_id, frt_quantity, workorder_transaction_type_id, job_type_id").Where(masterpackagemasterentity.PackageMasterDetailOperation{
 			PackageId: id,
-		}).Scan(&entityOperation).Rows()
+		}).Scan(&GetCombinedData).Rows()
 		if err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
-		defer rows.Close()
-		profitCenterUrl := "http://127.0.0.1:8000/api/general/profit-center/" + strconv.Itoa(entityOperation.LineTypeId)
-		errLineTypeUrl := utils.Get(profitCenterUrl, &getlinetype, nil)
-		if errLineTypeUrl != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		joinedData1 := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
+		defer rowsOperation.Close()
 
-		rows2, err2 := tx.Model(&itementities).Where(masterpackagemasterentity.PackageMasterDetailOperation{
+		// Query for PackageMasterDetailItem
+		rowsItem, err := tx.Model(&itementities).Select("is_active, package_detail_item_id, package_id, line_type_id, item_id, frt_quantity, workorder_transaction_type_id, job_type_id").Where(masterpackagemasterentity.PackageMasterDetailItem{
 			PackageId: id,
-		}).Scan(&entityItem).Rows()
-		if err2 != nil {
+		}).Scan(&GetCombinedData).Rows()
+		if err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
-		defer rows2.Close()
-		profitCenterUrl2 := "http://127.0.0.1:8000/api/general/profit-center/" + strconv.Itoa(entityOperation.LineTypeId)
-		errLineTypeUrl2 := utils.Get(profitCenterUrl2, &getlinetype, nil)
-		if errLineTypeUrl2 != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		joinedData2 := utils.DataFrameInnerJoin(rows2, getlinetype, "LineTypeId")
-		combinedData := append(joinedData1, joinedData2...)
-		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(combinedData, &pages)
+		defer rowsItem.Close()
+
+		// for _, data := range GetCombinedData {
+		// 	profitCenterUrl2 := "http://10.1.32.26:8000/general-service/v1/line-type?line_type_id=" + strconv.Itoa(data.LineTypeId)
+		// 	errLineTypeUrl2 := utils.Get(profitCenterUrl2, &getlinetype, nil)
+		// 	if errLineTypeUrl2 != nil {
+		// 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		// 			StatusCode: http.StatusInternalServerError,
+		// 			Err:        errLineTypeUrl2, // Use errLineTypeUrl2 here
+		// 		}
+		// 	}
+		// 	// Join the data to the joinedData slice
+		// 	joinedData = utils.DataFrameInnerJoin(rowsItem, getlinetype, "LineTypeId")
+		// }
+		
+		// Use the accumulated joinedData for further processing
+		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(GetCombinedData, &pages)
+		
 		return dataPaginate, totalPages, totalRows, nil
+	}
+	return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		StatusCode: http.StatusInternalServerError,
+		Err:        nil,
 	}
 }
 
@@ -262,7 +255,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	defer rows.Close()
 
-	profitCenterUrl := "http://10.1.32.26:8000/general-service/api/general/profit-center/" + strconv.Itoa(payloads.ProfitCenterId)
+	profitCenterUrl := "http://10.1.32.26:8000/general-service/v1/profit-center/" + strconv.Itoa(payloads.ProfitCenterId)
 
 	errProfitcenterUrl := utils.Get(profitCenterUrl, &getProfitResponse, nil)
 
@@ -275,7 +268,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(payloads.ModelId)
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model/" + strconv.Itoa(payloads.ModelId)
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
@@ -288,7 +281,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getModelResponse}, "ModelId")
 
-	VariantModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-variant/" + strconv.Itoa(payloads.VariantId)
+	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant/" + strconv.Itoa(payloads.VariantId)
 
 	errUrlVariantModel := utils.Get(VariantModelUrl, &getUnitVariantResponse, nil)
 
@@ -301,7 +294,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
 
-	BrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(payloads.BrandId)
+	BrandUrl := "http://10.1.32.26:8000/sales-service/v1/unit-brand/" + strconv.Itoa(payloads.BrandId)
 
 	errUrlBrandModel := utils.Get(BrandUrl, &getBrandResponse, nil)
 
@@ -363,7 +356,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 			}
 		}
 		defer rows.Close()
-		LineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
+		LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
 
 		errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -390,7 +383,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				}
 			}
 			defer rows.Close()
-			LineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
+			LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -416,7 +409,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				}
 			}
 			defer result.Close()
-			LineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
+			LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -463,7 +456,7 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 
 func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailBodyshop(tx *gorm.DB, req masterpayloads.PackageMasterDetailOperationBodyshop, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var rowsAffected int64
-	err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?",id).Count(&rowsAffected).Error
+	err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?", id).Count(&rowsAffected).Error
 	if err != nil {
 		tx.Rollback()
 		return false, &exceptionsss_test.BaseErrorResponse{
