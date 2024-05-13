@@ -63,6 +63,36 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) Save(tx *gorm.DB, request ma
 	return true, nil
 }
 
+func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+
+	var warehouseMaster = masterwarehouseentities.WarehouseLocationDefinition{
+		IsActive:                               request.IsActive,
+		WarehouseLocationDefinitionId:          request.WarehouseLocationDefinitionId,
+		WarehouseLocationDefinitionLevelId:     request.WarehouseLocationDefinitionLevelId,
+		WarehouseLocationDefinitionLevelCode:   request.WarehouseLocationDefinitionLevelCode,
+		WarehouseLocationDefinitionDescription: request.WarehouseLocationDefinitionDescription,
+	}
+
+	err := tx.Save(&warehouseMaster).Error
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+}
+
 func (r *WarehouseLocationDefinitionRepositoryImpl) GetById(tx *gorm.DB, Id int) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse) {
 
 	entities := masterwarehouseentities.WarehouseLocationDefinition{}

@@ -51,6 +51,27 @@ func (s *WarehouseLocationDefinitionServiceImpl) Save(request masterwarehousepay
 	return save, err
 }
 
+func (s *WarehouseLocationDefinitionServiceImpl) SaveData(request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	if request.WarehouseLocationDefinitionId != 0 {
+		_, err := s.WarehouseLocationDefinitionRepo.GetById(tx, request.WarehouseLocationDefinitionId)
+
+		if err != nil {
+			return false, err
+		}
+	}
+
+	save, err := s.WarehouseLocationDefinitionRepo.SaveData(tx, request)
+
+	if err != nil {
+		return false, err
+	}
+
+	return save, err
+}
+
 func (s *WarehouseLocationDefinitionServiceImpl) GetById(Id int) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

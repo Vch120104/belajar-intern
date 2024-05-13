@@ -27,6 +27,7 @@ type WarehouseLocationDefinitionController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
+	SaveData(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	PopupWarehouseLocationLevel(writer http.ResponseWriter, request *http.Request)
 }
@@ -120,6 +121,36 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 	helper.ReadFromRequestBody(request, &formRequest)
 
 	save, err := r.WarehouseLocationDefinitionService.Save(formRequest)
+
+	if formRequest.WarehouseLocationDefinitionId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
+
+}
+
+// @Summary Save Data Warehouse Location
+// @Description Save Data Warehouse Location
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Location Definition
+// @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/ [put]
+func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.ResponseWriter, request *http.Request) {
+	var message string
+	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	save, err := r.WarehouseLocationDefinitionService.SaveData(formRequest)
 
 	if formRequest.WarehouseLocationDefinitionId == 0 {
 		message = "Create Data Successfully!"
