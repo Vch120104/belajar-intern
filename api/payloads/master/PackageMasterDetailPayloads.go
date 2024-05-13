@@ -8,7 +8,7 @@ type PackageMasterDetailItem struct {
 	ItemId                     int     `json:"item_id"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id"`
-	JobTitleId                 int     `json:"job_title_id"`
+	JobTypeId                  int     `json:"job_type_id"`
 }
 
 type PackageMasterDetailOperation struct {

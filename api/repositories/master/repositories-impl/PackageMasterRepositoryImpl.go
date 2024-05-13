@@ -82,7 +82,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	profitCenterUrl := "http://10.1.32.26:8000/general-service/api/general/profit-center?page=0&limit=10&profit_center_code=" + profitCenter
+	profitCenterUrl := "http://10.1.32.26:8000/general-service/v1/profit-center?page=0&limit=10&profit_center_code=" + profitCenter
 
 	errProfitcenterUrl := utils.Get(profitCenterUrl, &getProfitResponse, nil)
 
@@ -95,7 +95,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	joinedData1 := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
@@ -108,7 +108,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
 
-	VariantModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-variant?page=0&limit=10&variant_code=" + variantCode
+	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant?page=0&limit=10&variant_code=" + variantCode
 
 	errUrlVariantModel := utils.Get(VariantModelUrl, &getVariantResponse, nil)
 
@@ -137,8 +137,8 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 		}
 	}
 	defer rows.Close()
-	profitCenterUrl := "http://127.0.0.1:8000/api/general/profit-center/" + strconv.Itoa(entityOperation.LineTypeId)
-	errLineTypeUrl := utils.Get(profitCenterUrl, &getlinetype, nil)
+	LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type?line_type_id=" + strconv.Itoa(entityOperation.LineTypeId)
+	errLineTypeUrl := utils.Get(LineTypeUrl, &getlinetype, nil)
 	if errLineTypeUrl != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -255,7 +255,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	defer rows.Close()
 
-	profitCenterUrl := "http://10.1.32.26:8000/general-service/api/general/profit-center/" + strconv.Itoa(payloads.ProfitCenterId)
+	profitCenterUrl := "http://10.1.32.26:8000/general-service/v1/profit-center/" + strconv.Itoa(payloads.ProfitCenterId)
 
 	errProfitcenterUrl := utils.Get(profitCenterUrl, &getProfitResponse, nil)
 
@@ -268,7 +268,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(payloads.ModelId)
+	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model/" + strconv.Itoa(payloads.ModelId)
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
@@ -281,7 +281,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getModelResponse}, "ModelId")
 
-	VariantModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-variant/" + strconv.Itoa(payloads.VariantId)
+	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant/" + strconv.Itoa(payloads.VariantId)
 
 	errUrlVariantModel := utils.Get(VariantModelUrl, &getUnitVariantResponse, nil)
 
@@ -294,7 +294,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
 
-	BrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(payloads.BrandId)
+	BrandUrl := "http://10.1.32.26:8000/sales-service/v1/unit-brand/" + strconv.Itoa(payloads.BrandId)
 
 	errUrlBrandModel := utils.Get(BrandUrl, &getBrandResponse, nil)
 
@@ -356,7 +356,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 			}
 		}
 		defer rows.Close()
-		LineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
+		LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
 
 		errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -383,7 +383,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				}
 			}
 			defer rows.Close()
-			LineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
+			LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -409,7 +409,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				}
 			}
 			defer result.Close()
-			LineTypeUrl := "http://10.1.32.26:8000/general-service/api/general/line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
+			LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
