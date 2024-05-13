@@ -66,10 +66,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) Save(tx *gorm.DB, request ma
 func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseLocationDefinition{
-		IsActive:                               request.IsActive,
 		WarehouseLocationDefinitionId:          request.WarehouseLocationDefinitionId,
-		WarehouseLocationDefinitionLevelId:     request.WarehouseLocationDefinitionLevelId,
-		WarehouseLocationDefinitionLevelCode:   request.WarehouseLocationDefinitionLevelCode,
 		WarehouseLocationDefinitionDescription: request.WarehouseLocationDefinitionDescription,
 	}
 

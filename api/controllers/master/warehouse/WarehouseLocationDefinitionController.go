@@ -5,6 +5,8 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"encoding/json"
+	"fmt"
 
 	"strconv"
 
@@ -141,29 +143,48 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_id path int true "Warehouse Location ID"
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/warehouse-location-definition/ [put]
+// @Router /v1/warehouse-location-definition/{warehouse_location_id} [put]
 func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.ResponseWriter, request *http.Request) {
-	var message string
+	warehouseLocationID := chi.URLParam(request, "warehouse_location_id")
+	id, err := strconv.Atoi(warehouseLocationID)
+	if err != nil {
+		errResponse := &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid warehouse_location_id"),
+		}
+		exceptionsss_test.NewBadRequestException(writer, request, errResponse)
+		return
+	}
+
 	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err := json.NewDecoder(request.Body).Decode(&formRequest); err != nil {
+		errResponse := &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid request body"),
+		}
+		exceptionsss_test.NewBadRequestException(writer, request, errResponse)
+		return
+	}
+	formRequest.WarehouseLocationDefinitionId = id
 
-	save, err := r.WarehouseLocationDefinitionService.SaveData(formRequest)
+	save, saveErr := r.WarehouseLocationDefinitionService.SaveData(formRequest)
+	if saveErr != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, saveErr)
+		return
+	}
 
-	if formRequest.WarehouseLocationDefinitionId == 0 {
+	var message string
+	if id == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
 	}
 
-	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
-		return
-	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
-
 }
 
 // @Summary Change Warehouse Location Status By Id
