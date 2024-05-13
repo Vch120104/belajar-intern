@@ -44,8 +44,9 @@ go.work
 docs.go
 swagger.json
 swagger.yaml
-# tmpt
-*build-errors.log
+# tmp
+tmp/
+build-errors.log
 
 
 # NEXTJS
