@@ -14,6 +14,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -459,64 +460,59 @@ func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempaylo
 
 func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	// Define a slice to hold Item Detail responses
-	var responses []masteritempayloads.ItemDetailResponse
+	var responses []masteritempayloads.ItemDetailRequest
 
-	// Define table struct
-	tableStruct := masteritempayloads.ItemDetailRequest{}
+	responseStruct := reflect.TypeOf(masteritempayloads.ItemDetailRequest{})
 
-	// Define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	// Apply filters
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	// Execute query
-	rows, err := whereQuery.Find(&responses).Rows()
-	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
+	// Filter internal service conditions
+	var internalServiceFilter []utils.FilterCondition
+	for _, condition := range filterCondition {
+		for j := 0; j < responseStruct.NumField(); j++ {
+			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, condition)
+				break
+			}
 		}
 	}
-	defer rows.Close()
+
+	// Apply internal service filter conditions
+	tableStruct := masteritempayloads.ItemDetailRequest{}
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+
+	// Fetch data from database
+	err := whereQuery.Find(&responses).Error
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
+		}
+	}
+
+	// Check if responses are empty
+	if len(responses) == 0 {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
+		}
+	}
 
 	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
 
-	// Iterate over rows
-	for rows.Next() {
-		// Define variables to hold row data
-		var ItemDetailRes masteritempayloads.ItemDetailRequest
-
-		// Scan the row into ItemDetailResponse struct
-		if err := rows.Scan(
-			&ItemDetailRes.ItemDetailId,
-			&ItemDetailRes.ItemId,
-			&ItemDetailRes.BrandId,
-			&ItemDetailRes.MillageEvery,
-			&ItemDetailRes.ModelId,
-			&ItemDetailRes.IsActive,
-			&ItemDetailRes.ReturnEvery,
-			&ItemDetailRes.VariantId); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		// Convert DiscountGroupResponse to map
+	// Iterate over responses and convert them to maps
+	for _, response := range responses {
 		responseMap := map[string]interface{}{
-			"item_id":        ItemDetailRes.ItemId,
-			"item_detail_id": ItemDetailRes.ItemDetailId,
-			"brand_id":       ItemDetailRes.BrandId,
-			"model_id":       ItemDetailRes.ModelId,
-			"variant_id":     ItemDetailRes.VariantId,
-			"is_active":      ItemDetailRes.IsActive,
-			"millage_every":  ItemDetailRes.MillageEvery,
-			"return_every":   ItemDetailRes.ReturnEvery,
+			"is_active":      response.IsActive,
+			"item_detail_id": response.ItemDetailId,
+			"item_id":        response.ItemId,
+			"brand_id":       response.BrandId,
+			"millage_every":  response.MillageEvery,
+			"model_id":       response.ModelId,
+			"return_every":   response.ReturnEvery,
+			"variant_id":     response.VariantId,
+			// Add other fields as needed
 		}
-
-		// Append responseMap to the slice
 		mapResponses = append(mapResponses, responseMap)
 	}
 

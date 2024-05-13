@@ -129,7 +129,7 @@ type ItemLookup struct {
 
 type ItemDetailResponse struct {
 	ItemDetailId int     `json:"item_detail_id"`
-	IsActive     bool    `json:"is_active"`
+	IsActive     bool    `gorm:"column:is_active" json:"is_active"`
 	ItemId       int     `json:"item_id"`
 	BrandId      int     `json:"brand_id"`
 	ModelId      int     `json:"model_id"`
@@ -140,13 +140,13 @@ type ItemDetailResponse struct {
 
 type ItemDetailRequest struct {
 	ItemDetailId int     `json:"item_detail_id" parent_entity:"mtr_item_detail" main_table:"mtr_item_detail"`
-	IsActive     bool    `json:"is_active" parent_entity:"mtr_item_detail"`
 	ItemId       int     `json:"item_id" parent_entity:"mtr_item_detail"`
 	BrandId      int     `json:"brand_id" parent_entity:"mtr_item_detail"`
 	ModelId      int     `json:"model_id" parent_entity:"mtr_item_detail"`
 	VariantId    int     `json:"variant_id" parent_entity:"mtr_item_detail"`
 	MillageEvery float64 `json:"millage_every" parent_entity:"mtr_item_detail"`
 	ReturnEvery  float64 `json:"return_every" parent_entity:"mtr_item_detail"`
+	IsActive     bool    `json:"is_active" parent_entity:"mtr_item_detail"`
 }
 
 type ItemGroupResponse struct {

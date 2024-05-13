@@ -47,7 +47,7 @@ func NewItemLocationController(ItemLocationService masteritemservice.ItemLocatio
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/popup-location [get]
+// @Router /v1/item-location/popup-location [get]
 func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 

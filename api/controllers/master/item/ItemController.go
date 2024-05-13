@@ -215,7 +215,7 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 // @param item_id path int true "item_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/item/status/{item_id} [patch]
+// @Router /v1/item/{item_id} [patch]
 func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, request *http.Request) {
 
 	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
@@ -228,14 +228,14 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
 
-// @Summary Get All Detail Item
-// @Description Retrieve all detail items from an items by its ID
+// @Summary Get All Detail Items
+// @Description Retrieve all detail items from an item by its ID
 // @Accept json
 // @Produce json
 // @Tags Master : Item
 // @Param item_id path int true "Item ID"
-// @Param page query string true "Page number"
-// @Param limit query string true "Items per page"
+// @Param page query int true "Page number"
+// @Param limit query int true "Items per page"
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
