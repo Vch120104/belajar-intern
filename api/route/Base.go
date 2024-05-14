@@ -214,7 +214,7 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
-
+	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 	return router
 }
 
@@ -229,7 +229,10 @@ func ItemPackageDetailRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
-
+	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
+	router.Get("/{item_package_detail_id}", ItemPackageDetailController.GetItemPackageDetailById)
+	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetailByItemPackageId)
+	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
 	return router
 }
 
