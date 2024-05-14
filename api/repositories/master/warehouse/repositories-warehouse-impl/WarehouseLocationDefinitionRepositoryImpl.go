@@ -249,3 +249,28 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(
 
 	return dataPaginate, totalPages, totalRows, nil
 }
+
+func (r *WarehouseLocationDefinitionRepositoryImpl) GetByLevel(tx *gorm.DB, idlevel int, idwhl string) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocationDefinition{}
+	response := masterwarehousepayloads.WarehouseLocationDefinitionResponse{}
+
+	err := tx.Model(&entities).
+		Where("warehouse_location_definition_level_code like ? AND warehouse_location_definition_level_id = ?", "%"+idwhl+"%", idlevel).
+		First(&response).
+		Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masterwarehousepayloads.WarehouseLocationDefinitionResponse{}, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("data not found"),
+			}
+		}
+		return masterwarehousepayloads.WarehouseLocationDefinitionResponse{}, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}

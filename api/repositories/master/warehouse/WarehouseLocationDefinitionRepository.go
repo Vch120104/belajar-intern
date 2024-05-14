@@ -10,6 +10,7 @@ import (
 )
 
 type WarehouseLocationDefinitionRepository interface {
+	GetByLevel(*gorm.DB, int, string) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse)
 	SaveData(*gorm.DB, masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse)
 	Save(*gorm.DB, masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetById(*gorm.DB, int) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse)

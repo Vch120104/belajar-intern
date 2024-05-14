@@ -26,6 +26,7 @@ type WarehouseLocationDefinitionControllerImpl struct {
 }
 
 type WarehouseLocationDefinitionController interface {
+	GetByLevel(writer http.ResponseWriter, request *http.Request)
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
@@ -85,6 +86,29 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+// @Summary Get Warehouse Location By Level Id
+// @Description Get Warehouse Location By Level Id
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_definition_level_id path int true "Warehouse Location Definition Level ID"
+// @Param warehouse_location_definition_level_code path string true "Warehouse Location Definition ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_level_code} [get]
+func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.ResponseWriter, request *http.Request) {
+	warehouseLocationDefinitionLevelID, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_level_id"))
+	warehouseLocationDefinitionID := chi.URLParam(request, "warehouse_location_definition_level_code") // Menggunakan nilai string langsung
+
+	get, err := r.WarehouseLocationDefinitionService.GetByLevel(warehouseLocationDefinitionLevelID, warehouseLocationDefinitionID)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
 // @Summary Get Warehouse Location By Id
 // @Description Get Warehouse Location By Id
 // @Accept json
@@ -93,7 +117,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Param warehouse_location_definition_id path int true "warehouse_location_definition_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [get]
+// @Router /v1/warehouse-location-definition/by-id/{warehouse_location_definition_id} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))

@@ -525,11 +525,12 @@ func WarehouseLocationDefinitionRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WarehouseLocationDefinitionController.GetAll)
+	router.Get("/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetByLevel)
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
+	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
 	router.Post("/", WarehouseLocationDefinitionController.Save)
 	router.Put("/", WarehouseLocationDefinitionController.SaveData)
 	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
-	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
 
 	return router
 }
