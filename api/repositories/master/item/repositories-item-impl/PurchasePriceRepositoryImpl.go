@@ -70,7 +70,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 		// Fetch Supplier data from external service
 		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(purchasePriceReq.SupplierId)
-		//fmt.Println("Fetching Supplier data from:", SupplierURL)
+		fmt.Println("Fetching Supplier data from:", SupplierURL)
 		var getSupplierResponse masteritempayloads.PurchasePriceSupplierResponse
 		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -81,7 +81,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 		// Fetch Currency data from external service
 		CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(purchasePriceReq.CurrencyId)
-		//fmt.Println("Fetching Currency data from:", CurrencyURL)
+		fmt.Println("Fetching Currency data from:", CurrencyURL)
 		var getCurrencyResponse masteritempayloads.CurrencyResponse
 		if err := utils.Get(CurrencyURL, &getCurrencyResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
@@ -304,7 +304,7 @@ func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int) *
 	return nil
 }
 
-func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id int) (masteritementities.PurchasePrice, *exceptionsss_test.BaseErrorResponse) {
 	var entity masteritementities.PurchasePrice
 
 	// Cari entitas berdasarkan ID
@@ -315,13 +315,13 @@ func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id 
 	// Periksa apakah entitas ditemukan
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return masteritementities.PurchasePrice{}, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        fmt.Errorf("purchase price with ID %d not found", Id),
 			}
 		}
 		// Jika ada galat lain, kembalikan galat internal server
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masteritementities.PurchasePrice{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -333,11 +333,11 @@ func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id 
 	// Simpan perubahan
 	result = tx.Save(&entity)
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masteritementities.PurchasePrice{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entity, nil
 }

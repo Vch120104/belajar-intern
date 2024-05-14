@@ -224,13 +224,18 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
 
-	change_status, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
-
+	entity, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
 	if err != nil {
 		exceptionsss_test.NewBadRequestException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
+
+	responseData := map[string]interface{}{
+		"is_active":                        entity.IsActive,
+		"warehouse_location_definition_id": entity.WarehouseLocationDefinitionId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Updated successfully", http.StatusOK)
 
 }
 

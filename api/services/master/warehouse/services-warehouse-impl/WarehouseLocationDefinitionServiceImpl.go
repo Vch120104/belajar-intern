@@ -2,6 +2,7 @@ package masterwarehouseserviceimpl
 
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -102,17 +103,17 @@ func (s *WarehouseLocationDefinitionServiceImpl) GetAll(filterCondition []utils.
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WarehouseLocationDefinitionServiceImpl) ChangeStatus(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarehouseLocationDefinitionServiceImpl) ChangeStatus(Id int) (masterwarehouseentities.WarehouseLocationDefinition, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	// Ubah status
-	success, err := s.WarehouseLocationDefinitionRepo.ChangeStatus(tx, Id)
+	entity, err := s.WarehouseLocationDefinitionRepo.ChangeStatus(tx, Id)
 	if err != nil {
-		return false, err
+		return masterwarehouseentities.WarehouseLocationDefinition{}, err
 	}
 
-	return success, nil
+	return entity, nil
 }
 
 func (s *WarehouseLocationDefinitionServiceImpl) PopupWarehouseLocationLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {

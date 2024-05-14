@@ -1,6 +1,7 @@
 package masteritemservice
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -14,5 +15,5 @@ type PurchasePriceService interface {
 	GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 	GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 	AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusPurchasePrice(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptionsss_test.BaseErrorResponse)
 }

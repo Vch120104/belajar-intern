@@ -1,6 +1,7 @@
 package masterserviceimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
@@ -57,21 +58,17 @@ func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRespons
 	return results, nil
 }
 
-func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agreement, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	_, err := s.AgreementRepo.GetAgreementById(tx, Id)
-
+	// Ubah status
+	entity, err := s.AgreementRepo.ChangeStatusAgreement(tx, Id)
 	if err != nil {
-		return false, err
+		return masterentities.Agreement{}, err
 	}
 
-	results, err := s.AgreementRepo.ChangeStatusAgreement(tx, Id)
-	if err != nil {
-		return results, nil
-	}
-	return true, nil
+	return entity, nil
 }
 
 func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {

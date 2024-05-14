@@ -178,7 +178,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id int) (masterwarehouseentities.WarehouseLocationDefinition, *exceptionsss_test.BaseErrorResponse) {
 	var entity masterwarehouseentities.WarehouseLocationDefinition
 
 	// Cari entitas berdasarkan ID
@@ -189,13 +189,13 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id
 	// Periksa apakah entitas ditemukan
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        fmt.Errorf("warehouse Loc with ID %d not found", Id),
 			}
 		}
 		// Jika ada galat lain, kembalikan galat internal server
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -207,13 +207,13 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id
 	// Simpan perubahan
 	result = tx.Save(&entity)
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entity, nil
 }
 
 func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
