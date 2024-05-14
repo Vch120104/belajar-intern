@@ -5,11 +5,12 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
-
+	"after-sales/api/middlewares"
 	"github.com/go-chi/chi/v5"
 )
 
 /* Master */
+
 func DiscountPercentRouter(
 	discountPercentController masteritemcontroller.DiscountPercentController,
 ) chi.Router {
@@ -97,7 +98,29 @@ func MarkupRateRouter(
 	router.Post("/", markupRateController.SaveMarkupRate)
 	router.Patch("/{markup_rate_id}", markupRateController.ChangeStatusMarkupRate)
 
-	//router.PanicHandler = exceptions.ErrorHandler
+	return router
+}
+
+func ItemLocationRouter(
+	ItemLocationController masteritemcontroller.ItemLocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middlewares.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	//master
+	router.Get("/", ItemLocationController.GetAllItemLocation)
+	router.Get("/{item_location_id}", ItemLocationController.GetItemLocationById)
+	router.Post("/", ItemLocationController.SaveItemLocation)
+
+	//detail
+	router.Get("/detail/all", ItemLocationController.GetAllItemLocationDetail)
+	router.Get("/popup-location", ItemLocationController.PopupItemLocation)
+	router.Post("/detail", ItemLocationController.AddItemLocation)
+	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
 
 	return router
 }

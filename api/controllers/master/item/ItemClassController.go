@@ -18,6 +18,7 @@ import (
 type ItemClassController interface {
 	GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request)
 	GetAllItemClass(writer http.ResponseWriter, request *http.Request)
+	GetItemClassbyId(writer http.ResponseWriter, request *http.Request)
 	SaveItemClass(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
 }
@@ -29,6 +30,20 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 	return &ItemClassControllerImpl{
 		ItemClassService: itemClassService,
 	}
+}
+
+// GetItemClassbyId implements ItemClassController.
+func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, request *http.Request) {
+	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	response, err := r.ItemClassService.GetItemClassById(itemClassId)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Item Class Lookup
@@ -169,9 +184,9 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 // @Router /aftersales-service/api/aftersales/item-class/{item_class_id} [patch]
 func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request) {
 
-	itemclassGroupId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
 
-	response, err := r.ItemClassService.ChangeStatusItemClass(int(itemclassGroupId))
+	response, err := r.ItemClassService.ChangeStatusItemClass(int(itemClassId))
 
 	if err != nil {
 		exceptionsss_test.NewBadRequestException(writer, request, err)
