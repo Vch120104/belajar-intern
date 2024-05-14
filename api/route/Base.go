@@ -122,7 +122,10 @@ func ItemLevelRouter(
 
 	router.Get("/", itemLevelController.GetAll)
 	router.Get("/{item_level_id}", itemLevelController.GetById)
-	router.Get("/drop-down/{item_level}", itemLevelController.GetItemLevelDropDown)
+
+	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
+	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
+
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
