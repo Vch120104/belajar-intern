@@ -12,18 +12,21 @@ import (
 
 	// "after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type WarehouseMasterServiceImpl struct {
 	warehouseMasterRepo masterwarehouserepository.WarehouseMasterRepository
 	DB                  *gorm.DB
+	RedisClient         *redis.Client // Redis client
 }
 
-func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.WarehouseMasterRepository, db *gorm.DB) masterwarehouseservice.WarehouseMasterService {
+func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.WarehouseMasterRepository, db *gorm.DB, redisClient *redis.Client) masterwarehouseservice.WarehouseMasterService {
 	return &WarehouseMasterServiceImpl{
 		warehouseMasterRepo: warehouseMaster,
 		DB:                  db,
+		RedisClient:         redisClient,
 	}
 }
 

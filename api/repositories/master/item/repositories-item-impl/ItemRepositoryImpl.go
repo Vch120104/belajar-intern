@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -23,15 +24,11 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, *exceptionsss_test.BaseErrorResponse) {
-	var responses []masteritempayloads.ItemLookup
-	tableStruct := masteritempayloads.ItemLookup{}
-
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Scan(&responses).Rows()
+// GetUomItemDropDown implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) GetUomDropDown(tx *gorm.DB, uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	model := masteritementities.Uom{}
+	responses := []masteritempayloads.UomDropdownResponse{}
+	err := tx.Model(model).Where(masteritementities.Uom{UomTypeId: uomTypeId}).Scan(&responses).Error
 
 	if err != nil {
 		return responses, &exceptionsss_test.BaseErrorResponse{
@@ -40,8 +37,44 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 		}
 	}
 
-	if len(responses) == 0 {
+	return responses, nil
+}
+
+// GetUomTypeDropDown implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	model := masteritementities.UomType{}
+	responses := []masteritempayloads.UomTypeDropdownResponse{}
+	err := tx.Model(model).Scan(&responses).Error
+
+	if err != nil {
 		return responses, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return responses, nil
+}
+
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	var responses []masteritempayloads.ItemLookup
+	tableStruct := masteritempayloads.ItemLookup{}
+
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	rows, err := joinTable.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Rows()
+
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -49,7 +82,9 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 
 	defer rows.Close()
 
-	return responses, nil
+	pages.Rows = responses
+
+	return pages, nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
@@ -188,27 +223,42 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, internalFilterConditi
 
 }
 
-func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (map[string]any, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).
+	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*").
 		Where(masteritementities.Item{
 			ItemId: Id,
-		}).
+		}).InnerJoins("Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
 		First(&response).
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
+	supplierResponse := masteritempayloads.SupplierMasterResponse{}
+
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "/supplier-master/" + strconv.Itoa(response.SupplierId)
+
+	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
+
+	// join with user details data (not yet complete)
+
 	defer rows.Close()
 
-	return response, nil
+	return joinSupplierData[0], nil
 }
 
 func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
@@ -360,17 +410,17 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	return seventhJoin, nil
 }
 
-func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.Item{
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
 		ItemName:                     req.ItemName,
 		ItemGroupId:                  req.ItemGroupId,
 		ItemType:                     req.ItemType,
-		ItemLevel1:                   req.ItemLevel_1,
-		ItemLevel2:                   req.ItemLevel_2,
-		ItemLevel3:                   req.ItemLevel_3,
-		ItemLevel4:                   req.ItemLevel_4,
+		ItemLevel1:                   req.ItemLevel1,
+		ItemLevel2:                   req.ItemLevel2,
+		ItemLevel3:                   req.ItemLevel3,
+		ItemLevel4:                   req.ItemLevel4,
 		SupplierId:                   req.SupplierId,
 		UnitOfMeasurementTypeId:      req.UnitOfMeasurementTypeId,
 		UnitOfMeasurementSellingId:   req.UnitOfMeasurementSellingId,
@@ -419,6 +469,58 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	model := masteritementities.Item{}
+
+	err = tx.Model(&model).Where(masteritementities.Item{ItemCode: req.ItemCode}).First(&model).Error
+
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
+
+	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
+
+	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	uomTypeModel := masteritementities.UomType{}
+
+	err = tx.Model(&uomTypeModel).Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).First(&uomTypeModel).Error
+
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	uomItemEntities := masteritementities.UomItem{
+		ItemId:            model.ItemId,
+		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
+		UomTypeCode:       uomTypeModel.UomTypeCode,
+		SourceUomId:       req.UnitOfMeasurementPurchaseId,
+		TargetUomId:       req.UnitOfMeasurementStockId,
+		SourceConvertion:  float64(req.SourceConvertion),
+		TargetConvertion:  float64(req.TargetConvertion),
+	}
+
+	err = tx.Save(&uomItemEntities).Error
 
 	if err != nil {
 		return false, &exceptionsss_test.BaseErrorResponse{

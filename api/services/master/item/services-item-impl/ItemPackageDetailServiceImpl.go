@@ -9,18 +9,21 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type ItemPackageDetailServiceImpl struct {
 	ItemPackageDetailRepo masteritemrepository.ItemPackageDetailRepository
 	DB                    *gorm.DB
+	RedisClient           *redis.Client // Redis client
 }
 
-func StartItemPackageDetailService(ItemPackageDetailRepo masteritemrepository.ItemPackageDetailRepository, db *gorm.DB) masteritemservice.ItemPackageDetailService {
+func StartItemPackageDetailService(ItemPackageDetailRepo masteritemrepository.ItemPackageDetailRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.ItemPackageDetailService {
 	return &ItemPackageDetailServiceImpl{
 		ItemPackageDetailRepo: ItemPackageDetailRepo,
 		DB:                    db,
+		RedisClient:           redisClient,
 	}
 }
 

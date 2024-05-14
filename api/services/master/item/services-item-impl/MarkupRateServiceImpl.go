@@ -9,18 +9,21 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type MarkupRateServiceImpl struct {
-	markupRepo masteritemrepository.MarkupRateRepository
-	DB         *gorm.DB
+	markupRepo  masteritemrepository.MarkupRateRepository
+	DB          *gorm.DB
+	RedisClient *redis.Client // Redis client
 }
 
-func StartMarkupRateService(markupRepo masteritemrepository.MarkupRateRepository, db *gorm.DB) masteritemservice.MarkupRateService {
+func StartMarkupRateService(markupRepo masteritemrepository.MarkupRateRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.MarkupRateService {
 	return &MarkupRateServiceImpl{
-		markupRepo: markupRepo,
-		DB:         db,
+		markupRepo:  markupRepo,
+		DB:          db,
+		RedisClient: redisClient,
 	}
 }
 

@@ -7,6 +7,11 @@ import (
 	"os"
 )
 
+// @title DMS After-Sales API
+// @version v1
+// @license AGPLv3
+// @description This is a DMS After-Sales API Server.
+
 func main() {
 	args := os.Args
 	env := ""
@@ -31,8 +36,5 @@ func main() {
 		db := config.InitDB()
 		config.InitLogger(db)
 		route.StartRouting(db)
-		// redis := config.InitRedis()
-		// route.CreateHandler(db, env, redis)
-		migration.MigrateGG()
 	}
 }

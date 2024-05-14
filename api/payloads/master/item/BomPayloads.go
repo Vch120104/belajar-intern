@@ -33,13 +33,13 @@ type BomMasterListResponse struct {
 type BomMasterRequest struct {
 	BomMasterId            int       `json:"bom_master_id"`
 	IsActive               bool      `json:"is_active"`
-	BomMasterSeq           int       `json:"bom_master_seq"`
 	BomMasterQty           int       `json:"bom_master_qty"`
 	BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
 	BomMasterChangeNumber  int       `json:"bom_master_change_number"`
 	ItemCode               string    `json:"item_code"`
 	ItemName               string    `json:"item_name"`
 	ItemId                 int       `json:"item_id"`
+	UomDescription         string    `json:"uom_description"`
 }
 
 type BomItemNameResponse struct {
@@ -93,6 +93,7 @@ type BomDetailListResponse struct {
 	BomDetailQty            int       `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
 	BomDetailRemark         string    `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
 	BomDetailCostingPercent int       `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
+	UomDescription          string    `json:"uom_description" parent_entity:"mtr_uom"`
 }
 
 type BomItemLookup struct {

@@ -45,8 +45,8 @@ func NewOperationCodeController(operationCodeservice masteroperationservice.Oper
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-code [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/operation-code/ [get]
 func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -80,8 +80,8 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 // @Tags Master : Operation Code
 // @Param operation_id path int true "operation_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-code/by-id/{operation_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/operation-code/by-id/{operation_id} [get]
 func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseWriter, request *http.Request) {
 	OperationIdStr, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
 
@@ -102,8 +102,8 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 // @Tags Master : Operation Code
 // @param reqBody body masteroperationpayloads.OperationCodeSave true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-code/ [post]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/operation-code/ [post]
 func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationCodeSave
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -136,11 +136,11 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 // @Tags Master : Operation Code
 // @param operation_id path int true "operation_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-code/{operation_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/operation-code/{operation_id} [patch]
 func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request) {
 
-	OperationId, _ := strconv.Atoi(chi.URLParam(request,"operation_id"))
+	OperationId, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
 
 	response, err := r.operationCodeService.ChangeStatusOperationCode(OperationId)
 
