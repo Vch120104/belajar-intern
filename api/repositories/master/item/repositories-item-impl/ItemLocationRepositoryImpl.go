@@ -278,7 +278,7 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, request masteritempayloads.ItemLocationDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int, request masteritempayloads.ItemLocationDetailRequest) *exceptionsss_test.BaseErrorResponse {
 	entities := masteritementities.ItemLocationDetail{
 		ItemId:                     request.ItemId,
 		ItemLocationId:             request.ItemLocationId,
@@ -288,21 +288,13 @@ func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, request master
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        err,
-			}
-		} else {
-
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 
-	return true, nil
+	return nil
 }
 
 // DeleteItemLocation deletes an item location by ID
