@@ -129,10 +129,6 @@ func StartRouting(db *gorm.DB) {
 	forecastMasterService := masterserviceimpl.StartForecastMasterService(forecastMasterRepository, db, rdb)
 	forecastMasterController := mastercontroller.NewForecastMasterController(forecastMasterService)
 
-	// ForecastMaster
-	movingCodeRepository := masterrepositoryimpl.StartMovingCodeRepositoryImpl()
-	movingCodeService := masterserviceimpl.StartMovingCodeServiceImpl(movingCodeRepository, db)
-	movingCodeController := mastercontroller.NewMovingCodeController(movingCodeService)
 	// Agreement
 	AgreementRepository := masterrepositoryimpl.StartAgreementRepositoryImpl()
 	AgreementService := masterserviceimpl.StartAgreementService(AgreementRepository, db, rdb)
@@ -267,7 +263,6 @@ func StartRouting(db *gorm.DB) {
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
 	DiscountRouter := DiscountRouter(discountController)
 	MarkupRateRouter := MarkupRateRouter(markupRateController)
-	movingCodeRouter := MovingCodeRouter(movingCodeController)
 	ItemSubstituteRouter := ItemSubstituteRouter(itemSubstituteController)
 	ItemLocationRouter := ItemLocationRouter(ItemLocationController)
 	WarehouseGroupRouter := WarehouseGroupRouter(warehouseGroupController)
@@ -297,7 +292,7 @@ func StartRouting(db *gorm.DB) {
 		/* Master */
 		r.Mount("/item-class", itemClassRouter)
 		r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
-		r.Mount("/discount-percent", DiscountPercentRouter)
+
 		r.Mount("/markup-master", markupMasterRouter)
 		r.Mount("/item-location", ItemLocationRouter)
 		//r.Mount("/import-item", ImportItemRouter)
@@ -311,7 +306,6 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/agreement", AgreementRouter)
 		//r.Mount("/campaign", CampaignRouter)
 		//r.Mount("/package", PackageRouter)
-		r.Mount("/skill-level", SkillLevelRouter)
 		//r.Mount("/work-info-massage", WorkInfoRouter)
 		r.Mount("/field-action", FieldActionRouter)
 		r.Mount("/item-level", itemLevelRouter)
@@ -333,14 +327,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/operation-section", OperationSectionRouter)
 		r.Mount("/operation-key", OperationKeyRouter)
 		r.Mount("/operation-entries", OperationEntriesRouter)
-		r.Mount("/discount", DiscountRouter)
-		r.Mount("/markup-rate", MarkupRateRouter)         //error Could not get response
-		r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
-		r.Mount("/warehouse-location", WarehouseLocation)
-		r.Mount("/warehouse-master", WarehouseMaster)
-		r.Mount("/shift-schedule", ShiftScheduleRouter)
-		r.Mount("/price-list", priceListRouter) //null value
-		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
+		r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
 		//prometheus route
 		r.Mount("/metrics", promhttp.Handler())
 
@@ -355,12 +342,9 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
 	r.Mount("/discount", DiscountRouter)
 
-	r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
-
 	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
 	r.Mount("/warehouse-location", WarehouseLocation)
 	r.Mount("/warehouse-master", WarehouseMaster)
-	r.Mount("/warehouse-free-service", warrantyFreeServiceRouter)
 
 	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
 	r.Mount("/shift-schedule", ShiftScheduleRouter)
