@@ -150,12 +150,18 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	response, err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
+	entity, err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+
+	responseData := map[string]interface{}{
+		"is_active":     entity.IsActive,
+		"bom_master_id": entity.BomMasterId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Bom Detail
@@ -286,10 +292,10 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 }
 
 // @Summary Get All Bom Item Lookup
-// @Description REST API Item
+// @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master : Bom Detail
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"

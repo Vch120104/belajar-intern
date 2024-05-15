@@ -14,4 +14,5 @@ type OperationCodeRepository interface {
 	GetAllOperationCode(*gorm.DB,[]utils.FilterCondition, pagination.Pagination)(pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
 	SaveOperationCode(*gorm.DB,masteroperationpayloads.OperationCodeSave)(bool,*exceptionsss_test.BaseErrorResponse)
 	ChangeStatusItemSubstitute(*gorm.DB,int)(bool,*exceptionsss_test.BaseErrorResponse)
+	GetOperationCodeByCode(*gorm.DB,string) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse)
 }

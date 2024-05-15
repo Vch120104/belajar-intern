@@ -5,6 +5,8 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"encoding/json"
+	"fmt"
 
 	"strconv"
 
@@ -24,9 +26,11 @@ type WarehouseLocationDefinitionControllerImpl struct {
 }
 
 type WarehouseLocationDefinitionController interface {
+	GetByLevel(writer http.ResponseWriter, request *http.Request)
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
+	SaveData(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	PopupWarehouseLocationLevel(writer http.ResponseWriter, request *http.Request)
 }
@@ -82,6 +86,29 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+// @Summary Get Warehouse Location By Level Id
+// @Description Get Warehouse Location By Level Id
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_definition_level_id path int true "Warehouse Location Definition Level ID"
+// @Param warehouse_location_definition_level_code path string true "Warehouse Location Definition ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_level_code} [get]
+func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.ResponseWriter, request *http.Request) {
+	warehouseLocationDefinitionLevelID, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_level_id"))
+	warehouseLocationDefinitionID := chi.URLParam(request, "warehouse_location_definition_level_code") // Menggunakan nilai string langsung
+
+	get, err := r.WarehouseLocationDefinitionService.GetByLevel(warehouseLocationDefinitionLevelID, warehouseLocationDefinitionID)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
 // @Summary Get Warehouse Location By Id
 // @Description Get Warehouse Location By Id
 // @Accept json
@@ -90,7 +117,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Param warehouse_location_definition_id path int true "warehouse_location_definition_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [get]
+// @Router /v1/warehouse-location-definition/by-id/{warehouse_location_definition_id} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
@@ -135,6 +162,55 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 
 }
 
+// @Summary Save Data Warehouse Location
+// @Description Save Data Warehouse Location
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_id path int true "Warehouse Location ID"
+// @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/{warehouse_location_id} [put]
+func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.ResponseWriter, request *http.Request) {
+	warehouseLocationID := chi.URLParam(request, "warehouse_location_id")
+	id, err := strconv.Atoi(warehouseLocationID)
+	if err != nil {
+		errResponse := &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid warehouse_location_id"),
+		}
+		exceptionsss_test.NewBadRequestException(writer, request, errResponse)
+		return
+	}
+
+	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
+	if err := json.NewDecoder(request.Body).Decode(&formRequest); err != nil {
+		errResponse := &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid request body"),
+		}
+		exceptionsss_test.NewBadRequestException(writer, request, errResponse)
+		return
+	}
+	formRequest.WarehouseLocationDefinitionId = id
+
+	save, saveErr := r.WarehouseLocationDefinitionService.SaveData(formRequest)
+	if saveErr != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, saveErr)
+		return
+	}
+
+	var message string
+	if id == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
+}
+
 // @Summary Change Warehouse Location Status By Id
 // @Description Change Warehouse Location Status By Id
 // @Accept json
@@ -148,13 +224,18 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
 
-	change_status, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
-
+	entity, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
 	if err != nil {
 		exceptionsss_test.NewBadRequestException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
+
+	responseData := map[string]interface{}{
+		"is_active":                        entity.IsActive,
+		"warehouse_location_definition_id": entity.WarehouseLocationDefinitionId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Updated successfully", http.StatusOK)
 
 }
 

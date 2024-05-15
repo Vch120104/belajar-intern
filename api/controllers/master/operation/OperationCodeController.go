@@ -18,6 +18,7 @@ import (
 type OperationCodeController interface {
 	GetAllOperationCode(writer http.ResponseWriter, request *http.Request)
 	GetByIdOperationCode(writer http.ResponseWriter, request *http.Request)
+	GetByCodeOperationCode(writer http.ResponseWriter, request *http.Request)
 	SaveOperationCode(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request)
 }
@@ -86,6 +87,19 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 	OperationIdStr, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
 
 	result, err := r.operationCodeService.GetOperationCodeById(int(OperationIdStr))
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationCodeControllerImpl) GetByCodeOperationCode(writer http.ResponseWriter, request *http.Request) {
+	OperationCodeStr, _ := strconv.Atoi(chi.URLParam(request, "operation_code"))
+
+	result, err := r.operationCodeService.GetOperationCodeById(OperationCodeStr)
 
 	if err != nil {
 		exceptionsss_test.NewBadRequestException(writer, request, err)
