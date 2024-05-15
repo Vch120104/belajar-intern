@@ -5,6 +5,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
+	"net/http"
 
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/utils"
@@ -13,7 +14,6 @@ import (
 )
 
 type WorkOrderRepositoryImpl struct {
-	DB *gorm.DB
 }
 
 func OpenWorkOrderRepositoryImpl() transactionworkshoprepository.WorkOrderRepository {
@@ -92,12 +92,8 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 
 func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	// Create a new instance of WorkOrderRepositoryImpl
-	repo := &WorkOrderRepositoryImpl{
-		DB: tx,
-	}
-
 	// Save the work order
-	success, err := repo.Save(request)
+	success, err := r.Save(tx, request) // Menggunakan method Save dari receiver saat ini, yaitu r
 	if err != nil {
 		return false, &exceptionsss_test.BaseErrorResponse{Message: "Failed to save work order"}
 	}
@@ -161,11 +157,18 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworks
 	return payload, nil
 }
 
-func (r *WorkOrderRepositoryImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
-	var WorkOrderEntities = transactionworkshopentities.WorkOrder{}
-	err := r.DB.Model(&WorkOrderEntities).Create(&WorkOrderEntities).Error
+func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	var workOrderEntities = transactionworkshopentities.WorkOrder{
+		// Assign fields from request
+	}
+
+	// Create a new record
+	err := tx.Create(&workOrderEntities).Error
 	if err != nil {
-		return false, err
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 	return true, nil
 }

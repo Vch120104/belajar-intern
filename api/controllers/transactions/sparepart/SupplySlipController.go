@@ -1,37 +1,37 @@
 package transactionsparepartcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/payloads"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
-
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
-	"gorm.io/gorm"
 )
 
-type SupplySlipController struct {
+type SupplySlipControllerImpl struct {
 	supplyslipservice transactionsparepartservice.SupplySlipService
 }
 
-func StartSupplySlipRoutes(
-	db *gorm.DB,
-	r chi.Router,
-	supplyslipservice transactionsparepartservice.SupplySlipService,
-) {
-	supplySlipHandler := SupplySlipController{supplyslipservice: supplyslipservice}
-	r.Get("/supply-slip/{supply_system_number}", supplySlipHandler.GetSupplySlipByID)
+type SupplySlipController interface {
+	GetSupplySlipByID(writer http.ResponseWriter, request *http.Request)
+}
+
+func NewSupplySlipController(supplyslipservice transactionsparepartservice.SupplySlipService) SupplySlipController {
+	return &SupplySlipControllerImpl{
+		supplyslipservice: supplyslipservice,
+	}
 }
 
 // Get Supply Slip By ID
-func (r *SupplySlipController) GetSupplySlipByID(w http.ResponseWriter, req *http.Request) {
-	supplySystemNumber, _ := strconv.Atoi(chi.URLParam(req, "supply_system_number"))
-	result, err := r.supplyslipservice.GetSupplySlipById(int32(supplySystemNumber))
-	if err != nil {
-		exceptions.NotFoundException(w, err.Error())
-		return
-	}
-	payloads.NewHandleSuccess(w, result, "Get Data Successfully!", http.StatusOK)
+func (r *SupplySlipControllerImpl) GetSupplySlipByID(writer http.ResponseWriter, request *http.Request) {
+	// Get ID from URL
+	// id := mux.Vars(request)["id"]
+
+	// Get data from service
+	// data, err := r.supplyslipservice.GetSupplySlipByID(id)
+	// if err != nil {
+	// 	// Return error
+	// 	exceptionsss_test.NewNotFoundException(writer, request, err)
+	// 	return
+	// }
+
+	// Return success
+	// payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
 }

@@ -1,6 +1,7 @@
 package transactionworkshopcontroller
 
 import (
+	"after-sales/api/config"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
@@ -79,6 +80,9 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 
 // Save saves a new work order
 func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
+
 	// Mendekode payload request ke struct WorkOrderRequest
 	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
 	if err := json.NewDecoder(request.Body).Decode(&workOrderRequest); err != nil {
@@ -88,10 +92,10 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	}
 
 	// Panggil fungsi Save dari layanan untuk menyimpan data work order
-	success, err := r.WorkOrderService.Save(workOrderRequest)
+	success, err := r.WorkOrderService.Save(db, workOrderRequest) // Memastikan untuk meneruskan db ke dalam metode Save
 	if err != nil {
 		// Tangani kesalahan dari layanan
-		payloads.NewHandleError(writer, err.Error(), http.StatusInternalServerError)
+		exceptionsss_test.NewAppException(writer, request, err)
 		return
 	}
 

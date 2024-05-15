@@ -5,6 +5,7 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
@@ -462,7 +463,7 @@ func OperationCodeRouter(
 
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
-	router.Get("/by-code/{operation_code}",operationCodeController.GetByCodeOperationCode)
+	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 
@@ -788,6 +789,11 @@ func DeductionRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", DeductionController.GetAllDeductionList)
 	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
@@ -799,10 +805,46 @@ func DeductionRouter(
 	return router
 }
 
+func SupplySlipRouter(
+	SupplySlipController transactionsparepartcontroller.SupplySlipController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
+
+	return router
+}
+
+func BookingEstimationRouter(
+	BookingEstimationController transactionworkshopcontroller.BookingEstimationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", BookingEstimationController.GetAll)
+	router.Get("/normal", BookingEstimationController.New)
+	router.Get("/find/{work_order_system_number}", BookingEstimationController.GetById)
+	router.Put("/{id}", BookingEstimationController.Save)
+	router.Post("/submit", BookingEstimationController.Submit)
+	router.Delete("/{id}", BookingEstimationController.Void)
+	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
+
+	return router
+}
+
 func WorkOrderRouter(
 	WorkOrderController transactionworkshopcontroller.WorkOrderController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal", WorkOrderController.New)
@@ -848,19 +890,3 @@ func SwaggerRouter() chi.Router {
 
 	return router
 }
-
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
-
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
-
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }

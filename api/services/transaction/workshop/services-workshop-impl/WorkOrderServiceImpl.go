@@ -56,13 +56,17 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 	return results, nil
 }
 
-func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
-	tx := s.DB.Begin()
+func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
 	defer helper.CommitOrRollback(tx)
-	save, err := s.structWorkOrderRepo.Save(request)
+
+	// Panggil metode Save dengan menyediakan transaksi dan permintaan WorkOrder
+	save, err := s.structWorkOrderRepo.Save(tx, request)
 	if err != nil {
 		return false, err
 	}
+
+	// Mengembalikan hasil penyimpanan dan nilai nil untuk ErrorResponse
 	return save, nil
 }
 

@@ -17,8 +17,11 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
+	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
+	transactionsparepartrepositoryimpl "after-sales/api/repositories/transaction/sparepart/repositories-sparepart-impl"
 	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
+	transactionsparepartserviceimpl "after-sales/api/services/transaction/sparepart/services-sparepart-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
 
@@ -235,6 +238,16 @@ func StartRouting(db *gorm.DB) {
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
 	/* Transaction */
+	//Supply Slip
+	SupplySlipRepository := transactionsparepartrepositoryimpl.StartSupplySlipRepositoryImpl()
+	SupplySlipService := transactionsparepartserviceimpl.StartSupplySlipService(SupplySlipRepository, db, rdb)
+	SupplySlipController := transactionsparepartcontroller.NewSupplySlipController(SupplySlipService)
+
+	//Booking Estimation
+	BookingEstimationRepository := transactionworkshoprepositoryimpl.OpenBookingEstimationRepositoryImpl()
+	BookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(BookingEstimationRepository, db, rdb)
+	BookingEstimationController := transactionworksopcontroller.NewBookingEstimationController(BookingEstimationService)
+
 	//Work order
 	WorkOrderRepository := transactionworkshoprepositoryimpl.OpenWorkOrderRepositoryImpl()
 	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
@@ -283,6 +296,8 @@ func StartRouting(db *gorm.DB) {
 	PackageMasterRouter := PackageMasterRouter(PackageMasterController)
 
 	/* Transaction */
+	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
+	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
 
 	r := chi.NewRouter()
@@ -343,6 +358,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/deduction", DeductionRouter)
 
 		/* Transaction */
+		r.Mount("/supply-slip", SupplySlipRouter)
+		r.Mount("/booking-estimation", BookingEstimationRouter)
 		r.Mount("/work-order", WorkOrderRouter)
 
 	})
