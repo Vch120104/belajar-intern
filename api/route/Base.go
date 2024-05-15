@@ -142,7 +142,8 @@ func ItemRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 	router.Get("/", itemController.GetAllItem)
-	router.Get("/pop-up", itemController.GetAllItemLookup)
+	router.Get("/{item_id}", itemController.GetItembyId)
+	router.Get("/lookup", itemController.GetAllItemLookup)
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
@@ -292,7 +293,16 @@ func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
 ) chi.Router {
 	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
+	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
+	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
+	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 	return router
 }
 
@@ -831,6 +841,22 @@ func SwaggerRouter() chi.Router {
 
 	return router
 }
+
+// func SwaggerRouter() chi.Router {
+// 	router := chi.NewRouter()
+// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
+// 	return router
+// }
+
+// func adaptHandler(h http.Handler) chi.Handle {
+// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+// 		h.ServeHTTP(w, r)
+// 	}
+// }
+
+// func swaggerHandler() http.HandlerFunc {
+// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
+// }
 
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()

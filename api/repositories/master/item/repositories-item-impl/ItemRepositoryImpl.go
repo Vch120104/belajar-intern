@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"reflect"
 	"strconv"
 	"time"
@@ -296,7 +295,7 @@ func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) 
 }
 
 func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
-	encodedCode := url.PathEscape(code)
+	// encodedCode := url.PathEscape(code)
 
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
@@ -309,9 +308,9 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 	var getPersonInChargeResponse masteritempayloads.PersonInChargeResponse
 	var getAtpmWarrantyClaimTypeResponse masteritempayloads.AtpmWarrantyClaimTypeResponse
 
-	rows, err := tx.Model(&entities).
+	rows, err := tx.Model(&entities).Select("mtr_item.*").
 		Where(masteritementities.Item{
-			ItemCode: encodedCode, // Menggunakan kode yang telah diencode
+			ItemCode: code, // Menggunakan kode yang telah diencode
 		}).First(&response).Rows()
 
 	if err != nil {
@@ -417,7 +416,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) ([]map[string
 			Err:        err,
 		}
 	}
-
+	fmt.Print("awdawdwad", seventhJoin)
 	eightJoin := utils.DataFrameLeftJoin(seventhJoin, getPersonInChargeResponse, "PersonInChargeId")
 
 	// FK luar with mtr_unit_of_measurement_type

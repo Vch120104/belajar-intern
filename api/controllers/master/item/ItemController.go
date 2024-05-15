@@ -9,9 +9,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
-	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -226,8 +224,8 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 
 	itemCode := chi.URLParam(request, "item_code")
 
-	itemCodeEncode := url.QueryEscape(itemCode)
-	fmt.Print(itemCodeEncode)
+	itemCodeEncode := strings.ReplaceAll(itemCode, "!", "/")
+
 	// Melakukan URL encoding pada item_code
 	// encodedItemCode := url.PathEscape(itemCode)
 

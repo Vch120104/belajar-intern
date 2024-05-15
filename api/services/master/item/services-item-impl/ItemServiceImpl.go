@@ -9,8 +9,6 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
-	"net/url"
-
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -93,11 +91,11 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 
 func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
 	// Melakukan URL encoding pada parameter code
-	encodedCode := url.PathEscape(code)
+	// encodedCode := url.PathEscape(code)
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetItemCode(tx, encodedCode) // Menggunakan kode yang telah diencode
+	results, err := s.itemRepo.GetItemCode(tx, code) // Menggunakan kode yang telah diencode
 	if err != nil {
 		return results, err
 	}
