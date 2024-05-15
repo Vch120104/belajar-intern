@@ -753,7 +753,7 @@ func CampaignMasterRouter(
 
 	//from package master
 	router.Get("/package",campaignmastercontroller.GetAllPackageMasterToCopy)
-	router.Get("/package-copy/{package_id}/{campaign_id}",campaignmastercontroller.SelectFromPackageMaster)
+	// router.Get("/package-copy/{package_id}/{campaign_id}",campaignmastercontroller.SelectFromPackageMaster)
 	
 	return router
 }

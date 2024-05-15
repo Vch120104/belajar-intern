@@ -39,7 +39,12 @@ type GetVariantResponse struct {
 	VariantDesc string `json:"variant_description"`
 }
 
-type GetProfitMaster struct{
-	ProfitCenterId int `json:"profit_center_id"`
-	ProfitCenterName string `json:"profit_center_name"`	
+type GetProfitMaster struct {
+	ProfitCenterId   int    `json:"profit_center_id"`
+	ProfitCenterName string `json:"profit_center_name"`
+}
+
+type PackageMasterForCampaignMaster struct {
+	PackageCode string `json:"package_code"`
+	PackageName string `json:"package_name"`
 }
