@@ -89,7 +89,7 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 	}
 
 	// Fetch order type data
-	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/order-type-filter?order_type_name=" + orderTypeName
+	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "order-type-filter?order_type_name=" + orderTypeName
 	errUrlMarkupRate := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
 	if errUrlMarkupRate != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{

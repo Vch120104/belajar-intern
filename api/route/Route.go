@@ -289,13 +289,23 @@ func StartRouting(db *gorm.DB) {
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
 		// Tambahkan routing untuk v1 versi di sini
-		/* Master */
+		/* Master Item */
 		r.Mount("/item-class", itemClassRouter)
 		r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 
 		r.Mount("/markup-master", markupMasterRouter)
+		r.Mount("/markup-rate", MarkupRateRouter)
+		r.Mount("/item-level", itemLevelRouter)
+		r.Mount("/item", itemRouter)
+		r.Mount("/item-substitute", ItemSubstituteRouter)
 		r.Mount("/item-location", ItemLocationRouter)
+		r.Mount("/item-package", itemPackageRouter)
+		r.Mount("/item-package-detail", itemPackageDetailRouter)
+		r.Mount("/price-list", priceListRouter)
+		r.Mount("/item-model-mapping", ItemModelMappingRouter)
 		//r.Mount("/import-item", ImportItemRouter)
+		r.Mount("/bom", BomRouter)
+		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/purchase-price", PurchasePriceRouter)
 		r.Mount("/landed-cost", LandedCostMasterRouter)
 		//r.Mount("/import-duty", ImportDutyRouter)
@@ -323,6 +333,9 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/incentive-group", IncentiveGroupRouter)
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter) //method notalowed
+
+		/* Master Operation */
+		r.Mount("/operation-group", OperationGroupRouter)
 		r.Mount("/operation-code", OperationCodeRouter)
 		r.Mount("/operation-section", OperationSectionRouter)
 		r.Mount("/operation-key", OperationKeyRouter)
@@ -330,6 +343,31 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/markup-rate", MarkupRateRouter) //error Could not get response
 		//prometheus route
 		r.Mount("/metrics", promhttp.Handler())
+		r.Mount("/operation-model-mapping", OperationModelMappingRouter)
+		//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+
+		/* Master Warehouse */
+		r.Mount("/warehouse-group", WarehouseGroupRouter)
+		r.Mount("/warehouse-location", WarehouseLocation)
+		r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
+		r.Mount("/warehouse-master", WarehouseMaster)
+
+		/* Master */
+		r.Mount("/moving-code", MovingCodeRouter)
+		r.Mount("/forecast-master", ForecastMasterRouter)
+		r.Mount("/agreement", AgreementRouter)
+		//r.Mount("/campaign", CampaignRouter)
+		r.Mount("/package-master", PackageMasterRouter)
+		r.Mount("/skill-level", SkillLevelRouter)
+		r.Mount("/shift-schedule", ShiftScheduleRouter)
+		r.Mount("/incentive", IncentiveMasterRouter)
+		//r.Mount("/work-info-massage", WorkInfoRouter)
+		r.Mount("/field-action", FieldActionRouter)
+		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
+		r.Mount("/discount", DiscountRouter)
+		r.Mount("/incentive-group", IncentiveGroupRouter)
+		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
+		r.Mount("/deduction", DeductionRouter)
 
 		/* Transaction */
 		r.Mount("/work-order", WorkOrderRouter)

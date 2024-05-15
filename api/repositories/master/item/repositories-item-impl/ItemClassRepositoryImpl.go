@@ -77,7 +77,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	defer rows.Close()
 
-	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "/filter-item-group?item_group_name=" + groupName
+	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
 
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
@@ -90,7 +90,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
-	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type?line_type_code=" + lineTypeCode
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
 
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 

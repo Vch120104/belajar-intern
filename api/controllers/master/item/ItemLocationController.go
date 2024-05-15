@@ -47,7 +47,7 @@ func NewItemLocationController(ItemLocationService masteritemservice.ItemLocatio
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/popup-location [get]
+// @Router /v1/item-location/popup-location [get]
 func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -122,7 +122,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 // @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/item-location/ [post]
+// @Router /v1/item-location [post]
 func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.ItemLocationRequest
@@ -176,10 +176,9 @@ func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWri
 // @Param item_location_detail_id query string false "item_location_detail_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
-// @Param item_location_id path int true "item_location_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/item-location/detail/{item_location_id} [get]
+// @Router /v1/item-location/detail/all [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -217,28 +216,23 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Accept json
 // @Produce json
 // @Tags Master : Item Location
+// @Param item_location_id path int true "Item Location Detail ID"
 // @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/item-location/detail [post]
+// @Router /v1/item-location/{item_location_id}/detail [post]
 func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter, request *http.Request) {
+	itemLocID, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
 
 	var formRequest masteritempayloads.ItemLocationDetailRequest
-	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create, err := r.ItemLocationService.AddItemLocation(formRequest)
-	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
+		exceptionsss_test.NewAppException(writer, request, err)
 		return
 	}
-	if formRequest.ItemLocationDetailId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusOK)
 }
 
 // @Summary Delete Item Location By ID
@@ -249,7 +243,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 // @Param item_location_detail_id path int true "item_location_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/item-location/all/detail/{item_location_detail_id} [get]
+// @Router /v1/item-location/all/detail/{item_location_detail_id} [delete]
 func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
 	itemLocationID, err := strconv.Atoi(chi.URLParam(request, "item_location_detail_id"))

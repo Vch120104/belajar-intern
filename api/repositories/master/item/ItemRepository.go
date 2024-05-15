@@ -19,4 +19,8 @@ type ItemRepository interface {
 	ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse)
 	GetUomDropDown(tx *gorm.DB, uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse)
+	AddItemDetail(*gorm.DB, int, masteritempayloads.ItemDetailRequest) *exceptionsss_test.BaseErrorResponse
+	DeleteItemDetail(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
+	GetItemDetailById(*gorm.DB, int, int) (masteritempayloads.ItemDetailRequest, *exceptionsss_test.BaseErrorResponse)
+	GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 }

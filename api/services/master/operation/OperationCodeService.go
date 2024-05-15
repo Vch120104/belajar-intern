@@ -12,4 +12,5 @@ type OperationCodeService interface {
 	GetAllOperationCode([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse)
 	SaveOperationCode(masteroperationpayloads.OperationCodeSave) (bool,*exceptionsss_test.BaseErrorResponse)
 	ChangeStatusOperationCode(int) (bool,*exceptionsss_test.BaseErrorResponse)
+	GetOperationCodeByCode(string) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse)
 }

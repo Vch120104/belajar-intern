@@ -70,12 +70,12 @@ type DiscountGroupResponse struct {
 }
 
 type ItemDiscountRequest struct {
-	AgreementItemId          int    `json:"agreement_item_id" parent_entity:"mtr_item_discount" main_table:"mtr_item_discount"`
-	AgreementId              int    `json:"agreement_id" parent_entity:"mtr_item_discount"`
-	LineTypeId               int    `json:"line_type_id" parent_entity:"mtr_item_discount"`
-	AgreementItemOperationId int    `json:"agreement_item_operation_id" parent_entity:"mtr_item_discount"`
-	MinValue                 int    `json:"min_value" parent_entity:"mtr_item_discount"`
-	AgreementRemark          string `json:"agreement_remark" parent_entity:"mtr_item_discount"`
+	AgreementItemId          int    `json:"agreement_item_id" parent_entity:"mtr_agreement_item_detail" main_table:"mtr_agreement_item_detail"`
+	AgreementId              int    `json:"agreement_id" parent_entity:"mtr_agreement_item_detail"`
+	LineTypeId               int    `json:"line_type_id" parent_entity:"mtr_agreement_item_detail"`
+	AgreementItemOperationId int    `json:"agreement_item_operation_id" parent_entity:"mtr_agreement_item_detail"`
+	MinValue                 int    `json:"min_value" parent_entity:"mtr_agreement_item_detail"`
+	AgreementRemark          string `json:"agreement_remark" parent_entity:"mtr_agreement_item_detail"`
 }
 
 type ItemDiscountResponse struct {

@@ -8,7 +8,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	// _ "after-sales/docs"
+	_ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -142,7 +142,6 @@ func ItemRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 	router.Get("/", itemController.GetAllItem)
-	router.Get("/{item_id}", itemController.GetItembyId)
 	router.Get("/pop-up", itemController.GetAllItemLookup)
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
@@ -150,6 +149,11 @@ func ItemRouter(
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
+
+	router.Get("/detail", itemController.GetAllItemDetail)
+	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
+	router.Post("/{item_id}/detail", itemController.AddItemDetail)
+	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 
 	return router
 }
@@ -473,6 +477,7 @@ func OperationCodeRouter(
 
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
+	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 
@@ -536,10 +541,12 @@ func WarehouseLocationDefinitionRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WarehouseLocationDefinitionController.GetAll)
+	router.Get("/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetByLevel)
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
-	router.Post("/", WarehouseLocationDefinitionController.Save)
-	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
+	router.Post("/", WarehouseLocationDefinitionController.Save)
+	router.Put("/", WarehouseLocationDefinitionController.SaveData)
+	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 
 	return router
 }
@@ -616,10 +623,18 @@ func AgreementRouter(
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
+	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+
+	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+
+	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
 
@@ -772,7 +787,7 @@ func WorkOrderRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/search", WorkOrderController.GetAll)
+	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal", WorkOrderController.New)
 	router.Get("/booking", WorkOrderController.NewBooking)
 	router.Get("/affiliated", WorkOrderController.NewAffiliated)
@@ -811,27 +826,11 @@ func SwaggerRouter() chi.Router {
 
 	// Izinkan akses ke Swagger di /aftersales-service/docs
 	router.Get("/aftersales-service/docs/v1/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server aktual Anda
+		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server
 	))
 
 	return router
 }
-
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
-
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
-
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }
 
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()
