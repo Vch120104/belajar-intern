@@ -1,6 +1,7 @@
 package masteritemserviceimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -88,15 +89,16 @@ func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int) *exceptionsss_tes
 	return nil
 }
 
-func (s *PurchasePriceServiceImpl) ChangeStatusPurchasePrice(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptionsss_test.BaseErrorResponse) {
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	// Ubah status
-	success, err := s.PurchasePriceRepo.ChangeStatusPurchasePrice(tx, Id)
+	entity, err := s.PurchasePriceRepo.ChangeStatusPurchasePrice(tx, Id)
 	if err != nil {
-		return false, err
+		return masteritementities.PurchasePrice{}, err
 	}
 
-	return success, nil
+	return entity, nil
 }

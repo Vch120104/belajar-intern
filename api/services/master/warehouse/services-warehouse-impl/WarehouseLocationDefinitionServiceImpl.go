@@ -2,6 +2,7 @@ package masterwarehouseserviceimpl
 
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -51,10 +52,41 @@ func (s *WarehouseLocationDefinitionServiceImpl) Save(request masterwarehousepay
 	return save, err
 }
 
+func (s *WarehouseLocationDefinitionServiceImpl) SaveData(request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	if request.WarehouseLocationDefinitionId != 0 {
+		_, err := s.WarehouseLocationDefinitionRepo.GetById(tx, request.WarehouseLocationDefinitionId)
+
+		if err != nil {
+			return false, err
+		}
+	}
+
+	save, err := s.WarehouseLocationDefinitionRepo.SaveData(tx, request)
+
+	if err != nil {
+		return false, err
+	}
+
+	return save, err
+}
+
 func (s *WarehouseLocationDefinitionServiceImpl) GetById(Id int) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.WarehouseLocationDefinitionRepo.GetById(tx, Id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *WarehouseLocationDefinitionServiceImpl) GetByLevel(idlevel int, idwhl string) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.WarehouseLocationDefinitionRepo.GetByLevel(tx, idlevel, idwhl)
 	if err != nil {
 		return results, err
 	}
@@ -71,17 +103,17 @@ func (s *WarehouseLocationDefinitionServiceImpl) GetAll(filterCondition []utils.
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WarehouseLocationDefinitionServiceImpl) ChangeStatus(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarehouseLocationDefinitionServiceImpl) ChangeStatus(Id int) (masterwarehouseentities.WarehouseLocationDefinition, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	// Ubah status
-	success, err := s.WarehouseLocationDefinitionRepo.ChangeStatus(tx, Id)
+	entity, err := s.WarehouseLocationDefinitionRepo.ChangeStatus(tx, Id)
 	if err != nil {
-		return false, err
+		return masterwarehouseentities.WarehouseLocationDefinition{}, err
 	}
 
-	return success, nil
+	return entity, nil
 }
 
 func (s *WarehouseLocationDefinitionServiceImpl) PopupWarehouseLocationLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {

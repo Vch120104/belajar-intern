@@ -8,6 +8,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -157,7 +159,7 @@ func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayload
 	return true, nil // Mengembalikan true jika operasi berhasil tanpa error
 }
 
-func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masteritementities.Bom, *exceptionsss_test.BaseErrorResponse) {
 	var entities masteritementities.Bom
 
 	result := tx.Model(&entities).
@@ -165,28 +167,32 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (bool, *e
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return masteritementities.Bom{}, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("bom with ID %d not found", id),
+			}
+		}
+		// Jika ada galat lain, kembalikan galat internal server
+		return masteritementities.Bom{}, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
+	// Ubah status entitas
+	entities.IsActive = !entities.IsActive
 
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masteritementities.Bom{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {

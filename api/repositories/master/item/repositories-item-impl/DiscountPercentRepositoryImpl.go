@@ -87,7 +87,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 	}
 
 	// Fetch order type data
-	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/order-type-filter?order_type_name=" + orderTypeName
+	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "order-type-filter?order_type_name=" + orderTypeName
 	errUrlDiscountPercent := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
 	if errUrlDiscountPercent != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{

@@ -8,7 +8,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	// _ "after-sales/docs"
+	_ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -140,11 +140,16 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemController.GetAllItem)
-	router.Get("/pop-up", itemController.GetAllItemLookup)
+	router.Get("/lookup", itemController.GetAllItemLookup)
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
+
+	router.Get("/detail", itemController.GetAllItemDetail)
+	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
+	router.Post("/{item_id}/detail", itemController.AddItemDetail)
+	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 
 	return router
 }
@@ -520,10 +525,12 @@ func WarehouseLocationDefinitionRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WarehouseLocationDefinitionController.GetAll)
+	router.Get("/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetByLevel)
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
-	router.Post("/", WarehouseLocationDefinitionController.Save)
-	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
+	router.Post("/", WarehouseLocationDefinitionController.Save)
+	router.Put("/", WarehouseLocationDefinitionController.SaveData)
+	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 
 	return router
 }
@@ -600,10 +607,18 @@ func AgreementRouter(
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
+	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+
+	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+
+	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
 
@@ -788,7 +803,7 @@ func WorkOrderRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	router.Get("/search", WorkOrderController.GetAll)
+	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal", WorkOrderController.New)
 	router.Get("/booking", WorkOrderController.NewBooking)
 	router.Get("/affiliated", WorkOrderController.NewAffiliated)
@@ -812,7 +827,7 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}",PackageMasterController.SavePackageMasterDetailBodyshop)
+	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
 	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
@@ -822,22 +837,16 @@ func PackageMasterRouter(
 	return router
 }
 
-
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
 	// Izinkan akses ke Swagger di /aftersales-service/docs
 	router.Get("/aftersales-service/docs/v1/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server aktual Anda
+		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server
 	))
 
 	return router
 }
-
-
-
-
-			
 
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()

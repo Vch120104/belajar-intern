@@ -1,6 +1,7 @@
 package masteritemserviceimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -59,21 +60,17 @@ func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) 
 	return results, nil
 }
 
-func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	_, err := s.BomRepository.GetBomMasterById(tx, Id)
-
+	// Ubah status
+	entity, err := s.BomRepository.ChangeStatusBomMaster(tx, Id)
 	if err != nil {
-		return false, err
+		return masteritementities.Bom{}, err
 	}
 
-	results, err := s.BomRepository.ChangeStatusBomMaster(tx, Id)
-	if err != nil {
-		return false, err
-	}
-	return results, nil
+	return entity, nil
 }
 
 func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {

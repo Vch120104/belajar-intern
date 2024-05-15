@@ -49,7 +49,6 @@ func (r *BookingEstimationImpl) Save(request transactionworkshoppayloads.SaveBoo
 		BookingEstimationBatchDate:     request.BookingEstimationBatchDate,
 		BookingEstimationVehicleNumber: request.BookingEstimationVehicleNumber,
 		AgreementNumberBr:              request.AgreementNumberBr,
-		IsUnregistered:                 request.IsUnregistered,
 		ContactPersonName:              request.ContactPersonName,
 		ContactPersonPhone:             request.ContactPersonPhone,
 		ContactPersonMobile:            request.ContactPersonMobile,
