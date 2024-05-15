@@ -10,15 +10,15 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
-	"math"
 	"net/http"
 	"net/url"
 	"reflect"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type ItemRepositoryImpl struct {
@@ -28,15 +28,11 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]masteritempayloads.ItemLookup, *exceptionsss_test.BaseErrorResponse) {
-	var responses []masteritempayloads.ItemLookup
-	tableStruct := masteritempayloads.ItemLookup{}
-
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Scan(&responses).Rows()
+// GetUomItemDropDown implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) GetUomDropDown(tx *gorm.DB, uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	model := masteritementities.Uom{}
+	responses := []masteritempayloads.UomDropdownResponse{}
+	err := tx.Model(model).Where(masteritementities.Uom{UomTypeId: uomTypeId}).Scan(&responses).Error
 
 	if err != nil {
 		return responses, &exceptionsss_test.BaseErrorResponse{
@@ -45,8 +41,44 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 		}
 	}
 
-	if len(responses) == 0 {
+	return responses, nil
+}
+
+// GetUomTypeDropDown implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	model := masteritementities.UomType{}
+	responses := []masteritempayloads.UomTypeDropdownResponse{}
+	err := tx.Model(model).Scan(&responses).Error
+
+	if err != nil {
 		return responses, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return responses, nil
+}
+
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	var responses []masteritempayloads.ItemLookup
+	tableStruct := masteritempayloads.ItemLookup{}
+
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	rows, err := joinTable.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Rows()
+
+	if err != nil {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -54,7 +86,9 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 
 	defer rows.Close()
 
-	return responses, nil
+	pages.Rows = responses
+
+	return pages, nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
@@ -158,40 +192,41 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, internalFilterConditi
 	// 	}
 
 	// Convert paginated data to map format
-	var mapResponses []map[string]interface{}
-	for _, data := range responses {
-		// Fetch data from mtr_item_group for each response
-		itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(data.ItemGroupId)
-		var itemGroupResp masteritempayloads.ItemGroupResponse
-		err := utils.Get(itemGroupUrl, &itemGroupResp, nil)
-		if err != nil {
-			return nil, 0, 0, err
-		}
+	// var mapResponses []map[string]interface{}
+	// for _, data := range responses {
+	// 	// Fetch data from mtr_item_group for each response
+	// 	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(data.ItemGroupId)
+	// 	var itemGroupResp masteritempayloads.ItemGroupResponse
+	// 	err := utils.Get(itemGroupUrl, &itemGroupResp, nil)
+	// 	if err != nil {
+	// 		return nil, 0, 0, err
+	// 	}
 
-		// Create response map combining ItemLookup and ItemGroupResponse data
-		responseMap := map[string]interface{}{
-			"is_active":       data.IsActive,
-			"item_id":         data.ItemId,
-			"item_code":       data.ItemCode,
-			"item_name":       data.ItemName,
-			"item_group_id":   data.ItemGroupId,
-			"item_class_id":   data.ItemClassId,
-			"item_type":       data.ItemType,
-			"supplier_id":     data.SupplierId,
-			"item_group_name": itemGroupResp.ItemGroupName,
-			// Add more fields as needed
-		}
-		mapResponses = append(mapResponses, responseMap)
-	}
+	// 	// Create response map combining ItemLookup and ItemGroupResponse data
+	// 	responseMap := map[string]interface{}{
+	// 		"is_active":       data.IsActive,
+	// 		"item_id":         data.ItemId,
+	// 		"item_code":       data.ItemCode,
+	// 		"item_name":       data.ItemName,
+	// 		"item_group_id":   data.ItemGroupId,
+	// 		"item_class_id":   data.ItemClassId,
+	// 		"item_type":       data.ItemType,
+	// 		"supplier_id":     data.SupplierId,
+	// 		"item_group_name": itemGroupResp.ItemGroupName,
+	// 		// Add more fields as needed
+	// 	}
+	// 	mapResponses = append(mapResponses, responseMap)
+	// }
 
-	// Calculate total pages
-	totalRows = pages.TotalRows
-	totalPages = pages.TotalPages
+	// // Calculate total pages
+	// totalRows = pages.TotalRows
+	// totalPages = pages.TotalPages
 
-	return mapResponses, totalPages, int(totalRows), nil
+	// return mapResponses, totalPages, int(totalRows), nil
+	panic("unimplemented")
 }
 
-func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (map[string]any, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
@@ -203,7 +238,18 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	supplierResponse := masteritempayloads.SupplierMasterResponse{}
+
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "/supplier-master/" + strconv.Itoa(response.SupplierId)
+
+	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -218,10 +264,9 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	return joinSupplierData[0], nil
 }
 
-func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, error) {
-	entities := masteritementities.Item{}
+func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
 	var response []masteritempayloads.ItemResponse
-
+	entities := masteritementities.Item{}
 	newLogger := logger.New(
 		log.New(log.Writer(), "\r\n", log.LstdFlags),
 		logger.Config{
@@ -239,7 +284,10 @@ func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) 
 		Rows()
 
 	if err != nil {
-		return response, err
+		return nil, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -500,7 +548,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, error) {
+func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
 	var entities masteritementities.Item
 
 	result := tx.Model(&entities).
@@ -508,7 +556,10 @@ func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, error)
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -520,7 +571,10 @@ func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, error)
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil

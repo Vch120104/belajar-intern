@@ -294,45 +294,25 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/unit-of-measurement", unitOfMeasurementRouter)
 
 		r.Mount("/markup-master", markupMasterRouter)
-		r.Mount("/markup-rate", MarkupRateRouter)
-		r.Mount("/item-level", itemLevelRouter)
-		r.Mount("/item", itemRouter)
-		r.Mount("/item-substitute", ItemSubstituteRouter)
+
 		r.Mount("/item-location", ItemLocationRouter)
-		r.Mount("/item-package", itemPackageRouter)
-		r.Mount("/item-package-detail", itemPackageDetailRouter)
-		r.Mount("/price-list", priceListRouter)
-		r.Mount("/item-model-mapping", ItemModelMappingRouter)
 		//r.Mount("/import-item", ImportItemRouter)
-		r.Mount("/bom", BomRouter)
-		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/purchase-price", PurchasePriceRouter)
 		r.Mount("/landed-cost", LandedCostMasterRouter)
 		//r.Mount("/import-duty", ImportDutyRouter)
-		r.Mount("/operation-model-mapping", OperationModelMappingRouter)
 		//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
-		r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
-		r.Mount("/moving-code", MovingCodeRouter)
-		r.Mount("/agreement", AgreementRouter)
 		//r.Mount("/campaign", CampaignRouter)
 		//r.Mount("/package", PackageRouter)
 		//r.Mount("/work-info-massage", WorkInfoRouter)
-		r.Mount("/field-action", FieldActionRouter)
 		r.Mount("/item-level", itemLevelRouter)
 		// mux.Handle("/operation-group/", OperationGroupRouter)
-		r.Mount("/operation-group", OperationGroupRouter)
-		r.Mount("/incentive", IncentiveMasterRouter)
 		r.Mount("/bom", BomRouter)
-		r.Mount("/deduction", DeductionRouter)
-		r.Mount("/package-master", PackageMasterRouter)
 		r.Mount("/item-package", itemPackageRouter)              //null value
 		r.Mount("/item-package-detail", itemPackageDetailRouter) //notfound
 		r.Mount("/item", itemRouter)                             //error mssql: The correlation name 'mtr_item_class' is specified multiple times in a FROM clause.
 		r.Mount("/item-substitute", ItemSubstituteRouter)
 		r.Mount("/item-model-mapping", ItemModelMappingRouter)
 		r.Mount("/item-import", itemImportRouter)
-		r.Mount("/incentive-group", IncentiveGroupRouter)
-		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter) //method notalowed
 
 		/* Master Operation */
 		r.Mount("/operation-group", OperationGroupRouter)
@@ -378,17 +358,8 @@ func StartRouting(db *gorm.DB) {
 	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
 
 	r.Mount("/discount-percent", DiscountPercentRouter) //error Could not get response
-	r.Mount("/discount", DiscountRouter)
 
-	r.Mount("/warehouse-group", WarehouseGroupRouter) //null value
-	r.Mount("/warehouse-location", WarehouseLocation)
-	r.Mount("/warehouse-master", WarehouseMaster)
-
-	r.Mount("/forecast-master", ForecastMasterRouter) //error Could not get response
-	r.Mount("/shift-schedule", ShiftScheduleRouter)
 	r.Mount("/price-list", priceListRouter) //null value
-	r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
-	r.Mount("/skill-level", SkillLevelRouter)
 	// Route untuk Prometheus metrics
 	r.Mount("/metrics", promhttp.Handler())
 
