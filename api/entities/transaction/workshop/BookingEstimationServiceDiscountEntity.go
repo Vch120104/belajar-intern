@@ -5,7 +5,7 @@ import "time"
 const TableNameBookingEstimationServiceDiscount = "trx_booking_estimation_service_discount"
 
 type BookingEstimationServiceDiscount struct {
-	EstimationSystemNumber           int        `gorm:"column:estimation_system_number;primaryKey" json:"estimation_system_number"`
+	EstimationSystemNumber           int        `gorm:"column:estimation_system_number;size:30;primaryKey" json:"estimation_system_number"`
 	BatchSystemNumber                int        `gorm:"column:batch_system_number;size:30;default:null" json:"batch_system_number"`
 	DocumentStatusID                 int        `gorm:"column:document_status_id;size:30;default:null" json:"document_status_id"`
 	EstimationDiscountApprovalStatus int        `gorm:"column:estimation_discount_approval_status;size:30;default:null" json:"estimation_discount_approval_status"`

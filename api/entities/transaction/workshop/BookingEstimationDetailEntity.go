@@ -5,7 +5,7 @@ import "time"
 const TableNameBookingEstimationDetail = "trx_booking_estimation_detail"
 
 type BookingEstimationDetail struct {
-	EstimationLineID               int        `gorm:"column:estimation_line_id;primaryKey" json:"estimation_line_id"`
+	EstimationLineID               int        `gorm:"column:estimation_line_id;size:30;primaryKey" json:"estimation_line_id"`
 	EstimationLineCode             int        `gorm:"column:estimation_line_code;size:30;default:null" json:"estimation_line_code"`
 	EstimationSystemNumber         int        `gorm:"column:estimation_system_number;size:30;default:null" json:"estimation_system_number"`
 	BillID                         string     `gorm:"column:bill_id;default:null" json:"bill_id"`

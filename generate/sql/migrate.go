@@ -4,12 +4,13 @@ import (
 	"after-sales/api/config"
 	//mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 
-	masterentities "after-sales/api/entities/master"
-	masteritementities "after-sales/api/entities/master/item"
+	// masterentities "after-sales/api/entities/master"
+	// masteritementities "after-sales/api/entities/master/item"
 
-	masteroperationentities "after-sales/api/entities/master/operation"
-	masterwarehouseentities "after-sales/api/entities/master/warehouse"
+	// masteroperationentities "after-sales/api/entities/master/operation"
+	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
+	transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
@@ -57,73 +58,70 @@ func Migrate() {
 		DisableForeignKeyConstraintWhenMigrating: false,
 	})
 
-	// db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{
-	// 	NamingStrategy: schema.NamingStrategy{
-	// 		//TablePrefix:   "dbo.", // schema name
-	// 		SingularTable: false,
-	// 	}, DisableForeignKeyConstraintWhenMigrating: false})
-
 	db.AutoMigrate( // sesuai urutan foreign key
-		&masteroperationentities.OperationModelMapping{},
-		&masteroperationentities.OperationFrt{},
-		&masteroperationentities.OperationGroup{},
-		&masteroperationentities.OperationSection{},
-		&masteroperationentities.OperationKey{},
-		&masteroperationentities.OperationEntries{},
-		&masteroperationentities.OperationCode{},
+		// &masteroperationentities.OperationModelMapping{},
+		// &masteroperationentities.OperationFrt{},
+		// &masteroperationentities.OperationGroup{},
+		// &masteroperationentities.OperationSection{},
+		// &masteroperationentities.OperationKey{},
+		// &masteroperationentities.OperationEntries{},
+		// &masteroperationentities.OperationCode{},
 
-		&masterwarehouseentities.WarehouseGroup{},
-		&masterwarehouseentities.WarehouseMaster{},
-		&masterwarehouseentities.WarehouseLocation{},
-		&masterwarehouseentities.WarehouseLocationDefinition{},
-		&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+		// &masterwarehouseentities.WarehouseGroup{},
+		// &masterwarehouseentities.WarehouseMaster{},
+		// &masterwarehouseentities.WarehouseLocation{},
+		// &masterwarehouseentities.WarehouseLocationDefinition{},
+		// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
 
-		&masteritementities.ItemLocationSource{},
-		&masteritementities.ItemLocationDetail{},
-		&masteritementities.ItemLocation{},
-		&masteritementities.PurchasePrice{},
-		&masteritementities.PurchasePriceDetail{},
-		&masteritementities.UomType{},
-		&masteritementities.Uom{},
-		&masteritementities.Bom{},
-		&masteritementities.BomDetail{},
-		&masteritementities.MarkupRate{},
-		&masteritementities.PrincipleBrandParent{},
-		&masteritementities.DiscountPercent{},
-		&masteritementities.MarkupMaster{},
-		&masteritementities.ItemLevel{},
-		&masteritementities.ItemClass{},
-		&masteritementities.PriceList{},
-		&masteritementities.ItemSubstituteDetail{},
-		&masteritementities.ItemSubstitute{},
-		&masteritementities.ItemPackage{},
-		&masteritementities.ItemPackageDetail{},
-		&masteritementities.ItemDetail{},
-		&masteritementities.ItemImport{},
-		&masteritementities.Item{},
+		// &masteritementities.ItemLocationSource{},
+		// &masteritementities.ItemLocationDetail{},
+		// &masteritementities.ItemLocation{},
+		// &masteritementities.PurchasePrice{},
+		// &masteritementities.PurchasePriceDetail{},
+		// &masteritementities.UomType{},
+		// &masteritementities.Uom{},
+		// &masteritementities.Bom{},
+		// &masteritementities.BomDetail{},
+		// &masteritementities.MarkupRate{},
+		// &masteritementities.PrincipleBrandParent{},
+		// &masteritementities.DiscountPercent{},
+		// &masteritementities.MarkupMaster{},
+		// &masteritementities.ItemLevel{},
+		// &masteritementities.ItemClass{},
+		// &masteritementities.PriceList{},
+		// &masteritementities.ItemSubstituteDetail{},
+		// &masteritementities.ItemSubstitute{},
+		// &masteritementities.ItemPackage{},
+		// &masteritementities.ItemPackageDetail{},
+		// &masteritementities.ItemDetail{},
+		// &masteritementities.ItemImport{},
+		// &masteritementities.Item{},
 
-		&masterentities.ForecastMaster{},
-		&masterentities.MovingCode{},
-		&masterentities.IncentiveGroup{},
-		&masterentities.PackageMaster{},
-		&masterentities.ShiftSchedule{},
-		&masterentities.IncentiveMaster{},
-		&masterentities.IncentiveGroupDetail{},
-		&masterentities.SkillLevel{},
-		&masterentities.WarrantyFreeService{},
-		&masterentities.DeductionList{},
-		&masterentities.DeductionDetail{},
-		&masterentities.FieldActionEligibleVehicleItem{},
-		&masterentities.FieldActionEligibleVehicle{},
-		&masterentities.FieldAction{},
-		&masterentities.Discount{},
-		&masterentities.Agreement{},
-		&masterentities.AgreementDiscount{},
-		&masterentities.AgreementDiscountGroupDetail{},
-		&masterentities.AgreementItemDetail{},
+		// &masterentities.ForecastMaster{},
+		// &masterentities.MovingCode{},
+		// &masterentities.IncentiveGroup{},
+		// &masterentities.PackageMaster{},
+		// &masterentities.ShiftSchedule{},
+		// &masterentities.IncentiveMaster{},
+		// &masterentities.IncentiveGroupDetail{},
+		// &masterentities.SkillLevel{},
+		// &masterentities.WarrantyFreeService{},
+		// &masterentities.DeductionList{},
+		// &masterentities.DeductionDetail{},
+		// &masterentities.FieldActionEligibleVehicleItem{},
+		// &masterentities.FieldActionEligibleVehicle{},
+		// &masterentities.FieldAction{},
+		// &masterentities.Discount{},
+		// &masterentities.Agreement{},
+		// &masterentities.AgreementDiscount{},
+		// &masterentities.AgreementDiscountGroupDetail{},
+		// &masterentities.AgreementItemDetail{},
 
+		&transactionsparepartpentities.SupplySlip{},
+		//&transactionsparepartpentities.SupplySlipDetail{},
 		&transactionworkshopentities.WorkOrder{},
-		&transactionworkshopentities.BookingEstimation{},
+		&transactionworkshopentities.WorkOrderRequestDescription{},
+		&transactionworkshopentities.WorkOrderDetail{},
 	)
 
 	if db != nil && db.Error != nil {

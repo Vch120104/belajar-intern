@@ -5,7 +5,7 @@ import "time"
 const TableNameBookingEstimationAllocation = "trx_booking_estimation_allocation"
 
 type BookingEstimationAllocation struct {
-	BookingSystemNumber   int       `gorm:"column:booking_system_number;primaryKey" json:"booking_system_number"`
+	BookingSystemNumber   int       `gorm:"column:booking_system_number;size:30;primaryKey" json:"booking_system_number"`
 	DocumentStatusID      int       `gorm:"column:document_status_id;size:30;default:null" json:"document_status_id"`
 	BatchSystemNumber     int       `gorm:"column:batch_system_number;size:30;default:null" json:"batch_system_number"`
 	CompanyID             int       `gorm:"column:company_id;size:30;default:null" json:"company_id"`
