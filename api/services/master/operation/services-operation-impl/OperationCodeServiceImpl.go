@@ -47,6 +47,16 @@ func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperation
 	return results, nil
 }
 
+func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.operationCodeRepo.GetOperationCodeByCode(tx, code)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
