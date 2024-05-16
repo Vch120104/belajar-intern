@@ -63,6 +63,7 @@ type ItemResponse struct {
 
 type UserDetailResponse struct {
 	UserEmployeeId int    `json:"user_employee_id"`
+	EmployeNo      int    `json:"employee_no"`
 	EmployeeName   string `json:"employee_name"`
 }
 

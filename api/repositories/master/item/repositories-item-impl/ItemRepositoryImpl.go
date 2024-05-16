@@ -256,7 +256,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (map[string]any, *
 
 	joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
 
-	// join with user details data (not yet complete)
+	// IMPLEMENT PERSON IN CHARGE AFTER INTEGRATION TOKEN AUTHORIZE TO USER SERVICE!!
 
 	defer rows.Close()
 
