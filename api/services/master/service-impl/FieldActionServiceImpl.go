@@ -13,18 +13,21 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type FieldActionServiceImpl struct {
 	FieldActionRepo masterrepository.FieldActionRepository
 	DB              *gorm.DB
+	RedisClient     *redis.Client // Redis client
 }
 
-func StartFieldActionService(FieldActionRepo masterrepository.FieldActionRepository, db *gorm.DB) masterservice.FieldActionService {
+func StartFieldActionService(FieldActionRepo masterrepository.FieldActionRepository, db *gorm.DB, redisClient *redis.Client) masterservice.FieldActionService {
 	return &FieldActionServiceImpl{
 		FieldActionRepo: FieldActionRepo,
 		DB:              db,
+		RedisClient:     redisClient,
 	}
 }
 
