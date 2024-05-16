@@ -303,6 +303,7 @@ func IncentiveGroupRouter(
 	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
+	router.Put("/", incentiveGroupController.UpdateIncentiveGroup)
 	return router
 }
 
