@@ -16,7 +16,7 @@ type CampaignMasterDetailItem struct {
 	ShareBillTo      string  `gorm:"column:share_bill_to;size:10" json:"share_bill_to"`
 	DiscountPercent  float64 `gorm:"column:discount_percent" json:"discount_percent"`
 	SharePercent     float64 `gorm:"column:share_percent" json:"share_percent"`
-	Price        float64 `gorm:"column:item_price" json:"item_price"`
+	Price            float64 `gorm:"price" json:"price"`
 }
 
 func (*CampaignMasterDetailItem) TableName() string {

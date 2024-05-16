@@ -102,7 +102,8 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 
 func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request){
 	queryId := chi.URLParam(request,"campaign_detail_id")
-	response, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId)
+	idhead,_ := strconv.Atoi(chi.URLParam(request,"campaign_id"))
+	response, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId,idhead)
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return
@@ -113,7 +114,8 @@ func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.
 
 func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request){
 	queryId := chi.URLParam(request,"campaign_detail_id")
-	response, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId)
+	idhead,_ := strconv.Atoi(chi.URLParam(request,"campaign_id"))
+	response, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId,idhead)
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return
@@ -140,10 +142,11 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.Respons
 
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.ResponseWriter, request *http.Request){
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
+	LineTypeId,_ := strconv.Atoi(chi.URLParam(request,"line_type_id"))
 
 	CampaignDetailId, _ := strconv.Atoi(CampaignDetailIdstr)
 
-	result, err := r.CampaignMasterService.GetByIdCampaignMasterDetail(CampaignDetailId)
+	result, err := r.CampaignMasterService.GetByIdCampaignMasterDetail(CampaignDetailId,LineTypeId)
 
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
@@ -195,14 +198,13 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.Re
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, err := r.CampaignMasterService.GetAllCampaignMasterDetail(pagination,CampaignId)
+	result, pages, rows, err := r.CampaignMasterService.GetAllCampaignMasterDetail(pagination,CampaignId)
 
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return
 	}
-
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, rows, pages,int64(rows), pages)
 
 }
 

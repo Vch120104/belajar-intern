@@ -26,9 +26,8 @@ type CampaignMasterDetailOperationPayloads struct {
 	OperationName   int     `json:"operation_name"`
 	Quantity        float64 `json:"quantity"`
 	Price           float64 `json:"price"`
-	DiscountPercent string  `json:"discount_percent"`
+	DiscountPercent float64 `json:"discount_percent"`
 	SharePercent    float64 `json:"share_percent"`
-	Total           float64 `json:"total"`
 }
 
 type CampaignMasterDetailItemPayloads struct {
@@ -40,7 +39,6 @@ type CampaignMasterDetailItemPayloads struct {
 	ItemName        int     `json:"item_name"`
 	Quantity        float64 `json:"quantity"`
 	Price           float64 `json:"price"`
-	DiscountPercent string  `json:"discount_percent"`
+	DiscountPercent float64 `json:"discount_percent"`
 	SharePercent    float64 `json:"share_percent"`
-	Total           float64 `json:"total"`
 }
