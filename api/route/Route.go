@@ -253,6 +253,11 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
 	WorkOrderController := transactionworksopcontroller.NewWorkOrderController(WorkOrderService)
 
+	//Sales Order
+	SalesOrderRepository := transactionsparepartrepositoryimpl.StartSalesOrderRepositoryImpl()
+	SalesOrderService := transactionsparepartserviceimpl.StartSalesOrderService(SalesOrderRepository, db, rdb)
+	SalesOrderController := transactionsparepartcontroller.NewSalesOrderController(SalesOrderService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -299,6 +304,7 @@ func StartRouting(db *gorm.DB) {
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
 	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
+	SalesOrderRouter := SalesOrderRouter(SalesOrderController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -358,9 +364,18 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/deduction", DeductionRouter)
 
 		/* Transaction */
-		r.Mount("/supply-slip", SupplySlipRouter)
+
+		/* Transaction JPCB */
+
+		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
 		r.Mount("/work-order", WorkOrderRouter)
+
+		/* Transaction Bodyshop */
+
+		/* Transaction Sparepart */
+		r.Mount("/supply-slip", SupplySlipRouter)
+		r.Mount("/sales-order", SalesOrderRouter)
 
 	})
 

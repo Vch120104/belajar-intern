@@ -163,6 +163,22 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	return success, nil
 }
 
+func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB, request transactionworkshopentities.WorkOrderMasterStatus) (bool, *exceptionsss_test.BaseErrorResponse) {
+	// Create a new instance of WorkOrderRepositoryImpl
+	entities := transactionworkshopentities.WorkOrderMasterStatus{}
+
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterStatus{}).
+		Find(&entities).
+		Error
+
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order status from the database"}
+	}
+
+	return true, nil
+
+}
+
 func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error

@@ -91,3 +91,9 @@ type WorkOrderRequest struct {
 	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
 	WorkOrderInsuranceOwnRisk     float32   `json:"insurance_own_risk"`
 }
+
+type WorkOrderStatus struct {
+	WorkOrderStatusId          int    `json:"work_order_status_id"`
+	WorkOrderStatusCode        string `json:"work_order_status_code"`
+	WorkOrderStatusDescription string `json:"work_order_status_description"`
+}

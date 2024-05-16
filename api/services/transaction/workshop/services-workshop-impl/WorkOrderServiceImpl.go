@@ -1,12 +1,14 @@
 package transactionworkshopserviceimpl
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
+
 	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
@@ -44,6 +46,16 @@ func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppaylo
 		return false, err
 	}
 	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB, request transactionworkshopentities.WorkOrderMasterStatus) (bool, *exceptionsss_test.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.NewStatus(tx, request)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+
 }
 
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {

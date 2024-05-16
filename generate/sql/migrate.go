@@ -118,19 +118,22 @@ func Migrate() {
 		&masterentities.AgreementItemDetail{},
 
 		&transactionsparepartpentities.SupplySlip{},
-		&transactionsparepartpentities.SupplySlipDetail{},
+		// &transactionsparepartpentities.SupplySlipDetail{},
+		&transactionworkshopentities.WorkOrderMaster{},
+		&transactionworkshopentities.WorkOrderMasterStatus{},
 		&transactionworkshopentities.WorkOrder{},
 		&transactionworkshopentities.WorkOrderRequestDescription{},
 		&transactionworkshopentities.WorkOrderDetail{},
 		&transactionworkshopentities.WorkOrderHistory{},
 		&transactionworkshopentities.WorkOrderHistoryRequest{},
 		&transactionworkshopentities.WorkOrderHistoryDetail{},
+
 		&transactionworkshopentities.BookingEstimation{},
-		&transactionworkshopentities.BookingEstimationDetail{},
-		&transactionworkshopentities.BookingEstimationRequest{},
 		&transactionworkshopentities.BookingEstimationAllocation{},
-		&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		&transactionworkshopentities.BookingEstimationRequest{},
 		&transactionworkshopentities.BookingEstimationServiceReminder{},
+		&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		&transactionworkshopentities.BookingEstimationDetail{},
 	)
 
 	if db != nil && db.Error != nil {

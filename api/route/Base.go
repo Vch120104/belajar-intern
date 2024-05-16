@@ -728,6 +728,27 @@ func WarrantyFreeServiceRouter(
 	return router
 }
 
+func PackageMasterRouter(
+	PackageMasterController mastercontroller.PackageMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", PackageMasterController.GetAllPackageMaster)
+	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
+	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
+	router.Get("/detail/{package_id}/{package_detail_id}/{line_type_id}", PackageMasterController.GetByIdPackageMasterDetail)
+	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
+
+	router.Post("/", PackageMasterController.SavepackageMaster)
+	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
+	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+
+	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
+	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
+	router.Patch("/detail/deactivate/{package_id}/{package_detail_id}", PackageMasterController.DeactivateMultiIdPackageMasterDetail)
+
+	return router
+}
+
 func DiscountRouter(
 	discountController mastercontroller.DiscountController,
 ) chi.Router {
@@ -805,16 +826,6 @@ func DeductionRouter(
 	return router
 }
 
-func SupplySlipRouter(
-	SupplySlipController transactionsparepartcontroller.SupplySlipController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
-
-	return router
-}
-
 func BookingEstimationRouter(
 	BookingEstimationController transactionworkshopcontroller.BookingEstimationController,
 ) chi.Router {
@@ -850,6 +861,7 @@ func WorkOrderRouter(
 	router.Get("/normal", WorkOrderController.New)
 	router.Get("/booking", WorkOrderController.NewBooking)
 	router.Get("/affiliated", WorkOrderController.NewAffiliated)
+	router.Get("/dropdown-status", WorkOrderController.NewStatus)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)
@@ -859,23 +871,22 @@ func WorkOrderRouter(
 	return router
 }
 
-func PackageMasterRouter(
-	PackageMasterController mastercontroller.PackageMasterController,
+func SupplySlipRouter(
+	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {
 	router := chi.NewRouter()
-	router.Get("/", PackageMasterController.GetAllPackageMaster)
-	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
-	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
-	router.Get("/detail/{package_id}/{package_detail_id}/{line_type_id}", PackageMasterController.GetByIdPackageMasterDetail)
-	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
-	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
-	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
 
-	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
-	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
-	router.Patch("/detail/deactivate/{package_id}/{package_detail_id}", PackageMasterController.DeactivateMultiIdPackageMasterDetail)
+	return router
+}
+
+func SalesOrderRouter(
+	SalesOrderController transactionsparepartcontroller.SalesOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
 
 	return router
 }
