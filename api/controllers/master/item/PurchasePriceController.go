@@ -140,12 +140,17 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 
 	PurchasePricesId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
 
-	response, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
+	entity, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+	responseData := map[string]interface{}{
+		"is_active":         entity.IsActive,
+		"purchase_price_id": entity.PurchasePriceId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Purchase Price Detail

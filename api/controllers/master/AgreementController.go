@@ -22,10 +22,19 @@ type AgreementController interface {
 	SaveAgreement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request)
 	GetAllAgreement(writer http.ResponseWriter, request *http.Request)
+
+	GetAllDiscountGroup(writer http.ResponseWriter, request *http.Request)
+	GetDiscountGroupAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddDiscountGroup(writer http.ResponseWriter, request *http.Request)
 	DeleteDiscountGroup(writer http.ResponseWriter, request *http.Request)
+
+	GetAllItemDiscount(writer http.ResponseWriter, request *http.Request)
+	GetDiscountItemAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddItemDiscount(writer http.ResponseWriter, request *http.Request)
 	DeleteItemDiscount(writer http.ResponseWriter, request *http.Request)
+
+	GetAllDiscountValue(writer http.ResponseWriter, request *http.Request)
+	GetDiscountValueAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddDiscountValue(writer http.ResponseWriter, request *http.Request)
 	DeleteDiscountValue(writer http.ResponseWriter, request *http.Request)
 }
@@ -297,4 +306,187 @@ func (r *AgreementControllerImpl) DeleteDiscountValue(writer http.ResponseWriter
 	}
 
 	payloads.NewHandleSuccess(writer, nil, "Discount value deleted successfully", http.StatusOK)
+}
+
+// @Summary Get All Discount Group
+// @Description Retrieve all discount groups from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group [get]
+func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"agreement_id": queryValues.Get("agreement_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	data, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Get Discount Group By Id
+// @Description Retrieve a discount group from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_discount_group_id path int true "Group ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group/{agreement_discount_group_id} [get]
+func (r *AgreementControllerImpl) GetDiscountGroupAgreementById(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+
+	result, err := r.AgreementService.GetDiscountGroupAgreementById(int(agreementID), int(groupID))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get All Discount Item
+// @Description Retrieve all discount items from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item [get]
+func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"agreement_id": queryValues.Get("agreement_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	data, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Get Discount Item By Id
+// @Description Retrieve a discount item from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_item_id path int true "Item ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item/{agreement_item_id} [get]
+func (r *AgreementControllerImpl) GetDiscountItemAgreementById(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+
+	result, err := r.AgreementService.GetDiscountItemAgreementById(int(agreementID), int(itemID))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get All Discount Value
+// @Description Retrieve all discount values from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_by query string false "Field to sort by"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value [get]
+func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"agreement_id": queryValues.Get("agreement_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: chi.URLParam(request, "sort_of"),
+		SortBy: chi.URLParam(request, "sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	data, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Get Discount Value By Id
+// @Description Retrieve a discount value from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_discount_id path int true "Value ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value/{agreement_discount_id} [get]
+func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+
+	result, err := r.AgreementService.GetDiscountValueAgreementById(int(agreementID), int(valueID))
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

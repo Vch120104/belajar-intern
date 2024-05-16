@@ -1,6 +1,7 @@
 package masteritemrepository
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -16,5 +17,5 @@ type PurchasePriceRepository interface {
 	GetAllPurchasePrice(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 	GetPurchasePriceById(tx *gorm.DB, Id int) (masteritempayloads.PurchasePriceRequest, *exceptionsss_test.BaseErrorResponse)
 	GetAllPurchasePriceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusPurchasePrice(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	ChangeStatusPurchasePrice(tx *gorm.DB, Id int) (masteritementities.PurchasePrice, *exceptionsss_test.BaseErrorResponse)
 }

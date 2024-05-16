@@ -69,6 +69,28 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) 
 	return response, nil
 }
 
+func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code string) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse){
+	entities := masteroperationentities.OperationCode{}
+	response := masteroperationpayloads.OperationCodeResponse{}
+
+	rows, err := tx.Model(&entities).
+		Where(masteroperationentities.OperationCode{
+			OperationCode: code,
+		}).
+		First(&response).
+		Rows()
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err: err,
+		}
+	}
+
+	defer rows.Close()
+	return response, nil
+}
+
 func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req masteroperationpayloads.OperationCodeSave) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{
 		IsActive:                req.IsActive,

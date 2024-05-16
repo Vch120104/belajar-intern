@@ -10,6 +10,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -30,9 +31,8 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 	var getWarehouseGroupResponse masteritempayloads.ItemLocWarehouseGroupResponse
 	var getItemResponse []masteritempayloads.ItemLocResponse
 	var internalServiceFilter []utils.FilterCondition
-	var warehouseGroupId int
 
-	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationResponse{})
+	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationRequest{})
 
 	// Filter internal service conditions
 	for _, condition := range filterCondition {
@@ -54,51 +54,64 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
 		}
 	}
 
 	// Check if responses are empty
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
-		panic(notFoundErr)
-	}
-
-	// Extract warehouse group ID from the first response
-	warehouseGroupId = responses[0].WarehouseGroupId
-
-	// Fetch warehouse group data from external service
-	warehouseGroupUrl := config.EnvConfigs.AfterSalesServiceUrl + "/warehouse-group/by-id/" + strconv.Itoa(warehouseGroupId)
-	err = utils.Get(warehouseGroupUrl, &getWarehouseGroupResponse, nil)
-	if err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
 		}
 	}
 
-	// Fetch item data from external service
-	itemIds := make([]string, len(responses))
-	for i, resp := range responses {
-		itemIds[i] = strconv.Itoa(resp.ItemId)
-	}
-	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "/item/multi-id/" + strings.Join(itemIds, ",")
-	err = utils.Get(itemUrl, &getItemResponse, nil)
-	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over responses and convert them to maps
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"warehouse_group_id": response.WarehouseGroupId,
+			"item_id":            response.ItemId,
+			"item_location_id":   response.ItemLocationId,
 		}
+
+		// Fetch warehouse group data if warehouse group ID is not zero
+		if response.WarehouseGroupId != 0 {
+			warehouseGroupURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-group/by-id/" + strconv.Itoa(response.WarehouseGroupId)
+			if err := utils.Get(warehouseGroupURL, &getWarehouseGroupResponse, nil); err != nil {
+				return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+			responseMap["warehouse_group_name"] = getWarehouseGroupResponse.WarehouseGroupName
+		}
+
+		// Fetch item data if item ID is not zero
+		if response.ItemId != 0 {
+			itemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/multi-id/" + strconv.Itoa(response.ItemId)
+			fmt.Println("Fetching mtr_item data from:", itemURL)
+			if err := utils.Get(itemURL, &getItemResponse, nil); err != nil {
+				return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+			if len(getItemResponse) > 0 {
+				responseMap["item_name"] = getItemResponse[0].ItemName
+				responseMap["item_code"] = getItemResponse[0].ItemCode
+			}
+		}
+
+		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Perform inner join between item location responses, warehouse group response, and item response
-	joinedData := utils.DataFrameInnerJoin(responses, []masteritempayloads.ItemLocWarehouseGroupResponse{getWarehouseGroupResponse}, "WarehouseGroupId")
-	joinedData = utils.DataFrameInnerJoin(joinedData, getItemResponse, "ItemId")
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
-	// Paginate the joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	return paginatedData, totalPages, totalRows, nil
 }
 
 func (r *ItemLocationRepositoryImpl) SaveItemLocation(tx *gorm.DB, request masteritempayloads.ItemLocationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
@@ -194,7 +207,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 	for _, resp := range responses {
 		itemIds = append(itemIds, strconv.Itoa(resp.ItemId))
 	}
-	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "/item/multi-id/" + strings.Join(itemIds, ",")
+	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/multi-id/" + strings.Join(itemIds, ",")
 	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -212,7 +225,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filte
 
 	// Mengambil data item location source dari layanan eksternal
 	for _, id := range itemLocIds {
-		itemLocSourceURL := config.EnvConfigs.AfterSalesServiceUrl + "/item-location/popup-location?item_location_source_id=" + id
+		itemLocSourceURL := config.EnvConfigs.AfterSalesServiceUrl + "item-location/popup-location?item_location_source_id=" + id
 		if err := utils.Get(itemLocSourceURL, &getItemLocResponse, nil); err != nil {
 			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -265,7 +278,7 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, request masteritempayloads.ItemLocationDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int, request masteritempayloads.ItemLocationDetailRequest) *exceptionsss_test.BaseErrorResponse {
 	entities := masteritementities.ItemLocationDetail{
 		ItemId:                     request.ItemId,
 		ItemLocationId:             request.ItemLocationId,
@@ -275,21 +288,13 @@ func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, request master
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        err,
-			}
-		} else {
-
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		return &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 
-	return true, nil
+	return nil
 }
 
 // DeleteItemLocation deletes an item location by ID

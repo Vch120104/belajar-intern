@@ -3,6 +3,7 @@ package masterwarehouserepositoryimpl
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 
+	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -39,6 +40,33 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) Save(tx *gorm.DB, request ma
 		WarehouseLocationDefinitionId:          request.WarehouseLocationDefinitionId,
 		WarehouseLocationDefinitionLevelId:     request.WarehouseLocationDefinitionLevelId,
 		WarehouseLocationDefinitionLevelCode:   request.WarehouseLocationDefinitionLevelCode,
+		WarehouseLocationDefinitionDescription: request.WarehouseLocationDefinitionDescription,
+	}
+
+	err := tx.Save(&warehouseMaster).Error
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+
+	var warehouseMaster = masterwarehouseentities.WarehouseLocationDefinition{
+		WarehouseLocationDefinitionId:          request.WarehouseLocationDefinitionId,
 		WarehouseLocationDefinitionDescription: request.WarehouseLocationDefinitionDescription,
 	}
 
@@ -125,7 +153,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	//fmt.Println("Warehouse Location Definition Level ID:", warehouseLocationDefinitionLevelId)
 
 	// Fetch warehouse location definition level data from external service
-	whLevelUrl := "http://localhost:8000/v1/warehouse-location-definition/popup-level?warehouse_location_definition_level_id=" + strconv.Itoa(warehouseLocationDefinitionLevelId)
+	whLevelUrl := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-location-definition/popup-level?warehouse_location_definition_level_id=" + strconv.Itoa(warehouseLocationDefinitionLevelId)
 	//fmt.Println("Warehouse Location Definition Level URL:", whLevelUrl)
 	err = utils.Get(whLevelUrl, &getWhLevelResponse, nil)
 	if err != nil {
@@ -150,7 +178,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id int) (masterwarehouseentities.WarehouseLocationDefinition, *exceptionsss_test.BaseErrorResponse) {
 	var entity masterwarehouseentities.WarehouseLocationDefinition
 
 	// Cari entitas berdasarkan ID
@@ -161,13 +189,13 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id
 	// Periksa apakah entitas ditemukan
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        fmt.Errorf("warehouse Loc with ID %d not found", Id),
 			}
 		}
 		// Jika ada galat lain, kembalikan galat internal server
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -179,13 +207,13 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) ChangeStatus(tx *gorm.DB, Id
 	// Simpan perubahan
 	result = tx.Save(&entity)
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entity, nil
 }
 
 func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
@@ -220,4 +248,29 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
+}
+
+func (r *WarehouseLocationDefinitionRepositoryImpl) GetByLevel(tx *gorm.DB, idlevel int, idwhl string) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptionsss_test.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocationDefinition{}
+	response := masterwarehousepayloads.WarehouseLocationDefinitionResponse{}
+
+	err := tx.Model(&entities).
+		Where("warehouse_location_definition_level_code like ? AND warehouse_location_definition_level_id = ?", "%"+idwhl+"%", idlevel).
+		First(&response).
+		Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masterwarehousepayloads.WarehouseLocationDefinitionResponse{}, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("data not found"),
+			}
+		}
+		return masterwarehousepayloads.WarehouseLocationDefinitionResponse{}, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
 }

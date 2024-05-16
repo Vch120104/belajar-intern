@@ -10,6 +10,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"reflect"
 
@@ -72,7 +73,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 
 	defer rows.Close()
 
-	jobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/job-position?job_position_id=" + jobPositionId
+	jobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "job-position?job_position_id=" + jobPositionId
 
 	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
 
@@ -151,7 +152,7 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 	return true, nil
 }
 
-func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB, Id int) (masterentities.IncentiveMaster, *exceptionsss_test.BaseErrorResponse) {
 	var entities masterentities.IncentiveMaster
 
 	result := tx.Model(&entities).
@@ -159,26 +160,29 @@ func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB,
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return masterentities.IncentiveMaster{}, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("incentive with ID %d not found", Id),
+			}
+		}
+		// Jika ada galat lain, kembalikan galat internal server
+		return masterentities.IncentiveMaster{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
+	entities.IsActive = !entities.IsActive
 
+	// Simpan perubahan
 	result = tx.Save(&entities)
-
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masterentities.IncentiveMaster{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }

@@ -58,7 +58,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 		}
 	}
 
-	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/filter-item-group?item_group_code=" + itemGroupCode
+	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=" + itemGroupCode
 
 	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
 
@@ -105,7 +105,7 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) ([]map
 
 	defer rows.Close()
 
-	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/filter-item-group"
+	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group"
 	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
 
 	if errUrlItemPackage != nil {

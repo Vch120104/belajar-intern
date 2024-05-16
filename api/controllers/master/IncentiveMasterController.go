@@ -1,6 +1,7 @@
 package mastercontroller
 
 import (
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
@@ -143,11 +144,16 @@ func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.
 
 	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
 
-	response, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
+	entity, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		exceptionsss_test.NewBadRequestException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+	responseData := map[string]interface{}{
+		"is_active":          entity.IsActive,
+		"incentive_level_id": entity.IncentiveLevelId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
 }

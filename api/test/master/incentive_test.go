@@ -3,6 +3,7 @@ package test
 import (
 	"after-sales/api/config"
 	mastercontroller "after-sales/api/controllers/master"
+	masterentities "after-sales/api/entities/master"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -37,9 +38,9 @@ func (m *MockIncentiveMasterService) GetIncentiveMasterById(id int) (masterpaylo
 }
 
 // Mock the ChangeStatusIncentiveMaster method
-func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
-	args := m.Called(Id)
-	return args.Bool(0), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(id int) (masterentities.IncentiveMaster, *exceptionsss_test.BaseErrorResponse) {
+	args := m.Called(id)
+	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
 }
 
 // Mock the SaveIncentiveMaster method

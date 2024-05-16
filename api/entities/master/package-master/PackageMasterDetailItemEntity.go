@@ -17,7 +17,7 @@ type PackageMasterDetailItem struct {
 	Item                       *masteritementities.Item
 	FrtQuantity                float64 `gorm:"column:frt_quantity;not null" json:"frt_quantity"`
 	WorkorderTransactionTypeId int     `gorm:"column:workorder_transaction_type_id;size:30;not null" json:"workorder_transaction_type_id"`
-	JobTypeId                  int     `gorm:"column:job_title_id;size:30;not null" json:"job_type_id"`
+	JobTypeId                  int     `gorm:"column:job_type_id;size:30;not null" json:"job_type_id"`
 }
 
 func (*PackageMasterDetailItem) TableName() string {

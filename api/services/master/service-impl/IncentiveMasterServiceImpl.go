@@ -1,6 +1,7 @@
 package masterserviceimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
@@ -57,19 +58,15 @@ func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.Ince
 	return results, nil
 }
 
-func (s *IncentiveMasterServiceImpl) ChangeStatusIncentiveMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *IncentiveMasterServiceImpl) ChangeStatusIncentiveMaster(Id int) (masterentities.IncentiveMaster, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	_, err := s.IncentiveMasterRepo.GetIncentiveMasterById(tx, Id)
-
+	// Ubah status
+	entity, err := s.IncentiveMasterRepo.ChangeStatusIncentiveMaster(tx, Id)
 	if err != nil {
-		return false, err
+		return masterentities.IncentiveMaster{}, err
 	}
 
-	results, err := s.IncentiveMasterRepo.ChangeStatusIncentiveMaster(tx, Id)
-	if err != nil {
-		return results, err
-	}
-	return true, nil
+	return entity, nil
 }

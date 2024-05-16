@@ -3,7 +3,7 @@ package masteritementities
 var CreateItemImportTable = "mtr_item_import"
 
 type ItemImport struct {
-	ItemImportId       int     `gorm:"column:item_import_id;not null;primaryKey"        json:"item_import_id"`
+	ItemImportId       int     `gorm:"column:item_import_id;size:30;not null;primaryKey"        json:"item_import_id"`
 	SupplierId         int     `gorm:"column:supplier_id;not null;size:30;uniqueindex:idx_item_import"        json:"supplier_id"`
 	ItemId             int     `gorm:"column:item_id;not null;size:30;uniqueindex:idx_item_import"        json:"item_id"`
 	Item               Item    `gorm:"foreignKey:ItemId"`
