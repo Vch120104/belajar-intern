@@ -285,6 +285,24 @@ func MovingCodeRouter(
 	return router
 }
 
+func IncentiveGroupRouter(
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
+	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
+	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
+	router.Put("/", incentiveGroupController.UpdateIncentiveGroup)
+	return router
+}
+
 func PriceListRouter(
 	priceListController masteritemcontroller.PriceListController,
 ) chi.Router {
@@ -747,25 +765,6 @@ func DiscountRouter(
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)
-
-	return router
-}
-
-func IncentiveGroupRouter(
-	incentiveGroupController mastercontroller.IncentiveGroupController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
-	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
-	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
-	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 
 	return router
 }
