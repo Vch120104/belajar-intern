@@ -115,7 +115,6 @@ func ItemLevelRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
@@ -166,7 +165,7 @@ func ItemLocationRouter(
 
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middlewares.Recoverer)
+	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
 	//master
@@ -219,7 +218,7 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
-	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
+
 	return router
 }
 
@@ -234,10 +233,7 @@ func ItemPackageDetailRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
-	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
-	router.Get("/{item_package_detail_id}", ItemPackageDetailController.GetItemPackageDetailById)
-	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetailByItemPackageId)
-	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
+
 	return router
 }
 
@@ -280,29 +276,12 @@ func MovingCodeRouter(
 
 	router.Post("/", MovingCodeController.CreateMovingCode)
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
-	router.Patch("/update", MovingCodeController.UpdateMovingCode)
+	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
 	//router.PanicHandler = exceptions.ErrorHandler
 
-	return router
-}
-
-func IncentiveGroupRouter(
-	incentiveGroupController mastercontroller.IncentiveGroupController,
-) chi.Router {
-	router := chi.NewRouter()
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
-	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
-	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
-	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 	return router
 }
 
@@ -716,7 +695,20 @@ func FieldActionRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	// router.PanicHandler = exceptions.ErrorHandler
+	router.Get("/", FieldActionController.GetAllFieldAction)
+	router.Get("/header/by-id/{field_action_system_number}", FieldActionController.GetFieldActionHeaderById)
+	router.Get("/vehicle-detail/all/by-id/{field_action_system_number}", FieldActionController.GetAllFieldActionVehicleDetailById)
+	router.Get("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetFieldActionVehicleDetailById)
+	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemDetailById)
+	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.GetFieldActionVehicleItemDetailById)
+	router.Post("/", FieldActionController.SaveFieldAction)
+	router.Post("/vehicle-detail/{field_action_system_number}", FieldActionController.PostFieldActionVehicleDetail)
+	router.Post("/multi-vehicle-detail/{field_action_system_number}", FieldActionController.PostMultipleVehicleDetail)
+	router.Post("/item-detail/{field_action_eligible_vehicle_system_number}", FieldActionController.PostFieldActionVehicleItemDetail)
+	router.Post("/all-item-detail/{field_action_system_number}", FieldActionController.PostVehicleItemIntoAllVehicleDetail)
+	router.Patch("/header/by-id/{field_action_system_number}", FieldActionController.ChangeStatusFieldAction)
+	router.Patch("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.ChangeStatusFieldActionVehicle)
+	router.Patch("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.ChangeStatusFieldActionVehicleItem)
 
 	return router
 }
@@ -755,6 +747,25 @@ func DiscountRouter(
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)
+
+	return router
+}
+
+func IncentiveGroupRouter(
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
+	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
+	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 
 	return router
 }
@@ -841,22 +852,6 @@ func SwaggerRouter() chi.Router {
 
 	return router
 }
-
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
-
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
-
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }
 
 // func SwaggerRouter() chi.Router {
 // 	router := chi.NewRouter()
