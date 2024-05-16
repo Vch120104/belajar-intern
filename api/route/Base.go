@@ -862,6 +862,7 @@ func WorkOrderRouter(
 	router.Get("/booking", WorkOrderController.NewBooking)
 	router.Get("/affiliated", WorkOrderController.NewAffiliated)
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
+	router.Get("/dropdown-type", WorkOrderController.NewType)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)

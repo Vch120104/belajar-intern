@@ -56,6 +56,14 @@ func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopenti
 	return statuses, nil
 }
 
+func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptionsss_test.BaseErrorResponse) {
+	types, err := s.structWorkOrderRepo.NewType(tx)
+	if err != nil {
+		return nil, err
+	}
+	return types, nil
+}
+
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

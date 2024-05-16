@@ -22,6 +22,7 @@ type WorkOrderController interface {
 	NewBooking(writer http.ResponseWriter, request *http.Request)
 	NewAffiliated(writer http.ResponseWriter, request *http.Request)
 	NewStatus(writer http.ResponseWriter, request *http.Request)
+	NewType(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Submit(writer http.ResponseWriter, request *http.Request)
@@ -92,6 +93,22 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 
 	// Kirim respons ke klien sesuai dengan hasil pengambilan status
 	payloads.NewHandleSuccess(writer, statuses, "List of work order statuses", http.StatusOK)
+}
+
+func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
+
+	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
+	statuses, err := r.WorkOrderService.NewType(db)
+	if err != nil {
+		// Menangani kesalahan dari layanan
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	// Kirim respons ke klien sesuai dengan hasil pengambilan status
+	payloads.NewHandleSuccess(writer, statuses, "List of work order type", http.StatusOK)
 }
 
 // WithTrx handles the transaction for all work orders

@@ -171,6 +171,14 @@ func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB) ([]transactionworkshope
 	return statuses, nil
 }
 
+func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptionsss_test.BaseErrorResponse) {
+	var types []transactionworkshopentities.WorkOrderMasterType
+	if err := tx.Find(&types).Error; err != nil {
+		return nil, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
+	return types, nil
+}
+
 func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error

@@ -121,6 +121,7 @@ func Migrate() {
 		// &transactionsparepartpentities.SupplySlipDetail{},
 		&transactionworkshopentities.WorkOrderMaster{},
 		&transactionworkshopentities.WorkOrderMasterStatus{},
+		&transactionworkshopentities.WorkOrderMasterType{},
 		&transactionworkshopentities.WorkOrder{},
 		&transactionworkshopentities.WorkOrderRequestDescription{},
 		&transactionworkshopentities.WorkOrderDetail{},
