@@ -48,14 +48,12 @@ func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppaylo
 	return results, nil
 }
 
-func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB, request transactionworkshopentities.WorkOrderMasterStatus) (bool, *exceptionsss_test.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.NewStatus(tx, request)
+func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptionsss_test.BaseErrorResponse) {
+	statuses, err := s.structWorkOrderRepo.NewStatus(tx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return results, nil
-
+	return statuses, nil
 }
 
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {

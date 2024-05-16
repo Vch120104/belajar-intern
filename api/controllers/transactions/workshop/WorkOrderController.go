@@ -2,7 +2,6 @@ package transactionworkshopcontroller
 
 import (
 	"after-sales/api/config"
-	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
@@ -78,32 +77,21 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
 }
-func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request *http.Request) {
-	// Mengambil data entity WorkOrderMasterStatus dari body request
-	var workOrderMasterStatus transactionworkshopentities.WorkOrderMasterStatus
-	if err := json.NewDecoder(request.Body).Decode(&workOrderMasterStatus); err != nil {
-		// Menangani kesalahan jika tidak dapat mendekode payload
-		payloads.NewHandleError(writer, "Failed to decode request payload", http.StatusBadRequest)
-		return
-	}
 
+func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
-	// Panggil fungsi NewStatus dari layanan untuk menyimpan data work order
-	success, err := r.WorkOrderService.NewStatus(db, workOrderMasterStatus)
+	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
+	statuses, err := r.WorkOrderService.NewStatus(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
 		exceptionsss_test.NewAppException(writer, request, err)
 		return
 	}
 
-	// Kirim respons ke klien sesuai hasil penyimpanan
-	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order status updated successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Failed to update work order status", http.StatusInternalServerError)
-	}
+	// Kirim respons ke klien sesuai dengan hasil pengambilan status
+	payloads.NewHandleSuccess(writer, statuses, "List of work order statuses", http.StatusOK)
 }
 
 // WithTrx handles the transaction for all work orders
