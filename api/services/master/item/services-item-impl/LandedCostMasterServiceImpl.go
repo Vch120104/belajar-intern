@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -27,52 +27,52 @@ func StartLandedCostMasterService(LandedCostMasterRepo masteritemrepository.Land
 	}
 }
 
-func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) pagination.Pagination {
+func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.LandedCostMasterRepo.GetAllLandedCost(tx, filterCondition, pages)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return results,err
 	}
-	return results
+	return results,nil
 }
 
-func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) masteritempayloads.LandedCostMasterPayloads {
+func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) (masteritempayloads.LandedCostMasterPayloads,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.LandedCostMasterRepo.GetByIdLandedCost(tx, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return results,err
 	}
-	return results
+	return results,nil
 }
 
-func (s *LandedCostMasterServiceImpl) SaveLandedCost(req masteritempayloads.LandedCostMasterPayloads) bool {
+func (s *LandedCostMasterServiceImpl) SaveLandedCost(req masteritempayloads.LandedCostMasterPayloads) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.LandedCostMasterRepo.SaveLandedCost(tx, req)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return false,err
 	}
-	return result
+	return result,nil
 }
 
-func (s *LandedCostMasterServiceImpl) DeactivateLandedCostMaster(id string) bool {
+func (s *LandedCostMasterServiceImpl) DeactivateLandedCostMaster(id string) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.LandedCostMasterRepo.DeactivateLandedCostmaster(tx, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return false,err
 	}
-	return result
+	return result,nil
 }
 
-func (s *LandedCostMasterServiceImpl) ActivateLandedCostMaster(id string) bool {
+func (s *LandedCostMasterServiceImpl) ActivateLandedCostMaster(id string) (bool,*exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.LandedCostMasterRepo.ActivateLandedCostMaster(tx, id)
 	if err != nil {
-		panic(exceptions.NewAppExceptionError(err.Error()))
+		return false,err
 	}
-	return result
+	return result,nil
 }

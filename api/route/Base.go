@@ -116,14 +116,16 @@ func ItemLevelRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLevelController.GetAll)
 	router.Get("/{item_level_id}", itemLevelController.GetById)
-	router.Get("/drop-down/{item_level}", itemLevelController.GetItemLevelDropDown)
+
+	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
+	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
+
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
@@ -139,11 +141,13 @@ func ItemRouter(
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
-
 	router.Get("/", itemController.GetAllItem)
+	router.Get("/{item_id}", itemController.GetItembyId)
 	router.Get("/lookup", itemController.GetAllItemLookup)
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
+	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
+	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 
@@ -273,12 +277,30 @@ func MovingCodeRouter(
 
 	router.Post("/", MovingCodeController.CreateMovingCode)
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
-	router.Patch("/update", MovingCodeController.UpdateMovingCode)
+	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
 	//router.PanicHandler = exceptions.ErrorHandler
 
+	return router
+}
+
+func IncentiveGroupRouter(
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
+	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
+	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
+	router.Put("/", incentiveGroupController.UpdateIncentiveGroup)
 	return router
 }
 
@@ -463,6 +485,7 @@ func OperationCodeRouter(
 
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
+	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
@@ -792,25 +815,6 @@ func CampaignMasterRouter(
 	//from package master
 	router.Get("/package", campaignmastercontroller.GetAllPackageMasterToCopy)
 	// router.Get("/package-copy/{package_id}/{campaign_id}",campaignmastercontroller.SelectFromPackageMaster)
-
-	return router
-}
-
-func IncentiveGroupRouter(
-	incentiveGroupController mastercontroller.IncentiveGroupController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
-	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
-	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
-	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 
 	return router
 }

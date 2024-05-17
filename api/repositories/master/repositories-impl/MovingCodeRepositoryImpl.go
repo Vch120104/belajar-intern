@@ -73,7 +73,7 @@ func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, 
 		}
 	}
 
-	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/company-list/" + strconv.Itoa(responses.CompanyId)
+	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list/" + strconv.Itoa(responses.CompanyId)
 
 	if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
 		return nil, &exceptionsss_test.BaseErrorResponse{
@@ -108,7 +108,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 	//CHECK COMPANY ID
 	companyResponses := masterpayloads.CompanyResponse{}
 
-	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/company-list/" + strconv.Itoa(req.CompanyId)
+	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list/" + strconv.Itoa(req.CompanyId)
 
 	if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
 		return false, &exceptionsss_test.BaseErrorResponse{
@@ -186,7 +186,7 @@ func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages paginatio
 		}
 	}
 
-	companyUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/company-list-all"
+	companyUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list-all"
 
 	if errUrlCompany := utils.Get(companyUrl, &companyResponses, nil); errUrlCompany != nil {
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{

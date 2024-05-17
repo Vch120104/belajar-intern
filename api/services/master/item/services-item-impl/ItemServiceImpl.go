@@ -8,8 +8,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
-	"net/http"
-	"net/url"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -29,41 +27,54 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB,
 	}
 }
 
-func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+// GetUomDropDown implements masteritemservice.ItemService.
+func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.itemRepo.GetAllItem(tx, filterCondition, pages)
+	results, err := s.itemRepo.GetUomDropDown(tx, uomTypeId)
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		return results, err
+	}
+	return results, nil
+}
+
+// GetUomTypeDropDown implements masteritemservice.ItemService.
+func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetUomTypeDropDown(tx)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetAllItem(tx, filterCondition, pages)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, internalFilterCondition, externalFilterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
 	}
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemLookup(queryParams []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, queryParams, pages)
-	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
-	}
-	return results, totalPages, totalRows, nil
-}
-
-func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemById(tx, Id)
 	if err != nil {
-		return masteritempayloads.ItemResponse{}, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    err.Error(),
-		}
+		return result, err
 	}
 	return result, nil
 }
@@ -73,50 +84,39 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemWithMultiId(tx, MultiIds)
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		return result, err
 	}
 	return result, nil
 }
 
 func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
 	// Melakukan URL encoding pada parameter code
-	encodedCode := url.PathEscape(code)
+	// encodedCode := url.PathEscape(code)
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetItemCode(tx, encodedCode) // Menggunakan kode yang telah diencode
+	results, err := s.itemRepo.GetItemCode(tx, code) // Menggunakan kode yang telah diencode
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		return results, err
 	}
 	return results, nil
 }
 
-func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	if req.ItemId != 0 {
 		_, err := s.itemRepo.GetItemById(tx, req.ItemId)
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    err.Error(),
-			}
+			return false, err
+
 		}
 	}
 
 	results, err := s.itemRepo.SaveItem(tx, req)
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		return false, err
 	}
 	return results, nil
 }
@@ -127,18 +127,12 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.Bas
 
 	_, err := s.itemRepo.GetItemById(tx, Id)
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    err.Error(),
-		}
+		return false, err
 	}
 
 	results, err := s.itemRepo.ChangeStatusItem(tx, Id)
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    err.Error(),
-		}
+		return false, err
 	}
 	return results, nil
 }

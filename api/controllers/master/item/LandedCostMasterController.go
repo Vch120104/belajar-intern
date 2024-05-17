@@ -2,6 +2,7 @@ package masteritemcontroller
 
 import (
 	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -61,7 +62,11 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
+	result,err := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -80,7 +85,11 @@ func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseW
 
 	LandedCostId, _ := strconv.Atoi(LandedCostIdstr)
 
-	result := r.LandedCostService.GetByIdLandedCost(LandedCostId)
+	result,err := r.LandedCostService.GetByIdLandedCost(LandedCostId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -99,7 +108,11 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	create := r.LandedCostService.SaveLandedCost(formRequest)
+	create,err := r.LandedCostService.SaveLandedCost(formRequest)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.LandedCostId == 0 {
 		message = "Create Data Successfully!"
@@ -122,7 +135,11 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("landed_cost_id")
-	response := r.LandedCostService.ActivateLandedCostMaster(queryId)
+	response,err := r.LandedCostService.ActivateLandedCostMaster(queryId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
@@ -138,6 +155,10 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("landed_cost_id")
-	response := r.LandedCostService.DeactivateLandedCostMaster(queryId)
+	response,err := r.LandedCostService.DeactivateLandedCostMaster(queryId)
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
