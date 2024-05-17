@@ -190,3 +190,27 @@ func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(tx *gorm.DB, Id int) (
 
 	return true, nil
 }
+
+func (r *MarkupRateRepositoryImpl) GetMarkupRateByMarkupMasterAndOrderType(tx *gorm.DB, MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptionsss_test.BaseErrorResponse) {
+	entities := masteritementities.MarkupRate{}
+	response := []masteritempayloads.MarkupRateResponse{}
+
+	rows, err := tx.Model(&entities).
+		Where(masteritementities.MarkupRate{
+			MarkupMasterId: MarkupMasterId,
+			OrderTypeId: OrderTypeId,
+		}).
+		Find(&response).
+		Rows()
+
+	if err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	return response, nil
+}

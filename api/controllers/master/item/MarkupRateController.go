@@ -26,6 +26,7 @@ type MarkupRateController interface {
 	GetMarkupRateByID(writer http.ResponseWriter, request *http.Request)
 	SaveMarkupRate(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request)
+	GetMarkupRateByMarkupMasterAndOrderType(writer http.ResponseWriter, request *http.Request)
 }
 type MarkupRateControllerImpl struct {
 	MarkupRateService masteritemservice.MarkupRateService
@@ -170,4 +171,20 @@ func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWr
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+
+func (r *MarkupRateControllerImpl) GetMarkupRateByMarkupMasterAndOrderType(writer http.ResponseWriter, request *http.Request) {
+
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+	orderTypeId, _ := strconv.Atoi(chi.URLParam(request, "order_type_id"))
+
+	result, err := r.MarkupRateService.GetMarkupRateByMarkupMasterAndOrderType(markupMasterId, orderTypeId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

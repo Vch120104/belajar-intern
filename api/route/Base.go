@@ -8,7 +8,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	_ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -104,6 +104,7 @@ func MarkupRateRouter(
 
 	router.Get("/", markupRateController.GetAllMarkupRate)
 	router.Get("/{markup_rate_id}", markupRateController.GetMarkupRateByID)
+	router.Get("/markup-master/{markup_master_id}/order-type/{order_type_id}", markupRateController.GetMarkupRateByMarkupMasterAndOrderType)
 	router.Post("/", markupRateController.SaveMarkupRate)
 	router.Patch("/{markup_rate_id}", markupRateController.ChangeStatusMarkupRate)
 

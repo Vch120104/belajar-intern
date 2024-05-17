@@ -12,4 +12,5 @@ type MarkupRateService interface {
 	SaveMarkupRate(req masteritempayloads.MarkupRateRequest) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetAllMarkupRate(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 	ChangeStatusMarkupRate(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetMarkupRateByMarkupMasterAndOrderType(MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptionsss_test.BaseErrorResponse)
 }
