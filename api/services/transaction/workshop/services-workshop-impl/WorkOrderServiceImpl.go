@@ -49,11 +49,12 @@ func (s *WorkOrderServiceImpl) VehicleLookup(filterCondition []utils.FilterCondi
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.New(tx, request)
+
+	results, err := s.structWorkOrderRepo.New(tx)
 	if err != nil {
-		return false, err
+		return transactionworkshoppayloads.WorkOrderRequest{}, err
 	}
 	return results, nil
 }

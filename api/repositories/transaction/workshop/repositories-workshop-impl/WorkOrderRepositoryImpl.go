@@ -258,15 +258,20 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 
 }
 
-func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
-	// Create a new instance of WorkOrderRepositoryImpl
+func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
+	// Create a new instance of WorkOrderRequest
+	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
+
 	// Save the work order
-	success, err := r.Save(tx, request) // Menggunakan method Save dari receiver saat ini, yaitu r
+	err := tx.Create(&workOrderRequest).Error
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{Message: "Failed to save work order"}
+		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptionsss_test.BaseErrorResponse{
+			Message: "Failed to save work order",
+			Err:     err,
+		}
 	}
 
-	return success, nil
+	return workOrderRequest, nil
 }
 
 func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptionsss_test.BaseErrorResponse) {

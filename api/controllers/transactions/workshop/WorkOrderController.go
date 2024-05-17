@@ -76,6 +76,20 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 
 func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
+
+	// Panggil fungsi New dari layanan untuk mengisi data work order baru
+	Create, err := r.WorkOrderService.New(db)
+	if err != nil {
+		// Menangani kesalahan dari layanan
+		exceptionsss_test.NewAppException(writer, request, err)
+		return
+	}
+
+	// Kirim respons ke klien sesuai dengan hasil pengambilan status
+	payloads.NewHandleSuccess(writer, Create, "work order created", http.StatusCreated)
+
 }
 
 func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request *http.Request) {
