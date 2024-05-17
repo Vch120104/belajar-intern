@@ -17,7 +17,16 @@ func NewSalesOrderController(salesOrderService transactionsparepartservice.Sales
 	}
 }
 
-// GetSalesOrderByID
+// GetSalesOrderByID retrieves a sales order by ID
+// @Summary Get Sales Order By ID
+// @Description Retrieve a sales order by its ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Spare Part Sales Order
+// @Param sales_order_id path int true "Sales Order ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,404 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/sales-order/{sales_order_id} [get]
 func (c *SalesOrderController) GetSalesOrderByID(w http.ResponseWriter, r *http.Request) {
 
 }

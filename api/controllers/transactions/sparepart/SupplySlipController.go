@@ -19,7 +19,16 @@ func NewSupplySlipController(supplyslipservice transactionsparepartservice.Suppl
 	}
 }
 
-// Get Supply Slip By ID
+// GetSupplySlipByID retrieves a supply slip by ID
+// @Summary Get Supply Slip By ID
+// @Description Retrieve a supply slip by its ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Spare Part Supply Slip
+// @Param supply_slip_id path int true "Supply Slip ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,404 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/supply-slip/{supply_slip_id} [get]
 func (r *SupplySlipControllerImpl) GetSupplySlipByID(writer http.ResponseWriter, request *http.Request) {
 	// Get ID from URL
 	// id := mux.Vars(request)["id"]

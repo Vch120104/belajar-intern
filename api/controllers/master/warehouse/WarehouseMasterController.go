@@ -90,7 +90,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Tags Master : Warehouse Master
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/warehouse-master/drop-down [get]
+// @Router /v1/warehouse-master/is-active [get]
 func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	get, err := r.WarehouseMasterService.GetAllIsActive()
