@@ -89,3 +89,13 @@ func (s *IncentiveGroupServiceImpl) ChangeStatusIncentiveGroup(id int) (bool, *e
 	}
 	return true, nil
 }
+
+func (s *IncentiveGroupServiceImpl) UpdateIncentiveGroup(req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.IncentiveGroupRepository.UpdateIncentiveGroup(tx, req)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}

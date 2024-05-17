@@ -2,10 +2,12 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
+	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"net/http"
 	"strings"
 
 	"gorm.io/gorm"
@@ -18,7 +20,7 @@ func StartLandedCostMasterRepositoryImpl() masteritemrepository.LandedCostMaster
 	return &LandedCostMasterRepositoryImpl{}
 }
 
-func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
+func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	entities := []masteritementities.LandedCost{}
 	payloads := []masteritempayloads.LandedCostMasterPayloads{}
 
@@ -26,11 +28,17 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&payloads).Rows()
 
 	if len(payloads) == 0 {
-		return pages, gorm.ErrRecordNotFound
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	if err != nil {
-		return pages, err
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 	defer rows.Close()
 
@@ -39,12 +47,15 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 	return pages, nil
 }
 
-func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) (masteritempayloads.LandedCostMasterPayloads, error) {
+func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) (masteritempayloads.LandedCostMasterPayloads, *exceptionsss_test.BaseErrorResponse) {
 	entities := masteritementities.LandedCost{}
 	payloads := masteritempayloads.LandedCostMasterPayloads{}
 	rows, err := tx.Model(&entities).Where(masteritementities.LandedCost{LandedCostId: id}).First(&payloads).Rows()
 	if err != nil {
-		return payloads, err
+		return payloads, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 	defer rows.Close()
 	return payloads, nil
@@ -73,7 +84,7 @@ func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) 
 // 	return true,nil
 // }
 
-func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteritempayloads.LandedCostMasterPayloads) (bool, error) {
+func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteritempayloads.LandedCostMasterPayloads) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entitiesGet := masteritementities.LandedCost{}
 	rows, _ := tx.Model(&entitiesGet).Where(masteritementities.LandedCost{CompanyId: req.CompanyId, SupplierId: req.SupplierId, ShippingMethodId: req.ShippingMethodId, LandedCostTypeId: req.LandedCostTypeId, LandedCostDescription: req.LandedCostDescription}).Rows()
 	defer rows.Close()
@@ -91,7 +102,10 @@ func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteri
 		}
 		err := tx.Save(&entities).Error
 		if err != nil {
-			return false, err
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 		return true, nil
 	}
@@ -99,40 +113,52 @@ func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteri
 	return true, nil
 }
 
-func (r *LandedCostMasterRepositoryImpl) DeactivateLandedCostmaster(tx *gorm.DB, id string) (bool, error) {
+func (r *LandedCostMasterRepositoryImpl) DeactivateLandedCostmaster(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteritementities.LandedCost
 		err := tx.Model(&entityToUpdate).Where("landed_cost_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, err
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 
 		entityToUpdate.IsActive = false
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, result.Error
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        result.Error,
+			}
 		}
 	}
 
 	return true, nil
 }
 
-func (r *LandedCostMasterRepositoryImpl) ActivateLandedCostMaster(tx *gorm.DB, id string) (bool, error) {
+func (r *LandedCostMasterRepositoryImpl) ActivateLandedCostMaster(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteritementities.LandedCost
 		err := tx.Model(&entityToUpdate).Where("landed_cost_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, err
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 
 		entityToUpdate.IsActive = true
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, result.Error
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        result.Error,
+			}
 		}
 	}
 
