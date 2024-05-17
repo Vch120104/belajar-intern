@@ -9,7 +9,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	// _ "after-sales/docs"
+	_ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -796,11 +796,6 @@ func CampaignMasterRouter(
 	return router
 }
 
-//	func SwaggerRouter() chi.Router {
-//		router := chi.NewRouter()
-//		router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-//		return router
-//	}
 func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
 ) chi.Router {

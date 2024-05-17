@@ -234,7 +234,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Campaign Master
 	CampaignMasterRepository := masterrepositoryimpl.StartCampaignMasterRepositoryImpl()
-	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository,db)
+	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository, db)
 	CampaignMasterController := mastercontroller.NewCampaignMasterController(CampaignMasterService)
 
 	// Master
@@ -305,7 +305,7 @@ func StartRouting(db *gorm.DB) {
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
 	CampaignMasterRouter := CampaignMasterRouter(CampaignMasterController)
-	PackageMasterRouter:=PackageMasterRouter(PackageMasterController)
+	PackageMasterRouter := PackageMasterRouter(PackageMasterController)
 
 	/* Transaction */
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
@@ -357,7 +357,6 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/moving-code", MovingCodeRouter)
 		r.Mount("/forecast-master", ForecastMasterRouter)
 		r.Mount("/agreement", AgreementRouter)
-		//r.Mount("/campaign", CampaignRouter)
 		r.Mount("/package-master", PackageMasterRouter)
 		r.Mount("/skill-level", SkillLevelRouter)
 		r.Mount("/shift-schedule", ShiftScheduleRouter)
@@ -365,9 +364,7 @@ func StartRouting(db *gorm.DB) {
 		//r.Mount("/work-info-massage", WorkInfoRouter)
 		r.Mount("/field-action", FieldActionRouter)
 		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
-		//prometheus route
-		r.Mount("/metrics", promhttp.Handler())
-		r.Mount("/campaign-master",CampaignMasterRouter)
+		r.Mount("/campaign-master", CampaignMasterRouter)
 		r.Mount("/discount", DiscountRouter)
 		r.Mount("/incentive-group", IncentiveGroupRouter)
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
