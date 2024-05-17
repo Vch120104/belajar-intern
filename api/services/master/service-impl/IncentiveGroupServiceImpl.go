@@ -99,3 +99,15 @@ func (s *IncentiveGroupServiceImpl) UpdateIncentiveGroup(req masterpayloads.Upda
 	}
 	return results, nil
 }
+
+func (s *IncentiveGroupServiceImpl) GetAllIncentiveGroupDropDown() ([]masterpayloads.IncentiveGroupDropDown, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.IncentiveGroupRepository.GetAllIncentiveGroupDropDown(tx)
+
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}

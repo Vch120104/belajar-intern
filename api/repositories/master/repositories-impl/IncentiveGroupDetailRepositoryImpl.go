@@ -6,6 +6,7 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
+	"errors"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -31,13 +32,6 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	//apply pagination and execute
 	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Rows()
 
-	if len(response) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
 	if err != nil {
 		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -48,6 +42,13 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	defer rows.Close()
 
 	pages.Rows = response
+
+	if len(response) == 0 {
+		return pages, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
 
 	return pages, nil
 }
@@ -91,6 +92,42 @@ func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.D
 		logrus.Info(err)
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *IncentiveGroupDetailRepositoryImpl) UpdateIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+
+	model := masterentities.IncentiveGroupDetail{}
+	if err := tx.Model(&model).Where(masterentities.IncentiveGroupDetail{IncentiveGroupDetailId: req.IncentiveGroupDetailId}).First(&model).Error; err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if model == (masterentities.IncentiveGroupDetail{}) {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
+	entities := masterentities.IncentiveGroupDetail{
+		IncentiveGroupDetailId: req.IncentiveGroupDetailId,
+		TargetAmount:           req.TargetAmount,
+		TargetPercent:          req.TargetPercent,
+	}
+
+	err := tx.Updates(&entities).Where(masterentities.IncentiveGroupDetail{IncentiveGroupDetailId: req.IncentiveGroupDetailId}).Error
+
+	if err != nil {
+
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
