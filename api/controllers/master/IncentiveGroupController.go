@@ -26,6 +26,7 @@ type IncentiveGroupController interface {
 	GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request)
 	SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request)
+	UpdateIncentiveGroup(writer http.ResponseWriter, request *http.Request)
 }
 
 type IncentiveGroupControllerImpl struct {
@@ -57,9 +58,11 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
+		"incentive_group_id":   queryValues.Get("incentive_group_id"),
 		"incentive_group_code": queryValues.Get("incentive_group_code"),
 		"incentive_group_name": queryValues.Get("incentive_group_name"),
 		"effective_date":       queryValues.Get("effective_date"),
+		"is_active":            queryValues.Get("is_active"),
 	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -175,4 +178,30 @@ func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.Re
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masterpayloads.UpdateIncentiveGroupRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptionsss_test.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.IncentiveGroupService.UpdateIncentiveGroup(formRequest)
+
+	if err != nil {
+		helper_test.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Update Data Successfully!", http.StatusOK)
 }

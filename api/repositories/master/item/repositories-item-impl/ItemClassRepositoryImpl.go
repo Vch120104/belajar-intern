@@ -1,7 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
-	config "after-sales/api/config"
+	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -9,6 +9,7 @@ import (
 	"after-sales/api/utils"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -109,12 +110,11 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	entities := masteritementities.ItemClass{}
 	response := masteritempayloads.ItemClassResponse{}
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).Select("mtr_item_class.*").
 		Where(masteritementities.ItemClass{
 			ItemClassId: Id,
 		}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
 		return response, &exceptionsss_test.BaseErrorResponse{
@@ -123,7 +123,27 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
-	defer rows.Close()
+	lineTypeResponse := masteritempayloads.LineTypeResponse{}
+
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
+
+	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+
+	value, ok := joinedData[0]["LineTypeName_1"]
+
+	if ok {
+		switch v := value.(type) {
+		case string:
+			response.LineTypeName = v
+		}
+	}
 
 	return response, nil
 }

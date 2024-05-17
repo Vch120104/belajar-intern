@@ -57,9 +57,18 @@ type ItemResponse struct {
 	SourceTypeId                 int     `json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int     `json:"person_in_charge_id"`
+	SourceConvertion             float64 `json:"source_convertion"`
+	TargetConvertion             float64 `json:"target_convertion"`
+}
+
+type UserDetailResponse struct {
+	UserEmployeeId int    `json:"user_employee_id"`
+	EmployeNo      int    `json:"employee_no"`
+	EmployeeName   string `json:"employee_name"`
 }
 
 type ItemRequest struct {
+	ItemId                       int     `json:"item_id"`
 	ItemCode                     string  `json:"item_code"`
 	ItemClassId                  int     `json:"item_class_id"`
 	ItemName                     string  `json:"item_name"`
@@ -114,6 +123,14 @@ type ItemRequest struct {
 	SourceTypeId                 int     `json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int     `json:"person_in_charge_id"`
+	SourceConvertion             float32 `json:"source_convertion"`
+	TargetConvertion             float32 `json:"target_convertion"`
+}
+
+type AtpmOrderTypeResponse struct {
+	AtpmOrderTypeDescription string `json:"atpm_order_type_description"`
+	AtpmOrderTypeCode        string `json:"atpm_order_type_code"`
+	AtpmOrderTypeId          int    `json:"atpm_order_type_id"`
 }
 
 type ItemLookup struct {
@@ -125,6 +142,18 @@ type ItemLookup struct {
 	ItemGroupId int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
 	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
 	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
+}
+
+type UomTypeDropdownResponse struct {
+	IsActive           bool   `json:"is_active"`
+	UomTypeId          int    `json:"uom_type_id"`
+	UomTypeDescription string `json:"uom_type_desc"`
+}
+
+type UomDropdownResponse struct {
+	IsActive       bool   `json:"is_active"`
+	UomId          int    `json:"uom_id"`
+	UomDescription string `json:"uom_description"`
 }
 
 type ItemDetailResponse struct {

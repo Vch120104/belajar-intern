@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	masteritemlevelservice "after-sales/api/services/master/item"
+	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -24,6 +25,19 @@ func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository
 		DB:                  db,
 		RedisClient:         redisClient,
 	}
+}
+
+// GetItemLevelLookUp implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.structItemLevelRepo.GetItemLevelLookUp(tx, filter, pages, itemClassId)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
 }
 
 // GetItemLevelDropDown implements masteritemservice.ItemLevelService.
@@ -72,10 +86,10 @@ func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads
 	return get, nil
 }
 
-func (s *ItemLevelServiceImpl) GetAll(request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	get, err := s.structItemLevelRepo.GetAll(tx, request, pages)
+	get, err := s.structItemLevelRepo.GetAll(tx, filter, pages)
 
 	if err != nil {
 		return get, err
