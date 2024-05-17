@@ -44,8 +44,9 @@ go.work
 docs.go
 swagger.json
 swagger.yaml
-
-
+# tmp
+tmp/
+build-errors.log
 
 # NEXTJS
 # playwright testing

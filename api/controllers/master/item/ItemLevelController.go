@@ -5,6 +5,7 @@ import (
 	helper_test "after-sales/api/helper_testt"
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/utils"
 	"after-sales/api/validation"
 	"strconv"
 
@@ -25,6 +26,7 @@ type ItemLevelController interface {
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request)
+	GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLevelControllerImpl struct {
@@ -35,6 +37,41 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 	return &ItemLevelControllerImpl{
 		itemLevelService: ItemLevelService,
 	}
+}
+
+// GetItemLevelLookUp implements ItemLevelController.
+func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	filter := map[string]string{
+		"mtr_item_level.item_level":        queryValues.Get("item_level"),
+		"mtr_item_class.item_class_code":   queryValues.Get("item_class_code"),
+		"mtr_item_level.item_level_parent": queryValues.Get("item_level_parent"),
+		"mtr_item_level.item_level_code":   queryValues.Get("item_level_code"),
+		"mtr_item_level.item_level_name":   queryValues.Get("item_level_name"),
+		"mtr_item_level.is_active":         queryValues.Get("is_active"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	get, err := r.itemLevelService.GetItemLevelLookUp(internalCriteria, paginate, itemClassId)
+
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+
 }
 
 // GetItemLevelDropDown implements ItemLevelController.
@@ -72,30 +109,26 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 // @Router /v1/item-level/ [get]
 func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	itemLevel := queryValues.Get("item_level")
-	itemClassCode := queryValues.Get("item_class_code")
-	itemLevelParent := queryValues.Get("item_level_parent")
-	itemLevelCode := queryValues.Get("item_level_code")
-	itemLevelName := queryValues.Get("item_level_name")
-	isActive := queryValues.Get("is_active")
 
-	get, err := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
-		ItemLevel:       itemLevel,
-		ItemClassCode:   itemClassCode,
-		ItemLevelParent: itemLevelParent,
-		ItemLevelCode:   itemLevelCode,
-		ItemLevelName:   itemLevelName,
-		IsActive:        isActive,
-	}, pagination.Pagination{
-		Limit:  limit,
-		SortOf: sortOf,
-		SortBy: sortBy,
-		Page:   page,
-	})
+	filter := map[string]string{
+		"mtr_item_level.item_level":        queryValues.Get("item_level"),
+		"mtr_item_class.item_class_code":   queryValues.Get("item_class_code"),
+		"mtr_item_level.item_level_parent": queryValues.Get("item_level_parent"),
+		"mtr_item_level.item_level_code":   queryValues.Get("item_level_code"),
+		"mtr_item_level.item_level_name":   queryValues.Get("item_level_name"),
+		"mtr_item_level.is_active":         queryValues.Get("is_active"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	get, err := r.itemLevelService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
