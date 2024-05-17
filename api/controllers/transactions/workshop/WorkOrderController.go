@@ -42,7 +42,13 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"trx_work_order.brand_id": queryValues.Get("brand_id"),
+		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
+		"trx_work_order.work_order_type_id":       queryValues.Get("work_order_type_id"),
+		"trx_work_order.brand_id":                 queryValues.Get("brand_id"),
+		"trx_work_order.model_id":                 queryValues.Get("model_id"),
+		"trx_work_order.vehicle_id":               queryValues.Get("vehicle_id"),
+		"trx_work_order.work_order_date":          queryValues.Get("work_order_date"),
+		"trx_work_order.work_order_close_date":    queryValues.Get("work_order_close_date"),
 	}
 
 	paginate := pagination.Pagination{

@@ -49,10 +49,22 @@ func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepa
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
 
 	if err != nil {
-		return get,err
+		return get, err
 	}
 
-	return get,nil
+	return get, nil
+}
+
+func (s *WarehouseMasterServiceImpl) DropdownWarehouse() ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.DropdownWarehouse(tx)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, *exceptionsss_test.BaseErrorResponse) {
@@ -64,7 +76,7 @@ func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads
 		return get, err
 	}
 
-	return get,nil
+	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptionsss_test.BaseErrorResponse) {
@@ -75,7 +87,7 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) 
 	if err != nil {
 		return get, err
 	}
-	return get,nil
+	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
@@ -87,7 +99,7 @@ func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetA
 		return get, err
 	}
 
-	return get,nil
+	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
@@ -99,7 +111,7 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) ([]ma
 		return get, err
 	}
 
-	return get,nil
+	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptionsss_test.BaseErrorResponse) {
@@ -112,5 +124,5 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwareho
 		return change_status, err
 	}
 
-	return change_status,nil
+	return change_status, nil
 }

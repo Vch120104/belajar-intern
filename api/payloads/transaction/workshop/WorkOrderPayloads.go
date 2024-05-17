@@ -3,6 +3,7 @@ package transactionworkshoppayloads
 import "time"
 
 type WorkOrderResponse struct {
+	WorkOrderStatusId             int       `json:"work_order_status_id"`
 	WorkOrderSystemNumber         int       `json:"work_order_system_number"`
 	WorkOrderDocumentNumber       string    `json:"work_order_document_number"`
 	WorkOrderDate                 time.Time `json:"work_order_date"`
@@ -49,6 +50,7 @@ type WorkOrderResponse struct {
 }
 
 type WorkOrderRequest struct {
+	WorkOrderStatusId             int       `json:"work_order_status_id"`
 	WorkOrderSystemNumber         int       `json:"work_order_system_number"`
 	WorkOrderDocumentNumber       string    `json:"work_order_document_number"`
 	WorkOrderDate                 time.Time `json:"work_order_date"`

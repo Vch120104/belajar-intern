@@ -574,7 +574,8 @@ func WarehouseMasterRouter(
 	router.Get("/by-id/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
-	router.Get("/drop-down", warehouseMasterController.GetAllIsActive)
+	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
+	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
@@ -889,9 +890,9 @@ func WorkOrderRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WorkOrderController.GetAll)
-	router.Get("/normal", WorkOrderController.New)
-	router.Get("/booking", WorkOrderController.NewBooking)
-	router.Get("/affiliated", WorkOrderController.NewAffiliated)
+	router.Post("/normal", WorkOrderController.New)
+	router.Post("/booking", WorkOrderController.NewBooking)
+	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
 	router.Get("/dropdown-type", WorkOrderController.NewType)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)

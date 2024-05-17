@@ -26,6 +26,7 @@ type WarehouseMasterControllerImpl struct {
 type WarehouseMasterController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetAllIsActive(writer http.ResponseWriter, request *http.Request)
+	DropdownWarehouse(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	GetByCode(writer http.ResponseWriter, request *http.Request)
 	GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request)
@@ -64,7 +65,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 	warehouseCode := queryValues.Get("warehouse_code")
 	isActive := queryValues.Get("is_active")
 
-	get,err := r.WarehouseMasterService.GetAll(masterwarehousepayloads.GetAllWarehouseMasterRequest{
+	get, err := r.WarehouseMasterService.GetAll(masterwarehousepayloads.GetAllWarehouseMasterRequest{
 		WarehouseName: warehouseName,
 		WarehouseCode: warehouseCode,
 		IsActive:      isActive,
@@ -74,7 +75,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 		SortBy: sortBy,
 		Page:   page,
 	})
-	if err != nil{
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -92,8 +93,27 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Router /v1/warehouse-master/drop-down [get]
 func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWriter, request *http.Request) {
 
-	get,err := r.WarehouseMasterService.GetAllIsActive()
-	if err != nil{
+	get, err := r.WarehouseMasterService.GetAllIsActive()
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get Dropdown Warehouse
+// @Description Get Dropdown Warehouse
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Master
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/warehouse-master/drop-down [get]
+func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWriter, request *http.Request) {
+
+	get, err := r.WarehouseMasterService.DropdownWarehouse()
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -114,8 +134,8 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 
-	get,err := r.WarehouseMasterService.GetById(warehouseId)
-	if err != nil{
+	get, err := r.WarehouseMasterService.GetById(warehouseId)
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -136,8 +156,8 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 
 	code := chi.URLParam(request, "warehouse_code")
 
-	get,err := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
-	if err != nil{
+	get, err := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -161,8 +181,8 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 
 	sliceOfString := strings.Split(warehouse_ids, ",")
 
-	result,err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
-	if err != nil{
+	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -185,8 +205,8 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	save,err := r.WarehouseMasterService.Save(formRequest)
-	if err !=nil{
+	save, err := r.WarehouseMasterService.Save(formRequest)
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -214,8 +234,8 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 
-	change_status,err := r.WarehouseMasterService.ChangeStatus(warehouseId)
-	if err != nil{
+	change_status, err := r.WarehouseMasterService.ChangeStatus(warehouseId)
+	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
