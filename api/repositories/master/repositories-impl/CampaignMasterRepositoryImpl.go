@@ -680,7 +680,6 @@ func (r *CampaignMasterRepositoryImpl) GetAllPackageMasterToCopy(tx *gorm.DB, pa
 
 	BaseModelQuery := tx.Model(&packageentities)
 	rows, err := BaseModelQuery.Scopes(pagination.Paginate(&packageentities, &pages, BaseModelQuery)).Where("profit_center_id=?", 13).Scan(payloads).Rows()
-	defer rows.Close()
 	if len(payloads) == 0 {
 		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -758,7 +757,10 @@ func (r *CampaignMasterRepositoryImpl) SelectFromPackageMaster(tx *gorm.DB, id i
 		}
 		err := tx.Create(entities).Error
 		if err != nil {
-
+			return false, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
 		}
 	}
 	return true, nil
