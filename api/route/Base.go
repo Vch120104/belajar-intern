@@ -9,6 +9,7 @@ import (
 	"after-sales/api/middlewares"
 
 	// _ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -485,6 +486,7 @@ func OperationCodeRouter(
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
 	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
+	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 
@@ -768,6 +770,39 @@ func DiscountRouter(
 
 	return router
 }
+
+func CampaignMasterRouter(
+	campaignmastercontroller mastercontroller.CampaignMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	//campaign master header
+	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
+	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
+	router.Get("/history", campaignmastercontroller.GetAllCampaignMasterCodeAndName)
+	router.Post("/", campaignmastercontroller.SaveCampaignMaster)
+	router.Patch("/{campaign_id}", campaignmastercontroller.ChangeStatusCampaignMaster)
+
+	//campaign master detail
+	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
+	router.Patch("/detail/deactivate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
+	router.Patch("/detail/activate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
+	router.Put("/detail/update/{campaign_detail_id}", campaignmastercontroller.UpdateCampaignMasterDetail)
+
+	//from package master
+	router.Get("/package", campaignmastercontroller.GetAllPackageMasterToCopy)
+	// router.Get("/package-copy/{package_id}/{campaign_id}",campaignmastercontroller.SelectFromPackageMaster)
+
+	return router
+}
+
+//	func SwaggerRouter() chi.Router {
+//		router := chi.NewRouter()
+//		router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
+//		return router
+//	}
 
 func IncentiveGroupDetailRouter(
 	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
