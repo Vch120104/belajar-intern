@@ -39,6 +39,16 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 	return results, totalPages, totalRows, nil
 }
 
+func (s *WorkOrderServiceImpl) VehicleLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.structWorkOrderRepo.VehicleLookup(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
 func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	results, err := s.structWorkOrderRepo.New(tx, request)

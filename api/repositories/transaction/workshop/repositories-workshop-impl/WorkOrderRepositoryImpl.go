@@ -1,11 +1,14 @@
 package transactionworkshoprepositoryimpl
 
 import (
+	"after-sales/api/config"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/utils"
@@ -41,22 +44,22 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		workOrderData["last_approval_by_id"] = entity.LastApprovalBy
 		workOrderData["last_approval_date"] = entity.LastApprovalDate
 		workOrderData["work_order_system_number"] = entity.WorkOrderSystemNumber
-		workOrderData["company_id"] = entity.CompanyID
+		workOrderData["company_id"] = entity.CompanyId
 		workOrderData["work_order_document_number"] = entity.WorkOrderDocumentNumber
-		workOrderData["work_order_status_id"] = entity.WorkOrderStatusID
+		workOrderData["work_order_status_id"] = entity.WorkOrderStatusId
 		workOrderData["work_order_date"] = entity.WorkOrderDate
 		workOrderData["work_order_close_date"] = entity.WorkOrderCloseDate
-		workOrderData["work_order_type_id"] = entity.WorkOrderTypeID
+		workOrderData["work_order_type_id"] = entity.WorkOrderTypeId
 		workOrderData["work_order_repeated_system_number"] = entity.WorkOrderRepeatedSystemNumber
 		workOrderData["work_order_repeated_document_number"] = entity.WorkOrderRepeatedDocumentNumber
 		workOrderData["afiliated_company"] = entity.AffiliatedCompany
-		workOrderData["profit_center_id"] = entity.ProfitCenterID
-		workOrderData["brand_id"] = entity.BrandID
-		workOrderData["model_id"] = entity.ModelID
-		workOrderData["variant_id"] = entity.VariantID
+		workOrderData["profit_center_id"] = entity.ProfitCenterId
+		workOrderData["brand_id"] = entity.BrandId
+		workOrderData["model_id"] = entity.ModelId
+		workOrderData["variant_id"] = entity.VariantId
 		workOrderData["vehicle_chassis_number"] = entity.VehicleChassisNumber
-		workOrderData["billable_to_id"] = entity.BillableToID
-		workOrderData["customer_id"] = entity.CustomerID
+		workOrderData["billable_to_id"] = entity.BillableToId
+		workOrderData["customer_id"] = entity.CustomerId
 		workOrderData["pay_type"] = entity.PayType
 		workOrderData["from_era"] = entity.FromEra
 		workOrderData["queue_number"] = entity.QueueNumber
@@ -72,15 +75,15 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		workOrderData["contact_person_mobile"] = entity.ContactPersonMobile
 		workOrderData["contact_person_contact_via"] = entity.ContactPersonContactVia
 		workOrderData["contract_service_system_number"] = entity.ContractServiceSystemNumber
-		workOrderData["agrement_general_repair_id"] = entity.AgreementGeneralRepairID
-		workOrderData["agreement_body_repair_id"] = entity.AgreementBodyRepairID
+		workOrderData["agrement_general_repair_id"] = entity.AgreementGeneralRepairId
+		workOrderData["agreement_body_repair_id"] = entity.AgreementBodyRepairId
 		workOrderData["booking_system_number"] = entity.BookingSystemNumber
 		workOrderData["estimation_system_number"] = entity.EstimationSystemNumber
 		workOrderData["pdi_system_number"] = entity.PDISystemNumber
 		workOrderData["pdi_document_number"] = entity.PDIDocumentNumber
 		workOrderData["pdi_line_number"] = entity.PDILineNumber
 		workOrderData["service_request_system_number"] = entity.ServiceRequestSystemNumber
-		workOrderData["campaign_id"] = entity.CampaignID
+		workOrderData["campaign_id"] = entity.CampaignId
 		workOrderData["campaign_code"] = entity.CampaignCode
 		workOrderData["insurance_policy_number"] = entity.InsurancePolicyNumber
 		workOrderData["insurance_expired_date"] = entity.InsuranceExpiredDate
@@ -103,9 +106,9 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		workOrderData["total_pph"] = entity.TotalPPH
 		workOrderData["discount_request_percent"] = entity.DiscountRequestPercent
 		workOrderData["discount_request_amount"] = entity.DiscountRequestAmount
-		workOrderData["tax_id"] = entity.TaxID
+		workOrderData["tax_id"] = entity.TaxId
 		workOrderData["vat_tax_rate"] = entity.VATTaxRate
-		workOrderData["additional_discount_status_approval_id"] = entity.AdditionalDiscountStatusApprovalID
+		workOrderData["additional_discount_status_approval_id"] = entity.AdditionalDiscountStatusApprovalId
 		workOrderData["remark"] = entity.Remark
 		workOrderData["foreman_id"] = entity.Foreman
 		workOrderData["production_head_id"] = entity.ProductionHead
@@ -117,7 +120,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		workOrderData["incentive_date"] = entity.IncentiveDate
 		workOrderData["work_order_cancel_reason"] = entity.WOCancelReason
 		workOrderData["invoice_system_number"] = entity.InvoiceSystemNumber
-		workOrderData["currency_id"] = entity.CurrencyID
+		workOrderData["currency_id"] = entity.CurrencyId
 		workOrderData["ATPM_warranty_claim_form_document_number"] = entity.ATPMWCFDocNo
 		workOrderData["ATPM_warranty_claim_form_date"] = entity.ATPMWCFDate
 		workOrderData["ATPM_free_service_document_number"] = entity.ATPMFSDocNo
@@ -150,6 +153,109 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(workOrderResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+
+	// Define a slice to hold WorkOrderLookupResponse responses
+	var responses []transactionworkshoppayloads.WorkOrderLookupResponse
+
+	// Define table struct
+	tableStruct := transactionworkshoppayloads.WorkOrderLookupRequest{}
+
+	// Define join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+	// Apply filters
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	// Execute query
+	rows, err := whereQuery.Find(&responses).Rows()
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	// Define a slice to hold WorkOrderLookupResponse
+	var convertedResponses []transactionworkshoppayloads.WorkOrderLookupResponse
+
+	// Iterate over rows
+	for rows.Next() {
+		// Define variables to hold row data
+		var (
+			workOrderReq transactionworkshoppayloads.WorkOrderLookupRequest
+			workOrderRes transactionworkshoppayloads.WorkOrderLookupResponse
+		)
+
+		// Scan the row into WorkOrderLookupRequest struct
+		if err := rows.Scan(
+			&workOrderReq.WorkOrderSystemNumber,
+			&workOrderReq.WorkOrderDocumentNumber,
+			&workOrderReq.VehicleId,
+			&workOrderReq.CustomerId,
+		); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		// Fetch vehicle data from external service
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(workOrderReq.VehicleId)
+		fmt.Println("Fetching Vehicle data from:", VehicleURL)
+		var getVehicleResponse transactionworkshoppayloads.WorkOrderVehicleResponse
+		if err := utils.Get(VehicleURL, &getVehicleResponse, nil); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch vehicle data from external service",
+				Err:        err,
+			}
+		}
+
+		// Fetch Customer data from external service
+		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "customer-detail/" + strconv.Itoa(workOrderReq.CustomerId)
+		fmt.Println("Fetching Customer data from:", CustomerURL)
+		var getCustomerResponse transactionworkshoppayloads.CustomerResponse
+		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
+			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch customer data from external service",
+				Err:        err,
+			}
+		}
+		// Create WorkOrderLookupResponse
+		workOrderRes = transactionworkshoppayloads.WorkOrderLookupResponse{
+			WorkOrderDocumentNumber: workOrderRes.WorkOrderDocumentNumber,
+			WorkOrderSystemNumber:   workOrderRes.WorkOrderSystemNumber,
+			VehicleId:               workOrderRes.VehicleId,
+			CustomerId:              workOrderRes.CustomerId,
+		}
+		// Append WorkOrderResponse to the slice
+		convertedResponses = append(convertedResponses, workOrderRes)
+	}
+
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
+
+	// Iterate over convertedResponses and convert them to maps
+	for _, response := range convertedResponses {
+		responseMap := map[string]interface{}{
+			"work_order_document_number": response.WorkOrderDocumentNumber,
+			"work_order_system_number":   response.WorkOrderSystemNumber,
+			"vehicle_id":                 response.VehicleId,
+			"customer_id":                response.CustomerId,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+
 }
 
 func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {

@@ -23,6 +23,7 @@ type WorkOrderController interface {
 	NewAffiliated(writer http.ResponseWriter, request *http.Request)
 	NewStatus(writer http.ResponseWriter, request *http.Request)
 	NewType(writer http.ResponseWriter, request *http.Request)
+	VehicleLookup(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Submit(writer http.ResponseWriter, request *http.Request)
@@ -109,6 +110,36 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 
 	// Kirim respons ke klien sesuai dengan hasil pengambilan status
 	payloads.NewHandleSuccess(writer, statuses, "List of work order type", http.StatusOK)
+}
+
+func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_work_order.vehicle_id": queryValues.Get("vehicle_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.VehicleLookup(criteria, paginate)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // WithTrx handles the transaction for all work orders

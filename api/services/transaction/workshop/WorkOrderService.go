@@ -20,4 +20,5 @@ type WorkOrderService interface {
 	Submit(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse
 	Void(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse
 	CloseOrder(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse
+	VehicleLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
 }

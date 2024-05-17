@@ -6,22 +6,23 @@ const TableNameWorkOrder = "trx_work_order"
 
 type WorkOrder struct {
 	WorkOrderSystemNumber              int               `gorm:"column:work_order_system_number;size:30;primaryKey" json:"work_order_system_number"`
-	CompanyID                          int               `gorm:"column:company_id;size:30;" json:"company_id"`
+	CompanyId                          int               `gorm:"column:company_id;size:30;" json:"company_id"`
 	WorkOrderDocumentNumber            string            `gorm:"column:work_order_document_number;size:50;" json:"work_order_document_number"`
-	WorkOrderStatusID                  int               `gorm:"column:work_order_status_id;size:30;" json:"work_order_status_id"`
+	WorkOrderStatusId                  int               `gorm:"column:work_order_status_id;size:30;" json:"work_order_status_id"`
 	WorkOrderDate                      time.Time         `gorm:"column:work_order_date;type:datetime" json:"work_order_date"`
 	WorkOrderCloseDate                 time.Time         `gorm:"column:work_order_close_date;type:datetime" json:"work_order_close_date"`
-	WorkOrderTypeID                    int               `gorm:"column:work_order_type_id;size:30;" json:"work_order_type_id"`
+	WorkOrderTypeId                    int               `gorm:"column:work_order_type_id;size:30;" json:"work_order_type_id"`
 	WorkOrderRepeatedSystemNumber      int               `gorm:"column:work_order_repeated_system_number;size:30;" json:"work_order_repeated_system_number"`
 	WorkOrderRepeatedDocumentNumber    string            `gorm:"column:work_order_repeated_document_number;size:50;" json:"work_order_repeated_document_number"`
 	AffiliatedCompany                  int               `gorm:"column:afiliated_company;size:30;" json:"afiliated_company"`
-	ProfitCenterID                     int               `gorm:"column:profit_center_id;size:30;" json:"profit_center_id"`
-	BrandID                            int               `gorm:"column:brand_id;size:30;" json:"brand_id"`
-	ModelID                            int               `gorm:"column:model_id;size:30;" json:"model_id"`
-	VariantID                          int               `gorm:"column:variant_id;size:30;" json:"variant_id"`
+	ProfitCenterId                     int               `gorm:"column:profit_center_id;size:30;" json:"profit_center_id"`
+	BrandId                            int               `gorm:"column:brand_id;size:30;" json:"brand_id"`
+	ModelId                            int               `gorm:"column:model_id;size:30;" json:"model_id"`
+	VariantId                          int               `gorm:"column:variant_id;size:30;" json:"variant_id"`
 	VehicleChassisNumber               string            `gorm:"column:vehicle_chassis_number;size:50;" json:"vehicle_chassis_number"`
-	BillableToID                       int               `gorm:"column:billable_to_id;size:30;" json:"billable_to_id"`
-	CustomerID                         int               `gorm:"column:customer_id;size:30;" json:"customer_id"`
+	VehicleId                          int               `gorm:"column:vehicle_id;size:30;" json:"vehicle_id"`
+	BillableToId                       int               `gorm:"column:billable_to_id;size:30;" json:"billable_to_id"`
+	CustomerId                         int               `gorm:"column:customer_id;size:30;" json:"customer_id"`
 	PayType                            string            `gorm:"column:pay_type;size:50;" json:"pay_type"`
 	FromEra                            string            `gorm:"column:from_era;size:50;" json:"from_era"`
 	QueueNumber                        string            `gorm:"column:queue_number;size:50;" json:"queue_number"`
@@ -37,15 +38,15 @@ type WorkOrder struct {
 	ContactPersonMobile                string            `gorm:"column:contact_person_mobile;size:50;" json:"contact_person_mobile"`
 	ContactPersonContactVia            string            `gorm:"column:contact_person_contact_via;size:50;" json:"contact_person_contact_via"`
 	ContractServiceSystemNumber        int               `gorm:"column:contract_service_system_number;size:30;" json:"contract_service_system_number"`
-	AgreementGeneralRepairID           int               `gorm:"column:agrement_general_repair_id;size:30;" json:"agreement_general_repair_id"`
-	AgreementBodyRepairID              int               `gorm:"column:agreement_body_repair_id;size:30;" json:"agreement_body_repair_id"`
+	AgreementGeneralRepairId           int               `gorm:"column:agrement_general_repair_id;size:30;" json:"agreement_general_repair_id"`
+	AgreementBodyRepairId              int               `gorm:"column:agreement_body_repair_id;size:30;" json:"agreement_body_repair_id"`
 	BookingSystemNumber                int               `gorm:"column:booking_system_number;size:30;" json:"booking_system_number"`
 	EstimationSystemNumber             int               `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`
 	PDISystemNumber                    float32           `gorm:"column:pdi_system_number" json:"pdi_system_number"`
 	PDIDocumentNumber                  string            `gorm:"column:pdi_document_number;size:50;" json:"pdi_document_number"`
 	PDILineNumber                      int               `gorm:"column:pdi_line_number;size:30;" json:"pdi_line_number"`
 	ServiceRequestSystemNumber         int               `gorm:"column:service_request_system_number;size:30;" json:"service_request_system_number"`
-	CampaignID                         int               `gorm:"column:campaign_id;size:30;" json:"campaign_id"`
+	CampaignId                         int               `gorm:"column:campaign_id;size:30;" json:"campaign_id"`
 	CampaignCode                       int               `gorm:"column:campaign_code;size:30;" json:"campaign_code"`
 	InsurancePolicyNumber              string            `gorm:"column:insurance_policy_number;size:50;" json:"insurance_policy_number"`
 	InsuranceExpiredDate               time.Time         `gorm:"column:insurance_expired_date;type:datetime" json:"insurance_expired_date"`
@@ -68,9 +69,9 @@ type WorkOrder struct {
 	TotalPPH                           float32           `gorm:"column:total_pph" json:"total_pph"`
 	DiscountRequestPercent             float32           `gorm:"column:discount_request_percent" json:"discount_request_percent"`
 	DiscountRequestAmount              float32           `gorm:"column:discount_request_amount" json:"discount_request_amount"`
-	TaxID                              int               `gorm:"column:tax_id;size:30;" json:"tax_id"`
+	TaxId                              int               `gorm:"column:tax_id;size:30;" json:"tax_id"`
 	VATTaxRate                         float32           `gorm:"column:vat_tax_rate" json:"vat_tax_rate"`
-	AdditionalDiscountStatusApprovalID int               `gorm:"column:additional_discount_status_approval;size:30;" json:"additional_discount_status_approval"`
+	AdditionalDiscountStatusApprovalId int               `gorm:"column:additional_discount_status_approval;size:30;" json:"additional_discount_status_approval"`
 	LastApprovalBy                     int               `gorm:"column:last_approval_by_id;size:30;" json:"last_approval_by_id"`
 	LastApprovalDate                   time.Time         `gorm:"column:last_approval_date" json:"last_approval_date"`
 	Remark                             string            `gorm:"column:remark;size:50;" json:"remark"`
@@ -84,7 +85,7 @@ type WorkOrder struct {
 	IncentiveDate                      time.Time         `gorm:"column:incentive_date" json:"incentive_date"`
 	WOCancelReason                     string            `gorm:"column:work_order_cancel_reason;size:50;" json:"work_order_cancel_reason"`
 	InvoiceSystemNumber                int               `gorm:"column:invoice_system_number;size:30;" json:"invoice_system_number"`
-	CurrencyID                         int               `gorm:"column:currency_id;size:30;" json:"currency_id"`
+	CurrencyId                         int               `gorm:"column:currency_id;size:30;" json:"currency_id"`
 	ATPMWCFDocNo                       string            `gorm:"column:atpm_warranty_claim_form_document_number;size:50;" json:"atpm_warranty_claim_form_document_number"`
 	ATPMWCFDate                        time.Time         `gorm:"column:atpm_warranty_claim_form_date" json:"atpm_warranty_claim_form_date"`
 	ATPMFSDocNo                        string            `gorm:"column:atpm_free_service_document_number;size:50;" json:"atpm_free_service_document_number"`

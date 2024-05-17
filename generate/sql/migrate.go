@@ -2,7 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-	//mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
@@ -118,7 +117,7 @@ func Migrate() {
 		&masterentities.AgreementItemDetail{},
 
 		&transactionsparepartpentities.SupplySlip{},
-		// &transactionsparepartpentities.SupplySlipDetail{},
+		&transactionsparepartpentities.SupplySlipDetail{},
 		&transactionworkshopentities.WorkOrderMaster{},
 		&transactionworkshopentities.WorkOrderMasterStatus{},
 		&transactionworkshopentities.WorkOrderMasterType{},
