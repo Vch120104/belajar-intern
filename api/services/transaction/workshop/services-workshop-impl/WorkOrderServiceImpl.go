@@ -1,12 +1,14 @@
 package transactionworkshopserviceimpl
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
+
 	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
@@ -37,13 +39,40 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) VehicleLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.New(tx, request)
+	results, totalPages, totalRows, err := s.structWorkOrderRepo.VehicleLookup(tx, filterCondition, pages)
 	if err != nil {
-		return false, err
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+
+	results, err := s.structWorkOrderRepo.New(tx)
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderRequest{}, err
 	}
 	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptionsss_test.BaseErrorResponse) {
+	statuses, err := s.structWorkOrderRepo.NewStatus(tx)
+	if err != nil {
+		return nil, err
+	}
+	return statuses, nil
+}
+
+func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptionsss_test.BaseErrorResponse) {
+	types, err := s.structWorkOrderRepo.NewType(tx)
+	if err != nil {
+		return nil, err
+	}
+	return types, nil
 }
 
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
@@ -56,13 +85,17 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 	return results, nil
 }
 
-func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderRequest) (bool, error) {
-	tx := s.DB.Begin()
+func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
 	defer helper.CommitOrRollback(tx)
-	save, err := s.structWorkOrderRepo.Save(request)
+
+	// Panggil metode Save dengan menyediakan transaksi dan permintaan WorkOrder
+	save, err := s.structWorkOrderRepo.Save(tx, request)
 	if err != nil {
 		return false, err
 	}
+
+	// Mengembalikan hasil penyimpanan dan nilai nil untuk ErrorResponse
 	return save, nil
 }
 

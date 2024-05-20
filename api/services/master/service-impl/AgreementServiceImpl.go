@@ -38,7 +38,7 @@ func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.Agreemen
 	return results, nil
 }
 
-func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
