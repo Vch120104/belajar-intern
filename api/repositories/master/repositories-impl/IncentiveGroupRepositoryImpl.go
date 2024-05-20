@@ -175,13 +175,14 @@ func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, I
 	return true, nil
 }
 
-func (r *IncentiveGroupRepositoryImpl) UpdateIncentiveGroup(tx *gorm.DB, req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupRepositoryImpl) UpdateIncentiveGroup(tx *gorm.DB, id int, req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	model := masterentities.IncentiveGroup{}
-	if err := tx.Model(&model).Where(masterentities.IncentiveGroup{IncentiveGroupId: req.IncentiveGroupId}).First(&model).Error; err != nil {
+	result := tx.Model(&model).Where(masterentities.IncentiveGroup{IncentiveGroupId: id}).First(&model).Updates(req)
+	if result.Error != nil {
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        result.Error,
 		}
 	}
 
@@ -189,23 +190,6 @@ func (r *IncentiveGroupRepositoryImpl) UpdateIncentiveGroup(tx *gorm.DB, req mas
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
-		}
-	}
-
-	entities := masterentities.IncentiveGroup{
-		IncentiveGroupId:   req.IncentiveGroupId,
-		IncentiveGroupCode: req.IncentiveGroupCode,
-		IncentiveGroupName: req.IncentiveGroupName,
-		EffectiveDate:      req.EffectiveDate,
-	}
-
-	err := tx.Updates(&entities).Where(masterentities.IncentiveGroup{IncentiveGroupId: req.IncentiveGroupId}).Error
-
-	if err != nil {
-
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
 		}
 	}
 

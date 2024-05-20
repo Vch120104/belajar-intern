@@ -12,5 +12,5 @@ type IncentiveGroupDetailRepository interface {
 	GetAllIncentiveGroupDetail(*gorm.DB, int, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
 	GetIncentiveGroupDetailById(*gorm.DB, int) (masterpayloads.IncentiveGroupDetailResponse, *exceptionsss_test.BaseErrorResponse)
 	SaveIncentiveGroupDetail(*gorm.DB, masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	UpdateIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
+	UpdateIncentiveGroupDetail(*gorm.DB, int, masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
 }

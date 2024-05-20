@@ -96,13 +96,14 @@ func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.D
 	return true, nil
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) UpdateIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupDetailRepositoryImpl) UpdateIncentiveGroupDetail(tx *gorm.DB, id int, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	model := masterentities.IncentiveGroupDetail{}
-	if err := tx.Model(&model).Where(masterentities.IncentiveGroupDetail{IncentiveGroupDetailId: req.IncentiveGroupDetailId}).First(&model).Error; err != nil {
+	result := tx.Model(&model).Where(masterentities.IncentiveGroupDetail{IncentiveGroupDetailId: id}).First(&model).Updates(req)
+	if result.Error != nil {
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        result.Error,
 		}
 	}
 
@@ -110,22 +111,6 @@ func (r *IncentiveGroupDetailRepositoryImpl) UpdateIncentiveGroupDetail(tx *gorm
 		return false, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
-		}
-	}
-
-	entities := masterentities.IncentiveGroupDetail{
-		IncentiveGroupDetailId: req.IncentiveGroupDetailId,
-		TargetAmount:           req.TargetAmount,
-		TargetPercent:          req.TargetPercent,
-	}
-
-	err := tx.Updates(&entities).Where(masterentities.IncentiveGroupDetail{IncentiveGroupDetailId: req.IncentiveGroupDetailId}).Error
-
-	if err != nil {
-
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
 		}
 	}
 

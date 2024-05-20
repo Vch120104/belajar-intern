@@ -10,5 +10,5 @@ type IncentiveGroupDetailService interface {
 	GetAllIncentiveGroupDetail(int, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
 	GetIncentiveGroupDetailById(int) (masterpayloads.IncentiveGroupDetailResponse, *exceptionsss_test.BaseErrorResponse)
 	SaveIncentiveGroupDetail(masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	UpdateIncentiveGroupDetail(masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
+	UpdateIncentiveGroupDetail(int, masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse)
 }

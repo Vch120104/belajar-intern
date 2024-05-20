@@ -13,6 +13,6 @@ type IncentiveGroupService interface {
 	GetIncentiveGroupById(int) (masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse)
 	SaveIncentiveGroup(masterpayloads.IncentiveGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse)
 	ChangeStatusIncentiveGroup(int) (bool, *exceptionsss_test.BaseErrorResponse)
-	UpdateIncentiveGroup(req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptionsss_test.BaseErrorResponse)
+	UpdateIncentiveGroup(masterpayloads.UpdateIncentiveGroupRequest, int) (bool, *exceptionsss_test.BaseErrorResponse)
 	GetAllIncentiveGroupDropDown() ([]masterpayloads.IncentiveGroupDropDown, *exceptionsss_test.BaseErrorResponse)
 }

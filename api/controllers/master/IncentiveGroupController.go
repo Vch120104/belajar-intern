@@ -133,6 +133,7 @@ func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.Re
 
 func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.UpdateIncentiveGroupRequest
+	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
@@ -147,7 +148,7 @@ func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.Response
 		return
 	}
 
-	create, err := r.IncentiveGroupService.UpdateIncentiveGroup(formRequest)
+	create, err := r.IncentiveGroupService.UpdateIncentiveGroup(formRequest, incentiveGroupId)
 
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)

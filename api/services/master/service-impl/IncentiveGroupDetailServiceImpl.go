@@ -66,19 +66,11 @@ func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.I
 	return results, nil
 }
 
-func (s *IncentiveGroupDetailImpl) UpdateIncentiveGroupDetail(req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *IncentiveGroupDetailImpl) UpdateIncentiveGroupDetail(id int, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	if req.IncentiveGroupDetailId != 0 {
-		_, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, req.IncentiveGroupDetailId)
-
-		if err != nil {
-			return false, err
-		}
-	}
-
-	results, err := s.IncentiveGroupDetailRepository.UpdateIncentiveGroupDetail(tx, req)
+	results, err := s.IncentiveGroupDetailRepository.UpdateIncentiveGroupDetail(tx, id, req)
 	if err != nil {
 		return results, err
 	}

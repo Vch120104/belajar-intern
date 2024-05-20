@@ -104,6 +104,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer 
 }
 
 func (r *IncentiveGroupDetailControllerImpl) UpdateIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
 
 	var incentiveGroupDetailRequest masterpayloads.UpdateIncentiveGroupDetailRequest
 	var message string
@@ -118,7 +119,7 @@ func (r *IncentiveGroupDetailControllerImpl) UpdateIncentiveGroupDetail(writer h
 		exceptionsss_test.NewBadRequestException(writer, request, err)
 		return
 	}
-	create, err := r.IncentiveGroupDetailService.UpdateIncentiveGroupDetail(incentiveGroupDetailRequest)
+	create, err := r.IncentiveGroupDetailService.UpdateIncentiveGroupDetail(id, incentiveGroupDetailRequest)
 	if err != nil {
 		helper_test.ReturnError(writer, request, err)
 		return

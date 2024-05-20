@@ -301,7 +301,7 @@ func IncentiveGroupRouter(
 	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
-	router.Put("/", incentiveGroupController.UpdateIncentiveGroup)
+	router.Put("/{incentive_group_id}", incentiveGroupController.UpdateIncentiveGroup)
 	return router
 }
 
@@ -818,7 +818,7 @@ func IncentiveGroupDetailRouter(
 	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
 	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
 	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
-	router.Put("/", incentiveGroupDetailController.UpdateIncentiveGroupDetail)
+	router.Put("/{incentive_group_detail_id}", incentiveGroupDetailController.UpdateIncentiveGroupDetail)
 
 	return router
 }

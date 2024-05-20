@@ -19,7 +19,6 @@ type IncentiveGroupDetailRequest struct {
 }
 
 type UpdateIncentiveGroupDetailRequest struct {
-	IncentiveGroupDetailId int     `json:"incentive_group_detail_id"`
-	TargetAmount           float64 `json:"target_amount"`
-	TargetPercent          float64 `json:"target_percent"`
+	TargetAmount  float64 `json:"target_amount"`
+	TargetPercent float64 `json:"target_percent"`
 }
