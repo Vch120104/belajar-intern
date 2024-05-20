@@ -12,11 +12,13 @@ import (
 
 func TestSaveBookingEstimation(t *testing.T) {
 	config.InitEnvConfigs(true, "")
-	db := config.InitDB()
-	bookingEstimationRepo := transactionworkshoprepositoryimpl.OpenBookingEstimationImpl(db)
-	bookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(bookingEstimationRepo)
+	bookingEstimationRepo := transactionworkshoprepositoryimpl.OpenBookingEstimationRepositoryImpl()
+	bookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(bookingEstimationRepo, nil, nil)
 
-	save, err := bookingEstimationService.Save(transactionworkshoppayloads.SaveBookingEstimationRequest{
+	// objek *gorm.DB dari manajer koneksi database
+	db := config.InitDB()
+
+	save, err := bookingEstimationService.Save(db, transactionworkshoppayloads.BookingEstimationRequest{
 		BatchSystemNumber:              1,
 		BookingSystemNumber:            1,
 		BrandId:                        1,

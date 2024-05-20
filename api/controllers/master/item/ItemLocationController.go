@@ -111,7 +111,11 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Save Item Location
@@ -136,11 +140,12 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 	}
 	if formRequest.ItemLocationId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Get Item Location By ID
@@ -208,7 +213,11 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 	}
 
 	// Construct the response
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Save Item Location Detail
@@ -232,7 +241,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Item Location By ID

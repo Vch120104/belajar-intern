@@ -130,11 +130,12 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 	}
 	if formRequest.BomMasterId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Bom Master
@@ -284,11 +285,12 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 	}
 	if formRequest.BomDetailId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Get All Bom Item Lookup

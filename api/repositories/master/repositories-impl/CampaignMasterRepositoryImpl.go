@@ -211,8 +211,8 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			Joins("JOIN mtr_labour_selling_price on mtr_labour_selling_price.job_type_id=mtr_package_master_detail_operation.job_type_id AND mtr_labour_selling_price.brand_id= mtr_package_master.brand_id").
 			Joins("JOIN mtr_labour_selling_price_detail on mtr_labour_selling_price_detail.labour_selling_price_id=mtr_labour_selling_price.labour_selling_price_id").
 			Where("operation_model_mapping_id=?", req.OperationItemId).Select("mtr_labour_selling_price.selling_price").Scan(&lastprice).Error
-		if err!=nil{
-			return false,&exceptionsss_test.BaseErrorResponse{
+		if err != nil {
+			return false, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}

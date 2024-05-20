@@ -46,12 +46,14 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter,
 	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
 
 	filter := map[string]string{
-		"mtr_item_level.item_level":        queryValues.Get("item_level"),
-		"mtr_item_class.item_class_code":   queryValues.Get("item_class_code"),
-		"mtr_item_level.item_level_parent": queryValues.Get("item_level_parent"),
-		"mtr_item_level.item_level_code":   queryValues.Get("item_level_code"),
-		"mtr_item_level.item_level_name":   queryValues.Get("item_level_name"),
-		"mtr_item_level.is_active":         queryValues.Get("is_active"),
+		"mtr_item_level.item_level_code": queryValues.Get("item_level_1"),
+		"mtr_item_level.item_level_name": queryValues.Get("item_level_1_name"),
+		"B.item_level_code":              queryValues.Get("item_level_2"),
+		"B.item_level_name":              queryValues.Get("item_level_2_name"),
+		"C.item_level_code":              queryValues.Get("item_level_3"),
+		"C.item_level_name":              queryValues.Get("item_level_3_name"),
+		"D.item_level_code":              queryValues.Get("item_level_4"),
+		"D.item_level_name":              queryValues.Get("item_level_4_name"),
 	}
 
 	paginate := pagination.Pagination{

@@ -2,7 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-	//mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
@@ -10,6 +9,7 @@ import (
 	masteroperationentities "after-sales/api/entities/master/operation"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
+	transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
@@ -57,12 +57,6 @@ func Migrate() {
 		DisableForeignKeyConstraintWhenMigrating: false,
 	})
 
-	// db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{
-	// 	NamingStrategy: schema.NamingStrategy{
-	// 		//TablePrefix:   "dbo.", // schema name
-	// 		SingularTable: false,
-	// 	}, DisableForeignKeyConstraintWhenMigrating: false})
-
 	db.AutoMigrate( // sesuai urutan foreign key
 		&masteroperationentities.OperationModelMapping{},
 		&masteroperationentities.OperationFrt{},
@@ -78,9 +72,9 @@ func Migrate() {
 		&masterwarehouseentities.WarehouseLocationDefinition{},
 		&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
 
+		&masteritementities.ItemLocation{},
 		&masteritementities.ItemLocationSource{},
 		&masteritementities.ItemLocationDetail{},
-		&masteritementities.ItemLocation{},
 		&masteritementities.PurchasePrice{},
 		&masteritementities.PurchasePriceDetail{},
 		&masteritementities.UomType{},
@@ -122,8 +116,24 @@ func Migrate() {
 		&masterentities.AgreementDiscountGroupDetail{},
 		&masterentities.AgreementItemDetail{},
 
+		&transactionsparepartpentities.SupplySlip{},
+		&transactionsparepartpentities.SupplySlipDetail{},
+		&transactionworkshopentities.WorkOrderMaster{},
+		&transactionworkshopentities.WorkOrderMasterStatus{},
+		&transactionworkshopentities.WorkOrderMasterType{},
 		&transactionworkshopentities.WorkOrder{},
+		&transactionworkshopentities.WorkOrderRequestDescription{},
+		&transactionworkshopentities.WorkOrderDetail{},
+		&transactionworkshopentities.WorkOrderHistory{},
+		&transactionworkshopentities.WorkOrderHistoryRequest{},
+		&transactionworkshopentities.WorkOrderHistoryDetail{},
+
 		&transactionworkshopentities.BookingEstimation{},
+		&transactionworkshopentities.BookingEstimationAllocation{},
+		&transactionworkshopentities.BookingEstimationRequest{},
+		&transactionworkshopentities.BookingEstimationServiceReminder{},
+		&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		&transactionworkshopentities.BookingEstimationDetail{},
 	)
 
 	if db != nil && db.Error != nil {

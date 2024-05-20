@@ -121,7 +121,7 @@ func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWrite
 func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageRequest
-	var message = ""
+	var message string
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {

@@ -6,7 +6,6 @@ toolchain go1.22.0
 
 require (
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-chi/render v1.0.3
 	github.com/go-gota/gota v0.12.0
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -26,7 +25,6 @@ require (
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/ajg/form v1.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect

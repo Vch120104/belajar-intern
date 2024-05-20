@@ -5,11 +5,11 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	// _ "after-sales/docs"
-	// _ "after-sales/docs"
+	_ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -574,7 +574,8 @@ func WarehouseMasterRouter(
 	router.Get("/by-id/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
-	router.Get("/drop-down", warehouseMasterController.GetAllIsActive)
+	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
+	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
@@ -751,6 +752,27 @@ func WarrantyFreeServiceRouter(
 	return router
 }
 
+func PackageMasterRouter(
+	PackageMasterController mastercontroller.PackageMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Get("/", PackageMasterController.GetAllPackageMaster)
+	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
+	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
+	router.Get("/detail/{package_id}/{package_detail_id}/{line_type_id}", PackageMasterController.GetByIdPackageMasterDetail)
+	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
+
+	router.Post("/", PackageMasterController.SavepackageMaster)
+	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
+	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+
+	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
+	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
+	router.Patch("/detail/deactivate/{package_id}/{package_detail_id}", PackageMasterController.DeactivateMultiIdPackageMasterDetail)
+
+	return router
+}
+
 func DiscountRouter(
 	discountController mastercontroller.DiscountController,
 ) chi.Router {
@@ -798,12 +820,6 @@ func CampaignMasterRouter(
 	return router
 }
 
-//	func SwaggerRouter() chi.Router {
-//		router := chi.NewRouter()
-//		router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-//		return router
-//	}
-
 func IncentiveGroupDetailRouter(
 	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
 ) chi.Router {
@@ -826,6 +842,11 @@ func DeductionRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", DeductionController.GetAllDeductionList)
 	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
@@ -837,15 +858,44 @@ func DeductionRouter(
 	return router
 }
 
+func BookingEstimationRouter(
+	BookingEstimationController transactionworkshopcontroller.BookingEstimationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", BookingEstimationController.GetAll)
+	router.Get("/normal", BookingEstimationController.New)
+	router.Get("/find/{work_order_system_number}", BookingEstimationController.GetById)
+	router.Put("/{id}", BookingEstimationController.Save)
+	router.Post("/submit", BookingEstimationController.Submit)
+	router.Delete("/{id}", BookingEstimationController.Void)
+	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
+
+	return router
+}
+
 func WorkOrderRouter(
 	WorkOrderController transactionworkshopcontroller.WorkOrderController,
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", WorkOrderController.GetAll)
-	router.Get("/normal", WorkOrderController.New)
-	router.Get("/booking", WorkOrderController.NewBooking)
-	router.Get("/affiliated", WorkOrderController.NewAffiliated)
+	router.Post("/normal", WorkOrderController.New)
+	router.Post("/booking", WorkOrderController.NewBooking)
+	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+	router.Get("/dropdown-status", WorkOrderController.NewStatus)
+	router.Get("/dropdown-type", WorkOrderController.NewType)
+	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)
@@ -855,23 +905,22 @@ func WorkOrderRouter(
 	return router
 }
 
-func PackageMasterRouter(
-	PackageMasterController mastercontroller.PackageMasterController,
+func SupplySlipRouter(
+	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {
 	router := chi.NewRouter()
-	router.Get("/", PackageMasterController.GetAllPackageMaster)
-	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
-	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
-	router.Get("/detail/{package_id}/{package_detail_id}/{line_type_id}", PackageMasterController.GetByIdPackageMasterDetail)
-	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
-	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
-	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
 
-	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
-	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
-	router.Patch("/detail/deactivate/{package_id}/{package_detail_id}", PackageMasterController.DeactivateMultiIdPackageMasterDetail)
+	return router
+}
+
+func SalesOrderRouter(
+	SalesOrderController transactionsparepartcontroller.SalesOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
 
 	return router
 }
@@ -886,19 +935,3 @@ func SwaggerRouter() chi.Router {
 
 	return router
 }
-
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
-
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
-
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }

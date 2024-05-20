@@ -76,13 +76,13 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 // @Accept json
 // @Produce json
 // @Tags Master : Agreement
-// @Param reqBody body masterpayloads.AgreementResponse true "Agreement Data"
+// @Param reqBody body masterpayloads.AgreementRequest true "Agreement Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
 // @Router /v1/agreement/ [post]
 func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, request *http.Request) {
 
-	var formRequest masterpayloads.AgreementResponse
+	var formRequest masterpayloads.AgreementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
@@ -94,11 +94,11 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 
 	if formRequest.AgreementId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Change Status Agreement
@@ -167,7 +167,12 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Add Discount Group
@@ -191,7 +196,7 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount group added successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Discount group added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Discount Group
@@ -237,7 +242,7 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item discount added successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Item discount added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Item Discount
@@ -283,7 +288,7 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount value added successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Discount value added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Discount Value
@@ -336,14 +341,18 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	data, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
 
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Get Discount Group By Id
@@ -397,14 +406,18 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	data, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
 
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Get Discount Item By Id
@@ -458,14 +471,18 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	data, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
 
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Get Discount Value By Id

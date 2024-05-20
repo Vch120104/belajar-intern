@@ -2,72 +2,177 @@ package transactionworkshoprepositoryimpl
 
 import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+	exceptionsss_test "after-sales/api/expectionsss"
+	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
-	"log"
+	"after-sales/api/utils"
+	"net/http"
 
 	"gorm.io/gorm"
 )
 
 type BookingEstimationImpl struct {
-	DB *gorm.DB
 }
 
-func OpenBookingEstimationImpl(db *gorm.DB) transactionworkshoprepository.BookingEstimationRepository {
-	return &BookingEstimationImpl{DB: db}
+func OpenBookingEstimationRepositoryImpl() transactionworkshoprepository.BookingEstimationRepository {
+	return &BookingEstimationImpl{}
 }
 
-func (r *BookingEstimationImpl) WithTrx(Trxhandle *gorm.DB) transactionworkshoprepository.BookingEstimationRepository {
-	if Trxhandle != nil {
-		log.Println("Transaction Database Not Found")
-		return r
+func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	var entities []transactionworkshopentities.BookingEstimation
+	// Query to retrieve all booking estimation entities based on the request
+	query := tx.Model(&transactionworkshopentities.BookingEstimation{})
+	if len(filterCondition) > 0 {
+		query = query.Where(filterCondition)
 	}
-	r.DB = Trxhandle
-	return r
-}
-
-func (r *BookingEstimationImpl) Save(request transactionworkshoppayloads.SaveBookingEstimationRequest) (bool, error) {
-
-	var bookingEstimationEntities = transactionworkshopentities.BookingEstimation{
-		BatchSystemNumber:              request.BatchSystemNumber,
-		BookingSystemNumber:            request.BookingSystemNumber,
-		BrandId:                        request.BrandId,
-		ModelId:                        request.ModelId,
-		VariantId:                      request.VariantId,
-		VehicleId:                      request.VehicleId,
-		EstimationSystemNumber:         request.EstimationSystemNumber,
-		PdiSystemNumber:                request.PdiSystemNumber,
-		ServiceRequestSystemNumber:     request.ServiceRequestSystemNumber,
-		ContractSystemNumber:           request.ContractSystemNumber,
-		AgreementId:                    request.AgreementId,
-		CampaignId:                     request.CampaignId,
-		CompanyId:                      request.CompanyId,
-		ProfitCenterId:                 request.ProfitCenterId,
-		DealerRepresentativeId:         request.DealerRepresentativeId,
-		CustomerId:                     request.CustomerId,
-		DocumentStatusId:               request.DocumentStatusId,
-		BookingEstimationBatchDate:     request.BookingEstimationBatchDate,
-		BookingEstimationVehicleNumber: request.BookingEstimationVehicleNumber,
-		AgreementNumberBr:              request.AgreementNumberBr,
-		ContactPersonName:              request.ContactPersonName,
-		ContactPersonPhone:             request.ContactPersonPhone,
-		ContactPersonMobile:            request.ContactPersonMobile,
-		ContactPersonVia:               request.ContactPersonVia,
-		InsurancePolicyNo:              request.InsurancePolicyNo,
-		InsuranceExpiredDate:           request.InsuranceExpiredDate,
-		InsuranceClaimNo:               request.InsuranceClaimNo,
-		InsurancePic:                   request.InsurancePic,
-	}
-
-	rows, err := r.DB.Model(&bookingEstimationEntities).
-		Save(&bookingEstimationEntities).
-		Rows()
-
+	err := query.Find(&entities).Error
 	if err != nil {
-		return false, err
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimations from the database"}
 	}
 
-	defer rows.Close()
+	var bookingEstimationResponses []map[string]interface{}
 
+	// Loop through each entity and copy its data to the response
+	for _, entity := range entities {
+		bookingEstimationData := make(map[string]interface{})
+		// Copy data from entity to response
+		bookingEstimationData["batch_system_number"] = entity.BatchSystemNumber
+		bookingEstimationData["booking_system_number"] = entity.BookingSystemNumber
+		bookingEstimationData["brand_id"] = entity.BrandId
+		bookingEstimationData["model_id"] = entity.ModelId
+		bookingEstimationData["variant_id"] = entity.VariantId
+		bookingEstimationData["vehicle_id"] = entity.VehicleId
+		bookingEstimationData["estimation_system_number"] = entity.EstimationSystemNumber
+		bookingEstimationData["pdi_system_number"] = entity.PdiSystemNumber
+		bookingEstimationData["service_request_system_number"] = entity.ServiceRequestSystemNumber
+		bookingEstimationData["contract_system_number"] = entity.ContractSystemNumber
+		bookingEstimationData["agreement_id"] = entity.AgreementId
+		bookingEstimationData["campaign_id"] = entity.CampaignId
+		bookingEstimationData["company_id"] = entity.CompanyId
+		bookingEstimationData["profit_center_id"] = entity.ProfitCenterId
+		bookingEstimationData["dealer_representative_id"] = entity.DealerRepresentativeId
+		bookingEstimationData["customer_id"] = entity.CustomerId
+		bookingEstimationData["document_status_id"] = entity.DocumentStatusId
+		bookingEstimationData["booking_estimation_batch_date"] = entity.BookingEstimationBatchDate
+		bookingEstimationData["booking_estimation_vehicle_number"] = entity.BookingEstimationVehicleNumber
+		bookingEstimationData["agreement_number_br"] = entity.AgreementNumberBr
+		bookingEstimationData["is_unregistered"] = entity.IsUnregistered
+		bookingEstimationData["contact_person_name"] = entity.ContactPersonName
+		bookingEstimationData["contact_person_phone"] = entity.ContactPersonPhone
+		bookingEstimationData["contact_person_mobile"] = entity.ContactPersonMobile
+		bookingEstimationData["contact_person_via"] = entity.ContactPersonVia
+		bookingEstimationData["insurance_policy_no"] = entity.InsurancePolicyNo
+		bookingEstimationData["insurance_expired_date"] = entity.InsuranceExpiredDate
+		bookingEstimationData["insurance_claim_no"] = entity.InsuranceClaimNo
+		bookingEstimationData["insurance_pic"] = entity.InsurancePic
+
+		// Append the response data to the array
+		bookingEstimationResponses = append(bookingEstimationResponses, bookingEstimationData)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(bookingEstimationResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *BookingEstimationImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	// Create a new instance of WorkOrderRepositoryImpl
+	// Save the booking estimation
+	success, err := r.Save(tx, request) // Menggunakan method Save dari receiver saat ini, yaitu r
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{Message: "Failed to save booking estimation"}
+	}
+
+	return success, nil
+}
+
+func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptionsss_test.BaseErrorResponse) {
+	var entity transactionworkshopentities.BookingEstimation
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return transactionworkshoppayloads.BookingEstimationRequest{}, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+	}
+
+	// Convert entity to payload
+	payload := transactionworkshoppayloads.BookingEstimationRequest{}
+
+	return payload, nil
+}
+
+func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+	var bookingEstimationEntities = transactionworkshopentities.BookingEstimation{
+		// Assign fields from request
+	}
+
+	// Create a new record
+	err := tx.Create(&bookingEstimationEntities).Error
+	if err != nil {
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 	return true, nil
+}
+
+func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	// Retrieve the booking estimation by Id
+	var entity transactionworkshopentities.BookingEstimation
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+	}
+
+	// Perform the necessary operations to submit the booking estimation
+	// ...
+
+	// Save the updated booking estimation
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+	}
+
+	return nil
+}
+
+func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	// Retrieve the booking estimation by Id
+	var entity transactionworkshopentities.BookingEstimation
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+	}
+
+	// Perform the necessary operations to void the booking estimation
+	// ...
+
+	// Save the updated booking estimation
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+	}
+
+	return nil
+}
+
+func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+	// Retrieve the booking estimation by Id
+	var entity transactionworkshopentities.BookingEstimation
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+	}
+
+	// Perform the necessary operations to close the booking estimation
+	// ...
+
+	// Save the updated booking estimation
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+	}
+
+	return nil
 }
