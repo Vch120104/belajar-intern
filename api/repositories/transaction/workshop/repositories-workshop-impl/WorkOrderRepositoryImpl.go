@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -256,6 +257,40 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 
 	return paginatedData, totalPages, totalRows, nil
 
+}
+
+func (r *WorkOrderRepositoryImpl) CampaignLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+
+	var entities []mastercampaignmasterentities.CampaignMaster
+	// Query to retrieve all work order entities based on the request
+	query := tx.Model(&mastercampaignmasterentities.CampaignMaster{})
+	if len(filterCondition) > 0 {
+		query = query.Where(filterCondition)
+	}
+	err := query.Find(&entities).Error
+	if err != nil {
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve campaign master from the database"}
+	}
+
+	var WorkOrderCampaignResponse []map[string]interface{}
+
+	// Loop through each entity and copy its data to the response
+	for _, entity := range entities {
+		campaignData := make(map[string]interface{})
+		// Copy data from entity to response
+		campaignData["campaign_id"] = entity.CampaignId
+		campaignData["campaign_code"] = entity.CampaignCode
+		campaignData["campaign_name"] = entity.CampaignName
+		campaignData["campaign_period_from"] = entity.CampaignPeriodFrom
+		campaignData["campaign_period_to"] = entity.CampaignPeriodTo
+
+		WorkOrderCampaignResponse = append(WorkOrderCampaignResponse, campaignData)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(WorkOrderCampaignResponse, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
 }
 
 func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {

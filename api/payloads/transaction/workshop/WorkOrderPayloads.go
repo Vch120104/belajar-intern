@@ -111,12 +111,15 @@ type WorkOrderLookupResponse struct {
 }
 
 type WorkOrderVehicleResponse struct {
-	VehicleId      int    `json:"vehicle_id"`
-	VehicleCode    string `json:"vehicle_code"`
-	VehicleType    string `json:"vehicle_type"`
-	VehicleBrand   string `json:"vehicle_brand"`
-	VehicleModel   string `json:"vehicle_model"`
-	VehicleVariant string `json:"vehicle_variant"`
+	VehicleId               int       `json:"vehicle_id"`
+	VehicleCode             string    `json:"vehicle_chassis_number"`
+	VehicleTnkb             string    `json:"registration_certificate_tnkb"`
+	VehicleCertificateOwner string    `json:"vehicle_registration_certificate_owner_name"`
+	VehicleProduction       string    `json:"vehicle_production_year"`
+	VehicleVariantColour    string    `json:"variant_colour_description"`
+	VehicleServiceBookingNo string    `json:"service_booking_number"`
+	VehicleLastServiceDate  time.Time `json:"last_service_date"`
+	VehicleLastKm           int       `json:"last_km"`
 }
 
 type CustomerResponse struct {
@@ -124,4 +127,12 @@ type CustomerResponse struct {
 	CustomerName string `json:"customer_name"`
 	CustomerType string `json:"customer_type"`
 	CustomerCode string `json:"customer_code"`
+}
+
+type WorkOrderCampaignResponse struct {
+	CampaignId         int       `json:"campaign_id"`
+	CampaignCode       string    `json:"campaign_code"`
+	CampaignName       string    `json:"campaign_name"`
+	CampaignPeriodFrom time.Time `json:"campign_period_from"`
+	CampaignPeriodTo   time.Time `json:"campaign_period_to"`
 }

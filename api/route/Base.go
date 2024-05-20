@@ -896,6 +896,7 @@ func WorkOrderRouter(
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
 	router.Get("/dropdown-type", WorkOrderController.NewType)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
+	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)

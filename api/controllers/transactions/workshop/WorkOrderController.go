@@ -24,6 +24,7 @@ type WorkOrderController interface {
 	NewStatus(writer http.ResponseWriter, request *http.Request)
 	NewType(writer http.ResponseWriter, request *http.Request)
 	VehicleLookup(writer http.ResponseWriter, request *http.Request)
+	CampaignLookup(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Submit(writer http.ResponseWriter, request *http.Request)
@@ -228,6 +229,50 @@ func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, requ
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.VehicleLookup(criteria, paginate)
+	if err != nil {
+		exceptionsss_test.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// CampaignLookup looks up campaign
+// @Summary Campaign Lookup
+// @Description Look up campaign with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param campaign_id query string false "Campaign ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Router /v1/work-order/lookup-campaign [get]
+func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_work_order.campaign_id": queryValues.Get("campaign_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.CampaignLookup(criteria, paginate)
 	if err != nil {
 		exceptionsss_test.NewNotFoundException(writer, request, err)
 		return
