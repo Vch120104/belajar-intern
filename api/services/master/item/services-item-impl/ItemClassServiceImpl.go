@@ -4,6 +4,7 @@ import (
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
@@ -26,14 +27,14 @@ func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db
 	}
 }
 
-func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetAllItemClass(tx, filterCondition)
+	results, totalPages, totalRows, err := s.itemRepo.GetAllItemClass(tx, filterCondition, pages)
 	if err != nil {
-		return nil, err
+		return nil, 0, 0, err
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, *exceptionsss_test.BaseErrorResponse) {

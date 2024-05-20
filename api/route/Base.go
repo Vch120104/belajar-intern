@@ -29,7 +29,7 @@ func ItemClassRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", itemClassController.GetAllItemClass)
+	// router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
 	router.Post("/", itemClassController.SaveItemClass)
 	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
