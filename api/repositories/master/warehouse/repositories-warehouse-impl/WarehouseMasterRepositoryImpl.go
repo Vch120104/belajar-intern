@@ -23,7 +23,7 @@ func OpenWarehouseMasterImpl() masterwarehouserepository.WarehouseMasterReposito
 	return &WarehouseMasterImpl{}
 }
 
-func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseMasterResponse) (bool,*exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseMaster{
 		IsActive:                      utils.BoolPtr(request.IsActive),
@@ -61,7 +61,23 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 	return true, nil
 }
 
-func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse,*exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+
+	var warehouseMasterResponse []masterwarehousepayloads.DropdownWarehouseMasterResponse
+
+	err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
+		Select("warehouse_id", "warehouse_code + ' - ' + warehouse_name as warehouse_code").
+		Find(&warehouseMasterResponse)
+	if err.Error != nil {
+		return warehouseMasterResponse, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err.Error,
+		}
+	}
+	return warehouseMasterResponse, nil
+}
+
+func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptionsss_test.BaseErrorResponse) {
 
 	var entities masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse masterwarehousepayloads.GetWarehouseMasterResponse

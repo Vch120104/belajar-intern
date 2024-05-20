@@ -57,7 +57,7 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
 	entities := masterentities.Agreement{
 		AgreementCode:     req.AgreementCode,
 		BrandId:           req.BrandId,
@@ -68,7 +68,6 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 		AgreementRemark:   req.AgreementRemark,
 		ProfitCenterId:    req.ProfitCenterId,
 		IsActive:          req.IsActive,
-		AgreementId:       req.AgreementId,
 		CustomerId:        req.CustomerId,
 	}
 
