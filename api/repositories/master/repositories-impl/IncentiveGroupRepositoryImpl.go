@@ -216,7 +216,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupDropDown(tx *gorm.DB)
 	// var IncentiveGroupResponse masterpayloads.IncentiveGroupResponse
 	DropDownResponse := []masterpayloads.IncentiveGroupDropDown{}
 
-	err := tx.Model(masterentities.IncentiveGroup{}).Select("mtr_incentive_group.*, CONCAT(incentive_group_code, ' - ', incentive_group_name) AS incentive_group_code_name").Where("is_active = 'true").Find(DropDownResponse).Error
+	err := tx.Model(masterentities.IncentiveGroup{}).Select("mtr_incentive_group.*, CONCAT(incentive_group_code, ' - ', incentive_group_name) AS incentive_group_code_name").Where("is_active = 'true'").Find(&DropDownResponse).Error
 	if err != nil {
 		return DropDownResponse, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,

@@ -26,12 +26,10 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	//define base model
 	query := tx.
 		Model(&entities).
-		Where(masterentities.IncentiveGroupDetail{IncentiveGroupId: headerId}).
-		Scan(&response)
+		Where(masterentities.IncentiveGroupDetail{IncentiveGroupId: headerId})
 
 	//apply pagination and execute
 	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Rows()
-
 	if err != nil {
 		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -39,16 +37,16 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 		}
 	}
 
-	defer rows.Close()
-
-	pages.Rows = response
-
 	if len(response) == 0 {
 		return pages, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
+
+	defer rows.Close()
+
+	pages.Rows = response
 
 	return pages, nil
 }
@@ -57,12 +55,11 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 	entities := masterentities.IncentiveGroupDetail{}
 	response := masterpayloads.IncentiveGroupDetailResponse{}
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Where(masterentities.IncentiveGroupDetail{
 			IncentiveGroupDetailId: Id,
 		}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
 		return response, &exceptionsss_test.BaseErrorResponse{
@@ -71,7 +68,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 		}
 	}
 
-	defer rows.Close()
+	// defer rows.Close()
 
 	return response, nil
 }
