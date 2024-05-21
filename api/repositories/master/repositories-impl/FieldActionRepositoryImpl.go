@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	// masterpayloads "after-sales/api/payloads/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -24,7 +24,7 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 	return &FieldActionRepositoryImpl{}
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.FieldActionResponse
 	var getStatusResponse []masterpayloads.ApprovalStatusResponse
 	var getChassisResponse []masterpayloads.VehicleChassisResponse
@@ -62,7 +62,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -73,7 +73,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -84,7 +84,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 	errUrlchassisNumber := utils.Get(chassisNumberUrl, &getChassisResponse, nil)
 
 	if errUrlchassisNumber != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -97,7 +97,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 	errUrlApprovalStatus := utils.Get(ApprovalStatusUrl, &getStatusResponse, nil)
 
 	if errUrlApprovalStatus != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -110,7 +110,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.FieldAction{
 		IsActive:                  req.IsActive,
 		FieldActionSystemNumber:   req.FieldActionSystemNumber,
@@ -129,7 +129,7 @@ func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpaylo
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -138,7 +138,7 @@ func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpaylo
 	return true, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetFieldActionHeaderById(tx *gorm.DB, Id int) (masterpayloads.FieldActionResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetFieldActionHeaderById(tx *gorm.DB, Id int) (masterpayloads.FieldActionResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.FieldAction{}
 	response := masterpayloads.FieldActionResponse{}
 
@@ -150,7 +150,7 @@ func (r *FieldActionRepositoryImpl) GetFieldActionHeaderById(tx *gorm.DB, Id int
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -161,7 +161,7 @@ func (r *FieldActionRepositoryImpl) GetFieldActionHeaderById(tx *gorm.DB, Id int
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.DB, Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.DB, Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masterentities.FieldActionEligibleVehicle{}
 	payloads := []masterpayloads.FieldActionDetailResponse{}
 	// tableStruct := masterpayloads.FieldActionDetailResponse{}
@@ -174,14 +174,14 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, filterQuery)).Scan(&payloads).Rows()
 
 	if len(payloads) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -194,7 +194,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.
 	return pages, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB, Id int) (masterpayloads.FieldActionDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB, Id int) (masterpayloads.FieldActionDetailResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.FieldActionEligibleVehicle{}
 	response := masterpayloads.FieldActionDetailResponse{}
 
@@ -206,7 +206,7 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB,
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -217,7 +217,7 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleDetailById(tx *gorm.DB,
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masterentities.FieldActionEligibleVehicleItem{}
 	payloads := []masterpayloads.FieldActionItemDetailResponse{}
 	// tableStruct := masterpayloads.FieldActionItemDetailResponse{}
@@ -230,14 +230,14 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *g
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&payloads).Rows()
 
 	if len(payloads) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -250,7 +250,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *g
 	return pages, nil
 }
 
-func (r *FieldActionRepositoryImpl) GetFieldActionVehicleItemDetailById(tx *gorm.DB, Id int) (masterpayloads.FieldActionItemDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetFieldActionVehicleItemDetailById(tx *gorm.DB, Id int) (masterpayloads.FieldActionItemDetailResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.FieldActionEligibleVehicleItem{}
 	response := masterpayloads.FieldActionItemDetailResponse{}
 
@@ -262,7 +262,7 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleItemDetailById(tx *gorm
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -273,7 +273,7 @@ func (r *FieldActionRepositoryImpl) GetFieldActionVehicleItemDetailById(tx *gorm
 	return response, nil
 }
 
-func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB, req masterpayloads.FieldActionItemDetailResponse, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB, req masterpayloads.FieldActionItemDetailResponse, id int) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.FieldActionEligibleVehicleItem{
 		FieldActionEligibleVehicleItemSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
 		FieldActionEligibleVehicleSystemNumber:     id,
@@ -286,7 +286,7 @@ func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -295,7 +295,7 @@ func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB
 	return true, nil
 }
 
-func (r *FieldActionRepositoryImpl) PostFieldActionVehicleDetail(tx *gorm.DB, req masterpayloads.FieldActionDetailResponse, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) PostFieldActionVehicleDetail(tx *gorm.DB, req masterpayloads.FieldActionDetailResponse, id int) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.FieldActionEligibleVehicle{
 		FieldActionEligibleVehicleSystemNumber: req.FieldActionEligibleVehicleSystemNumber,
 		FieldActionRecallLineNumber:            req.FieldActionRecallLineNumber,
@@ -309,7 +309,7 @@ func (r *FieldActionRepositoryImpl) PostFieldActionVehicleDetail(tx *gorm.DB, re
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -318,7 +318,7 @@ func (r *FieldActionRepositoryImpl) PostFieldActionVehicleDetail(tx *gorm.DB, re
 	return true, nil
 }
 
-func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, headerId int, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, headerId int, id string) (bool, *exceptions.BaseErrorResponse) {
 
 	var entities masterentities.FieldActionEligibleVehicle
 	var entityToUpdate []masterentities.FieldActionEligibleVehicle
@@ -329,7 +329,7 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 	for _, numid := range strid {
 		num, err := strconv.Atoi(numid)
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -341,7 +341,7 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 	err := tx.Model(&entities).Where("vehicle_id in (?) AND field_action_system_number == ?", strids, headerId).Scan(&entityToUpdate).Error
 
 	if len(entityToUpdate) != 0 {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -359,7 +359,7 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 		err := tx.Save(&data).Error
 
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -371,7 +371,7 @@ func (r *FieldActionRepositoryImpl) PostMultipleVehicleDetail(tx *gorm.DB, heade
 
 }
 
-func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm.DB, headerId int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm.DB, headerId int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 
 	// var entities masterentities.FieldActionEligibleVehicleItem
 	var headerEntities masterentities.FieldActionEligibleVehicle
@@ -393,7 +393,7 @@ func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm
 		err := tx.Save(&data).Error
 
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -405,7 +405,7 @@ func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm
 
 }
 
-func (r *FieldActionRepositoryImpl) ChangeStatusFieldAction(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) ChangeStatusFieldAction(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.FieldAction
 
 	result := tx.Model(&entities).
@@ -413,7 +413,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldAction(tx *gorm.DB, id int)
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -428,7 +428,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldAction(tx *gorm.DB, id int)
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -437,7 +437,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldAction(tx *gorm.DB, id int)
 	return true, nil
 }
 
-func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.FieldActionEligibleVehicle
 
 	result := tx.Model(&entities).
@@ -445,7 +445,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, 
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -460,7 +460,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, 
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -469,7 +469,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicle(tx *gorm.DB, 
 	return true, nil
 }
 
-func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicleItem(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicleItem(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.FieldActionEligibleVehicleItem
 
 	result := tx.Model(&entities).
@@ -477,7 +477,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicleItem(tx *gorm.
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -492,7 +492,7 @@ func (r *FieldActionRepositoryImpl) ChangeStatusFieldActionVehicleItem(tx *gorm.
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

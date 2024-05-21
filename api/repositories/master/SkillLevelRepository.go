@@ -1,7 +1,7 @@
 package masterrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,8 +10,8 @@ import (
 )
 
 type SkillLevelRepository interface {
-	GetAllSkillLevel(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetSkillLevelById(*gorm.DB, int) (masterpayloads.SkillLevelResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveSkillLevel(*gorm.DB, masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusSkillLevel(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllSkillLevel(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetSkillLevelById(*gorm.DB, int) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse)
+	SaveSkillLevel(*gorm.DB, masterpayloads.SkillLevelResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusSkillLevel(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }

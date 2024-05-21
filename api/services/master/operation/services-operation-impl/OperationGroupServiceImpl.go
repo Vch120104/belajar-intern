@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartOperationGroupService(operationGroupRepo masteroperationrepository.Ope
 	}
 }
 
-func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.operationGroupRepo.GetAllOperationGroupIsActive(tx)
@@ -39,7 +39,7 @@ func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() ([]masteroper
 	return get, nil
 }
 
-func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) (masteroperationpayloads.OperationGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetOperationGroupById(tx, id)
@@ -49,7 +49,7 @@ func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) (masteroperati
 	return results, nil
 }
 
-func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) (masteroperationpayloads.OperationGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationGroupRepo.GetOperationGroupByCode(tx, Code)
@@ -59,7 +59,7 @@ func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) (master
 	return results, nil
 }
 
-func (service *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (service *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	// tx := s.DB.Begin()
 	// defer helper.CommitOrRollback(tx)
 	// results, err := s.operationGroupRepo.GetAllOperationGroup(tx, filterCondition, pages)
@@ -78,7 +78,7 @@ func (service *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition [
 	return get, nil
 }
 
-func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -95,7 +95,7 @@ func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) (bool,
 	return true, nil
 }
 
-func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloads.OperationGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

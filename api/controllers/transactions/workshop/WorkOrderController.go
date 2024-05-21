@@ -2,13 +2,14 @@ package transactionworkshopcontroller
 
 import (
 	"after-sales/api/config"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -56,7 +57,7 @@ func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrde
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order [get]
 func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -82,7 +83,7 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAll(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -101,7 +102,7 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal [post]
 func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
@@ -112,7 +113,7 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 	Create, err := r.WorkOrderService.New(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -128,7 +129,7 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/booking [post]
 func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
@@ -141,7 +142,7 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/affiliated [post]
 func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
@@ -154,7 +155,7 @@ func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, requ
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-status [get]
 func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
@@ -164,7 +165,7 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 	statuses, err := r.WorkOrderService.NewStatus(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -179,7 +180,7 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-type [get]
 func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
@@ -189,7 +190,7 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 	statuses, err := r.WorkOrderService.NewType(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -209,7 +210,7 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/lookup-vehicle [get]
 func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
@@ -230,7 +231,7 @@ func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, requ
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.VehicleLookup(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -253,7 +254,7 @@ func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, requ
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/lookup-campaign [get]
 func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
@@ -274,7 +275,7 @@ func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, req
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.CampaignLookup(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -293,7 +294,7 @@ func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, req
 // @Tags Transaction : Workshop Work Order
 // @Param work_order_system_number path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/find/{work_order_system_number} [get]
 func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 	// This function can be implemented to handle transaction-related logic if needed
@@ -308,7 +309,7 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Tags Transaction : Workshop Work Order
 // @Param reqBody body transactionworkshoppayloads.WorkOrderRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order [put]
 func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
@@ -326,7 +327,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	success, err := r.WorkOrderService.Save(db, workOrderRequest) // Memastikan untuk meneruskan db ke dalam metode Save
 	if err != nil {
 		// Tangani kesalahan dari layanan
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -345,7 +346,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/submit [post]
 func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
@@ -359,7 +360,7 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 // @Tags Transaction : Workshop Work Order
 // @Param work_order_id path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/{work_order_id} [delete]
 func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	// Cancel work order
@@ -373,7 +374,7 @@ func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http
 // @Tags Transaction : Workshop Work Order
 // @Param work_order_id path string true "Work Order ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/{work_order_id}/close [put]
 func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request *http.Request) {
 	// Close work order

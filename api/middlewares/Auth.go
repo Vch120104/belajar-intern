@@ -24,7 +24,7 @@ func SetupAuthenticationMiddleware() func(http.Handler) http.Handler {
 			err := securities.GetAuthentication(r)
 
 			if err != nil {
-				exceptions.AuthorizeException(w, r, err.Error())
+				exceptions.NewAuthorizationException(w, r, err)
 				return
 			}
 
@@ -54,7 +54,7 @@ func (middleware *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := securities.GetAuthentication(r)
 	if err != nil {
-		exceptions.AuthorizeException(w, r, err.Error())
+		exceptions.NewAuthorizationException(w, r, err)
 		return
 	}
 

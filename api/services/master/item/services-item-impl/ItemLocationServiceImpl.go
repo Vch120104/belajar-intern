@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartItemLocationService(ItemLocationRepo masteritemrepository.ItemLocation
 	}
 }
 
-func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocation(tx, filterCondition, pages)
@@ -37,7 +37,7 @@ func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.Fil
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLocationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLocationRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemLocationRepo.SaveItemLocation(tx, req)
@@ -47,7 +47,7 @@ func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLo
 	return results, nil
 }
 
-func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) *exceptionsss_test.BaseErrorResponse {
+func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.ItemLocationRepo.AddItemLocation(tx, id, req)
@@ -57,7 +57,7 @@ func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads
 	return nil
 }
 
-func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemLocationRepo.GetItemLocationById(tx, id)
@@ -67,7 +67,7 @@ func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayload
 	return results, nil
 }
 
-func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocationDetail(tx, filterCondition, pages)
@@ -77,7 +77,7 @@ func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []uti
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ItemLocationRepo.PopupItemLocation(tx, filterCondition, pages)
@@ -88,7 +88,7 @@ func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.Filt
 }
 
 // DeleteItemLocation deletes an item location by ID
-func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptionsss_test.BaseErrorResponse {
+func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.ItemLocationRepo.DeleteItemLocation(tx, id)
