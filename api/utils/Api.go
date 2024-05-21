@@ -1,11 +1,12 @@
 package utils
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
+const serverUrl = ""
 const SalesURL = "http://10.1.32.26:8000/sales-service/v1"
 const GeneralURL = "http://10.1.32.26:8000/general-service/v1"
 
@@ -27,29 +28,93 @@ type APIPaginationResponse struct {
 	TotalRows  int64       `json:"total_rows"`
 }
 
-func Get(url string, responseData interface{}, client *http.Client) error {
-	if client == nil {
-		client = &http.Client{}
-	}
+func Get(url string, data interface{}, body interface{}) error {
 
-	request, err := http.NewRequest("GET", url, nil)
+	client := &http.Client{}
+	var buf bytes.Buffer
+
+	// Jika ada parameter Body/body request untuk getnya
+	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
 		return err
 	}
 
-	response, err := client.Do(request)
+	var responseBody APIResponse
+
+	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
+
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to fetch data from the external API, status code: %d", response.StatusCode)
+	newResponse, err := client.Do(newRequest)
+
+	if err != nil {
+		return err
 	}
 
-	if err := json.NewDecoder(response.Body).Decode(responseData); err != nil {
+	defer newResponse.Body.Close()
+	defer client.CloseIdleConnections()
+
+	responseBody = APIResponse{
+		Data: data,
+	}
+
+	//jika status != ok, maka return nothing
+	if newResponse.StatusCode != http.StatusOK {
+		return nil
+	}
+
+	if err := json.NewDecoder(newResponse.Body).Decode(&responseBody); err != nil {
 		return err
 	}
 
 	return nil
+
+}
+
+// get data from url with pagination, the returned data is in form of APIPaginationResponse
+func GetWithPagination(url string, pagination APIPaginationResponse, body interface{}) (APIPaginationResponse, error) {
+
+	client := &http.Client{}
+	var buf bytes.Buffer
+
+	// Jika ada parameter Body/body request untuk getnya
+	err := json.NewEncoder(&buf).Encode(body)
+	if err != nil {
+		return APIPaginationResponse{}, err
+	}
+
+	var responseBody APIPaginationResponse
+
+	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
+
+	if err != nil {
+		return APIPaginationResponse{}, err
+	}
+
+	newResponse, err := client.Do(newRequest)
+
+	if err != nil {
+		return APIPaginationResponse{}, err
+	}
+
+	defer newResponse.Body.Close()
+	defer client.CloseIdleConnections()
+
+	responseBody = APIPaginationResponse{
+		Data: pagination.Data,
+	}
+
+	//jika status != ok, maka return nothing
+	if newResponse.StatusCode != http.StatusOK {
+		return APIPaginationResponse{}, nil
+	}
+
+	if err := json.NewDecoder(newResponse.Body).Decode(&responseBody); err != nil {
+		return APIPaginationResponse{}, err
+	}
+
+	return responseBody, nil
+
 }
