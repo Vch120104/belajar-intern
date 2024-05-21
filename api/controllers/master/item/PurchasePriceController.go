@@ -85,7 +85,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
-// @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
+// @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price [post]
@@ -209,7 +209,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
-// @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
+// @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/detail [post]

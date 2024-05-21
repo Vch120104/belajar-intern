@@ -59,9 +59,11 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 
 	// Define query parameters
 	queryParams := map[string]string{
-		"mtr_bom.item_id":       queryValues.Get("item_id"), // Ambil nilai item_id tanpa mtr_bom.
-		"mtr_bom.bom_master_id": queryValues.Get("bom_master_id"),
-		"mtr_item.item_name":    queryValues.Get("item_name"),
+		"mtr_bom_master.bom_master_id":             queryValues.Get("bom_master_id"), // Ambil nilai bom_master_id tanpa mtr_bom_master.
+		"mtr_bom_master.item_id":                   queryValues.Get("item_id"),
+		"mtr_bom_master.bom_master_effective_date": queryValues.Get("bom_master_effective_date"),
+		"mtr_bom_master.is_active":                 queryValues.Get("is_active"),
+		"mtr_bom_master.bom_master_qty":            queryValues.Get("bom_master_qty"),
 	}
 
 	// Extract pagination parameters

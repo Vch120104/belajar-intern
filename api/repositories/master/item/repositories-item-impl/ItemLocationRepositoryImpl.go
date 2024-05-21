@@ -28,6 +28,7 @@ func StartItemLocationRepositoryImpl() masteritemrepository.ItemLocationReposito
 func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemLocationRequest
 	var getWarehouseGroupResponse masteritempayloads.ItemLocWarehouseGroupResponse
+	var getWarehouseResponse masteritempayloads.ItemLocationWarehouseResponse
 	var getItemResponse []masteritempayloads.ItemLocResponse
 	var internalServiceFilter []utils.FilterCondition
 
@@ -71,6 +72,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 	// Iterate over responses and convert them to maps
 	for _, response := range responses {
 		responseMap := map[string]interface{}{
+			"warehouse_id":       response.WarehouseId,
 			"warehouse_group_id": response.WarehouseGroupId,
 			"item_id":            response.ItemId,
 			"item_location_id":   response.ItemLocationId,
@@ -104,6 +106,20 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 			}
 		}
 
+		// Fetch warehouse data if warehouse ID is not zero
+		if response.WarehouseId != 0 {
+			warehouseURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-master/by-id/" + strconv.Itoa(response.WarehouseId)
+			fmt.Println("Fetching warehouse_id data from:", warehouseURL)
+			if err := utils.Get(warehouseURL, &getWarehouseResponse, nil); err != nil {
+				return nil, 0, 0, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+			responseMap["warehouse_code"] = getWarehouseResponse.WarehouseCode
+			responseMap["warehouse_name"] = getWarehouseResponse.WarehouseName
+		}
+
 		mapResponses = append(mapResponses, responseMap)
 	}
 
@@ -117,6 +133,7 @@ func (r *ItemLocationRepositoryImpl) SaveItemLocation(tx *gorm.DB, request maste
 	entities := masteritementities.ItemLocation{
 		WarehouseGroupId: request.WarehouseGroupId,
 		ItemId:           request.ItemId,
+		WarehouseId:      request.WarehouseId,
 	}
 
 	err := tx.Save(&entities).Error

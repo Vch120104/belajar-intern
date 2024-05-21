@@ -246,6 +246,7 @@ func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request mast
 		ItemId:          request.ItemId,
 		PurchasePriceId: request.PurchasePriceId,
 		PurchasePrice:   request.PurchasePrice,
+		IsActive:        request.IsActive,
 	}
 
 	err := tx.Save(&entities).Error

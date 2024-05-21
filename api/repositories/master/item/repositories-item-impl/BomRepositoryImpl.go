@@ -44,7 +44,6 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 		"bom.bom_master_id",
 		"bom.bom_master_qty",
 		"bom.bom_master_effective_date",
-		"bom.bom_master_change_number",
 		"item.item_code",
 		"item.item_name",
 		"item.item_id",
@@ -73,10 +72,19 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 		var isActive bool
 		var bomMasterId, bomMasterQty int
 		var bomMasterEffectiveDate time.Time
-		var bomMasterChangeNumber, itemId, uomId int
+		var itemId, uomId int
 		var itemCode, itemName, uomDescription string
 
-		err := rows.Scan(&isActive, &bomMasterId, &bomMasterQty, &bomMasterEffectiveDate, &bomMasterChangeNumber, &itemCode, &itemName, &itemId, &uomId, &uomDescription)
+		err := rows.Scan(&isActive,
+			&bomMasterId,
+			&bomMasterQty,
+			&bomMasterEffectiveDate,
+			&itemCode,
+			&itemName,
+			&itemId,
+			&uomId,
+			&uomDescription)
+
 		if err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
@@ -89,7 +97,6 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 			"bom_master_id":             bomMasterId,
 			"bom_master_qty":            bomMasterQty,
 			"bom_master_effective_date": bomMasterEffectiveDate,
-			"bom_master_change_number":  bomMasterChangeNumber,
 			"item_code":                 itemCode,
 			"item_name":                 itemName,
 			"uom_description":           uomDescription,

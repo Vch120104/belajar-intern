@@ -67,6 +67,8 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, reques
 	var warehouseMaster = masterwarehouseentities.WarehouseLocationDefinition{
 		WarehouseLocationDefinitionId:          request.WarehouseLocationDefinitionId,
 		WarehouseLocationDefinitionDescription: request.WarehouseLocationDefinitionDescription,
+		WarehouseLocationDefinitionLevelId:     request.WarehouseLocationDefinitionLevelId,
+		WarehouseLocationDefinitionLevelCode:   request.WarehouseLocationDefinitionLevelCode,
 	}
 
 	err := tx.Save(&warehouseMaster).Error

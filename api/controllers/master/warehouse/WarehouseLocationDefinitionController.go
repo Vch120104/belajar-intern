@@ -167,16 +167,16 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @Accept json
 // @Produce json
 // @Tags Master : Warehouse Location Definition
-// @Param warehouse_location_id path int true "Warehouse Location ID"
+// @Param warehouse_location_definition_id path int true "Warehouse Location ID"
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/warehouse-location-definition/{warehouse_location_id} [put]
+// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [put]
 func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.ResponseWriter, request *http.Request) {
-	warehouseLocationID := chi.URLParam(request, "warehouse_location_id")
+	warehouseLocationID := chi.URLParam(request, "warehouse_location_definition_id")
 	id, err := strconv.Atoi(warehouseLocationID)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid warehouse_location_id"))
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid warehouse_location_definition_id"))
 		return
 	}
 

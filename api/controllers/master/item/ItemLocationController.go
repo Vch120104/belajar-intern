@@ -123,7 +123,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Item Location
-// @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
+// @param reqBody body masteritempayloads.ItemLocationRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location [post]

@@ -369,7 +369,7 @@ func PurchasePriceRouter(
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
-	router.Get("/detail/all", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
 
@@ -554,7 +554,7 @@ func WarehouseLocationDefinitionRouter(
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
 	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
 	router.Post("/", WarehouseLocationDefinitionController.Save)
-	router.Put("/", WarehouseLocationDefinitionController.SaveData)
+	router.Put("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.SaveData)
 	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 
 	return router
