@@ -4,7 +4,7 @@ import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 
 	"after-sales/api/config"
-	"after-sales/api/exceptions"
+	// "after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
@@ -144,8 +144,10 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 
 	// Check if responses are empty
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
-		panic(notFoundErr)
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
 	}
 
 	// Extract warehouse location definition level ID from the first response
@@ -237,10 +239,10 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(
 
 	// Check if responses are empty
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 

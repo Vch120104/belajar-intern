@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"after-sales/api/exceptions"
+	exceptionsss_test "after-sales/api/expectionsss"
 	"bytes"
 	"encoding/json"
 	"net/http"
@@ -32,7 +32,7 @@ func Get(url string, data interface{}, body interface{}) error {
 	// Jika ada parameter Body/body request untuk getnya
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+		panic(exceptionsss_test.NewBadRequestError(err.Error()))
 	}
 
 	var responseBody APIResponse

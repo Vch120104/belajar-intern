@@ -2,7 +2,7 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	"after-sales/api/exceptions"
+	// "after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -116,10 +116,10 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempaylo
 		Error
 
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("Bom master not found")
+		// notFoundErr := exceptions.NewNotFoundError("Bom master not found")
 		return masteritempayloads.BomMasterRequest{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 
@@ -262,10 +262,10 @@ func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritemp
 		Where("bom.bom_master_id = ?", id).
 		Find(&responses).Error
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("Bom master not found")
+		// notFoundErr := exceptions.NewNotFoundError("Bom master not found")
 		return []masteritempayloads.BomDetailListResponse{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 	// Mengembalikan response
@@ -286,10 +286,10 @@ func (r *BomRepositoryImpl) GetBomDetailByIds(tx *gorm.DB, id int) ([]masteritem
 		Where("det.bom_detail_id = ?", id).
 		Find(&responses).Error
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("Bom detail not found")
+		// notFoundErr := exceptions.NewNotFoundError("Bom detail not found")
 		return []masteritempayloads.BomDetailListResponse{}, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 	// Mengembalikan response

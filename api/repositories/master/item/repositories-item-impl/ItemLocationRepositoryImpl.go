@@ -3,7 +3,7 @@ package masteritemrepositoryimpl
 import (
 	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
-	"after-sales/api/exceptions"
+	// "after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -265,10 +265,10 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 
 	// Check if responses are empty
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 

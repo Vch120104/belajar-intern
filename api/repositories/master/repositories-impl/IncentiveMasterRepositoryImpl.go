@@ -3,7 +3,7 @@ package masterrepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	"after-sales/api/exceptions"
+	// "after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -67,8 +67,11 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 	}
 
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
-		panic(notFoundErr)
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
+		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
+		}
 	}
 
 	defer rows.Close()
@@ -103,8 +106,10 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 		Error
 
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("incentive master not found")
-		panic(notFoundErr) // Panik jika 'incentive master' tidak ditemukan
+		return response, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	return response, nil

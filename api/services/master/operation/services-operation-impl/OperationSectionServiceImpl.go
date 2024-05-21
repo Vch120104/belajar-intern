@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	// "after-sales/api/exceptions"
 	exceptionsss_test "after-sales/api/expectionsss"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -9,6 +9,7 @@ import (
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
+	"net/http"
 
 	// "after-sales/api/utils"
 
@@ -77,7 +78,10 @@ func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpa
 	}
 
 	if len(req.OperationSectionCode) > 3 {
-		panic(exceptions.NewBadRequestError("Operation Section Code max 3 characters"))
+		return false, &exceptionsss_test.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:        "Operation Code max 3 characters",
+		}
 	}
 	results, err := s.operationSectionRepo.SaveOperationSection(tx, req)
 	if err != nil {
