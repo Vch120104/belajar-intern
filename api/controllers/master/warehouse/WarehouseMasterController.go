@@ -1,10 +1,11 @@
 package masterwarehousecontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -53,7 +54,7 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 // @Param warehouse_code query string false "Warehouse Code"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/ [get]
 func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -76,7 +77,8 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 		Page:   page,
 	})
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		// Handle the error
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -89,13 +91,13 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 // @Produce json
 // @Tags Master : Warehouse Master
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/is-active [get]
 func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	get, err := r.WarehouseMasterService.GetAllIsActive()
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -108,13 +110,13 @@ func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWrite
 // @Produce json
 // @Tags Master : Warehouse Master
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/drop-down [get]
 func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWriter, request *http.Request) {
 
 	get, err := r.WarehouseMasterService.DropdownWarehouse()
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -128,7 +130,7 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Tags Master : Warehouse Master
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/by-id/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
@@ -136,7 +138,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 
 	get, err := r.WarehouseMasterService.GetById(warehouseId)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -150,7 +152,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Tags Master : Warehouse Master
 // @Param warehouse_code path string true "warehouse_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/by-code/{warehouse_code} [get]
 func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, request *http.Request) {
 
@@ -158,7 +160,7 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 
 	get, err := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -173,7 +175,7 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 // @Tags Master : Warehouse Master
 // @Param warehouse_ids path string true "warehouse_ids"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/multi-id/{warehouse_ids} [get]
 func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request) {
 
@@ -183,7 +185,7 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 
 	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -197,7 +199,7 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 // @Tags Master : Warehouse Master
 // @param reqBody body masterwarehousepayloads.GetWarehouseMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/ [post]
 func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
@@ -207,7 +209,7 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -228,7 +230,7 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 // @Tags Master : Warehouse Master
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/{warehouse_id} [patch]
 func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
@@ -236,7 +238,7 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 	change_status, err := r.WarehouseMasterService.ChangeStatus(warehouseId)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 

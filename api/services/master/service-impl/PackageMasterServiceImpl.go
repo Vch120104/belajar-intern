@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -17,119 +17,119 @@ type PackageMasterServiceImpl struct {
 	db                *gorm.DB
 }
 
-func StartPackageMasterService(PackageMasterRepo masterrepository.PackageMasterRepository,db *gorm.DB)masterservice.PackageMasterService{
+func StartPackageMasterService(PackageMasterRepo masterrepository.PackageMasterRepository, db *gorm.DB) masterservice.PackageMasterService {
 	return &PackageMasterServiceImpl{
 		PackageMasterRepo: PackageMasterRepo,
-		db: db, 
+		db:                db,
 	}
 }
 
-func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition,pages pagination.Pagination)([]map[string]interface{},int,int,*exceptionsss_test.BaseErrorResponse){
-	tx :=s.db.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,totalPages,totalRows,err := s.PackageMasterRepo.GetAllPackageMaster(tx,filtercondition,pages)
-	if err!= nil{
-		return nil,0,0,err
-	}
-	return result,totalPages,totalRows,nil
-}
-
-func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination,id int)([]map[string]interface{},int,int,*exceptionsss_test.BaseErrorResponse){
+func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,totalPages,totalRows,err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx,id,pages)
-	if err != nil{
-		return nil,0,0,err
+	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMaster(tx, filtercondition, pages)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return result,totalPages,totalRows,nil
+	return result, totalPages, totalRows, nil
 }
 
-func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int)(map[string]interface{}, *exceptionsss_test.BaseErrorResponse){
-	tx:=s.db.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,err:= s.PackageMasterRepo.GetByIdPackageMaster(tx,id)
-	if err != nil{
-		return result,err
-	}
-	return result,nil
-}
-
-func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int,idhead int,LineTypeId int)(map[string]interface{},*exceptionsss_test.BaseErrorResponse){
+func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err:= s.PackageMasterRepo.GetByIdPackageMasterDetail(tx,id,idhead,LineTypeId)
-	if err != nil{
-		return result,err
+	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx, id, pages)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return result,nil
+	return result, totalPages, totalRows, nil
 }
 
-func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageMasterResponse)(bool,*exceptionsss_test.BaseErrorResponse){
+func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err:= s.PackageMasterRepo.PostpackageMaster(tx,req)
-	if err != nil{
-		return false,err
+	result, err := s.PackageMasterRepo.GetByIdPackageMaster(tx, id)
+	if err != nil {
+		return result, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) PostPackageMasterDetailBodyshop(req masterpayloads.PackageMasterDetailOperationBodyshop,id int)(bool,*exceptionsss_test.BaseErrorResponse){
+func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int, idhead int, LineTypeId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err := s.PackageMasterRepo.PostPackageMasterDetailBodyshop(tx,req,id)
-	if err != nil{
-		return false,err
+	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id, idhead, LineTypeId)
+	if err != nil {
+		return result, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) PostPackageMasterDetailWorkshop(req masterpayloads.PackageMasterDetailWorkshop)(bool,*exceptionsss_test.BaseErrorResponse){
+func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err := s.PackageMasterRepo.PostPackageMasterDetailWorkshop(tx,req)
-	if err != nil{
-		return false,err
+	result, err := s.PackageMasterRepo.PostpackageMaster(tx, req)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int)(bool,*exceptionsss_test.BaseErrorResponse){
+func (s *PackageMasterServiceImpl) PostPackageMasterDetailBodyshop(req masterpayloads.PackageMasterDetailOperationBodyshop, id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer  helper.CommitOrRollback(tx)
-	result,err := s.PackageMasterRepo.ChangeStatusItemPackage(tx,id)
-	if err != nil{
-		return false,err
+	defer helper.CommitOrRollback(tx)
+	result, err := s.PackageMasterRepo.PostPackageMasterDetailBodyshop(tx, req, id)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string,idhead int)(bool,*exceptionsss_test.BaseErrorResponse){
-	tx :=s.db.Begin()
+func (s *PackageMasterServiceImpl) PostPackageMasterDetailWorkshop(req masterpayloads.PackageMasterDetailWorkshop) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err :=s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx,ids,idhead)
-	if err != nil{
-		return false,err
+	result, err := s.PackageMasterRepo.PostPackageMasterDetailWorkshop(tx, req)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string,idhead int)(bool,*exceptionsss_test.BaseErrorResponse){
-	tx:=s.db.Begin()
+func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx,ids,idhead)
-	if err != nil{
-		return false,err
+	result, err := s.PackageMasterRepo.ChangeStatusItemPackage(tx, id)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel int)(bool,*exceptionsss_test.BaseErrorResponse){
-	tx:=s.db.Begin()
+func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string, idhead int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.db.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err:= s.PackageMasterRepo.CopyToOtherModel(tx,id,name,idmodel)
-	if err != nil{
-		return false,err
+	result, err := s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx, ids, idhead)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
+}
+
+func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string, idhead int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.db.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx, ids, idhead)
+	if err != nil {
+		return false, err
+	}
+	return result, nil
+}
+
+func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.db.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.PackageMasterRepo.CopyToOtherModel(tx, id, name, idmodel)
+	if err != nil {
+		return false, err
+	}
+	return result, nil
 }

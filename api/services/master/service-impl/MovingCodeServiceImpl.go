@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -17,7 +17,7 @@ type MovingCodeServiceImpl struct {
 }
 
 // ChangeStatusMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptionsss_test.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.ChangeStatusMovingCode(tx, Id)
@@ -28,7 +28,7 @@ func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions
 }
 
 // CreateMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.CreateMovingCode(tx, req)
@@ -39,7 +39,7 @@ func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeLi
 }
 
 // GetAllMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.MovingCodeRepo.GetAllMovingCode(tx, pages)
@@ -50,7 +50,7 @@ func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([
 }
 
 // GetMovingCodebyId implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (any, *exceptionsss_test.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.GetMovingCodebyId(tx, Id)
@@ -61,7 +61,7 @@ func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (any, *exceptionsss_te
 }
 
 // PushMovingCodePriority implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.PushMovingCodePriority(tx, Id)
@@ -72,7 +72,7 @@ func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exception
 }
 
 // UpdateMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.UpdateMovingCode(tx, req)

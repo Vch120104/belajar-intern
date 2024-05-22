@@ -3,7 +3,7 @@ package masterserviceimpl
 import (
 	// "after-sales/api/exceptions"
 
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 
 	// masterpayloads "after-sales/api/payloads/master"
@@ -31,7 +31,7 @@ func StartFieldActionService(FieldActionRepo masterrepository.FieldActionReposit
 	}
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
@@ -41,7 +41,7 @@ func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.Filte
 	return results, totalPages, totalRows, nil
 }
 
-func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.SaveFieldAction(tx, req)
@@ -51,7 +51,7 @@ func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionR
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) GetFieldActionHeaderById(Id int) (masterpayloads.FieldActionResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetFieldActionHeaderById(Id int) (masterpayloads.FieldActionResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.GetFieldActionHeaderById(tx, Id)
@@ -61,7 +61,7 @@ func (s *FieldActionServiceImpl) GetFieldActionHeaderById(Id int) (masterpayload
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleDetailById(tx, Id, pages, filterCondition)
@@ -71,7 +71,7 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleDetailById(Id int, page
 	return pages, nil
 }
 
-func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (masterpayloads.FieldActionDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (masterpayloads.FieldActionDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.GetFieldActionVehicleDetailById(tx, Id)
@@ -81,7 +81,7 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (master
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, pages)
@@ -91,7 +91,7 @@ func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, 
 	return pages, nil
 }
 
-func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int) (masterpayloads.FieldActionItemDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int) (masterpayloads.FieldActionItemDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.GetFieldActionVehicleItemDetailById(tx, Id)
@@ -101,7 +101,7 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int) (ma
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.PostFieldActionVehicleItemDetail(tx, req, Id)
@@ -111,7 +111,7 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleItemDetail(Id int, req ma
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) PostFieldActionVehicleDetail(Id int, req masterpayloads.FieldActionDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) PostFieldActionVehicleDetail(Id int, req masterpayloads.FieldActionDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.PostFieldActionVehicleDetail(tx, req, Id)
@@ -121,7 +121,7 @@ func (s *FieldActionServiceImpl) PostFieldActionVehicleDetail(Id int, req master
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.PostMultipleVehicleDetail(tx, headerId, id)
@@ -131,7 +131,7 @@ func (s *FieldActionServiceImpl) PostMultipleVehicleDetail(headerId int, id stri
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId int, req masterpayloads.FieldActionItemDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.FieldActionRepo.PostVehicleItemIntoAllVehicleDetail(tx, headerId, req)
@@ -141,7 +141,7 @@ func (s *FieldActionServiceImpl) PostVehicleItemIntoAllVehicleDetail(headerId in
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) ChangeStatusFieldAction(id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) ChangeStatusFieldAction(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -153,7 +153,7 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldAction(id int) (bool, *excepti
 	return result, nil
 }
 
-func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicle(id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicle(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -165,7 +165,7 @@ func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicle(id int) (bool, *
 	return result, nil
 }
 
-func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicleItem(id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) ChangeStatusFieldActionVehicleItem(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

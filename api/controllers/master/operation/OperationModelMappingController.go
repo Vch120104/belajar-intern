@@ -1,8 +1,7 @@
 package masteroperationcontroller
 
 import (
-	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
+	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"net/http"
@@ -57,7 +56,7 @@ func NewOperationModelMappingController(operationModelMappingservice masteropera
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/ [get]
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -78,7 +77,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(wri
 	criteria := utils.BuildFilterCondition(queryParams)
 	paginatedData, totalPages, totalRows, err := r.operationmodelmappingservice.GetOperationModelMappingLookup(criteria, paginate)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -92,14 +91,14 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(wri
 // @Tags Master : Operation Model Mapping
 // @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingById(writer http.ResponseWriter, request *http.Request) {
 	operationModelMappingID, _ := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
 
 	result, err := r.operationmodelmappingservice.GetOperationModelMappingById(operationModelMappingID)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -115,7 +114,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingById(write
 // @Param model_id query int true "Model ID"
 // @Param operation_id query int true "Operation ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/lookup [get]
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandModelOperationCode(writer http.ResponseWriter, request *http.Request) {
 
@@ -130,7 +129,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandMod
 	})
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -144,7 +143,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandMod
 // @Tags Master : Operation Model Mapping
 // @Param reqBody body masteroperationpayloads.OperationModelMappingResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/ [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingResponse
@@ -153,7 +152,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer h
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMapping(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -173,14 +172,14 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer h
 // @Tags Master : Operation Model Mapping
 // @Param operation_model_mapping_id path int true "Operation Model Mapping ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id} [patch]
 func (r *OperationModelMappingControllerImpl) ChangeStatusOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
 	operationModelMappingID, _ := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
 
 	response, err := r.operationmodelmappingservice.ChangeStatusOperationModelMapping(operationModelMappingID)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -194,7 +193,7 @@ func (r *OperationModelMappingControllerImpl) ChangeStatusOperationModelMapping(
 // @Tags Master : Operation Model Mapping
 // @Param reqBody body masteroperationpayloads.OperationModelMappingFrtRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/frt [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingFrtRequest
@@ -203,7 +202,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMappingFrt(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -223,7 +222,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 // @Tags Master : Operation Model Mapping
 // @Param operation_frt_id path string true "Operation FRT ID(s) to deactivate, comma-separated"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/frt/deactivate/{operation_frt_id} [patch]
 func (r *OperationModelMappingControllerImpl) DeactivateOperationFrt(writer http.ResponseWriter, request *http.Request) {
 
@@ -231,7 +230,7 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationFrt(writer http
 	response, err := r.operationmodelmappingservice.DeactivateOperationFrt(OperationFrtIds)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -245,7 +244,7 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationFrt(writer http
 // @Tags Master : Operation Model Mapping
 // @Param operation_frt_id path string true "Operation FRT ID(s) to activate, comma-separated"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/frt/activate/{operation_frt_id} [patch]
 func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.ResponseWriter, request *http.Request) {
 
@@ -253,7 +252,7 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.R
 	response, err := r.operationmodelmappingservice.ActivateOperationFrt(OperationFrtIds)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -271,7 +270,7 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.R
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id}/document-requirements [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -286,7 +285,7 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement
 
 	result, err := r.operationmodelmappingservice.GetAllOperationDocumentRequirement(headerId, paginate)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -304,7 +303,7 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id}/frt [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -319,7 +318,7 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.Res
 
 	result, err := r.operationmodelmappingservice.GetAllOperationFrt(headerId, paginate)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -333,14 +332,14 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.Res
 // @Tags Master : Operation Model Mapping
 // @Param operation_document_requirement_id path int true "Operation Document Requirement ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/document-requirements/{operation_document_requirement_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationDocumentRequirementById(writer http.ResponseWriter, request *http.Request) {
 	operationDocumentRequirementId, _ := strconv.Atoi(chi.URLParam(request, "operation_document_requirement_id"))
 
 	result, err := r.operationmodelmappingservice.GetOperationDocumentRequirementById(operationDocumentRequirementId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -354,14 +353,14 @@ func (r *OperationModelMappingControllerImpl) GetOperationDocumentRequirementByI
 // @Tags Master : Operation Model Mapping
 // @Param operation_frt_id path int true "Operation FRT ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/frt/{operation_frt_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.ResponseWriter, request *http.Request) {
 	OperationFrtId, _ := strconv.Atoi(chi.URLParam(request, "operation_frt_id"))
 
 	result, err := r.operationmodelmappingservice.GetOperationFrtById(OperationFrtId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -375,7 +374,7 @@ func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.Re
 // @Tags Master : Operation Model Mapping
 // @Param reqBody body masteroperationpayloads.OperationModelMappingDocumentRequirementRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/document-requirements [post]
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
@@ -384,7 +383,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMappingDocumentRequirement(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -404,7 +403,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 // @Tags Master : Operation Model Mapping
 // @Param operation_model_mapping_id path string true "Operation Model Mapping ID(s) to deactivate, comma-separated"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/document-requirements/deactivate/{operation_model_mapping_id} [patch]
 func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
@@ -412,7 +411,7 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequire
 	response, err := r.operationmodelmappingservice.DeactivateOperationDocumentRequirement(OperationFrtIds)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -426,7 +425,7 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequire
 // @Tags Master : Operation Model Mapping
 // @Param operation_model_mapping_id path string true "Operation Model Mapping ID(s) to activate, comma-separated"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/document-requirements/activate/{operation_model_mapping_id} [patch]
 func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
@@ -434,7 +433,7 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequireme
 	response, err := r.operationmodelmappingservice.ActivateOperationDocumentRequirement(OperationFrtIds)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

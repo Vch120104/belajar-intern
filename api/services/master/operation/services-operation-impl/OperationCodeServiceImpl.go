@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartOperationCodeService(operationCodeRepo masteroperationrepository.Opera
 	}
 }
 
-func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationCodeRepo.GetAllOperationCode(tx, filterCondition, pages)
@@ -37,7 +37,7 @@ func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.F
 	return results, nil
 }
 
-func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationCodeRepo.GetOperationCodeById(tx, id)
@@ -47,7 +47,7 @@ func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperation
 	return results, nil
 }
 
-func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse){
+func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationCodeRepo.GetOperationCodeByCode(tx, code)
@@ -57,7 +57,7 @@ func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masterop
 	return results, nil
 }
 
-func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.operationCodeRepo.SaveOperationCode(tx, req)
@@ -67,7 +67,7 @@ func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads
 	return result, nil
 }
 
-func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Statement.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.operationCodeRepo.ChangeStatusItemSubstitute(tx, id)

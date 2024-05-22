@@ -1,8 +1,7 @@
 package mastercontroller
 
 import (
-	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
+	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -61,7 +60,7 @@ func (r *PackageMasterControllerImpl) GetAllPackageMaster(writer http.ResponseWr
 
 	result, totalPages, totalRows, err := r.PackageMasterService.GetAllPackageMaster(filterCondition, pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
@@ -79,7 +78,7 @@ func (r *PackageMasterControllerImpl) GetAllPackageMasterDetail(writer http.Resp
 
 	result, totalPages, totalRows, err := r.PackageMasterService.GetAllPackageMasterDetail(pagination, PackageMasterId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
@@ -89,7 +88,7 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMaster(writer http.ResponseW
 	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
 	result, err := r.PackageMasterService.GetByIdPackageMaster(PackageMasterId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -101,7 +100,7 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMasterDetail(writer http.Res
 	LineTypeId, _ := strconv.Atoi(chi.URLParam(request, "line_type_id"))
 	result, err := r.PackageMasterService.GetByIdPackageMasterDetail(PackageMasterDetailId, PackageMasterId, LineTypeId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -114,7 +113,7 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 
 	create, err := r.PackageMasterService.PostPackageMaster(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -135,7 +134,7 @@ func (r *PackageMasterControllerImpl) SavePackageMasterDetailBodyshop(writer htt
 
 	create, err := r.PackageMasterService.PostPackageMasterDetailBodyshop(formRequest, PackageMasterId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -155,7 +154,7 @@ func (r *PackageMasterControllerImpl) SavePackageMasterDetailWorkshop(writer htt
 
 	create, err := r.PackageMasterService.PostPackageMasterDetailWorkshop(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -172,7 +171,7 @@ func (r *PackageMasterControllerImpl) ChangeStatusPackageMaster(writer http.Resp
 	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
 	result, err := r.PackageMasterService.ChangeStatusItemPackage(PackageMasterId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -184,7 +183,7 @@ func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer 
 	response, err := r.PackageMasterService.ActivateMultiIdPackageMasterDetail(PackageDetailId, PackageMasterId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -197,7 +196,7 @@ func (r *PackageMasterControllerImpl) DeactivateMultiIdPackageMasterDetail(write
 	response, err := r.PackageMasterService.DeactivateMultiIdPackageMasterDetail(PackageDetailId, PackageMasterId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -211,7 +210,7 @@ func (r *PackageMasterControllerImpl) CopyToOtherModel(writer http.ResponseWrite
 
 	ressult, err := r.PackageMasterService.CopyToOtherModel(PackageMasterId, PackageDetailId, ModelId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

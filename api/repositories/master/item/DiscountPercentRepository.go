@@ -1,7 +1,7 @@
 package masteritemrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,8 +10,8 @@ import (
 )
 
 type DiscountPercentRepository interface {
-	GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	SaveDiscountPercent(tx *gorm.DB, request masteritempayloads.DiscountPercentResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetDiscountPercentById(tx *gorm.DB, Id int) (masteritempayloads.DiscountPercentResponse, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusDiscountPercent(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	SaveDiscountPercent(tx *gorm.DB, request masteritempayloads.DiscountPercentResponse) (bool, *exceptions.BaseErrorResponse)
+	GetDiscountPercentById(tx *gorm.DB, Id int) (masteritempayloads.DiscountPercentResponse, *exceptions.BaseErrorResponse)
+	ChangeStatusDiscountPercent(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 }

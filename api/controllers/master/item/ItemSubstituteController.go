@@ -1,10 +1,11 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
+	"errors"
 
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -52,7 +53,7 @@ func NewItemSubstituteController(itemSubstituteService masteritemservice.ItemSub
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/ [get]
 func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -75,7 +76,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 	result, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -88,7 +89,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 // @Tags Master : Item Substitute
 // @Param item_substitute_id path int true "item_substitute_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/header/by-id/{item_substitute_id} [get]
 func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	ItemSubstituteIdStr := chi.URLParam(request, "item_substitute_id")
@@ -98,7 +99,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.Respons
 	result, err := r.ItemSubstituteService.GetByIdItemSubstitute(ItemSubstituteId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -121,7 +122,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.Respons
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/all/by-id/{item_substitute_id} [get]
 func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -138,7 +139,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 
 	result, err := r.ItemSubstituteService.GetAllItemSubstituteDetail(pagination, ItemSubstituteId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -152,7 +153,7 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 // @Tags Master : Item Substitute
 // @Param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/by-id/{item_substitute_detail_id} [get]
 func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	ItemSubstituteDetailIdStr := chi.URLParam(request, "item_substitute_detail_id")
@@ -162,7 +163,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.R
 	result, err := r.ItemSubstituteService.GetByIdItemSubstituteDetail(ItemSubstituteDetailId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -176,7 +177,7 @@ func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.R
 // @Tags Master : Item Substitute
 // @param reqBody body masteritempayloads.ItemSubstitutePostPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/ [post]
 func (r *ItemSubstituteControllerImpl) SaveItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemSubstitutePostPayloads
@@ -185,13 +186,13 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstitute(writer http.ResponseWr
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	create, err := r.ItemSubstituteService.SaveItemSubstitute(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -212,7 +213,7 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstitute(writer http.ResponseWr
 // @Param item_substitute_id path int true "item_substitute_id"
 // @param reqBody body masteritempayloads.ItemSubstituteDetailPostPayloads true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/{item_substitute_id} [post]
 func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemSubstituteDetailPostPayloads
@@ -223,14 +224,14 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	create, err := r.ItemSubstituteService.SaveItemSubstituteDetail(formRequest, ItemSubstituteDetailId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -250,7 +251,7 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 // @Tags Master : Item Substitute
 // @param item_substitute_id path int true "item_substitute_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/{item_substitute_id} [patch]
 func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 
@@ -259,7 +260,7 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 	response, err := r.ItemSubstituteService.ChangeStatusItemOperation(ItemSubstituteId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -273,14 +274,14 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 // @Tags Master : Item Substitute
 // @param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/activate/by-id/{item_substitute_detail_id} [patch]
 func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryId := query.Get("item_substitute_detail_id")
 	response, err := r.ItemSubstituteService.ActivateItemSubstituteDetail(queryId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -294,7 +295,7 @@ func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.
 // @Tags Master : Item Substitute
 // @param item_substitute_detail_id path int true "item_substitute_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/deactivate/by-id/{item_substitute_detail_id} [patch]
 func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
@@ -302,7 +303,7 @@ func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer htt
 	response, err := r.ItemSubstituteService.DeactivateItemSubstituteDetail(queryId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

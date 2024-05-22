@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartUnitOfMeasurementService(unitOfMeasurementRepo masteritemrepository.Un
 	}
 }
 
-func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurementIsActive() ([]masteritempayloads.UomResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurementIsActive() ([]masteritempayloads.UomResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.unitOfMeasurementRepo.GetAllUnitOfMeasurementIsActive(tx)
@@ -37,7 +37,7 @@ func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurementIsActive() ([]mast
 	return results, nil
 }
 
-func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) (masteritempayloads.UomIdCodeResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) (masteritempayloads.UomIdCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementById(tx, id)
@@ -48,7 +48,7 @@ func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) (masteri
 	return results, nil
 }
 
-func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementByCode(Code string) (masteritempayloads.UomIdCodeResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementByCode(Code string) (masteritempayloads.UomIdCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementByCode(tx, Code)
@@ -58,7 +58,7 @@ func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementByCode(Code string) (
 	return results, nil
 }
 
-func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.unitOfMeasurementRepo.GetAllUnitOfMeasurement(tx, filterCondition, pages)
@@ -68,7 +68,7 @@ func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurement(filterCondition [
 	return results, nil
 }
 
-func (s *UnitOfMeasurementServiceImpl) ChangeStatusUnitOfMeasurement(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *UnitOfMeasurementServiceImpl) ChangeStatusUnitOfMeasurement(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -85,7 +85,7 @@ func (s *UnitOfMeasurementServiceImpl) ChangeStatusUnitOfMeasurement(Id int) (bo
 	return results, nil
 }
 
-func (s *UnitOfMeasurementServiceImpl) SaveUnitOfMeasurement(req masteritempayloads.UomResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *UnitOfMeasurementServiceImpl) SaveUnitOfMeasurement(req masteritempayloads.UomResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

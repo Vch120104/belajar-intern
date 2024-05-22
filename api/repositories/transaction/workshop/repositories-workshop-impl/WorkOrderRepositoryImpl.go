@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -10,7 +11,7 @@ import (
 	"net/http"
 	"strconv"
 
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/utils"
 
 	"gorm.io/gorm"
@@ -23,7 +24,7 @@ func OpenWorkOrderRepositoryImpl() transactionworkshoprepository.WorkOrderReposi
 	return &WorkOrderRepositoryImpl{}
 }
 
-func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.WorkOrder
 	// Query to retrieve all work order entities based on the request
 	query := tx.Model(&transactionworkshopentities.WorkOrder{})
@@ -32,7 +33,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	}
 	err := query.Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work orders from the database"}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work orders from the database"}
 	}
 
 	var workOrderResponses []map[string]interface{}
@@ -155,7 +156,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	// Define a slice to hold WorkOrderLookupResponse responses
 	var responses []transactionworkshoppayloads.WorkOrderLookupResponse
@@ -172,7 +173,7 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 	// Execute query
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -197,7 +198,7 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 			&workOrderReq.VehicleId,
 			&workOrderReq.CustomerId,
 		); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -208,7 +209,7 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 		fmt.Println("Fetching Vehicle data from:", VehicleURL)
 		var getVehicleResponse transactionworkshoppayloads.WorkOrderVehicleResponse
 		if err := utils.Get(VehicleURL, &getVehicleResponse, nil); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch vehicle data from external service",
 				Err:        err,
@@ -220,7 +221,7 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 		fmt.Println("Fetching Customer data from:", CustomerURL)
 		var getCustomerResponse transactionworkshoppayloads.CustomerResponse
 		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch customer data from external service",
 				Err:        err,
@@ -258,14 +259,48 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 
 }
 
-func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) CampaignLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+
+	var entities []mastercampaignmasterentities.CampaignMaster
+	// Query to retrieve all work order entities based on the request
+	query := tx.Model(&mastercampaignmasterentities.CampaignMaster{})
+	if len(filterCondition) > 0 {
+		query = query.Where(filterCondition)
+	}
+	err := query.Find(&entities).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve campaign master from the database"}
+	}
+
+	var WorkOrderCampaignResponse []map[string]interface{}
+
+	// Loop through each entity and copy its data to the response
+	for _, entity := range entities {
+		campaignData := make(map[string]interface{})
+		// Copy data from entity to response
+		campaignData["campaign_id"] = entity.CampaignId
+		campaignData["campaign_code"] = entity.CampaignCode
+		campaignData["campaign_name"] = entity.CampaignName
+		campaignData["campaign_period_from"] = entity.CampaignPeriodFrom
+		campaignData["campaign_period_to"] = entity.CampaignPeriodTo
+
+		WorkOrderCampaignResponse = append(WorkOrderCampaignResponse, campaignData)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(WorkOrderCampaignResponse, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
 	// Create a new instance of WorkOrderRequest
 	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
 
 	// Save the work order
 	err := tx.Create(&workOrderRequest).Error
 	if err != nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptionsss_test.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{
 			Message: "Failed to save work order",
 			Err:     err,
 		}
@@ -274,27 +309,27 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB) (transactionworkshoppayloads.
 	return workOrderRequest, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
 	var statuses []transactionworkshopentities.WorkOrderMasterStatus
 	if err := tx.Find(&statuses).Error; err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order statuses from the database"}
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order statuses from the database"}
 	}
 	return statuses, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterType
 	if err := tx.Find(&types).Error; err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
 	}
 	return types, nil
 }
 
-func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
 	}
 
 	// Convert entity to payload
@@ -303,7 +338,7 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworks
 	return payload, nil
 }
 
-func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse) {
 	var workOrderEntities = transactionworkshopentities.WorkOrder{
 		// Assign fields from request
 	}
@@ -311,7 +346,7 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 	// Create a new record
 	err := tx.Create(&workOrderEntities).Error
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -319,12 +354,12 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	// Retrieve the work order by Id
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
 	}
 
 	// Perform the necessary operations to submit the work order
@@ -333,18 +368,18 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, Id int) *exceptionsss_test
 	// Save the updated work order
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated work order"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order"}
 	}
 
 	return nil
 }
 
-func (r *WorkOrderRepositoryImpl) Void(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+func (r *WorkOrderRepositoryImpl) Void(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	// Retrieve the work order by Id
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
 	}
 
 	// Perform the necessary operations to void the work order
@@ -353,18 +388,18 @@ func (r *WorkOrderRepositoryImpl) Void(tx *gorm.DB, Id int) *exceptionsss_test.B
 	// Save the updated work order
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated work order"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order"}
 	}
 
 	return nil
 }
 
-func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	// Retrieve the work order by Id
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
 	}
 
 	// Perform the necessary operations to close the work order
@@ -373,7 +408,7 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) *exceptionsss_
 	// Save the updated work order
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated work order"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order"}
 	}
 
 	return nil

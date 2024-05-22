@@ -1,15 +1,15 @@
 package masterservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 )
 
 type ForecastMasterService interface {
-	GetForecastMasterById(int) (masterpayloads.ForecastMasterResponse,*exceptionsss_test.BaseErrorResponse)
-	SaveForecastMaster(masterpayloads.ForecastMasterResponse) (bool,*exceptionsss_test.BaseErrorResponse)
-	ChangeStatusForecastMaster(int) (bool,*exceptionsss_test.BaseErrorResponse)
-	GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int,*exceptionsss_test.BaseErrorResponse)
+	GetForecastMasterById(int) (masterpayloads.ForecastMasterResponse, *exceptions.BaseErrorResponse)
+	SaveForecastMaster(masterpayloads.ForecastMasterResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusForecastMaster(int) (bool, *exceptions.BaseErrorResponse)
+	GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

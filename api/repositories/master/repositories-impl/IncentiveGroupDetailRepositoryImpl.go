@@ -2,7 +2,7 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -19,7 +19,7 @@ func StartIncentiveGroupDetailRepositoryImpl() masterrepository.IncentiveGroupDe
 	return &IncentiveGroupDetailRepositoryImpl{}
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm.DB, headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masterentities.IncentiveGroupDetail{}
 	response := []masterpayloads.IncentiveGroupDetailResponse{}
 	//define base model
@@ -32,14 +32,14 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Rows()
 
 	if len(response) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -52,7 +52,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	return pages, nil
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gorm.DB, Id int) (masterpayloads.IncentiveGroupDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gorm.DB, Id int) (masterpayloads.IncentiveGroupDetailResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.IncentiveGroupDetail{}
 	response := masterpayloads.IncentiveGroupDetailResponse{}
 
@@ -64,7 +64,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -75,7 +75,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 	return response, nil
 }
 
-func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.DB, req masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.IncentiveGroupDetail{
 		IsActive:               req.IsActive,
 		IncentiveGroupDetailId: req.IncentiveGroupDetailId,
@@ -89,7 +89,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.D
 
 	if err != nil {
 		logrus.Info(err)
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
