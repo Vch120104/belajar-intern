@@ -325,6 +325,22 @@ func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB) ([]transactionworkshopent
 	return types, nil
 }
 
+func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+	BillableURL := config.EnvConfigs.GeneralServiceUrl + "billable-to"
+	fmt.Println("Fetching Billable data from:", BillableURL)
+
+	var getBillables []transactionworkshoppayloads.WorkOrderBillable
+	if err := utils.Get(BillableURL, &getBillables, nil); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch billable data from external service",
+			Err:        err,
+		}
+	}
+
+	return getBillables, nil
+}
+
 func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error

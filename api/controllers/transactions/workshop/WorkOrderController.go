@@ -24,6 +24,7 @@ type WorkOrderController interface {
 	NewAffiliated(writer http.ResponseWriter, request *http.Request)
 	NewStatus(writer http.ResponseWriter, request *http.Request)
 	NewType(writer http.ResponseWriter, request *http.Request)
+	NewBill(writer http.ResponseWriter, request *http.Request)
 	VehicleLookup(writer http.ResponseWriter, request *http.Request)
 	CampaignLookup(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
@@ -171,6 +172,31 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 
 	// Kirim respons ke klien sesuai dengan hasil pengambilan status
 	payloads.NewHandleSuccess(writer, statuses, "List of work order statuses", http.StatusOK)
+}
+
+// NewBill gets the bill of new work orders
+// @Summary Get Work Order Bill
+// @Description Retrieve all work order bill
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-bill [get]
+func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
+
+	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
+	statuses, err := r.WorkOrderService.NewBill(db)
+	if err != nil {
+		// Menangani kesalahan dari layanan
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		return
+	}
+
+	// Kirim respons ke klien sesuai dengan hasil pengambilan status
+	payloads.NewHandleSuccess(writer, statuses, "List of work order bill able to", http.StatusOK)
 }
 
 // NewType gets the types of new work orders

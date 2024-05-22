@@ -84,6 +84,14 @@ func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB) ([]transactionworkshopentiti
 	return types, nil
 }
 
+func (s *WorkOrderServiceImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+	bills, err := s.structWorkOrderRepo.NewBill(tx)
+	if err != nil {
+		return nil, err
+	}
+	return bills, nil
+}
+
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

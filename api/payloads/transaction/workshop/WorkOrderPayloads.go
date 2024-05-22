@@ -136,3 +136,10 @@ type WorkOrderCampaignResponse struct {
 	CampaignPeriodFrom time.Time `json:"campign_period_from"`
 	CampaignPeriodTo   time.Time `json:"campaign_period_to"`
 }
+
+type WorkOrderBillable struct {
+	BillableToName string `json:"billable_to_name"`
+	BillableToID   int    `json:"billable_to_id"`
+	IsActive       bool   `json:"is_active"`
+	BillableToCode string `json:"billable_to_code"`
+}

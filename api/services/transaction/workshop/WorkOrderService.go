@@ -15,6 +15,7 @@ type WorkOrderService interface {
 	New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse)
 	NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse)
 	NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse)
+	NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse)
 	GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse)
 	Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse)
 	Submit(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse

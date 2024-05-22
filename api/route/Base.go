@@ -175,7 +175,7 @@ func ItemLocationRouter(
 	router.Post("/", ItemLocationController.SaveItemLocation)
 
 	//detail
-	router.Get("/detail/all", ItemLocationController.GetAllItemLocationDetail)
+	router.Get("/detail", ItemLocationController.GetAllItemLocationDetail)
 	router.Get("/popup-location", ItemLocationController.PopupItemLocation)
 	router.Post("/detail", ItemLocationController.AddItemLocation)
 	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
@@ -891,10 +891,11 @@ func WorkOrderRouter(
 
 	router.Get("/", WorkOrderController.GetAll)
 	router.Post("/normal", WorkOrderController.New)
-	router.Post("/booking", WorkOrderController.NewBooking)
+	router.Post("/normalbooking", WorkOrderController.NewBooking)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
 	router.Get("/dropdown-type", WorkOrderController.NewType)
+	router.Get("/dropdown-bill", WorkOrderController.NewBill)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)

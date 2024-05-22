@@ -183,7 +183,7 @@ func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWri
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/detail/all [get]
+// @Router /v1/item-location/detail [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -226,10 +226,10 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Produce json
 // @Tags Master : Item Location
 // @Param item_location_id path int true "Item Location Detail ID"
-// @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
+// @param reqBody body masteritempayloads.ItemLocationDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/{item_location_id}/detail [post]
+// @Router /v1/item-location/detail [post]
 func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter, request *http.Request) {
 	itemLocID, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
 
@@ -252,7 +252,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 // @Param item_location_detail_id path int true "item_location_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/all/detail/{item_location_detail_id} [delete]
+// @Router /v1/item-location/detail/{item_location_detail_id} [delete]
 func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
 	itemLocationID, err := strconv.Atoi(chi.URLParam(request, "item_location_detail_id"))
