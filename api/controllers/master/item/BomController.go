@@ -80,7 +80,7 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.BomService.GetBomMasterList(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request,err)
 		return
 	}
 	// Construct the response
@@ -208,7 +208,7 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.BomService.GetBomDetailList(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	// Construct the response
@@ -347,7 +347,7 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.BomService.GetBomItemList(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	// Construct the response

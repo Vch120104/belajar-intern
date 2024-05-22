@@ -1,7 +1,7 @@
 package jsonchecker
 
 import (
-	exceptions "after-sales/api/exceptions"
+	"after-sales/api/exceptions"
 	"encoding/json"
 	"net/http"
 )
@@ -11,7 +11,7 @@ func ReadFromRequestBody(request *http.Request, result interface{}) *exceptions.
 	err := decoder.Decode(result)
 	if err != nil {
 		// errorMsg := fmt.Sprintf("Failed to decode request body: %s", err.Error())
-		return &exceptionsss_test.BaseErrorResponse{
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
 			Err:        err,
 		}
@@ -25,7 +25,7 @@ func WriteToResponseBody(writer http.ResponseWriter, response interface{}) *exce
 	err := encoder.Encode(response)
 	if err != nil {
 		// errorMsg := fmt.Sprintf("Failed to encode response body: %s", err.Error())
-		return &exceptionsss_test.BaseErrorResponse{
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
 			Err:        err,
 		}

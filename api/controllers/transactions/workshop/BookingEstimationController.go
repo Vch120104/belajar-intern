@@ -9,7 +9,6 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
@@ -151,7 +150,7 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	// Panggil fungsi Save dari layanan untuk menyimpan data booking estimation
-	if err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
+	if _,err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
 		// Tangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
 		return

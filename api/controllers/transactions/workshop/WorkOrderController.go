@@ -9,7 +9,6 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
@@ -231,7 +230,7 @@ func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, requ
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.VehicleLookup(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -275,7 +274,7 @@ func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, req
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.CampaignLookup(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

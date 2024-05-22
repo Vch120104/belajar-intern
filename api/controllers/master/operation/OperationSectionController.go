@@ -3,7 +3,6 @@ package masteroperationcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
-	"errors"
 
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"

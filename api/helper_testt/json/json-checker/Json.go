@@ -1,7 +1,7 @@
 package jsonchecker
 
 import (
-	exceptions "after-sales/api/exceptions"
+	"after-sales/api/exceptions"
 	"encoding/json"
 	"net/http"
 )

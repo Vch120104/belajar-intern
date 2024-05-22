@@ -1,7 +1,7 @@
 package helper_test
 
 import (
-	exceptions "after-sales/api/exceptions"
+	"after-sales/api/exceptions"
 	"net/http"
 )
 

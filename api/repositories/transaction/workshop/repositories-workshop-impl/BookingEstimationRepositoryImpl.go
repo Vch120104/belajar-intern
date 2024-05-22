@@ -112,9 +112,9 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-		}, err
+		}
 	}
-	return nil, nil
+	return true, nil
 }
 
 func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
