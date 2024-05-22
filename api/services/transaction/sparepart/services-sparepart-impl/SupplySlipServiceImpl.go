@@ -1,7 +1,7 @@
 package transactionsparepartserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -25,7 +25,7 @@ func StartSupplySlipService(supplySlipRepo transactionsparepartrepository.Supply
 	}
 }
 
-func (s *SupplySlipServiceImpl) GetSupplySlipById(tx *gorm.DB, id int) (transactionsparepartpayloads.SupplySlipResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *SupplySlipServiceImpl) GetSupplySlipById(tx *gorm.DB, id int) (transactionsparepartpayloads.SupplySlipResponse, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	value, err := s.supplySlipRepo.GetSupplySlipById(tx, id)
 	if err != nil {
@@ -34,7 +34,7 @@ func (s *SupplySlipServiceImpl) GetSupplySlipById(tx *gorm.DB, id int) (transact
 	return value, nil
 }
 
-func (s *SupplySlipServiceImpl) GetSupplySlipDetailById(tx *gorm.DB, id int) (transactionsparepartpayloads.SupplySlipDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *SupplySlipServiceImpl) GetSupplySlipDetailById(tx *gorm.DB, id int) (transactionsparepartpayloads.SupplySlipDetailResponse, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	value, err := s.supplySlipRepo.GetSupplySlipDetailById(tx, id)
 	if err != nil {

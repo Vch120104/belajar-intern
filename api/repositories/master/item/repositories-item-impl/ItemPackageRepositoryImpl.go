@@ -3,7 +3,7 @@ package masteritemrepositoryimpl
 import (
 	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
@@ -23,7 +23,7 @@ func StartItemPackageRepositoryImpl() masteritemlevelrepo.ItemPackageRepository 
 	return &ItemPackageRepositoryImpl{}
 }
 
-func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.GetAllItemPackageResponse
 	var getItemGroupResponses []masteritempayloads.GetItemGroupResponse
 
@@ -43,7 +43,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -52,7 +52,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -63,7 +63,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
 
 	if errUrlItemPackage != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -76,7 +76,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 
 	tableStruct := masteritementities.ItemPackage{}
 	response := []masteritempayloads.GetAllItemPackageResponse{}
@@ -90,14 +90,14 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) ([]map
 	}).First(&response).Rows()
 
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(response) == 0 {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -109,7 +109,7 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) ([]map
 	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
 
 	if errUrlItemPackage != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -120,7 +120,7 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) ([]map
 	return joinedData, nil
 }
 
-func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteritempayloads.SaveItemPackageRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemPackage{
 		IsActive:        request.IsActive,
 		ItemGroupId:     request.ItemGroupId,
@@ -134,7 +134,7 @@ func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteri
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -143,7 +143,7 @@ func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteri
 	return true, nil
 }
 
-func (r *ItemPackageRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemPackageRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemPackage
 
 	result := tx.Model(&entities).
@@ -151,7 +151,7 @@ func (r *ItemPackageRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int)
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -166,7 +166,7 @@ func (r *ItemPackageRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int)
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

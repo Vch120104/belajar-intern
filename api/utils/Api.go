@@ -1,7 +1,6 @@
 package utils
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
 	"bytes"
 	"encoding/json"
 	"net/http"
@@ -32,7 +31,7 @@ func Get(url string, data interface{}, body interface{}) error {
 	// Jika ada parameter Body/body request untuk getnya
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		panic(exceptionsss_test.NewBadRequestError(err.Error()))
+		return err
 	}
 
 	var responseBody APIResponse
@@ -40,13 +39,13 @@ func Get(url string, data interface{}, body interface{}) error {
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return err
 	}
 
 	newResponse, err := client.Do(newRequest)
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	defer newResponse.Body.Close()
@@ -58,7 +57,7 @@ func Get(url string, data interface{}, body interface{}) error {
 
 	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
-		return exceptions.NewNotFoundError(newResponse.Status)
+		return nil
 		// c.JSON(newResponse.StatusCode, gin.H{"error": "Failed to fetch data from the external API"})
 		// return err
 	}
@@ -67,7 +66,7 @@ func Get(url string, data interface{}, body interface{}) error {
 	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
 
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+		return err
 	}
 
 	return nil
@@ -81,7 +80,7 @@ func GetWithPagination(url string, pagination APIPaginationResponse, body interf
 	// Jika ada parameter Body
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+		return APIPaginationResponse{},err
 
 	}
 
@@ -90,15 +89,13 @@ func GetWithPagination(url string, pagination APIPaginationResponse, body interf
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
-
+        return APIPaginationResponse{},err
 	}
 
 	newResponse, err := client.Do(newRequest)
 
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
-
+        return APIPaginationResponse{},err
 	}
 
 	defer newResponse.Body.Close()
@@ -121,7 +118,7 @@ func GetWithPagination(url string, pagination APIPaginationResponse, body interf
 	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
 
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+        return APIPaginationResponse{},err
 	}
 
 	return responseBody, err

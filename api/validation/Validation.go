@@ -1,7 +1,7 @@
 package validation
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"errors"
 	"fmt"
 	"net/http"
@@ -29,7 +29,7 @@ func translateError(err error, trans ut.Translator) (errs []error) {
 	}
 	return errs
 }
-func ValidationForm(writer http.ResponseWriter, request *http.Request, form interface{}) *exceptionsss_test.BaseErrorResponse {
+func ValidationForm(writer http.ResponseWriter, request *http.Request, form interface{}) *exceptions.BaseErrorResponse {
 	validate = validator.New()
 	var msg string
 
@@ -55,7 +55,7 @@ func ValidationForm(writer http.ResponseWriter, request *http.Request, form inte
 		}
 	}
 	if msg != "" {
-		return &exceptionsss_test.BaseErrorResponse{
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    msg,
 			Err:        errors.New(msg),
@@ -63,7 +63,7 @@ func ValidationForm(writer http.ResponseWriter, request *http.Request, form inte
 	} else if err != nil {
 		errorMsg := fmt.Sprintf("%v ", translateError(err, trans))
 		fmt.Println(err, " ++")
-		return &exceptionsss_test.BaseErrorResponse{
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    errorMsg,
 			Err:        errors.New(errorMsg),

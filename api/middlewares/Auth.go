@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/securities"
+
 	// "encoding/json"
 	"net/http"
 
@@ -24,7 +25,7 @@ func SetupAuthenticationMiddleware() func(http.Handler) http.Handler {
 			err := securities.GetAuthentication(r)
 
 			if err != nil {
-				exceptionsss_test.NewAuthorizationException(w, r, &exceptionsss_test.BaseErrorResponse{
+				exceptions.NewAuthorizationException(w, r, &exceptions.BaseErrorResponse{
 					Err: err,
 				})
 				return
@@ -56,7 +57,7 @@ func (middleware *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := securities.GetAuthentication(r)
 	if err != nil {
-		exceptionsss_test.NewAuthorizationException(w, r, &exceptionsss_test.BaseErrorResponse{
+		exceptions.NewAuthorizationException(w, r, &exceptions.BaseErrorResponse{
 			Err: err,
 		})
 		return

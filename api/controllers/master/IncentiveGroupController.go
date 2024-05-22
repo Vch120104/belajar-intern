@@ -1,7 +1,7 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	// "after-sales/api/helper"
 	helper_test "after-sales/api/helper_testt"
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
@@ -52,7 +52,7 @@ func NewIncentiveGroupController(IncentiveGroupService masterservice.IncentiveGr
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/ [get]
 func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -87,7 +87,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 // @Produce json
 // @Tags Master : Incentive Group
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/drop-down [get]
 func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.ResponseWriter, request *http.Request) {
 
@@ -107,7 +107,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 // @Tags Master : Incentive Group
 // @Param incentive_group_id path int true "incentive_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/{incentive_group_id} [get]
 func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request) {
 	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
@@ -127,7 +127,7 @@ func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.Respons
 // @Tags Master : Incentive Group
 // @param reqBody body masterpayloads.IncentiveGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/ [post]
 func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	IncentiveGroupRequest := masterpayloads.IncentiveGroupResponse{}
@@ -135,12 +135,12 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 
 	err := jsonchecker.ReadFromRequestBody(request, &IncentiveGroupRequest)
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, IncentiveGroupRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.IncentiveGroupService.SaveIncentiveGroup(IncentiveGroupRequest)
@@ -165,7 +165,7 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 // @Tags Master : Incentive Group
 // @param incentive_group_id path int true "incentive_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group/{incentive_group_id} [patch]
 func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -185,14 +185,14 @@ func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.Response
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

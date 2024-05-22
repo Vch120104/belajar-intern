@@ -4,7 +4,7 @@ import (
 	"after-sales/api/config"
 	mastercontroller "after-sales/api/controllers/master"
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
@@ -26,27 +26,27 @@ type MockIncentiveMasterService struct {
 }
 
 // Mock the GetAllIncentiveMaster method
-func (m *MockIncentiveMasterService) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptionsss_test.BaseErrorResponse)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 // Mock the GetAllIncentiveById method
-func (m *MockIncentiveMasterService) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(id)
-	return args.Get(0).(masterpayloads.IncentiveMasterResponse), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+	return args.Get(0).(masterpayloads.IncentiveMasterResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Mock the ChangeStatusIncentiveMaster method
-func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(id int) (masterentities.IncentiveMaster, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
 	args := m.Called(id)
-	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Mock the SaveIncentiveMaster method
-func (m *MockIncentiveMasterService) SaveIncentiveMaster(payload masterpayloads.IncentiveMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) SaveIncentiveMaster(payload masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 	args := m.Called(payload)
-	return args.Bool(0), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func TestGetAllIncentiveMaster_Success(t *testing.T) {
@@ -59,7 +59,7 @@ func TestGetAllIncentiveMaster_Success(t *testing.T) {
 	}
 	mockService := new(MockIncentiveMasterService)
 	mockService.On("GetAllIncentiveMaster", mock.Anything, mock.Anything).
-		Return(responseData, len(responseData), len(responseData), (*exceptionsss_test.BaseErrorResponse)(nil)) // Return nil for BaseErrorResponse
+		Return(responseData, len(responseData), len(responseData), (*exceptions.BaseErrorResponse)(nil)) // Return nil for BaseErrorResponse
 
 	controller := mastercontroller.NewIncentiveMasterController(mockService)
 	controller.GetAllIncentiveMaster(rr, req)

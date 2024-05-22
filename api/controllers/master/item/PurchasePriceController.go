@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
@@ -46,7 +46,7 @@ func NewPurchasePriceController(PurchasePriceService masteritemservice.PurchaseP
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -69,7 +69,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 
 	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePrice(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 // @Tags Master : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price [post]
 func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
@@ -97,7 +97,7 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 
 	create, err := r.PurchasePriceService.SavePurchasePrice(formRequest)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.PurchasePriceId == 0 {
@@ -117,7 +117,7 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 // @Tags Master : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/by-id/{purchase_price_id} [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseWriter, request *http.Request) {
 
@@ -139,7 +139,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 // @Tags Master : Purchase Price
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/{purchase_price_id} [patch]
 func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
@@ -147,7 +147,7 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 
 	entity, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	responseData := map[string]interface{}{
@@ -171,7 +171,7 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/{purchase_price_id}/detail  [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -196,7 +196,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePriceDetail(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Tags Master : Purchase Price
 // @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/detail [post]
 func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
@@ -221,7 +221,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 
 	create, err := r.PurchasePriceService.AddPurchasePrice(formRequest)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.PurchasePriceDetailId == 0 {
@@ -240,7 +240,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Tags Master : Purchase Price
 // @Param purchase_price_detail_id path int true "purchase_price_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/all/detail/{purchase_price_detail_id} [get]
 func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
@@ -254,7 +254,7 @@ func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWr
 	// Memanggil service untuk menghapus item lokasi
 	if deleteErr := r.PurchasePriceService.DeletePurchasePrice(PurchasePriceID); deleteErr != nil {
 		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptionsss_test.NewNotFoundException(writer, request, deleteErr)
+		exceptions.NewNotFoundException(writer, request, deleteErr)
 		return
 	}
 

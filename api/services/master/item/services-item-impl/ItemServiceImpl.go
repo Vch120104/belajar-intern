@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -28,7 +28,7 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB,
 }
 
 // GetUomDropDown implements masteritemservice.ItemService.
-func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetUomDropDown(tx, uomTypeId)
@@ -39,7 +39,7 @@ func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.Uo
 }
 
 // GetUomTypeDropDown implements masteritemservice.ItemService.
-func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetUomTypeDropDown(tx)
@@ -49,7 +49,7 @@ func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDrop
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetAllItem(tx, filterCondition, pages)
@@ -59,7 +59,7 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, internalFilterCondition, externalFilterCondition, pages)
@@ -69,7 +69,7 @@ func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.Filte
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemById(tx, Id)
@@ -79,7 +79,7 @@ func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptionsss_tes
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemWithMultiId(tx, MultiIds)
@@ -89,7 +89,7 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	// Melakukan URL encoding pada parameter code
 	// encodedCode := url.PathEscape(code)
 
@@ -102,7 +102,7 @@ func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *e
 	return results, nil
 }
 
-func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -121,7 +121,7 @@ func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *e
 	return results, nil
 }
 
-func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -137,7 +137,7 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptionsss_test.Bas
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.itemRepo.GetAllItemDetail(tx, filterCondition, pages)
@@ -147,7 +147,7 @@ func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterConditi
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masteritempayloads.ItemDetailRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masteritempayloads.ItemDetailRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemDetailById(tx, itemID, itemDetailID)
@@ -157,7 +157,7 @@ func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masterite
 	return result, nil
 }
 
-func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) *exceptionsss_test.BaseErrorResponse {
+func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.itemRepo.AddItemDetail(tx, id, req)
@@ -167,7 +167,7 @@ func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetai
 	return nil
 }
 
-func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptionsss_test.BaseErrorResponse {
+func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.itemRepo.DeleteItemDetail(tx, id, itemDetailID)

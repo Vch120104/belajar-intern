@@ -1,31 +1,31 @@
 package helper_test
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"net/http"
 )
 
-func ReturnError(writer http.ResponseWriter, request *http.Request, err *exceptionsss_test.BaseErrorResponse) {
+func ReturnError(writer http.ResponseWriter, request *http.Request, err *exceptions.BaseErrorResponse) {
 	if err.StatusCode == http.StatusUnauthorized {
-		exceptionsss_test.NewAuthorizationException(writer, request, err)
+		exceptions.NewAuthorizationException(writer, request, err)
 		return
 	} else if err.StatusCode == http.StatusBadRequest {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	} else if err.StatusCode == http.StatusUnprocessableEntity {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	} else if err.StatusCode == http.StatusNotFound {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	} else if err.StatusCode == http.StatusForbidden {
-		exceptionsss_test.NewRoleException(writer, request, err)
+		exceptions.NewRoleException(writer, request, err)
 		return
 	} else if err.StatusCode == http.StatusConflict {
-		exceptionsss_test.NewConflictException(writer, request, err)
+		exceptions.NewConflictException(writer, request, err)
 		return
 	} else {
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 }

@@ -2,7 +2,7 @@ package masteritemserviceimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -28,7 +28,7 @@ func StartPurchasePriceService(PurchasePriceRepo masteritemrepository.PurchasePr
 	}
 }
 
-func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetAllPurchasePrice(tx, filterCondition, pages)
@@ -38,7 +38,7 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.F
 	return results, totalPages, totalRows, nil
 }
 
-func (s *PurchasePriceServiceImpl) SavePurchasePrice(req masteritempayloads.PurchasePriceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) SavePurchasePrice(req masteritempayloads.PurchasePriceRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.PurchasePriceRepo.SavePurchasePrice(tx, req)
@@ -48,7 +48,7 @@ func (s *PurchasePriceServiceImpl) SavePurchasePrice(req masteritempayloads.Purc
 	return results, nil
 }
 
-func (s *PurchasePriceServiceImpl) GetPurchasePriceById(id int) (masteritempayloads.PurchasePriceRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetPurchasePriceById(id int) (masteritempayloads.PurchasePriceRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.PurchasePriceRepo.GetPurchasePriceById(tx, id)
@@ -58,7 +58,7 @@ func (s *PurchasePriceServiceImpl) GetPurchasePriceById(id int) (masteritempaylo
 	return results, nil
 }
 
-func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.PurchasePriceRepo.AddPurchasePrice(tx, req)
@@ -68,7 +68,7 @@ func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.Purch
 	return results, nil
 }
 
-func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, filterCondition, pages)
@@ -79,7 +79,7 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []u
 }
 
 // DeletePurchasePrice deletes an item location by ID
-func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int) *exceptionsss_test.BaseErrorResponse {
+func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.PurchasePriceRepo.DeletePurchasePrice(tx, id)
@@ -89,7 +89,7 @@ func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int) *exceptionsss_tes
 	return nil
 }
 
-func (s *PurchasePriceServiceImpl) ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptionsss_test.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

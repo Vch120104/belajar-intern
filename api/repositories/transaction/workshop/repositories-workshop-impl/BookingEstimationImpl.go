@@ -2,7 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
@@ -19,7 +19,7 @@ func OpenBookingEstimationRepositoryImpl() transactionworkshoprepository.Booking
 	return &BookingEstimationImpl{}
 }
 
-func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.BookingEstimation
 	// Query to retrieve all booking estimation entities based on the request
 	query := tx.Model(&transactionworkshopentities.BookingEstimation{})
@@ -28,7 +28,7 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 	}
 	err := query.Find(&entities).Error
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimations from the database"}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimations from the database"}
 	}
 
 	var bookingEstimationResponses []map[string]interface{}
@@ -77,22 +77,22 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *BookingEstimationImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BookingEstimationImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Create a new instance of WorkOrderRepositoryImpl
 	// Save the booking estimation
 	success, err := r.Save(tx, request) // Menggunakan method Save dari receiver saat ini, yaitu r
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{Message: "Failed to save booking estimation"}
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save booking estimation"}
 	}
 
 	return success, nil
 }
 
-func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptionsss_test.BaseErrorResponse) {
+func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.BookingEstimation
 	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return transactionworkshoppayloads.BookingEstimationRequest{}, &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return transactionworkshoppayloads.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
 
 	// Convert entity to payload
@@ -101,7 +101,7 @@ func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (transactionworksho
 	return payload, nil
 }
 
-func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	var bookingEstimationEntities = transactionworkshopentities.BookingEstimation{
 		// Assign fields from request
 	}
@@ -109,7 +109,7 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 	// Create a new record
 	err := tx.Create(&bookingEstimationEntities).Error
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -117,12 +117,12 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 	return true, nil
 }
 
-func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	// Retrieve the booking estimation by Id
 	var entity transactionworkshopentities.BookingEstimation
 	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
 
 	// Perform the necessary operations to submit the booking estimation
@@ -131,18 +131,18 @@ func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) *exceptionsss_test.B
 	// Save the updated booking estimation
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
 	}
 
 	return nil
 }
 
-func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	// Retrieve the booking estimation by Id
 	var entity transactionworkshopentities.BookingEstimation
 	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
 
 	// Perform the necessary operations to void the booking estimation
@@ -151,18 +151,18 @@ func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) *exceptionsss_test.Bas
 	// Save the updated booking estimation
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
 	}
 
 	return nil
 }
 
-func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptionsss_test.BaseErrorResponse {
+func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
 	// Retrieve the booking estimation by Id
 	var entity transactionworkshopentities.BookingEstimation
 	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
 
 	// Perform the necessary operations to close the booking estimation
@@ -171,7 +171,7 @@ func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptionsss_te
 	// Save the updated booking estimation
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptionsss_test.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
 	}
 
 	return nil

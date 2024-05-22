@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	helper_test "after-sales/api/helper_testt"
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
@@ -36,7 +36,7 @@ type ItemModelMappingControllerImpl struct {
 // @Param page query int false "Page number"
 // @Param limit query int false "Items per page"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-model-mapping/{item_id} [get]
 func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -65,21 +65,21 @@ func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http
 // @Tags Master : Item Model Mapping
 // @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-model-mapping/ [put]
 func (r *ItemModelMappingControllerImpl) UpdateItemModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.CreateItemModelMapping
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (r *ItemModelMappingControllerImpl) UpdateItemModelMapping(writer http.Resp
 // @Tags Master : Item Model Mapping
 // @Param reqBody body masteritempayloads.CreateItemModelMapping true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-model-mapping/ [post]
 func (r *ItemModelMappingControllerImpl) CreateItemModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.CreateItemModelMapping
@@ -109,14 +109,14 @@ func (r *ItemModelMappingControllerImpl) CreateItemModelMapping(writer http.Resp
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

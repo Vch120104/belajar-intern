@@ -1,4 +1,4 @@
-package exceptionsss_test
+package exceptions
 
 import (
 	jsonresponse "after-sales/api/helper_testt/json/json-response"

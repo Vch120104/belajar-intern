@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	helper_test "after-sales/api/helper_testt"
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
@@ -41,7 +41,7 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 // @Tags Master : Item Package Detail
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/{item_package_detail_id} [patch]
 func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
@@ -67,7 +67,7 @@ func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer h
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/package/{item_package_id} [get]
 func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -97,7 +97,7 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(wr
 // @Tags Master : Item Package Detail
 // @Param item_package_detail_id path int true "Item Package Detail ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/{item_package_detail_id} [get]
 func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.ResponseWriter, request *http.Request) {
 
@@ -120,7 +120,7 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.R
 // @Tags Master : Item Package Detail
 // @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/package [post]
 func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 
@@ -128,14 +128,14 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 // @Tags Master : Item Package Detail
 // @Param reqBody body masteritempayloads.SaveItemPackageDetail true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/package [put]
 func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 
@@ -164,14 +164,14 @@ func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetailByItemPackageId
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

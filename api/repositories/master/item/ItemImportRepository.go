@@ -2,7 +2,7 @@ package masteritemrepository
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptionsss_test "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 

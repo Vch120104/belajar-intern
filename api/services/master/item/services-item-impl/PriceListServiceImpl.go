@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -25,7 +25,7 @@ func StartPriceListService(priceListRepo masteritemrepository.PriceListRepositor
 	}
 }
 
-func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceList(tx, request)
@@ -35,7 +35,7 @@ func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceList
 	return results, nil
 }
 
-func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceListById(tx, Id)
@@ -45,7 +45,7 @@ func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.Pric
 	return results, nil
 }
 
-func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceListResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -64,7 +64,7 @@ func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceLis
 	return result, nil
 }
 
-func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

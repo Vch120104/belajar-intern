@@ -1,7 +1,7 @@
 package masteroperationcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 
 	"after-sales/api/payloads"
@@ -51,7 +51,7 @@ func NewOperationSectionController(operationSectionService masteroperationservic
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-section/ [get]
 func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.ResponseWriter, request *http.Request) {
 
@@ -75,7 +75,7 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 	result, err := r.operationsectionservice.GetAllOperationSectionList(filterCondition, pagination)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -89,7 +89,7 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 // @Tags Master : Operation Section
 // @Param operation_section_id path int true "operation_section_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-section/{operation_section_id} [get]
 func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.ResponseWriter, request *http.Request) {
 
@@ -97,7 +97,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.Res
 
 	result, err := r.operationsectionservice.GetOperationSectionById(int(operationSectionId))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.Res
 // @Tags Master : Operation Section
 // @Param operation_group_id query int true "operation_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-section/code-by-group-id [get]
 func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.ResponseWriter, request *http.Request) {
 
@@ -120,7 +120,7 @@ func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.Res
 	result, err := r.operationsectionservice.GetSectionCodeByGroupId(groupId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.Res
 // @Param operation_group_id query int true "operation_group_id"
 // @Param operation_section_code query string true "operation_section_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-section/operation-section-name [get]
 func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
@@ -145,7 +145,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 
 	result, err := r.operationsectionservice.GetOperationSectionName(operationGroupId, section_code)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -159,7 +159,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 // @Tags Master : Operation Section
 // @param reqBody body masteroperationpayloads.OperationSectionRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-section/ [put]
 func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationSectionRequest
@@ -170,7 +170,7 @@ func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.Respon
 	create, err := r.operationsectionservice.SaveOperationSection(formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -190,7 +190,7 @@ func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.Respon
 // @Tags Master : Operation Section
 // @param operation_section_id path int true "operation_section_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-section/{operation_section_id} [patch]
 func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer http.ResponseWriter, request *http.Request) {
 
@@ -199,7 +199,7 @@ func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer htt
 	response, err := r.operationsectionservice.ChangeStatusOperationSection(int(operationSectionId))
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

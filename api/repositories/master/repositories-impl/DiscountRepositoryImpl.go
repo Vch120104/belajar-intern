@@ -7,7 +7,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"net/http"
 
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 
 	"after-sales/api/utils"
 
@@ -21,7 +21,7 @@ func StartDiscountRepositoryImpl() masterrepository.DiscountRepository {
 	return &DiscountRepositoryImpl{}
 }
 
-func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Discount{}
 	responses := []masterpayloads.DiscountResponse{}
 
@@ -33,13 +33,13 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 	if len(responses) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -51,7 +51,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 	return pages, nil
 }
 
-func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpayloads.DiscountResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	var Discounts []masterentities.Discount
 	response := []masterpayloads.DiscountResponse{}
 
@@ -62,7 +62,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 		Rows()
 
 	if len(response) == 0 {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -70,7 +70,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 
 	if err != nil {
 
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -81,7 +81,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpayloads.DiscountResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	var entities masterentities.Discount
 	var response masterpayloads.DiscountResponse
 
@@ -93,7 +93,7 @@ func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpay
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -104,7 +104,7 @@ func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpay
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (masterpayloads.DiscountResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Discount{}
 	response := masterpayloads.DiscountResponse{}
 
@@ -116,7 +116,7 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -127,7 +127,7 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Discount{
 		IsActive:                req.IsActive,
 		DiscountCodeId:          req.DiscountCodeId,
@@ -138,7 +138,7 @@ func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.Di
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -147,7 +147,7 @@ func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.Di
 	return true, nil
 }
 
-func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.Discount
 
 	result := tx.Model(&entities).
@@ -155,7 +155,7 @@ func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -170,7 +170,7 @@ func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

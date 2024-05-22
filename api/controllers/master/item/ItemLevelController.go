@@ -1,7 +1,7 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	helper_test "after-sales/api/helper_testt"
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
@@ -68,7 +68,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter,
 	get, err := r.itemLevelService.GetItemLevelLookUp(internalCriteria, paginate, itemClassId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 	get, err := r.itemLevelService.GetItemLevelDropDown(itemLevelId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -107,7 +107,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 // @Param item_level_code query string false "Item Level Code"
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/ [get]
 func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -133,7 +133,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	get, err := r.itemLevelService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Tags Master : Item Level
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/by-id/{item_level_id} [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
@@ -156,7 +156,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 	get, err := r.itemLevelService.GetById(itemLevelId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -170,7 +170,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Tags Master : Item Level
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/ [post]
 func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
@@ -179,12 +179,12 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 	var message = ""
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Tags Master : Item Level
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
@@ -220,7 +220,7 @@ func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, reque
 	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

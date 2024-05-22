@@ -1,7 +1,7 @@
 package transactionworkshopserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -27,7 +27,7 @@ func OpenBookingEstimationServiceImpl(bookingEstimationRepo transactionworkshopr
 	}
 }
 
-func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.structBookingEstimationRepo.GetAll(tx, filterCondition, pages)
@@ -37,7 +37,7 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	results, err := s.structBookingEstimationRepo.New(tx, request)
 	if err != nil {
@@ -46,7 +46,7 @@ func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworks
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.structBookingEstimationRepo.GetById(tx, id)
@@ -56,7 +56,7 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppaylo
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
 	defer helper.CommitOrRollback(tx)
 
@@ -70,7 +70,7 @@ func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionwork
 	return save, nil
 }
 
-func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) *exceptionsss_test.BaseErrorResponse {
+func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
 	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.Submit(tx, id)
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) *exceptionsss
 	return nil
 }
 
-func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) *exceptionsss_test.BaseErrorResponse {
+func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
 	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.Void(tx, id)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) *exceptionsss_t
 	return nil
 }
 
-func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptionsss_test.BaseErrorResponse {
+func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
 	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.CloseOrder(tx, id)
 	if err != nil {

@@ -1,7 +1,7 @@
 package masterwarehousecontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 
@@ -50,7 +50,7 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 // @Param warehouse_location_detail_name query string false "Warehouse Location Detail Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/ [get]
 func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -79,7 +79,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 	})
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -93,7 +93,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Tags Master : Warehouse Location
 // @Param warehouse_location_id path int true "warehouse_location_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/{warehouse_location_id} [get]
 func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
@@ -102,7 +102,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 	get, err := r.WarehouseLocationService.GetById(warehouseLocationId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
@@ -116,7 +116,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Tags Master : Warehouse Location
 // @param reqBody body masterwarehousepayloads.GetWarehouseLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/ [post]
 func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
@@ -132,7 +132,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
@@ -146,7 +146,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Tags Master : Warehouse Location
 // @Param warehouse_location_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/{warehouse_location_id} [patch]
 func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
@@ -155,7 +155,7 @@ func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWrite
 	change_status, err := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
