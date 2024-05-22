@@ -83,7 +83,7 @@ func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exception
 	return true, nil
 }
 
-func (s *MarkupRateServiceImpl) GetMarkupRateByMarkupMasterAndOrderType(MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *MarkupRateServiceImpl) GetMarkupRateByMarkupMasterAndOrderType(MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupRateByMarkupMasterAndOrderType(tx, MarkupMasterId, OrderTypeId)

@@ -2,8 +2,8 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
-	jsonchecker "after-sales/api/helper/json/json-checker"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
@@ -69,7 +69,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter,
 	get, err := r.itemLevelService.GetItemLevelLookUp(internalCriteria, paginate, itemClassId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 	get, err := r.itemLevelService.GetItemLevelDropDown(itemLevelId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	get, err := r.itemLevelService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -157,7 +157,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 	get, err := r.itemLevelService.GetById(itemLevelId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -180,12 +180,12 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("data Not Found"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -221,7 +221,7 @@ func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, reque
 	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

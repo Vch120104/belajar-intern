@@ -61,7 +61,7 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -83,7 +83,7 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code s
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -116,7 +116,7 @@ func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req mastero
 		}
 	}
 
-	if len(req.OperationCode) > 10 || len(req.OperationCode)>200 {
+	if len(req.OperationCode) > 10 || len(req.OperationCode) > 200 {
 		// errMessage := "Operation Group Code max 2 characters"
 
 		return false, &exceptions.BaseErrorResponse{
@@ -135,12 +135,12 @@ func (r *OperationCodeRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id
 		Where("operation_id = ?", id).
 		First(&entities)
 
-		if result.Error != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        result.Error,
-			}
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
 		}
+	}
 
 	if entities.IsActive {
 		entities.IsActive = false

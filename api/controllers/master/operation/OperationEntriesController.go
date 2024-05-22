@@ -77,7 +77,7 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 
 	result, err := r.operationEntriesService.GetAllOperationEntries(criteria, pagination)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -96,7 +96,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.Res
 	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
 	result, err := r.operationEntriesService.GetOperationEntriesById(int(operationEntriesId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -130,7 +130,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.Res
 	})
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -153,7 +153,7 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 	create, err := r.operationEntriesService.SaveOperationEntries(requestForm)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -181,7 +181,7 @@ func (r *OperationEntriesControllerImpl) ChangeStatusOperationEntries(writer htt
 	response, err := r.operationEntriesService.ChangeStatusOperationEntries(int(operationEntriesId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

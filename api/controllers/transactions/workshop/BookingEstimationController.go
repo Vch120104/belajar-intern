@@ -67,7 +67,7 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 
 	paginatedData, totalPages, totalRows, err := r.bookingEstimationService.GetAll(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 	// Panggil fungsi Save dari layanan untuk menyimpan data booking estimation
 	if err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
 		// Tangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 

@@ -2,8 +2,8 @@ package masteroperationcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
-	jsonchecker "after-sales/api/helper/json/json-checker"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -79,7 +79,7 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 	result, err := r.operationkeyservice.GetAllOperationKeyList(criteria, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWri
 	result, err := r.operationkeyservice.GetOperationKeyById(operationKeyId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (r *OperationKeyControllerImpl) GetOperationKeyName(writer http.ResponseWri
 	})
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -155,14 +155,14 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, requestForm)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

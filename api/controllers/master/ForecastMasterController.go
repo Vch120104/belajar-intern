@@ -49,7 +49,7 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 
 	result, err := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -73,7 +73,7 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 
 	create, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("data Not Found"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 
 	response, err := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	paginatedData, totalPages, totalRows, err := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)

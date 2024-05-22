@@ -5,8 +5,8 @@ import (
 	// "after-sales/api/helper"
 
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
-	jsonchecker "after-sales/api/helper/json/json-checker"
+	helper_test "after-sales/api/helper_testt"
+	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -72,7 +72,7 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 
 	result, err := r.SkillLevelService.GetAllSkillLevel(filterCondition, pagination)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -93,7 +93,7 @@ func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter,
 
 	result, err := r.SkillLevelService.GetSkillLevelById(skillLevelId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -116,12 +116,12 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 	var message string
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWr
 	response, err := r.SkillLevelService.ChangeStatusSkillLevel(int(SkillLevelId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

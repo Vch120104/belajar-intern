@@ -80,7 +80,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 	})
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 	get, err := r.WarehouseLocationService.GetById(warehouseLocationId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
@@ -133,7 +133,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid Data"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
@@ -156,7 +156,7 @@ func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWrite
 	change_status, err := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid data"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)

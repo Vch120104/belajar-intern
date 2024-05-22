@@ -1,4 +1,4 @@
-package masterrepositoryimpl
+	package masterrepositoryimpl
 
 import (
 	"after-sales/api/config"
@@ -67,7 +67,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 
 	if len(responses) == 0 {
 		// notFoundErr := exceptions.NewNotFoundError("No data found")
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("no data found"),
 		}
@@ -105,7 +105,7 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 		Error
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}

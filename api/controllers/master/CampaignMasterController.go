@@ -2,7 +2,8 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -49,7 +50,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 
 	create, err := r.CampaignMasterService.PostCampaignMaster(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("conflict error"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 
@@ -69,7 +70,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 
 	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 	message = "Create Data Successfully!"
@@ -83,7 +84,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 	var message = ""
 	response, err := r.CampaignMasterService.PostCampaignMasterDetailFromHistory(CampaignId1, CampaignId2)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 	message = "Create Data Successfully!"
@@ -95,7 +96,7 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 	CampaignId, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
 	response, err := r.CampaignMasterService.ChangeStatusCampaignMaster(CampaignId)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", 200)
 }
@@ -179,7 +180,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 	result, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -218,7 +219,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 	}
 	result, err := r.CampaignMasterService.GetAllCampaignMasterCodeAndName(pagination)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		helper_test.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -234,7 +235,7 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 	var message = ""
 	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, formRequest)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		helper_test.ReturnError(writer, request, err)
 		return
 	}
 	message = "Update Data Successfully!"
@@ -252,7 +253,7 @@ func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.Res
 	}
 	result, err := r.CampaignMasterService.GetAllPackageMasterToCopy(pagination)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		helper_test.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -265,7 +266,7 @@ func (r *CampaignMasterControllerImpl) SelectFromPackageMaster(writer http.Respo
 
 	result, err := r.CampaignMasterService.SelectFromPackageMaster(PackageMaster, CampaignMasterId)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		helper_test.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)

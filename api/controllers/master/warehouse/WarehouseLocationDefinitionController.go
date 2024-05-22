@@ -79,7 +79,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 
 	paginatedData, totalPages, totalRows, err := r.WarehouseLocationDefinitionService.GetAll(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -103,7 +103,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.Respo
 	get, err := r.WarehouseLocationDefinitionService.GetByLevel(warehouseLocationDefinitionLevelID, warehouseLocationDefinitionID)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
@@ -125,7 +125,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.Response
 	get, err := r.WarehouseLocationDefinitionService.GetById(WarehouseLocationDefinitionId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
@@ -155,7 +155,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 	}
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
@@ -171,25 +171,33 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [put]
+// @Router /v1/warehouse-location-definition/{warehouse_location_id} [put]
 func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.ResponseWriter, request *http.Request) {
 	warehouseLocationID := chi.URLParam(request, "warehouse_location_definition_id")
 	id, err := strconv.Atoi(warehouseLocationID)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid warehouse_location_definition_id"))
+		errResponse := &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid warehouse_location_id"),
+		}
+		exceptions.NewBadRequestException(writer, request, errResponse)
 		return
 	}
 
 	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
 	if err := json.NewDecoder(request.Body).Decode(&formRequest); err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid request body"))
+		errResponse := &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid request body"),
+		}
+		exceptions.NewBadRequestException(writer, request, errResponse)
 		return
 	}
 	formRequest.WarehouseLocationDefinitionId = id
 
 	save, saveErr := r.WarehouseLocationDefinitionService.SaveData(formRequest)
 	if saveErr != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, saveErr)
 		return
 	}
 
@@ -218,7 +226,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 
 	entity, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid Id Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -263,7 +271,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) PopupWarehouseLocationLevel(
 
 	paginatedData, totalPages, totalRows, err := r.WarehouseLocationDefinitionService.PopupWarehouseLocationLevel(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

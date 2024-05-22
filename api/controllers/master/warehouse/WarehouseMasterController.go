@@ -77,8 +77,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 		Page:   page,
 	})
 	if err != nil {
-		// Handle the error
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -97,7 +96,7 @@ func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWrite
 
 	get, err := r.WarehouseMasterService.GetAllIsActive()
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -116,7 +115,7 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 
 	get, err := r.WarehouseMasterService.DropdownWarehouse()
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -138,7 +137,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 
 	get, err := r.WarehouseMasterService.GetById(warehouseId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -160,7 +159,7 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 
 	get, err := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -185,7 +184,7 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 
 	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -209,7 +208,7 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -238,7 +237,7 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 	change_status, err := r.WarehouseMasterService.ChangeStatus(warehouseId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

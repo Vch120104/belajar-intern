@@ -2,7 +2,7 @@ package masteroperationcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/validation"
 	"errors"
 
@@ -74,7 +74,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 
 	result, err := r.OperationGroupService.GetAllOperationGroup(filterCondition, pagination)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -92,7 +92,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.
 
 	result, err := r.OperationGroupService.GetAllOperationGroupIsActive()
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -113,7 +113,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.Respo
 
 	result, err := r.OperationGroupService.GetOperationGroupByCode(operationGroupCode)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -135,12 +135,12 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.Re
 	response, err := r.OperationGroupService.ChangeStatusOperationGroup(int(operationGroupId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

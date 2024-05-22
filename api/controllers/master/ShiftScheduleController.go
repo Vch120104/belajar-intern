@@ -87,7 +87,7 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 
 	result, err := r.ShiftScheduleService.GetAllShiftSchedule(filterCondition, pagination)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseW
 
 	result, err := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -148,7 +148,7 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 
 	create, err := r.ShiftScheduleService.SaveShiftSchedule(formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.Resp
 
 	response, err := r.ShiftScheduleService.ChangeStatusShiftSchedule(int(ShiftScheduleId))
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("conflict error"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)

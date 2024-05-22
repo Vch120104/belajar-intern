@@ -2,7 +2,8 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -182,7 +183,7 @@ func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, reques
 	result, totalPages, totalRows, err := r.itemservice.GetAllItemLookup(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
@@ -205,7 +206,7 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 
 	result, err := r.itemservice.GetItemWithMultiId(sliceOfString)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "success", 200)
@@ -231,7 +232,7 @@ func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *
 
 	result, err := r.itemservice.GetItemCode(itemCodeEncode)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -255,7 +256,7 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 
 	create, err := r.itemservice.SaveItem(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.ItemId == 0 {
@@ -282,7 +283,7 @@ func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, reques
 
 	response, err := r.itemservice.ChangeStatusItem(int(ItemId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
@@ -320,7 +321,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	data, totalPages, totalRows, err := r.itemservice.GetAllItemDetail(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -343,7 +344,7 @@ func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, reque
 
 	result, err := r.itemservice.GetItemDetailById(int(itemID), int(itemDetailID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -367,7 +368,7 @@ func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *
 	helper.ReadFromRequestBody(request, &itemRequest)
 
 	if err := r.itemservice.AddItemDetail(int(itemID), itemRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -389,7 +390,7 @@ func (r *ItemControllerImpl) DeleteItemDetail(writer http.ResponseWriter, reques
 	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
 
 	if err := r.itemservice.DeleteItemDetail(int(itemID), int(itemDetailID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 

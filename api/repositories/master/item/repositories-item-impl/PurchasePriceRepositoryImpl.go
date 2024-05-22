@@ -278,7 +278,7 @@ func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int) *
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		// Jika data tidak ditemukan, kirim respons data not found
 		// notFoundErr := exceptions.NewNotFoundError("Purchase price detail not found")
-		return &exceptionsss_test.BaseErrorResponse{
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        result.Error,
 		}

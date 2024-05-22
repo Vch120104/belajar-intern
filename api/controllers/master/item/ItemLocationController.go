@@ -2,7 +2,8 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
+	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -68,7 +69,7 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.PopupItemLocation(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -107,7 +108,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocation(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -135,7 +136,7 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 
 	create, err := r.ItemLocationService.SaveItemLocation(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.ItemLocationId == 0 {
@@ -208,7 +209,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocationDetail(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -237,7 +238,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 	helper.ReadFromRequestBody(request, &formRequest)
 
 	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -265,7 +266,7 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 	// Memanggil service untuk menghapus item lokasi
 	if deleteErr := r.ItemLocationService.DeleteItemLocation(itemLocationID); deleteErr != nil {
 		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid data id not found"))
+		exceptions.NewNotFoundException(writer, request, deleteErr)
 		return
 	}
 

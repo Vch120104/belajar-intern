@@ -88,7 +88,7 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 	}
 }
 
@@ -107,7 +107,7 @@ func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request
 
 	result, err := r.BomService.GetBomMasterById(bomMasterId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -130,7 +130,7 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 
 	create, err := r.BomService.SaveBomMaster(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.BomMasterId == 0 {
@@ -158,7 +158,7 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 
 	entity, err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 }
@@ -236,7 +236,7 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 
 	result, err := r.BomService.GetBomDetailById(bomDetailId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -258,7 +258,7 @@ func (r *BomControllerImpl) GetBomDetailByIds(writer http.ResponseWriter, reques
 
 	result, err := r.BomService.GetBomDetailByIds(bomDetailId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -288,7 +288,7 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 
 	create, err := r.BomService.SaveBomDetail(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.BomDetailId == 0 {
@@ -355,7 +355,7 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 }
@@ -377,13 +377,15 @@ func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request 
 	// Ubah bomDetailID menjadi integer
 	bomDetailIDInt, err := strconv.Atoi(bomDetailID)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid bom_detail_id"))
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			Err: errors.New("invalid bom_detail_id"),
+		})
 		return
 	}
 
 	// Call the method to delete bom details by their IDs
 	if deleted, err := r.BomService.DeleteByIds([]int{bomDetailIDInt}); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 	} else if deleted {
 		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)
 	} else {
