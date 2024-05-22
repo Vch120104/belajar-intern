@@ -1,7 +1,7 @@
 package masterwarehouseserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
@@ -28,7 +28,7 @@ func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.Warehous
 	}
 }
 
-func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -49,7 +49,7 @@ func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepa
 	return save, nil
 }
 
-func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
@@ -61,7 +61,7 @@ func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) 
 	return get, nil
 }
 
-func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetAllWarehouseGroup(tx, filterCondition, pages)
@@ -73,7 +73,7 @@ func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils
 	return get, nil
 }
 
-func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

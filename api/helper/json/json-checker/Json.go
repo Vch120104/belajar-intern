@@ -10,8 +10,8 @@ func ReadFromRequestBody(request *http.Request, result interface{}) *exceptionss
 	decoder := json.NewDecoder(request.Body)
 	err := decoder.Decode(result)
 	if err != nil {
-		// errorMsg := fmt.Sprintf("Failed to decode request body: %s", err.Error())
-		return &exceptionsss_test.BaseErrorResponse{
+		errorMsg := fmt.Sprintf("Failed to decode request body: %s", err.Error())
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
 			Err:        err,
 		}
@@ -24,8 +24,8 @@ func WriteToResponseBody(writer http.ResponseWriter, response interface{}) *exce
 	encoder := json.NewEncoder(writer)
 	err := encoder.Encode(response)
 	if err != nil {
-		// errorMsg := fmt.Sprintf("Failed to encode response body: %s", err.Error())
-		return &exceptionsss_test.BaseErrorResponse{
+		errorMsg := fmt.Sprintf("Failed to encode response body: %s", err.Error())
+		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
 			Err:        err,
 		}

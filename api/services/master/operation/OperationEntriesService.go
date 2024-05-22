@@ -1,16 +1,16 @@
 package masteroperationservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 )
 
 type OperationEntriesService interface {
-	GetAllOperationEntries([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetOperationEntriesById(int) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse)
-	GetOperationEntriesName(masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationEntries(masteroperationpayloads.OperationEntriesResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusOperationEntries(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllOperationEntries([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetOperationEntriesById(int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse)
+	GetOperationEntriesName(masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse)
+	SaveOperationEntries(masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusOperationEntries(Id int) (bool, *exceptions.BaseErrorResponse)
 }

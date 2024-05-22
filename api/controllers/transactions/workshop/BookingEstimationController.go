@@ -2,13 +2,14 @@ package transactionworkshopcontroller
 
 import (
 	"after-sales/api/config"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -46,7 +47,7 @@ func NewBookingEstimationController(BookingEstimationService transactionworkshop
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation [get]
 func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -66,7 +67,7 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 
 	paginatedData, totalPages, totalRows, err := r.bookingEstimationService.GetAll(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
 		return
 	}
 
@@ -80,7 +81,7 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation [post]
 func (r *BookingEstimationControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
 	// Create new booking estimation
@@ -93,7 +94,7 @@ func (r *BookingEstimationControllerImpl) New(writer http.ResponseWriter, reques
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/booking [post]
 func (r *BookingEstimationControllerImpl) NewBooking(writer http.ResponseWriter, request *http.Request) {
 	// Create new booking estimation
@@ -106,7 +107,7 @@ func (r *BookingEstimationControllerImpl) NewBooking(writer http.ResponseWriter,
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/affiliated [post]
 func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWriter, request *http.Request) {
 	// Create new booking estimation
@@ -120,7 +121,7 @@ func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWrit
 // @Tags Transaction : Workshop Booking Estimation
 // @Param work_order_system_number path string true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/find/{work_order_system_number} [get]
 func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 	// This function can be implemented to handle transaction-related logic if needed
@@ -135,7 +136,7 @@ func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Tags Transaction : Workshop Booking Estimation
 // @Param reqBody body transactionworkshoppayloads.BookingEstimationRequest true "Booking Estimation Data"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation [put]
 func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
@@ -150,19 +151,14 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	// Panggil fungsi Save dari layanan untuk menyimpan data booking estimation
-	success, err := r.bookingEstimationService.Save(db, bookingEstimationRequest) // Memastikan untuk meneruskan db ke dalam metode Save
-	if err != nil {
+	if err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
 		// Tangani kesalahan dari layanan
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
 	// Kirim respons ke klien sesuai hasil penyimpanan
-	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Failed to save booking estimation", http.StatusInternalServerError)
-	}
+	payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
 }
 
 // Submit submits a new booking estimation
@@ -172,7 +168,7 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Produce json
 // @Tags Transaction : Workshop Booking Estimation
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/submit [post]
 func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
 	// Create new booking estimation
@@ -186,7 +182,7 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 // @Tags Transaction : Workshop Booking Estimation
 // @Param booking_estimation_id path string true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/{booking_estimation_id} [delete]
 func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	// Cancel booking estimation
@@ -200,7 +196,7 @@ func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, reque
 // @Tags Transaction : Workshop Booking Estimation
 // @Param booking_estimation_id path string true "Booking Estimation ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/{booking_estimation_id}/close [put]
 func (r *BookingEstimationControllerImpl) CloseOrder(writer http.ResponseWriter, request *http.Request) {
 	// Close booking estimation

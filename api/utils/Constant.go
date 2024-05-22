@@ -1,6 +1,10 @@
 package utils
 
-// "time"
+import (
+	"errors"
+	"strconv"
+	"time"
+)
 
 // Status
 
@@ -35,21 +39,47 @@ var SessionError string = "Session Invalid, please re-login"
 var MultiLoginError string = "you are already logged in on a different device"
 var PermissionError string = "You don't have permission"
 var PasswordNotMatched string = "Password not matched"
+var ExcelEpoch = time.Date(1899, time.December, 30, 0, 0, 0, 0, time.UTC)
 
 // Etc
 var LikeString string = "%%%s%%"
 
-//	func BoolPtr(b bool) *bool {
-//		return &b
-//	}
+func BoolPtr(b bool) *bool {
+	return &b
+}
 func IntPtr(i int) *int {
 	return &i
 }
-
-// func TimePtr(t time.Time) *time.Time {
-// 	return &t
-// }
+func TimePtr(t time.Time) *time.Time {
+	return &t
+}
 
 func StringPtr(str string) *string {
 	return &str
 }
+
+func RemoveDuplicateIds(arr []int) []int {
+	encountered := make(map[int]bool)
+	result := []int{}
+
+	for _, v := range arr {
+		if !encountered[v] {
+			encountered[v] = true
+			result = append(result, v)
+		}
+	}
+
+	return result
+}
+
+func ExcelDateToDate(excelDate string) time.Time {
+	var days, _ = strconv.ParseFloat(excelDate, 64)
+	return ExcelEpoch.Add(time.Second * time.Duration(days*86400))
+}
+
+// Error
+var ErrIncorrectInput = errors.New(BadRequestError)
+var ErrNotFound = errors.New(GetDataNotFound)
+var ErrConflict = errors.New(DataExists)
+var ErrEntity = errors.New(JsonError)
+var ErrInternalServerError = errors.New(SomethingWrong)

@@ -1,7 +1,7 @@
 package masteritemservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"

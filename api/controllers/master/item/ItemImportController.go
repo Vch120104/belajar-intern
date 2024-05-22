@@ -2,14 +2,15 @@ package masteritemcontroller
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -35,7 +36,7 @@ type ItemImportControllerImpl struct {
 // @Tags Master : Item Import
 // @Param item_import_id path int true "Item Import ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/{item_import_id} [get]
 func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter, request *http.Request) {
 
@@ -44,7 +45,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 	result, err := r.ItemImportService.GetItemImportbyId(itemPackageId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -66,7 +67,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import [get]
 func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -94,7 +95,7 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	paginatedData, totalPages, totalRows, err := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -109,28 +110,28 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 // @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/save [post]
 func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritementities.ItemImport
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	create, err := r.ItemImportService.SaveItemImport(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -145,28 +146,28 @@ func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, re
 // @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/update [put]
 func (r *ItemImportControllerImpl) UpdateItemImport(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritementities.ItemImport
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	create, err := r.ItemImportService.UpdateItemImport(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

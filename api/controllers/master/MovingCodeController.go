@@ -1,15 +1,16 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -36,7 +37,7 @@ func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWr
 	response, err := r.MovingCodeService.ChangeStatusMovingCode(id)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -49,21 +50,21 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	create, err := r.MovingCodeService.CreateMovingCode(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -84,7 +85,7 @@ func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, 
 	paginatedData, totalPages, totalRows, err := r.MovingCodeService.GetAllMovingCode(paginate)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -99,7 +100,7 @@ func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter,
 	result, err := r.MovingCodeService.GetMovingCodebyId(movingCodeId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -112,7 +113,7 @@ func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWr
 	result, err := r.MovingCodeService.PushMovingCodePriority(itemPackageId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -125,21 +126,21 @@ func (r *MovingCodeControllerImpl) UpdateMovingCode(writer http.ResponseWriter, 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
 
 	create, err := r.MovingCodeService.UpdateMovingCode(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

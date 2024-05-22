@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -26,7 +26,7 @@ func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db
 	}
 }
 
-func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetAllItemClass(tx, filterCondition)
@@ -36,7 +36,7 @@ func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCon
 	return results, nil
 }
 
-func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemClassById(tx, Id)
@@ -46,7 +46,7 @@ func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.Item
 	return result, nil
 }
 
-func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -65,7 +65,7 @@ func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassRes
 	return results, nil
 }
 
-func (s *ItemClassServiceImpl) ChangeStatusItemClass(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemClassServiceImpl) ChangeStatusItemClass(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

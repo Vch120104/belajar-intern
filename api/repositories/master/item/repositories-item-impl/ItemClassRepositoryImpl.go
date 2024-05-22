@@ -3,7 +3,7 @@ package masteritemrepositoryimpl
 import (
 	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
@@ -22,7 +22,7 @@ func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
 	return &ItemClassRepositoryImpl{}
 }
 
-func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
 	var responses []masteritempayloads.ItemClassResponse
 	var getLineTypeResponse []masteritempayloads.LineTypeResponse
@@ -62,14 +62,14 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -82,7 +82,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
 	if errUrlItemGroup != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlItemGroup,
 		}
@@ -95,7 +95,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 
 	if errUrlLineType != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlLineType,
 		}
@@ -106,7 +106,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	return joinedDataSecond, nil
 }
 
-func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteritempayloads.ItemClassResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemClass{}
 	response := masteritempayloads.ItemClassResponse{}
 
@@ -117,7 +117,7 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		First(&response).Error
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -128,7 +128,7 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
 
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -148,7 +148,7 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	return response, nil
 }
 
-func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritempayloads.ItemClassResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemClass{
 		IsActive:      request.IsActive,
 		ItemClassId:   request.ItemClassId,
@@ -162,13 +162,13 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritemp
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -178,7 +178,7 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritemp
 	return true, nil
 }
 
-func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemClass
 
 	result := tx.Model(&entities).
@@ -186,7 +186,7 @@ func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(tx *gorm.DB, Id int) (bo
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -201,7 +201,7 @@ func (r *ItemClassRepositoryImpl) ChangeStatusItemClass(tx *gorm.DB, Id int) (bo
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

@@ -1,7 +1,7 @@
 package masteroperationrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,19 +10,19 @@ import (
 )
 
 type OperationModelMappingRepository interface {
-	GetOperationModelMappingById(*gorm.DB, int) (masteroperationpayloads.OperationModelMappingResponse, *exceptionsss_test.BaseErrorResponse)
-	GetOperationModelMappingByBrandModelOperationCode(*gorm.DB, masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptionsss_test.BaseErrorResponse)
-	GetOperationModelMappingLookup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationModelMapping(*gorm.DB, masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusOperationModelMapping(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationModelMappingFrt(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	DeactivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse)
-	ActivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationModelMappingDocumentRequirement(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	DeactivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse)
-	ActivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetAllOperationDocumentRequirement(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetOperationDocumentRequirementById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptionsss_test.BaseErrorResponse)
-	GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetOperationFrtById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptionsss_test.BaseErrorResponse)
+	GetOperationModelMappingById(*gorm.DB, int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse)
+	GetOperationModelMappingByBrandModelOperationCode(*gorm.DB, masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse)
+	GetOperationModelMappingLookup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	SaveOperationModelMapping(*gorm.DB, masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusOperationModelMapping(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
+	SaveOperationModelMappingFrt(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse)
+	DeactivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	ActivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	SaveOperationModelMappingDocumentRequirement(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptions.BaseErrorResponse)
+	DeactivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	ActivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	GetAllOperationDocumentRequirement(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetOperationDocumentRequirementById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse)
+	GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetOperationFrtById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse)
 }

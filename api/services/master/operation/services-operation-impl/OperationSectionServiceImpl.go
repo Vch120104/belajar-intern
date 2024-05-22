@@ -1,8 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	// "after-sales/api/exceptions"
-	exceptionsss_test "after-sales/api/expectionsss"
+	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -31,7 +30,7 @@ func StartOperationSectionService(operationSectionRepo masteroperationrepository
 	}
 }
 
-func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetAllOperationSectionList(tx, filterCondition, pages)
@@ -41,7 +40,7 @@ func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition
 	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetSectionCodeByGroupId(tx, GroupId)
@@ -53,7 +52,7 @@ func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) ([]ma
 	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) (masteroperationpayloads.OperationSectionNameResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) (masteroperationpayloads.OperationSectionNameResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetOperationSectionName(tx, group_id, section_code)
@@ -65,32 +64,38 @@ func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, sect
 	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
 	if req.OperationSectionId != 0 {
 		_, err := s.operationSectionRepo.GetOperationSectionById(tx, req.OperationSectionId)
-
 		if err != nil {
-			return false, err
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Operation section not found",
+			}
 		}
 	}
 
 	if len(req.OperationSectionCode) > 3 {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Message:        "Operation Code max 3 characters",
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Operation Section Code max 3 characters",
 		}
 	}
+
 	results, err := s.operationSectionRepo.SaveOperationSection(tx, req)
 	if err != nil {
-		return results, err
+		return results, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save operation section",
+		}
 	}
 	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) (masteroperationpayloads.OperationSectionListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) (masteroperationpayloads.OperationSectionListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetOperationSectionById(tx, id)
@@ -101,7 +106,7 @@ func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) (masterope
 	return results, nil
 }
 
-func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.ChangeStatusOperationSection(tx, Id)

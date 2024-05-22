@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartOperationModelMappingService(operationModelMappingRepo masteroperation
 	}
 }
 
-func (s *OperationModelMappingServiceImpl) GetOperationModelMappingById(id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetOperationModelMappingById(id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.GetOperationModelMappingById(tx, id)
@@ -37,7 +37,7 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingById(id int) 
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetOperationModelMappingLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetOperationModelMappingLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.operationModelMappingRepo.GetOperationModelMappingLookup(tx, filterCondition, pages)
@@ -47,7 +47,7 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingLookup(filter
 	return results, totalPages, totalRows, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetOperationModelMappingByBrandModelOperationCode(request masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetOperationModelMappingByBrandModelOperationCode(request masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.GetOperationModelMappingByBrandModelOperationCode(tx, request)
@@ -57,7 +57,7 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingByBrandModelO
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) SaveOperationModelMapping(req masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) SaveOperationModelMapping(req masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.SaveOperationModelMapping(tx, req)
@@ -67,7 +67,7 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMapping(req mastero
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) ChangeStatusOperationModelMapping(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) ChangeStatusOperationModelMapping(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.ChangeStatusOperationModelMapping(tx, Id)
@@ -77,7 +77,7 @@ func (s *OperationModelMappingServiceImpl) ChangeStatusOperationModelMapping(Id 
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.SaveOperationModelMappingFrt(tx, request)
@@ -87,7 +87,7 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request 
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.DeactivateOperationFrt(tx, id)
@@ -97,7 +97,7 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bo
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) ActivateOperationFrt(id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) ActivateOperationFrt(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.ActivateOperationFrt(tx, id)
@@ -107,7 +107,7 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationFrt(id string) (bool
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.GetAllOperationDocumentRequirement(tx, id, pages)
@@ -117,7 +117,7 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.GetAllOperationFrt(tx, id, pages)
@@ -127,7 +127,7 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagi
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetOperationDocumentRequirementById(id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetOperationDocumentRequirementById(id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.GetOperationDocumentRequirementById(tx, id)
@@ -137,7 +137,7 @@ func (s *OperationModelMappingServiceImpl) GetOperationDocumentRequirementById(i
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetOperationFrtById(id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetOperationFrtById(id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.GetOperationFrtById(tx, id)
@@ -147,7 +147,7 @@ func (s *OperationModelMappingServiceImpl) GetOperationFrtById(id int) (masterop
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingDocumentRequirement(request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingDocumentRequirement(request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.SaveOperationModelMappingDocumentRequirement(tx, request)
@@ -157,7 +157,7 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingDocumentRequ
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) DeactivateOperationDocumentRequirement(id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) DeactivateOperationDocumentRequirement(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.DeactivateOperationDocumentRequirement(tx, id)
@@ -167,7 +167,7 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationDocumentRequiremen
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) ActivateOperationDocumentRequirement(id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) ActivateOperationDocumentRequirement(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationModelMappingRepo.ActivateOperationDocumentRequirement(tx, id)

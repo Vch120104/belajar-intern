@@ -2,7 +2,7 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"errors"
@@ -19,7 +19,7 @@ func StartPriceListRepositoryImpl() masteritemrepository.PriceListRepository {
 	return &PriceListRepositoryImpl{}
 }
 
-func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.PriceListResponse
 
 	tempRows := tx.
@@ -58,14 +58,14 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request master
 		Rows()
 
 	if err != nil {
-		return responses, &exceptionsss_test.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return responses, &exceptionsss_test.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -76,7 +76,7 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request master
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.PriceListResponse
 	var idMaps = make(map[string][]string)
 
@@ -136,14 +136,14 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 		Rows()
 
 	if err != nil {
-		return responses, &exceptionsss_test.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return responses, &exceptionsss_test.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -161,7 +161,7 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PriceList{}
 	response := masteritempayloads.PriceListResponse{}
 
@@ -173,14 +173,14 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if response != (masteritempayloads.PriceListResponse{}) {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -191,7 +191,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	return response, nil
 }
 
-func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PriceList{
 		IsActive:            request.IsActive,
 		PriceListId:         request.PriceListId,
@@ -212,7 +212,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
@@ -221,7 +221,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 	return true, nil
 }
 
-func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.PriceList
 
 	result := tx.Model(&entities).
@@ -229,7 +229,7 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bo
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -244,7 +244,7 @@ func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bo
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

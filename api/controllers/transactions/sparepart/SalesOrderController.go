@@ -25,7 +25,7 @@ func NewSalesOrderController(salesOrderService transactionsparepartservice.Sales
 // @Tags Transaction : Spare Part Sales Order
 // @Param sales_order_id path int true "Sales Order ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,404 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,404 {object} exceptions.BaseErrorResponse
 // @Router /v1/sales-order/{sales_order_id} [get]
 func (c *SalesOrderController) GetSalesOrderByID(w http.ResponseWriter, r *http.Request) {
 

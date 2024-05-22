@@ -1,16 +1,16 @@
 package masterservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 )
 
 type MovingCodeService interface {
-	GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse)
-	PushMovingCodePriority(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
-	CreateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	UpdateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetMovingCodebyId(Id int) (any, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusMovingCode(Id int) (any, *exceptionsss_test.BaseErrorResponse)
+	GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
+	PushMovingCodePriority(Id int) (bool, *exceptions.BaseErrorResponse)
+	CreateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse)
+	GetMovingCodebyId(Id int) (any, *exceptions.BaseErrorResponse)
+	ChangeStatusMovingCode(Id int) (any, *exceptions.BaseErrorResponse)
 }

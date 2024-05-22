@@ -1,15 +1,16 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -50,7 +51,7 @@ func NewDeductionController(deductionService masterservice.DeductionService) Ded
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/deduction/ [get]
 func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter, request *http.Request) {
 
@@ -72,7 +73,7 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 
 	result, err := r.DeductionService.GetAllDeduction(filterCondition, pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -85,14 +86,14 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 // @Tags Master : Deduction
 // @Param deduction_detail_id path int true "deduction_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/deduction/detail/by-id/{deduction_detail_id} [get]
 func (r *DeductionControllerImpl) GetByIdDeductionDetail(writer http.ResponseWriter, request *http.Request) {
 	DeductionDetailIdstr, _ := strconv.Atoi(chi.URLParam(request, "id"))
 
 	result, err := r.DeductionService.GetByIdDeductionDetail(DeductionDetailIdstr)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -104,7 +105,7 @@ func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, r
 
 	result, err := r.DeductionService.GetDeductionById(DeductionListId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -124,7 +125,7 @@ func (r *DeductionControllerImpl) GetAllDeductionDetail(writer http.ResponseWrit
 
 	result, err := r.DeductionService.GetAllDeductionDetail(DeductionDetailId, pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -138,7 +139,7 @@ func (r *DeductionControllerImpl) GetAllDeductionDetail(writer http.ResponseWrit
 // @Tags Master : Deduction
 // @param reqBody body masterpayloads.DeductionListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/deduction/ [post]
 func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, request *http.Request) {
 	DeductionRequest := masterpayloads.DeductionListResponse{}
@@ -146,17 +147,17 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 
 	err := jsonchecker.ReadFromRequestBody(request, &DeductionRequest)
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
 		return
 	}
 	err = validation.ValidationForm(writer, request, DeductionRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid request"))
 		return
 	}
 	create, err := r.DeductionService.PostDeductionList(DeductionRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	if DeductionRequest.DeductionListId == 0 {
@@ -174,7 +175,7 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 // @Tags Master : Deduction
 // @param reqBody body masterpayloads.DeductionDetailResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/deduction/detail [post]
 func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter, request *http.Request) {
 	DeductionDetailRequest := masterpayloads.DeductionDetailResponse{}
@@ -182,17 +183,17 @@ func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter
 
 	err := jsonchecker.ReadFromRequestBody(request, &DeductionDetailRequest)
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
 		return
 	}
 	err = validation.ValidationForm(writer, request, DeductionDetailRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid request"))
 		return
 	}
 	create, err := r.DeductionService.PostDeductionDetail(DeductionDetailRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	if DeductionDetailRequest.DeductionDetailId == 0 {
@@ -210,14 +211,14 @@ func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter
 // @Tags Master : Deduction
 // @param deduction_list_id path int true "deduction_list_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/deduction/{deduction_list_id} [patch]
 func (r *DeductionControllerImpl) ChangeStatusDeduction(writer http.ResponseWriter, request *http.Request) {
 	DeductionId, _ := strconv.Atoi(chi.URLParam(request, "id"))
 
 	response, err := r.DeductionService.ChangeStatusDeduction(DeductionId)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
