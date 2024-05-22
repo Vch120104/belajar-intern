@@ -4,13 +4,14 @@ import (
 
 	// "after-sales/api/middlewares"
 
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -40,7 +41,7 @@ func NewForecastMasterController(forecastMasterService masterservice.ForecastMas
 // @Tags Master : Forecast Master
 // @Param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/forecast-master/{forecast_master_id} [get]
 func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.ResponseWriter, request *http.Request) {
 
@@ -48,7 +49,7 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 
 	result, err := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -62,7 +63,7 @@ func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.Respons
 // @Tags Master : Forecast Master
 // @param reqBody body masterpayloads.ForecastMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/forecast-master/ [post]
 func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -72,7 +73,7 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 
 	create, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
 	if err != nil {
-		exceptionsss_test.NewConflictException(writer, request, err)
+		exceptions.NewConflictException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -92,7 +93,7 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 // @Tags Master : Forecast Master
 // @param forecast_master_id path int true "forecast_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/forecast-master/{forecast_master_id} [patch]
 func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -100,7 +101,7 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 
 	response, err := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 
@@ -124,7 +125,7 @@ func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.Re
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/forecast-master/ [get]
 
 func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.ResponseWriter, request *http.Request) {
@@ -152,7 +153,7 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	paginatedData, totalPages, totalRows, err := r.ForecastMasterService.GetAllForecastMaster(criteria, paginate)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)

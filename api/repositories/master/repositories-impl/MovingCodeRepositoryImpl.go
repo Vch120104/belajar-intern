@@ -3,7 +3,7 @@ package masterrepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -19,7 +19,7 @@ type MovingCodeRepositoryImpl struct {
 }
 
 // ChangeStatusMovingCode implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) ChangeStatusMovingCode(tx *gorm.DB, Id int) (any, *exceptionsss_test.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) ChangeStatusMovingCode(tx *gorm.DB, Id int) (any, *exceptions.BaseErrorResponse) {
 	var entities masterentities.MovingCode
 
 	result := tx.Model(&entities).
@@ -27,7 +27,7 @@ func (r *MovingCodeRepositoryImpl) ChangeStatusMovingCode(tx *gorm.DB, Id int) (
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -42,7 +42,7 @@ func (r *MovingCodeRepositoryImpl) ChangeStatusMovingCode(tx *gorm.DB, Id int) (
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -52,7 +52,7 @@ func (r *MovingCodeRepositoryImpl) ChangeStatusMovingCode(tx *gorm.DB, Id int) (
 }
 
 // GetMovingCodebyId implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, *exceptionsss_test.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, *exceptions.BaseErrorResponse) {
 	model := masterentities.MovingCode{}
 	responses := masterentities.MovingCode{}
 	companyResponses := masterpayloads.CompanyResponse{}
@@ -60,14 +60,14 @@ func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, 
 	err := tx.Model(&model).First(&responses).Where(masterentities.MovingCode{MovingCodeId: Id}).Error
 
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if responses == (masterentities.MovingCode{}) {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -76,14 +76,14 @@ func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, 
 	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list/" + strconv.Itoa(responses.CompanyId)
 
 	if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
 	if companyResponses == (masterpayloads.CompanyResponse{}) {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -92,7 +92,7 @@ func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, 
 	joinedData := utils.DataFrameInnerJoin([]masterentities.MovingCode{responses}, []masterpayloads.CompanyResponse{companyResponses}, "CompanyId")
 
 	if len(joinedData) == 0 {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -103,7 +103,7 @@ func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, 
 }
 
 // CreateMovingCode implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	//CHECK COMPANY ID
 	companyResponses := masterpayloads.CompanyResponse{}
@@ -111,14 +111,14 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list/" + strconv.Itoa(req.CompanyId)
 
 	if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
 	if companyResponses == (masterpayloads.CompanyResponse{}) {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -131,7 +131,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 	model := masterentities.MovingCode{}
 
 	if err := tx.Model(&model).Count(&priority).Error; err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -155,7 +155,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -165,7 +165,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 }
 
 // GetAllMovingCode implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	model := masterentities.MovingCode{}
 	var responses []masterentities.MovingCode
 	var companyResponses []masterpayloads.CompanyResponse
@@ -173,14 +173,14 @@ func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages paginatio
 	err := tx.Model(&model).Scan(&responses).Error
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -189,7 +189,7 @@ func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages paginatio
 	companyUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list-all"
 
 	if errUrlCompany := utils.Get(companyUrl, &companyResponses, nil); errUrlCompany != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -198,7 +198,7 @@ func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages paginatio
 	joinedData := utils.DataFrameInnerJoin(responses, companyResponses, "CompanyId")
 
 	if len(joinedData) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -211,7 +211,7 @@ func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, pages paginatio
 }
 
 // PushMovingCodePriority implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 
 	currentModel := masterentities.MovingCode{}
 	nextIndexModel := masterentities.MovingCode{}
@@ -221,14 +221,14 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 	err := tx.Model(&currentModel).Where(masterentities.MovingCode{MovingCodeId: Id}).First(&currentModel).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if currentModel.Priority == 1 {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
@@ -239,7 +239,7 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 	err = tx.Model(&currentModel).Where(masterentities.MovingCode{Priority: currentModel.Priority - 1}).First(&nextIndexModel).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -252,7 +252,7 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 	pushPriority := tx.Save(&currentModel)
 
 	if pushPriority.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        pushPriority.Error,
 		}
@@ -265,7 +265,7 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 	decreasePriority := tx.Save(&nextIndexModel)
 
 	if decreasePriority.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        decreasePriority.Error,
 		}
@@ -275,18 +275,18 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 }
 
 // UpdateMovingCode implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	model := masterentities.MovingCode{}
 	if err := tx.Model(&model).Where(masterentities.MovingCode{MovingCodeId: req.MovingCodeId}).First(&model).Error; err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if model == (masterentities.MovingCode{}) {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -309,7 +309,7 @@ func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpaylo
 
 	if err != nil {
 
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}

@@ -1,7 +1,7 @@
 package transactionsparepartserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -25,7 +25,7 @@ func StartSalesOrderService(salesOrderRepo transactionsparepartrepository.SalesO
 	}
 }
 
-func (s *SalesOrderServiceImpl) GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *SalesOrderServiceImpl) GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	value, err := s.salesOrderRepo.GetSalesOrderByID(tx, id)
 	if err != nil {

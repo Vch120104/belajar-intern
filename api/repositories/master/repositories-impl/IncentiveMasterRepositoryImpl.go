@@ -3,8 +3,7 @@ package masterrepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	"after-sales/api/exceptions"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -24,7 +23,7 @@ func StartIncentiveMasterRepositoryImpl() masterrepository.IncentiveMasterReposi
 	return &IncentiveMasterRepositoryImpl{}
 }
 
-func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.IncentiveMasterListResponse
 	var getJobPositionResponse []masterpayloads.JobPositionResponse
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
@@ -60,15 +59,17 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		notFoundErr := exceptions.NewNotFoundError("No data found")
-		panic(notFoundErr)
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No data found",
+		}
 	}
 
 	defer rows.Close()
@@ -78,7 +79,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 	errUrlIncentiveMaster := utils.Get(jobPositionUrl, &getJobPositionResponse, nil)
 
 	if errUrlIncentiveMaster != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -91,7 +92,7 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id int) (masterpayloads.IncentiveMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id int) (masterpayloads.IncentiveMasterResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.IncentiveMaster{}
 	response := masterpayloads.IncentiveMasterResponse{}
 
@@ -103,14 +104,16 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 		Error
 
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("incentive master not found")
-		panic(notFoundErr) // Panik jika 'incentive master' tidak ditemukan
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Incentive Master data not found",
+		}
 	}
 
 	return response, nil
 }
 
-func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.IncentiveMaster{
 		IncentiveLevelId:      request.IncentiveLevelId,
 		IncentiveLevelCode:    request.IncentiveLevelCode,
@@ -125,13 +128,13 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 			// Check for duplicate entry error
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// If it's a duplicate entry error, panic duplicate
-				return false, &exceptionsss_test.BaseErrorResponse{
+				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
 			}
 			// For other errors, return the error
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -142,7 +145,7 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 			Where("incentive_level_id = ?", request.IncentiveLevelId).
 			Updates(entities).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -152,7 +155,7 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 	return true, nil
 }
 
-func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB, Id int) (masterentities.IncentiveMaster, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB, Id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
 	var entities masterentities.IncentiveMaster
 
 	result := tx.Model(&entities).
@@ -161,13 +164,13 @@ func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB,
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return masterentities.IncentiveMaster{}, &exceptionsss_test.BaseErrorResponse{
+			return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        fmt.Errorf("incentive with ID %d not found", Id),
 			}
 		}
 		// Jika ada galat lain, kembalikan galat internal server
-		return masterentities.IncentiveMaster{}, &exceptionsss_test.BaseErrorResponse{
+		return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -178,7 +181,7 @@ func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB,
 	// Simpan perubahan
 	result = tx.Save(&entities)
 	if result.Error != nil {
-		return masterentities.IncentiveMaster{}, &exceptionsss_test.BaseErrorResponse{
+		return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

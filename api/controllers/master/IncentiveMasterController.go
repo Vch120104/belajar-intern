@@ -1,14 +1,14 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
+	exceptions "after-sales/api/exceptions"
+	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -47,7 +47,7 @@ func NewIncentiveMasterController(incentiveMasterService masterservice.Incentive
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive/ [get]
 func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -72,7 +72,7 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 
 	paginatedData, totalPages, totalRows, err := r.IncentiveMasterService.GetAllIncentiveMaster(criteria, paginate)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 // @Tags Master : Incentive Master
 // @Param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive/{incentive_level_id} [get]
 func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request) {
 
@@ -98,7 +98,7 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 
 	result, err := r.IncentiveMasterService.GetIncentiveMasterById(IncentiveLevelIds)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 // @Tags Master : Incentive Master
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
 // @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive/ [post]
 func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -122,7 +122,7 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 
 	create, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -142,7 +142,7 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 // @Tags Master : Incentive Master
 // @param incentive_level_id path int true "incentive_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive/{incentive_level_id} [patch]
 func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
@@ -150,7 +150,7 @@ func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.
 
 	entity, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid incentive_level_id"))
 		return
 	}
 

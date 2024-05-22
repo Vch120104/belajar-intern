@@ -1,16 +1,16 @@
 package masteroperationservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 )
 
 type OperationCodeService interface {
-	GetOperationCodeById(int) (masteroperationpayloads.OperationCodeResponse,*exceptionsss_test.BaseErrorResponse)
-	GetAllOperationCode([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse)
-	SaveOperationCode(masteroperationpayloads.OperationCodeSave) (bool,*exceptionsss_test.BaseErrorResponse)
-	ChangeStatusOperationCode(int) (bool,*exceptionsss_test.BaseErrorResponse)
-	GetOperationCodeByCode(string) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse)
+	GetOperationCodeById(int) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse)
+	GetAllOperationCode([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	SaveOperationCode(masteroperationpayloads.OperationCodeSave) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusOperationCode(int) (bool, *exceptions.BaseErrorResponse)
+	GetOperationCodeByCode(string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse)
 }

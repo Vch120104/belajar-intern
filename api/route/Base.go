@@ -369,7 +369,7 @@ func PurchasePriceRouter(
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
-	router.Get("/detail/all", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
 
@@ -554,7 +554,7 @@ func WarehouseLocationDefinitionRouter(
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
 	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
 	router.Post("/", WarehouseLocationDefinitionController.Save)
-	router.Put("/", WarehouseLocationDefinitionController.SaveData)
+	router.Put("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.SaveData)
 	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 
 	return router
@@ -896,6 +896,7 @@ func WorkOrderRouter(
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
 	router.Get("/dropdown-type", WorkOrderController.NewType)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
+	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)

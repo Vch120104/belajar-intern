@@ -1,12 +1,12 @@
 package transactionsparepartservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 
 	"gorm.io/gorm"
 )
 
 type SalesOrderService interface {
-	GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptionsss_test.BaseErrorResponse)
+	GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptions.BaseErrorResponse)
 }

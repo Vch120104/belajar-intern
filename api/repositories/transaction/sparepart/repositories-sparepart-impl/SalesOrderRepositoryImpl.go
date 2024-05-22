@@ -2,7 +2,7 @@ package transactionsparepartrepositoryimpl
 
 import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 
@@ -18,7 +18,7 @@ func StartSalesOrderRepositoryImpl() transactionsparepartrepository.SalesOrderRe
 	return &SalesOrderRepositoryImpl{}
 }
 
-func (r *SalesOrderRepositoryImpl) GetSalesOrderByID(tx *gorm.DB, Id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *SalesOrderRepositoryImpl) GetSalesOrderByID(tx *gorm.DB, Id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptions.BaseErrorResponse) {
 	entities := transactionsparepartentities.SalesOrder{}
 	response := transactionsparepartpayloads.SalesOrderResponse{}
 
@@ -28,7 +28,7 @@ func (r *SalesOrderRepositoryImpl) GetSalesOrderByID(tx *gorm.DB, Id int) (trans
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}

@@ -1,7 +1,7 @@
 package masteroperationrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,9 +10,9 @@ import (
 )
 
 type OperationEntriesRepository interface {
-	GetAllOperationEntries(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetOperationEntriesById(*gorm.DB, int) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse)
-	GetOperationEntriesName(*gorm.DB, masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationEntries(*gorm.DB, masteroperationpayloads.OperationEntriesResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusOperationEntries(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllOperationEntries(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetOperationEntriesById(*gorm.DB, int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse)
+	GetOperationEntriesName(*gorm.DB, masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse)
+	SaveOperationEntries(*gorm.DB, masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusOperationEntries(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }

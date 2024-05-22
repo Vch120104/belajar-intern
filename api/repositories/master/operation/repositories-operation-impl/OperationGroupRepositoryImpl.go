@@ -2,7 +2,7 @@ package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
@@ -22,7 +22,7 @@ func StartOperationGroupRepositoryImpl() masteroperationrepository.OperationGrou
 	return &OperationGroupRepositoryImpl{}
 }
 
-func (*OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	// entities := []masteroperationentities.OperationGroup{}
 	// //define base model
 	// baseModelQuery := tx.Model(&entities)
@@ -53,14 +53,14 @@ func (*OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCon
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(entities) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -72,14 +72,14 @@ func (*OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCon
 	return pages, nil
 }
 
-func (*OperationGroupRepositoryImpl) GetAllOperationGroupIsActive(tx *gorm.DB) ([]masteroperationpayloads.OperationGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationGroupRepositoryImpl) GetAllOperationGroupIsActive(tx *gorm.DB) ([]masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	var OperationGroups []masteroperationentities.OperationGroup
 	response := []masteroperationpayloads.OperationGroupResponse{}
 
 	err := tx.Model(&OperationGroups).Where("is_active = 'true'").Scan(&response).Error
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -88,7 +88,7 @@ func (*OperationGroupRepositoryImpl) GetAllOperationGroupIsActive(tx *gorm.DB) (
 	return response, nil
 }
 
-func (*OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationGroup{}
 	response := masteroperationpayloads.OperationGroupResponse{}
 
@@ -100,7 +100,7 @@ func (*OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) 
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -111,7 +111,7 @@ func (*OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) 
 	return response, nil
 }
 
-func (*OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code string) (masteroperationpayloads.OperationGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationGroup{}
 	response := masteroperationpayloads.OperationGroupResponse{}
 
@@ -123,7 +123,7 @@ func (*OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code s
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -134,7 +134,7 @@ func (*OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code s
 	return response, nil
 }
 
-func (*OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req masteroperationpayloads.OperationGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req masteroperationpayloads.OperationGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationGroup{
 		IsActive:                  req.IsActive,
 		OperationGroupId:          req.OperationGroupId,
@@ -146,13 +146,13 @@ func (*OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req mastero
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -162,7 +162,7 @@ func (*OperationGroupRepositoryImpl) SaveOperationGroup(tx *gorm.DB, req mastero
 	return true, nil
 }
 
-func (*OperationGroupRepositoryImpl) ChangeStatusOperationGroup(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationGroupRepositoryImpl) ChangeStatusOperationGroup(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteroperationentities.OperationGroup
 
 	result := tx.Model(&entities).
@@ -170,7 +170,7 @@ func (*OperationGroupRepositoryImpl) ChangeStatusOperationGroup(tx *gorm.DB, Id 
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -185,7 +185,7 @@ func (*OperationGroupRepositoryImpl) ChangeStatusOperationGroup(tx *gorm.DB, Id 
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
