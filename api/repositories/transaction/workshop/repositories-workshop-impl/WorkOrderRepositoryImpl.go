@@ -341,6 +341,54 @@ func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppay
 	return getBillables, nil
 }
 
+func (r *WorkOrderRepositoryImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
+	DropPointURL := config.EnvConfigs.GeneralServiceUrl + "company-selection-dropdown"
+	fmt.Println("Fetching Drop Point data from:", DropPointURL)
+
+	var getDropPoints []transactionworkshoppayloads.WorkOrderDropPoint
+	if err := utils.Get(DropPointURL, &getDropPoints, nil); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch drop point data from external service",
+			Err:        err,
+		}
+	}
+
+	return getDropPoints, nil
+}
+
+func (r *WorkOrderRepositoryImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
+	VehicleBrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand-dropdown"
+	fmt.Println("Fetching Vehicle Brand data from:", VehicleBrandURL)
+
+	var getVehicleBrands []transactionworkshoppayloads.WorkOrderVehicleBrand
+	if err := utils.Get(VehicleBrandURL, &getVehicleBrands, nil); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch vehicle brand data from external service",
+			Err:        err,
+		}
+	}
+
+	return getVehicleBrands, nil
+}
+
+func (r *WorkOrderRepositoryImpl) NewVehicleModel(tx *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
+	VehicleModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model-dropdown/" + strconv.Itoa(brandId)
+	fmt.Println("Fetching Vehicle Model data from:", VehicleModelURL)
+
+	var getVehicleModels []transactionworkshoppayloads.WorkOrderVehicleModel
+	if err := utils.Get(VehicleModelURL, &getVehicleModels, nil); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch vehicle model data from external service",
+			Err:        err,
+		}
+	}
+
+	return getVehicleModels, nil
+}
+
 func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("id = ?", Id).First(&entity).Error

@@ -2,6 +2,7 @@ package helper
 
 import (
 	"after-sales/api/exceptions"
+	"errors"
 	"net/http"
 )
 
@@ -28,4 +29,12 @@ func ReturnError(writer http.ResponseWriter, request *http.Request, err *excepti
 	default:
 		exceptions.NewAppException(writer, request, err.Err)
 	}
+}
+
+// ConvertBaseErrorResponseToError converts a BaseErrorResponse to a standard error
+func ConvertBaseErrorResponseToError(baseErr *exceptions.BaseErrorResponse) error {
+	if baseErr == nil {
+		return nil
+	}
+	return errors.New(baseErr.Message)
 }

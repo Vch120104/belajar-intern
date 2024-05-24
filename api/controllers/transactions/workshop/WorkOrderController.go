@@ -3,14 +3,18 @@ package transactionworkshopcontroller
 import (
 	"after-sales/api/config"
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
-	"after-sales/api/utils"
+	utils "after-sales/api/utils"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type WorkOrderControllerImpl struct {
@@ -25,6 +29,9 @@ type WorkOrderController interface {
 	NewStatus(writer http.ResponseWriter, request *http.Request)
 	NewType(writer http.ResponseWriter, request *http.Request)
 	NewBill(writer http.ResponseWriter, request *http.Request)
+	NewDropPoint(writer http.ResponseWriter, request *http.Request)
+	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
+	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
 	VehicleLookup(writer http.ResponseWriter, request *http.Request)
 	CampaignLookup(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
@@ -113,12 +120,11 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 	// Panggil fungsi New dari layanan untuk mengisi data work order baru
 	Create, err := r.WorkOrderService.New(db)
 	if err != nil {
-		// Menangani kesalahan dari layanan
+
 		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
-	// Kirim respons ke klien sesuai dengan hasil pengambilan status
 	payloads.NewHandleSuccess(writer, Create, "work order created", http.StatusCreated)
 
 }
@@ -165,13 +171,16 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewStatus(db)
 	if err != nil {
-		// Menangani kesalahan dari layanan
+
 		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
-	// Kirim respons ke klien sesuai dengan hasil pengambilan status
-	payloads.NewHandleSuccess(writer, statuses, "List of work order statuses", http.StatusOK)
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of work order statuses", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // NewBill gets the bill of new work orders
@@ -190,13 +199,16 @@ func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *h
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewBill(db)
 	if err != nil {
-		// Menangani kesalahan dari layanan
+
 		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
-	// Kirim respons ke klien sesuai dengan hasil pengambilan status
-	payloads.NewHandleSuccess(writer, statuses, "List of work order bill able to", http.StatusOK)
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of work order bill able to", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // NewType gets the types of new work orders
@@ -215,13 +227,105 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewType(db)
 	if err != nil {
-		// Menangani kesalahan dari layanan
+
 		exceptions.NewAppException(writer, request, errors.New(err.Message))
 		return
 	}
 
-	// Kirim respons ke klien sesuai dengan hasil pengambilan status
-	payloads.NewHandleSuccess(writer, statuses, "List of work order type", http.StatusOK)
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of work order type", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// NewDropPoint gets the drop points of new work orders
+// @Summary Get Work Order Drop Points
+// @Description Retrieve all work order drop points
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-drop-point [get]
+func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
+
+	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
+	statuses, err := r.WorkOrderService.NewDropPoint(db)
+	if err != nil {
+
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		return
+	}
+
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of work order drop point", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// NewVehicleBrand gets the vehicle brands of new work orders
+// @Summary Get Work Order Vehicle Brands
+// @Description Retrieve all work order vehicle brands
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-vehicle-brand [get]
+func (r *WorkOrderControllerImpl) NewVehicleBrand(writer http.ResponseWriter, request *http.Request) {
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
+
+	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
+	statuses, err := r.WorkOrderService.NewVehicleBrand(db)
+	if err != nil {
+
+		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		return
+	}
+
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of work order vehicle brand", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// NewVehicleModel gets the vehicle models of new work orders
+// @Summary Get Work Order Vehicle Models Based Brand ID
+// @Description Retrieve all work order vehicle models based brand ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param brand_id query string true "Brand ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-vehicle-model/{brand_id} [get]
+func (r *WorkOrderControllerImpl) NewVehicleModel(writer http.ResponseWriter, request *http.Request) {
+	brandIdStr := chi.URLParam(request, "brand_id")
+	brandId, err := strconv.Atoi(brandIdStr)
+	if err != nil {
+		exceptions.NewAppException(writer, request, errors.New("invalid brand ID"))
+		return
+	}
+
+	db := config.InitDB()
+	create, baseErr := r.WorkOrderService.NewVehicleModel(db, brandId)
+	if baseErr != nil {
+		err := helper.ConvertBaseErrorResponseToError(baseErr)
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if len(create) > 0 {
+		payloads.NewHandleSuccess(writer, create, "List of work order vehicle model", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // VehicleLookup looks up vehicles

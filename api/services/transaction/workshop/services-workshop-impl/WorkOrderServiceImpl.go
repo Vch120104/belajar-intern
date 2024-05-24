@@ -92,6 +92,30 @@ func (s *WorkOrderServiceImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloa
 	return bills, nil
 }
 
+func (s *WorkOrderServiceImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
+	dropPoints, err := s.structWorkOrderRepo.NewDropPoint(tx)
+	if err != nil {
+		return nil, err
+	}
+	return dropPoints, nil
+}
+
+func (s *WorkOrderServiceImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
+	brands, err := s.structWorkOrderRepo.NewVehicleBrand(tx)
+	if err != nil {
+		return nil, err
+	}
+	return brands, nil
+}
+
+func (s *WorkOrderServiceImpl) NewVehicleModel(tx *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
+	models, err := s.structWorkOrderRepo.NewVehicleModel(tx, brandId)
+	if err != nil {
+		return nil, err
+	}
+	return models, nil
+}
+
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
