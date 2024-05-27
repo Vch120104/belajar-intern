@@ -119,6 +119,7 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 		IncentiveLevelCode:    request.IncentiveLevelCode,
 		JobPositionId:         request.JobPositionId,
 		IncentiveLevelPercent: request.IncentiveLevelPercent,
+		IsActive:              request.IsActive,
 	}
 
 	if request.IncentiveLevelId == 0 {

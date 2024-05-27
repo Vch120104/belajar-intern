@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -120,18 +121,46 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 	var message string
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+	// Validasi input
+	err := validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		// Gunakan pesan kesalahan dari err
+		exceptions.NewBadRequestException(writer, request, errors.New("form not valid"))
 		return
 	}
 
+	// Simpan atau perbarui data
+	var create bool
+	var errResp *exceptions.BaseErrorResponse
+	var httpStatus int // Definisikan variabel httpStatus di sini
+
 	if formRequest.IncentiveLevelId == 0 {
+		create, errResp = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+		if errResp != nil {
+			exceptions.NewBadRequestException(writer, request, errResp.Err)
+			return
+		}
 		message = "Create Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
+		// Set status code to http.StatusCreated (201) for creation
+		httpStatus = http.StatusCreated
 	} else {
+		// Jika ID tidak 0, ini adalah operasi pembaruan
+		create, errResp = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+		if errResp != nil {
+			exceptions.NewBadRequestException(writer, request, errResp.Err)
+			return
+		}
 		message = "Update Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+		// Set status code to http.StatusOK (200) for update
+		httpStatus = http.StatusOK
+	}
+
+	// Tanggapan berhasil
+	if create {
+		payloads.NewHandleSuccess(writer, create, message, httpStatus)
+	} else {
+		// Jika gagal membuat atau memperbarui data
+		exceptions.NewBadRequestException(writer, request, errors.New("failed to create or update data"))
 	}
 }
 
