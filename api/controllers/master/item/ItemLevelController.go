@@ -3,7 +3,7 @@ package masteritemcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"after-sales/api/validation"

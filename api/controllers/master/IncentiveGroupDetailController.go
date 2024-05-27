@@ -1,20 +1,15 @@
 package mastercontroller
 
 import (
+	"after-sales/api/exceptions"
 	"after-sales/api/helper"
-	masterpayloads "after-sales/api/payloads/master"
-
-	// masterrepository "after-sales/api/repositories/master"
-	exceptions "after-sales/api/exceptions"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-
-	// "after-sales/api/middlewares"
-
 	"net/http"
 	"strconv"
 
