@@ -889,10 +889,15 @@ func WorkOrderRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
+	//header
 	router.Get("/", WorkOrderController.GetAll)
+
+	//add trx
 	router.Post("/normal", WorkOrderController.New)
 	router.Post("/normalbooking", WorkOrderController.NewBooking)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+
+	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
 	router.Get("/dropdown-type", WorkOrderController.NewType)
 	router.Get("/dropdown-bill", WorkOrderController.NewBill)
@@ -901,6 +906,8 @@ func WorkOrderRouter(
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
+
+	// trx header
 	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
 	router.Put("/{id}", WorkOrderController.Save)
 	router.Post("/submit", WorkOrderController.Submit)
