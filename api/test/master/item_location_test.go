@@ -175,6 +175,10 @@ func TestGetItemLocationById(t *testing.T) {
 
 	responseData := masteritempayloads.ItemLocationDetailResponse{
 		// Sesuaikan dengan data yang diharapkan
+		ItemLocationDetailId: 1,
+		ItemLocationId:       1,
+		ItemId:               1,
+		ItemLocationSourceId: 1,
 	}
 	mockService := new(MockItemLocationService)
 	mockService.On("GetItemLocationById", id).
@@ -239,6 +243,10 @@ func TestAddItemLocation_Success(t *testing.T) {
 	itemLocID := 1 // Ganti dengan ID yang sesuai
 	payload := masteritempayloads.ItemLocationDetailRequest{
 		// Sesuaikan dengan payload yang sesuai
+		ItemLocationDetailId: 1,
+		ItemLocationId:       1,
+		ItemId:               1,
+		ItemLocationSourceId: 1,
 	}
 
 	mockService := new(MockItemLocationService)
