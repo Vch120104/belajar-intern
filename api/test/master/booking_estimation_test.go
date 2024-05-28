@@ -11,14 +11,18 @@ import (
 )
 
 func TestSaveBookingEstimation(t *testing.T) {
+	// Initialize environment configurations
 	config.InitEnvConfigs(true, "")
+
+	// Initialize the repository and service
 	bookingEstimationRepo := transactionworkshoprepositoryimpl.OpenBookingEstimationRepositoryImpl()
 	bookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(bookingEstimationRepo, nil, nil)
 
-	// objek *gorm.DB dari manajer koneksi database
+	// Initialize the database connection
 	db := config.InitDB()
 
-	err := bookingEstimationService.Save(db, transactionworkshoppayloads.BookingEstimationRequest{
+	// Create a request object for booking estimation
+	request := transactionworkshoppayloads.BookingEstimationRequest{
 		BatchSystemNumber:              1,
 		BookingSystemNumber:            1,
 		BrandId:                        1,
@@ -48,14 +52,17 @@ func TestSaveBookingEstimation(t *testing.T) {
 		InsuranceExpiredDate:           time.Now(),
 		InsuranceClaimNo:               "TEST1",
 		InsurancePic:                   "TEST",
-	})
+	}
 
+	// Call the Save method and capture the return values
+	result, err := bookingEstimationService.Save(db, request)
+
+	// Check if there was an error
 	if err != nil {
-		// Handle the error
 		t.Errorf("Error saving booking estimation: %v", err)
 		return
 	}
 
-	// No error, test passed
-	fmt.Println("Booking estimation saved successfully")
+	// Print the result for debugging purposes
+	fmt.Println("Booking estimation saved successfully:", result)
 }

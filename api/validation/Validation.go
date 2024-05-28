@@ -43,8 +43,8 @@ func translateError(err error, trans ut.Translator) (errs []error) {
 
 func ValidationForm(writer http.ResponseWriter, request *http.Request, form interface{}) *exceptions.BaseErrorResponse {
 	err := validate.Struct(form)
+	var msg string
 	if err != nil {
-		var msg string
 		for _, err := range err.(validator.ValidationErrors) {
 			switch err.Tag() {
 			case "required":
@@ -61,20 +61,20 @@ func ValidationForm(writer http.ResponseWriter, request *http.Request, form inte
 				msg = err.Translate(trans)
 			}
 		}
-
-		if msg != "" {
-			return &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    msg,
-				Err:        errors.New(msg),
-			}
-		} else {
-			errorMsg := fmt.Sprintf("%v ", translateError(err, trans))
-			return &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Message:    errorMsg,
-				Err:        errors.New(errorMsg),
-			}
+	}
+	if msg != "" {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    msg,
+			Err:        errors.New(msg),
+		}
+	} else if err != nil {
+		errorMsg := fmt.Sprintf("%v ", translateError(err, trans))
+		fmt.Println(err, " ++")
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    errorMsg,
+			Err:        errors.New(errorMsg),
 		}
 	}
 

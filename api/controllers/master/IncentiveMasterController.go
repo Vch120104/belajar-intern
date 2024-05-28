@@ -2,14 +2,13 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -125,19 +124,18 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 	err := validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
 		// Gunakan pesan kesalahan dari err
-		exceptions.NewBadRequestException(writer, request, errors.New("form not valid"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	// Simpan atau perbarui data
 	var create bool
-	var errResp *exceptions.BaseErrorResponse
 	var httpStatus int // Definisikan variabel httpStatus di sini
 
 	if formRequest.IncentiveLevelId == 0 {
-		create, errResp = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
-		if errResp != nil {
-			exceptions.NewBadRequestException(writer, request, errResp.Err)
+		create, err = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+		if err != nil {
+			exceptions.NewBadRequestException(writer, request, err)
 			return
 		}
 		message = "Create Data Successfully!"
@@ -145,9 +143,9 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 		httpStatus = http.StatusCreated
 	} else {
 		// Jika ID tidak 0, ini adalah operasi pembaruan
-		create, errResp = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
-		if errResp != nil {
-			exceptions.NewBadRequestException(writer, request, errResp.Err)
+		create, err = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+		if err != nil {
+			exceptions.NewBadRequestException(writer, request, err)
 			return
 		}
 		message = "Update Data Successfully!"
@@ -160,7 +158,7 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 		payloads.NewHandleSuccess(writer, create, message, httpStatus)
 	} else {
 		// Jika gagal membuat atau memperbarui data
-		exceptions.NewBadRequestException(writer, request, errors.New("failed to create or update data"))
+		exceptions.NewBadRequestException(writer, request, err)
 	}
 }
 
@@ -179,7 +177,7 @@ func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.
 
 	entity, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid incentive_level_id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

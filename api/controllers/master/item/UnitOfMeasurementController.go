@@ -2,7 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -10,7 +10,6 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -72,7 +71,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -92,7 +91,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -114,7 +113,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 	result, err := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(uomCode)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -137,13 +136,13 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -179,7 +178,7 @@ func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer h
 	response, err := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
