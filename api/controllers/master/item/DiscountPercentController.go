@@ -2,7 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -10,7 +10,6 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -74,7 +73,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -97,7 +96,7 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 	result, err := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -120,12 +119,12 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("entity Not Found"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid Data"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -161,7 +160,7 @@ func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.
 	response, err := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

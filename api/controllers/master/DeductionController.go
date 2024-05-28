@@ -1,8 +1,8 @@
 package mastercontroller
 
 import (
-	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -10,7 +10,6 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -147,12 +146,12 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 
 	err := jsonchecker.ReadFromRequestBody(request, &DeductionRequest)
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, DeductionRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.DeductionService.PostDeductionList(DeductionRequest)
@@ -183,12 +182,12 @@ func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter
 
 	err := jsonchecker.ReadFromRequestBody(request, &DeductionDetailRequest)
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, DeductionDetailRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.DeductionService.PostDeductionDetail(DeductionDetailRequest)
@@ -218,7 +217,7 @@ func (r *DeductionControllerImpl) ChangeStatusDeduction(writer http.ResponseWrit
 
 	response, err := r.DeductionService.ChangeStatusDeduction(DeductionId)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

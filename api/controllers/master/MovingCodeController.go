@@ -2,7 +2,7 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -10,7 +10,6 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -50,14 +49,14 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -126,14 +125,14 @@ func (r *MovingCodeControllerImpl) UpdateMovingCode(writer http.ResponseWriter, 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

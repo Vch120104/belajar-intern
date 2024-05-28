@@ -122,9 +122,10 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempaylo
 		Error
 
 	if err != nil {
+		// notFoundErr := exceptions.NewNotFoundError("Bom master not found")
 		return masteritempayloads.BomMasterRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "Bom master not found",
+			Err:        err,
 		}
 	}
 
@@ -267,9 +268,10 @@ func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritemp
 		Where("bom.bom_master_id = ?", id).
 		Find(&responses).Error
 	if err != nil {
+		// notFoundErr := exceptions.NewNotFoundError("Bom master not found")
 		return []masteritempayloads.BomDetailListResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "Bom master not found",
+			Err:        err,
 		}
 	}
 	// Mengembalikan response
@@ -290,9 +292,10 @@ func (r *BomRepositoryImpl) GetBomDetailByIds(tx *gorm.DB, id int) ([]masteritem
 		Where("det.bom_detail_id = ?", id).
 		Find(&responses).Error
 	if err != nil {
+		// notFoundErr := exceptions.NewNotFoundError("Bom detail not found")
 		return []masteritempayloads.BomDetailListResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "Bom detail not found",
+			Err:        err,
 		}
 	}
 	// Mengembalikan response

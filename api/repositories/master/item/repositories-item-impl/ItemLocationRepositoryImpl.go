@@ -281,9 +281,10 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 
 	// Check if responses are empty
 	if len(responses) == 0 {
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    " data not found",
+			Err:        err,
 		}
 	}
 

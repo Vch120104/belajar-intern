@@ -77,12 +77,12 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *BookingEstimationImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (*exceptions.BaseErrorResponse, error) {
+func (r *BookingEstimationImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Create a new instance of WorkOrderRepositoryImpl
 	// Save the booking estimation
 	success, err := r.Save(tx, request) // Menggunakan method Save dari receiver saat ini, yaitu r
 	if err != nil {
-		return &exceptions.BaseErrorResponse{Message: "Failed to save booking estimation"}, err
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save booking estimation"}
 	}
 
 	return success, nil
@@ -101,7 +101,7 @@ func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (transactionworksho
 	return payload, nil
 }
 
-func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (*exceptions.BaseErrorResponse, error) {
+func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	var bookingEstimationEntities = transactionworkshopentities.BookingEstimation{
 		// Assign fields from request
 	}
@@ -109,12 +109,12 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 	// Create a new record
 	err := tx.Create(&bookingEstimationEntities).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-		}, err
+		}
 	}
-	return nil, nil
+	return true, nil
 }
 
 func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {

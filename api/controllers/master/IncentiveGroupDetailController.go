@@ -1,21 +1,15 @@
 package mastercontroller
 
 import (
-	masterpayloads "after-sales/api/payloads/master"
-	"errors"
-
-	// masterrepository "after-sales/api/repositories/master"
-	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-
-	// "after-sales/api/middlewares"
-
 	"net/http"
 	"strconv"
 
@@ -87,12 +81,12 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 
 	err := jsonchecker.ReadFromRequestBody(request, &incentiveGroupDetailRequest)
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, incentiveGroupDetailRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.IncentiveGroupDetailService.SaveIncentiveGroupDetail(incentiveGroupDetailRequest)
@@ -123,7 +117,10 @@ func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer 
 	// IncentiveGrouDetailId, _ := strconv.Atoi(params.ByName("incentive_group_detail_id"))
 	IncentiveGrouDetailId, err := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid incentive_group_detail_id"))
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+			Err: err,
+		})
+		return
 	}
 	IncentiveGroupDetailResponse, errors := r.IncentiveGroupDetailService.GetIncentiveGroupDetailById(IncentiveGrouDetailId)
 

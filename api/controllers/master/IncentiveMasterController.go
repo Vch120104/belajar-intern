@@ -2,13 +2,12 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -150,7 +149,7 @@ func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.
 
 	entity, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid incentive_level_id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

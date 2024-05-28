@@ -2,8 +2,6 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"errors"
-
 	// "after-sales/api/helper"
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -137,12 +135,12 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 
 	err := jsonchecker.ReadFromRequestBody(request, &IncentiveGroupRequest)
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, IncentiveGroupRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.IncentiveGroupService.SaveIncentiveGroup(IncentiveGroupRequest)
@@ -187,14 +185,14 @@ func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.Response
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

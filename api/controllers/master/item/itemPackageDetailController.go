@@ -2,7 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -10,7 +10,6 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -129,14 +128,14 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -165,14 +164,14 @@ func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetailByItemPackageId
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

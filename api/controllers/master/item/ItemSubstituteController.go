@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"errors"
 
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -186,7 +185,7 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstitute(writer http.ResponseWr
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -224,7 +223,7 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

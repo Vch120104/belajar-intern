@@ -2,14 +2,13 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -27,6 +26,7 @@ type MarkupRateController interface {
 	GetMarkupRateByID(writer http.ResponseWriter, request *http.Request)
 	SaveMarkupRate(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request)
+	GetMarkupRateByMarkupMasterAndOrderType(writer http.ResponseWriter, request *http.Request)
 }
 type MarkupRateControllerImpl struct {
 	MarkupRateService masteritemservice.MarkupRateService
@@ -79,7 +79,7 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 	paginatedData, totalPages, totalRows, err := r.MarkupRateService.GetAllMarkupRate(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter,
 	result, err := r.MarkupRateService.GetMarkupRateById(markupRateId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -125,12 +125,12 @@ func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, re
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity request"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -166,9 +166,24 @@ func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWr
 	response, err := r.MarkupRateService.ChangeStatusMarkupRate(int(markupRateId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *MarkupRateControllerImpl) GetMarkupRateByMarkupMasterAndOrderType(writer http.ResponseWriter, request *http.Request) {
+
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+	orderTypeId, _ := strconv.Atoi(chi.URLParam(request, "order_type_id"))
+
+	result, err := r.MarkupRateService.GetMarkupRateByMarkupMasterAndOrderType(markupMasterId, orderTypeId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
