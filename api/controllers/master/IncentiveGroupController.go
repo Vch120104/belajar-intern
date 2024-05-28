@@ -1,10 +1,10 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	// "after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -60,7 +60,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroup(writer http.Response
 	filterCondition := utils.BuildFilterCondition(queryParams)
 	result, err := r.IncentiveGroupService.GetAllIncentiveGroup(filterCondition, pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 
 	result, err := r.IncentiveGroupService.GetAllIncentiveGroupIsActive()
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.Respons
 	incentiveGroupResponse, errors := r.IncentiveGroupService.GetIncentiveGroupById(incentiveGroupId)
 
 	if errors != nil {
-		helper_test.ReturnError(writer, request, errors)
+		helper.ReturnError(writer, request, errors)
 		return
 	}
 	payloads.NewHandleSuccess(writer, incentiveGroupResponse, utils.GetDataSuccess, http.StatusOK)
@@ -95,17 +95,17 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 
 	err := jsonchecker.ReadFromRequestBody(request, &IncentiveGroupRequest)
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, IncentiveGroupRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.IncentiveGroupService.SaveIncentiveGroup(IncentiveGroupRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.Re
 
 	response, err := r.IncentiveGroupService.ChangeStatusIncentiveGroup(int(IncentiveGroupId))
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -137,21 +137,21 @@ func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.Response
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.IncentiveGroupService.UpdateIncentiveGroup(formRequest, incentiveGroupId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupDropDown(writer http.
 
 	result, err := r.IncentiveGroupService.GetAllIncentiveGroupDropDown()
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
