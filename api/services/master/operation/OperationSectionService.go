@@ -1,7 +1,7 @@
 package masteroperationservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -9,10 +9,10 @@ import (
 )
 
 type OperationSectionService interface {
-	GetAllOperationSectionList([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetOperationSectionById(int) (masteroperationpayloads.OperationSectionListResponse, *exceptionsss_test.BaseErrorResponse)
-	GetSectionCodeByGroupId(int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptionsss_test.BaseErrorResponse)
-	GetOperationSectionName(int, string) (masteroperationpayloads.OperationSectionNameResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationSection(masteroperationpayloads.OperationSectionRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusOperationSection(int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllOperationSectionList([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetOperationSectionById(int) (masteroperationpayloads.OperationSectionListResponse, *exceptions.BaseErrorResponse)
+	GetSectionCodeByGroupId(int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptions.BaseErrorResponse)
+	GetOperationSectionName(int, string) (masteroperationpayloads.OperationSectionNameResponse, *exceptions.BaseErrorResponse)
+	SaveOperationSection(masteroperationpayloads.OperationSectionRequest) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusOperationSection(int) (bool, *exceptions.BaseErrorResponse)
 }

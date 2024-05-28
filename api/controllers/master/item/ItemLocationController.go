@@ -1,9 +1,8 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -46,7 +45,7 @@ func NewItemLocationController(ItemLocationService masteritemservice.ItemLocatio
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location/popup-location [get]
 func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -68,7 +67,7 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.PopupItemLocation(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -86,7 +85,7 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -107,11 +106,15 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocation(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Save Item Location
@@ -119,9 +122,9 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 // @Accept json
 // @Produce json
 // @Tags Master : Item Location
-// @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
+// @param reqBody body masteritempayloads.ItemLocationRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location [post]
 func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter, request *http.Request) {
 
@@ -131,16 +134,17 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 
 	create, err := r.ItemLocationService.SaveItemLocation(formRequest)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.ItemLocationId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Get Item Location By ID
@@ -150,7 +154,7 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 // @Tags Master : Item Location
 // @Param item_location_id path int true "item_location_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location/{item_location_id} [get]
 func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWriter, request *http.Request) {
 
@@ -158,7 +162,7 @@ func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWri
 
 	result, err := r.ItemLocationService.GetItemLocationById(ItemLocationIds)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -177,7 +181,7 @@ func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWri
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location/detail/all [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -203,12 +207,16 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocationDetail(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
 	// Construct the response
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Save Item Location Detail
@@ -219,7 +227,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Param item_location_id path int true "Item Location Detail ID"
 // @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location/{item_location_id}/detail [post]
 func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter, request *http.Request) {
 	itemLocID, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
@@ -228,11 +236,11 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 	helper.ReadFromRequestBody(request, &formRequest)
 
 	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
-		exceptionsss_test.NewAppException(writer, request, err)
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Item Location By ID
@@ -242,7 +250,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 // @Tags Master : Item Location
 // @Param item_location_detail_id path int true "item_location_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location/all/detail/{item_location_detail_id} [delete]
 func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
@@ -256,7 +264,7 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 	// Memanggil service untuk menghapus item lokasi
 	if deleteErr := r.ItemLocationService.DeleteItemLocation(itemLocationID); deleteErr != nil {
 		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptionsss_test.NewNotFoundException(writer, request, deleteErr)
+		exceptions.NewNotFoundException(writer, request, deleteErr)
 		return
 	}
 

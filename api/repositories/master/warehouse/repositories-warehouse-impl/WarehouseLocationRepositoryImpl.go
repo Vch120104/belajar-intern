@@ -2,7 +2,7 @@ package masterwarehouserepositoryimpl
 
 import (
 	// masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
@@ -28,7 +28,7 @@ func OpenWarehouseLocationImpl() masterwarehouserepository.WarehouseLocationRepo
 	return &WarehouseLocationImpl{}
 }
 
-func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseLocationResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseLocationResponse) (bool, *exceptions.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseLocation{
 		IsActive:                      utils.BoolPtr(request.IsActive),
@@ -46,13 +46,13 @@ func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehousepayload
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -62,7 +62,7 @@ func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehousepayload
 	return true, nil
 }
 
-func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
 
 	var entities masterwarehouseentities.WarehouseLocation
 	var warehouseLocationResponse masterwarehousepayloads.GetWarehouseLocationResponse
@@ -76,7 +76,7 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 		Rows()
 
 	if err != nil {
-		return warehouseLocationResponse, &exceptionsss_test.BaseErrorResponse{
+		return warehouseLocationResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -87,7 +87,7 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 	return warehouseLocationResponse, nil
 }
 
-func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []masterwarehouseentities.WarehouseLocation
 	var warehouseLocationResponse []masterwarehousepayloads.GetAllWarehouseLocationResponse
 
@@ -111,7 +111,7 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, request masterwarehousepaylo
 		Rows()
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -123,7 +123,7 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, request masterwarehousepaylo
 	return pages, nil
 }
 
-func (r *WarehouseLocationImpl) ChangeStatus(tx *gorm.DB, warehouseLocationId int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarehouseLocationImpl) ChangeStatus(tx *gorm.DB, warehouseLocationId int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseLocation
 	var warehouseLocationPayloads masterwarehousepayloads.GetWarehouseLocationResponse
 
@@ -149,7 +149,7 @@ func (r *WarehouseLocationImpl) ChangeStatus(tx *gorm.DB, warehouseLocationId in
 		Rows()
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}

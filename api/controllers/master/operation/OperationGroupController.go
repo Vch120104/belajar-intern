@@ -1,11 +1,11 @@
 package masteroperationcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/validation"
 
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -50,7 +50,7 @@ func NewOperationGroupController(operationGroupService masteroperationservice.Op
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/ [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -73,7 +73,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 
 	result, err := r.OperationGroupService.GetAllOperationGroup(filterCondition, pagination)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -85,13 +85,13 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Produce json
 // @Tags Master : Operation Group
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/drop-down [get]
 func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.OperationGroupService.GetAllOperationGroupIsActive()
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -104,7 +104,7 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.
 // @Tags Master : Operation Group
 // @Param operation_group_code path string true "operation_group_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/by-code/{operation_group_code} [get]
 func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request) {
 
@@ -112,7 +112,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.Respo
 
 	result, err := r.OperationGroupService.GetOperationGroupByCode(operationGroupCode)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -125,7 +125,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.Respo
 // @Tags Master : Operation Group
 // @param reqBody body masteroperationpayloads.OperationGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/ [post]
 func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -134,19 +134,19 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 	var message = ""
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.OperationGroupService.SaveOperationGroup(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -166,7 +166,7 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 // @Tags Master : Operation Group
 // @param operation_group_id path int true "operation_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/{operation_group_id} [patch]
 func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -175,7 +175,7 @@ func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.Re
 	response, err := r.OperationGroupService.ChangeStatusOperationGroup(int(operationGroupId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

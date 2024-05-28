@@ -1,68 +1,150 @@
 package exceptions
 
 import (
-	"encoding/json"
+	jsonresponse "after-sales/api/helper/json/json-response"
+	"after-sales/api/utils"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
+// BaseErrorResponse defines the general error response structure
 type BaseErrorResponse struct {
 	StatusCode int         `json:"status_code"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data"`
-	Err        string      `json:"error"`
+	Err        error       `json:"-"`
 }
 
-func ErrorHandler(writer http.ResponseWriter, err interface{}) {
-	baseError := &BaseErrorResponse{}
-	switch e := err.(type) {
-	case BadRequestError:
-		baseError.StatusCode = http.StatusBadRequest
-		baseError.Message = "Bad Request"
-		baseError.Data = e.Error
-		baseError.Err = "Bad request error"
-	case NoContentError:
-		baseError.StatusCode = http.StatusNoContent
-		baseError.Message = "Data Not Found"
-		baseError.Data = e.Error
-		baseError.Err = "No content error"
-	case AuthorizationError:
-		baseError.StatusCode = http.StatusUnauthorized
-		baseError.Message = "You don't have permission"
-		baseError.Data = e.Error
-		baseError.Err = "Authorization error"
-	case ConflictError:
-		baseError.StatusCode = http.StatusConflict
-		baseError.Message = "Data Already Exists"
-		baseError.Data = e.Error
-		baseError.Err = "Conflict error"
-	case EntityError:
-		baseError.StatusCode = http.StatusUnprocessableEntity
-		baseError.Message = "Data Error, please check your input"
-		baseError.Data = e.Error
-		baseError.Err = "Entity error"
-	case NotFoundError:
-		baseError.StatusCode = http.StatusNotFound
-		baseError.Message = "Data Not Found"
-		baseError.Data = e.Error
-		baseError.Err = "Not found error"
-	case AppExceptionError:
-		baseError.StatusCode = http.StatusInternalServerError
-		baseError.Message = "Internal Server Error"
-		baseError.Data = e.Error
-		baseError.Err = "App exception error"
-	case RoleError:
-		baseError.StatusCode = http.StatusForbidden
-		baseError.Message = "You don't have permission"
-		baseError.Data = e.Error
-		baseError.Err = "Role error"
-	default:
-		baseError.StatusCode = http.StatusInternalServerError
-		baseError.Message = "Internal Server Error"
-		baseError.Data = "An unexpected error occurred"
-		baseError.Err = "Unexpected error"
+// NewAppException creates a new AppException with a customizable HTTP status code
+func NewAppException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusInternalServerError
+	if err.Message == "" {
+		err.Message = utils.SomethingWrong
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
 
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(baseError.StatusCode)
-	json.NewEncoder(writer).Encode(baseError)
+		writer.WriteHeader(err.StatusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
+}
+
+func NewAuthorizationException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusUnauthorized
+	if err.Message == "" {
+		err.Message = utils.SessionError
+	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
+
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
+}
+func NewBadRequestException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusBadRequest
+
+	if err.Message == "" {
+		err.Message = utils.BadRequestError
+	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Err.Error(),
+			//Data:       err,
+		}
+
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
+}
+
+func NewConflictException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusConflict
+	if err.Message == "" {
+		err.Message = utils.DataExists
+	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
+
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
+}
+func NewEntityException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusUnprocessableEntity
+	if err.Message == "" {
+		err.Message = utils.JsonError
+	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Err.Error(),
+			//Data:       err,
+		}
+
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
+}
+
+func NewNotFoundException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusNotFound
+	if err.Message == "" {
+		err.Message = utils.GetDataNotFound
+	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
+
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
+}
+func NewRoleException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
+	statusCode := http.StatusForbidden
+
+	if err.Message == "" {
+		err.Message = utils.PermissionError
+	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Err.Error(),
+			//Data:       err,
+		}
+
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }

@@ -104,6 +104,11 @@ type GetAllWarehouseMasterResponse struct {
 	JobPositionDetails            JobPositionResponse `json:"job_position_details"`
 }
 
+type DropdownWarehouseMasterResponse struct {
+	WarehouseId   int    `json:"warehouse_id"`
+	WarehouseCode string `json:"warehouse_code_name"`
+}
+
 type IsActiveWarehouseMasterResponse struct {
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`

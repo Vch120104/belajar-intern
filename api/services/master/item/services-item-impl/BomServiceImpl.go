@@ -2,7 +2,7 @@ package masteritemserviceimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -28,7 +28,7 @@ func StartBomService(BomRepository masteritemrepository.BomRepository, db *gorm.
 	}
 }
 
-func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
@@ -39,7 +39,7 @@ func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterConditio
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) GetBomMasterById(id int) (masteritempayloads.BomMasterRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomMasterById(id int) (masteritempayloads.BomMasterRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.GetBomMasterById(tx, id)
@@ -50,7 +50,7 @@ func (s *BomServiceImpl) GetBomMasterById(id int) (masteritempayloads.BomMasterR
 	return results, nil
 }
 
-func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.SaveBomMaster(tx, req)
@@ -60,7 +60,7 @@ func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) 
 	return results, nil
 }
 
-func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -73,7 +73,7 @@ func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, 
 	return entity, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
@@ -84,7 +84,7 @@ func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterConditio
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailById(id int) ([]masteritempayloads.BomDetailListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailById(id int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.GetBomDetailById(tx, id)
@@ -95,7 +95,7 @@ func (s *BomServiceImpl) GetBomDetailById(id int) ([]masteritempayloads.BomDetai
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailByIds(id int) ([]masteritempayloads.BomDetailListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailByIds(id int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.GetBomDetailByIds(tx, id)
@@ -106,7 +106,7 @@ func (s *BomServiceImpl) GetBomDetailByIds(id int) ([]masteritempayloads.BomDeta
 	return results, nil
 }
 
-func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.SaveBomDetail(tx, req)
@@ -116,7 +116,7 @@ func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) 
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
@@ -127,7 +127,7 @@ func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition,
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

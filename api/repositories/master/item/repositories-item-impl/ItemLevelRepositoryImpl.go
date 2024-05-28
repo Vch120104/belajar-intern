@@ -1,7 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"net/http"
@@ -24,7 +24,7 @@ func StartItemLevelRepositoryImpl() masteritemlevelrepo.ItemLevelRepository {
 }
 
 // GetItemLevelLookUp implements masteritemrepository.ItemLevelRepository.
-func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemLevel{}
 	responses := []masteritemlevelpayloads.GetItemLevelLookUp{}
 
@@ -48,7 +48,7 @@ func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCon
 	err := queryFilter.Scopes(pagination.Paginate(&model, &pages, queryFilter)).Order("mtr_item_level.item_level_id").Scan(&responses).Error
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -61,7 +61,7 @@ func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCon
 }
 
 // GetItemLevelDropDown implements masteritemrepository.ItemLevelRepository.
-func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemLevel{}
 	result := []masteritemlevelpayloads.GetItemLevelDropdownResponse{}
 
@@ -70,7 +70,7 @@ func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]m
 	err := tx.Model(&model).Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemlevelInt - 1)}).Scan(&result).Error
 
 	if err != nil {
-		return result, &exceptionsss_test.BaseErrorResponse{
+		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -79,7 +79,7 @@ func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]m
 	return result, nil
 }
 
-func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemLevel{}
 
 	var itemLevelResponse []masteritemlevelpayloads.GetAllItemLevelResponse
@@ -91,7 +91,7 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, page
 	err := queryFilter.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&itemLevelResponse).Error
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -101,7 +101,7 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, page
 	return pages, nil
 }
 
-func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
 
 	var entities masteritementities.ItemLevel
 	var itemLevelResponse masteritemlevelpayloads.GetItemLevelResponseById
@@ -115,7 +115,7 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpa
 		Rows()
 
 	if err != nil {
-		return itemLevelResponse, &exceptionsss_test.BaseErrorResponse{
+		return itemLevelResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -126,7 +126,7 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpa
 	return itemLevelResponse, nil
 }
 
-func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
@@ -142,13 +142,13 @@ func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveIt
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -158,7 +158,7 @@ func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveIt
 	return true, nil
 }
 
-func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemLevel
 
 	result := tx.Model(&entities).
@@ -166,7 +166,7 @@ func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptionsss_t
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -181,7 +181,7 @@ func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptionsss_t
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
