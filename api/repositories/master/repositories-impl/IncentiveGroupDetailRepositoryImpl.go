@@ -6,6 +6,7 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
+	"errors"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -25,23 +26,21 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 	//define base model
 	query := tx.
 		Model(&entities).
-		Where(masterentities.IncentiveGroupDetail{IncentiveGroupId: headerId}).
-		Scan(&response)
+		Where(masterentities.IncentiveGroupDetail{IncentiveGroupId: headerId})
 
 	//apply pagination and execute
 	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Rows()
-
-	if len(response) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+		}
+	}
+
+	if len(response) == 0 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
 		}
 	}
 
@@ -56,12 +55,11 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 	entities := masterentities.IncentiveGroupDetail{}
 	response := masterpayloads.IncentiveGroupDetailResponse{}
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Where(masterentities.IncentiveGroupDetail{
 			IncentiveGroupDetailId: Id,
 		}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -70,7 +68,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetIncentiveGroupDetailById(tx *gor
 		}
 	}
 
-	defer rows.Close()
+	// defer rows.Close()
 
 	return response, nil
 }
@@ -92,6 +90,27 @@ func (r *IncentiveGroupDetailRepositoryImpl) SaveIncentiveGroupDetail(tx *gorm.D
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *IncentiveGroupDetailRepositoryImpl) UpdateIncentiveGroupDetail(tx *gorm.DB, id int, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+
+	model := masterentities.IncentiveGroupDetail{}
+	result := tx.Model(&model).Where(masterentities.IncentiveGroupDetail{IncentiveGroupDetailId: id}).First(&model).Updates(req)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	if model == (masterentities.IncentiveGroupDetail{}) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
 		}
 	}
 

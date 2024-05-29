@@ -90,12 +90,24 @@ func (s *IncentiveGroupServiceImpl) ChangeStatusIncentiveGroup(id int) (bool, *e
 	return true, nil
 }
 
-func (s *IncentiveGroupServiceImpl) UpdateIncentiveGroup(req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *IncentiveGroupServiceImpl) UpdateIncentiveGroup(req masterpayloads.UpdateIncentiveGroupRequest, id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.IncentiveGroupRepository.UpdateIncentiveGroup(tx, req)
+	results, err := s.IncentiveGroupRepository.UpdateIncentiveGroup(tx, id, req)
 	if err != nil {
 		return results, err
 	}
 	return results, nil
+}
+
+func (s *IncentiveGroupServiceImpl) GetAllIncentiveGroupDropDown() ([]masterpayloads.IncentiveGroupDropDown, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.IncentiveGroupRepository.GetAllIncentiveGroupDropDown(tx)
+
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
