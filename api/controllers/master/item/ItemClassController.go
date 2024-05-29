@@ -2,14 +2,13 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -40,7 +39,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 	response, err := r.ItemClassService.GetItemClassById(itemClassId)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid item class id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -86,7 +85,7 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 	result, err := r.ItemClassService.GetAllItemClass(criteria)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -125,7 +124,7 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 	result, err := r.ItemClassService.GetAllItemClass(criteria)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -148,13 +147,13 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -190,7 +189,7 @@ func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWrit
 	response, err := r.ItemClassService.ChangeStatusItemClass(int(itemClassId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid item class id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

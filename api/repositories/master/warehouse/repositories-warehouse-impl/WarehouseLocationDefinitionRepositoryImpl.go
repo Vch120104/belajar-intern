@@ -147,7 +147,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "No data found",
+			Err:        errors.New(""),
 		}
 	}
 
@@ -240,9 +240,10 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(
 
 	// Check if responses are empty
 	if len(responses) == 0 {
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "No data found",
+			Err:        err,
 		}
 	}
 

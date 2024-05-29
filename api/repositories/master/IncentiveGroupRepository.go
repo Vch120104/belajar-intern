@@ -15,5 +15,6 @@ type IncentiveGroupRepository interface {
 	GetIncentiveGroupById(*gorm.DB, int) (masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse)
 	SaveIncentiveGroup(*gorm.DB, masterpayloads.IncentiveGroupResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusIncentiveGroup(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
-	UpdateIncentiveGroup(*gorm.DB, masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateIncentiveGroup(*gorm.DB, int, masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllIncentiveGroupDropDown(tx *gorm.DB) ([]masterpayloads.IncentiveGroupDropDown, *exceptions.BaseErrorResponse)
 }

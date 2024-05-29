@@ -9,7 +9,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	_ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -85,6 +85,7 @@ func MarkupMasterRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", markupMasterController.GetMarkupMasterList)
+	router.Get("/{markup_master_id}", markupMasterController.GetMarkupMasterByID)
 	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
 	router.Get("/dropdown", markupMasterController.GetAllMarkupMasterIsActive)
 	router.Post("/", markupMasterController.SaveMarkupMaster)
@@ -105,6 +106,7 @@ func MarkupRateRouter(
 
 	router.Get("/", markupRateController.GetAllMarkupRate)
 	router.Get("/{markup_rate_id}", markupRateController.GetMarkupRateByID)
+	router.Get("/markup-master/{markup_master_id}/order-type/{order_type_id}", markupRateController.GetMarkupRateByMarkupMasterAndOrderType)
 	router.Post("/", markupRateController.SaveMarkupRate)
 	router.Patch("/{markup_rate_id}", markupRateController.ChangeStatusMarkupRate)
 
@@ -296,11 +298,12 @@ func IncentiveGroupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/is-active", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/dropdown", incentiveGroupController.GetAllIncentiveGroupDropDown)
 	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
-	router.Put("/", incentiveGroupController.UpdateIncentiveGroup)
+	router.Put("/{incentive_group_id}", incentiveGroupController.UpdateIncentiveGroup)
 	return router
 }
 
@@ -833,6 +836,7 @@ func IncentiveGroupDetailRouter(
 	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
 	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
 	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+	router.Put("/{incentive_group_detail_id}", incentiveGroupDetailController.UpdateIncentiveGroupDetail)
 
 	return router
 }

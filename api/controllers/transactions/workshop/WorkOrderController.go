@@ -9,7 +9,6 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
-	"errors"
 	"net/http"
 )
 
@@ -83,7 +82,7 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAll(criteria, paginate)
 	if err != nil {
-		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -113,7 +112,7 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 	Create, err := r.WorkOrderService.New(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -165,7 +164,7 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 	statuses, err := r.WorkOrderService.NewStatus(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -190,7 +189,7 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 	statuses, err := r.WorkOrderService.NewType(db)
 	if err != nil {
 		// Menangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -231,7 +230,7 @@ func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, requ
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.VehicleLookup(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -275,7 +274,7 @@ func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, req
 
 	paginatedData, totalPages, totalRows, err := r.WorkOrderService.CampaignLookup(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New(err.Message))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -327,7 +326,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	success, err := r.WorkOrderService.Save(db, workOrderRequest) // Memastikan untuk meneruskan db ke dalam metode Save
 	if err != nil {
 		// Tangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, errors.New(err.Message))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 

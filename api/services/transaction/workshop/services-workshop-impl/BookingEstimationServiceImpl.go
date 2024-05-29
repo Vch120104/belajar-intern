@@ -1,14 +1,13 @@
 package transactionworkshopserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
-	"net/http"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -38,13 +37,13 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) *exceptions.BaseErrorResponse {
+func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	_, err := s.structBookingEstimationRepo.New(tx, request)
 	if err != nil {
-		return exceptions.NewBaseErrorResponse(http.StatusInternalServerError, "Failed to create new record", err)
+		return false,err
 	}
-	return nil
+	return true,nil
 }
 
 func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
@@ -57,13 +56,14 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppaylo
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) *exceptions.BaseErrorResponse {
+func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
+	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
 	defer helper.CommitOrRollback(tx)
 	_, err := s.structBookingEstimationRepo.Save(tx, request)
 	if err != nil {
-		return exceptions.NewBaseErrorResponse(http.StatusInternalServerError, "Failed to save record", err)
+		return false,err
 	}
-	return nil
+	return true,nil
 }
 
 func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {

@@ -11,7 +11,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -65,7 +64,7 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 
 	result, err := r.AgreementService.GetAgreementById(int(AgreementId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -89,7 +88,7 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 
 	create, err := r.AgreementService.SaveAgreement(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 
@@ -117,7 +116,7 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 
 	response, err := r.AgreementService.ChangeStatusAgreement(int(agreement_id))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -165,7 +164,7 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllAgreement(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -193,7 +192,7 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 	helper.ReadFromRequestBody(request, &groupRequest)
 
 	if err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -215,7 +214,7 @@ func (r *AgreementControllerImpl) DeleteDiscountGroup(writer http.ResponseWriter
 	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
 
 	if err := r.AgreementService.DeleteDiscountGroup(int(agreementID), int(groupID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -239,7 +238,7 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 	helper.ReadFromRequestBody(request, &itemRequest)
 
 	if err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -261,7 +260,7 @@ func (r *AgreementControllerImpl) DeleteItemDiscount(writer http.ResponseWriter,
 	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
 
 	if err := r.AgreementService.DeleteItemDiscount(int(agreementID), int(itemID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -285,7 +284,7 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 	helper.ReadFromRequestBody(request, &valueRequest)
 
 	if err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -307,7 +306,7 @@ func (r *AgreementControllerImpl) DeleteDiscountValue(writer http.ResponseWriter
 	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
 
 	if err := r.AgreementService.DeleteDiscountValue(int(agreementID), int(valueID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -345,7 +344,7 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -372,7 +371,7 @@ func (r *AgreementControllerImpl) GetDiscountGroupAgreementById(writer http.Resp
 
 	result, err := r.AgreementService.GetDiscountGroupAgreementById(int(agreementID), int(groupID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -410,7 +409,7 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -437,7 +436,7 @@ func (r *AgreementControllerImpl) GetDiscountItemAgreementById(writer http.Respo
 
 	result, err := r.AgreementService.GetDiscountItemAgreementById(int(agreementID), int(itemID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -475,7 +474,7 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -502,7 +501,7 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 
 	result, err := r.AgreementService.GetDiscountValueAgreementById(int(agreementID), int(valueID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

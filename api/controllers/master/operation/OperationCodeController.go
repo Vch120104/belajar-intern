@@ -2,14 +2,13 @@ package masteroperationcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -69,7 +68,7 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 	result, err := r.operationCodeService.GetAllOperationCode(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -90,7 +89,7 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 	result, err := r.operationCodeService.GetOperationCodeById(int(OperationIdStr))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -103,7 +102,7 @@ func (r *OperationCodeControllerImpl) GetByCodeOperationCode(writer http.Respons
 	result, err := r.operationCodeService.GetOperationCodeById(OperationCodeStr)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -123,7 +122,7 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 	var formRequest masteroperationpayloads.OperationCodeSave
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	var message = ""
@@ -160,7 +159,7 @@ func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.Resp
 	response, err := r.operationCodeService.ChangeStatusOperationCode(OperationId)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

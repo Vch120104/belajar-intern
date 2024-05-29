@@ -2,7 +2,6 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"errors"
 	"fmt"
 
 	// "after-sales/api/helper"
@@ -74,7 +73,7 @@ func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, requ
 
 	result, err := r.discountservice.GetAllDiscount(filterCondition, pagination)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -93,7 +92,7 @@ func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWrit
 
 	result, err := r.discountservice.GetAllDiscountIsActive()
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -140,7 +139,7 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 	discountCode := query.Get("discount_code_value")
 	result, err := r.discountservice.GetDiscountByCode(discountCode)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -163,12 +162,12 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 
 	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("entity not found"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, requestForm)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -202,7 +201,7 @@ func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter
 	response, err := r.discountservice.ChangeStatusDiscount(int(discountId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

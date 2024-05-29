@@ -2,13 +2,12 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -69,7 +68,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 
 	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePrice(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -97,7 +96,7 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 
 	create, err := r.PurchasePriceService.SavePurchasePrice(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.PurchasePriceId == 0 {
@@ -147,7 +146,7 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 
 	entity, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	responseData := map[string]interface{}{
@@ -196,7 +195,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePriceDetail(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -221,7 +220,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 
 	create, err := r.PurchasePriceService.AddPurchasePrice(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.PurchasePriceDetailId == 0 {
@@ -254,7 +253,7 @@ func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWr
 	// Memanggil service untuk menghapus item lokasi
 	if deleteErr := r.PurchasePriceService.DeletePurchasePrice(PurchasePriceID); deleteErr != nil {
 		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid data id not found"))
+		exceptions.NewNotFoundException(writer, request, deleteErr)
 		return
 	}
 
