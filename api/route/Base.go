@@ -298,11 +298,12 @@ func IncentiveGroupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/is-active", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/dropdown", incentiveGroupController.GetAllIncentiveGroupDropDown)
 	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
-	router.Put("/", incentiveGroupController.UpdateIncentiveGroup)
+	router.Put("/{incentive_group_id}", incentiveGroupController.UpdateIncentiveGroup)
 	return router
 }
 
@@ -835,6 +836,7 @@ func IncentiveGroupDetailRouter(
 	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
 	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
 	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+	router.Put("/{incentive_group_detail_id}", incentiveGroupDetailController.UpdateIncentiveGroupDetail)
 
 	return router
 }
