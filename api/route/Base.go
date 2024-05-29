@@ -31,6 +31,7 @@ func ItemClassRouter(
 
 	// router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
+	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
 	router.Post("/", itemClassController.SaveItemClass)
 	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
 
