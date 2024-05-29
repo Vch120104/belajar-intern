@@ -24,6 +24,7 @@ import (
 
 type MarkupMasterController interface {
 	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request)
+	GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request)
 	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request)
 	GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request)
 	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request)
@@ -80,6 +81,20 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request) {
+
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	result, err := r.markupMasterService.GetMarkupMasterById(markupMasterId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Markup Master Description by code

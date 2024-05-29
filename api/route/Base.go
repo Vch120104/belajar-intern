@@ -85,6 +85,7 @@ func MarkupMasterRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", markupMasterController.GetMarkupMasterList)
+	router.Get("/{markup_master_id}", markupMasterController.GetMarkupMasterByID)
 	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
 	router.Get("/dropdown", markupMasterController.GetAllMarkupMasterIsActive)
 	router.Post("/", markupMasterController.SaveMarkupMaster)
