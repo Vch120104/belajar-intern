@@ -1,7 +1,7 @@
 package masteroperationserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartOperationEntriesService(operationEntriesRepo masteroperationrepository
 	}
 }
 
-func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetAllOperationEntries(tx, filterCondition, pages)
@@ -37,7 +37,7 @@ func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []u
 	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesById(tx, id)
@@ -47,7 +47,7 @@ func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masterope
 	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesName(tx, request)
@@ -57,7 +57,7 @@ func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroper
 	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -76,7 +76,7 @@ func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpa
 	return results, nil
 }
 
-func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(tx, Id)

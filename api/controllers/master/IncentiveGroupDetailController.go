@@ -1,19 +1,15 @@
 package mastercontroller
 
 import (
-	masterpayloads "after-sales/api/payloads/master"
-	// masterrepository "after-sales/api/repositories/master"
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-
-	// "after-sales/api/middlewares"
-
 	"net/http"
 	"strconv"
 
@@ -46,7 +42,7 @@ func NewIncentiveGroupDetailController(IncentiveGroupDetailService masterservice
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group-detail/by-header-id/{id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -61,7 +57,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 
 	result, err := r.IncentiveGroupDetailService.GetAllIncentiveGroupDetail(IncentiveGroupId, pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -76,7 +72,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 // @Param reqBody body masterpayloads.IncentiveGroupDetailResponse true "Form Request"
 // @Param incentive_group_id_detail path int true "incentive_group_id_detail"  // Update this line
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group-detail/{incentive_group_id_detail} [post]
 func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 
@@ -85,17 +81,17 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 
 	err := jsonchecker.ReadFromRequestBody(request, &incentiveGroupDetailRequest)
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, incentiveGroupDetailRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.IncentiveGroupDetailService.SaveIncentiveGroupDetail(incentiveGroupDetailRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -115,13 +111,13 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 // @Tags Master : Incentive Group Detail
 // @Param incentive_group_detail_id path string true "incentive_group_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/incentive-group-detail/by-detail-id/{incentive_group_detail_id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request) {
 	// IncentiveGrouDetailId, _ := strconv.Atoi(params.ByName("incentive_group_detail_id"))
 	IncentiveGrouDetailId, err := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
 	if err != nil {
-		exceptionsss_test.NewAppException(writer, request, &exceptionsss_test.BaseErrorResponse{
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
 			Err: err,
 		})
 		return
@@ -129,7 +125,7 @@ func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer 
 	IncentiveGroupDetailResponse, errors := r.IncentiveGroupDetailService.GetIncentiveGroupDetailById(IncentiveGrouDetailId)
 
 	if errors != nil {
-		helper_test.ReturnError(writer, request, errors)
+		helper.ReturnError(writer, request, errors)
 		return
 	}
 	payloads.NewHandleSuccess(writer, IncentiveGroupDetailResponse, utils.GetDataSuccess, http.StatusOK)

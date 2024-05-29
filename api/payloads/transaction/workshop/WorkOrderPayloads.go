@@ -3,8 +3,9 @@ package transactionworkshoppayloads
 import "time"
 
 type WorkOrderResponse struct {
-	BatchSystemNumber             int       `json:"batch_system_number"`
-	WorkOrderSystemNumber         string    `json:"work_order_system_number"`
+	WorkOrderStatusId             int       `json:"work_order_status_id"`
+	WorkOrderSystemNumber         int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber       string    `json:"work_order_document_number"`
 	WorkOrderDate                 time.Time `json:"work_order_date"`
 	WorkOrderTypeId               int       `json:"work_order_type_id"`
 	WorkOrderServiceSite          int       `json:"work_order_servicesite_id"`
@@ -12,7 +13,8 @@ type WorkOrderResponse struct {
 	ModelId                       int       `json:"model_id"`
 	VariantId                     int       `json:"variant_id"`
 	VehicleId                     int       `json:"vehicle_id"`
-	BilltoCustomerId              int       `json:"customer_id"`
+	CustomerId                    int       `json:"customer_id"`
+	BilltoCustomerId              int       `json:"billto_customer_id"`
 	WorkOrderStatusEra            bool      `json:"work_order_status_era"`
 	WorkOrderEraNo                string    `json:"work_order_era_no"`
 	WorkOrderEraExpiredDate       time.Time `json:"work_order_era_expired_date"`
@@ -48,8 +50,9 @@ type WorkOrderResponse struct {
 }
 
 type WorkOrderRequest struct {
-	BatchSystemNumber             int       `json:"batch_system_number"`
-	WorkOrderSystemNumber         string    `json:"work_order_system_number"`
+	WorkOrderStatusId             int       `json:"work_order_status_id"`
+	WorkOrderSystemNumber         int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber       string    `json:"work_order_document_number"`
 	WorkOrderDate                 time.Time `json:"work_order_date"`
 	WorkOrderTypeId               int       `json:"work_order_type_id"`
 	WorkOrderServiceSite          int       `json:"work_order_servicesite_id"`
@@ -57,7 +60,8 @@ type WorkOrderRequest struct {
 	ModelId                       int       `json:"model_id"`
 	VariantId                     int       `json:"variant_id"`
 	VehicleId                     int       `json:"vehicle_id"`
-	BilltoCustomerId              int       `json:"customer_id"`
+	CustomerId                    int       `json:"customer_id"`
+	BilltoCustomerId              int       `json:"billto_customer_id"`
 	WorkOrderStatusEra            bool      `json:"work_order_status_era"`
 	WorkOrderEraNo                string    `json:"work_order_era_no"`
 	WorkOrderEraExpiredDate       time.Time `json:"work_order_era_expired_date"`
@@ -90,4 +94,45 @@ type WorkOrderRequest struct {
 	WorkOrderInsurancePic         string    `json:"insurance_pic"`
 	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
 	WorkOrderInsuranceOwnRisk     float32   `json:"insurance_own_risk"`
+}
+
+type WorkOrderLookupRequest struct {
+	WorkOrderSystemNumber   string `json:"work_order_system_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
+	WorkOrderDocumentNumber string `json:"work_order_document_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
+	VehicleId               int    `json:"vehicle_id" parent_entity:"trx_work_order"`
+	CustomerId              int    `json:"customer_id" parent_entity:"trx_work_order"`
+}
+
+type WorkOrderLookupResponse struct {
+	WorkOrderDocumentNumber int    `json:"work_order_document_number"`
+	WorkOrderSystemNumber   string `json:"work_order_system_number"`
+	VehicleId               int    `json:"vehicle_id"`
+	CustomerId              int    `json:"customer_id"`
+}
+
+type WorkOrderVehicleResponse struct {
+	VehicleId               int       `json:"vehicle_id"`
+	VehicleCode             string    `json:"vehicle_chassis_number"`
+	VehicleTnkb             string    `json:"registration_certificate_tnkb"`
+	VehicleCertificateOwner string    `json:"vehicle_registration_certificate_owner_name"`
+	VehicleProduction       string    `json:"vehicle_production_year"`
+	VehicleVariantColour    string    `json:"variant_colour_description"`
+	VehicleServiceBookingNo string    `json:"service_booking_number"`
+	VehicleLastServiceDate  time.Time `json:"last_service_date"`
+	VehicleLastKm           int       `json:"last_km"`
+}
+
+type CustomerResponse struct {
+	CustomerId   int    `json:"customer_id"`
+	CustomerName string `json:"customer_name"`
+	CustomerType string `json:"customer_type"`
+	CustomerCode string `json:"customer_code"`
+}
+
+type WorkOrderCampaignResponse struct {
+	CampaignId         int       `json:"campaign_id"`
+	CampaignCode       string    `json:"campaign_code"`
+	CampaignName       string    `json:"campaign_name"`
+	CampaignPeriodFrom time.Time `json:"campign_period_from"`
+	CampaignPeriodTo   time.Time `json:"campaign_period_to"`
 }

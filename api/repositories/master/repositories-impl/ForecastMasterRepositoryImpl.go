@@ -3,7 +3,7 @@ package masterrepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -22,7 +22,7 @@ func StartForecastMasterRepositoryImpl() masterrepository.ForecastMasterReposito
 	return &ForecastMasterRepositoryImpl{}
 }
 
-func (r *ForecastMasterRepositoryImpl) GetForecastMasterById(tx *gorm.DB, forecastMasterId int) (masterpayloads.ForecastMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *ForecastMasterRepositoryImpl) GetForecastMasterById(tx *gorm.DB, forecastMasterId int) (masterpayloads.ForecastMasterResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.ForecastMaster{}
 	response := masterpayloads.ForecastMasterResponse{}
 
@@ -34,7 +34,7 @@ func (r *ForecastMasterRepositoryImpl) GetForecastMasterById(tx *gorm.DB, foreca
 		Error
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -43,7 +43,7 @@ func (r *ForecastMasterRepositoryImpl) GetForecastMasterById(tx *gorm.DB, foreca
 	return response, nil
 }
 
-func (r *ForecastMasterRepositoryImpl) SaveForecastMaster(tx *gorm.DB, req masterpayloads.ForecastMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ForecastMasterRepositoryImpl) SaveForecastMaster(tx *gorm.DB, req masterpayloads.ForecastMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.ForecastMaster{
 		IsActive:                   req.IsActive,
 		ForecastMasterId:           req.ForecastMasterId,
@@ -58,7 +58,7 @@ func (r *ForecastMasterRepositoryImpl) SaveForecastMaster(tx *gorm.DB, req maste
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -67,7 +67,7 @@ func (r *ForecastMasterRepositoryImpl) SaveForecastMaster(tx *gorm.DB, req maste
 	return true, nil
 }
 
-func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.ForecastMaster
 
 	result := tx.Model(&entities).
@@ -75,7 +75,7 @@ func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, I
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -90,7 +90,7 @@ func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, I
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -99,7 +99,7 @@ func (r *ForecastMasterRepositoryImpl) ChangeStatusForecastMaster(tx *gorm.DB, I
 	return true, nil
 }
 
-func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// Define variables
 	var (
 		responses             []masterpayloads.ForecastMasterListResponse
@@ -141,7 +141,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 	// Execute query
 	if err := whereQuery.Scan(&responses).Error; err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -149,7 +149,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 	// Check if no records found
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        gorm.ErrRecordNotFound,
 		}
@@ -159,7 +159,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 	if supplierName != "" || orderTypeName != "" {
 		supplierURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/filter-supplier-master?supplier_name=" + supplierName
 		if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
@@ -169,7 +169,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "/api/general/order-type-filter?order_type_name=" + orderTypeName
 		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
