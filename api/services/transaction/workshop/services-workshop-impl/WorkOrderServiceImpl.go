@@ -166,3 +166,43 @@ func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptions.BaseE
 	}
 	return nil
 }
+
+func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.AddRequest(tx, id, request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.DeleteRequest(tx, id, IdWorkorder)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.AddVehicleService(tx, id, request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) DeleteVehicleService(id int, IdWorkorder int) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.DeleteVehicleService(tx, id, IdWorkorder)
+	if err != nil {
+		return err
+	}
+	return nil
+}

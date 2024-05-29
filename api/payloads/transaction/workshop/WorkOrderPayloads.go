@@ -162,3 +162,18 @@ type WorkOrderVehicleModel struct {
 	ModelName            string `json:"model_description"`
 	ModelCodeDescription string `json:"model_code_description"`
 }
+
+type WorkOrderServiceRequest struct {
+	WorkOrderServiceId      int    `json:"work_order_service_id"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string `json:"work_order_document_number"`
+	WorkOrderServiceRemark  string `json:"work_order_service_remark"`
+}
+
+type WorkOrderServiceVehicleRequest struct {
+	WorkOrderVehicleId      int       `json:"work_order_vehicle_id"`
+	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
+	WorkOrderVehicleDate    time.Time `json:"work_order_vehicle_date"`
+	WorkOrderVehicleRemark  string    `json:"work_order_vehicle_remark"`
+}

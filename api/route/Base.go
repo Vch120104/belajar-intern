@@ -9,7 +9,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	// _ "after-sales/docs"
+	_ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -897,6 +897,12 @@ func WorkOrderRouter(
 	router.Post("/normal", WorkOrderController.New)
 	router.Post("/normalbooking", WorkOrderController.NewBooking)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+
+	//add trx sub
+	router.Post("/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
+	router.Delete("/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
+	router.Post("/{work_order_system_number}/vehicleservice", WorkOrderController.AddVehicleService)
+	router.Delete("/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
 
 	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)

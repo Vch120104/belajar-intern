@@ -133,6 +133,8 @@ func Migrate() {
 		&transactionworkshopentities.WorkOrderHistory{},
 		&transactionworkshopentities.WorkOrderHistoryRequest{},
 		&transactionworkshopentities.WorkOrderHistoryDetail{},
+		&transactionworkshopentities.WorkOrderService{},
+		&transactionworkshopentities.WorkOrderServiceVehicle{},
 
 		&transactionworkshopentities.BookingEstimation{},
 		&transactionworkshopentities.BookingEstimationAllocation{},

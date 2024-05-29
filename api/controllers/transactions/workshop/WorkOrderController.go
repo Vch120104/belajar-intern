@@ -3,6 +3,7 @@ package transactionworkshopcontroller
 import (
 	"after-sales/api/config"
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -20,23 +21,30 @@ type WorkOrderControllerImpl struct {
 }
 
 type WorkOrderController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request)
 	New(writer http.ResponseWriter, request *http.Request)
 	NewBooking(writer http.ResponseWriter, request *http.Request)
 	NewAffiliated(writer http.ResponseWriter, request *http.Request)
+
+	VehicleLookup(writer http.ResponseWriter, request *http.Request)
+	CampaignLookup(writer http.ResponseWriter, request *http.Request)
+	AddRequest(writer http.ResponseWriter, request *http.Request)
+	DeleteRequest(writer http.ResponseWriter, request *http.Request)
+	AddVehicleService(writer http.ResponseWriter, request *http.Request)
+	DeleteVehicleService(writer http.ResponseWriter, request *http.Request)
+
+	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	Submit(writer http.ResponseWriter, request *http.Request)
+	Void(writer http.ResponseWriter, request *http.Request)
+	CloseOrder(writer http.ResponseWriter, request *http.Request)
+
 	NewStatus(writer http.ResponseWriter, request *http.Request)
 	NewType(writer http.ResponseWriter, request *http.Request)
 	NewBill(writer http.ResponseWriter, request *http.Request)
 	NewDropPoint(writer http.ResponseWriter, request *http.Request)
 	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
 	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
-	VehicleLookup(writer http.ResponseWriter, request *http.Request)
-	CampaignLookup(writer http.ResponseWriter, request *http.Request)
-	GetById(writer http.ResponseWriter, request *http.Request)
-	Save(writer http.ResponseWriter, request *http.Request)
-	Submit(writer http.ResponseWriter, request *http.Request)
-	Void(writer http.ResponseWriter, request *http.Request)
-	CloseOrder(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrderService) WorkOrderController {
@@ -413,6 +421,106 @@ func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, req
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// AddRequest adds a new request to a work order
+// @Summary Add Request to Work Order
+// @Description Add a new request to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/{work_order_system_number}/requestservice [post]
+func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request *http.Request) {
+	// Add request to work order\
+	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
+	helper.ReadFromRequestBody(request, &groupRequest)
+
+	if err := r.WorkOrderService.AddRequest(int(workorderID), groupRequest); err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Request added successfully", http.StatusCreated)
+}
+
+// DeleteRequest deletes a request from a work order
+// @Summary Delete Request from Work Order
+// @Description Delete a request from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param work_order_service_id path string true "Work Order Service ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/{work_order_system_number}/requestservice/{work_order_service_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, request *http.Request) {
+	// Delete request from work order
+	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	requestID, _ := strconv.Atoi(chi.URLParam(request, "work_order_service_id"))
+
+	if err := r.WorkOrderService.DeleteRequest(int(workorderID), int(requestID)); err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Request deleted successfully", http.StatusOK)
+}
+
+// AddVehicleService adds a new vehicle service to a work order
+// @Summary Add Vehicle Service to Work Order
+// @Description Add a new vehicle service to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderServiceVehicleRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/{work_order_system_number}/vehicleservice [post]
+func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, request *http.Request) {
+	// Add vehicle service to work order
+	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	var vehicleRequest transactionworkshoppayloads.WorkOrderServiceVehicleRequest
+	helper.ReadFromRequestBody(request, &vehicleRequest)
+
+	if err := r.WorkOrderService.AddVehicleService(int(workorderID), vehicleRequest); err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Vehicle service added successfully", http.StatusCreated)
+}
+
+// DeleteVehicleService deletes a vehicle service from a work order
+// @Summary Delete Vehicle Service from Work Order
+// @Description Delete a vehicle service from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param work_order_vehicle_service_id path string true "Work Order Vehicle Service ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/{work_order_system_number}/vehicleservice/{work_order_vehicle_service_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWriter, request *http.Request) {
+	// Delete vehicle service from work order
+	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	vehicleServiceID, _ := strconv.Atoi(chi.URLParam(request, "work_order_service_vehicle_id"))
+
+	if err := r.WorkOrderService.DeleteVehicleService(int(workorderID), int(vehicleServiceID)); err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Vehicle service deleted successfully", http.StatusOK)
 }
 
 // GetById handles the transaction for all work orders
