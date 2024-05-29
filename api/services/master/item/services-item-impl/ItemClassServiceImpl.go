@@ -27,6 +27,17 @@ func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db
 	}
 }
 
+// GetItemClassDropDown implements masteritemservice.ItemClassService.
+func (s *ItemClassServiceImpl) GetItemClassDropDown() ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetItemClassDropDown(tx)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
 func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

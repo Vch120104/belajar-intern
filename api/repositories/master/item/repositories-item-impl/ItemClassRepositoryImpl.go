@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -21,6 +22,26 @@ type ItemClassRepositoryImpl struct {
 
 func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
 	return &ItemClassRepositoryImpl{}
+}
+
+// GetItemClassDropDown implements masteritemrepository.ItemClassRepository.
+func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
+	entities := []masteritementities.ItemClass{}
+	response := []masteritempayloads.ItemClassDropdownResponse{}
+	if err := tx.Model(entities).Scan(&response).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(response) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New(""),
+		}
+	}
+	return response, nil
 }
 
 func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

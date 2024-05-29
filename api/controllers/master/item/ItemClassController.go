@@ -17,8 +17,8 @@ import (
 )
 
 type ItemClassController interface {
-	GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request)
 	GetAllItemClass(writer http.ResponseWriter, request *http.Request)
+	GetItemClassDropdown(writer http.ResponseWriter, request *http.Request)
 	GetItemClassbyId(writer http.ResponseWriter, request *http.Request)
 	SaveItemClass(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
@@ -65,7 +65,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-class/pop-up [get]
-func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request) {
+func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"mtr_item_class.is_active":       queryValues.Get("is_active"),
@@ -109,28 +109,14 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-class/ [get]
-func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
-	// queryValues := request.URL.Query()
-	// queryParams := map[string]string{
-	// 	"mtr_item_class.is_active":       queryValues.Get("is_active"),
-	// 	"mtr_item_class.item_class_id":   queryValues.Get("item_class_id"),
-	// 	"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
-	// 	"mtr_item_class.item_class_name": queryValues.Get("item_class_name"),
-	// 	"item_group_name":                queryValues.Get("item_group_name"),
-	// 	"line_type_code":                 queryValues.Get("line_type_code"),
-	// }
+func (r *ItemClassControllerImpl) GetItemClassDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.ItemClassService.GetItemClassDropDown()
 
-	// criteria := utils.BuildFilterCondition(queryParams)
-
-	// result, err := r.ItemClassService.GetAllItemClass(criteria)
-
-	// if err != nil {
-	// 	exceptionsss_test.NewNotFoundException(writer, request, err)
-	// 	return
-	// }
-
-	// payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "success", 200)
-	panic("unimplemented")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Save Item Class
