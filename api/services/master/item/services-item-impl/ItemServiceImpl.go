@@ -176,3 +176,44 @@ func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptions
 	}
 	return nil
 }
+
+func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+	tx :=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:= s.itemRepo.UpdateItem(tx,id,req)
+	if err != nil {
+		return result,err
+	}
+	return result,nil
+}
+
+func (s *ItemServiceImpl) UpdateItemDetail(id int, req masteritempayloads.ItemDetailUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:=s.itemRepo.UpdateItemDetail(tx,id,req)
+	if err !=nil{
+		return result,err
+	}
+	return result,nil
+}
+
+func (s *ItemServiceImpl) GetPrincipleBrandParent(code string)([]masteritempayloads.PrincipleBrandDropdownDescription,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:=s.itemRepo.GetPrincipleBrandParent(tx,code)
+	if err != nil{
+		return result,err
+	}
+	return result,nil
+}
+
+
+func (s *ItemServiceImpl)GetPrincipleBrandDropdown()([]masteritempayloads.PrincipleBrandDropdownResponse,*exceptions.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:=s.itemRepo.GetPrincipleBrandDropdown(tx)
+	if err != nil{
+		return result,err
+	}
+	return result,nil
+}
