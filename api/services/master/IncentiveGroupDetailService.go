@@ -9,5 +9,6 @@ import (
 type IncentiveGroupDetailService interface {
 	GetAllIncentiveGroupDetail(int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetIncentiveGroupDetailById(int) (masterpayloads.IncentiveGroupDetailResponse, *exceptions.BaseErrorResponse)
-	SaveIncentiveGroupDetail(req masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	SaveIncentiveGroupDetail(masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateIncentiveGroupDetail(int, masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse)
 }
