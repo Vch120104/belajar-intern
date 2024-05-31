@@ -734,3 +734,57 @@ func (r *ItemRepositoryImpl) DeleteItemDetail(tx *gorm.DB, ItemId int, ItemDetai
 
 	return nil
 }
+
+func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+	var entities masteritementities.Item
+
+	result:= tx.Model(&entities).Where("item_id=?",ItemId).Updates(req)
+	if result.Error !=nil{
+		return false,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        result.Error,
+		}
+	}
+	return true,nil
+}
+
+func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB,ItemId int, req masteritempayloads.ItemDetailUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+	var entities masteritementities.ItemDetail
+
+	result:=tx.Model(&entities).Where("Item_detail_id=?",ItemId).Updates(req)
+	if result.Error != nil{
+		return false,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        result.Error,
+		}
+	}
+	return true,nil
+}
+
+func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB)([]masteritempayloads.PrincipleBrandDropdownResponse,*exceptions.BaseErrorResponse){
+	entities:= masteritementities.PrincipleBrandParent{}
+	payloads:= []masteritempayloads.PrincipleBrandDropdownResponse{}
+	err:= tx.Model(&entities).Scan(&payloads).Error
+	if err != nil{
+		return nil,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	return payloads,nil
+}
+
+func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string)([]masteritempayloads.PrincipleBrandDropdownDescription,*exceptions.BaseErrorResponse){
+	entities:= masteritementities.PrincipleBrandParent{}
+	payloads:=[]masteritempayloads.PrincipleBrandDropdownDescription{}
+	err:= tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
+		PrincipalBrandParentCode: code,
+	}).Scan(&payloads).Error
+	if err != nil{
+		return nil,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	return payloads,nil
+}
