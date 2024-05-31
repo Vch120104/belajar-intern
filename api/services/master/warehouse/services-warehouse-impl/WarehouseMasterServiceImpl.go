@@ -7,6 +7,7 @@ import (
 	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
+	"after-sales/api/utils"
 
 	// "log"
 
@@ -90,10 +91,10 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) 
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	get, err := s.warehouseMasterRepo.GetAll(tx, request, pages)
+	get, err := s.warehouseMasterRepo.GetAll(tx, filter, pages)
 
 	if err != nil {
 		return get, err
