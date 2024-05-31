@@ -120,18 +120,17 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Router /v1/work-order/normal [post]
 func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
-	// Menginisialisasi koneksi database
-	db := config.InitDB()
+	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 
-	// Panggil fungsi New dari layanan untuk mengisi data work order baru
-	Create, err := r.WorkOrderService.New(db)
-	if err != nil {
-		// Menangani kesalahan dari layanan
+	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
+	helper.ReadFromRequestBody(request, &groupRequest)
+
+	if err := r.WorkOrderService.AddRequest(int(workorderID), groupRequest); err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, Create, "work order created", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, nil, "work order created", http.StatusCreated)
 
 }
 

@@ -14,6 +14,7 @@ type PurchasePriceService interface {
 	SavePurchasePrice(masteritempayloads.PurchasePriceRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetPurchasePriceDetailById(id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse)
 }

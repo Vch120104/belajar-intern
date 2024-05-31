@@ -78,6 +78,16 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePriceDetail(filterCondition []u
 	return results, totalPages, totalRows, nil
 }
 
+func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailById(id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.PurchasePriceRepo.GetPurchasePriceDetailById(tx, id, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
 // DeletePurchasePrice deletes an item location by ID
 func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()

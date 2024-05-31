@@ -177,3 +177,11 @@ type WorkOrderServiceVehicleRequest struct {
 	WorkOrderVehicleDate    time.Time `json:"work_order_vehicle_date"`
 	WorkOrderVehicleRemark  string    `json:"work_order_vehicle_remark"`
 }
+
+type WorkOrderAddRequest struct {
+	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
+	WorkOrderDate           time.Time `json:"work_order_date"`
+	WorkOrderTypeId         int       `json:"work_order_type_id"`
+	WorkOrderStatusId       int       `json:"work_order_status_id"`
+}

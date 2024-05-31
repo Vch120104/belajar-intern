@@ -373,6 +373,7 @@ func PurchasePriceRouter(
 
 	//detail
 	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Get("/{purchase_price_id}/detail", PurchasePriceController.GetPurchasePriceDetailById)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
 
