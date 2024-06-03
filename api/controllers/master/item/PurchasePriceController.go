@@ -209,7 +209,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Produce json
 // @Tags Master : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
-// @Success 200 {object} payloads.Response
+// @Success 200 {object} payloads.ResponsePagination
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/{purchase_price_id}/detail [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request) {
@@ -232,8 +232,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.Res
 	}
 
 	// Construct the response
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-
+	payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Save Purchase Price Detail

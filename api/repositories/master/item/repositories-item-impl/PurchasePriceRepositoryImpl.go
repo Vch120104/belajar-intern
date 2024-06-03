@@ -10,10 +10,12 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -241,7 +243,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, fil
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// Inisialisasi variabel untuk menyimpan respons dari database
 	var getHeaderRequest masteritempayloads.PurchasePriceRequest
 	var getDetailRequest []masteritempayloads.PurchasePriceDetailRequest
@@ -310,30 +312,42 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id
 		detailResponses = append(detailResponses, detailResponse)
 	}
 
-	// Mem-paginate data detail
-	paginatedDetails, totalPages, totalRows := pagination.NewDataFramePaginate(detailResponses, &pages)
+	// Manual pagination on details
+	totalRows := len(detailResponses)
+	page := pages.GetPage()
+	limit := pages.GetLimit()
+	start := page * limit
+	end := start + limit
 
-	// Format respons akhir sesuai permintaan
-	finalResponse := []map[string]interface{}{
-		{
-			"header": map[string]interface{}{
-				"purchase_price_id":             getHeaderRequest.PurchasePriceId,
-				"supplier_id":                   getHeaderRequest.SupplierId,
-				"currency_id":                   getHeaderRequest.CurrencyId,
-				"purchase_price_effective_date": getHeaderRequest.PurchasePriceEffectiveDate,
-				"is_active":                     getHeaderRequest.IsActive,
-			},
-			"details": map[string]interface{}{
-				"data":        paginatedDetails,
-				"page":        pages.Page,
-				"page_limit":  pages.Limit,
-				"total_rows":  totalRows,
-				"total_pages": totalPages,
-			},
+	if start > totalRows {
+		detailResponses = []map[string]interface{}{}
+	} else {
+		if end > totalRows {
+			end = totalRows
+		}
+		detailResponses = detailResponses[start:end]
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(limit)))
+
+	// Membuat respons akhir
+	response := map[string]interface{}{
+		"data": map[string]interface{}{
+			"currency_id":                   getHeaderRequest.CurrencyId,
+			"is_active":                     getHeaderRequest.IsActive,
+			"purchase_price_effective_date": getHeaderRequest.PurchasePriceEffectiveDate.Format(time.RFC3339),
+			"purchase_price_id":             getHeaderRequest.PurchasePriceId,
+			"supplier_id":                   getHeaderRequest.SupplierId,
 		},
 	}
 
-	return finalResponse, totalPages, totalRows, nil
+	// Menambahkan detail di bawah respons utama
+	detailData := map[string]interface{}{
+		"data": detailResponses,
+	}
+	response["data"].(map[string]interface{})["zdetails"] = detailData
+
+	return response, totalPages, totalRows, nil
 }
 
 func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
