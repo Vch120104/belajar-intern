@@ -77,6 +77,7 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 	result, err := r.operationEntriesService.GetAllOperationEntries(criteria, pagination)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -96,6 +97,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.Res
 	result, err := r.operationEntriesService.GetOperationEntriesById(int(operationEntriesId))
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -130,6 +132,7 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.Res
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

@@ -56,25 +56,27 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/ [get]
 func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	warehouseName := queryValues.Get("warehouse_name")
-	warehouseCode := queryValues.Get("warehouse_code")
-	isActive := queryValues.Get("is_active")
 
-	get, err := r.WarehouseMasterService.GetAll(masterwarehousepayloads.GetAllWarehouseMasterRequest{
-		WarehouseName: warehouseName,
-		WarehouseCode: warehouseCode,
-		IsActive:      isActive,
-	}, pagination.Pagination{
-		Limit:  limit,
-		SortOf: sortOf,
-		SortBy: sortBy,
-		Page:   page,
-	})
+	queryValues := request.URL.Query()
+
+	filter := map[string]string{
+		"warehouse_name":       queryValues.Get("warehouse_name"),
+		"warehouse_code":       queryValues.Get("warehouse_code"),
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+		"is_active":            queryValues.Get("is_active"),
+	}
+
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	filterCondition := utils.BuildFilterCondition(filter)
+
+	get, err := r.WarehouseMasterService.GetAll(filterCondition, pagination)
+
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -207,7 +209,7 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

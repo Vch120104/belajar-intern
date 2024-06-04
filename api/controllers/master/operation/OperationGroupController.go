@@ -112,7 +112,7 @@ func (r *OperationGroupControllerImpl) GetOperationGroupByCode(writer http.Respo
 
 	result, err := r.OperationGroupService.GetOperationGroupByCode(operationGroupCode)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)

@@ -1,7 +1,9 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -79,7 +81,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 		}
 	}
 
-	chassisNumberUrl := "http://10.1.32.26:8000/sales-service/api/sales/vehicle-master?page=0&limit=10&vehicle_chassis_number=" + chassisNumber
+	chassisNumberUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=10&vehicle_chassis_number=" + chassisNumber
 
 	errUrlchassisNumber := utils.Get(chassisNumberUrl, &getChassisResponse, nil)
 
@@ -90,9 +92,11 @@ func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterConditi
 		}
 	}
 
+	fmt.Print("dawdawd", getChassisResponse)
+
 	joinedData1 := utils.DataFrameInnerJoin(responses, getChassisResponse, "vehicle_id")
 
-	ApprovalStatusUrl := "http://10.1.32.26:8000/general-service/api/general/approval-status?approval_status_description=" + approvalCode
+	ApprovalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status?approval_status_description=" + approvalCode
 
 	errUrlApprovalStatus := utils.Get(ApprovalStatusUrl, &getStatusResponse, nil)
 
