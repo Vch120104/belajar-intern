@@ -15,4 +15,8 @@ type ItemLocationService interface {
 	GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	PopupItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	AddItemLocation(int, masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse
+	GetAllItemLoc(filtercondition []utils.FilterCondition,pages pagination.Pagination)([]map[string]interface{},int,int, *exceptions.BaseErrorResponse)
+	GetByIdItemLoc(id int)(masteritempayloads.ItemLocationGetByIdResponse,*exceptions.BaseErrorResponse)
+	SaveItemLoc(req masteritempayloads.SaveItemlocation)(bool,*exceptions.BaseErrorResponse)
+	DeleteItemLoc(ids []int)(bool,*exceptions.BaseErrorResponse)
 }

@@ -127,10 +127,12 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	query := db.Table(mainTable).Select(keyAttribute)
 
 	// Join Tables
+	var innerloop =0
 	if len(joinTableIds) > 0 {
 		for ref := range referenceTable {
-			joinCondition := "join " + ref + " as " + ref + " on " + mainTable + "." + joinTableIds[0] + " = " + ref + "." + joinTableIds[0]
+			joinCondition := "join " + ref + " as " + ref + " on " + mainTable + "." + joinTableIds[innerloop] + " = " + ref + "." + joinTableIds[innerloop]
 			joinTable = append(joinTable, joinCondition)
+			innerloop++
 		}
 		query = query.Joins(strings.Join(joinTable, " "))
 	} else {
