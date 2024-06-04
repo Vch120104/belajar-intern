@@ -106,13 +106,13 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(tx *gorm.DB, Id
 
 func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, request masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationEntries{
-		IsActive:             request.IsActive,
-		OperationEntriesId:   request.OperationEntriesId,
-		OperationEntriesCode: request.OperationEntriesCode,
-		OperationGroupId:     request.OperationGroupId,
-		OperationSectionId:   request.OperationSectionId,
-		OperationKeyId:       request.OperationKeyId,
-		OperationEntriesDesc: request.OperationEntriesDesc,
+		IsActive:                    request.IsActive,
+		OperationEntriesId:          request.OperationEntriesId,
+		OperationEntriesCode:        request.OperationEntriesCode,
+		OperationGroupId:            request.OperationGroupId,
+		OperationSectionId:          request.OperationSectionId,
+		OperationKeyId:              request.OperationKeyId,
+		OperationEntriesDescription: request.OperationEntriesDescription,
 	}
 
 	err := tx.Save(&entities).Error

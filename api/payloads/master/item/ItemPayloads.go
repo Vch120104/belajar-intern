@@ -147,7 +147,7 @@ type ItemLookup struct {
 type UomTypeDropdownResponse struct {
 	IsActive           bool   `json:"is_active"`
 	UomTypeId          int    `json:"uom_type_id"`
-	UomTypeDescription string `json:"uom_type_desc"`
+	UomTypeDescription string `json:"uom_type_description"`
 }
 
 type UomDropdownResponse struct {

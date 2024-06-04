@@ -4,6 +4,7 @@ import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
@@ -26,14 +27,36 @@ func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db
 	}
 }
 
-func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+// GetItemClassByCode implements masteritemservice.ItemClassService.
+func (s *ItemClassServiceImpl) GetItemClassByCode(itemClassCode string) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemRepo.GetAllItemClass(tx, filterCondition)
+	result, err := s.itemRepo.GetItemClassByCode(tx, itemClassCode)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// GetItemClassDropDown implements masteritemservice.ItemClassService.
+func (s *ItemClassServiceImpl) GetItemClassDropDown() ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemRepo.GetItemClassDropDown(tx)
 	if err != nil {
 		return nil, err
 	}
 	return results, nil
+}
+
+func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.itemRepo.GetAllItemClass(tx, filterCondition, pages)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
 }
 
 func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {

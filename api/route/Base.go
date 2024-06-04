@@ -29,8 +29,10 @@ func ItemClassRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
+	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
 	router.Get("/", itemClassController.GetAllItemClass)
-	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
+	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
+	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
 	router.Post("/", itemClassController.SaveItemClass)
 	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
 
@@ -575,7 +577,7 @@ func WarehouseMasterRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
-	router.Get("/by-id/{warehouse_id}", warehouseMasterController.GetById)
+	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
 	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
