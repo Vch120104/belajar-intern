@@ -28,7 +28,7 @@ func ItemClassRouter(
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
-
+	//test
 	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
 	router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
