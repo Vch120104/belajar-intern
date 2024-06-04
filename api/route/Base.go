@@ -904,7 +904,7 @@ func WorkOrderRouter(
 	router.Post("/normalbooking", WorkOrderController.NewBooking)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 
-	//add trx sub
+	//add post trx sub
 	router.Post("/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
 	router.Delete("/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
 	router.Post("/{work_order_system_number}/vehicleservice", WorkOrderController.AddVehicleService)

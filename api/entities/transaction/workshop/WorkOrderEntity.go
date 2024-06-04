@@ -25,11 +25,11 @@ type WorkOrder struct {
 	CustomerId                         int               `gorm:"column:customer_id;size:30;" json:"customer_id"`
 	PayType                            string            `gorm:"column:pay_type;size:50;" json:"pay_type"`
 	FromEra                            string            `gorm:"column:from_era;size:50;" json:"from_era"`
-	QueueNumber                        string            `gorm:"column:queue_number;size:50;" json:"queue_number"`
-	ArrivalTime                        string            `gorm:"column:arrival_time;size:50;" json:"arrival_time"`
-	ServiceMileage                     string            `gorm:"column:service_mileage;size:50;" json:"service_mileage"`
-	LeaveCar                           string            `gorm:"column:leave_car;size:50;" json:"leave_car"`
-	Storing                            string            `gorm:"column:storing;size:50;" json:"storing"`
+	QueueNumber                        int               `gorm:"column:queue_number;size:50;" json:"queue_number"`
+	ArrivalTime                        time.Time         `gorm:"column:arrival_time;type:datetime;" json:"arrival_time"`
+	ServiceMileage                     int               `gorm:"column:service_mileage;size:50;" json:"service_mileage"`
+	LeaveCar                           bool              `gorm:"column:leave_car;" json:"leave_car"`
+	Storing                            bool              `gorm:"column:storing;size:50;" json:"storing"`
 	EraNumber                          string            `gorm:"column:era_number;size:50;" json:"era_number"`
 	EraExpiredDate                     time.Time         `gorm:"column:era_expired_date;type:datetime" json:"era_expired_date"`
 	Unregister                         string            `gorm:"column:unregister;size:50;" json:"unregister"`
@@ -52,7 +52,7 @@ type WorkOrder struct {
 	InsuranceExpiredDate               time.Time         `gorm:"column:insurance_expired_date;type:datetime" json:"insurance_expired_date"`
 	InsuranceClaimNumber               string            `gorm:"column:insurance_claim_number;size:50;" json:"insurance_claim_number"`
 	InsurancePersonInCharge            string            `gorm:"column:insurance_person_in_charge;size:50;" json:"insurance_person_in_charge"`
-	InsuranceOwnRisk                   string            `gorm:"column:insurance_own_risk;size:50;" json:"insurance_own_risk"`
+	InsuranceOwnRisk                   float32           `gorm:"column:insurance_own_risk;" json:"insurance_own_risk"`
 	InsuranceWorkOrderNumber           string            `gorm:"column:insurance_work_order_number;size:50;" json:"insurance_work_order_number"`
 	TotalPackage                       float32           `gorm:"column:total_package" json:"total_package"`
 	TotalOperation                     float32           `gorm:"column:total_operation" json:"total_operation"`
@@ -105,10 +105,10 @@ type WorkOrder struct {
 	SiteTypeId                         int               `gorm:"column:work_order_site_type_id;size:30;" json:"work_order_site_type_id"`
 	CostCenterId                       int               `gorm:"column:cost_center_id;size:30;" json:"cost_center_id"`
 	PromiseDate                        time.Time         `gorm:"column:promise_date;type:datetime" json:"promise_date"`
-	PromiseTime                        float32           `gorm:"column:promise_time" json:"promise_time"`
-	CarWash                            string            `gorm:"column:car_wash;size:50;" json:"car_wash"`
+	PromiseTime                        time.Time         `gorm:"column:promise_time;type:time" json:"promise_time"`
+	CarWash                            bool              `gorm:"column:car_wash;" json:"car_wash"`
 	JobOnHoldReason                    string            `gorm:"column:job_on_hold_reason;size:50;" json:"job_on_hold_reason"`
-	CustomerExpress                    string            `gorm:"column:customer_express;size:50;" json:"customer_express"`
+	CustomerExpress                    bool              `gorm:"column:customer_express;" json:"customer_express"`
 	CPTitlePrefix                      string            `gorm:"column:contact_person_title_prefix;size:50;" json:"contact_person_title_prefix"`
 	WorkOrderDetail                    []WorkOrderDetail `gorm:"foreignKey:WorkOrderSystemNumber;references:WorkOrderSystemNumber" json:"work_order_detail"`
 }

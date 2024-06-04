@@ -115,22 +115,35 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Param reqBody body transactionworkshoppayloads.WorkOrderRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal [post]
 func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
-	// Create new work order
-	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 
-	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
-	helper.ReadFromRequestBody(request, &groupRequest)
+	// Menginisialisasi koneksi database
+	db := config.InitDB()
 
-	if err := r.WorkOrderService.AddRequest(int(workorderID), groupRequest); err != nil {
+	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
+	if err := json.NewDecoder(request.Body).Decode(&workOrderRequest); err != nil {
+
+		payloads.NewHandleError(writer, "Failed to decode request payload", http.StatusBadRequest)
+		return
+	}
+
+	success, err := r.WorkOrderService.New(db, workOrderRequest)
+	if err != nil {
+
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "work order created", http.StatusCreated)
+	// Kirim respons ke klien sesuai hasil penyimpanan
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
+	}
 
 }
 

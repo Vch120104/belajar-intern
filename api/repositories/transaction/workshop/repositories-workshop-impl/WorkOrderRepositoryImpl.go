@@ -293,20 +293,64 @@ func (r *WorkOrderRepositoryImpl) CampaignLookup(tx *gorm.DB, filterCondition []
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Create a new instance of WorkOrderRequest
-	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
-
-	// Save the work order
-	err := tx.Create(&workOrderRequest).Error
-	if err != nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{
-			Message: "Failed to save work order",
-			Err:     err,
-		}
+	entities := transactionworkshopentities.WorkOrder{
+		// Assign fields from request
+		WorkOrderSystemNumber:    request.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber:  request.WorkOrderDocumentNumber,
+		WorkOrderStatusId:        request.WorkOrderStatusId,
+		WorkOrderDate:            request.WorkOrderDate,
+		WorkOrderTypeId:          request.WorkOrderTypeId,
+		BrandId:                  request.BrandId,
+		ServiceAdvisor:           request.ServiceAdvisorId,
+		ModelId:                  request.ModelId,
+		VariantId:                request.VariantId,
+		VehicleId:                request.VehicleId,
+		CustomerId:               request.CustomerId,
+		BillableToId:             request.BilltoCustomerId,
+		FromEra:                  request.WorkOrderEraNo,
+		QueueNumber:              request.QueueSystemNumber,
+		ArrivalTime:              request.WorkOrderArrivalTime,
+		ServiceMileage:           request.WorkOrderCurrentMileage,
+		Storing:                  request.WorkOrderStatusStoring,
+		Remark:                   request.WorkOrderRemark,
+		ProfitCenterId:           request.WorkOrderProfitCenter,
+		CostCenterId:             request.WorkOrderDealerRepCode,
+		ContactPersonName:        request.NameCust,
+		ContactPersonPhone:       request.PhoneCust,
+		ContactPersonMobile:      request.MobileCust,
+		ContactPersonContactVia:  request.ContactVia,
+		EraNumber:                request.WorkOrderEraNo,
+		EraExpiredDate:           request.WorkOrderEraExpiredDate,
+		InsurancePolicyNumber:    request.WorkOrderInsurancePolicyNo,
+		InsuranceExpiredDate:     request.WorkOrderInsuranceExpiredDate,
+		InsuranceClaimNumber:     request.WorkOrderInsuranceClaimNo,
+		InsurancePersonInCharge:  request.WorkOrderInsurancePic,
+		InsuranceOwnRisk:         request.WorkOrderInsuranceOwnRisk,
+		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
+		CampaignId:               request.CampaignId,
+		EstTime:                  request.EstimationDuration,
+		CustomerExpress:          request.CustomerExpress,
+		LeaveCar:                 request.LeaveCar,
+		CarWash:                  request.CarWash,
+		PromiseDate:              request.PromiseDate,
+		PromiseTime:              request.PromiseTime,
+		FSCouponNo:               request.FSCouponNo,
+		Notes:                    request.Notes,
+		Suggestion:               request.Suggestion,
+		DPAmount:                 request.DownpaymentAmount,
 	}
 
-	return workOrderRequest, nil
+	// Save the work order
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	return true, nil
 }
 
 func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {

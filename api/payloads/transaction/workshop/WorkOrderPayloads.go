@@ -57,6 +57,7 @@ type WorkOrderRequest struct {
 	WorkOrderTypeId               int       `json:"work_order_type_id"`
 	WorkOrderServiceSite          int       `json:"work_order_servicesite_id"`
 	BrandId                       int       `json:"brand_id"`
+	ServiceAdvisorId              int       `json:"service_advisor_id"`
 	ModelId                       int       `json:"model_id"`
 	VariantId                     int       `json:"variant_id"`
 	VehicleId                     int       `json:"vehicle_id"`
@@ -71,8 +72,8 @@ type WorkOrderRequest struct {
 	WorkOrderStatusStoring        bool      `json:"work_order_status_storing"`
 	WorkOrderRemark               string    `json:"work_order_remark"`
 	WorkOrderStatusUnregistered   bool      `json:"work_order_status_unregistered"`
-	WorkOrderProfitCenter         string    `json:"work_order_profit_center"`
-	WorkOrderDealerRepCode        string    `json:"work_order_dealer_rep_code"`
+	WorkOrderProfitCenter         int       `json:"work_order_profit_center"`
+	WorkOrderDealerRepCode        int       `json:"work_order_dealer_rep_code"`
 	CampaignId                    int       `json:"campaign_id"`
 	AgreementId                   int       `json:"agreement_id"`
 	ServiceRequestSystemNumber    int       `json:"system_request_system_number"`
@@ -94,6 +95,16 @@ type WorkOrderRequest struct {
 	WorkOrderInsurancePic         string    `json:"insurance_pic"`
 	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
 	WorkOrderInsuranceOwnRisk     float32   `json:"insurance_own_risk"`
+	EstimationDuration            float32   `json:"estimation_duration"`
+	CustomerExpress               bool      `json:"customer_express"`
+	LeaveCar                      bool      `json:"leave_car"`
+	CarWash                       bool      `json:"car_wash"`
+	PromiseDate                   time.Time `json:"promise_date"`
+	PromiseTime                   time.Time `json:"promise_time"`
+	FSCouponNo                    string    `json:"fs_coupon_no"`
+	Notes                         string    `json:"notes"`
+	Suggestion                    string    `json:"suggestion"`
+	DownpaymentAmount             float32   `json:"dp_amount"`
 }
 
 type WorkOrderLookupRequest struct {

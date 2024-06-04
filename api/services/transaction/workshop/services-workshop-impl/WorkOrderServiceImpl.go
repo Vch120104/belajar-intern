@@ -58,14 +58,13 @@ func (s *WorkOrderServiceImpl) CampaignLookup(filterCondition []utils.FilterCond
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) New(tx *gorm.DB) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
-
-	results, err := s.structWorkOrderRepo.New(tx)
+	save, err := s.structWorkOrderRepo.New(tx, request)
 	if err != nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, err
+		return false, err
 	}
-	return results, nil
+	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
