@@ -4,6 +4,8 @@ import (
 	"math"
 	"reflect"
 
+	"strings"
+
 	"github.com/go-gota/gota/dataframe"
 )
 
@@ -29,6 +31,10 @@ func DataFramePaginate(data interface{}, page int, limit int, sortOf string, sor
 		df = dataframe.LoadMaps(data.([]map[string]interface{}))
 	} else {
 		df = dataframe.LoadStructs(data)
+	}
+
+	if strings.Contains(sortOf, "_") {
+		SnaketoPascalCase(sortOf)
 	}
 
 	totalRows = df.Nrow()

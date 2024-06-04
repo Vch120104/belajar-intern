@@ -5,8 +5,10 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -22,7 +24,70 @@ func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
 	return &ItemClassRepositoryImpl{}
 }
 
-func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+// GetItemClassByCode implements masteritemrepository.ItemClassRepository.
+func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode string) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemClass{}
+	response := masteritempayloads.ItemClassResponse{}
+
+	err := tx.Model(&entities).Select("mtr_item_class.*").
+		Where(masteritementities.ItemClass{
+			ItemClassCode: itemClassCode,
+		}).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	lineTypeResponse := masteritempayloads.LineTypeResponse{}
+
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
+
+	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+
+	value, ok := joinedData[0]["LineTypeName_1"]
+
+	if ok {
+		switch v := value.(type) {
+		case string:
+			response.LineTypeName = v
+		}
+	}
+
+	return response, nil
+}
+
+// GetItemClassDropDown implements masteritemrepository.ItemClassRepository.
+func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
+	entities := []masteritementities.ItemClass{}
+	response := []masteritempayloads.ItemClassDropdownResponse{}
+	if err := tx.Model(entities).Scan(&response).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(response) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New(""),
+		}
+	}
+	return response, nil
+}
+
+func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
 	var responses []masteritempayloads.ItemClassResponse
 	var getLineTypeResponse []masteritempayloads.LineTypeResponse
@@ -59,30 +124,28 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, internalServiceFilter)
 	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
 
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
 	if errUrlItemGroup != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlItemGroup,
 		}
@@ -95,7 +158,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 
 	if errUrlLineType != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlLineType,
 		}
@@ -103,7 +166,9 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
 
-	return joinedDataSecond, nil
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSecond, &pages)
+
+	return dataPaginate, totalPages, totalRows, nil
 }
 
 func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
