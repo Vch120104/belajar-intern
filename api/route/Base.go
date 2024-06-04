@@ -31,6 +31,7 @@ func ItemClassRouter(
 
 	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
 	router.Get("/", itemClassController.GetAllItemClass)
+	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
 	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
 	router.Post("/", itemClassController.SaveItemClass)
 	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)

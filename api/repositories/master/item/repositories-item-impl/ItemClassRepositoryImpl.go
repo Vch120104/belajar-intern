@@ -24,6 +24,49 @@ func StartItemClassRepositoryImpl() masteritemrepository.ItemClassRepository {
 	return &ItemClassRepositoryImpl{}
 }
 
+// GetItemClassByCode implements masteritemrepository.ItemClassRepository.
+func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode string) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemClass{}
+	response := masteritempayloads.ItemClassResponse{}
+
+	err := tx.Model(&entities).Select("mtr_item_class.*").
+		Where(masteritementities.ItemClass{
+			ItemClassCode: itemClassCode,
+		}).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	lineTypeResponse := masteritempayloads.LineTypeResponse{}
+
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
+
+	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+
+	value, ok := joinedData[0]["LineTypeName_1"]
+
+	if ok {
+		switch v := value.(type) {
+		case string:
+			response.LineTypeName = v
+		}
+	}
+
+	return response, nil
+}
+
 // GetItemClassDropDown implements masteritemrepository.ItemClassRepository.
 func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}

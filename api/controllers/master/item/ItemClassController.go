@@ -20,6 +20,7 @@ type ItemClassController interface {
 	GetAllItemClass(writer http.ResponseWriter, request *http.Request)
 	GetItemClassDropdown(writer http.ResponseWriter, request *http.Request)
 	GetItemClassbyId(writer http.ResponseWriter, request *http.Request)
+	GetItemClassByCode(writer http.ResponseWriter, request *http.Request)
 	SaveItemClass(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
 }
@@ -31,6 +32,20 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 	return &ItemClassControllerImpl{
 		ItemClassService: itemClassService,
 	}
+}
+
+// GetItemClassByCode implements ItemClassController.
+func (r *ItemClassControllerImpl) GetItemClassByCode(writer http.ResponseWriter, request *http.Request) {
+	itemClassCode := chi.URLParam(request, "item_class_code")
+
+	response, err := r.ItemClassService.GetItemClassByCode(itemClassCode)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
 // GetItemClassbyId implements ItemClassController.
