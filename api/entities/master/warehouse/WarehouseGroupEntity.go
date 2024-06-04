@@ -12,6 +12,7 @@ type WarehouseGroup struct {
 	ProfitCenterId     int                    `gorm:"column:profit_center_id;not null;size:30" json:"profit_center_id"`
 	WarehouseLocation  WarehouseLocation      `gorm:"foreignKey:WarehouseGroupId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;references:warehouse_group_id" json:"warehouse_group"`
 	ItemLocation       masteritementities.ItemLocation `gorm:"foreignkey:warehouse_group_id;references:warehouse_group_id"`
+	WarehouseMaster    WarehouseMaster   `gorm:"foreignKey:WarehouseGroupId;references:WarehouseGroupId" `
 }
 
 func (*WarehouseGroup) TableName() string {

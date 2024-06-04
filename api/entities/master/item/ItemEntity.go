@@ -64,6 +64,7 @@ type Item struct {
 	ItemClass                    ItemClass         `gorm:"foreignKey:item_id;references:item_id"`
 	ItemPackageDetail            ItemPackageDetail `gorm:"foreignKey:item_id;references:item_id"`
 	ItemLocation                 ItemLocation      `gorm:"foreignKey:item_id;references:item_id"`
+	Bom                          Bom               `gorm:"foreignKey:item_id;references:item_id"`
 }
 
 func (*Item) TableName() string {

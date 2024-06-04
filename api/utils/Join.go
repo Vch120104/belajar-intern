@@ -88,7 +88,7 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	keyAttribute := []string{}
 	responseType := reflect.TypeOf(tableStruct)
 	joinTable := []string{}
-	var joinTableIds []string
+	joinTableMap := make(map[string]string)
 	var mainTable string
 	referenceTable := map[string]bool{} // Use map to store unique referenced tables
 
@@ -117,7 +117,7 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	for i := 0; i < responseType.NumField(); i++ {
 		for ref := range referenceTable {
 			if ref == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "id") {
-				joinTableIds = append(joinTableIds, responseType.Field(i).Tag.Get("json"))
+				joinTableMap[responseType.Field(i).Tag.Get("parent_entity")] = responseType.Field(i).Tag.Get("json")
 			}
 		}
 		keyAttribute = append(keyAttribute, responseType.Field(i).Tag.Get("parent_entity")+"."+responseType.Field(i).Tag.Get("json"))
@@ -127,17 +127,11 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	query := db.Table(mainTable).Select(keyAttribute)
 
 	// Join Tables
-	var innerloop =0
-	if len(joinTableIds) > 0 {
-		for ref := range referenceTable {
-			joinCondition := "join " + ref + " as " + ref + " on " + mainTable + "." + joinTableIds[innerloop] + " = " + ref + "." + joinTableIds[innerloop]
-			joinTable = append(joinTable, joinCondition)
-			innerloop++
-		}
-		query = query.Joins(strings.Join(joinTable, " "))
-	} else {
-		fmt.Println("No join tables found")
+	for ref := range referenceTable {
+		joinCondition := "join " + ref + " as " + ref + " on " + mainTable + "." + joinTableMap[ref] + " = " + ref + "." + joinTableMap[ref]
+		joinTable = append(joinTable, joinCondition)
 	}
+	query = query.Joins(strings.Join(joinTable, " "))
 
 	return query
 }

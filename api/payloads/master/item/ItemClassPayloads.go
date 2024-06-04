@@ -18,6 +18,12 @@ type ItemClassResponse struct {
 	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
 }
 
+type ItemClassDropdownResponse struct {
+	IsActive      bool   `json:"is_active" parent_entity:"mtr_item_class"`
+	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class"`
+	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
+}
+
 // IsActive      bool   `json:"is_active" parent_entity:"mtr_item"`
 // ItemId        int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
 // ItemCode      string `json:"item_code" parent_entity:"mtr_item"`

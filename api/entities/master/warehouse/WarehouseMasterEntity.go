@@ -10,6 +10,8 @@ type WarehouseMaster struct {
 	WarehouseKaroseri             *bool  `gorm:"column:warehouse_karoseri;default:false;not null" json:"warehouse_karoseri"`
 	WarehouseNegativeStock        *bool  `gorm:"column:warehouse_negative_stock;default:false;not null" json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator *bool  `gorm:"column:warehouse_replishment_indicator;default:false;not null" json:"warehouse_replishment_indicator"`
+	WarehouseGroupId              int    `gorm:"column:warehouse_group_id;size:30" json:"warehouse_group_id"`
+	WarehouseGroup                *WarehouseGroup
 	WarehouseContact              string `gorm:"column:warehouse_contact;not null;type:varchar(100)" json:"warehouse_contact"`
 	WarehouseCode                 string `gorm:"column:warehouse_code;not null;type:varchar(5);unique" json:"warehouse_code"`
 	WarehouseId                   int    `gorm:"column:warehouse_id;not null;primaryKey" json:"warehouse_id"`

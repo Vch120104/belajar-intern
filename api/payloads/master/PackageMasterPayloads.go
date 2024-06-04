@@ -34,9 +34,9 @@ type CurrencyResponse struct {
 }
 
 type GetVariantResponse struct {
-	VariantId   int    `json:"variant_id"`
-	VariantCode string `json:"variant_code"`
-	VariantDesc string `json:"variant_description"`
+	VariantId          int    `json:"variant_id"`
+	VariantCode        string `json:"variant_code"`
+	VariantDescription string `json:"variant_description"`
 }
 
 type GetProfitMaster struct {
