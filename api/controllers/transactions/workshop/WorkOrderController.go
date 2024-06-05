@@ -125,11 +125,7 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 	db := config.InitDB()
 
 	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
-	if err := json.NewDecoder(request.Body).Decode(&workOrderRequest); err != nil {
-
-		payloads.NewHandleError(writer, "Failed to decode request payload", http.StatusBadRequest)
-		return
-	}
+	helper.ReadFromRequestBody(request, &workOrderRequest)
 
 	success, err := r.WorkOrderService.New(db, workOrderRequest)
 	if err != nil {
