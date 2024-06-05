@@ -184,6 +184,12 @@ func ItemLocationRouter(
 	router.Post("/detail", ItemLocationController.AddItemLocation)
 	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
 
+	// new
+	router.Get("/new/get-all/",ItemLocationController.GetAllItemLoc)
+	router.Get("/new/get-by-id/{item_location_id}",ItemLocationController.GetByIdItemLoc)
+	router.Post("/new/save",ItemLocationController.SaveItemLoc)
+	router.Delete("/new/delete/{item_location_id}",ItemLocationController.DeleteItemLoc)
+
 	return router
 }
 

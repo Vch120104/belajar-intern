@@ -1,5 +1,7 @@
 package masterwarehouseentities
 
+import masteritementities "after-sales/api/entities/master/item"
+
 const TableNameWarehouseMaster = "mtr_warehouse_master"
 
 type WarehouseMaster struct {
@@ -22,6 +24,7 @@ type WarehouseMaster struct {
 	WarehouseName                 string `gorm:"column:warehouse_name;not null;type:varchar(100)" json:"warehouse_name"`
 	WarehouseDetailName           string `gorm:"column:warehouse_detail_name;not null;type:varchar(100)" json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `gorm:"column:warehouse_transit_default;not null;type:varchar(5)" json:"warehouse_transit_default"`
+	ItemLocation                  masteritementities.ItemLocation `gorm:"foreignkey:warehouse_id;references:warehouse_id"`
 }
 
 func (*WarehouseMaster) TableName() string {
