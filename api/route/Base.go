@@ -185,10 +185,10 @@ func ItemLocationRouter(
 	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
 
 	// new
-	router.Get("/new/get-all/",ItemLocationController.GetAllItemLoc)
-	router.Get("/new/get-by-id/{item_location_id}",ItemLocationController.GetByIdItemLoc)
-	router.Post("/new/save",ItemLocationController.SaveItemLoc)
-	router.Delete("/new/delete/{item_location_id}",ItemLocationController.DeleteItemLoc)
+	router.Get("/new/get-all/", ItemLocationController.GetAllItemLoc)
+	router.Get("/new/get-by-id/{item_location_id}", ItemLocationController.GetByIdItemLoc)
+	router.Post("/new/save", ItemLocationController.SaveItemLoc)
+	router.Delete("/new/delete/{item_location_id}", ItemLocationController.DeleteItemLoc)
 
 	return router
 }
@@ -907,14 +907,31 @@ func WorkOrderRouter(
 
 	//add trx
 	router.Post("/normal", WorkOrderController.New)
-	router.Post("/normalbooking", WorkOrderController.NewBooking)
-	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+	router.Get("/normal/{work_order_system_number}", WorkOrderController.GetById)
+	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
+	router.Post("/normal/submit", WorkOrderController.Submit)
+	router.Delete("/normal/{work_order_system_number}", WorkOrderController.Void)
+	router.Put("/normal/close/{work_order_system_number}", WorkOrderController.CloseOrder)
 
 	//add post trx sub
-	router.Post("/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
-	router.Delete("/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
-	router.Post("/{work_order_system_number}/vehicleservice", WorkOrderController.AddVehicleService)
-	router.Delete("/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
+	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
+	router.Get("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.GetRequestById)
+	router.Post("/normal/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
+	router.Put("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.UpdateRequest)
+	router.Delete("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
+
+	router.Get("/normal/vehicleservice", WorkOrderController.GetAllVehicleService)
+	router.Get("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.GetVehicleServiceById)
+	router.Put("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.UpdateVehicleService)
+	router.Post("/normal/{work_order_system_number}/vehicleservice", WorkOrderController.AddVehicleService)
+	router.Delete("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
+
+	//add trx detail
+	// router.Get("/normal/{work_order_system_number}/detail", WorkOrderController.GetAllDetail)
+	// router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailById)
+	// router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetail)
+	// router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetail)
+	// router.Delete("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.DeleteDetail)
 
 	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
@@ -926,12 +943,8 @@ func WorkOrderRouter(
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 
-	// trx header
-	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
-	router.Put("/{id}", WorkOrderController.Save)
-	router.Post("/submit", WorkOrderController.Submit)
-	router.Delete("/{id}", WorkOrderController.Void)
-	router.Put("/close/{id}", WorkOrderController.CloseOrder)
+	router.Post("/normalbooking", WorkOrderController.NewBooking)
+	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 
 	return router
 }

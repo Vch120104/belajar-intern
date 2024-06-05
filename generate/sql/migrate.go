@@ -3,13 +3,13 @@ package migration
 import (
 	"after-sales/api/config"
 
-	// masterentities "after-sales/api/entities/master"
-	// masteritementities "after-sales/api/entities/master/item"
+	masterentities "after-sales/api/entities/master"
+	masteritementities "after-sales/api/entities/master/item"
 
-	// masteroperationentities "after-sales/api/entities/master/operation"
-	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
+	masteroperationentities "after-sales/api/entities/master/operation"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
-	// transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
+	transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
@@ -64,66 +64,66 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-		// &masteroperationentities.OperationModelMapping{},
-		// &masteroperationentities.OperationFrt{},
-		// &masteroperationentities.OperationGroup{},
-		// &masteroperationentities.OperationSection{},
-		// &masteroperationentities.OperationKey{},
-		// &masteroperationentities.OperationEntries{},
-		// &masteroperationentities.OperationCode{},
+		&masteroperationentities.OperationModelMapping{},
+		&masteroperationentities.OperationFrt{},
+		&masteroperationentities.OperationGroup{},
+		&masteroperationentities.OperationSection{},
+		&masteroperationentities.OperationKey{},
+		&masteroperationentities.OperationEntries{},
+		&masteroperationentities.OperationCode{},
 
-		// &masterwarehouseentities.WarehouseGroup{},
-		// &masterwarehouseentities.WarehouseMaster{},
-		// &masterwarehouseentities.WarehouseLocation{},
-		// &masterwarehouseentities.WarehouseLocationDefinition{},
-		// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+		&masterwarehouseentities.WarehouseGroup{},
+		&masterwarehouseentities.WarehouseMaster{},
+		&masterwarehouseentities.WarehouseLocation{},
+		&masterwarehouseentities.WarehouseLocationDefinition{},
+		&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
 
-		// &masteritementities.ItemLocation{},
-		// &masteritementities.ItemLocationSource{},
-		// &masteritementities.ItemLocationDetail{},
-		// &masteritementities.PurchasePrice{},
-		// &masteritementities.PurchasePriceDetail{},
-		// &masteritementities.UomType{},
-		// &masteritementities.Uom{},
-		// &masteritementities.Bom{},
-		// &masteritementities.BomDetail{},
-		// &masteritementities.MarkupRate{},
-		// &masteritementities.PrincipleBrandParent{},
-		// &masteritementities.MarkupMaster{},
-		// &masteritementities.ItemLevel{},
-		// &masteritementities.ItemClass{},
-		// &masteritementities.PriceList{},
-		// &masteritementities.ItemSubstituteDetail{},
-		// &masteritementities.ItemSubstitute{},
-		// &masteritementities.ItemPackage{},
-		// &masteritementities.ItemPackageDetail{},
-		// &masteritementities.ItemDetail{},
-		// &masteritementities.ItemImport{},
-		// &masteritementities.Item{},
+		&masteritementities.ItemLocation{},
+		&masteritementities.ItemLocationSource{},
+		&masteritementities.ItemLocationDetail{},
+		&masteritementities.PurchasePrice{},
+		&masteritementities.PurchasePriceDetail{},
+		&masteritementities.UomType{},
+		&masteritementities.Uom{},
+		&masteritementities.Bom{},
+		&masteritementities.BomDetail{},
+		&masteritementities.MarkupRate{},
+		&masteritementities.PrincipleBrandParent{},
+		&masteritementities.MarkupMaster{},
+		&masteritementities.ItemLevel{},
+		&masteritementities.ItemClass{},
+		&masteritementities.PriceList{},
+		&masteritementities.ItemSubstituteDetail{},
+		&masteritementities.ItemSubstitute{},
+		&masteritementities.ItemPackage{},
+		&masteritementities.ItemPackageDetail{},
+		&masteritementities.ItemDetail{},
+		&masteritementities.ItemImport{},
+		&masteritementities.Item{},
 
-		// &masterentities.ForecastMaster{},
-		// &masterentities.MovingCode{},
-		// &masterentities.IncentiveGroup{},
-		// &masterentities.PackageMaster{},
-		// &masterentities.ShiftSchedule{},
-		// &masterentities.IncentiveMaster{},
-		// &masterentities.IncentiveGroupDetail{},
-		// &masterentities.SkillLevel{},
-		// &masterentities.WarrantyFreeService{},
-		// &masterentities.DeductionList{},
-		// &masterentities.DeductionDetail{},
-		// &masterentities.FieldActionEligibleVehicleItem{},
-		// &masterentities.FieldActionEligibleVehicle{},
-		// &masterentities.FieldAction{},
-		// &masterentities.Discount{},
-		// &masteritementities.DiscountPercent{},
-		// &masterentities.Agreement{},
-		// &masterentities.AgreementDiscount{},
-		// &masterentities.AgreementDiscountGroupDetail{},
-		// &masterentities.AgreementItemDetail{},
+		&masterentities.ForecastMaster{},
+		&masterentities.MovingCode{},
+		&masterentities.IncentiveGroup{},
+		&masterentities.PackageMaster{},
+		&masterentities.ShiftSchedule{},
+		&masterentities.IncentiveMaster{},
+		&masterentities.IncentiveGroupDetail{},
+		&masterentities.SkillLevel{},
+		&masterentities.WarrantyFreeService{},
+		&masterentities.DeductionList{},
+		&masterentities.DeductionDetail{},
+		&masterentities.FieldActionEligibleVehicleItem{},
+		&masterentities.FieldActionEligibleVehicle{},
+		&masterentities.FieldAction{},
+		&masterentities.Discount{},
+		&masteritementities.DiscountPercent{},
+		&masterentities.Agreement{},
+		&masterentities.AgreementDiscount{},
+		&masterentities.AgreementDiscountGroupDetail{},
+		&masterentities.AgreementItemDetail{},
 
-		// &transactionsparepartpentities.SupplySlip{},
-		// &transactionsparepartpentities.SupplySlipDetail{},
+		&transactionsparepartpentities.SupplySlip{},
+		&transactionsparepartpentities.SupplySlipDetail{},
 		&transactionworkshopentities.WorkOrderMaster{},
 		&transactionworkshopentities.WorkOrderMasterStatus{},
 		&transactionworkshopentities.WorkOrderMasterType{},
@@ -136,12 +136,12 @@ func Migrate() {
 		&transactionworkshopentities.WorkOrderService{},
 		&transactionworkshopentities.WorkOrderServiceVehicle{},
 
-		// &transactionworkshopentities.BookingEstimation{},
-		// &transactionworkshopentities.BookingEstimationAllocation{},
-		// &transactionworkshopentities.BookingEstimationRequest{},
-		// &transactionworkshopentities.BookingEstimationServiceReminder{},
-		// &transactionworkshopentities.BookingEstimationServiceDiscount{},
-		// &transactionworkshopentities.BookingEstimationDetail{},
+		&transactionworkshopentities.BookingEstimation{},
+		&transactionworkshopentities.BookingEstimationAllocation{},
+		&transactionworkshopentities.BookingEstimationRequest{},
+		&transactionworkshopentities.BookingEstimationServiceReminder{},
+		&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		&transactionworkshopentities.BookingEstimationDetail{},
 	)
 
 	if err != nil {

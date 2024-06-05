@@ -166,6 +166,35 @@ func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptions.BaseE
 	return nil
 }
 
+func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.GetRequestById(tx, idwosn, idwos)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateRequest(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.UpdateRequest(tx, idwosn, idwos, request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -180,6 +209,36 @@ func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) *exception
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.structWorkOrderRepo.DeleteRequest(tx, id, IdWorkorder)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllVehicleService(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.GetVehicleServiceById(tx, idwosn, idwos)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateVehicleService(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse {
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.UpdateVehicleService(tx, idwosn, idwos, request)
 	if err != nil {
 		return err
 	}
