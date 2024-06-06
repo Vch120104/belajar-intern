@@ -9,7 +9,6 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	utils "after-sales/api/utils"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -755,41 +754,46 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 }
 
 // Save saves a new work order
-// @Summary Save New Work Order
+// @Summary Save Work Order
 // @Description Save a new work order
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderRequest true "Work Order Data"
-// @Success 200 {object} payloads.Response
+// @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order [put]
+// @Router /v1/work-order/normal/{work_order_system_number} [put]
 func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
+	// Get the Work Order ID from URL parameters and convert to int
+	workOrderIdStr := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(workOrderIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	// Read the request body and convert to WorkOrderRequest struct
+	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	// Initialize the database connection
 	db := config.InitDB()
 
-	// Mendekode payload request ke struct WorkOrderRequest
-	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
-	if err := json.NewDecoder(request.Body).Decode(&workOrderRequest); err != nil {
-		// Tangani kesalahan jika tidak dapat mendekode payload
-		payloads.NewHandleError(writer, "Failed to decode request payload", http.StatusBadRequest)
+	// Save the work order
+	success, baseErr := r.WorkOrderService.Save(db, workOrderRequest, workOrderId)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	// Panggil fungsi Save dari layanan untuk menyimpan data work order
-	success, err := r.WorkOrderService.Save(db, workOrderRequest) // Memastikan untuk meneruskan db ke dalam metode Save
-	if err != nil {
-		// Tangani kesalahan dari layanan
-		exceptions.NewAppException(writer, request, err)
-		return
-	}
-
-	// Kirim respons ke klien sesuai hasil penyimpanan
+	// Send response to client based on the save result
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
 	}
+
 }
 
 // Submit submits a new work order
@@ -798,25 +802,65 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path int true "Work Order ID"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/submit [post]
+// @Router /v1/work-order/normal/{work_order_system_number}/submit [post]
 func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
 	// Create new work order
+	workOrderId := chi.URLParam(request, "work_order_system_number")
+	workOrderIdInt, err := strconv.Atoi(workOrderId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	db := config.InitDB()
+	success, baseErr := r.WorkOrderService.Submit(db, workOrderIdInt)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Work order submitted successfully", http.StatusCreated)
+	} else {
+		payloads.NewHandleError(writer, "Failed to submit work order", http.StatusInternalServerError)
+	}
+
 }
 
-// Void cancels a work order
-// @Summary Cancel Work Order
-// @Description Cancel an existing work order
+// Void delete or cancel a work order
+// @Summary Void Work Order
+// @Description Delete or cancel a work order
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
-// @Param work_order_id path string true "Work Order ID"
+// @Param work_order_system_number path int true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_id} [delete]
+// @Router /v1/work-order/void/{work_order_system_number} [delete]
 func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
-	// Cancel work order
+	// Void work order
+	workOrderId := chi.URLParam(request, "work_order_system_number")
+	workOrderIdInt, err := strconv.Atoi(workOrderId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	db := config.InitDB()
+	success, baseErr := r.WorkOrderService.Void(db, workOrderIdInt)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Work order voided successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to void work order", http.StatusInternalServerError)
+	}
 }
 
 // CloseOrder closes a work order
@@ -825,10 +869,32 @@ func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order
-// @Param work_order_id path string true "Work Order ID"
+// @Param work_order_system_number path int true "Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_id}/close [put]
+// @Router /v1/work-order/{work_order_system_number}/close [patch]
 func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request *http.Request) {
 	// Close work order
+	workOrderId := chi.URLParam(request, "work_order_system_number")
+	workOrderIdInt, err := strconv.Atoi(workOrderId)
+
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	db := config.InitDB()
+	success, baseErr := r.WorkOrderService.CloseOrder(db, workOrderIdInt)
+
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Work order closed successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to close work order", http.StatusInternalServerError)
+	}
+
 }

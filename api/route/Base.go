@@ -902,16 +902,14 @@ func WorkOrderRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	//header
+	//add trx normal
 	router.Get("/", WorkOrderController.GetAll)
-
-	//add trx
-	router.Post("/normal", WorkOrderController.New)
 	router.Get("/normal/{work_order_system_number}", WorkOrderController.GetById)
-	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
+	router.Post("/normal", WorkOrderController.New)
 	router.Post("/normal/submit", WorkOrderController.Submit)
+	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
 	router.Delete("/normal/{work_order_system_number}", WorkOrderController.Void)
-	router.Put("/normal/close/{work_order_system_number}", WorkOrderController.CloseOrder)
+	router.Patch("/normal/{work_order_system_number}/close", WorkOrderController.CloseOrder)
 
 	//add post trx sub
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)

@@ -125,45 +125,41 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 	return results, nil
 }
 
-func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse) {
-	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
+func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
+	// Start a new transaction
 	defer helper.CommitOrRollback(tx)
-
-	// Panggil metode Save dengan menyediakan transaksi dan permintaan WorkOrder
-	save, err := s.structWorkOrderRepo.Save(tx, request)
+	save, err := s.structWorkOrderRepo.Save(tx, request, workOrderId)
 	if err != nil {
 		return false, err
 	}
-
-	// Mengembalikan hasil penyimpanan dan nilai nil untuk ErrorResponse
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
+func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
-	err := s.structWorkOrderRepo.Submit(tx, id)
+	submit, err := s.structWorkOrderRepo.Submit(tx, id)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	return submit, nil
 }
 
-func (s *WorkOrderServiceImpl) Void(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
+func (s *WorkOrderServiceImpl) Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
-	err := s.structWorkOrderRepo.Void(tx, id)
+	delete, err := s.structWorkOrderRepo.Void(tx, workOrderId)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
+func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
-	err := s.structWorkOrderRepo.CloseOrder(tx, id)
+	close, err := s.structWorkOrderRepo.CloseOrder(tx, id)
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	return close, nil
 }
 
 func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

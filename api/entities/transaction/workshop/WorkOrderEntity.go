@@ -33,10 +33,12 @@ type WorkOrder struct {
 	Storing                            bool              `gorm:"column:storing;default:false;" json:"storing"`
 	EraNumber                          string            `gorm:"column:era_number;size:50;" json:"era_number"`
 	EraExpiredDate                     *time.Time        `gorm:"column:era_expired_date;default:null" json:"era_expired_date"`
-	Unregister                         string            `gorm:"column:unregister;size:50;" json:"unregister"`
+	Unregister                         bool              `gorm:"column:unregister;size:50;" json:"unregister"`
 	ContactPersonName                  string            `gorm:"column:contact_person_name;size:50;" json:"contact_person_name"`
 	ContactPersonPhone                 string            `gorm:"column:contact_person_phone;size:50;" json:"contact_person_phone"`
 	ContactPersonMobile                string            `gorm:"column:contact_person_mobile;size:50;" json:"contact_person_mobile"`
+	ContactPersonMobileAlternative     string            `gorm:"column:contact_person_mobile_alternative;size:50;" json:"contact_person_mobile_alternative"`
+	ContactPersonMobileDriver          string            `gorm:"column:contact_person_mobile_driver;size:50;" json:"contact_person_mobile_driver"`
 	ContactPersonContactVia            string            `gorm:"column:contact_person_contact_via;size:50;" json:"contact_person_contact_via"`
 	ContractServiceSystemNumber        int               `gorm:"column:contract_service_system_number;size:30;" json:"contract_service_system_number"`
 	AgreementGeneralRepairId           int               `gorm:"column:agrement_general_repair_id;size:30;" json:"agreement_general_repair_id"`
@@ -49,6 +51,7 @@ type WorkOrder struct {
 	ServiceRequestSystemNumber         int               `gorm:"column:service_request_system_number;size:30;" json:"service_request_system_number"`
 	CampaignId                         int               `gorm:"column:campaign_id;size:30;" json:"campaign_id"`
 	CampaignCode                       int               `gorm:"column:campaign_code;size:30;" json:"campaign_code"`
+	InsuranceCheck                     bool              `gorm:"column:insurance_check;default:false;" json:"insurance_check"`
 	InsurancePolicyNumber              string            `gorm:"column:insurance_policy_number;size:50;" json:"insurance_policy_number"`
 	InsuranceExpiredDate               *time.Time        `gorm:"column:insurance_expired_date;default:null" json:"insurance_expired_date"`
 	InsuranceClaimNumber               string            `gorm:"column:insurance_claim_number;size:50;" json:"insurance_claim_number"`
