@@ -27,17 +27,17 @@ func StartLandedCostMasterService(LandedCostMasterRepo masteritemrepository.Land
 	}
 }
 
-func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{},int,int,*exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.LandedCostMasterRepo.GetAllLandedCost(tx, filterCondition, pages)
+	results,totalpages,totalrows, err := s.LandedCostMasterRepo.GetAllLandedCost(tx, filterCondition, pages)
 	if err != nil {
-		return results, err
+		return results,0,0,err
 	}
-	return results, nil
+	return results,totalpages,totalrows,nil
 }
 
-func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) (masteritempayloads.LandedCostMasterPayloads, *exceptions.BaseErrorResponse) {
+func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.LandedCostMasterRepo.GetByIdLandedCost(tx, id)
@@ -47,7 +47,7 @@ func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) (masteritempaylo
 	return results, nil
 }
 
-func (s *LandedCostMasterServiceImpl) SaveLandedCost(req masteritempayloads.LandedCostMasterPayloads) (bool, *exceptions.BaseErrorResponse) {
+func (s *LandedCostMasterServiceImpl) SaveLandedCost(req masteritempayloads.LandedCostMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.LandedCostMasterRepo.SaveLandedCost(tx, req)
@@ -75,4 +75,14 @@ func (s *LandedCostMasterServiceImpl) ActivateLandedCostMaster(id string) (bool,
 		return false, err
 	}
 	return result, nil
+}
+
+func (s *LandedCostMasterServiceImpl) UpdateLandedCostMaster(id int,req masteritempayloads.LandedCostMasterUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err :=s.LandedCostMasterRepo.UpdateLandedCostMaster(tx,id,req)
+	if err != nil{
+		return false,err
+	}
+	return result,nil
 }

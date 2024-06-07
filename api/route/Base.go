@@ -403,6 +403,7 @@ func LandedCostMasterRouter(
 	router.Post("/", LandedCostMaster.SaveLandedCostMaster)
 	router.Patch("/activate/", LandedCostMaster.ActivateLandedCostMaster)
 	router.Patch("/deactivate/", LandedCostMaster.DeactivateLandedCostmaster)
+	router.Put("/{landed_cost_id}",LandedCostMaster.UpdateLandedCostMaster)
 
 	return router
 }
