@@ -88,7 +88,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	// join with mtr_brand
 
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-brand?page=0&limit=1000000&brand_code=" + brandCode
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_code=" + brandCode
 
 	errUrlUnitBrand := utils.Get(unitBrandUrl, &getBrandResponse, nil)
 
@@ -103,7 +103,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	// join with mtr_unit_model
 
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-model?page=0&limit=100000&model_code=" + modelCode
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=100000&model_code=" + modelCode
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
@@ -118,7 +118,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	// join with mtr_warranty_free_service_type
 
-	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
+	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
 
 	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
 
@@ -162,7 +162,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	// join with mtr_brand on sales service
 
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-brand/" + strconv.Itoa(response.BrandId)
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(response.BrandId)
 
 	errUrlUnitBrand := utils.Get(unitBrandUrl, &getUnitBrandResponse, nil)
 
@@ -177,7 +177,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	//join with mtr_unit_model on sales service
 
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-model/" + strconv.Itoa(response.ModelId)
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(response.ModelId)
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getUnitModelResponse, nil)
 
@@ -192,7 +192,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	// join with mtr_unit_variant on sales service
 
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-variant/" + strconv.Itoa(response.VariantId)
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(response.VariantId)
 
 	errUrlUnitVariant := utils.Get(unitVariantUrl, &getUnitVariantResponse, nil)
 
@@ -207,7 +207,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	// join with mtr_warranty_free_service_type on general service
 
-	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/api/general/warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
+	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
 
 	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
 
