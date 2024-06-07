@@ -23,7 +23,7 @@ type WorkOrderRepository interface {
 	GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse)
 	Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse)
-	Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
+	Submit(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse)
 	Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse)
 	CloseOrder(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 
@@ -41,4 +41,5 @@ type WorkOrderRepository interface {
 	UpdateVehicleService(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
 	AddVehicleService(*gorm.DB, int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
 	DeleteVehicleService(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse)
 }

@@ -135,15 +135,6 @@ func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayl
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
-	submit, err := s.structWorkOrderRepo.Submit(tx, id)
-	if err != nil {
-		return false, err
-	}
-	return submit, nil
-}
-
 func (s *WorkOrderServiceImpl) Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
 	delete, err := s.structWorkOrderRepo.Void(tx, workOrderId)
@@ -259,4 +250,12 @@ func (s *WorkOrderServiceImpl) DeleteVehicleService(id int, IdWorkorder int) *ex
 		return err
 	}
 	return nil
+}
+
+func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) (bool, string, *exceptions.BaseErrorResponse) {
+	submit, newDocumentNumber, err := s.structWorkOrderRepo.Submit(tx, id)
+	if err != nil {
+		return false, "", err
+	}
+	return submit, newDocumentNumber, nil
 }

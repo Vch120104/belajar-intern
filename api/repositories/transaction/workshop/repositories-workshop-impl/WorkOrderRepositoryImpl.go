@@ -554,77 +554,6 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) GenerateWorkOrderCode(tx *gorm.DB, brandID int) (string, error) {
-	var lastWorkOrder transactionworkshopentities.WorkOrder
-
-	// Retrieve the last work order with the same brandID
-	err := tx.Where("brand_id = ?", brandID).Order("work_order_system_number desc").First(&lastWorkOrder).Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", errors.New("failed to retrieve last work order")
-	}
-
-	currentTime := time.Now()
-	month := currentTime.Month()
-	year := currentTime.Year()
-
-	// Check if the last work order exists
-	if lastWorkOrder.WorkOrderSystemNumber == 0 {
-		// If no work order exists, start the running number from 1
-		return fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandID, month, year%100), nil
-	}
-
-	lastWorkOrderDate := lastWorkOrder.WorkOrderDate
-	lastWorkOrderMonth := lastWorkOrderDate.Month()
-	lastWorkOrderYear := lastWorkOrderDate.Year()
-
-	// Reset the running number if the last work order is from a different month or year
-	if lastWorkOrderMonth != month || lastWorkOrderYear != year {
-		return fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandID, month, year%100), nil
-	}
-
-	// Extract the running number from the last work order code and increment it by 1
-	lastWorkOrderCode := lastWorkOrder.WorkOrderDocumentNumber
-	lastWorkOrderNumber, err := strconv.Atoi(strings.Split(lastWorkOrderCode, "/")[5])
-	if err != nil {
-		return "", errors.New("failed to parse last work order code")
-	}
-
-	newWorkOrderNumber := lastWorkOrderNumber + 1
-
-	// Format the new work order code
-	return fmt.Sprintf("WSWO/%d/%02d/%02d/%05d", brandID, month, year%100, newWorkOrderNumber), nil
-}
-
-func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
-	// Retrieve the work order by Id
-	var entity transactionworkshopentities.WorkOrder
-	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", workOrderId).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order from the database"}
-	}
-
-	// Generate a new document number for the work order
-	// newDocumentNumber, err := r.GenerateWorkOrderCode(tx, entity.BrandId)
-	// if err != nil {
-	// 	return false, &exceptions.BaseErrorResponse{Message: "Failed to generate work order code"}
-	// }
-
-	// // Update the work order document number
-	// entity.WorkOrderDocumentNumber = newDocumentNumber
-
-	// Update the work order status to 2 (New Submitted)
-	entity.WorkOrderStatusId = 2
-
-	// Save the updated work order
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{Message: "Failed to submit the work order"}
-	}
-
-	return true, nil
-
-}
-
 func (r *WorkOrderRepositoryImpl) Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
 	// Retrieve the work order by work_order_system_number
 	var entity transactionworkshopentities.WorkOrder
@@ -880,4 +809,98 @@ func (r *WorkOrderRepositoryImpl) DeleteVehicleService(tx *gorm.DB, id int, IdWo
 	}
 
 	return nil
+}
+
+func (r *WorkOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse) {
+	var workOrder transactionworkshopentities.WorkOrder
+
+	// Retrieve the work order by Id to get brand_id
+	err := tx.Where("work_order_system_number = ?", workOrderId).First(&workOrder).Error
+	if err != nil {
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("failed to retrieve work order: %v", err)}
+	}
+
+	// Check if brand_id is available
+	if workOrder.BrandId == 0 {
+		return "", &exceptions.BaseErrorResponse{Message: "brand_id is missing in the work order"}
+	}
+
+	// Retrieve the last work order with the same brandID
+	var lastWorkOrder transactionworkshopentities.WorkOrder
+	err = tx.Where("brand_id = ?", workOrder.BrandId).
+		Order("work_order_system_number desc").
+		First(&lastWorkOrder).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("failed to retrieve last work order: %v", err)}
+	}
+
+	currentTime := time.Now()
+	month := int(currentTime.Month())
+	year := currentTime.Year() % 100 // Use last two digits of the year
+
+	// Get the brand initial
+	brandInitial := workOrder.BrandId
+
+	// Check if the last work order exists
+	if lastWorkOrder.WorkOrderSystemNumber == 0 {
+		// If no work order exists, start the running number from 1
+		return fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandInitial, month, year), nil
+	}
+
+	lastWorkOrderDate := lastWorkOrder.WorkOrderDate
+	lastWorkOrderMonth := int(lastWorkOrderDate.Month())
+	lastWorkOrderYear := lastWorkOrderDate.Year() % 100
+
+	// Reset the running number if the last work order is from a different month or year
+	if lastWorkOrderMonth != month || lastWorkOrderYear != year {
+		return fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandInitial, month, year), nil
+	}
+
+	// Extract the running number from the last work order code and increment it by 1
+	lastWorkOrderCode := lastWorkOrder.WorkOrderDocumentNumber
+	codeParts := strings.Split(lastWorkOrderCode, "/")
+	if len(codeParts) < 5 {
+		return "", &exceptions.BaseErrorResponse{Message: "invalid last work order code format"}
+	}
+	lastWorkOrderNumber, err := strconv.Atoi(codeParts[4])
+	if err != nil {
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("failed to parse last work order code: %v", err)}
+	}
+
+	newWorkOrderNumber := lastWorkOrderNumber + 1
+
+	// Format the new work order code
+	newDocumentNumber := fmt.Sprintf("WSWO/%d/%02d/%02d/%05d", brandInitial, month, year, newWorkOrderNumber)
+	return newDocumentNumber, nil
+}
+
+func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, string, *exceptions.BaseErrorResponse) {
+	// Retrieve the work order by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", workOrderId).First(&entity).Error
+	if err != nil {
+		return false, "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve work order from the database: %v", err)}
+	}
+
+	// Generate new document number
+	// newDocumentNumber, genErr := r.GenerateDocumentNumber(tx, entity.WorkOrderSystemNumber)
+	// if genErr != nil {
+	// 	return false, "", genErr
+	// }
+
+	// // Update the work order document number
+	// entity.WorkOrderDocumentNumber = newDocumentNumber
+
+	newDocumentNumber := entity.WorkOrderDocumentNumber
+	// Update the work order status to 2 (New Submitted)
+	entity.WorkOrderStatusId = 2
+
+	// Save the updated work order
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to submit the work order: %v", err)}
+	}
+
+	return true, newDocumentNumber, nil
 }

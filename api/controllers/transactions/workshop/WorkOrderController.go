@@ -9,6 +9,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	utils "after-sales/api/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -829,7 +830,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Param work_order_system_number path int true "Work Order ID"
-// @Success 201 {object} payloads.Response
+// @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/submit [post]
 func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
@@ -842,18 +843,17 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 	}
 
 	db := config.InitDB()
-	success, baseErr := r.WorkOrderService.Submit(db, workOrderIdInt)
+	success, newDocumentNumber, baseErr := r.WorkOrderService.Submit(db, workOrderIdInt)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order submitted successfully", http.StatusCreated)
+		payloads.NewHandleSuccess(writer, nil, fmt.Sprintf("Work order submitted successfully. Document Number: %s", newDocumentNumber), http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to submit work order", http.StatusInternalServerError)
 	}
-
 }
 
 // Void delete or cancel a work order

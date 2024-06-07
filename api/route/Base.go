@@ -906,7 +906,7 @@ func WorkOrderRouter(
 	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal/{work_order_system_number}", WorkOrderController.GetById)
 	router.Post("/normal", WorkOrderController.New)
-	router.Post("/normal/submit", WorkOrderController.Submit)
+	router.Post("/normal/{work_order_system_number}/submit", WorkOrderController.Submit)
 	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
 	router.Delete("/normal/{work_order_system_number}", WorkOrderController.Void)
 	router.Patch("/normal/{work_order_system_number}/close", WorkOrderController.CloseOrder)
