@@ -67,16 +67,16 @@ func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppaylo
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
-	statuses, err := s.structWorkOrderRepo.NewStatus(tx)
+func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
+	statuses, err := s.structWorkOrderRepo.NewStatus(tx, filter)
 	if err != nil {
 		return nil, err
 	}
 	return statuses, nil
 }
 
-func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
-	types, err := s.structWorkOrderRepo.NewType(tx)
+func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
+	types, err := s.structWorkOrderRepo.NewType(tx, filter)
 	if err != nil {
 		return nil, err
 	}

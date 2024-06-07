@@ -133,19 +133,26 @@ type WorkOrderGetAllRequest struct {
 	VehicleId               int       `json:"vehicle_id" parent_entity:"trx_work_order"`
 	CustomerId              int       `json:"customer_id" parent_entity:"trx_work_order"`
 	BilltoCustomerId        int       `json:"billable_to_id" parent_entity:"trx_work_order"`
+	StatusId                int       `json:"work_order_status_id" parent_entity:"trx_work_order"`
 }
 
 type WorkOrderGetAllResponse struct {
 	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
 	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
 	WorkOrderDate           time.Time `json:"work_order_date"`
+	FormattedWorkOrderDate  string    `json:"formatted_work_order_date"`
 	WorkOrderTypeId         int       `json:"work_order_type_id"`
+	WorkOrderTypeName       string    `json:"work_order_type_name"`
+	StatusId                int       `json:"work_order_status_id"`
+	StatusName              string    `json:"work_order_status_description"`
 	ServiceAdvisorId        int       `json:"service_advisor_id"`
 	BrandId                 int       `json:"brand_id"`
 	ModelId                 int       `json:"model_id"`
 	VariantId               int       `json:"variant_id"`
 	ServiceSite             string    `json:"service_site"`
 	VehicleId               int       `json:"vehicle_id"`
+	VehicleCode             string    `json:"vehicle_chassis_number"`
+	VehicleTnkb             string    `json:"registration_certificate_tnkb"`
 	CustomerId              int       `json:"customer_id"`
 	BilltoCustomerId        int       `json:"billable_to_id"`
 }
@@ -356,6 +363,18 @@ type WorkOrderVehicleModel struct {
 	ModelCode            string `json:"model_code"`
 	ModelName            string `json:"model_description"`
 	ModelCodeDescription string `json:"model_code_description"`
+}
+
+type WorkOrderTypeResponse struct {
+	WorkOrderTypeId   int    `json:"work_order_type_id"`
+	WorkOrderTypeCode string `json:"work_order_type_code"`
+	WorkOrderTypeName string `json:"work_order_type_description"`
+}
+
+type WorkOrderStatusResponse struct {
+	WorkOrderStatusId   int    `json:"work_order_status_id"`
+	WorkOrderStatusCode string `json:"work_order_status_code"`
+	WorkOrderStatusName string `json:"work_order_status_description"`
 }
 
 type WorkOrderServiceRequest struct {

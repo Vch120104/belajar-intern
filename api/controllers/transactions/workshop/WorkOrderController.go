@@ -186,11 +186,24 @@ func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, requ
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-status [get]
 func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request *http.Request) {
+
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
 	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
-	statuses, err := r.WorkOrderService.NewStatus(db)
+	statuses, err := r.WorkOrderService.NewStatus(db, filters)
 	if err != nil {
 		// Menangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
@@ -242,11 +255,24 @@ func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *h
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-type [get]
 func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *http.Request) {
+
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
 	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
-	statuses, err := r.WorkOrderService.NewType(db)
+	statuses, err := r.WorkOrderService.NewType(db, filters)
 	if err != nil {
 		// Menangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)

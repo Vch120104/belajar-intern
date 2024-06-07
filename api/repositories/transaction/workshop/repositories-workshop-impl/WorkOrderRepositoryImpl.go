@@ -73,6 +73,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			&workOrderReq.VehicleId,
 			&workOrderReq.CustomerId,
 			&workOrderReq.BilltoCustomerId,
+			&workOrderReq.StatusId,
 		); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -104,16 +105,55 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			}
 		}
 
+		// Fetch type of work order
+		WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(workOrderReq.WorkOrderTypeId)
+		fmt.Println("Fetching Work Order Type data from:", WorkOrderTypeURL)
+		var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse // Use slice of WorkOrderTypeResponse
+		if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch work order type data from external service",
+				Err:        err,
+			}
+		}
+
+		var workOrderTypeName string
+		if len(getWorkOrderTypeResponses) > 0 {
+			workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
+		}
+
+		// fetch status of work order
+		WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(workOrderReq.StatusId)
+		fmt.Println("Fetching Work Order Status data from:", WorkOrderStatusURL)
+		var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
+		if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch work order status data from external service",
+				Err:        err,
+			}
+		}
+		var workOrderStatusName string
+		if len(getWorkOrderStatusResponses) > 0 {
+			workOrderStatusName = getWorkOrderStatusResponses[0].WorkOrderStatusName
+		}
+
 		// Create WorkOrderGetAllResponse
 		workOrderRes = transactionworkshoppayloads.WorkOrderGetAllResponse{
 			WorkOrderDocumentNumber: workOrderReq.WorkOrderDocumentNumber,
 			WorkOrderSystemNumber:   workOrderReq.WorkOrderSystemNumber,
 			WorkOrderDate:           workOrderReq.WorkOrderDate,
+			FormattedWorkOrderDate:  workOrderReq.WorkOrderDate.Format("2006-01-02"), // Set formatted date
 			WorkOrderTypeId:         workOrderReq.WorkOrderTypeId,
+			WorkOrderTypeName:       workOrderTypeName,
 			BrandId:                 workOrderReq.BrandId,
+			VehicleCode:             getVehicleResponse.VehicleCode,
+			VehicleTnkb:             getVehicleResponse.VehicleTnkb,
 			ModelId:                 workOrderReq.ModelId,
 			VehicleId:               workOrderReq.VehicleId,
 			CustomerId:              workOrderReq.CustomerId,
+			StatusId:                workOrderReq.StatusId,
+			StatusName:              workOrderStatusName,
 		}
 
 		// Append WorkOrderResponse to the slice
@@ -126,13 +166,18 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	// Iterate over convertedResponses and convert them to maps
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"work_order_document_number": response.WorkOrderDocumentNumber,
-			"work_order_system_number":   response.WorkOrderSystemNumber,
-			"work_order_date":            response.WorkOrderDate,
-			"work_order_type_id":         response.WorkOrderTypeId,
-			"brand_id":                   response.BrandId,
-			"vehicle_id":                 response.VehicleId,
-			"customer_id":                response.CustomerId,
+			"work_order_document_number":  response.WorkOrderDocumentNumber,
+			"work_order_system_number":    response.WorkOrderSystemNumber,
+			"work_order_date":             response.FormattedWorkOrderDate, // Use formatted date
+			"work_order_type_id":          response.WorkOrderTypeId,
+			"work_order_type_description": response.WorkOrderTypeName,
+			"brand_id":                    response.BrandId,
+			"vehicle_id":                  response.VehicleId,
+			"vehicle_chassis_number":      response.VehicleCode,
+			"vehicle_tnkb":                response.VehicleTnkb,
+			"customer_id":                 response.CustomerId,
+			"work_order_status_id":        response.StatusId,
+			"work_order_status_name":      response.StatusName,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -141,7 +186,6 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
-
 }
 
 func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -356,17 +400,25 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
 	var statuses []transactionworkshopentities.WorkOrderMasterStatus
-	if err := tx.Find(&statuses).Error; err != nil {
+
+	// Apply filter to the query
+	query := utils.ApplyFilter(tx, filter)
+
+	// Execute the query and check for errors
+	if err := query.Find(&statuses).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order statuses from the database"}
 	}
 	return statuses, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterType
-	if err := tx.Find(&types).Error; err != nil {
+	// Apply filter to the query
+	query := utils.ApplyFilter(tx, filter)
+
+	if err := query.Find(&types).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
 	}
 	return types, nil
