@@ -73,43 +73,6 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 	return paginatedata, totalPages, totalrows, nil
 }
 
-// func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-// 	var entities masteritementities.LandedCost
-// 	var payloads masteritempayloads.LandedCostMasterPayloads
-// 	var shippingmethodpayloads masteritempayloads.ShippingMethodResponse
-// 	var landedcostpayloads masteritempayloads.LandedCostTypeResponse
-// 	rows, err := tx.Model(&entities).Where(masteritementities.LandedCost{LandedCostId: id}).First(&payloads).Rows()
-// 	if err != nil {
-// 		return nil, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
-// 	defer rows.Close()
-// 	LandedCostTypeUrl := config.EnvConfigs.GeneralServiceUrl + "landed-cost-type/" + strconv.Itoa(payloads.LandedCostId)
-// 	errLandedCost := utils.Get(LandedCostTypeUrl, &landedcostpayloads, nil)
-// 	if errLandedCost != nil {
-// 		return nil, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
-// 	joinedData1 := utils.DataFrameInnerJoin(payloads, &landedcostpayloads, "LandedCostId")
-// 	ShippingMethodUrl := config.EnvConfigs.GeneralServiceUrl + "shipping-method/" + strconv.Itoa(payloads.ShippingMethodId)
-
-// 	errshippingmethod := utils.Get(ShippingMethodUrl, &shippingmethodpayloads, nil)
-
-// 	if errshippingmethod != nil {
-// 		return nil, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
-// 	JoinedData2 := utils.DataFrameInnerJoin(joinedData1, &shippingmethodpayloads, "ShippingMethodId")
-
-// 	return JoinedData2[0], nil
-// }
-
 func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tableStruct := masteritementities.LandedCost{}
 	response := masteritempayloads.LandedCostMasterPayloads{}

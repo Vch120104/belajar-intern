@@ -4,7 +4,7 @@ import (
 	"after-sales/api/config"
 
 	// masterentities "after-sales/api/entities/master"
-	masteritementities "after-sales/api/entities/master/item"
+	// masteritementities "after-sales/api/entities/master/item"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -72,7 +72,7 @@ func Migrate() {
 		// &masterwarehouseentities.WarehouseLocationDefinition{},
 		// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
 
-		&masteritementities.LandedCost{},
+		// &masteritementities.LandedCost{},
 		// &masteritementities.ItemLocation{},
 		// &masteritementities.ItemLocationSource{},
 		// &masteritementities.ItemLocationDetail{},
