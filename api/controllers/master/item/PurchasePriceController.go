@@ -18,10 +18,11 @@ type PurchasePriceController interface {
 	GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	SavePurchasePrice(writer http.ResponseWriter, request *http.Request)
 	GetPurchasePriceById(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request)
+	GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request)
 	GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 	AddPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	DeletePurchasePrice(writer http.ResponseWriter, request *http.Request)
-	ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchasePriceControllerImpl struct {
@@ -165,13 +166,12 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
-// @Param purchase_price_id path int true "purchase_price_id"
 // @Param purchase_price_detail_id query string false "purchase_price_detail_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/purchase-price/{purchase_price_id}/detail  [get]
+// @Router /v1/purchase-price/detail  [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -201,6 +201,38 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 
 	// Construct the response
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Get Purchase Price Detail By Purchase Price ID
+// @Description REST API  Purchase Price Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param purchase_price_id path int true "purchase_price_id"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/{purchase_price_id}/detail [get]
+func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+
+	// Extract pagination parameters
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	// Call service to get paginated data
+	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetPurchasePriceDetailById(PurchasePriceIds, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	// Construct the response
+	payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Save Purchase Price Detail
