@@ -42,4 +42,10 @@ type WorkOrderRepository interface {
 	AddVehicleService(*gorm.DB, int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
 	DeleteVehicleService(*gorm.DB, int, int) *exceptions.BaseErrorResponse
 	GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse)
+
+	GetAllDetailWorkOrder(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetDetailByIdWorkOrder(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse)
+	UpdateDetailWorkOrder(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
+	AddDetailWorkOrder(*gorm.DB, int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
+	DeleteDetailWorkOrder(*gorm.DB, int, int) *exceptions.BaseErrorResponse
 }

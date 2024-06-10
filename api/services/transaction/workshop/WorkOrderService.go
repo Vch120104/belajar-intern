@@ -46,4 +46,11 @@ type WorkOrderService interface {
 	UpdateVehicleService(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
 	AddVehicleService(int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
 	DeleteVehicleService(int, int) *exceptions.BaseErrorResponse
+
+	// detail work order
+	GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse)
+	UpdateDetailWorkOrder(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
+	AddDetailWorkOrder(int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
+	DeleteDetailWorkOrder(int, int) *exceptions.BaseErrorResponse
 }

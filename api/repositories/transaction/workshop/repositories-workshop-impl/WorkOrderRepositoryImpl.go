@@ -904,3 +904,131 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, st
 
 	return true, newDocumentNumber, nil
 }
+
+func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var entities []transactionworkshopentities.WorkOrderDetail
+	// Query to retrieve all work order detail entities based on the request
+	query := tx.Model(&transactionworkshopentities.WorkOrderDetail{})
+	if len(filterCondition) > 0 {
+		query = query.Where(filterCondition)
+	}
+	err := query.Find(&entities).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order detail from the database"}
+	}
+
+	var workOrderDetailResponses []map[string]interface{}
+
+	// Loop through each entity and copy its data to the response
+	for _, entity := range entities {
+		workOrderDetailData := make(map[string]interface{})
+		// Copy data from entity to response
+		workOrderDetailData["work_order_detail_id"] = entity.WorkOrderDetailId
+		workOrderDetailData["work_order_system_number"] = entity.WorkOrderSystemNumber
+		workOrderDetailData["line_type_id"] = entity.LineTypeId
+		workOrderDetailData["work_order_transaction_type_id"] = entity.WorkOrderTransactionTypeId
+		workOrderDetailData["job_type_id"] = entity.JobTypeId
+		workOrderDetailData["description"] = entity.Description
+		workOrderDetailData["frt_quantity"] = entity.FrtQuantity
+		workOrderDetailData["supply_quantity"] = entity.SupplyQuantity
+		workOrderDetailData["price_list_id"] = entity.PriceListId
+
+		workOrderDetailResponses = append(workOrderDetailResponses, workOrderDetailData)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(workOrderDetailResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, id int, IdWorkorder int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderDetail
+	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_detail_id = ?", id, IdWorkorder).
+		First(&entity).Error
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderDetailRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order detail from the database"}
+	}
+
+	// Convert entity to payload
+	payload := transactionworkshoppayloads.WorkOrderDetailRequest{
+		WorkOrderDetailId:          entity.WorkOrderDetailId,
+		WorkOrderSystemNumber:      entity.WorkOrderSystemNumber,
+		LineTypeId:                 entity.LineTypeId,
+		WorkOrderTransactionTypeId: entity.WorkOrderTransactionTypeId,
+		JobTypeId:                  entity.JobTypeId,
+		Description:                entity.Description,
+		FrtQuantity:                entity.FrtQuantity,
+		SupplyQuantity:             entity.SupplyQuantity,
+		PriceListId:                entity.PriceListId,
+	}
+
+	return payload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, id int, IdWorkorder int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse {
+	// Retrieve the work order detail by Id
+	var entity transactionworkshopentities.WorkOrderDetail
+	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_detail_id = ?", id, IdWorkorder).
+		First(&entity).Error
+	if err != nil {
+		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order detail from the database"}
+	}
+
+	// Update the work order detail
+	entity.LineTypeId = request.LineTypeId
+	entity.WorkOrderTransactionTypeId = request.WorkOrderTransactionTypeId
+	entity.JobTypeId = request.JobTypeId
+	entity.Description = request.Description
+	entity.FrtQuantity = request.FrtQuantity
+	entity.SupplyQuantity = request.SupplyQuantity
+	entity.PriceListId = request.PriceListId
+
+	// Save the updated work order detail
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order detail"}
+	}
+
+	return nil
+}
+
+func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse {
+	// Create a new instance of WorkOrderDetailRequest
+	entities := transactionworkshopentities.WorkOrderDetail{
+		// Assign fields from request
+		WorkOrderSystemNumber:      request.WorkOrderSystemNumber,
+		LineTypeId:                 request.LineTypeId,
+		WorkOrderTransactionTypeId: request.WorkOrderTransactionTypeId,
+		JobTypeId:                  request.JobTypeId,
+		Description:                request.Description,
+		FrtQuantity:                request.FrtQuantity,
+		SupplyQuantity:             request.SupplyQuantity,
+		PriceListId:                request.PriceListId,
+	}
+
+	// Save the work order detail
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	return nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteDetailWorkOrder(tx *gorm.DB, id int, IdWorkorder int) *exceptions.BaseErrorResponse {
+	// Retrieve the work order detail by Id
+	var entity transactionworkshopentities.WorkOrderDetail
+	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_detail_id = ?", id, IdWorkorder).
+		Delete(&entity).Error
+	if err != nil {
+		return &exceptions.BaseErrorResponse{Message: "Failed to delete work order detail from the database"}
+	}
+
+	return nil
+}

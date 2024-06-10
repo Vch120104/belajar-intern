@@ -399,3 +399,22 @@ type WorkOrderAddRequest struct {
 	WorkOrderTypeId         int       `json:"work_order_type_id"`
 	WorkOrderStatusId       int       `json:"work_order_status_id"`
 }
+
+type WorkOrderDetailRequest struct {
+	WorkOrderDetailId          int     `json:"work_order_detail_id"`
+	WorkOrderSystemNumber      int     `json:"work_order_system_number"`
+	WorkOrderDocumentNumber    string  `json:"work_order_document_number"`
+	LineTypeId                 int     `json:"line_type_id"`
+	WorkOrderTransactionTypeId int     `json:"work_order_transaction_type_id"`
+	JobTypeId                  int     `json:"job_type_id"`
+	Description                string  `json:"description"`
+	FrtQuantity                float32 `json:"frt_quantity"`
+	SupplyQuantity             float32 `json:"supply_quantity"`
+	PriceListId                int     `json:"price_list_id"`
+}
+
+type WorkOrderDetailResponse struct {
+	WorkOrderDetailId       int    `json:"work_order_detail_id"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string `json:"work_order_document_number"`
+}

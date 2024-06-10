@@ -259,3 +259,52 @@ func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) (bool, string, *excep
 	}
 	return submit, newDocumentNumber, nil
 }
+
+func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, idwosn, idwos)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse {
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.UpdateDetailWorkOrder(tx, idwosn, idwos, request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.AddDetailWorkOrder(tx, id, request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.structWorkOrderRepo.DeleteDetailWorkOrder(tx, id, IdWorkorder)
+	if err != nil {
+		return err
+	}
+	return nil
+}

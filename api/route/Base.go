@@ -403,7 +403,7 @@ func LandedCostMasterRouter(
 	router.Post("/", LandedCostMaster.SaveLandedCostMaster)
 	router.Patch("/activate/", LandedCostMaster.ActivateLandedCostMaster)
 	router.Patch("/deactivate/", LandedCostMaster.DeactivateLandedCostmaster)
-	router.Put("/{landed_cost_id}",LandedCostMaster.UpdateLandedCostMaster)
+	router.Put("/{landed_cost_id}", LandedCostMaster.UpdateLandedCostMaster)
 
 	return router
 }
@@ -926,11 +926,11 @@ func WorkOrderRouter(
 	router.Delete("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
 
 	//add trx detail
-	// router.Get("/normal/{work_order_system_number}/detail", WorkOrderController.GetAllDetail)
-	// router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailById)
-	// router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetail)
-	// router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetail)
-	// router.Delete("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.DeleteDetail)
+	router.Get("/normal/{work_order_system_number}/detail", WorkOrderController.GetAllDetailWorkOrder)
+	router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailByIdWorkOrder)
+	router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetailWorkOrder)
+	router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetailWorkOrder)
+	router.Delete("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.DeleteDetailWorkOrder)
 
 	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)

@@ -53,6 +53,12 @@ type WorkOrderController interface {
 	NewDropPoint(writer http.ResponseWriter, request *http.Request)
 	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
 	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
+
+	GetAllDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
+	GetDetailByIdWorkOrder(writer http.ResponseWriter, request *http.Request)
+	AddDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
+	UpdateDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
+	DeleteDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrderService) WorkOrderController {
@@ -87,6 +93,7 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryParams := map[string]string{
 		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
 		"trx_work_order.work_order_type_id":       queryValues.Get("work_order_type_id"),
+		"work_order_status_id":                    queryValues.Get("work_order_status_id"),
 		"trx_work_order.brand_id":                 queryValues.Get("brand_id"),
 		"trx_work_order.model_id":                 queryValues.Get("model_id"),
 		"trx_work_order.vehicle_id":               queryValues.Get("vehicle_id"),
@@ -923,4 +930,153 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 		payloads.NewHandleError(writer, "Failed to close work order", http.StatusInternalServerError)
 	}
 
+}
+
+// GetWorkOrderDetail gets the detail of a work order
+// @Summary Get Work Order Detail
+// @Description Retrieve the detail of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/detail [get]
+func (r *WorkOrderControllerImpl) GetAllDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
+	// Get the detail of a work order
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	queryParams := map[string]string{
+		"trx_work_order_detail.work_order_system_number": chi.URLParam(request, "work_order_system_number"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllDetailWorkOrder(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetDetailWorkOrderById gets the detail of a work order by ID
+// @Summary Get Work Order Detail By ID
+// @Description Retrieve the detail of a work order by ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param work_order_detail_id path string true "Work Order Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/detail/{work_order_detail_id} [get]
+func (r *WorkOrderControllerImpl) GetDetailByIdWorkOrder(writer http.ResponseWriter, request *http.Request) {
+	// Get the detail of a work order by ID
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	detailId, _ := strconv.Atoi(chi.URLParam(request, "work_order_detail_id"))
+
+	detail, err := r.WorkOrderService.GetDetailByIdWorkOrder(int(workOrderId), int(detailId))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, detail, "Get Data Successfully", http.StatusOK)
+}
+
+// UpdateDetailWorkOrder updates the detail of a work order
+// @Summary Update Work Order Detail
+// @Description Update the detail of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param work_order_detail_id path string true "Work Order Detail ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderDetailRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/detail/{work_order_detail_id} [put]
+func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
+	// Update the detail of a work order
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	detailId, _ := strconv.Atoi(chi.URLParam(request, "work_order_detail_id"))
+
+	var detailRequest transactionworkshoppayloads.WorkOrderDetailRequest
+	helper.ReadFromRequestBody(request, &detailRequest)
+
+	db := config.InitDB()
+	err := r.WorkOrderService.UpdateDetailWorkOrder(db, int(workOrderId), int(detailId), detailRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Detail updated successfully", http.StatusOK)
+}
+
+// AddDetailWorkOrder adds a new detail to a work order
+// @Summary Add Work Order Detail
+// @Description Add a new detail to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderDetailRequest true "Work Order Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/detail [post]
+func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
+	// Add a new detail to a work order
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	var detailRequest transactionworkshoppayloads.WorkOrderDetailRequest
+	helper.ReadFromRequestBody(request, &detailRequest)
+
+	if err := r.WorkOrderService.AddDetailWorkOrder(int(workOrderId), detailRequest); err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Detail added successfully", http.StatusCreated)
+}
+
+// DeleteDetailWorkOrder deletes a detail from a work order
+// @Summary Delete Work Order Detail
+// @Description Delete a detail from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param work_order_detail_id path string true "Work Order Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/{work_order_system_number}/detail/{work_order_detail_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
+	// Delete a detail from a work order
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	detailId, _ := strconv.Atoi(chi.URLParam(request, "work_order_detail_id"))
+
+	if err := r.WorkOrderService.DeleteDetailWorkOrder(int(workOrderId), int(detailId)); err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Detail deleted successfully", http.StatusOK)
 }
