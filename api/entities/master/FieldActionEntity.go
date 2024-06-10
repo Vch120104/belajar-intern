@@ -17,7 +17,7 @@ type FieldAction struct {
 	RemarkPopup                string    `gorm:"column:remark_popup;size:255;null"        json:"remark_popup"`
 	IsCritical                 bool      `gorm:"column:is_critical;null"        json:"is_critical"`
 	RemarkInvoice              string    `gorm:"column:remark_invoice;size:255;null"        json:"remark_invoice"`
-	FieldActionEligibleVehicle FieldActionEligibleVehicle
+	// FieldActionEligibleVehicle FieldActionEligibleVehicle `gorm:"foreignkey:field_action_system_number" references:"field_action_system_number"`
 }
 
 func (*FieldAction) TableName() string {
