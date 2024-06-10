@@ -10,9 +10,10 @@ import (
 )
 
 type LandedCostMasterRepository interface {
-	GetAllLandedCost(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetByIdLandedCost(*gorm.DB, int) (masteritempayloads.LandedCostMasterPayloads, *exceptions.BaseErrorResponse)
-	SaveLandedCost(*gorm.DB, masteritempayloads.LandedCostMasterPayloads) (bool, *exceptions.BaseErrorResponse)
+	GetAllLandedCost(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{},int,int,*exceptions.BaseErrorResponse)
+	GetByIdLandedCost(*gorm.DB, int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	SaveLandedCost(*gorm.DB, masteritempayloads.LandedCostMasterRequest) (bool, *exceptions.BaseErrorResponse)
 	DeactivateLandedCostmaster(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	ActivateLandedCostMaster(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
+	UpdateLandedCostMaster(tx *gorm.DB,id int, req masteritempayloads.LandedCostMasterUpdateRequest)(bool,*exceptions.BaseErrorResponse)
 }
