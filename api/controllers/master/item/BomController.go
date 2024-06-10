@@ -59,11 +59,11 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 
 	// Define query parameters
 	queryParams := map[string]string{
-		"mtr_bom_master.bom_master_id":             queryValues.Get("bom_master_id"), // Ambil nilai bom_master_id tanpa mtr_bom_master.
-		"mtr_bom_master.item_id":                   queryValues.Get("item_id"),
-		"mtr_bom_master.bom_master_effective_date": queryValues.Get("bom_master_effective_date"),
-		"mtr_bom_master.is_active":                 queryValues.Get("is_active"),
-		"mtr_bom_master.bom_master_qty":            queryValues.Get("bom_master_qty"),
+		"bom_master_id":             queryValues.Get("bom_master_id"), // Ambil nilai bom_master_id tanpa mtr_bom_master.
+		"item_id":                   queryValues.Get("item_id"),
+		"bom_master_effective_date": queryValues.Get("bom_master_effective_date"),
+		"is_active":                 queryValues.Get("is_active"),
+		"bom_master_qty":            queryValues.Get("bom_master_qty"),
 	}
 
 	// Extract pagination parameters
@@ -80,7 +80,7 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.BomService.GetBomMasterList(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request,err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	// Construct the response

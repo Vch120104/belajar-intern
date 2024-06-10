@@ -4,7 +4,7 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 )
 
-var CreateWorkOrderItemTable = "work_order_item"
+var CreateWorkOrderItemTable = "trx_work_order_item"
 
 type WorkOrderItem struct {
 	IsActive              bool                    `gorm:"column:is_active;not null;default:true" json:"is_active"`

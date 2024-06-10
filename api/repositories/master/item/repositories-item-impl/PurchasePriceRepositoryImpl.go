@@ -10,10 +10,12 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -239,6 +241,113 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, fil
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
+}
+
+func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id int, pages pagination.Pagination) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	// Inisialisasi variabel untuk menyimpan respons dari database
+	var getHeaderRequest masteritempayloads.PurchasePriceRequest
+	var getDetailRequest []masteritempayloads.PurchasePriceDetailRequest
+	var getItemResponse []masteritempayloads.PurchasePriceItemResponse
+
+	// Membuat query untuk mendapatkan data dari tabel PurchasePrice berdasarkan ID
+	if err := tx.Table("mtr_purchase_price").Where("purchase_price_id = ?", Id).First(&getHeaderRequest).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Membuat query untuk mendapatkan data dari tabel PurchasePriceDetail berdasarkan ID
+	if err := tx.Table("mtr_purchase_price_detail").Where("purchase_price_id = ?", Id).Find(&getDetailRequest).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Mengambil data item dari layanan eksternal
+	var itemIds []string
+	for _, detail := range getDetailRequest {
+		itemIds = append(itemIds, strconv.Itoa(detail.ItemId))
+	}
+	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/multi-id/" + strings.Join(itemIds, ",")
+	if err := utils.Get(itemUrl, &getItemResponse, nil); err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Membuat map untuk item response agar lebih mudah diakses
+	itemMap := make(map[int]masteritempayloads.PurchasePriceItemResponse)
+	for _, item := range getItemResponse {
+		itemMap[item.ItemId] = item
+	}
+
+	// Membuat respons detail dengan menggabungkan data detail dan item
+	var detailResponses []map[string]interface{}
+	for _, detail := range getDetailRequest {
+		item := itemMap[detail.ItemId]
+		detailResponse := map[string]interface{}{
+			"purchase_price_detail_id": detail.PurchasePriceDetailId,
+			"purchase_price_id":        detail.PurchasePriceId,
+			"item_id":                  detail.ItemId,
+			"is_active":                detail.IsActive,
+			"purchase_price":           detail.PurchasePrice,
+			"item_code":                item.ItemCode,
+			"item_name":                item.ItemName,
+		}
+		detailResponses = append(detailResponses, detailResponse)
+	}
+
+	// Manual pagination on details
+	totalRows := len(detailResponses)
+	page := pages.GetPage()
+	limit := pages.GetLimit()
+	start := page * limit
+	end := start + limit
+
+	if start > totalRows {
+		detailResponses = []map[string]interface{}{}
+	} else {
+		if end > totalRows {
+			end = totalRows
+		}
+		detailResponses = detailResponses[start:end]
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(limit)))
+
+	// Membuat respons akhir
+	response := map[string]interface{}{
+		"data": map[string]interface{}{
+			"currency_id":                   getHeaderRequest.CurrencyId,
+			"is_active":                     getHeaderRequest.IsActive,
+			"purchase_price_effective_date": getHeaderRequest.PurchasePriceEffectiveDate.Format(time.RFC3339),
+			"purchase_price_id":             getHeaderRequest.PurchasePriceId,
+			"supplier_id":                   getHeaderRequest.SupplierId,
+		},
+	}
+
+	// Menambahkan detail di bawah respons utama
+	detailData := map[string]interface{}{
+		"data": detailResponses,
+	}
+	response["data"].(map[string]interface{})["zdetails"] = detailData
+
+	return response, totalPages, totalRows, nil
 }
 
 func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
