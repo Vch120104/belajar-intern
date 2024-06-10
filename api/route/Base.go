@@ -942,7 +942,13 @@ func WorkOrderRouter(
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 
+	router.Get("/normalbooking", WorkOrderController.GetAllBooking)
+	router.Get("/normalbooking/{work_order_system_number}", WorkOrderController.GetBookingById)
 	router.Post("/normalbooking", WorkOrderController.NewBooking)
+	router.Put("/normalbooking/{work_order_system_number}", WorkOrderController.SaveBooking)
+	router.Delete("/normalbooking/{work_order_system_number}", WorkOrderController.VoidBooking)
+	router.Patch("/normalbooking/{work_order_system_number}/close", WorkOrderController.CloseBooking)
+
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 
 	return router

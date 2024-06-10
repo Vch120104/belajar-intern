@@ -308,3 +308,68 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) *e
 	}
 	return nil
 }
+
+func (s *WorkOrderServiceImpl) NewBooking(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.NewBooking(tx, workOrderId, request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.structWorkOrderRepo.GetBookingById(tx, workOrderId, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) SaveBooking(tx *gorm.DB, workOrderId int, id int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.SaveBooking(tx, workOrderId, id, request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) SubmitBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	submit, err := s.structWorkOrderRepo.SubmitBooking(tx, workOrderId, id)
+	if err != nil {
+		return false, err
+	}
+	return submit, nil
+}
+
+func (s *WorkOrderServiceImpl) VoidBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	delete, err := s.structWorkOrderRepo.VoidBooking(tx, workOrderId, id)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
+func (s *WorkOrderServiceImpl) CloseBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	close, err := s.structWorkOrderRepo.CloseBooking(tx, workOrderId, id)
+	if err != nil {
+		return false, err
+	}
+	return close, nil
+}

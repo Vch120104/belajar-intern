@@ -11,8 +11,6 @@ import (
 )
 
 type WorkOrderRepository interface {
-	New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse)
-
 	NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse)
 	NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse)
 	NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse)
@@ -20,6 +18,7 @@ type WorkOrderRepository interface {
 	NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse)
 	NewVehicleModel(tx *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse)
 
+	New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse)
 	Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse)
@@ -48,4 +47,12 @@ type WorkOrderRepository interface {
 	UpdateDetailWorkOrder(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
 	AddDetailWorkOrder(*gorm.DB, int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
 	DeleteDetailWorkOrder(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+
+	NewBooking(*gorm.DB, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllBooking(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetBookingById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse)
+	SaveBooking(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	SubmitBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
+	VoidBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
+	CloseBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 }

@@ -53,4 +53,13 @@ type WorkOrderService interface {
 	UpdateDetailWorkOrder(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
 	AddDetailWorkOrder(int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
 	DeleteDetailWorkOrder(int, int) *exceptions.BaseErrorResponse
+
+	// booking function
+	NewBooking(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetBookingById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse)
+	SaveBooking(tx *gorm.DB, workOrderId int, id int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	SubmitBooking(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
+	VoidBooking(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
+	CloseBooking(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
 }

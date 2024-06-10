@@ -1032,3 +1032,152 @@ func (r *WorkOrderRepositoryImpl) DeleteDetailWorkOrder(tx *gorm.DB, id int, IdW
 
 	return nil
 }
+
+func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
+	// Create a new instance of WorkOrderBooking
+	entities := transactionworkshopentities.WorkOrder{
+		// Assign fields from request
+		WorkOrderSystemNumber: request.WorkOrderSystemNumber,
+		BookingSystemNumber:   request.BoookingId,
+	}
+
+	// Save the work order booking
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the work order booking"}
+	}
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetAllBooking(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var entities []transactionworkshopentities.WorkOrder
+	// Query to retrieve all work order booking entities based on the request
+	query := tx.Model(&transactionworkshopentities.WorkOrder{})
+	if len(filterCondition) > 0 {
+		query = query.Where(filterCondition)
+	}
+	err := query.Find(&entities).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order booking from the database"}
+	}
+
+	var workOrderBookingResponses []map[string]interface{}
+
+	// Loop through each entity and copy its data to the response
+	for _, entity := range entities {
+		workOrderBookingData := make(map[string]interface{})
+		// Copy data from entity to response
+		workOrderBookingData["work_order_system_number"] = entity.WorkOrderSystemNumber
+		workOrderBookingData["booking_system_number"] = entity.BookingSystemNumber
+
+		workOrderBookingResponses = append(workOrderBookingResponses, workOrderBookingData)
+	}
+
+	// Paginate the response data
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(workOrderBookingResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND booking_system_number = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderBookingRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order booking from the database"}
+	}
+
+	// Convert entity to payload
+	payload := transactionworkshoppayloads.WorkOrderBookingRequest{
+		WorkOrderSystemNumber: entity.WorkOrderSystemNumber,
+		BoookingId:            entity.BookingSystemNumber,
+	}
+
+	return payload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) SaveBooking(tx *gorm.DB, IdWorkorder int, id int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND booking_system_number = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order booking from the database"}
+	}
+
+	// Update the work order booking
+	entity.WorkOrderSystemNumber = request.WorkOrderSystemNumber
+	entity.BookingSystemNumber = request.BoookingId
+
+	// Save the updated work order booking
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order booking"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) SubmitBooking(tx *gorm.DB, IdWorkorder int, id int) (bool, *exceptions.BaseErrorResponse) {
+	// Retrieve the work order booking by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND booking_system_number = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order booking from the database"}
+	}
+
+	// Update the work order booking status to 2 (Submitted)
+	entity.WorkOrderStatusId = 2
+
+	// Save the updated work order booking
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to submit the work order booking"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) VoidBooking(tx *gorm.DB, IdWorkorder int, id int) (bool, *exceptions.BaseErrorResponse) {
+	// Retrieve the work order booking by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND booking_system_number = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order booking from the database"}
+	}
+
+	// Delete the work order booking
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete the work order booking"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) CloseBooking(tx *gorm.DB, IdWorkorder int, id int) (bool, *exceptions.BaseErrorResponse) {
+	// Retrieve the work order booking by Id
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND booking_system_number = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order booking from the database"}
+	}
+
+	// Update the work order booking status to 3 (Closed)
+	entity.WorkOrderStatusId = 3
+
+	// Save the updated work order booking
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to close the work order booking"}
+	}
+
+	return true, nil
+}
