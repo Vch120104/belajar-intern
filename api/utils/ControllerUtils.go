@@ -10,7 +10,6 @@ import (
 )
 
 // convert Pascal to Snake Case for json response
-//
 func ModifyKeysInResponse(data interface{}) interface{} {
 	v := reflect.ValueOf(data)
 
@@ -85,5 +84,3 @@ func NewGetQueryInt(queryValues url.Values, param string) int {
 	value, _ := strconv.Atoi(queryValues.Get(param))
 	return value
 }
-
-

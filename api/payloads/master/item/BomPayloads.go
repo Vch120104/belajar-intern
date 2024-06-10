@@ -97,16 +97,16 @@ type BomDetailListResponse struct {
 }
 
 type BomItemLookup struct {
-	IsActive      bool   `json:"is_active" parent_entity:"mtr_item"`
-	ItemId        int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
-	ItemCode      string `json:"item_code" parent_entity:"mtr_item"`
-	ItemName      string `json:"item_name" parent_entity:"mtr_item"`
-	ItemType      string `json:"item_type" parent_entity:"mtr_item"`
-	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                   //fk luar mtr_item_group -> item_group_name
-	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class"` //fk dalam item_class_id -> ItemClassName
-	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class"`
-	//UomId          int    `json:"unit_of_measurement_selling_id" parent_entity:"mtr_item" references:"mtr_uom"`
-	//UomDescription string `json:"uom_description" parent_entity:"mtr_uom"`
+	IsActive       bool   `json:"is_active" parent_entity:"mtr_item"`
+	ItemId         int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
+	ItemCode       string `json:"item_code" parent_entity:"mtr_item"`
+	ItemName       string `json:"item_name" parent_entity:"mtr_item"`
+	ItemType       string `json:"item_type" parent_entity:"mtr_item"`
+	ItemGroupId    int    `json:"item_group_id" parent_entity:"mtr_item"`                                   //fk luar mtr_item_group -> item_group_name
+	ItemClassId    int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class"` //fk dalam item_class_id -> ItemClassName
+	ItemClassCode  string `json:"item_class_code" parent_entity:"mtr_item_class"`
+	UomId          int    `json:"unit_of_measurement_type_id" parent_entity:"mtr_item" references:"mtr_uom"`
+	UomDescription string `json:"uom_description" parent_entity:"mtr_uom"`
 }
 
 type BomUomLookup struct {
