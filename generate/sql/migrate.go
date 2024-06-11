@@ -3,6 +3,15 @@ package migration
 import (
 	"after-sales/api/config"
 
+	// masterentities "after-sales/api/entities/master"
+	// masteritementities "after-sales/api/entities/master/item"
+
+	// masteroperationentities "after-sales/api/entities/master/operation"
+	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
+
+	// transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
+	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+
 	"time"
 
 	"fmt"
@@ -28,7 +37,7 @@ func Migrate() {
 		config.EnvConfigs.DBName,
 	)
 
-	//init logger
+	// Initialize logger
 	newLogger := logger.New(
 		log.New(log.Writer(), "\r\n", log.LstdFlags),
 		logger.Config{
@@ -38,7 +47,7 @@ func Migrate() {
 		},
 	)
 
-	//constraint foreign key tidak akan ke create jika DisableForeignKeyConstraintWhenMigrating: true
+	// Disable foreign key constraints when migrating
 	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{
 		Logger: newLogger, // Set the logger for GORM
 		NamingStrategy: schema.NamingStrategy{
@@ -48,7 +57,13 @@ func Migrate() {
 		DisableForeignKeyConstraintWhenMigrating: false,
 	})
 
-	db.AutoMigrate( // sesuai urutan foreign key
+	if err != nil {
+		log.Printf("%s Failed to connect to database with error: %s", logEntry, err)
+		panic(err)
+	}
+
+	// AutoMigrate models
+	err = db.AutoMigrate( // according to foreign key order
 	// &masteroperationentities.OperationModelMapping{},
 	// &masteroperationentities.OperationFrt{},
 	// &masteroperationentities.OperationGroup{},
@@ -63,6 +78,7 @@ func Migrate() {
 	// &masterwarehouseentities.WarehouseLocationDefinition{},
 	// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
 
+	// &masteritementities.LandedCost{},
 	// &masteritementities.ItemLocation{},
 	// &masteritementities.ItemLocationSource{},
 	// &masteritementities.ItemLocationDetail{},
@@ -102,13 +118,14 @@ func Migrate() {
 	// &masterentities.FieldActionEligibleVehicle{},
 	// &masterentities.FieldAction{},
 	// &masterentities.Discount{},
+	// &masteritementities.DiscountPercent{},
 	// &masterentities.Agreement{},
 	// &masterentities.AgreementDiscount{},
 	// &masterentities.AgreementDiscountGroupDetail{},
 	// &masterentities.AgreementItemDetail{},
 
-	// &transactionsparepartentities.SupplySlip{},
-	// &transactionsparepartentities.SupplySlipDetail{},
+	// &transactionsparepartpentities.SupplySlip{},
+	// &transactionsparepartpentities.SupplySlipDetail{},
 	// &transactionworkshopentities.WorkOrderMaster{},
 	// &transactionworkshopentities.WorkOrderMasterStatus{},
 	// &transactionworkshopentities.WorkOrderMasterType{},
@@ -118,6 +135,8 @@ func Migrate() {
 	// &transactionworkshopentities.WorkOrderHistory{},
 	// &transactionworkshopentities.WorkOrderHistoryRequest{},
 	// &transactionworkshopentities.WorkOrderHistoryDetail{},
+	// &transactionworkshopentities.WorkOrderService{},
+	// &transactionworkshopentities.WorkOrderServiceVehicle{},
 
 	// &transactionworkshopentities.BookingEstimation{},
 	// &transactionworkshopentities.BookingEstimationAllocation{},
@@ -127,8 +146,8 @@ func Migrate() {
 	// &transactionworkshopentities.BookingEstimationDetail{},
 	)
 
-	if db != nil && db.Error != nil {
-		log.Printf("%s Failed with error %s", logEntry, db.Error)
+	if err != nil {
+		log.Printf("%s Failed with error: %s", logEntry, err)
 		panic(err)
 	}
 

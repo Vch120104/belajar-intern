@@ -76,7 +76,6 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 		"mtr_item.item_name": queryValues.Get("item_name"),
 	}
 	externalFilterCondition := map[string]string{
-
 		"mtr_supplier.supplier_code": queryValues.Get("supplier_code"),
 		"mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
 	}

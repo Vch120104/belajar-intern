@@ -21,4 +21,8 @@ type ItemService interface {
 	DeleteItemDetail(int, int) *exceptions.BaseErrorResponse
 	GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse)
 	GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse)
+	UpdateItem(int, masteritempayloads.ItemUpdateRequest)(bool,*exceptions.BaseErrorResponse)
+	UpdateItemDetail(int, masteritempayloads.ItemDetailUpdateRequest)(bool,*exceptions.BaseErrorResponse)
+	GetPrincipleBrandParent(code string)([]masteritempayloads.PrincipleBrandDropdownDescription,*exceptions.BaseErrorResponse)
+	GetPrincipleBrandDropdown()([]masteritempayloads.PrincipleBrandDropdownResponse,*exceptions.BaseErrorResponse)
 }

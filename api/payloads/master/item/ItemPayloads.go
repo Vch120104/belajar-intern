@@ -237,5 +237,30 @@ type AtpmSupplierCodeOrderResponse struct {
 }
 
 type PersonInChargeResponse struct {
-	PersonInChargeId int `json:"user_id"`
+	PersonInChargeId     int    `json:"user_id"`
+	PersonInChargeName   string `json:"employee_name"`
+	PersonInChargeNumber string `json:"employee_number"`
 }
+
+type ItemUpdateRequest struct {
+	IsTechnicalDefect bool `json:"is_technical_defect"`
+	SpecialMovementId int  `json:"special_movement_id"`
+	GmmCatalogCode    int  `json:"gmm_catalog_code"`
+}
+
+type ItemDetailUpdateRequest struct {
+	MillageEvery float64 `json:"millage_every"`
+	ReturnEvery  float64 `json:"return_every"`
+}
+
+type PrincipleBrandDropdownResponse struct{
+	IsActive bool `json:"is_active"`
+	PrincipleBrandId int `json:"principle_brand_id"`
+	PrincipleBrandCode string `json:"principle_brand_code"`
+}
+
+type PrincipleBrandDropdownDescription struct{
+	PrincipleBrandId int `json:"principle_brand_id"`
+	PrincipleBrandDescription string `json:"principle_brand_description"`
+}
+

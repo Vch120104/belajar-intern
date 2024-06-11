@@ -6,8 +6,6 @@ type ItemImportResponse struct {
 	ItemCode     string `json:"item_code"`
 	ItemName     string `json:"item_name"`
 	SupplierId   int    `json:"supplier_id"`
-	SupplierName string `json:"supplier_name"`
-	SupplierCode string `json:"supplier_code"`
 }
 
 type ItemImportByIdResponse struct {

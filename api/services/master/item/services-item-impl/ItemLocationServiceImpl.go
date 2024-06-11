@@ -97,3 +97,43 @@ func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptions.BaseErr
 	}
 	return nil
 }
+
+func (s *ItemLocationServiceImpl) GetAllItemLoc(filtercondition []utils.FilterCondition,pages pagination.Pagination)([]map[string]interface{},int,int, *exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,totalpages,totalrows,err:=s.ItemLocationRepo.GetAllItemLoc(tx,filtercondition,pages)
+	if err != nil{
+		return result,0,0,err
+	}
+	return result,totalpages,totalrows,nil
+}
+
+func (s *ItemLocationServiceImpl) GetByIdItemLoc(id int)(masteritempayloads.ItemLocationGetByIdResponse,*exceptions.BaseErrorResponse){
+	tx :=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:= s.ItemLocationRepo.GetByIdItemLoc(tx,id)
+	if err != nil{
+		return result,err
+	}
+	return result,nil
+}
+
+func (s *ItemLocationServiceImpl) SaveItemLoc(req masteritempayloads.SaveItemlocation)(bool,*exceptions.BaseErrorResponse){
+	tx :=s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:= s.ItemLocationRepo.SaveItemLoc(tx,req)
+	if err != nil{
+		return false,err
+	}
+	return result,nil
+}
+
+func (s *ItemLocationServiceImpl) DeleteItemLoc(ids []int)(bool,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err:= s.ItemLocationRepo.DeleteItemLoc(tx,ids)
+	if err != nil{
+		return false,err
+	}
+	return result,nil
+}

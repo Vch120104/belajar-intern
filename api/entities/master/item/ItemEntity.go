@@ -62,6 +62,7 @@ type Item struct {
 	AtpmSupplierCodeOrderId      int               `gorm:"column:atpm_supplier_code_order_id;type:int;size:30;null"        json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int               `gorm:"column:person_in_charge_id;type:int;size:30;null"        json:"person_in_charge_id"`
 	ItemPackageDetail            ItemPackageDetail `gorm:"foreignKey:item_id;references:item_id"`
+	ItemLocation                 ItemLocation      `gorm:"foreignKey:item_id;references:item_id"`
 	Bom                          Bom               `gorm:"foreignKey:item_id;references:item_id"`
 	ItemClass                    ItemClass
 	ItemSubstitute               *ItemSubstitute `gorm:"foreignKey:item_id;references:item_id"`
