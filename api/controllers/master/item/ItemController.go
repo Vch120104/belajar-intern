@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -106,6 +107,7 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
+		"mtr_item.item_id":               queryValues.Get("item_id"),
 		"mtr_item.item_code":             queryValues.Get("item_code"),
 		"mtr_item.item_name":             queryValues.Get("item_name"),
 		"mtr_item.item_type":             queryValues.Get("item_type"),
@@ -114,7 +116,18 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
 		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
 		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
+		"mtr_item.supplier_id":           queryValues.Get("supplier_id"), // Add supplier_id to queryParams
 	}
+
+	// Periksa apakah parameter query ada dan tidak kosong
+	for key, value := range queryParams {
+		if value == "" {
+			delete(queryParams, key)
+		}
+	}
+
+	// Debug log for query parameters
+	fmt.Printf("Query parameters: %+v\n", queryParams)
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -125,14 +138,14 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.itemservice.GetAllItem(criteria, paginate)
+	data, totalPages, totalRows, err := r.itemservice.GetAllItem(criteria, paginate)
 
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "success", 200)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get All Item Lookup
@@ -399,45 +412,45 @@ func (r *ItemControllerImpl) DeleteItemDetail(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, nil, "Item detail deleted successfully", http.StatusOK)
 }
 
-func (r *ItemControllerImpl)UpdateItem(writer http.ResponseWriter, request *http.Request){
+func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemUpdateRequest
 
 	helper.ReadFromRequestBody(request, &formRequest)
-	item_id,_ := strconv.Atoi(chi.URLParam(request,"item_id"))
-	_, err := r.itemservice.UpdateItem(item_id,formRequest)
-	if err != nil{
+	item_id, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	_, err := r.itemservice.UpdateItem(item_id, formRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, nil, "Item updated successfully", http.StatusOK)
 }
 
-func (r *ItemControllerImpl)UpdateItemDetail(writer http.ResponseWriter, request *http.Request){
+func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.ItemDetailUpdateRequest
 
 	helper.ReadFromRequestBody(request, &formRequest)
-	item_detail_id,_ := strconv.Atoi(chi.URLParam(request,"item_detail_id"))
-	_, err := r.itemservice.UpdateItemDetail(item_detail_id,formRequest)
-	if err != nil{
+	item_detail_id, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	_, err := r.itemservice.UpdateItemDetail(item_detail_id, formRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, nil, "Item updated successfully", http.StatusOK)
 }
 
-func (r *ItemControllerImpl)GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request){
-	result,err:=r.itemservice.GetPrincipleBrandDropdown()
-	if err != nil{
+func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.itemservice.GetPrincipleBrandDropdown()
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-func (r *ItemControllerImpl)GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request){
-	principleBrandCode:=chi.URLParam(request,"principle_brand_code")
-	result,err:= r.itemservice.GetPrincipleBrandParent(principleBrandCode)
-	if err != nil{
+func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request) {
+	principleBrandCode := chi.URLParam(request, "principle_brand_code")
+	result, err := r.itemservice.GetPrincipleBrandParent(principleBrandCode)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}

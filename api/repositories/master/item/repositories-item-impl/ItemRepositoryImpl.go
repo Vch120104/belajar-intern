@@ -59,35 +59,51 @@ func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloa
 	return responses, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	// Define a slice to hold Item responses
 	var responses []masteritempayloads.ItemLookup
+
+	// Apply internal service filter conditions
 	tableStruct := masteritempayloads.ItemLookup{}
-
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilterForDB(joinTable, filterCondition)
 
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := joinTable.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Rows()
-
+	// Apply pagination directly in the query
+	err := whereQuery.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
 		}
 	}
 
+	// Check if responses are empty
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New("no data found"),
 		}
 	}
 
-	defer rows.Close()
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
 
-	pages.Rows = responses
+	// Iterate over responses and convert them to maps
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"is_active":     response.IsActive,
+			"item_id":       response.ItemId,
+			"item_code":     response.ItemCode,
+			"item_name":     response.ItemName,
+			"item_group_id": response.ItemGroupId,
+			"item_class_id": response.ItemClassId,
+			"item_type":     response.ItemType,
+			"supplier_id":   response.SupplierId,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
 
-	return pages, nil
+	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
@@ -735,56 +751,56 @@ func (r *ItemRepositoryImpl) DeleteItemDetail(tx *gorm.DB, ItemId int, ItemDetai
 	return nil
 }
 
-func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.Item
 
-	result:= tx.Model(&entities).Where("item_id=?",ItemId).Updates(req)
-	if result.Error !=nil{
-		return false,&exceptions.BaseErrorResponse{
+	result := tx.Model(&entities).Where("item_id=?", ItemId).Updates(req)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        result.Error,
 		}
 	}
-	return true,nil
+	return true, nil
 }
 
-func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB,ItemId int, req masteritempayloads.ItemDetailUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemDetail
 
-	result:=tx.Model(&entities).Where("Item_detail_id=?",ItemId).Updates(req)
-	if result.Error != nil{
-		return false,&exceptions.BaseErrorResponse{
+	result := tx.Model(&entities).Where("Item_detail_id=?", ItemId).Updates(req)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        result.Error,
 		}
 	}
-	return true,nil
+	return true, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB)([]masteritempayloads.PrincipleBrandDropdownResponse,*exceptions.BaseErrorResponse){
-	entities:= masteritementities.PrincipleBrandParent{}
-	payloads:= []masteritempayloads.PrincipleBrandDropdownResponse{}
-	err:= tx.Model(&entities).Scan(&payloads).Error
-	if err != nil{
-		return nil,&exceptions.BaseErrorResponse{
+func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipleBrandParent{}
+	payloads := []masteritempayloads.PrincipleBrandDropdownResponse{}
+	err := tx.Model(&entities).Scan(&payloads).Error
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-	return payloads,nil
+	return payloads, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string)([]masteritempayloads.PrincipleBrandDropdownDescription,*exceptions.BaseErrorResponse){
-	entities:= masteritementities.PrincipleBrandParent{}
-	payloads:=[]masteritempayloads.PrincipleBrandDropdownDescription{}
-	err:= tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
+func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipleBrandParent{}
+	payloads := []masteritempayloads.PrincipleBrandDropdownDescription{}
+	err := tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
 		PrincipalBrandParentCode: code,
 	}).Scan(&payloads).Error
-	if err != nil{
-		return nil,&exceptions.BaseErrorResponse{
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-	return payloads,nil
+	return payloads, nil
 }
