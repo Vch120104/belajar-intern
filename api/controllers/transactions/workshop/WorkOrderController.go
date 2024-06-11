@@ -575,7 +575,7 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_system_number}/requestservice [post]
+// @Router /v1/work-order/normal/{work_order_system_number}/requestservice [post]
 func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request *http.Request) {
 	// Add request to work order\
 	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
@@ -601,7 +601,7 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 // @Param work_order_service_id path string true "Work Order Service ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_system_number}/requestservice/{work_order_service_id} [delete]
+// @Router /v1/work-order/normal/{work_order_system_number}/requestservice/{work_order_service_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, request *http.Request) {
 	// Delete request from work order
 	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
@@ -725,7 +725,7 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceVehicleRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_system_number}/vehicleservice [post]
+// @Router /v1/work-order/normal/{work_order_system_number}/vehicleservice [post]
 func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, request *http.Request) {
 	// Add vehicle service to work order
 	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
@@ -776,8 +776,21 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number} [get]
 func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-	// This function can be implemented to handle transaction-related logic if needed
-	// For now, it's empty
+	// Get work order by ID
+	workOrderIdStr := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(workOrderIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	workOrder, baseErr := r.WorkOrderService.GetById(workOrderId)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, workOrder, "Get Data Successfully", http.StatusOK)
 }
 
 // Save saves a new work order
@@ -1231,8 +1244,9 @@ func (r *WorkOrderControllerImpl) VoidBooking(writer http.ResponseWriter, reques
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order Booking
-// @Param work_order_booking_id path string true "Work Order Booking ID"
-// @Param reqBody body transactionworkshoppayloads.WorkOrderBookingCloseRequest true "Work Order Data"
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param booking_system_number path string true "Work Order Booking ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderBookingRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/booking/{work_order_system_number}/close/{booking_system_number} [patch]

@@ -723,10 +723,10 @@ func (r *WorkOrderRepositoryImpl) GetAllVehicleService(tx *gorm.DB, filterCondit
 	for _, entity := range entities {
 		workOrderServiceVehicleData := make(map[string]interface{})
 		// Copy data from entity to response
-		workOrderServiceVehicleData["work_order_service_id"] = entity.WorkOrderServiceId
+
 		workOrderServiceVehicleData["work_order_system_number"] = entity.WorkOrderSystemNumber
-		workOrderServiceVehicleData["work_order_service_date"] = entity.WorkOrderServiceDate
-		workOrderServiceVehicleData["work_order_service_remark"] = entity.WorkOrderServiceRemark
+		workOrderServiceVehicleData["work_order_vehicle_date"] = entity.WorkOrderVehicleDate
+		workOrderServiceVehicleData["work_order_vehicle_remark"] = entity.WorkOrderVehicleRemark
 		workOrderServiceVehicleResponses = append(workOrderServiceVehicleResponses, workOrderServiceVehicleData)
 	}
 
@@ -748,8 +748,8 @@ func (r *WorkOrderRepositoryImpl) GetVehicleServiceById(tx *gorm.DB, id int, IdW
 	// Convert entity to payload
 	payload := transactionworkshoppayloads.WorkOrderServiceVehicleRequest{
 		WorkOrderSystemNumber:  entity.WorkOrderSystemNumber,
-		WorkOrderVehicleDate:   entity.WorkOrderServiceDate,
-		WorkOrderVehicleRemark: entity.WorkOrderServiceRemark,
+		WorkOrderVehicleDate:   entity.WorkOrderVehicleDate,
+		WorkOrderVehicleRemark: entity.WorkOrderVehicleRemark,
 	}
 
 	return payload, nil
@@ -766,8 +766,8 @@ func (r *WorkOrderRepositoryImpl) UpdateVehicleService(tx *gorm.DB, id int, IdWo
 	}
 
 	// Update the work order service request
-	entity.WorkOrderServiceDate = request.WorkOrderVehicleDate
-	entity.WorkOrderServiceRemark = request.WorkOrderVehicleRemark
+	entity.WorkOrderVehicleDate = request.WorkOrderVehicleDate
+	entity.WorkOrderVehicleRemark = request.WorkOrderVehicleRemark
 
 	// Save the updated work order service request
 	err = tx.Save(&entity).Error
@@ -783,8 +783,8 @@ func (r *WorkOrderRepositoryImpl) AddVehicleService(tx *gorm.DB, id int, request
 	entities := transactionworkshopentities.WorkOrderServiceVehicle{
 		// Assign fields from request
 		WorkOrderSystemNumber:  request.WorkOrderSystemNumber,
-		WorkOrderServiceDate:   request.WorkOrderVehicleDate,
-		WorkOrderServiceRemark: request.WorkOrderVehicleRemark,
+		WorkOrderVehicleDate:   request.WorkOrderVehicleDate,
+		WorkOrderVehicleRemark: request.WorkOrderVehicleRemark,
 	}
 
 	// Save the work order service
@@ -1069,6 +1069,10 @@ func (r *WorkOrderRepositoryImpl) GetAllBooking(tx *gorm.DB, filterCondition []u
 		// Copy data from entity to response
 		workOrderBookingData["work_order_system_number"] = entity.WorkOrderSystemNumber
 		workOrderBookingData["booking_system_number"] = entity.BookingSystemNumber
+		workOrderBookingData["service_request_system_number"] = entity.ServiceRequestSystemNumber
+		workOrderBookingData["brand_id"] = entity.BrandId
+		workOrderBookingData["model_id"] = entity.ModelId
+		workOrderBookingData["vehicle_id"] = entity.VehicleId
 
 		workOrderBookingResponses = append(workOrderBookingResponses, workOrderBookingData)
 	}

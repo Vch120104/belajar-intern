@@ -299,15 +299,15 @@ type WorkOrderAffiliateRequest struct {
 }
 
 type WorkOrderLookupRequest struct {
-	WorkOrderSystemNumber   string `json:"work_order_system_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
 	WorkOrderDocumentNumber string `json:"work_order_document_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
 	VehicleId               int    `json:"vehicle_id" parent_entity:"trx_work_order"`
 	CustomerId              int    `json:"customer_id" parent_entity:"trx_work_order"`
 }
 
 type WorkOrderLookupResponse struct {
-	WorkOrderDocumentNumber int    `json:"work_order_document_number"`
-	WorkOrderSystemNumber   string `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string `json:"work_order_document_number"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
 	VehicleId               int    `json:"vehicle_id"`
 	CustomerId              int    `json:"customer_id"`
 }

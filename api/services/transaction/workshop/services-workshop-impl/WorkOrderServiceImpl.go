@@ -9,10 +9,20 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"context"
+	"encoding/json"
+	"fmt"
+	"math"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
+
+const cacheExpiration = time.Minute * 30 // cache expiration time
 
 type WorkOrderServiceImpl struct {
 	structWorkOrderRepo transactionworkshoprepository.WorkOrderRepository
@@ -28,34 +38,183 @@ func OpenWorkOrderServiceImpl(WorkOrderRepo transactionworkshoprepository.WorkOr
 	}
 }
 
-func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAll(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+// Function to generate cache key for GetAll
+func generateCacheKey(prefix string, filterCondition []utils.FilterCondition, pagination pagination.Pagination) string {
+
+	filterBytes, _ := json.Marshal(filterCondition)
+
+	pageStr := fmt.Sprintf("page=%d&size=%d", pagination.Page, pagination.Limit)
+
+	key := fmt.Sprintf("%s:%s:%s", prefix, filterBytes, pageStr)
+
+	return key
+
+	// // pakai ini kalau ingin di hash key
+	// hasher := sha1.New()
+	// hasher.Write([]byte(key))
+	// sha := hex.EncodeToString(hasher.Sum(nil))
+	// return sha
+}
+
+// Function to generate cache key for GetById
+func generateCacheKeyId(prefix string, params ...interface{}) string {
+
+	var paramStrs []string
+	for _, param := range params {
+		switch v := param.(type) {
+		case int:
+			paramStrs = append(paramStrs, fmt.Sprintf("%d", v))
+		case string:
+			paramStrs = append(paramStrs, v)
+		case []utils.FilterCondition:
+			filterBytes, _ := json.Marshal(v)
+			paramStrs = append(paramStrs, string(filterBytes))
+		case pagination.Pagination:
+			paramStrs = append(paramStrs, fmt.Sprintf("page=%d&size=%d", v.Page, v.Limit))
+		}
 	}
-	return results, totalPages, totalRows, nil
+
+	key := prefix + ":" + strings.Join(paramStrs, ":")
+
+	return key
+}
+
+func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	ctx := context.Background()
+	cacheKey := generateCacheKey("work_orders", filterCondition, pages)
+
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+
+		fmt.Println("Cache miss, querying database...")
+
+		tx := s.DB.Begin()
+		defer helper.CommitOrRollback(tx)
+
+		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAll(tx, filterCondition, pages)
+		if repoErr != nil {
+			return results, totalPages, totalRows, repoErr
+		}
+
+		cacheData, marshalErr := json.Marshal(results)
+		if marshalErr == nil {
+			s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+		} else {
+			fmt.Println("Failed to marshal results for caching:", marshalErr)
+		}
+
+		return results, totalPages, totalRows, nil
+	} else if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	} else {
+
+		fmt.Println("Cache hit, returning cached data...")
+		var mapResponses []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+		return paginatedData, totalPages, totalRows, nil
+	}
 }
 
 func (s *WorkOrderServiceImpl) VehicleLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.VehicleLookup(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+	ctx := context.Background()
+	cacheKey := generateCacheKey("vehicle_lookup", filterCondition, pages)
+
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+
+		fmt.Println("Cache miss for VehicleLookup, querying database...")
+
+		tx := s.DB.Begin()
+		defer helper.CommitOrRollback(tx)
+
+		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.VehicleLookup(tx, filterCondition, pages)
+		if repoErr != nil {
+			return results, totalPages, totalRows, repoErr
+		}
+
+		cacheData, marshalErr := json.Marshal(results)
+		if marshalErr == nil {
+			s.RedisClient.Set(ctx, cacheKey, cacheData, 5*time.Minute) // Atur durasi cache sesuai kebutuhan
+		} else {
+			fmt.Println("Failed to marshal results for caching:", marshalErr)
+		}
+
+		return results, totalPages, totalRows, nil
+	} else if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	} else {
+
+		fmt.Println("Cache hit for VehicleLookup, returning cached data...")
+		var mapResponses []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+		return paginatedData, totalPages, totalRows, nil
 	}
-	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) CampaignLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.CampaignLookup(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+	ctx := context.Background()
+	cacheKey := generateCacheKey("campaign_lookup", filterCondition, pages)
+
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+
+		fmt.Println("Cache miss for CampaignLookup, querying database...")
+
+		tx := s.DB.Begin()
+		defer helper.CommitOrRollback(tx)
+
+		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.CampaignLookup(tx, filterCondition, pages)
+		if repoErr != nil {
+			return results, totalPages, totalRows, repoErr
+		}
+
+		cacheData, marshalErr := json.Marshal(results)
+		if marshalErr == nil {
+			s.RedisClient.Set(ctx, cacheKey, cacheData, 5*time.Minute) // Atur durasi cache sesuai kebutuhan
+		} else {
+			fmt.Println("Failed to marshal results for caching:", marshalErr)
+		}
+
+		return results, totalPages, totalRows, nil
+	} else if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	} else {
+
+		fmt.Println("Cache hit for CampaignLookup, returning cached data...")
+		var mapResponses []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+		return paginatedData, totalPages, totalRows, nil
 	}
-	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -116,12 +275,43 @@ func (s *WorkOrderServiceImpl) NewVehicleModel(tx *gorm.DB, brandId int) ([]tran
 }
 
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
+
+	idString := strconv.Itoa(id)
+	cacheKey := generateCacheKeyId(idString)
+
+	// retrieve data from cache
+	cachedData, err := s.RedisClient.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+
+		var result transactionworkshoppayloads.WorkOrderRequest
+		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
+			return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{Message: "Error unmarshalling cached data"}
+		}
+		return result, nil
+	}
+
+	// Data not found in cache, proceed to database
+	// Start database transaction
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.GetById(tx, id)
-	if err != nil {
-		return results, err
+
+	// Retrieve data from repository
+	results, repoErr := s.structWorkOrderRepo.GetById(tx, id)
+	if repoErr != nil {
+
+		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
+		return transactionworkshoppayloads.WorkOrderRequest{}, errorResponse
 	}
+
+	jsonData, err := json.Marshal(results)
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{Message: "Error marshalling data"}
+	}
+
+	if err := s.RedisClient.Set(context.Background(), cacheKey, jsonData, cacheExpiration).Err(); err != nil {
+		fmt.Println("Error caching data:", err)
+	}
+
 	return results, nil
 }
 
@@ -154,23 +344,84 @@ func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) (bool, *exception
 }
 
 func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKey("all_request", filterCondition, pages)
+
+	cachedData, err := s.RedisClient.Get(context.Background(), cacheKey).Result()
+	if err == nil {
+
+		var result []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Error unmarshalling cached data"}
+		}
+		return result, 0, 0, nil
+	}
+
+	// Data not found in cache, proceed to database
+	// Start database transaction
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+
+	// Retrieve data from repository
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
+	if repoErr != nil {
+
+		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
+		return nil, 0, 0, errorResponse
 	}
+
+	jsonData, err := json.Marshal(results)
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Error marshalling data"}
+	}
+
+	if err := s.RedisClient.Set(context.Background(), cacheKey, jsonData, cacheExpiration).Err(); err != nil {
+		fmt.Println("Error caching data:", err)
+	}
+
 	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKeyId("request_by_id", idwosn, idwos)
+
+	ctx := context.Background()
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var request transactionworkshoppayloads.WorkOrderServiceRequest
+		if err := json.Unmarshal([]byte(cachedData), &request); err != nil {
+			return request, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		return request, nil
+	} else if err != redis.Nil {
+
+		return transactionworkshoppayloads.WorkOrderServiceRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.GetRequestById(tx, idwosn, idwos)
-	if err != nil {
-		return results, err
+
+	request, repoErr := s.structWorkOrderRepo.GetRequestById(tx, idwosn, idwos)
+	if repoErr != nil {
+		return request, repoErr
 	}
-	return results, nil
+
+	cacheData, marshalErr := json.Marshal(request)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal request data for caching:", marshalErr)
+	} else {
+		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+	}
+
+	return request, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateRequest(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
@@ -203,24 +454,87 @@ func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) *exception
 }
 
 func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKey("vehicle_service", filterCondition, pages)
+
+	ctx := context.Background()
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var results []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &results); err != nil {
+			return results, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		return results, 0, 0, nil
+	} else if err != redis.Nil {
+
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllVehicleService(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllVehicleService(tx, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	cacheData, marshalErr := json.Marshal(results)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal results for caching:", marshalErr)
+	} else {
+		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
 
 	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKeyId("vehicle_service", idwosn, idwos)
+
+	ctx := context.Background()
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var result transactionworkshoppayloads.WorkOrderServiceVehicleRequest
+		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
+			return result, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		return result, nil
+	} else if err != redis.Nil {
+
+		return transactionworkshoppayloads.WorkOrderServiceVehicleRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.GetVehicleServiceById(tx, idwosn, idwos)
-	if err != nil {
-		return results, err
+
+	result, repoErr := s.structWorkOrderRepo.GetVehicleServiceById(tx, idwosn, idwos)
+	if repoErr != nil {
+		return result, repoErr
 	}
-	return results, nil
+
+	cacheData, marshalErr := json.Marshal(result)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal result for caching:", marshalErr)
+	} else {
+		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+	}
+
+	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateVehicleService(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse {
@@ -261,23 +575,99 @@ func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) (bool, string, *excep
 }
 
 func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKey("detail_work_order", filterCondition, pages)
+
+	ctx := context.Background()
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var results []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &results); err != nil {
+			return results, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		totalPages := int(math.Ceil(float64(len(results)) / float64(pages.Limit)))
+		totalRows := len(results)
+
+		start := pages.Page * pages.Limit
+		end := start + pages.Limit
+		if end > totalRows {
+			end = totalRows
+		}
+		results = results[start:end]
+
+		return results, totalPages, totalRows, nil
+	} else if err != redis.Nil {
+
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
 	}
+
+	cacheData, marshalErr := json.Marshal(results)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal results for caching:", marshalErr)
+	} else {
+		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+	}
+
 	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKeyId("work_order_detail_id", idwosn, idwos)
+
+	ctx := context.Background()
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var result transactionworkshoppayloads.WorkOrderDetailRequest
+		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
+			return result, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		return result, nil
+	} else if err != redis.Nil {
+
+		return transactionworkshoppayloads.WorkOrderDetailRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, idwosn, idwos)
-	if err != nil {
-		return results, err
+
+	result, repoErr := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, idwosn, idwos)
+	if repoErr != nil {
+		return result, repoErr
 	}
-	return results, nil
+
+	cacheData, marshalErr := json.Marshal(result)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal result for caching:", marshalErr)
+	} else {
+		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+	}
+
+	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse {
@@ -319,23 +709,92 @@ func (s *WorkOrderServiceImpl) NewBooking(tx *gorm.DB, workOrderId int, request 
 }
 
 func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
-	if err != nil {
-		return results, totalPages, totalRows, err
+	ctx := context.Background()
+	cacheKey := generateCacheKey("all_booking", filterCondition, pages)
+
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+
+		fmt.Println("Cache miss, querying database...")
+
+		tx := s.DB.Begin()
+		defer helper.CommitOrRollback(tx)
+
+		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
+		if repoErr != nil {
+			return results, totalPages, totalRows, repoErr
+		}
+
+		cacheData, marshalErr := json.Marshal(results)
+		if marshalErr == nil {
+			s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+		} else {
+			fmt.Println("Failed to marshal results for caching:", marshalErr)
+		}
+
+		return results, totalPages, totalRows, nil
+	} else if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	} else {
+
+		fmt.Println("Cache hit, returning cached data...")
+		var mapResponses []map[string]interface{}
+		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+		return paginatedData, totalPages, totalRows, nil
 	}
-	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse) {
+
+	cacheKey := generateCacheKeyId("booking", workOrderId, id)
+
+	ctx := context.Background()
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var result transactionworkshoppayloads.WorkOrderBookingRequest
+		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
+			return result, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		return result, nil
+	} else if err != redis.Nil {
+
+		return transactionworkshoppayloads.WorkOrderBookingRequest{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.structWorkOrderRepo.GetBookingById(tx, workOrderId, id)
-	if err != nil {
-		return results, err
+
+	result, repoErr := s.structWorkOrderRepo.GetBookingById(tx, workOrderId, id)
+	if repoErr != nil {
+		return result, repoErr
 	}
-	return results, nil
+
+	cacheData, marshalErr := json.Marshal(result)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal result for caching:", marshalErr)
+	} else {
+		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+	}
+
+	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) SaveBooking(tx *gorm.DB, workOrderId int, id int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
