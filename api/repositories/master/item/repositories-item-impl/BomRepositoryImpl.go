@@ -28,10 +28,12 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 	// Define main table
 	mainTable := "mtr_bom"
 	mainAlias := "bom"
+	mainAliasItem := "item"
+	mainAliasUom := "uom"
 
 	// Define join tables
 	joinTables := []utils.JoinTable{
-		{Table: "mtr_item", Alias: "item", ForeignKey: "bom.item_id", ReferenceKey: "item.item_id"},
+		{Table: "mtr_item", Alias: "item", ForeignKey: mainAlias + ".item_id", ReferenceKey: "item.item_id"},
 		{Table: "mtr_uom", Alias: "uom", ForeignKey: "item.unit_of_measurement_type_id", ReferenceKey: "uom.uom_id"},
 	}
 
@@ -40,25 +42,31 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 
 	// Define key attributes to be selected
 	keyAttributes := []string{
-		"bom.is_active",
-		"bom.bom_master_id",
-		"bom.bom_master_qty",
-		"bom.bom_master_effective_date",
-		"item.item_code",
-		"item.item_name",
-		"item.item_id",
-		"uom.uom_id",
-		"uom.uom_description",
+		mainAlias + ".is_active",
+		mainAlias + ".bom_master_id",
+		mainAlias + ".bom_master_qty",
+		mainAlias + ".bom_master_effective_date",
+		mainAliasItem + ".item_code",
+		mainAliasItem + ".item_name",
+		mainAliasItem + ".item_id",
+		mainAliasUom + ".uom_id",
+		mainAliasUom + ".uom_description",
 	}
 
 	// Apply key attributes selection
 	joinQuery = joinQuery.Select(keyAttributes)
 
 	// Apply filters
-	whereQuery := utils.ApplyFilter(joinQuery, filters)
+	for _, filter := range filters {
+		if filter.ColumnField == "bom_master_id" {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" = ?", filter.ColumnValue) // Menggunakan operator "="
+		} else {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" LIKE ?", "%"+filter.ColumnValue+"%") // Menggunakan operator "LIKE"
+		}
+	}
 
 	// Execute query
-	rows, err := whereQuery.Rows()
+	rows, err := joinQuery.Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -354,18 +362,51 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 }
 
 func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.BomItemLookup
+	var responses []map[string]interface{}
 
-	// Define table struct
-	tableStruct := masteritempayloads.BomItemLookup{}
-	// Define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	// Define main table
+	mainTable := "mtr_item"
+	mainAlias := "item"
+	mainAliasClass := "item_class"
+	mainAliasUom := "uom"
+
+	// Define join tables
+	joinTables := []utils.JoinTable{
+		{Table: "mtr_item_class", Alias: "item_class", ForeignKey: mainAlias + ".item_class_id", ReferenceKey: mainAliasClass + ".item_class_id"},
+		{Table: "mtr_uom", Alias: "uom", ForeignKey: mainAlias + ".unit_of_measurement_selling_id", ReferenceKey: mainAliasUom + ".uom_id"},
+	}
+
+	// Create join query
+	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+
+	// Define key attributes to be selected
+	keyAttributes := []string{
+		mainAlias + ".is_active",
+		mainAlias + ".item_id",
+		mainAlias + ".item_code",
+		mainAlias + ".item_name",
+		mainAlias + ".item_type",
+		mainAlias + ".item_group_id",
+		mainAliasClass + ".item_class_id",
+		mainAliasClass + ".item_class_code",
+		mainAliasUom + ".uom_id",
+		mainAliasUom + ".uom_description",
+	}
+
+	// Apply key attributes selection
+	joinQuery = joinQuery.Select(keyAttributes)
 
 	// Apply filters
-	whereQuery := utils.ApplyFilter(joinTable, filters)
+	for _, filter := range filters {
+		if filter.ColumnField == "item_id" {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" = ?", filter.ColumnValue)
+		} else {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" LIKE ?", "%"+filter.ColumnValue+"%")
+		}
+	}
 
 	// Execute query
-	rows, err := whereQuery.Find(&responses).Rows()
+	rows, err := joinQuery.Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -374,22 +415,47 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 	}
 	defer rows.Close()
 
-	// Convert responses to maps
-	responseMaps := make([]map[string]interface{}, 0)
-	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"item_code":       response.ItemCode,
-			"item_name":       response.ItemName,
-			"item_type":       response.ItemType,
-			"item_group_code": response.ItemGroupId,
-			"item_class_code": response.ItemClassCode,
-			"is_active":       response.IsActive,
+	// Fetch data and append to response slice
+	for rows.Next() {
+		var isActive bool
+		var itemId, itemGroupId, itemClassId, uomId int
+		var itemCode, itemName, itemType, itemClassCode, uomDescription string
+
+		err := rows.Scan(&isActive,
+			&itemId,
+			&itemCode,
+			&itemName,
+			&itemType,
+			&itemGroupId,
+			&itemClassId,
+			&itemClassCode,
+			&uomId,
+			&uomDescription)
+
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
 		}
-		responseMaps = append(responseMaps, responseMap)
+
+		responseMap := map[string]interface{}{
+			"is_active":                isActive,
+			"item_id":                  itemId,
+			"item_code":                itemCode,
+			"item_name":                itemName,
+			"item_type":                itemType,
+			"item_group_id":            itemGroupId,
+			"item_class_id":            itemClassId,
+			"item_class_code":          itemClassCode,
+			"unit_of_measurement_id":   uomId,
+			"unit_of_measurement_code": uomDescription,
+		}
+		responses = append(responses, responseMap)
 	}
 
 	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
