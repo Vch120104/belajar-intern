@@ -11,7 +11,7 @@ import (
 )
 
 type FieldActionRepository interface {
-	GetAllFieldAction(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllFieldAction(*gorm.DB, []utils.FilterCondition, pagination.Pagination)(pagination.Pagination, *exceptions.BaseErrorResponse)
 	SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse)
 
 	GetFieldActionHeaderById(tx *gorm.DB, Id int) (masterpayloads.FieldActionResponse, *exceptions.BaseErrorResponse)
