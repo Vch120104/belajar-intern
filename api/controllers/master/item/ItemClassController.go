@@ -23,6 +23,7 @@ type ItemClassController interface {
 	GetItemClassByCode(writer http.ResponseWriter, request *http.Request)
 	SaveItemClass(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
+	GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request)
 }
 type ItemClassControllerImpl struct {
 	ItemClassService masteritemservice.ItemClassService
@@ -32,6 +33,20 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 	return &ItemClassControllerImpl{
 		ItemClassService: itemClassService,
 	}
+}
+
+// GetItemClassDropDownbyGroupId implements ItemClassController.
+func (r *ItemClassControllerImpl) GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request) {
+	itemGroupId, _ := strconv.Atoi(chi.URLParam(request, "item_group_id"))
+
+	response, err := r.ItemClassService.GetItemClassDropDownbyGroupId(itemGroupId)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
 // GetItemClassByCode implements ItemClassController.

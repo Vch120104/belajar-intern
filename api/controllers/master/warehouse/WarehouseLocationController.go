@@ -4,6 +4,7 @@ import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
+	"after-sales/api/utils"
 
 	"strconv"
 
@@ -55,35 +56,32 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	warehouseLocationName := queryValues.Get("warehouse_location_code")
-	companyId := queryValues.Get("company_id")
-	warehouseLocationCode := queryValues.Get("warehouse_location_name")
-	warehouseLocationDetailName := queryValues.Get("warehouse_location_detail_name")
-	isActive := queryValues.Get("is_active")
+	filter := map[string]string{
+		"WarehouseGroup.warehouse_group_name":            queryValues.Get("warehouse_group_name"),
+		"mtr_warehouse_master.warehouse_code":            queryValues.Get("warehouse_code"),
+		"mtr_warehouse_master.warehouse_name":            queryValues.Get("warehouse_name"),
+		"mtr_warehouse_location.warehouse_location_code": queryValues.Get("warehouse_location_code"),
+		"mtr_warehouse_location.warehouse_location_name": queryValues.Get("warehouse_location_name"),
+		"mtr_warehouse_location.is_active":               queryValues.Get("is_active"),
+	}
 
-	get, err := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
-		WarehouseLocationCode:       warehouseLocationName,
-		WarehouseLocationName:       warehouseLocationCode,
-		WarehouseLocationDetailName: warehouseLocationDetailName,
-		CompanyId:                   companyId,
-		IsActive:                    isActive,
-	}, pagination.Pagination{
-		Limit:  limit,
-		SortOf: sortOf,
-		SortBy: sortBy,
-		Page:   page,
-	})
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	result, err := r.WarehouseLocationService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Warehouse Location By Id

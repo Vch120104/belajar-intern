@@ -27,6 +27,17 @@ func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db
 	}
 }
 
+// GetItemClassDropDownbyGroupId implements masteritemservice.ItemClassService.
+func (s *ItemClassServiceImpl) GetItemClassDropDownbyGroupId(groupId int) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetItemClassDropDownbyGroupId(tx, groupId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 // GetItemClassByCode implements masteritemservice.ItemClassService.
 func (s *ItemClassServiceImpl) GetItemClassByCode(itemClassCode string) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()

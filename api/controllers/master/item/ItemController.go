@@ -152,39 +152,41 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/lookup [get]
 func (r *ItemControllerImpl) GetAllItemLookup(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
+	// queryValues := request.URL.Query()
 
-	internalFilterCondition := map[string]string{
-		"item_code":       queryValues.Get("item_code"),
-		"item_name":       queryValues.Get("item_name"),
-		"item_type":       queryValues.Get("item_type"),
-		"item_group_code": queryValues.Get("item_group_code"),
-		"item_class_code": queryValues.Get("item_class_code"),
-		"is_active":       queryValues.Get("is_active"),
-	}
-	externalFilterCondition := map[string]string{
+	// internalFilterCondition := map[string]string{
+	// 	"item_code":       queryValues.Get("item_code"),
+	// 	"item_name":       queryValues.Get("item_name"),
+	// 	"item_type":       queryValues.Get("item_type"),
+	// 	"item_group_code": queryValues.Get("item_group_code"),
+	// 	"item_class_code": queryValues.Get("item_class_code"),
+	// 	"is_active":       queryValues.Get("is_active"),
+	// }
+	// externalFilterCondition := map[string]string{
 
-		"supplier_code": queryValues.Get("supplier_code"),
-		"supplier_name": queryValues.Get("supplier_name"),
-	}
+	// 	"supplier_code": queryValues.Get("supplier_code"),
+	// 	"supplier_name": queryValues.Get("supplier_name"),
+	// }
 
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
+	// paginate := pagination.Pagination{
+	// 	Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+	// 	Page:   utils.NewGetQueryInt(queryValues, "page"),
+	// 	SortOf: queryValues.Get("sort_of"),
+	// 	SortBy: queryValues.Get("sort_by"),
+	// }
 
-	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
-	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
+	// internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	// externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	result, totalPages, totalRows, err := r.itemservice.GetAllItemLookup(internalCriteria, externalCriteria, paginate)
+	// result, totalPages, totalRows, err := r.itemservice.GetAllItemLookup(internalCriteria, externalCriteria, paginate)
 
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	// if err != nil {
+	// 	exceptions.NewNotFoundException(writer, request, err)
+	// 	return
+	// }
+	// payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+
+	panic("ON PROGRESSS")
 }
 
 // @Summary Get Item With MultiId

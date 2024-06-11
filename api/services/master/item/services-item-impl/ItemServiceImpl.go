@@ -59,14 +59,14 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.itemRepo.GetAllItemLookup(tx, internalFilterCondition, externalFilterCondition, pages)
+	results, err := s.itemRepo.GetAllItemLookup(tx, filter)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptions.BaseErrorResponse) {

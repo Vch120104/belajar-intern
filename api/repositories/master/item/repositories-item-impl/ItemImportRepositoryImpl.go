@@ -95,7 +95,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/supplier-master?page=" + strconv.Itoa(pages.Page) + "&limit=" + strconv.Itoa(pages.Limit) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master?page=" + strconv.Itoa(pages.Page) + "&limit=" + strconv.Itoa(pages.Limit) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{

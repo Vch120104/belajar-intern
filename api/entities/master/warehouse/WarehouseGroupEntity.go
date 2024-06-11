@@ -9,7 +9,7 @@ type WarehouseGroup struct {
 	WarehouseGroupName string            `gorm:"column:warehouse_group_name;not null;type:varchar(100)" json:"warehouse_group_name"`
 	ProfitCenterId     int               `gorm:"column:profit_center_id;not null;size:30" json:"profit_center_id"`
 	WarehouseMaster    WarehouseMaster   `gorm:"foreignKey:WarehouseGroupId;references:WarehouseGroupId" `
-	WarehouseLocation  WarehouseLocation `gorm:"foreignKey:WarehouseGroupId;references:warehouse_group_id"`
+	WarehouseLocation  WarehouseLocation `gorm:"foreignKey:WarehouseGroupId;references:WarehouseGroupId"`
 }
 
 func (*WarehouseGroup) TableName() string {
