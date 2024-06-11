@@ -83,13 +83,13 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, totalPages, totalRows, err := r.FieldActionService.GetAllFieldAction(filterCondition, pagination)
+	result, err := r.FieldActionService.GetAllFieldAction(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Save Field Action
