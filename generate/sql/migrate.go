@@ -9,7 +9,7 @@ import (
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
-	// transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
+	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
@@ -124,8 +124,8 @@ func Migrate() {
 	// &masterentities.AgreementDiscountGroupDetail{},
 	// &masterentities.AgreementItemDetail{},
 
-	// &transactionsparepartpentities.SupplySlip{},
-	// &transactionsparepartpentities.SupplySlipDetail{},
+	// &transactionsparepartentities.SupplySlip{},
+	// &transactionsparepartentities.SupplySlipDetail{},
 	// &transactionworkshopentities.WorkOrderMaster{},
 	// &transactionworkshopentities.WorkOrderMasterStatus{},
 	// &transactionworkshopentities.WorkOrderMasterType{},
