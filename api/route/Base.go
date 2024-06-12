@@ -9,7 +9,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	_ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -149,7 +149,7 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 	router.Get("/", itemController.GetAllItem)
 	router.Get("/{item_id}", itemController.GetItembyId)
-	router.Get("/lookup", itemController.GetAllItemLookup)
+	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)

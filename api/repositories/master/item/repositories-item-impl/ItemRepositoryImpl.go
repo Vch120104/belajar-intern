@@ -79,7 +79,7 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 	if len(responses) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 
@@ -605,56 +605,56 @@ func (r *ItemRepositoryImpl) DeleteItemDetail(tx *gorm.DB, ItemId int, ItemDetai
 	return nil
 }
 
-func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.Item
 
-	result:= tx.Model(&entities).Where("item_id=?",ItemId).Updates(req)
-	if result.Error !=nil{
-		return false,&exceptions.BaseErrorResponse{
+	result := tx.Model(&entities).Where("item_id=?", ItemId).Updates(req)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        result.Error,
 		}
 	}
-	return true,nil
+	return true, nil
 }
 
-func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB,ItemId int, req masteritempayloads.ItemDetailUpdateRequest)(bool,*exceptions.BaseErrorResponse){
+func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemDetail
 
-	result:=tx.Model(&entities).Where("Item_detail_id=?",ItemId).Updates(req)
-	if result.Error != nil{
-		return false,&exceptions.BaseErrorResponse{
+	result := tx.Model(&entities).Where("Item_detail_id=?", ItemId).Updates(req)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        result.Error,
 		}
 	}
-	return true,nil
+	return true, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB)([]masteritempayloads.PrincipleBrandDropdownResponse,*exceptions.BaseErrorResponse){
-	entities:= masteritementities.PrincipleBrandParent{}
-	payloads:= []masteritempayloads.PrincipleBrandDropdownResponse{}
-	err:= tx.Model(&entities).Scan(&payloads).Error
-	if err != nil{
-		return nil,&exceptions.BaseErrorResponse{
+func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipleBrandParent{}
+	payloads := []masteritempayloads.PrincipleBrandDropdownResponse{}
+	err := tx.Model(&entities).Scan(&payloads).Error
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-	return payloads,nil
+	return payloads, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string)([]masteritempayloads.PrincipleBrandDropdownDescription,*exceptions.BaseErrorResponse){
-	entities:= masteritementities.PrincipleBrandParent{}
-	payloads:=[]masteritempayloads.PrincipleBrandDropdownDescription{}
-	err:= tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
+func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipleBrandParent{}
+	payloads := []masteritempayloads.PrincipleBrandDropdownDescription{}
+	err := tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
 		PrincipalBrandParentCode: code,
 	}).Scan(&payloads).Error
-	if err != nil{
-		return nil,&exceptions.BaseErrorResponse{
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-	return payloads,nil
+	return payloads, nil
 }
