@@ -78,7 +78,7 @@ func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrde
 // @Description Retrieve all work orders with optional filtering and pagination
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order
+// @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number query string false "Work Order System Number"
 // @Param work_order_type_id query string false "Work Order Type ID"
 // @Param brand_id query string false "Brand ID"
@@ -136,7 +136,7 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order Normal
-// @Param reqBody body transactionworkshoppayloads.WorkOrderRequest true "Work Order Data"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderNormalRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal [post]
@@ -145,7 +145,7 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
-	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
+	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
 	success, err := r.WorkOrderService.New(db, workOrderRequest)
@@ -570,7 +570,7 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 // @Description Add a new request to a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order
+// @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -596,7 +596,7 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 // @Description Delete a request from a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order
+// @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_service_id path string true "Work Order Service ID"
 // @Success 200 {object} payloads.Response
@@ -720,7 +720,7 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 // @Description Add a new vehicle service to a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order
+// @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param reqBody body transactionworkshoppayloads.WorkOrderServiceVehicleRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
@@ -746,7 +746,7 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 // @Description Delete a vehicle service from a work order
 // @Accept json
 // @Produce json
-// @Tags Transaction : Workshop Work Order
+// @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path string true "Work Order ID"
 // @Param work_order_vehicle_service_id path string true "Work Order Vehicle Service ID"
 // @Success 200 {object} payloads.Response
@@ -800,7 +800,7 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Produce json
 // @Tags Transaction : Workshop Work Order Normal
 // @param work_order_system_number path string true "Work Order ID"
-// @Param reqBody body transactionworkshoppayloads.WorkOrderRequest true "Work Order Data"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderNormalSaveRequest true "Work Order Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number} [put]
@@ -814,7 +814,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	}
 
 	// Read the request body and convert to WorkOrderRequest struct
-	var workOrderRequest transactionworkshoppayloads.WorkOrderRequest
+	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalSaveRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
 	// Initialize the database connection

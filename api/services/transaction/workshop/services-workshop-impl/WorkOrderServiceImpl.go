@@ -22,7 +22,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const cacheExpiration = time.Minute * 30 // cache expiration time
+const cacheExpiration = time.Minute * 5 // cache expiration time
 
 type WorkOrderServiceImpl struct {
 	structWorkOrderRepo transactionworkshoprepository.WorkOrderRepository
@@ -79,6 +79,28 @@ func generateCacheKeyId(prefix string, params ...interface{}) string {
 	return key
 }
 
+// Function to refresh cache
+func (s *WorkOrderServiceImpl) refreshCache(ctx context.Context, prefix interface{}) {
+	var prefixStr string
+	switch v := prefix.(type) {
+	case string:
+		prefixStr = v
+	case int:
+		prefixStr = strconv.Itoa(v)
+	default:
+		fmt.Println("Invalid prefix type. Must be string or int.")
+		return
+	}
+
+	iter := s.RedisClient.Scan(ctx, 0, prefixStr+"*", 0).Iterator()
+	for iter.Next(ctx) {
+		s.RedisClient.Del(ctx, iter.Val())
+	}
+	if err := iter.Err(); err != nil {
+		fmt.Println("Error while scanning Redis keys:", err)
+	}
+}
+
 func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 	cacheKey := generateCacheKey("work_orders", filterCondition, pages)
@@ -102,6 +124,9 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 		} else {
 			fmt.Println("Failed to marshal results for caching:", marshalErr)
 		}
+
+		// Refresh cache
+		s.refreshCache(ctx, "work_orders")
 
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
@@ -217,12 +242,18 @@ func (s *WorkOrderServiceImpl) CampaignLookup(filterCondition []utils.FilterCond
 	}
 }
 
-func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalRequest) (bool, *exceptions.BaseErrorResponse) {
+	ctx := context.Background()
+
 	defer helper.CommitOrRollback(tx)
 	save, err := s.structWorkOrderRepo.New(tx, request)
 	if err != nil {
 		return false, err
 	}
+
+	// Refresh cache after adding new data
+	s.refreshCache(ctx, "work_orders")
+
 	return save, nil
 }
 
@@ -275,7 +306,7 @@ func (s *WorkOrderServiceImpl) NewVehicleModel(tx *gorm.DB, brandId int) ([]tran
 }
 
 func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
-
+	ctx := context.Background()
 	idString := strconv.Itoa(id)
 	cacheKey := generateCacheKeyId(idString)
 
@@ -312,16 +343,25 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 		fmt.Println("Error caching data:", err)
 	}
 
+	// Refresh cache after adding new data
+	s.refreshCache(ctx, idString)
+
 	return results, nil
 }
 
-func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
+	ctx := context.Background()
+
 	// Start a new transaction
 	defer helper.CommitOrRollback(tx)
 	save, err := s.structWorkOrderRepo.Save(tx, request, workOrderId)
 	if err != nil {
 		return false, err
 	}
+
+	// Refresh cache after adding new data
+	s.refreshCache(ctx, workOrderId)
+
 	return save, nil
 }
 
