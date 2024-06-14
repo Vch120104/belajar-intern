@@ -9,7 +9,7 @@ import (
 
 type ItemService interface {
 	GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
+	GetAllItemLookup(FilterCondition []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
 	GetItemById(Id int) (map[string]any, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemCode(string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)

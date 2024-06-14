@@ -11,7 +11,7 @@ import (
 
 type ItemRepository interface {
 	GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAllItemLookup(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
+	GetAllItemLookup(tx *gorm.DB, FilterCondition []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
 	GetItemById(tx *gorm.DB, Id int) (map[string]any, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemCode(*gorm.DB, string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
