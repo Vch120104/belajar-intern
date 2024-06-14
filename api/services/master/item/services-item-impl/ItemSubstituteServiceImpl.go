@@ -8,6 +8,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -27,10 +28,10 @@ func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubs
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages)
+	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
 	if err != nil {
 		return results, err
 	}
@@ -90,11 +91,11 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) ChangeStatusItemOperation(id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	result, err := s.itemSubstituteRepo.ChangeStatusItemOperation(tx, id)
+	result, err := s.itemSubstituteRepo.ChangeStatusItemSubstitute(tx, id)
 
 	if err != nil {
 		return result, err

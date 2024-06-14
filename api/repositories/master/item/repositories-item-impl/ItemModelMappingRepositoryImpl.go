@@ -26,7 +26,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	var variantResponses []masteritempayloads.UnitVariantResponses
 
 	model := masteritementities.ItemDetail{}
-	baseModelQuery := tx.Model(&model)
+	baseModelQuery := tx.Model(&model).Where(masteritementities.ItemDetail{ItemId: itemId})
 
 	rows, err := baseModelQuery.Scan(&responses).Rows()
 
@@ -85,7 +85,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	}
 
 	//// Unit Variant
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=1000" 
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=1000"
 
 	if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{

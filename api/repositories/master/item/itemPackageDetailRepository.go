@@ -11,7 +11,7 @@ import (
 type ItemPackageDetailRepository interface {
 	GetItemPackageDetailByItemPackageId(tx *gorm.DB, itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	CreateItemPackageDetailByItemPackageId(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse)
-	UpdateItemPackageDetailByItemPackageId(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse)
+	UpdateItemPackageDetail(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse)
 	GetItemPackageDetailById(tx *gorm.DB, itemPackageDetailId int) (masteritempayloads.ItemPackageDetailResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackageDetail(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 }
