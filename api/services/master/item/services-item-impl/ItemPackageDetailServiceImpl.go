@@ -74,10 +74,10 @@ func (s *ItemPackageDetailServiceImpl) CreateItemPackageDetailByItemPackageId(re
 	return results, nil
 }
 
-func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetailByItemPackageId(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetail(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetailByItemPackageId(tx, req)
+	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetail(tx, req)
 	if err != nil {
 		return results, err
 	}
