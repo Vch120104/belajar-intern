@@ -15,6 +15,7 @@ type WarehouseLocation struct {
 	WarehouseLocationPickSequence int                             `gorm:"column:warehouse_location_pick_sequence;size:30;not null" json:"warehouse_location_pick_sequence"`
 	WarehouseLocationCapacityInM3 float64                         `gorm:"column:warehouse_location_capacity_in_m3;not null" json:"warehouse_location_capacity_in_m3"`
 	ItemLocation                  masteritementities.ItemLocation `gorm:"foreignkey:warehouse_location_id;references:warehouse_location_id"`
+	WarehouseGroup                *WarehouseGroup
 }
 
 func (*WarehouseLocation) TableName() string {

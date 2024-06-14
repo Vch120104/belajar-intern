@@ -30,6 +30,7 @@ func ItemClassRouter(
 	router.Use(middlewares.MetricsMiddleware)
 	//test
 	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
+	router.Get("/drop-down/by-group-id/{item_group_id}", itemClassController.GetItemClassDropDownbyGroupId)
 	router.Get("/", itemClassController.GetAllItemClass)
 	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
 	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
@@ -50,6 +51,7 @@ func UnitOfMeasurementRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", unitOfMeasurementController.GetAllUnitOfMeasurement)
+	router.Get("/{uom_id}", unitOfMeasurementController.GetUnitOfMeasurementById)
 	router.Get("/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
 	router.Get("/code/{uom_code}", unitOfMeasurementController.GetUnitOfMeasurementByCode)
 	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
@@ -147,7 +149,7 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 	router.Get("/", itemController.GetAllItem)
 	router.Get("/{item_id}", itemController.GetItembyId)
-	router.Get("/lookup", itemController.GetAllItemLookup)
+	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
@@ -210,8 +212,8 @@ func ItemSubstituteRouter(
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
-	router.Patch("/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
-	router.Patch("/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
+	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 
 	return router
 }
@@ -229,6 +231,7 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 
 	return router
 }
@@ -244,6 +247,10 @@ func ItemPackageDetailRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
+	router.Get("/{item_package_detail_id}", ItemPackageDetailController.GetItemPackageDetailById)
+	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
+	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
+	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetail)
 
 	return router
 }
@@ -545,7 +552,10 @@ func WarehouseGroupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseGroupController.GetAllWarehouseGroup)
-	router.Get("/by-id/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
+	router.Get("/by-code/{warehouse_group_code}", warehouseGroupController.GetbyGroupCode)
+	router.Get("/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
+	router.Get("/drop-down/{warehouse_group_id}", warehouseGroupController.GetWarehouseGroupDropdownbyId)
+	router.Get("/drop-down", warehouseGroupController.GetWarehouseGroupDropDown)
 	router.Post("/", warehouseGroupController.SaveWarehouseGroup)
 	router.Patch("/{warehouse_group_id}", warehouseGroupController.ChangeStatusWarehouseGroup)
 

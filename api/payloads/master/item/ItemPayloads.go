@@ -153,6 +153,7 @@ type UomTypeDropdownResponse struct {
 type UomDropdownResponse struct {
 	IsActive       bool   `json:"is_active"`
 	UomId          int    `json:"uom_id"`
+	UomCode        string `json:"uom_code"`
 	UomDescription string `json:"uom_description"`
 }
 

@@ -20,6 +20,7 @@ type UnitOfMeasurementController interface {
 	GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request)
 	GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request)
+	GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request)
 	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 }
@@ -32,6 +33,20 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 	return &UnitOfMeasurementControllerImpl{
 		unitofmeasurementservice: UnitOfMeasurementService,
 	}
+}
+
+// GetUnitOfMeasurementById implements UnitOfMeasurementController.
+func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request) {
+	uomId, _ := strconv.Atoi(chi.URLParam(request, "uom_id"))
+
+	response, err := r.unitofmeasurementservice.GetUnitOfMeasurementById(int(uomId))
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Unit Of Measurement
