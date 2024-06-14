@@ -959,7 +959,12 @@ func WorkOrderRouter(
 	router.Delete("/normalbooking/{work_order_system_number}", WorkOrderController.VoidBooking)
 	router.Patch("/normalbooking/{work_order_system_number}/close", WorkOrderController.CloseBooking)
 
+	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
+	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
+	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
+	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
 
 	return router
 }

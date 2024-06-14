@@ -1190,3 +1190,112 @@ func (r *WorkOrderRepositoryImpl) CloseBooking(tx *gorm.DB, IdWorkorder int, id 
 
 	return true, nil
 }
+
+func (r *WorkOrderRepositoryImpl) GetAllAffiliated(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var entities []transactionworkshopentities.WorkOrder
+
+	query := tx.Model(&transactionworkshopentities.WorkOrder{})
+	if len(filterCondition) > 0 {
+		query = query.Where(filterCondition)
+	}
+	err := query.Find(&entities).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
+	}
+
+	var workOrderAffiliateResponses []map[string]interface{}
+
+	for _, entity := range entities {
+		workOrderAffiliateData := make(map[string]interface{})
+
+		workOrderAffiliateData["work_order_system_number"] = entity.WorkOrderSystemNumber
+
+		workOrderAffiliateResponses = append(workOrderAffiliateResponses, workOrderAffiliateData)
+	}
+
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(workOrderAffiliateResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int, id int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND affiliate_id = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
+	}
+
+	payload := transactionworkshoppayloads.WorkOrderAffiliatedRequest{
+		WorkOrderSystemNumber: entity.WorkOrderSystemNumber,
+	}
+
+	return payload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) NewAffiliated(tx *gorm.DB, IdWorkorder int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrder{
+
+		WorkOrderSystemNumber: request.WorkOrderSystemNumber,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the work order affiliate"}
+	}
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) SaveAffiliated(tx *gorm.DB, IdWorkorder int, id int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND affiliate_id = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
+	}
+
+	entity.WorkOrderSystemNumber = request.WorkOrderSystemNumber
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order affiliate"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) VoidAffiliated(tx *gorm.DB, IdWorkorder int, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND affiliate_id = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete the work order affiliate"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) CloseAffiliated(tx *gorm.DB, IdWorkorder int, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrder
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ? AND affiliate_id = ?", IdWorkorder, id).
+		First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to close the work order affiliate"}
+	}
+
+	return true, nil
+}

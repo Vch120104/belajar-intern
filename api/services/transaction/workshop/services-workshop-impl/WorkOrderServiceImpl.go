@@ -872,3 +872,127 @@ func (s *WorkOrderServiceImpl) CloseBooking(tx *gorm.DB, workOrderId int, id int
 	}
 	return close, nil
 }
+
+func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	ctx := context.Background()
+	cacheKey := generateCacheKey("all_affiliate", filterCondition, pages)
+
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == redis.Nil {
+
+		fmt.Println("Cache miss, querying database...")
+
+		tx := s.DB.Begin()
+		defer helper.CommitOrRollback(tx)
+
+		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllAffiliated(tx, filterCondition, pages)
+		if repoErr != nil {
+			return results, totalPages, totalRows, repoErr
+		}
+
+		cacheData, marshalErr := json.Marshal(results)
+		if marshalErr == nil {
+			s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
+		} else {
+			fmt.Println("Failed to marshal results for caching:", marshalErr)
+		}
+
+		return results, totalPages, totalRows, nil
+	}
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	fmt.Println("Cache hit, returning cached data...")
+	var mapResponses []map[string]interface{}
+	if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse) {
+	ctx := context.Background()
+	idString := strconv.Itoa(id)
+	cacheKey := generateCacheKeyId("affiliate", idString)
+
+	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
+	if err == nil {
+
+		var result transactionworkshoppayloads.WorkOrderAffiliatedRequest
+		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
+			return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{Message: "Error unmarshalling cached data"}
+		}
+		return result, nil
+	}
+
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	result, repoErr := s.structWorkOrderRepo.GetAffiliatedById(tx, workOrderId, id)
+	if repoErr != nil {
+		return result, repoErr
+	}
+
+	jsonData, err := json.Marshal(result)
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{Message: "Error marshalling data"}
+	}
+
+	if err := s.RedisClient.Set(ctx, cacheKey, jsonData, cacheExpiration).Err(); err != nil {
+		fmt.Println("Error caching data:", err)
+	}
+
+	return result, nil
+}
+
+func (s *WorkOrderServiceImpl) NewAffiliated(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.NewAffiliated(tx, workOrderId, request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) SaveAffiliated(tx *gorm.DB, workOrderId int, id int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse) {
+	ctx := context.Background()
+
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.SaveAffiliated(tx, workOrderId, id, request)
+	if err != nil {
+		return false, err
+	}
+
+	// Refresh cache after adding new data
+	s.refreshCache(ctx, "affiliate")
+
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) VoidAffiliated(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	delete, err := s.structWorkOrderRepo.VoidAffiliated(tx, workOrderId, id)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
+func (s *WorkOrderServiceImpl) CloseAffiliated(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	close, err := s.structWorkOrderRepo.CloseAffiliated(tx, workOrderId, id)
+	if err != nil {
+		return false, err
+	}
+	return close, nil
+}

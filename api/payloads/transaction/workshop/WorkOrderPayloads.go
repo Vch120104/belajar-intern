@@ -533,3 +533,29 @@ type WorkOrderDetailResponse struct {
 	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
 	WorkOrderDocumentNumber string `json:"work_order_document_number"`
 }
+
+type WorkOrderAffiliate struct {
+	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
+	WorkOrderDate           time.Time `json:"work_order_date"`
+	ServiceRequestId        int       `json:"service_request_id"`
+	ServiceRequestNumber    int       `json:"service_request_number"`
+	ServiceRequestDate      time.Time `json:"service_request_date"`
+	ServiceRequestCompany   string    `json:"service_request_company"`
+	BrandId                 int       `json:"brand_id"`
+	ModelId                 int       `json:"model_id"`
+	VehicleId               int       `json:"vehicle_id"`
+}
+
+type WorkOrderAffiliatedRequest struct {
+	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
+	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
+	WorkOrderDate           time.Time `json:"work_order_date"`
+	ServiceRequestId        int       `json:"service_request_id"`
+	ServiceRequestNumber    int       `json:"service_request_number"`
+	ServiceRequestDate      time.Time `json:"service_request_date"`
+	ServiceRequestCompany   string    `json:"service_request_company"`
+	BrandId                 int       `json:"brand_id"`
+	ModelId                 int       `json:"model_id"`
+	VehicleId               int       `json:"vehicle_id"`
+}

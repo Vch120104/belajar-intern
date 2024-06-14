@@ -21,8 +21,6 @@ type WorkOrderControllerImpl struct {
 }
 
 type WorkOrderController interface {
-	NewAffiliated(writer http.ResponseWriter, request *http.Request)
-
 	VehicleLookup(writer http.ResponseWriter, request *http.Request)
 	CampaignLookup(writer http.ResponseWriter, request *http.Request)
 
@@ -65,6 +63,13 @@ type WorkOrderController interface {
 	SaveBooking(writer http.ResponseWriter, request *http.Request)
 	VoidBooking(writer http.ResponseWriter, request *http.Request)
 	CloseBooking(writer http.ResponseWriter, request *http.Request)
+
+	GetAllAffiliated(writer http.ResponseWriter, request *http.Request)
+	GetAffiliatedById(writer http.ResponseWriter, request *http.Request)
+	NewAffiliated(writer http.ResponseWriter, request *http.Request)
+	SaveAffiliated(writer http.ResponseWriter, request *http.Request)
+	VoidAffiliated(writer http.ResponseWriter, request *http.Request)
+	CloseAffiliated(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrderService) WorkOrderController {
@@ -162,19 +167,6 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
 	}
 
-}
-
-// NewAffiliated creates a new affiliated work order
-// @Summary Create New Affiliated Work Order
-// @Description Create a new affiliated work order
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
-// @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/affiliated [post]
-func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, request *http.Request) {
-	// Create new work order
 }
 
 // NewStatus gets the status of new work orders
@@ -1263,4 +1255,179 @@ func (r *WorkOrderControllerImpl) CloseBooking(writer http.ResponseWriter, reque
 	}
 
 	payloads.NewHandleSuccess(writer, close, "Work order closed successfully", http.StatusOK)
+}
+
+// GetAllAffiliated gets all affiliated work orders
+// @Summary Get All Affiliated Work Orders
+// @Description Retrieve all affiliated work orders
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Affiliated
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/affiliated [get]
+func (r *WorkOrderControllerImpl) GetAllAffiliated(writer http.ResponseWriter, request *http.Request) {
+	// Get all affiliated work orders
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	queryParams := map[string]string{}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllAffiliated(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetAffiliatedById gets an affiliated work order by ID
+// @Summary Get Affiliated Work Order By ID
+// @Description Retrieve an affiliated work order by ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Affiliated
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/affiliated/{work_order_system_number}/{affiliated_work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetAffiliatedById(writer http.ResponseWriter, request *http.Request) {
+	// Get affiliated work order by ID
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
+
+	workOrder, err := r.WorkOrderService.GetAffiliatedById(workOrderId, affiliatedWorkOrderId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, workOrder, "Get Data Successfully", http.StatusOK)
+}
+
+// NewAffiliated creates a new affiliated work order
+// @Summary Create New Affiliated Work Order
+// @Description Create a new affiliated work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Affiliated
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/affiliated [post]
+func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	var workOrderRequest transactionworkshoppayloads.WorkOrderAffiliatedRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	db := config.InitDB()
+	result, err := r.WorkOrderService.NewAffiliated(db, workOrderId, workOrderRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Work order added successfully", http.StatusCreated)
+}
+
+// UpdateAffiliated updates an affiliated work order
+// @Summary Update Affiliated Work Order
+// @Description Update an affiliated work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Affiliated
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderAffiliatedRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/affiliated/{work_order_system_number}/{affiliated_work_order_system_number} [put]
+func (r *WorkOrderControllerImpl) SaveAffiliated(writer http.ResponseWriter, request *http.Request) {
+	// Update an affiliated work order
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
+
+	var workOrderRequest transactionworkshoppayloads.WorkOrderAffiliatedRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	db := config.InitDB()
+	result, err := r.WorkOrderService.SaveAffiliated(db, workOrderId, affiliatedWorkOrderId, workOrderRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Work order updated successfully", http.StatusOK)
+}
+
+// Void Affiliated Work Order deletes an affiliated work order
+// @Summary Void Affiliated Work Order
+// @Description Void an affiliated work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Affiliated
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderAffiliatedRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/affiliated/void/{work_order_system_number}/{affiliated_work_order_system_number} [delete]
+func (r *WorkOrderControllerImpl) VoidAffiliated(writer http.ResponseWriter, request *http.Request) {
+	// Void an affiliated work order
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
+
+	db := config.InitDB()
+	result, err := r.WorkOrderService.VoidAffiliated(db, workOrderId, affiliatedWorkOrderId)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Work order voided successfully", http.StatusOK)
+}
+
+// CloseAffiliated closes an affiliated work order
+// @Summary Close Affiliated Work Order
+// @Description Close an affiliated work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Affiliated
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderAffiliatedRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/affiliated/{work_order_system_number}/close/{affiliated_work_order_system_number} [patch]
+func (r *WorkOrderControllerImpl) CloseAffiliated(writer http.ResponseWriter, request *http.Request) {
+	// Close an affiliated work order
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
+
+	db := config.InitDB()
+	result, err := r.WorkOrderService.CloseAffiliated(db, workOrderId, affiliatedWorkOrderId)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Work order closed successfully", http.StatusOK)
 }

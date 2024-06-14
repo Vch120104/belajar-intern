@@ -55,4 +55,11 @@ type WorkOrderRepository interface {
 	SubmitBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	VoidBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	CloseBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
+
+	NewAffiliated(*gorm.DB, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllAffiliated(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAffiliatedById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse)
+	SaveAffiliated(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
+	VoidAffiliated(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
+	CloseAffiliated(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 }

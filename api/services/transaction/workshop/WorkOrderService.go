@@ -62,4 +62,12 @@ type WorkOrderService interface {
 	SubmitBooking(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
 	VoidBooking(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
 	CloseBooking(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
+
+	// affiliate function
+	NewAffiliated(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAffiliatedById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse)
+	SaveAffiliated(tx *gorm.DB, workOrderId int, id int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
+	VoidAffiliated(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
+	CloseAffiliated(tx *gorm.DB, workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
 }
