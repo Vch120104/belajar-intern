@@ -45,9 +45,25 @@ type WorkOrderController interface {
 	CloseOrder(writer http.ResponseWriter, request *http.Request)
 
 	NewStatus(writer http.ResponseWriter, request *http.Request)
+	AddStatus(writer http.ResponseWriter, request *http.Request)
+	UpdateStatus(writer http.ResponseWriter, request *http.Request)
+	DeleteStatus(writer http.ResponseWriter, request *http.Request)
+
 	NewType(writer http.ResponseWriter, request *http.Request)
+	AddType(writer http.ResponseWriter, request *http.Request)
+	UpdateType(writer http.ResponseWriter, request *http.Request)
+	DeleteType(writer http.ResponseWriter, request *http.Request)
+
 	NewBill(writer http.ResponseWriter, request *http.Request)
+	AddBill(writer http.ResponseWriter, request *http.Request)
+	UpdateBill(writer http.ResponseWriter, request *http.Request)
+	DeleteBill(writer http.ResponseWriter, request *http.Request)
+
 	NewDropPoint(writer http.ResponseWriter, request *http.Request)
+	// AddDropPoint(writer http.ResponseWriter, request *http.Request)
+	// UpdateDropPoint(writer http.ResponseWriter, request *http.Request)
+	// DeleteDropPoint(writer http.ResponseWriter, request *http.Request)
+
 	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
 	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
 
@@ -192,19 +208,105 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 		}
 	}
 
-	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
-	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewStatus(db, filters)
 	if err != nil {
-		// Menangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
 	if len(statuses) > 0 {
 		payloads.NewHandleSuccess(writer, statuses, "List of work order statuses", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// AddStatus adds a new status to a work order
+// @Summary Add Work Order Status
+// @Description Add a new status to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param reqBody body transactionworkshoppayloads.WorkOrderStatusRequest true "Work Order Status Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-status [post]
+func (r *WorkOrderControllerImpl) AddStatus(writer http.ResponseWriter, request *http.Request) {
+	// Add status to work order
+	var statusRequest transactionworkshoppayloads.WorkOrderStatusRequest
+	helper.ReadFromRequestBody(request, &statusRequest)
+
+	db := config.InitDB()
+	success, err := r.WorkOrderService.AddStatus(db, statusRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Status added successfully", http.StatusCreated)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// UpdateStatus updates a status of a work order
+// @Summary Update Work Order Status
+// @Description Update a status of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_status_id path string true "Work Order Status ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderStatusRequest true "Work Order Status Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-status/{work_order_status_id} [put]
+func (r *WorkOrderControllerImpl) UpdateStatus(writer http.ResponseWriter, request *http.Request) {
+	// Update status of a work order
+	statusID, _ := strconv.Atoi(chi.URLParam(request, "work_order_status_id"))
+
+	var statusRequest transactionworkshoppayloads.WorkOrderStatusRequest
+	helper.ReadFromRequestBody(request, &statusRequest)
+
+	db := config.InitDB()
+	update, err := r.WorkOrderService.UpdateStatus(db, int(statusID), statusRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if update {
+		payloads.NewHandleSuccess(writer, nil, "Status updated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// DeleteStatus deletes a status from a work order
+// @Summary Delete Work Order Status
+// @Description Delete a status from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_status_id path string true "Work Order Status ID"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-status/{work_order_status_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteStatus(writer http.ResponseWriter, request *http.Request) {
+	// Delete status from work order
+	statusID, _ := strconv.Atoi(chi.URLParam(request, "work_order_status_id"))
+
+	db := config.InitDB()
+	delete, err := r.WorkOrderService.DeleteStatus(db, int(statusID))
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if delete {
+		payloads.NewHandleSuccess(writer, nil, "Status deleted successfully", http.StatusNoContent)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -238,6 +340,94 @@ func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *h
 	}
 }
 
+// AddBill adds a new bill to a work order
+// @Summary Add Work Order Bill
+// @Description Add a new bill to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param reqBody body transactionworkshoppayloads.WorkOrderBillableRequest true "Work Order Bill Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-bill [post]
+func (r *WorkOrderControllerImpl) AddBill(writer http.ResponseWriter, request *http.Request) {
+	// Add bill to work order
+	var billRequest transactionworkshoppayloads.WorkOrderBillableRequest
+	helper.ReadFromRequestBody(request, &billRequest)
+
+	db := config.InitDB()
+	success, err := r.WorkOrderService.AddBill(db, billRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Bill added successfully", http.StatusCreated)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// UpdateBill updates a bill of a work order
+// @Summary Update Work Order Bill
+// @Description Update a bill of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_bill_id path string true "Work Order Bill ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderBillableRequest true "Work Order Bill Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-bill/{work_order_bill_id} [put]
+func (r *WorkOrderControllerImpl) UpdateBill(writer http.ResponseWriter, request *http.Request) {
+	// Update bill of a work order
+	billID, _ := strconv.Atoi(chi.URLParam(request, "work_order_bill_id"))
+
+	var billRequest transactionworkshoppayloads.WorkOrderBillableRequest
+	helper.ReadFromRequestBody(request, &billRequest)
+
+	db := config.InitDB()
+	update, err := r.WorkOrderService.UpdateBill(db, int(billID), billRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+	if update {
+		payloads.NewHandleSuccess(writer, nil, "Bill updated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// DeleteBill deletes a bill from a work order
+// @Summary Delete Work Order Bill
+// @Description Delete a bill from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_bill_id path string true "Work Order Bill ID"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-bill/{work_order_bill_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteBill(writer http.ResponseWriter, request *http.Request) {
+	// Delete bill from work order
+	billID, _ := strconv.Atoi(chi.URLParam(request, "work_order_bill_id"))
+
+	db := config.InitDB()
+	delete, err := r.WorkOrderService.DeleteBill(db, int(billID))
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if delete {
+		payloads.NewHandleSuccess(writer, nil, "Bill deleted successfully", http.StatusNoContent)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
 // NewType gets the types of new work orders
 // @Summary Get Work Order Types
 // @Description Retrieve all work order types
@@ -261,7 +451,6 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 		}
 	}
 
-	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
@@ -279,6 +468,95 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 	}
 }
 
+// AddType adds a new type to a work order
+// @Summary Add Work Order Type
+// @Description Add a new type to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param reqBody body transactionworkshoppayloads.WorkOrderTypeRequest true "Work Order Type Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-type [post]
+func (r *WorkOrderControllerImpl) AddType(writer http.ResponseWriter, request *http.Request) {
+	// Add type to work order
+	var typeRequest transactionworkshoppayloads.WorkOrderTypeRequest
+	helper.ReadFromRequestBody(request, &typeRequest)
+
+	db := config.InitDB()
+	success, err := r.WorkOrderService.AddType(db, typeRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Type added successfully", http.StatusCreated)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// UpdateType updates a type of a work order
+// @Summary Update Work Order Type
+// @Description Update a type of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_type_id path string true "Work Order Type ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderTypeRequest true "Work Order Type Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-type/{work_order_type_id} [put]
+func (r *WorkOrderControllerImpl) UpdateType(writer http.ResponseWriter, request *http.Request) {
+	// Update type of a work order
+	typeID, _ := strconv.Atoi(chi.URLParam(request, "work_order_type_id"))
+
+	var typeRequest transactionworkshoppayloads.WorkOrderTypeRequest
+	helper.ReadFromRequestBody(request, &typeRequest)
+
+	db := config.InitDB()
+	update, err := r.WorkOrderService.UpdateType(db, int(typeID), typeRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if update {
+		payloads.NewHandleSuccess(writer, nil, "Type updated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// DeleteType deletes a type from a work order
+// @Summary Delete Work Order Type
+// @Description Delete a type from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_type_id path string true "Work Order Type ID"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-type/{work_order_type_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteType(writer http.ResponseWriter, request *http.Request) {
+	// Delete type from work order
+	typeID, _ := strconv.Atoi(chi.URLParam(request, "work_order_type_id"))
+
+	db := config.InitDB()
+	delete, err := r.WorkOrderService.DeleteType(db, int(typeID))
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if delete {
+		payloads.NewHandleSuccess(writer, nil, "Type deleted successfully", http.StatusNoContent)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
 // NewDropPoint gets the drop points of new work orders
 // @Summary Get Work Order Drop Points
 // @Description Retrieve all work order drop points
@@ -289,10 +567,8 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-drop-point [get]
 func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
 	db := config.InitDB()
 
-	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewDropPoint(db)
 	if err != nil {
 
@@ -306,6 +582,83 @@ func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, reque
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
 }
+
+// // AddDropPoint adds a new drop point to a work order
+// // @Summary Add Work Order Drop Point
+// // @Description Add a new drop point to a work order
+// // @Accept json
+// // @Produce json
+// // @Tags Transaction : Workshop Work Order
+// // @Param reqBody body transactionworkshoppayloads.WorkOrderDropPointRequest true "Work Order Drop Point Data"
+// // @Success 201 {object} payloads.Response
+// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// // @Router /v1/work-order/dropdown-drop-point [post]
+// func (r *WorkOrderControllerImpl) AddDropPoint(writer http.ResponseWriter, request *http.Request) {
+// 	// Add drop point to work order
+// 	var dropPointRequest transactionworkshoppayloads.WorkOrderDropPointRequest
+// 	helper.ReadFromRequestBody(request, &dropPointRequest)
+
+// 	db := config.InitDB()
+// 	err := r.WorkOrderService.AddDropPoint(db, dropPointRequest)
+// 	if err != nil {
+// 		exceptions.NewAppException(writer, request, err)
+// 		return
+// 	}
+
+// 	payloads.NewHandleSuccess(writer, nil, "Drop point added successfully", http.StatusCreated)
+// }
+
+// // UpdateDropPoint updates a drop point of a work order
+// // @Summary Update Work Order Drop Point
+// // @Description Update a drop point of a work order
+// // @Accept json
+// // @Produce json
+// // @Tags Transaction : Workshop Work Order
+// // @Param work_order_drop_point_id path string true "Work Order Drop Point ID"
+// // @Param reqBody body transactionworkshoppayloads.WorkOrderDropPointRequest true "Work Order Drop Point Data"
+// // @Success 200 {object} payloads.Response
+// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// // @Router /v1/work-order/dropdown-drop-point/{work_order_drop_point_id} [put]
+// func (r *WorkOrderControllerImpl) UpdateDropPoint(writer http.ResponseWriter, request *http.Request) {
+// 	// Update drop point of a work order
+// 	dropPointID, _ := strconv.Atoi(chi.URLParam(request, "work_order_drop_point_id"))
+
+// 	var dropPointRequest transactionworkshoppayloads.WorkOrderDropPointRequest
+// 	helper.ReadFromRequestBody(request, &dropPointRequest)
+
+// 	db := config.InitDB()
+// 	err := r.WorkOrderService.UpdateDropPoint(db, int(dropPointID), dropPointRequest)
+// 	if err != nil {
+// 		exceptions.NewAppException(writer, request, err)
+// 		return
+// 	}
+
+// 	payloads.NewHandleSuccess(writer, nil, "Drop point updated successfully", http.StatusOK)
+// }
+
+// // DeleteDropPoint deletes a drop point from a work order
+// // @Summary Delete Work Order Drop Point
+// // @Description Delete a drop point from a work order
+// // @Accept json
+// // @Produce json
+// // @Tags Transaction : Workshop Work Order
+// // @Param work_order_drop_point_id path string true "Work Order Drop Point ID"
+// // @Success 204 {object} payloads.Response
+// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// // @Router /v1/work-order/dropdown-drop-point/{work_order_drop_point_id} [delete]
+// func (r *WorkOrderControllerImpl) DeleteDropPoint(writer http.ResponseWriter, request *http.Request) {
+// 	// Delete drop point from work order
+// 	dropPointID, _ := strconv.Atoi(chi.URLParam(request, "work_order_drop_point_id"))
+
+// 	db := config.InitDB()
+// 	err := r.WorkOrderService.DeleteDropPoint(db, int(dropPointID))
+// 	if err != nil {
+// 		exceptions.NewAppException(writer, request, err)
+// 		return
+// 	}
+
+// 	payloads.NewHandleSuccess(writer, nil, "Drop point deleted successfully", http.StatusNoContent)
+// }
 
 // NewVehicleBrand gets the vehicle brands of new work orders
 // @Summary Get Work Order Vehicle Brands

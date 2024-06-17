@@ -944,9 +944,25 @@ func WorkOrderRouter(
 
 	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
+	router.Post("/dropdown-status", WorkOrderController.AddStatus)
+	router.Put("/dropdown-status/{status_id}", WorkOrderController.UpdateStatus)
+	router.Delete("/dropdown-status/{status_id}", WorkOrderController.DeleteStatus)
+
 	router.Get("/dropdown-type", WorkOrderController.NewType)
+	router.Post("/dropdown-type", WorkOrderController.AddType)
+	router.Put("/dropdown-type/{type_id}", WorkOrderController.UpdateType)
+	router.Delete("/dropdown-type/{type_id}", WorkOrderController.DeleteType)
+
 	router.Get("/dropdown-bill", WorkOrderController.NewBill)
+	router.Post("/dropdown-bill", WorkOrderController.AddBill)
+	router.Put("/dropdown-bill/{bill_id}", WorkOrderController.UpdateBill)
+	router.Delete("/dropdown-bill/{bill_id}", WorkOrderController.DeleteBill)
+
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
+	// router.Post("/dropdown-drop-point", WorkOrderController.AddDropPoint)
+	// router.Put("/dropdown-drop-point/{drop_point_id}", WorkOrderController.UpdateDropPoint)
+	// router.Delete("/dropdown-drop-point/{drop_point_id}", WorkOrderController.DeleteDropPoint)
+
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)

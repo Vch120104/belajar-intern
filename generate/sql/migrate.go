@@ -129,6 +129,7 @@ func Migrate() {
 		&transactionworkshopentities.WorkOrderMaster{},
 		&transactionworkshopentities.WorkOrderMasterStatus{},
 		&transactionworkshopentities.WorkOrderMasterType{},
+		&transactionworkshopentities.WorkOrderMasterBillAbleto{},
 		&transactionworkshopentities.WorkOrder{},
 		&transactionworkshopentities.WorkOrderRequestDescription{},
 		&transactionworkshopentities.WorkOrderDetail{},

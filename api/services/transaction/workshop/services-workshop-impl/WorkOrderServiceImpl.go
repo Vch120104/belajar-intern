@@ -265,12 +265,66 @@ func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondi
 	return statuses, nil
 }
 
+func (s *WorkOrderServiceImpl) AddStatus(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.AddStatus(tx, request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateStatus(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	update, err := s.structWorkOrderRepo.UpdateStatus(tx, id, request)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+}
+
+func (s *WorkOrderServiceImpl) DeleteStatus(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	delete, err := s.structWorkOrderRepo.DeleteStatus(tx, id)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
 func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
 	types, err := s.structWorkOrderRepo.NewType(tx, filter)
 	if err != nil {
 		return nil, err
 	}
 	return types, nil
+}
+
+func (s *WorkOrderServiceImpl) AddType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.AddType(tx, request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	update, err := s.structWorkOrderRepo.UpdateType(tx, id, request)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+}
+
+func (s *WorkOrderServiceImpl) DeleteType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	delete, err := s.structWorkOrderRepo.DeleteType(tx, id)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
@@ -281,6 +335,34 @@ func (s *WorkOrderServiceImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloa
 	return bills, nil
 }
 
+func (s *WorkOrderServiceImpl) AddBill(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	save, err := s.structWorkOrderRepo.AddBill(tx, request)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateBill(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	update, err := s.structWorkOrderRepo.UpdateBill(tx, id, request)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+
+}
+
+func (s *WorkOrderServiceImpl) DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	defer helper.CommitOrRollback(tx)
+	delete, err := s.structWorkOrderRepo.DeleteBill(tx, id)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
 func (s *WorkOrderServiceImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
 	dropPoints, err := s.structWorkOrderRepo.NewDropPoint(tx)
 	if err != nil {
@@ -288,6 +370,33 @@ func (s *WorkOrderServiceImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshopp
 	}
 	return dropPoints, nil
 }
+
+// func (s *WorkOrderServiceImpl) AddDropPoint(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderDropPointRequest) (bool, *exceptions.BaseErrorResponse) {
+// 	defer helper.CommitOrRollback(tx)
+// 	save, err := s.structWorkOrderRepo.AddDropPoint(tx, request)
+// 	if err != nil {
+// 		return false, err
+// 	}
+// 	return save, nil
+// }
+
+// func (s *WorkOrderServiceImpl) UpdateDropPoint(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderDropPointRequest) (bool, *exceptions.BaseErrorResponse) {
+// 	defer helper.CommitOrRollback(tx)
+// 	update, err := s.structWorkOrderRepo.UpdateDropPoint(tx, id, request)
+// 	if err != nil {
+// 		return false, err
+// 	}
+// 	return update, nil
+// }
+
+// func (s *WorkOrderServiceImpl) DeleteDropPoint(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+// 	defer helper.CommitOrRollback(tx)
+// 	delete, err := s.structWorkOrderRepo.DeleteDropPoint(tx, id)
+// 	if err != nil {
+// 		return false, err
+// 	}
+// 	return delete, nil
+// }
 
 func (s *WorkOrderServiceImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
 	brands, err := s.structWorkOrderRepo.NewVehicleBrand(tx)

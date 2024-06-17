@@ -559,3 +559,28 @@ type WorkOrderAffiliatedRequest struct {
 	ModelId                 int       `json:"model_id"`
 	VehicleId               int       `json:"vehicle_id"`
 }
+
+type WorkOrderStatusRequest struct {
+	WorkOrderStatusId   int    `json:"work_order_status_id"`
+	WorkOrderStatusCode string `json:"work_order_status_code"`
+	WorkOrderStatusName string `json:"work_order_status_description"`
+}
+
+type WorkOrderTypeRequest struct {
+	WorkOrderTypeId   int    `json:"work_order_type_id"`
+	WorkOrderTypeCode string `json:"work_order_type_code"`
+	WorkOrderTypeName string `json:"work_order_type_description"`
+}
+
+type WorkOrderBillableRequest struct {
+	BillableToName string `json:"billable_to_name"`
+	BillableToID   int    `json:"billable_to_id"`
+	IsActive       bool   `json:"is_active"`
+	BillableToCode string `json:"billable_to_code"`
+}
+
+type WorkOrderDropPointRequest struct {
+	CompanyId   int    `json:"company_id"`
+	CompanyCode string `json:"company_code"`
+	CompanyName string `json:"company_name"`
+}

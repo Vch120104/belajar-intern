@@ -399,6 +399,53 @@ func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCo
 	return statuses, nil
 }
 
+func (r *WorkOrderRepositoryImpl) AddStatus(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterStatus{
+		WorkOrderStatusCode:        request.WorkOrderStatusCode,
+		WorkOrderStatusDescription: request.WorkOrderStatusName,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateStatus(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterStatus
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterStatus{}).Where("work_order_status_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order status from the database"}
+	}
+
+	entity.WorkOrderStatusCode = request.WorkOrderStatusCode
+	entity.WorkOrderStatusDescription = request.WorkOrderStatusName
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update work order status"}
+	}
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteStatus(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterStatus
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterStatus{}).Where("work_order_status_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order status from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete work order status"}
+	}
+	return true, nil
+}
+
 func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterType
 
@@ -408,6 +455,56 @@ func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB, filter []utils.FilterCond
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
 	}
 	return types, nil
+}
+
+func (r *WorkOrderRepositoryImpl) AddType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterType{
+		WorkOrderTypeCode:        request.WorkOrderTypeCode,
+		WorkOrderTypeDescription: request.WorkOrderTypeName,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterType{}).Where("work_order_type_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
+
+	entity.WorkOrderTypeCode = request.WorkOrderTypeCode
+	entity.WorkOrderTypeDescription = request.WorkOrderTypeName
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update work order type"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterType{}).Where("work_order_type_id = ?", id).First(&entity).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete work order type"}
+	}
+
+	return true, nil
 }
 
 func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
@@ -426,6 +523,56 @@ func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppay
 	return getBillables, nil
 }
 
+func (r *WorkOrderRepositoryImpl) AddBill(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterBillAbleto{
+		WorkOrderBillabletoName: request.BillableToName,
+		WorkOrderBillabletoCode: request.BillableToCode,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateBill(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterBillAbleto
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterBillAbleto{}).Where("billable_to_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	entity.WorkOrderBillabletoName = request.BillableToName
+	entity.WorkOrderBillabletoCode = request.BillableToCode
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterBillAbleto
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterBillAbleto{}).Where("billable_to_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete billable data"}
+	}
+
+	return true, nil
+}
+
 func (r *WorkOrderRepositoryImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
 	DropPointURL := config.EnvConfigs.GeneralServiceUrl + "company-selection-dropdown"
 	fmt.Println("Fetching Drop Point data from:", DropPointURL)
@@ -441,6 +588,56 @@ func (r *WorkOrderRepositoryImpl) NewDropPoint(tx *gorm.DB) ([]transactionworksh
 
 	return getDropPoints, nil
 }
+
+// func (r *WorkOrderRepositoryImpl) AddDropPoint(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderDropPointRequest) (bool, *exceptions.BaseErrorResponse) {
+// 	entities := transactionworkshopentities.WorkOrderDropPoint{
+// 		CompanySelectionName:        request.CompanySelectionName,
+// 		CompanySelectionDescription: request.CompanySelectionDescription,
+// 	}
+
+// 	err := tx.Create(&entities).Error
+// 	if err != nil {
+// 		return false, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusInternalServerError,
+// 			Err:        err,
+// 		}
+// 	}
+
+// 	return true, nil
+// }
+
+// func (r *WorkOrderRepositoryImpl) UpdateDropPoint(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderDropPointRequest) (bool, *exceptions.BaseErrorResponse) {
+// 	var entity transactionworkshopentities.WorkOrderDropPoint
+// 	err := tx.Model(&transactionworkshopentities.WorkOrderDropPoint{}).Where("company_selection_id = ?", id).First(&entity).Error
+// 	if err != nil {
+// 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve drop point data from the database"}
+// 	}
+
+// 	entity.CompanySelectionName = request.CompanySelectionName
+// 	entity.CompanySelectionDescription = request.CompanySelectionDescription
+
+// 	err = tx.Save(&entity).Error
+// 	if err != nil {
+// 		return false, &exceptions.BaseErrorResponse{Message: "Failed to update drop point data"}
+// 	}
+
+// 	return true, nil
+// }
+
+// func (r *WorkOrderRepositoryImpl) DeleteDropPoint(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+// 	var entity transactionworkshopentities.WorkOrderDropPoint
+// 	err := tx.Model(&transactionworkshopentities.WorkOrderDropPoint{}).Where("company_selection_id = ?", id).First(&entity).Error
+// 	if err != nil {
+// 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve drop point data from the database"}
+// 	}
+
+// 	err = tx.Delete(&entity).Error
+// 	if err != nil {
+// 		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete drop point data"}
+// 	}
+
+// 	return true, nil
+// }
 
 func (r *WorkOrderRepositoryImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
 	VehicleBrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand-dropdown"
