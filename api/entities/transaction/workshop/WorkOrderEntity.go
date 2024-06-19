@@ -7,7 +7,7 @@ const TableNameWorkOrder = "trx_work_order"
 type WorkOrder struct {
 	WorkOrderSystemNumber              int               `gorm:"column:work_order_system_number;size:30;primaryKey" json:"work_order_system_number"`
 	CompanyId                          int               `gorm:"column:company_id;size:30;" json:"company_id"`
-	WorkOrderDocumentNumber            string            `gorm:"column:work_order_document_number;size:50;" json:"work_order_document_number"`
+	WorkOrderDocumentNumber            string            `gorm:"column:work_order_document_number;unique;size:50;" json:"work_order_document_number"`
 	WorkOrderStatusId                  int               `gorm:"column:work_order_status_id;size:30;" json:"work_order_status_id"`
 	WorkOrderDate                      *time.Time        `gorm:"column:work_order_date;default:null" json:"work_order_date"`
 	WorkOrderCloseDate                 *time.Time        `gorm:"column:work_order_close_date;default:null" json:"work_order_close_date"`

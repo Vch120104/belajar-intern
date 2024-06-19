@@ -48,21 +48,21 @@ type WorkOrderRepository interface {
 	GetAllRequest(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetRequestById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse)
 	UpdateRequest(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse
-	AddRequest(*gorm.DB, int, transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse
-	DeleteRequest(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	AddRequest(*gorm.DB, int, transactionworkshoppayloads.WorkOrderServiceRequest) (bool, *exceptions.BaseErrorResponse)
+	DeleteRequest(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 
 	GetAllVehicleService(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetVehicleServiceById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse)
 	UpdateVehicleService(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
-	AddVehicleService(*gorm.DB, int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
-	DeleteVehicleService(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	AddVehicleService(*gorm.DB, int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (bool, *exceptions.BaseErrorResponse)
+	DeleteVehicleService(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse)
 
 	GetAllDetailWorkOrder(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetDetailByIdWorkOrder(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse)
-	UpdateDetailWorkOrder(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
-	AddDetailWorkOrder(*gorm.DB, int, transactionworkshoppayloads.WorkOrderDetailRequest) *exceptions.BaseErrorResponse
-	DeleteDetailWorkOrder(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	UpdateDetailWorkOrder(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	AddDetailWorkOrder(*gorm.DB, int, transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	DeleteDetailWorkOrder(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 
 	NewBooking(*gorm.DB, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAllBooking(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)

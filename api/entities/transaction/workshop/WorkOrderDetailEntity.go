@@ -15,7 +15,7 @@ type WorkOrderDetail struct {
 	WorkorderStatusId                   int       `gorm:"column:workorder_status_id;size:30;" json:"workorder_status_id"`
 	LineTypeId                          int       `gorm:"column:line_type_id;size:30;" json:"line_type_id"`
 	ServiceStatusId                     int       `gorm:"column:service_status_id;size:30;" json:"service_status_id"`
-	WorkOrderTransactionTypeId          int       `gorm:"column:work_order_transaction_type_id;size:30;" json:"work_order_transaction_type_id"`
+	TransactionTypeId                   int       `gorm:"column:transaction_type_id;size:30;" json:"transaction_type_id"`
 	JobTypeId                           int       `gorm:"column:job_type_id;size:30;" json:"job_type_id"`
 	ApprovalId                          int       `gorm:"column:approval_id;size:30;" json:"approval_id"`
 	Description                         string    `gorm:"column:description;size:50;" json:"description"`
@@ -31,7 +31,7 @@ type WorkOrderDetail struct {
 	TaxId                               int       `gorm:"column:tax_id;size:30;" json:"tax_id"`
 	PphTaxRate                          float32   `gorm:"column:pph_tax_rate" json:"pph_tax_rate"`
 	LastApprovalBy                      string    `gorm:"column:last_approval_by;size:50;" json:"last_approval_by"`
-	LastApprovalDate                    time.Time `gorm:"column:last_approval_date;type:datetime" json:"last_approval_date"`
+	LastApprovalDate                    time.Time `gorm:"column:last_approval_date;" json:"last_approval_date"`
 	QualityControlStatus                string    `gorm:"column:quality_control_status;size:50;" json:"quality_control_status"`
 	QualityControlExtraFrt              float32   `gorm:"column:quality_control_extra_frt" json:"quality_control_extra_frt"`
 	QualityControlExtraReason           string    `gorm:"column:quality_control_extra_reason;size:50;" json:"quality_control_extra_reason"`
@@ -40,7 +40,7 @@ type WorkOrderDetail struct {
 	SubstrituteItemCode                 string    `gorm:"column:substritute_item_code;size:50;" json:"substritute_item_code"`
 	WarehouseId                         int       `gorm:"column:warehouse_id;size:30;" json:"warehouse_id"`
 	AtpmClaimNumber                     string    `gorm:"column:atpm_claim_number;size:50;" json:"atpm_claim_number"`
-	AtpmClaimDate                       time.Time `gorm:"column:atpm_claim_date;type:datetime" json:"atpm_claim_date"`
+	AtpmClaimDate                       time.Time `gorm:"column:atpm_claim_date;" json:"atpm_claim_date"`
 	WarrantyClaimTypeId                 int       `gorm:"column:warranty_claim_type_id;size:30;" json:"warranty_claim_type_id"`
 	PurchaseRequestSystemNumber         int       `gorm:"column:purchase_request_system_number;size:30;" json:"purchase_request_system_number"`
 	PurchaseRequestDetailId             int       `gorm:"column:purchase_request_detail_id;size:30;" json:"purchase_request_detail_id"`
@@ -61,7 +61,7 @@ type WorkOrderDetail struct {
 	PriceListId                         int       `gorm:"column:price_list_id;size:30;" json:"price_list_id"`
 	ServiceCategoryId                   int       `gorm:"column:service_category_id;size:30;" json:"service_category_id"`
 	ClaimSystemNumber                   int       `gorm:"column:claim_system_number;size:30;" json:"claim_system_number"`
-	QualityControlPassDatetime          time.Time `gorm:"column:quality_control_pass_datetime;type:datetime" json:"quality_control_pass_datetime"`
+	QualityControlPassDatetime          time.Time `gorm:"column:quality_control_pass_datetime;" json:"quality_control_pass_datetime"`
 	ExtendedWarranty                    bool      `gorm:"column:extended_warranty" json:"extended_warranty"`
 	RemarkExtendedWarranty              string    `gorm:"column:remark_extended_warranty;size:50;" json:"remark_extended_warranty"`
 }

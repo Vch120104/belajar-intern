@@ -939,7 +939,7 @@ func WorkOrderRouter(
 	router.Delete("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
 
 	//add trx detail
-	router.Get("/normal/{work_order_system_number}/detail", WorkOrderController.GetAllDetailWorkOrder)
+	router.Get("/normal/detail", WorkOrderController.GetAllDetailWorkOrder)
 	router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailByIdWorkOrder)
 	router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetailWorkOrder)
 	router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetailWorkOrder)

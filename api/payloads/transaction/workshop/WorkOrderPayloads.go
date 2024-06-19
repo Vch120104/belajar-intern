@@ -121,6 +121,7 @@ type WorkOrderRequest struct {
 
 type WorkOrderNormalRequest struct {
 	// Basic information
+	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
 	BrandId                 int       `json:"brand_id"`
 	ModelId                 int       `json:"model_id"`
 	VariantId               int       `json:"variant_id"`
@@ -516,16 +517,17 @@ type WorkOrderAddRequest struct {
 }
 
 type WorkOrderDetailRequest struct {
-	WorkOrderDetailId          int     `json:"work_order_detail_id"`
-	WorkOrderSystemNumber      int     `json:"work_order_system_number"`
-	WorkOrderDocumentNumber    string  `json:"work_order_document_number"`
-	LineTypeId                 int     `json:"line_type_id"`
-	WorkOrderTransactionTypeId int     `json:"work_order_transaction_type_id"`
-	JobTypeId                  int     `json:"job_type_id"`
-	Description                string  `json:"description"`
-	FrtQuantity                float32 `json:"frt_quantity"`
-	SupplyQuantity             float32 `json:"supply_quantity"`
-	PriceListId                int     `json:"price_list_id"`
+	WorkOrderDetailId     int     `json:"work_order_detail_id"`
+	WorkOrderSystemNumber int     `json:"work_order_system_number"`
+	LineTypeId            int     `json:"line_type_id"`
+	TransactionTypeId     int     `json:"work_order_transaction_type_id"`
+	JobTypeId             int     `json:"job_type_id"`
+	FrtQuantity           float32 `json:"frt_quantity"`
+	SupplyQuantity        float32 `json:"supply_quantity"`
+	PriceListId           int     `json:"price_list_id"`
+	WarehouseId           int     `json:"warehouse_id"`
+	ItemId                int     `json:"item_id"`
+	ProposedPrice         float32 `json:"operation_item_discount_request_amount"`
 }
 
 type WorkOrderDetailResponse struct {

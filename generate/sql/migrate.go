@@ -83,6 +83,7 @@ func Migrate() {
 		&masteritementities.PurchasePriceDetail{},
 		&masteritementities.UomType{},
 		&masteritementities.Uom{},
+		&masteritementities.UomItem{},
 		&masteritementities.MarkupRate{},
 		&masteritementities.PrincipleBrandParent{},
 		&masteritementities.MarkupMaster{},
