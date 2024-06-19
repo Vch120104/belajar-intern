@@ -13,6 +13,8 @@ type ItemResponse struct {
 	ItemLevel_3                  string  `json:"item_level_3"`
 	ItemLevel_4                  string  `json:"item_level_4"`
 	SupplierId                   int     `json:"supplier_id"`
+	SupplierName                 *string `json:"supplier_name"`
+	SupplierCode                 *string `json:"supplier_code"`
 	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  int     `json:"unit_of_measurement_purchase_id"`
@@ -253,14 +255,13 @@ type ItemDetailUpdateRequest struct {
 	ReturnEvery  float64 `json:"return_every"`
 }
 
-type PrincipleBrandDropdownResponse struct{
-	IsActive bool `json:"is_active"`
-	PrincipleBrandId int `json:"principle_brand_id"`
+type PrincipleBrandDropdownResponse struct {
+	IsActive           bool   `json:"is_active"`
+	PrincipleBrandId   int    `json:"principle_brand_id"`
 	PrincipleBrandCode string `json:"principle_brand_code"`
 }
 
-type PrincipleBrandDropdownDescription struct{
-	PrincipleBrandId int `json:"principle_brand_id"`
+type PrincipleBrandDropdownDescription struct {
+	PrincipleBrandId          int    `json:"principle_brand_id"`
 	PrincipleBrandDescription string `json:"principle_brand_description"`
 }
-

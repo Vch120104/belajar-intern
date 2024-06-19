@@ -9,7 +9,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	_ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -599,6 +599,7 @@ func WarehouseMasterRouter(
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
 	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
 	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
+	router.Get("/drop-down/by-warehouse-group-id/{warehouse_group_id}", warehouseMasterController.DropdownbyGroupId)
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 

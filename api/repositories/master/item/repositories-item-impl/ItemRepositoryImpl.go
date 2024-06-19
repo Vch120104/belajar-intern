@@ -95,7 +95,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, filter []utils.Filter
 	panic("unimplemented")
 }
 
-func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (map[string]any, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
@@ -107,7 +107,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (map[string]any, *
 		Rows()
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -118,19 +118,22 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (map[string]any, *
 	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "/supplier-master/" + strconv.Itoa(response.SupplierId)
 
 	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
+	response.SupplierCode = &supplierResponse.SupplierCode
+	response.SupplierName = &supplierResponse.SupplierName
+
+	// joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
 
 	// IMPLEMENT PERSON IN CHARGE AFTER INTEGRATION TOKEN AUTHORIZE TO USER SERVICE!!
 
 	defer rows.Close()
 
-	return joinSupplierData[0], nil
+	return response, nil
 }
 
 func (r *ItemRepositoryImpl) GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
