@@ -528,6 +528,7 @@ type WorkOrderDetailRequest struct {
 	WarehouseId           int     `json:"warehouse_id"`
 	ItemId                int     `json:"item_id"`
 	ProposedPrice         float32 `json:"operation_item_discount_request_amount"`
+	OperationItemPrice    float32 `json:"operation_item_price"`
 }
 
 type WorkOrderDetailResponse struct {

@@ -1353,7 +1353,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 		SupplyQuantity:                     request.SupplyQuantity,
 		PriceListId:                        request.PriceListId,
 		OperationItemDiscountRequestAmount: request.ProposedPrice,
-		OperationItemPrice:                 1000,
+		OperationItemPrice:                 request.OperationItemPrice,
 	}
 
 	err := tx.Create(&entities).Error
@@ -1373,7 +1373,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, id int, IdWorkorder int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder int, id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	var entity transactionworkshopentities.WorkOrderDetail
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -1392,7 +1392,7 @@ func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, id int, IdW
 	entity.SupplyQuantity = request.SupplyQuantity
 	entity.PriceListId = request.PriceListId
 	entity.OperationItemDiscountRequestAmount = request.ProposedPrice
-	entity.OperationItemPrice = 1000
+	entity.OperationItemPrice = request.OperationItemPrice
 
 	err = tx.Save(&entity).Error
 	if err != nil {
