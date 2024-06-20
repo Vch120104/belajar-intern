@@ -20,6 +20,7 @@ import (
 type AgreementController interface {
 	GetAgreementById(writer http.ResponseWriter, request *http.Request)
 	SaveAgreement(writer http.ResponseWriter, request *http.Request)
+	UpdateAgreement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request)
 	GetAllAgreement(writer http.ResponseWriter, request *http.Request)
 
@@ -102,6 +103,32 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 		message = "Update Data Successfully!"
 		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
+}
+
+// @Summary Update Agreement
+// @Description Update an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param reqBody body masterpayloads.AgreementRequest true "Agreement Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id} [put]
+func (r *AgreementControllerImpl) UpdateAgreement(writer http.ResponseWriter, request *http.Request) {
+
+	AgreementId, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	var formRequest masterpayloads.AgreementRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	response, err := r.AgreementService.UpdateAgreement(int(AgreementId), formRequest)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Agreement

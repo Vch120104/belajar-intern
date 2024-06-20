@@ -13,6 +13,7 @@ import (
 type AgreementRepository interface {
 	GetAgreementById(*gorm.DB, int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
 	SaveAgreement(*gorm.DB, masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateAgreement(*gorm.DB, int, masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusAgreement(*gorm.DB, int) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	AddDiscountGroup(*gorm.DB, int, masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse

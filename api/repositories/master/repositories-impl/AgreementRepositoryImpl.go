@@ -83,6 +83,34 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 	return true, nil
 }
 
+func (r *AgreementRepositoryImpl) UpdateAgreement(tx *gorm.DB, Id int, req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterentities.Agreement
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ?", Id).
+		Updates(map[string]interface{}{
+			"agreement_code":      req.AgreementCode,
+			"brand_id":            req.BrandId,
+			"dealer_id":           req.DealerId,
+			"top_id":              req.TopId,
+			"agreement_date_from": req.AgreementDateFrom,
+			"agreement_date_to":   req.AgreementDateTo,
+			"agreement_remark":    req.AgreementRemark,
+			"profit_center_id":    req.ProfitCenterId,
+			"is_active":           req.IsActive,
+			"customer_id":         req.CustomerId,
+		})
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
 func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	var entities masterentities.Agreement
 

@@ -58,6 +58,23 @@ func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest
 	return results, nil
 }
 
+func (s *AgreementServiceImpl) UpdateAgreement(id int, req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	_, err := s.AgreementRepo.GetAgreementById(tx, id)
+	if err != nil {
+		return false, err
+	}
+
+	results, err := s.AgreementRepo.UpdateAgreement(tx, id, req)
+	if err != nil {
+		return false, err
+	}
+
+	return results, nil
+}
+
 func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

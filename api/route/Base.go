@@ -654,6 +654,7 @@ func AgreementRouter(
 	router.Get("/", AgreementController.GetAllAgreement)
 	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
 	router.Post("/", AgreementController.SaveAgreement)
+	router.Put("/{agreement_id}", AgreementController.UpdateAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
 	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
