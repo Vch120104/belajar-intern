@@ -26,7 +26,10 @@ type WarehouseGroupController interface {
 	GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request)
 	GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request)
 	SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseGroupDropdownbyId(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseGroupDropDown(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	GetbyGroupCode(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService) WarehouseGroupController {
@@ -35,7 +38,42 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 	}
 }
 
-// @Summary Get All Warehouse Group
+// GetbyGroupCode implements WarehouseGroupController.
+func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter, request *http.Request) {
+	groupCode := chi.URLParam(request, "warehouse_group_code")
+
+	get, err := r.WarehouseGroupService.GetbyGroupCode(groupCode)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// GetWarehouseGroupDropdownbyId implements WarehouseGroupController.
+func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http.ResponseWriter, request *http.Request) {
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+
+	get, err := r.WarehouseGroupService.GetWarehouseGroupDropdownbyId(warehouseGroupId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// GetWarehouseGroupDropDown implements WarehouseGroupController.
+func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropDown(writer http.ResponseWriter, request *http.Request) {
+
+	get, err := r.WarehouseGroupService.GetWarehouseGroupDropdown()
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get All Warehouse GroupF
 // @Description Get All Warehouse Group
 // @Accept json
 // @Produce json
@@ -91,6 +129,7 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 	get, err := r.WarehouseGroupService.GetByIdWarehouseGroup(int(warehouseGroupId))
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 

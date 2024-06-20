@@ -108,6 +108,7 @@ type GetLookupWarehouseMasterResponse struct {
 	IsActive           bool   `json:"is_active"`
 	WarehouseId        int    `json:"warehouse_id"`
 	WarehouseName      string `json:"warehouse_name"`
+	WarehouseCode      string `json:"warehouse_code"`
 	WarehouseGroupName string `json:"warehouse_group_name"`
 }
 

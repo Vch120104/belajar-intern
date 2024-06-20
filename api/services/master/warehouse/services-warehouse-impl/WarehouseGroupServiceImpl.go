@@ -28,6 +28,45 @@ func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.Warehous
 	}
 }
 
+// GetbyGroupCode implements masterwarehouseservice.WarehouseGroupService.
+func (s *WarehouseGroupServiceImpl) GetbyGroupCode(groupCode string) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseGroupRepo.GetbyGroupCode(tx, groupCode)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
+}
+
+// GetWarehouseGroupDropdownbyId implements masterwarehouseservice.WarehouseGroupService.
+func (s *WarehouseGroupServiceImpl) GetWarehouseGroupDropdownbyId(Id int) (masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseGroupRepo.GetWarehouseGroupDropdownbyId(tx, Id)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
+}
+
+// GetWarehouseGroupDropdown implements masterwarehouseservice.WarehouseGroupService.
+func (s *WarehouseGroupServiceImpl) GetWarehouseGroupDropdown() ([]masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseGroupRepo.GetWarehouseGroupDropdown(tx)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
+}
+
 func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)

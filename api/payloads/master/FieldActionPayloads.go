@@ -19,7 +19,7 @@ type FieldActionRequest struct {
 
 type FieldActionResponse struct {
 	IsActive                  bool   `json:"is_active" parent_entity:"mtr_field_action"`
-	FieldActionSystemNumber   int    `json:"field_action_system_number" parent_entity:"mtr_field_action"`
+	FieldActionSystemNumber   int    `json:"field_action_system_number" parent_entity:"mtr_field_action" main_table:"mtr_field_action"`
 	ApprovalStatusId          int    `json:"approval_status_id" parent_entity:"mtr_field_action"`
 	BrandId                   int    `json:"brand_id" parent_entity:"mtr_field_action"`
 	FieldActionDocumentNumber string `json:"field_action_document_number" parent_entity:"mtr_field_action"`
@@ -30,6 +30,7 @@ type FieldActionResponse struct {
 	RemarkPopup               string `json:"remark_popup" parent_entity:"mtr_field_action"`
 	IsCritical                bool   `json:"is_critical" parent_entity:"mtr_field_action"`
 	RemarkInvoice             string `json:"remark_invoice" parent_entity:"mtr_field_action"`
+	VehicleId                 int    `json:"vehicle_id" parent_entity:"mtr_field_action_eligible_vehicle" main_table:"mtr_field_action"`
 }
 
 type FieldActionDetailResponse struct {
