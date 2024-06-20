@@ -91,7 +91,7 @@ func (r *AgreementRepositoryImpl) UpdateAgreement(tx *gorm.DB, Id int, req maste
 		Updates(map[string]interface{}{
 			"agreement_code":      req.AgreementCode,
 			"brand_id":            req.BrandId,
-			"dealer_id":           req.DealerId,
+			"company_id":          req.DealerId,
 			"top_id":              req.TopId,
 			"agreement_date_from": req.AgreementDateFrom,
 			"agreement_date_to":   req.AgreementDateTo,
