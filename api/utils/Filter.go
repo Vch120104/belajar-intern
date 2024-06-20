@@ -89,3 +89,26 @@ func DefineInternalExternalFilter(filterCondition []FilterCondition, tableStruct
 	}
 	return internalFilter, externalFilter
 }
+
+func ApplyFilterExact(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
+	var queryWhere []string
+	var columnValue, columnName []string
+
+	for _, c := range criteria {
+		columnValue, columnName = append(columnValue, c.ColumnValue), append(columnName, c.ColumnField)
+	}
+
+	for i := 0; i < len(columnValue); i++ {
+
+		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
+			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
+			columnValue[i] = n[columnValue[i]]
+		}
+
+		condition := columnName[i] + " LIKE '" + columnValue[i] + "'"
+		queryWhere = append(queryWhere, condition)
+	}
+	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
+
+	return queryFinal
+}
