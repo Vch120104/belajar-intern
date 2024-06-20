@@ -87,6 +87,7 @@ type ItemLocationGetByIdResponse struct {
 	ItemId                int    `json:"item_id" parent_entity:"mtr_item_location"`
 	ItemCode              string `json:"item_code" parent_entity:"mtr_item"`
 	ItemName              string `json:"item_name" parent_entity:"mtr_item"`
+	WarehouseLocationId   int    `json:"warehouse_location_id" parent_entity:"mtr_item_location"`
 	WarehouseLocationName string `json:"warehouse_location_name" parent_entity:"mtr_warehouse_location"`
 	WarehouseLocationCode string `json:"warehouse_location_code" parent_entity:"mtr_warehouse_location"`
 }
