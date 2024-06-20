@@ -36,10 +36,7 @@ type BomMasterRequest struct {
 	BomMasterQty           int       `json:"bom_master_qty"`
 	BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
 	BomMasterChangeNumber  int       `json:"bom_master_change_number"`
-	ItemCode               string    `json:"item_code"`
-	ItemName               string    `json:"item_name"`
 	ItemId                 int       `json:"item_id"`
-	UomDescription         string    `json:"uom_description"`
 }
 
 type BomItemNameResponse struct {
@@ -69,14 +66,11 @@ type BomDetailResponse struct {
 type BomDetailRequest struct {
 	BomDetailId             int    `json:"bom_detail_id"`
 	BomMasterId             int    `json:"bom_master_id"`
-	BomDetailSeq            int    `json:"bom_detail_seq"`
 	BomDetailQty            int    `json:"bom_detail_qty"`
-	BomDetailUom            string `json:"bom_detail_uom"`
 	BomDetailRemark         string `json:"bom_detail_remark"`
 	BomDetailCostingPercent int    `json:"bom_detail_costing_percent"`
-	BomDetailType           string `json:"bom_detail_type"`
-	BomDetailMaterialCode   string `json:"bom_detail_material_code"`
-	BomDetailMaterialName   string `json:"bom_detail_material_name"`
+	BomDetailTypeId         int    `json:"bom_detail_type_id"`
+	BomDetailMaterialId     int    `json:"bom_detail_material_id"`
 }
 
 type BomDetailListResponse struct {

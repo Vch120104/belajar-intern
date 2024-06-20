@@ -354,13 +354,14 @@ func BomRouter(
 	router.Get("/", BomController.GetBomMasterList)
 	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
 	router.Post("/", BomController.SaveBomMaster)
+	router.Put("/{bom_master_id}", BomController.UpdateBomMaster)
 	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
 	//bom detail
 	// Detail
-	router.Get("/detail/all", BomController.GetBomDetailList)
-	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
-	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailByIds)
+	router.Get("/detail", BomController.GetBomDetailList)
+	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
+	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
 	router.Post("/detail", BomController.SaveBomDetail)
 	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
 
