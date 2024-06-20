@@ -16,8 +16,8 @@ package test
 // func TestSaveWarehouseLocation(t *testing.T) {
 // 	config.InitEnvConfigs(true, "")
 // 	db := config.InitDB()
-// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl(db)
-// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo)
+// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl()
+// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo, db, nil)
 
 // 	save, err := warehouseLocationService.Save(
 // 		masterwarehousepayloads.GetWarehouseLocationResponse{
@@ -42,8 +42,8 @@ package test
 // func TestGetWarehouseLocationById(t *testing.T) {
 // 	config.InitEnvConfigs(true, "")
 // 	db := config.InitDB()
-// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl(db)
-// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo)
+// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl()
+// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo, db, nil)
 
 // 	update, err := warehouseLocationService.GetById(
 // 		2,
@@ -56,11 +56,11 @@ package test
 // 	fmt.Println(update)
 // }
 
-// func TestGetAllWarehouseLocationById(t *testing.T) {
+// func TestGetAllWarehouseLocation(t *testing.T) {
 // 	config.InitEnvConfigs(true, "")
 // 	db := config.InitDB()
-// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl(db)
-// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo)
+// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl()
+// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo, db, nil)
 
 // 	update, err := warehouseLocationService.GetAll(
 // 		masterwarehousepayloads.GetAllWarehouseLocationRequest{}, pagination.Pagination{
@@ -79,8 +79,8 @@ package test
 // func TestChangeStatusWarehouseLocationById(t *testing.T) {
 // 	config.InitEnvConfigs(true, "")
 // 	db := config.InitDB()
-// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl(db)
-// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo)
+// 	warehouseLocationRepo := masterwarehouserepo.OpenWarehouseLocationImpl()
+// 	warehouseLocationService := masterwarehousegroupservice.OpenWarehouseLocationService(warehouseLocationRepo, db, nil)
 
 // 	update, err := warehouseLocationService.ChangeStatus(
 // 		2,

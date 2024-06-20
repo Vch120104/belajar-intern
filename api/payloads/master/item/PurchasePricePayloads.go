@@ -55,3 +55,16 @@ type PurchasePriceItemResponse struct {
 	ItemCode string `json:"item_code"`
 	ItemName string `json:"item_name"`
 }
+
+type PurchasePriceSubDetailResponse struct {
+	PurchasePriceId            int                         `json:"purchase_price_id"`
+	SupplierId                 int                         `json:"supplier_id"`
+	SupplierCode               string                      `json:"supplier_code"`
+	SupplierName               string                      `json:"supplier_name"`
+	CurrencyId                 int                         `json:"currency_id"`
+	CurrencyCode               string                      `json:"currency_code"`
+	CurrencyName               string                      `json:"currency_name"`
+	PurchasePriceEffectiveDate time.Time                   `json:"purchase_price_effective_date"`
+	IsActive                   bool                        `json:"is_active"`
+	PurchasePriceDetail        PurchasePriceDetailResponse `json:"purchase_price_detail"`
+}

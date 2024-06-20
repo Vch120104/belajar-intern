@@ -1,11 +1,8 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -26,92 +23,31 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 	return &FieldActionRepositoryImpl{}
 }
 
-func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.FieldActionResponse
-	var getStatusResponse []masterpayloads.ApprovalStatusResponse
-	var getChassisResponse []masterpayloads.VehicleChassisResponse
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
-	var chassisNumber string
-	var approvalCode string
-	responseStruct := reflect.TypeOf(masterpayloads.FieldActionResponse{})
+ 	entities := masterentities.FieldAction{}
+	JoinTable := tx.Table("mtr_field_action as fa").
+    Select("fa.*,faev.*").
+    Joins("Join mtr_field_action_eligible_vehicle as faev ON faev.field_action_system_number=fa.field_action_system_number")
 
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		}
-	}
-
-	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		if strings.Contains(externalServiceFilter[i].ColumnField, "vehicle_id") {
-			// chassisNumber = externalServiceFilter[i].ColumnValue
-		} else if strings.Contains(externalServiceFilter[i].ColumnField, "approval_status_id") {
-			approvalCode = externalServiceFilter[i].ColumnValue
-		}
-	}
-
-	result := tx.Model(masterentities.FieldAction{})
-
-	whereQuery := utils.ApplyFilter(result, internalServiceFilter)
-	rows, err := whereQuery.Scan(&responses).Rows()
+	whereQuery := utils.ApplyFilter(JoinTable, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, JoinTable)).Order("fa.field_action_system_number").Scan(&responses).Error
 
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-
-	// pages.Rows = responses
-
-	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-
-	chassisNumberUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=10&vehicle_chassis_number=" + chassisNumber
-
-	errUrlchassisNumber := utils.Get(chassisNumberUrl, &getChassisResponse, nil)
-
-	if errUrlchassisNumber != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	fmt.Print("dawdawd", getChassisResponse)
-
-	joinedData1 := utils.DataFrameInnerJoin(responses, getChassisResponse, "vehicle_id")
-
-	ApprovalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status?approval_status_description=" + approvalCode
-
-	errUrlApprovalStatus := utils.Get(ApprovalStatusUrl, &getStatusResponse, nil)
-
-	if errUrlApprovalStatus != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getStatusResponse, "ApprovalStatusId")
-
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows=responses
+	return pages, nil
 }
 
 func (r *FieldActionRepositoryImpl) SaveFieldAction(tx *gorm.DB, req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
