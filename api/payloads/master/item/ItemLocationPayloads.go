@@ -68,6 +68,7 @@ type ItemLocationGetAllResponse struct {
 	ItemId                int    `json:"item_id" parent_entity:"mtr_item" references:"mtr_item"`
 	ItemCode              string `json:"item_code" parent_entity:"mtr_item"`
 	ItemName              string `json:"item_name" parent_entity:"mtr_item"`
+	StockOpname           bool   `json:"stock_opname" parent_entity:"mtr_location_item"`
 	WarehouseId           int    `json:"warehouse_id" parent_entity:"mtr_warehouse_master" references:"mtr_warehouse_master"`
 	WarehouseName         string `json:"warehouse_name" parent_entity:"mtr_warehouse_master"`
 	WarehouseCode         string `json:"warehouse_code" parent_entity:"mtr_warehouse_master"`

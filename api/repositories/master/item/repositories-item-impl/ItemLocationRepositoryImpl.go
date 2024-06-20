@@ -330,7 +330,6 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *ex
 	return nil
 }
 
-
 func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemLocationGetAllResponse
 
@@ -374,6 +373,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filtercondition 
 			"item_id":                 response.ItemId,
 			"item_code":               response.ItemCode,
 			"item_name":               response.ItemName,
+			"stock_opname":            response.StockOpname,
 			"warehouse_id":            response.WarehouseId,
 			"warehouse_name":          response.WarehouseName,
 			"warehouse_code":          response.WarehouseCode,
