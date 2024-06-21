@@ -25,6 +25,30 @@ func OpenWarehouseMasterImpl() masterwarehouserepository.WarehouseMasterReposito
 	return &WarehouseMasterImpl{}
 }
 
+// DropdownbyGroupId implements masterwarehouserepository.WarehouseMasterRepository.
+func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+
+	var warehouseMasterResponse []masterwarehousepayloads.DropdownWarehouseMasterResponse
+
+	err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).Where(masterwarehouseentities.WarehouseMaster{WarehouseGroupId: warehouseGroupId}).
+		Select("warehouse_id", "warehouse_code + ' - ' + warehouse_name as warehouse_code").
+		Find(&warehouseMasterResponse)
+	if err.Error != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err.Error,
+		}
+	}
+
+	if len(warehouseMasterResponse) == 0 {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+	return warehouseMasterResponse, nil
+}
+
 func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseMaster{
