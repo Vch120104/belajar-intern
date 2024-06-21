@@ -142,7 +142,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Master By Code
