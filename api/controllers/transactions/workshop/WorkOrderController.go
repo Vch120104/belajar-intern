@@ -9,7 +9,6 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	utils "after-sales/api/utils"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -66,6 +65,7 @@ type WorkOrderController interface {
 
 	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
 	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
+	GenerateDocumentNumber(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
 	GetDetailByIdWorkOrder(writer http.ResponseWriter, request *http.Request)
@@ -1153,7 +1153,11 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 
 	workOrder, baseErr := r.WorkOrderService.GetById(workOrderId)
 	if baseErr != nil {
-		exceptions.NewAppException(writer, request, baseErr)
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
 		return
 	}
 
@@ -1240,7 +1244,11 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 
 	// Handle success and failure responses
 	if success {
-		payloads.NewHandleSuccess(writer, nil, fmt.Sprintf("Work order submitted successfully. Document Number: %s", newDocumentNumber), http.StatusOK)
+		responseData := transactionworkshoppayloads.SubmitWorkOrderResponse{
+			DocumentNumber:        newDocumentNumber,
+			WorkOrderSystemNumber: workOrderIdInt,
+		}
+		payloads.NewHandleSuccess(writer, responseData, "Work order submitted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to submit work order", http.StatusInternalServerError)
 	}
@@ -1835,4 +1843,30 @@ func (r *WorkOrderControllerImpl) CloseAffiliated(writer http.ResponseWriter, re
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Work order closed successfully", http.StatusOK)
+}
+
+// GenerateWorkOrderDocumentNumber generates a new work order document number
+// @Summary Generate Work Order Document Number
+// @Description Generate a new work order document number
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal
+// @Param work_order_system_number path string true "Work Order ID"
+// Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/document-number/{work_order_system_number} [post]
+func (r *WorkOrderControllerImpl) GenerateDocumentNumber(writer http.ResponseWriter, request *http.Request) {
+	// Generate a new work order document number
+	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	db := config.InitDB()
+
+	result, err := r.WorkOrderService.GenerateDocumentNumber(db, workOrderId)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Document number generated successfully", http.StatusOK)
+
 }

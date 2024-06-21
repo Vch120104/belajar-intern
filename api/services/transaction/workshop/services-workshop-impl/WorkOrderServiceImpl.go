@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -36,6 +37,16 @@ func OpenWorkOrderServiceImpl(WorkOrderRepo transactionworkshoprepository.WorkOr
 		DB:                  db,
 		RedisClient:         redisClient,
 	}
+}
+
+// Function to generate document number
+func (s *WorkOrderServiceImpl) GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse) {
+	documentNumber, err := s.structWorkOrderRepo.GenerateDocumentNumber(tx, workOrderId)
+	if err != nil {
+		return "", err
+	}
+	log.Printf("Document number from repository: %s", documentNumber)
+	return documentNumber, nil
 }
 
 // Function to generate cache key for GetAll
@@ -438,9 +449,10 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 	// Retrieve data from repository
 	results, repoErr := s.structWorkOrderRepo.GetById(tx, id)
 	if repoErr != nil {
-
-		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
-		return transactionworkshoppayloads.WorkOrderRequest{}, errorResponse
+		if repoErr.StatusCode == http.StatusNotFound {
+			return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+		}
+		return transactionworkshoppayloads.WorkOrderRequest{}, repoErr
 	}
 
 	jsonData, err := json.Marshal(results)

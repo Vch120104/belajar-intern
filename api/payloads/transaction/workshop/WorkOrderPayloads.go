@@ -587,3 +587,8 @@ type WorkOrderDropPointRequest struct {
 	CompanyCode string `json:"company_code"`
 	CompanyName string `json:"company_name"`
 }
+
+type SubmitWorkOrderResponse struct {
+	DocumentNumber        string `json:"document_number"`
+	WorkOrderSystemNumber int    `json:"work_order_system_number"`
+}

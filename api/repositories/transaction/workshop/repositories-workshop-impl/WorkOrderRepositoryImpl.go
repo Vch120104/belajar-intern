@@ -9,6 +9,7 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -189,6 +190,7 @@ func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []u
 			Err:        err,
 		}
 	}
+
 	defer rows.Close()
 
 	var convertedResponses []transactionworkshoppayloads.WorkOrderLookupResponse
@@ -544,7 +546,7 @@ func (r *WorkOrderRepositoryImpl) DeleteType(tx *gorm.DB, id int) (bool, *except
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewBill(*gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
 	BillableURL := config.EnvConfigs.GeneralServiceUrl + "billable-to"
 	fmt.Println("Fetching Billable data from:", BillableURL)
 
@@ -610,7 +612,7 @@ func (r *WorkOrderRepositoryImpl) DeleteBill(tx *gorm.DB, id int) (bool, *except
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewDropPoint(*gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
 	DropPointURL := config.EnvConfigs.GeneralServiceUrl + "company-selection-dropdown"
 	fmt.Println("Fetching Drop Point data from:", DropPointURL)
 
@@ -676,7 +678,7 @@ func (r *WorkOrderRepositoryImpl) NewDropPoint(tx *gorm.DB) ([]transactionworksh
 // 	return true, nil
 // }
 
-func (r *WorkOrderRepositoryImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewVehicleBrand(*gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
 	VehicleBrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand-dropdown"
 	fmt.Println("Fetching Vehicle Brand data from:", VehicleBrandURL)
 
@@ -692,7 +694,7 @@ func (r *WorkOrderRepositoryImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionwor
 	return getVehicleBrands, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewVehicleModel(tx *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewVehicleModel(_ *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
 	VehicleModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model-dropdown/" + strconv.Itoa(brandId)
 	fmt.Println("Fetching Vehicle Model data from:", VehicleModelURL)
 
@@ -713,7 +715,7 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworks
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{Message: "Work order not found"}
+			return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Work order not found"}
 		}
 		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order from the database", Err: err}
 	}
@@ -1093,11 +1095,13 @@ func (r *WorkOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, workOrderI
 	// Get the work order based on the work order system number
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", workOrderId).First(&workOrder).Error
 	if err != nil {
+
 		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve work order from the database: %v", err)}
 	}
 
 	if workOrder.BrandId == 0 {
-		return "", &exceptions.BaseErrorResponse{Message: "brand_id is missing in the work order"}
+
+		return "", &exceptions.BaseErrorResponse{Message: "brand_id is missing in the work order. Please ensure the work order has a valid brand_id before generating document number."}
 	}
 
 	// Get the last work order based on the work order system number
@@ -1108,6 +1112,7 @@ func (r *WorkOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, workOrderI
 		First(&lastWorkOrder).Error
 
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+
 		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve last work order: %v", err)}
 	}
 
@@ -1117,32 +1122,31 @@ func (r *WorkOrderRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, workOrderI
 
 	brandInitial := workOrder.BrandId
 
-	// Handle the case when there is no last work order
-	if lastWorkOrder.WorkOrderSystemNumber == 0 {
-		return fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandInitial, month, year), nil
+	// Handle the case when there is no last work order or the format is invalid
+	newDocumentNumber := fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandInitial, month, year)
+	if lastWorkOrder.WorkOrderSystemNumber != 0 {
+		lastWorkOrderDate := lastWorkOrder.WorkOrderDate
+		lastWorkOrderYear := lastWorkOrderDate.Year() % 100
+
+		// Check if the last work order is from the same year
+		if lastWorkOrderYear == year {
+			lastWorkOrderCode := lastWorkOrder.WorkOrderDocumentNumber
+			codeParts := strings.Split(lastWorkOrderCode, "/")
+			if len(codeParts) == 5 {
+				lastWorkOrderNumber, err := strconv.Atoi(codeParts[4])
+				if err == nil {
+					newWorkOrderNumber := lastWorkOrderNumber + 1
+					newDocumentNumber = fmt.Sprintf("WSWO/%d/%02d/%02d/%05d", brandInitial, month, year, newWorkOrderNumber)
+				} else {
+					log.Printf("Failed to parse last work order code: %v", err)
+				}
+			} else {
+				log.Println("Invalid last work order code format")
+			}
+		}
 	}
 
-	lastWorkOrderDate := lastWorkOrder.WorkOrderDate
-	lastWorkOrderYear := lastWorkOrderDate.Year() % 100
-
-	// Check if the last work order is from the same year
-	if lastWorkOrderYear != year {
-		return fmt.Sprintf("WSWO/%d/%02d/%02d/00001", brandInitial, month, year), nil
-	}
-
-	lastWorkOrderCode := lastWorkOrder.WorkOrderDocumentNumber
-	codeParts := strings.Split(lastWorkOrderCode, "/")
-	if len(codeParts) < 5 {
-		return "", &exceptions.BaseErrorResponse{Message: "invalid last work order code format"}
-	}
-	lastWorkOrderNumber, err := strconv.Atoi(codeParts[4])
-	if err != nil {
-		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("failed to parse last work order code: %v", err)}
-	}
-
-	newWorkOrderNumber := lastWorkOrderNumber + 1
-
-	newDocumentNumber := fmt.Sprintf("WSWO/%d/%02d/%02d/%05d", brandInitial, month, year, newWorkOrderNumber)
+	log.Printf("New document number: %s", newDocumentNumber)
 	return newDocumentNumber, nil
 }
 
@@ -1156,13 +1160,13 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, st
 		return false, "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve work order from the database: %v", err)}
 	}
 
-	// Check if WorkOrderDocumentNumber is empty and WorkOrderStatusId is 1
 	if entity.WorkOrderDocumentNumber == "" && entity.WorkOrderStatusId == 1 {
-		// Generate new document number
+		//Generate new document number
 		newDocumentNumber, genErr := r.GenerateDocumentNumber(tx, entity.WorkOrderSystemNumber)
 		if genErr != nil {
 			return false, "", genErr
 		}
+		//newDocumentNumber := "WSWO/1/21/21/00001"
 
 		entity.WorkOrderDocumentNumber = newDocumentNumber
 
@@ -1176,7 +1180,7 @@ func (r *WorkOrderRepositoryImpl) Submit(tx *gorm.DB, workOrderId int) (bool, st
 
 		return true, newDocumentNumber, nil
 	} else {
-		// Return error if document number has already been generated
+
 		return false, "", &exceptions.BaseErrorResponse{Message: "Document number has already been generated"}
 	}
 }
