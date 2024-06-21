@@ -122,6 +122,12 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 		}
 	}
 
+	if warehouseMasterResponse.WarehouseId== 0{
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:  errors.New("warehouse not found"),
+		}
+	}
 	errUrlAddress := utils.Get(config.EnvConfigs.GeneralServiceUrl+"address/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getAddressResponse, nil)
 
 	if errUrlAddress != nil {
