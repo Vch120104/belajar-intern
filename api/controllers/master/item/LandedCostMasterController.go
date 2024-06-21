@@ -63,11 +63,10 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	result,totalpages,totalrows,err := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
-	if err != nil {
-		helper.ReturnError(writer, request, err)
+	if err != nil{
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 		return
 	}
-
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 }
 

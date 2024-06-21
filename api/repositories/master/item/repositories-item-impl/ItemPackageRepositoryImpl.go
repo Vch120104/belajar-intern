@@ -94,7 +94,7 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 		ItemPackageId: Id,
 	}).First(&response).Error
 
-	fmt.Print(response)
+	fmt.Println(response)
 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -104,9 +104,10 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 	}
 
 	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-	errUrlItemPackage := utils.Get(itemGroupUrl, &response, nil)
+	errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
 
-	fmt.Print(getItemGroupResponses)
+	response.ItemGroupName = &getItemGroupResponses.ItemGroupName
+	response.ItemGroupCode = &getItemGroupResponses.ItemGroupCode
 
 	if errUrlItemPackage != nil {
 		return response, &exceptions.BaseErrorResponse{

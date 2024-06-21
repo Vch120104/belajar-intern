@@ -32,12 +32,12 @@ func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.F
 	defer helper.CommitOrRollback(tx)
 	results,totalpages,totalrows, err := s.LandedCostMasterRepo.GetAllLandedCost(tx, filterCondition, pages)
 	if err != nil {
-		return results,0,0,err
+		return nil,0,0,err
 	}
 	return results,totalpages,totalrows,nil
 }
 
-func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.LandedCostMasterRepo.GetByIdLandedCost(tx, id)
