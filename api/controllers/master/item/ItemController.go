@@ -112,8 +112,7 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item.is_active":             queryValues.Get("is_active"),
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
-		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
-		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
+		"mtr_item.supplier_id":           queryValues.Get("supplier_id"),
 	}
 
 	paginate := pagination.Pagination{
