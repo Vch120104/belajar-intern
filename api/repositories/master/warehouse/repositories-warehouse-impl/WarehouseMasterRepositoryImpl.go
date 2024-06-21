@@ -104,7 +104,6 @@ func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousep
 }
 
 func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-
 	var entities masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse masterwarehousepayloads.GetWarehouseMasterResponse
 	var getAddressResponse masterwarehousepayloads.AddressResponse
@@ -112,10 +111,8 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 	var getSupplierResponse masterwarehousepayloads.SupplierResponse
 
 	err := tx.Model(&entities).
-		Where(masterwarehouseentities.WarehouseMaster{
-			WarehouseId: warehouseId,
-		}).
-		First(&warehouseMasterResponse).Error
+		Where("warehouse_id = ?", warehouseId).
+		Scan(&warehouseMasterResponse).Error
 	// Find(&warehouseMasterResponse).
 
 	if err != nil {
@@ -136,7 +133,6 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 
 	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{warehouseMasterResponse}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
 
-	// BrandId                       int    `json:"brand_id"` http://10.1.32.26:8000/sales-service/api/sales/unit-brand/
 	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getBrandResponse, nil)
 
 	if errUrlBrand != nil {
@@ -147,8 +143,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 	}
 
 	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masterwarehousepayloads.BrandResponse{getBrandResponse}, "BrandId")
-
-	// SupplierId                    int    `json:"supplier_id"` http://10.1.32.26:8000/general-service/api/general/supplier-master/
+	
 	errUrlSupplier := utils.Get(config.EnvConfigs.GeneralServiceUrl+"supplier-master/"+strconv.Itoa(warehouseMasterResponse.SupplierId), &getSupplierResponse, nil)
 
 	if errUrlSupplier != nil {
@@ -159,7 +154,8 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 	}
 
 	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masterwarehousepayloads.SupplierResponse{getSupplierResponse}, "SupplierId")
-	return thirdJoin[0],nil
+	
+    return thirdJoin[0], nil
 }
 
 func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
