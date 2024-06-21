@@ -1,7 +1,8 @@
 package masterserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +28,7 @@ func StartAgreementService(AgreementRepo masterrepository.AgreementRepository, d
 	}
 }
 
-func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.AgreementRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.AgreementRepo.GetAgreementById(tx, id)
@@ -37,7 +38,7 @@ func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.Agreemen
 	return results, nil
 }
 
-func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -57,24 +58,20 @@ func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRespons
 	return results, nil
 }
 
-func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
-	_, err := s.AgreementRepo.GetAgreementById(tx, Id)
-
+	// Ubah status
+	entity, err := s.AgreementRepo.ChangeStatusAgreement(tx, Id)
 	if err != nil {
-		return false, err
+		return masterentities.Agreement{}, err
 	}
 
-	results, err := s.AgreementRepo.ChangeStatusAgreement(tx, Id)
-	if err != nil {
-		return results, nil
-	}
-	return true, nil
+	return entity, nil
 }
 
-func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.AgreementRepo.GetAllAgreement(tx, filterCondition, pages)
@@ -84,7 +81,7 @@ func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCon
 	return results, totalPages, totalRows, nil
 }
 
-func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.DiscountGroupRequest) *exceptionsss_test.BaseErrorResponse {
+func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.AddDiscountGroup(tx, id, req)
@@ -94,7 +91,7 @@ func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.Disco
 	return nil
 }
 
-func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) *exceptionsss_test.BaseErrorResponse {
+func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.DeleteDiscountGroup(tx, id, discountGroupId)
@@ -104,7 +101,7 @@ func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) 
 	return nil
 }
 
-func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDiscountRequest) *exceptionsss_test.BaseErrorResponse {
+func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.AddItemDiscount(tx, id, req)
@@ -114,7 +111,7 @@ func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDi
 	return nil
 }
 
-func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *exceptionsss_test.BaseErrorResponse {
+func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.DeleteItemDiscount(tx, id, itemDiscountId)
@@ -124,7 +121,7 @@ func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *e
 	return nil
 }
 
-func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse {
+func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.AddDiscountValue(tx, id, req)
@@ -134,7 +131,7 @@ func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.Disco
 	return nil
 }
 
-func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) *exceptionsss_test.BaseErrorResponse {
+func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.DeleteDiscountValue(tx, id, discountValueId)
@@ -142,4 +139,64 @@ func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) 
 		return err
 	}
 	return nil
+}
+
+func (s *AgreementServiceImpl) GetAllDiscountGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.AgreementRepo.GetAllDiscountGroup(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *AgreementServiceImpl) GetAllItemDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.AgreementRepo.GetAllItemDiscount(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *AgreementServiceImpl) GetAllDiscountValue(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, err := s.AgreementRepo.GetAllDiscountValue(tx, filterCondition, pages)
+	if err != nil {
+		return results, 0, 0, err
+	}
+	return results, totalPages, totalRows, nil
+}
+
+func (s *AgreementServiceImpl) GetDiscountGroupAgreementById(agreementID, groupID int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.AgreementRepo.GetDiscountGroupAgreementById(tx, agreementID, groupID)
+	if err != nil {
+		return masterpayloads.DiscountGroupRequest{}, err
+	}
+	return result, nil
+}
+
+func (s *AgreementServiceImpl) GetDiscountItemAgreementById(agreementID, itemID int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.AgreementRepo.GetDiscountItemAgreementById(tx, agreementID, itemID)
+	if err != nil {
+		return masterpayloads.ItemDiscountRequest{}, err
+	}
+	return result, nil
+}
+
+func (s *AgreementServiceImpl) GetDiscountValueAgreementById(agreementID, valueID int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.AgreementRepo.GetDiscountValueAgreementById(tx, agreementID, valueID)
+	if err != nil {
+		return masterpayloads.DiscountValueRequest{}, err
+	}
+	return result, nil
 }

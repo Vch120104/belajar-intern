@@ -6,25 +6,25 @@ var CreateSupplySlipDetailTable = "trx_supply_slip_detail"
 
 type SupplySlipDetail struct {
 	IsActive                          bool                              `gorm:"column:is_active;not null;default:true" json:"is_active"`
-	SupplySlipDetailSystemNumber      int32                             `gorm:"column:supply_slip_detail_system_number;not null;primaryKey"        json:"supply_slip_detail_system_number"`
-	SupplySystemNumbers               int32                             `gorm:"column:supply_system_number;not null"        json:"supply_system_number"`
-	SupplySlip                        SupplySlip                        `gorm:"foreignKey:SupplySystemNumbers;references:supply_system_number" json:"supply_slip"`
-	SupplySystemLineNumber            int32                             `gorm:"column:supply_system_line_number;not null"        json:"supply_system_line_number"`
-	LocationId                        int32                             `gorm:"column:location_id;null"        json:"location_id"`
-	WorkOrderItemId                   int32                             `gorm:"column:work_order_item_id;null"        json:"work_order_item_id"`
-	WorkOrderItem                     transactionentities.WorkOrderItem `gorm:"references:work_order_item_id" json:"work_order_item"`
-	UnitOutMeasurementId              int32                             `gorm:"column:unit_out_measurement_id;null"        json:"unit_out_measurement_id"`
-	QuantitySupply                    float64                           `gorm:"column:quantity_supply;null"        json:"quantity_supply"`
-	QuantityReturn                    float64                           `gorm:"column:quantity_return;null"        json:"quantity_return"`
-	QuantityDemand                    float64                           `gorm:"column:quantity_demand;null"        json:"quantity_demand"`
-	CostOfGoodsSold                   float64                           `gorm:"column:cost_of_goods_sold;null"        json:"cost_of_goods_sold"`
-	PurchaseRequestSystemNumber       int32                             `gorm:"column:purchase_request_system_number;null"        json:"purchase_request_system_number"`
-	PurchaseRequestSystemNumberDetail int32                             `gorm:"column:purchase_request_system_number_detail;null"        json:"purchase_request_system_number_detail"`
-	WorkOrderSystemNumber             int32                             `gorm:"column:work_order_system_number;null"        json:"work_order_system_number"`
-	WorkOrderLineNumberId             int32                             `gorm:"column:work_order_line_number_id;null"        json:"work_order_line_number_id"`
-	WarehouseGroupId                  int32                             `gorm:"column:warehouse_group_id;null"        json:"warehouse_group_id"`
-	WarehouseId                       int32                             `gorm:"column:warehouse_id;null"        json:"warehouse_id"`
-	QuantityTotal                     int32                             `gorm:"column:quantity_total;null"        json:"quantity_total"`
+	SupplySlipDetailSystemNumber      int                               `gorm:"column:supply_slip_detail_system_number;;size:30;not null;primaryKey;size:30" json:"supply_slip_detail_system_number"`
+	SupplySystemNumbers               int                               `gorm:"column:supply_system_number;not null;size:30;" json:"supply_system_number"`
+	SupplySlip                        SupplySlip                        `gorm:"foreignKey:SupplySystemNumbers;references:SupplySystemNumber" json:"supply_slip"`
+	SupplySystemLineNumber            int                               `gorm:"column:supply_system_line_number;not null;size:30;" json:"supply_system_line_number"`
+	LocationId                        int                               `gorm:"column:location_id;size:30;" json:"location_id"`
+	WorkOrderItemId                   int                               `gorm:"column:work_order_item_id;size:30;" json:"work_order_item_id"`
+	WorkOrderItem                     transactionentities.WorkOrderItem `gorm:"references:WorkOrderItemId" json:"work_order_item"`
+	UnitOutMeasurementId              int                               `gorm:"column:unit_out_measurement_id;size:30;" json:"unit_out_measurement_id"`
+	QuantitySupply                    float32                           `gorm:"column:quantity_supply" json:"quantity_supply"`
+	QuantityReturn                    float32                           `gorm:"column:quantity_return" json:"quantity_return"`
+	QuantityDemand                    float32                           `gorm:"column:quantity_demand" json:"quantity_demand"`
+	CostOfGoodsSold                   float32                           `gorm:"column:cost_of_goods_sold" json:"cost_of_goods_sold"`
+	PurchaseRequestSystemNumber       int                               `gorm:"column:purchase_request_system_number;size:30;" json:"purchase_request_system_number"`
+	PurchaseRequestSystemNumberDetail int                               `gorm:"column:purchase_request_system_number_detail;size:30;" json:"purchase_request_system_number_detail"`
+	WorkOrderSystemNumber             int                               `gorm:"column:work_order_system_number;size:30;" json:"work_order_system_number"`
+	WorkOrderLineNumberId             int                               `gorm:"column:work_order_line_number_id;size:30;" json:"work_order_line_number_id"`
+	WarehouseGroupId                  int                               `gorm:"column:warehouse_group_id;size:30;" json:"warehouse_group_id"`
+	WarehouseId                       int                               `gorm:"column:warehouse_id;size:30;" json:"warehouse_id"`
+	QuantityTotal                     int                               `gorm:"column:quantity_total;size:30;" json:"quantity_total"`
 }
 
 func (*SupplySlipDetail) TableName() string {

@@ -1,16 +1,20 @@
 package utils
 
 import (
-	"after-sales/api/exceptions"
 	"bytes"
 	"encoding/json"
 	"net/http"
 )
 
-// const serverUrl = "http://10.1.32.26:8000/general-service"
 const serverUrl = ""
+const SalesURL = "http://10.1.32.26:8000/sales-service/v1"
+const GeneralURL = "http://10.1.32.26:8000/general-service/v1"
 
-// const serverUrl = "http://127.0.0.1:8000"
+type ResponseBody struct {
+	StatusCode int         `json:"status_code"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data"`
+}
 
 type APIResponse struct {
 	Data interface{} `json:"data"`
@@ -24,29 +28,29 @@ type APIPaginationResponse struct {
 	TotalRows  int64       `json:"total_rows"`
 }
 
-// get data from url
 func Get(url string, data interface{}, body interface{}) error {
+
 	client := &http.Client{}
 	var buf bytes.Buffer
 
 	// Jika ada parameter Body/body request untuk getnya
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+		return err
 	}
 
 	var responseBody APIResponse
 
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
-
+	
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return err
 	}
 
 	newResponse, err := client.Do(newRequest)
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	defer newResponse.Body.Close()
@@ -58,31 +62,27 @@ func Get(url string, data interface{}, body interface{}) error {
 
 	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
-		return exceptions.NewNotFoundError(newResponse.Status)
-		// c.JSON(newResponse.StatusCode, gin.H{"error": "Failed to fetch data from the external API"})
-		// return err
+		return nil
 	}
 
-	//decode body response
-	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
-
-	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+	if err := json.NewDecoder(newResponse.Body).Decode(&responseBody); err != nil {
+		return err
 	}
 
 	return nil
+
 }
 
 // get data from url with pagination, the returned data is in form of APIPaginationResponse
 func GetWithPagination(url string, pagination APIPaginationResponse, body interface{}) (APIPaginationResponse, error) {
+
 	client := &http.Client{}
 	var buf bytes.Buffer
 
-	// Jika ada parameter Body
+	// Jika ada parameter Body/body request untuk getnya
 	err := json.NewEncoder(&buf).Encode(body)
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
-
+		return APIPaginationResponse{}, err
 	}
 
 	var responseBody APIPaginationResponse
@@ -90,39 +90,31 @@ func GetWithPagination(url string, pagination APIPaginationResponse, body interf
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
-
+		return APIPaginationResponse{}, err
 	}
 
 	newResponse, err := client.Do(newRequest)
 
 	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
-
+		return APIPaginationResponse{}, err
 	}
 
 	defer newResponse.Body.Close()
 	defer client.CloseIdleConnections()
 
 	responseBody = APIPaginationResponse{
-		Data:       pagination.Data,
-		Page:       pagination.Page,
-		TotalPages: pagination.TotalPages,
-		Limit:      pagination.Limit,
-		TotalRows:  pagination.TotalRows,
+		Data: pagination.Data,
 	}
 
+	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
-		return pagination, err
-		// c.JSON(newResponse.StatusCode, gin.H{"error": "Failed to fetch data from the external API"})
-		// return err
+		return APIPaginationResponse{}, nil
 	}
 
-	err = json.NewDecoder(newResponse.Body).Decode(&responseBody)
-
-	if err != nil {
-		panic(exceptions.NewBadRequestError(err.Error()))
+	if err := json.NewDecoder(newResponse.Body).Decode(&responseBody); err != nil {
+		return APIPaginationResponse{}, err
 	}
 
-	return responseBody, err
+	return responseBody, nil
+
 }

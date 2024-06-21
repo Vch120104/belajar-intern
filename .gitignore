@@ -48,7 +48,6 @@ swagger.yaml
 tmp/
 build-errors.log
 
-
 # NEXTJS
 # playwright testing
 /playwright/test-results

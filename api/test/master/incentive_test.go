@@ -3,11 +3,13 @@ package test
 import (
 	"after-sales/api/config"
 	mastercontroller "after-sales/api/controllers/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
+	"bytes"
 	"fmt"
 
 	"after-sales/api/utils"
@@ -25,27 +27,111 @@ type MockIncentiveMasterService struct {
 }
 
 // Mock the GetAllIncentiveMaster method
-func (m *MockIncentiveMasterService) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	args := m.Called(filterCondition, pages)
-	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptionsss_test.BaseErrorResponse)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 // Mock the GetAllIncentiveById method
-func (m *MockIncentiveMasterService) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(id)
-	return args.Get(0).(masterpayloads.IncentiveMasterResponse), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+	return args.Get(0).(masterpayloads.IncentiveMasterResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Mock the ChangeStatusIncentiveMaster method
-func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
-	args := m.Called(Id)
-	return args.Bool(0), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
+	args := m.Called(id)
+	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-// Mock the SaveIncentiveMaster method
-func (m *MockIncentiveMasterService) SaveIncentiveMaster(payload masterpayloads.IncentiveMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) SaveIncentiveMaster(payload masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 	args := m.Called(payload)
-	return args.Bool(0), args.Get(1).(*exceptionsss_test.BaseErrorResponse)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func TestSaveIncentiveMaster_Success(t *testing.T) {
+	payload := masterpayloads.IncentiveMasterRequest{
+		IncentiveLevelId:      1,
+		IncentiveLevelCode:    6,
+		JobPositionId:         1,
+		IncentiveLevelPercent: 10,
+	}
+
+	mockService := new(MockIncentiveMasterService)
+	mockService.On("SaveIncentiveMaster", payload).Return(true, (*exceptions.BaseErrorResponse)(nil))
+
+	payloadBytes, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", "http://localhost:8000/v1/incentive", bytes.NewReader(payloadBytes))
+	rr := httptest.NewRecorder()
+
+	controller := mastercontroller.NewIncentiveMasterController(mockService)
+	controller.SaveIncentiveMaster(rr, req)
+
+	statusCode := rr.Code
+	fmt.Println("Status code:", statusCode)
+
+	// Periksa apakah ini pembuatan data baru atau pembaruan data yang sudah ada
+	expectedStatusCode := http.StatusOK
+	expectedMessage := "Update Data Successfully!"
+
+	if payload.IncentiveLevelId == 0 {
+		expectedStatusCode = http.StatusCreated
+		expectedMessage = "Create Data Successfully!"
+	}
+
+	assert.Equal(t, expectedStatusCode, statusCode, "Status code should match expected")
+
+	var response map[string]interface{}
+	err := json.Unmarshal(rr.Body.Bytes(), &response)
+	assert.Nil(t, err, "Error should be nil when unmarshalling response")
+
+	fmt.Println("Response:", response)
+
+	// Periksa pesan dan status code
+	assert.Equal(t, expectedMessage, response["message"], "Message should match expected")
+	assert.Equal(t, expectedStatusCode, int(response["status_code"].(float64)), "Status code should match expected")
+}
+
+func TestSaveIncentiveMaster_Failure(t *testing.T) {
+	payload := masterpayloads.IncentiveMasterRequest{
+		IncentiveLevelId:      0, // ganti value disini
+		IncentiveLevelCode:    1,
+		JobPositionId:         1,
+		IncentiveLevelPercent: 10,
+	}
+
+	// Simulate a failure response from the service
+	mockService := new(MockIncentiveMasterService)
+	mockService.On("SaveIncentiveMaster", payload).
+		Return(false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest, // Mengganti status kode menjadi 400
+			Err:        fmt.Errorf("some error"),
+		})
+
+	// Create a new HTTP request
+	payloadBytes, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", "http://localhost:8000/v1/incentive", bytes.NewReader(payloadBytes))
+	rr := httptest.NewRecorder()
+
+	// Call the controller
+	controller := mastercontroller.NewIncentiveMasterController(mockService)
+	controller.SaveIncentiveMaster(rr, req)
+
+	// Check if the HTTP status code is as expected
+	statusCode := rr.Code
+	fmt.Println("Status code:", statusCode)
+	assert.Equal(t, http.StatusBadRequest, statusCode, "Status code should be 400") // Mengubah ekspektasi menjadi 400
+
+	// Check if the response body contains the expected data
+	var response map[string]interface{}
+	err := json.Unmarshal(rr.Body.Bytes(), &response)
+	assert.Nil(t, err, "Error should be nil when unmarshalling response")
+
+	// Print the response for debugging
+	fmt.Println("Response:", response)
+
+	assert.NotNil(t, response["error"], "Response should contain error")
+	assert.Equal(t, "some error", response["error"], "Error should be 'some error'")
 }
 
 func TestGetAllIncentiveMaster_Success(t *testing.T) {
@@ -54,11 +140,11 @@ func TestGetAllIncentiveMaster_Success(t *testing.T) {
 
 	// Simulate a successful response from the service
 	responseData := []map[string]interface{}{
-		{"key": "value"},
+		{"key": "value"}, // ganti value disini
 	}
 	mockService := new(MockIncentiveMasterService)
 	mockService.On("GetAllIncentiveMaster", mock.Anything, mock.Anything).
-		Return(responseData, len(responseData), len(responseData), (*exceptionsss_test.BaseErrorResponse)(nil)) // Return nil for BaseErrorResponse
+		Return(responseData, len(responseData), len(responseData), (*exceptions.BaseErrorResponse)(nil)) // Return nil for BaseErrorResponse
 
 	controller := mastercontroller.NewIncentiveMasterController(mockService)
 	controller.GetAllIncentiveMaster(rr, req)
@@ -76,14 +162,11 @@ func TestGetAllIncentiveMaster_Success(t *testing.T) {
 	// Print the response for debugging
 	fmt.Println("Response:", response)
 
-	// Check if the data key exists in the response
 	assert.NotNil(t, response["data"], "Response should contain data")
 
-	// Check if the data in the response has the expected type
 	responseDataFromResponse, ok := response["data"].([]interface{})
 	assert.True(t, ok, "Data in response should be []interface{}")
 
-	// Check if the length of the data in the response matches the expected length
 	assert.Equal(t, len(responseData), len(responseDataFromResponse), "Length of response data should match")
 }
 
@@ -94,10 +177,10 @@ func TestGetIncentiveMasterById(t *testing.T) {
 	IncentiveMasterRepository := masterrepositoryimpl.StartIncentiveMasterRepositoryImpl()
 	IncentiveMasterService := masterserviceimpl.StartIncentiveMasterService(IncentiveMasterRepository, db, rdb)
 
-	get, err := IncentiveMasterService.GetIncentiveMasterById(2) //change value test here
+	get, err := IncentiveMasterService.GetIncentiveMasterById(1) // ganti value disini
 	if err != nil {
-		t.Errorf("Error: %v", err) // Ubah t.Fatalf menjadi t.Errorf
-		return                     // Kembalikan agar tes berhenti di sini jika terjadi kesalahan
+		t.Errorf("Error: %v", err)
+		return
 	}
 
 	assert.NotZero(t, get.IncentiveLevelId, "Expected non-zero result for IncentiveLevelId")

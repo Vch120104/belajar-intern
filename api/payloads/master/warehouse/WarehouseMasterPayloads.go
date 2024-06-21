@@ -104,6 +104,19 @@ type GetAllWarehouseMasterResponse struct {
 	JobPositionDetails            JobPositionResponse `json:"job_position_details"`
 }
 
+type GetLookupWarehouseMasterResponse struct {
+	IsActive           bool   `json:"is_active"`
+	WarehouseId        int    `json:"warehouse_id"`
+	WarehouseName      string `json:"warehouse_name"`
+	WarehouseCode      string `json:"warehouse_code"`
+	WarehouseGroupName string `json:"warehouse_group_name"`
+}
+
+type DropdownWarehouseMasterResponse struct {
+	WarehouseId   int    `json:"warehouse_id"`
+	WarehouseCode string `json:"warehouse_code_name"`
+}
+
 type IsActiveWarehouseMasterResponse struct {
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`
@@ -135,6 +148,7 @@ type AddressResponse struct {
 	AddressStreet1 string `json:"address_street_1"`
 	AddressStreet2 string `json:"address_street_2"`
 	AddressStreet3 string `json:"address_street_3"`
+	VillageId      int    `json:"village_id"`
 }
 
 type BrandResponse struct {

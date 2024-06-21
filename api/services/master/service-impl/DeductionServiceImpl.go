@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"context"
 	"encoding/json"
@@ -35,7 +35,7 @@ func StartDeductionService(deductionRepo masterrepository.DeductionRepository, d
 	}
 }
 
-func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 
 	// Generate key for caching
@@ -47,7 +47,7 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 		// If data found in cache, return it
 		var result pagination.Pagination
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return result, &exceptionsss_test.BaseErrorResponse{
+			return result, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -75,7 +75,7 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.DeductionDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse) {
 	ctx := context.Background() // Initialize context
 
 	// Generate key for caching
@@ -87,7 +87,7 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 		// If data found in cache, return it
 		var result masterpayloads.DeductionDetailResponse
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return result, &exceptionsss_test.BaseErrorResponse{
+			return result, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -114,7 +114,7 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.deductionrepo.SaveDeductionList(tx, req)
@@ -124,7 +124,7 @@ func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionLis
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.deductionrepo.SaveDeductionDetail(tx, req)
@@ -134,7 +134,7 @@ func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionD
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.DeductionListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
 	ctx := context.Background() // Inisialisasi context
 
 	// Generate key for caching
@@ -146,7 +146,7 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 		// If data found in cache, return it
 		var result masterpayloads.DeductionListResponse
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return result, &exceptionsss_test.BaseErrorResponse{
+			return result, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -173,7 +173,7 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	detail_result, detail_err := s.deductionrepo.GetAllDeductionDetail(tx, pages, Id)
@@ -185,7 +185,7 @@ func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pa
 	return detail_result, nil
 }
 
-func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

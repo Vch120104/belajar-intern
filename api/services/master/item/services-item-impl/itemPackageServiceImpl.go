@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -27,7 +27,7 @@ func StartItemPackageService(ItemPackageRepo masteritemrepository.ItemPackageRep
 	}
 }
 
-func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ItemPackageRepo.GetAllItemPackage(tx, internalFilterCondition, externalFilterCondition, pages)
@@ -37,7 +37,7 @@ func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []uti
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemPackageRepo.GetItemPackageById(tx, Id)
@@ -47,7 +47,7 @@ func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) ([]map[string]interf
 	return results, nil
 }
 
-func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItemPackageRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -67,7 +67,7 @@ func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItem
 	return results, nil
 }
 
-func (s *ItemPackageServiceImpl) ChangeStatusItemPackage(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) ChangeStatusItemPackage(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

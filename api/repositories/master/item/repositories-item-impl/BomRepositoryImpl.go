@@ -2,12 +2,13 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	"after-sales/api/exceptions"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -21,16 +22,18 @@ func StartBomRepositoryImpl() masteritemrepository.BomRepository {
 	return &BomRepositoryImpl{}
 }
 
-func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []map[string]interface{}
 
 	// Define main table
 	mainTable := "mtr_bom"
 	mainAlias := "bom"
+	mainAliasItem := "item"
+	mainAliasUom := "uom"
 
 	// Define join tables
 	joinTables := []utils.JoinTable{
-		{Table: "mtr_item", Alias: "item", ForeignKey: "bom.item_id", ReferenceKey: "item.item_id"},
+		{Table: "mtr_item", Alias: "item", ForeignKey: mainAlias + ".item_id", ReferenceKey: "item.item_id"},
 		{Table: "mtr_uom", Alias: "uom", ForeignKey: "item.unit_of_measurement_type_id", ReferenceKey: "uom.uom_id"},
 	}
 
@@ -39,28 +42,33 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 
 	// Define key attributes to be selected
 	keyAttributes := []string{
-		"bom.is_active",
-		"bom.bom_master_id",
-		"bom.bom_master_qty",
-		"bom.bom_master_effective_date",
-		"bom.bom_master_change_number",
-		"item.item_code",
-		"item.item_name",
-		"item.item_id",
-		"uom.uom_id",
-		"uom.uom_description",
+		mainAlias + ".is_active",
+		mainAlias + ".bom_master_id",
+		mainAlias + ".bom_master_qty",
+		mainAlias + ".bom_master_effective_date",
+		mainAliasItem + ".item_code",
+		mainAliasItem + ".item_name",
+		mainAliasItem + ".item_id",
+		mainAliasUom + ".uom_id",
+		mainAliasUom + ".uom_description",
 	}
 
 	// Apply key attributes selection
 	joinQuery = joinQuery.Select(keyAttributes)
 
 	// Apply filters
-	whereQuery := utils.ApplyFilter(joinQuery, filters)
+	for _, filter := range filters {
+		if filter.ColumnField == "bom_master_id" {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" = ?", filter.ColumnValue) // Menggunakan operator "="
+		} else {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" LIKE ?", "%"+filter.ColumnValue+"%") // Menggunakan operator "LIKE"
+		}
+	}
 
 	// Execute query
-	rows, err := whereQuery.Rows()
+	rows, err := joinQuery.Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -72,12 +80,21 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 		var isActive bool
 		var bomMasterId, bomMasterQty int
 		var bomMasterEffectiveDate time.Time
-		var bomMasterChangeNumber, itemId, uomId int
+		var itemId, uomId int
 		var itemCode, itemName, uomDescription string
 
-		err := rows.Scan(&isActive, &bomMasterId, &bomMasterQty, &bomMasterEffectiveDate, &bomMasterChangeNumber, &itemCode, &itemName, &itemId, &uomId, &uomDescription)
+		err := rows.Scan(&isActive,
+			&bomMasterId,
+			&bomMasterQty,
+			&bomMasterEffectiveDate,
+			&itemCode,
+			&itemName,
+			&itemId,
+			&uomId,
+			&uomDescription)
+
 		if err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
@@ -88,7 +105,6 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 			"bom_master_id":             bomMasterId,
 			"bom_master_qty":            bomMasterQty,
 			"bom_master_effective_date": bomMasterEffectiveDate,
-			"bom_master_change_number":  bomMasterChangeNumber,
 			"item_code":                 itemCode,
 			"item_name":                 itemName,
 			"uom_description":           uomDescription,
@@ -102,7 +118,7 @@ func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.Filter
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempayloads.BomMasterRequest, *exceptionsss_test.BaseErrorResponse) {
+func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempayloads.BomMasterRequest, *exceptions.BaseErrorResponse) {
 	var response masteritempayloads.BomMasterRequest
 
 	err := tx.Table("mtr_bom").
@@ -114,17 +130,17 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int) (masteritempaylo
 		Error
 
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("Bom master not found")
-		return masteritempayloads.BomMasterRequest{}, &exceptionsss_test.BaseErrorResponse{
+		// notFoundErr := exceptions.NewNotFoundError("Bom master not found")
+		return masteritempayloads.BomMasterRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 
 	return response, nil
 }
 
-func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.BomMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayloads.BomMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	entities := masteritementities.Bom{
 		BomMasterId:            request.BomMasterId,
@@ -137,7 +153,7 @@ func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayload
 	if request.BomMasterId == 0 {
 		err := tx.Create(&entities).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			} // Mengembalikan pesan kesalahan jika terjadi error saat membuat data baru
@@ -147,7 +163,7 @@ func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayload
 			Where("bom_master_id = ?", request.BomMasterId).
 			Updates(entities).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			} // Mengembalikan pesan kesalahan jika terjadi error saat memperbarui data yang sudah ada
@@ -157,7 +173,7 @@ func (r *BomRepositoryImpl) SaveBomMaster(tx *gorm.DB, request masteritempayload
 	return true, nil // Mengembalikan true jika operasi berhasil tanpa error
 }
 
-func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.Bom
 
 	result := tx.Model(&entities).
@@ -165,31 +181,35 @@ func (r *BomRepositoryImpl) ChangeStatusBomMaster(tx *gorm.DB, id int) (bool, *e
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("bom with ID %d not found", id),
+			}
+		}
+		// Jika ada galat lain, kembalikan galat internal server
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
+	// Ubah status entitas
+	entities.IsActive = !entities.IsActive
 
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masteritementities.Bom{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
-func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.BomDetailListResponse
 
 	// Define join table
@@ -207,7 +227,7 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 	// Execute query
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -242,7 +262,7 @@ func (r *BomRepositoryImpl) GetBomDetailList(tx *gorm.DB, filters []utils.Filter
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritempayloads.BomDetailListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.BomDetailListResponse
 
 	// Execute query
@@ -256,17 +276,17 @@ func (r *BomRepositoryImpl) GetBomDetailById(tx *gorm.DB, id int) ([]masteritemp
 		Where("bom.bom_master_id = ?", id).
 		Find(&responses).Error
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("Bom master not found")
-		return []masteritempayloads.BomDetailListResponse{}, &exceptionsss_test.BaseErrorResponse{
+		// notFoundErr := exceptions.NewNotFoundError("Bom master not found")
+		return []masteritempayloads.BomDetailListResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 	// Mengembalikan response
 	return responses, nil
 }
 
-func (r *BomRepositoryImpl) GetBomDetailByIds(tx *gorm.DB, id int) ([]masteritempayloads.BomDetailListResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) GetBomDetailByIds(tx *gorm.DB, id int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.BomDetailListResponse
 
 	// Execute query
@@ -280,17 +300,17 @@ func (r *BomRepositoryImpl) GetBomDetailByIds(tx *gorm.DB, id int) ([]masteritem
 		Where("det.bom_detail_id = ?", id).
 		Find(&responses).Error
 	if err != nil {
-		notFoundErr := exceptions.NewNotFoundError("Bom detail not found")
-		return []masteritempayloads.BomDetailListResponse{}, &exceptionsss_test.BaseErrorResponse{
+		// notFoundErr := exceptions.NewNotFoundError("Bom detail not found")
+		return []masteritempayloads.BomDetailListResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        notFoundErr,
+			Err:        err,
 		}
 	}
 	// Mengembalikan response
 	return responses, nil
 }
 
-func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Tentukan nilai BomDetailSeq
 	var newBomDetailSeq int
 	if err := tx.Model(&masteritementities.BomDetail{}).
@@ -298,7 +318,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 		Select("COALESCE(MAX(bom_detail_seq), 0)").
 		Row().
 		Scan(&newBomDetailSeq); err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		} // Mengembalikan pesan kesalahan jika terjadi error saat mengambil nilai maksimum bom_detail_seq
@@ -321,7 +341,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	if request.BomDetailId == 0 {
 		err := tx.Create(&entities).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			} // Mengembalikan pesan kesalahan jika terjadi error saat membuat data baru
@@ -331,7 +351,7 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 			Where("bom_detail_id = ?", request.BomDetailId).
 			Updates(entities).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			} // Mengembalikan pesan kesalahan jika terjadi error saat memperbarui data yang sudah ada
@@ -341,52 +361,110 @@ func (r *BomRepositoryImpl) SaveBomDetail(tx *gorm.DB, request masteritempayload
 	return true, nil // Mengembalikan true jika operasi berhasil tanpa error
 }
 
-func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
-	var responses []masteritempayloads.BomItemLookup
+func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var responses []map[string]interface{}
 
-	// Define table struct
-	tableStruct := masteritempayloads.BomItemLookup{}
-	// Define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	// Define main table
+	mainTable := "mtr_item"
+	mainAlias := "item"
+	mainAliasClass := "item_class"
+	mainAliasUom := "uom"
+
+	// Define join tables
+	joinTables := []utils.JoinTable{
+		{Table: "mtr_item_class", Alias: "item_class", ForeignKey: mainAlias + ".item_class_id", ReferenceKey: mainAliasClass + ".item_class_id"},
+		{Table: "mtr_uom", Alias: "uom", ForeignKey: mainAlias + ".unit_of_measurement_selling_id", ReferenceKey: mainAliasUom + ".uom_id"},
+	}
+
+	// Create join query
+	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+
+	// Define key attributes to be selected
+	keyAttributes := []string{
+		mainAlias + ".is_active",
+		mainAlias + ".item_id",
+		mainAlias + ".item_code",
+		mainAlias + ".item_name",
+		mainAlias + ".item_type",
+		mainAlias + ".item_group_id",
+		mainAliasClass + ".item_class_id",
+		mainAliasClass + ".item_class_code",
+		mainAliasUom + ".uom_id",
+		mainAliasUom + ".uom_description",
+	}
+
+	// Apply key attributes selection
+	joinQuery = joinQuery.Select(keyAttributes)
 
 	// Apply filters
-	whereQuery := utils.ApplyFilter(joinTable, filters)
+	for _, filter := range filters {
+		if filter.ColumnField == "item_id" {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" = ?", filter.ColumnValue)
+		} else {
+			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" LIKE ?", "%"+filter.ColumnValue+"%")
+		}
+	}
 
 	// Execute query
-	rows, err := whereQuery.Find(&responses).Rows()
+	rows, err := joinQuery.Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 	defer rows.Close()
 
-	// Convert responses to maps
-	responseMaps := make([]map[string]interface{}, 0)
-	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"item_code":       response.ItemCode,
-			"item_name":       response.ItemName,
-			"item_type":       response.ItemType,
-			"item_group_code": response.ItemGroupId,
-			"item_class_code": response.ItemClassCode,
-			"is_active":       response.IsActive,
+	// Fetch data and append to response slice
+	for rows.Next() {
+		var isActive bool
+		var itemId, itemGroupId, itemClassId, uomId int
+		var itemCode, itemName, itemType, itemClassCode, uomDescription string
+
+		err := rows.Scan(&isActive,
+			&itemId,
+			&itemCode,
+			&itemName,
+			&itemType,
+			&itemGroupId,
+			&itemClassId,
+			&itemClassCode,
+			&uomId,
+			&uomDescription)
+
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
 		}
-		responseMaps = append(responseMaps, responseMap)
+
+		responseMap := map[string]interface{}{
+			"is_active":                isActive,
+			"item_id":                  itemId,
+			"item_code":                itemCode,
+			"item_name":                itemName,
+			"item_type":                itemType,
+			"item_group_id":            itemGroupId,
+			"item_class_id":            itemClassId,
+			"item_class_code":          itemClassCode,
+			"unit_of_measurement_id":   uomId,
+			"unit_of_measurement_code": uomDescription,
+		}
+		responses = append(responses, responseMap)
 	}
 
 	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responseMaps, &pages)
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *BomRepositoryImpl) DeleteByIds(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.BomDetail
 
 	if err := tx.Delete(&entities, ids).Error; err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}

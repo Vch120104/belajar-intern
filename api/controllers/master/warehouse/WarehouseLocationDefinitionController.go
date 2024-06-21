@@ -1,10 +1,12 @@
 package masterwarehousecontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"encoding/json"
+	"fmt"
 
 	"strconv"
 
@@ -24,9 +26,11 @@ type WarehouseLocationDefinitionControllerImpl struct {
 }
 
 type WarehouseLocationDefinitionController interface {
+	GetByLevel(writer http.ResponseWriter, request *http.Request)
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
+	SaveData(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	PopupWarehouseLocationLevel(writer http.ResponseWriter, request *http.Request)
 }
@@ -52,7 +56,7 @@ func NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService
 // @Param warehouse_location_detail_name query string false "Warehouse Location Detail Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location-definition/ [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -75,11 +79,34 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 
 	paginatedData, totalPages, totalRows, err := r.WarehouseLocationDefinitionService.GetAll(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// @Summary Get Warehouse Location By Level Id
+// @Description Get Warehouse Location By Level Id
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_definition_level_id path int true "Warehouse Location Definition Level ID"
+// @Param warehouse_location_definition_level_code path string true "Warehouse Location Definition ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_level_code} [get]
+func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.ResponseWriter, request *http.Request) {
+	warehouseLocationDefinitionLevelID, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_level_id"))
+	warehouseLocationDefinitionID := chi.URLParam(request, "warehouse_location_definition_level_code") // Menggunakan nilai string langsung
+
+	get, err := r.WarehouseLocationDefinitionService.GetByLevel(warehouseLocationDefinitionLevelID, warehouseLocationDefinitionID)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Location By Id
@@ -89,8 +116,8 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Tags Master : Warehouse Location Definition
 // @Param warehouse_location_definition_id path int true "warehouse_location_definition_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/by-id/{warehouse_location_definition_id} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
@@ -98,7 +125,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.Response
 	get, err := r.WarehouseLocationDefinitionService.GetById(WarehouseLocationDefinitionId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
@@ -112,7 +139,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.Response
 // @Tags Master : Warehouse Location Definition
 // @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location-definition/ [post]
 func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
@@ -128,11 +155,60 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 	}
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 
+}
+
+// @Summary Save Data Warehouse Location
+// @Description Save Data Warehouse Location
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Location Definition
+// @Param warehouse_location_definition_id path int true "Warehouse Location ID"
+// @param reqBody body masterwarehousepayloads.WarehouseLocationDefinitionResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-location-definition/{warehouse_location_id} [put]
+func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.ResponseWriter, request *http.Request) {
+	warehouseLocationID := chi.URLParam(request, "warehouse_location_definition_id")
+	id, err := strconv.Atoi(warehouseLocationID)
+	if err != nil {
+		errResponse := &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid warehouse_location_id"),
+		}
+		exceptions.NewBadRequestException(writer, request, errResponse)
+		return
+	}
+
+	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
+	if err := json.NewDecoder(request.Body).Decode(&formRequest); err != nil {
+		errResponse := &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("invalid request body"),
+		}
+		exceptions.NewBadRequestException(writer, request, errResponse)
+		return
+	}
+	formRequest.WarehouseLocationDefinitionId = id
+
+	save, saveErr := r.WarehouseLocationDefinitionService.SaveData(formRequest)
+	if saveErr != nil {
+		exceptions.NewNotFoundException(writer, request, saveErr)
+		return
+	}
+
+	var message string
+	if id == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
 }
 
 // @Summary Change Warehouse Location Status By Id
@@ -142,19 +218,24 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 // @Tags Master : Warehouse Location Definition
 // @Param warehouse_location_definition_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [patch]
 func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
 	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
 
-	change_status, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
-
+	entity, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
+
+	responseData := map[string]interface{}{
+		"is_active":                        entity.IsActive,
+		"warehouse_location_definition_id": entity.WarehouseLocationDefinitionId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Updated successfully", http.StatusOK)
 
 }
 
@@ -169,7 +250,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.Res
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location-definition/popup-level [get]
 func (r *WarehouseLocationDefinitionControllerImpl) PopupWarehouseLocationLevel(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -190,7 +271,7 @@ func (r *WarehouseLocationDefinitionControllerImpl) PopupWarehouseLocationLevel(
 
 	paginatedData, totalPages, totalRows, err := r.WarehouseLocationDefinitionService.PopupWarehouseLocationLevel(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

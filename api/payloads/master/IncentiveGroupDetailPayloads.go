@@ -17,3 +17,8 @@ type IncentiveGroupDetailRequest struct {
 	TargetAmount           float64 `json:"target_amount"`
 	TargetPercent          float64 `json:"target_percent"`
 }
+
+type UpdateIncentiveGroupDetailRequest struct {
+	TargetAmount  float64 `json:"target_amount"`
+	TargetPercent float64 `json:"target_percent"`
+}

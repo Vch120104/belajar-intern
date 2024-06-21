@@ -5,10 +5,9 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
-	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -27,9 +26,12 @@ func ItemClassRouter(
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
-
+	//test
+	router.Get("/drop-down", itemClassController.GetItemClassDropdown)
+	router.Get("/drop-down/by-group-id/{item_group_id}", itemClassController.GetItemClassDropDownbyGroupId)
 	router.Get("/", itemClassController.GetAllItemClass)
-	router.Get("/pop-up", itemClassController.GetAllItemClassLookup)
+	router.Get("/by-code/{item_class_code}", itemClassController.GetItemClassByCode)
+	router.Get("/{item_class_id}", itemClassController.GetItemClassbyId)
 	router.Post("/", itemClassController.SaveItemClass)
 	router.Patch("/{item_class_id}", itemClassController.ChangeStatusItemClass)
 
@@ -47,6 +49,7 @@ func UnitOfMeasurementRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", unitOfMeasurementController.GetAllUnitOfMeasurement)
+	router.Get("/{uom_id}", unitOfMeasurementController.GetUnitOfMeasurementById)
 	router.Get("/drop-down", unitOfMeasurementController.GetAllUnitOfMeasurementIsActive)
 	router.Get("/code/{uom_code}", unitOfMeasurementController.GetUnitOfMeasurementByCode)
 	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
@@ -84,6 +87,7 @@ func MarkupMasterRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", markupMasterController.GetMarkupMasterList)
+	router.Get("/{markup_master_id}", markupMasterController.GetMarkupMasterByID)
 	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
 	router.Get("/dropdown", markupMasterController.GetAllMarkupMasterIsActive)
 	router.Post("/", markupMasterController.SaveMarkupMaster)
@@ -104,6 +108,7 @@ func MarkupRateRouter(
 
 	router.Get("/", markupRateController.GetAllMarkupRate)
 	router.Get("/{markup_rate_id}", markupRateController.GetMarkupRateByID)
+	router.Get("/markup-master/{markup_master_id}/order-type/{order_type_id}", markupRateController.GetMarkupRateByMarkupMasterAndOrderType)
 	router.Post("/", markupRateController.SaveMarkupRate)
 	router.Patch("/{markup_rate_id}", markupRateController.ChangeStatusMarkupRate)
 
@@ -115,14 +120,16 @@ func ItemLevelRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
-	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLevelController.GetAll)
 	router.Get("/{item_level_id}", itemLevelController.GetById)
-	router.Get("/drop-down/{item_level}", itemLevelController.GetItemLevelDropDown)
+
+	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
+	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
+
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
@@ -140,13 +147,18 @@ func ItemRouter(
 	router.Use(middlewares.MetricsMiddleware)
 	router.Get("/", itemController.GetAllItem)
 	router.Get("/{item_id}", itemController.GetItembyId)
-	router.Get("/pop-up", itemController.GetAllItemLookup)
+	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
+
+	router.Get("/detail", itemController.GetAllItemDetail)
+	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
+	router.Post("/{item_id}/detail", itemController.AddItemDetail)
+	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 
 	return router
 }
@@ -167,10 +179,16 @@ func ItemLocationRouter(
 	router.Post("/", ItemLocationController.SaveItemLocation)
 
 	//detail
-	router.Get("/detail/all", ItemLocationController.GetAllItemLocationDetail)
+	router.Get("/detail", ItemLocationController.GetAllItemLocationDetail)
 	router.Get("/popup-location", ItemLocationController.PopupItemLocation)
 	router.Post("/detail", ItemLocationController.AddItemLocation)
 	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
+
+	// new
+	router.Get("/new/get-all/", ItemLocationController.GetAllItemLoc)
+	router.Get("/new/get-by-id/{item_location_id}", ItemLocationController.GetByIdItemLoc)
+	router.Post("/new/save", ItemLocationController.SaveItemLoc)
+	router.Delete("/new/delete/{item_location_id}", ItemLocationController.DeleteItemLoc)
 
 	return router
 }
@@ -192,8 +210,8 @@ func ItemSubstituteRouter(
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
-	router.Patch("/detail/activate/by-id/", itemSubstituteController.ActivateItemSubstituteDetail)
-	router.Patch("/detail/deactivate/by-id/", itemSubstituteController.DeactivateItemSubstituteDetail)
+	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
+	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 
 	return router
 }
@@ -211,6 +229,7 @@ func ItemPackageRouter(
 	router.Get("/", ItemPackageController.GetAllItemPackage)
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
+	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
 
 	return router
 }
@@ -226,6 +245,10 @@ func ItemPackageDetailRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/by-package-id/{item_package_id}", ItemPackageDetailController.GetItemPackageDetailByItemPackageId)
+	router.Get("/{item_package_detail_id}", ItemPackageDetailController.GetItemPackageDetailById)
+	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
+	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
+	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetail)
 
 	return router
 }
@@ -269,12 +292,31 @@ func MovingCodeRouter(
 
 	router.Post("/", MovingCodeController.CreateMovingCode)
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
-	router.Patch("/update", MovingCodeController.UpdateMovingCode)
+	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
 	//router.PanicHandler = exceptions.ErrorHandler
 
+	return router
+}
+
+func IncentiveGroupRouter(
+	incentiveGroupController mastercontroller.IncentiveGroupController,
+) chi.Router {
+	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
+	router.Get("/is-active", incentiveGroupController.GetAllIncentiveGroupIsActive)
+	router.Get("/dropdown", incentiveGroupController.GetAllIncentiveGroupDropDown)
+	router.Get("/by-id/{incentive_group_id}", incentiveGroupController.GetIncentiveGroupById)
+	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
+	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
+	router.Put("/{incentive_group_id}", incentiveGroupController.UpdateIncentiveGroup)
 	return router
 }
 
@@ -343,7 +385,8 @@ func PurchasePriceRouter(
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
-	router.Get("/detail/all", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
+	router.Get("/{purchase_price_id}/detail", PurchasePriceController.GetPurchasePriceDetailById)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
 
@@ -365,6 +408,7 @@ func LandedCostMasterRouter(
 	router.Post("/", LandedCostMaster.SaveLandedCostMaster)
 	router.Patch("/activate/", LandedCostMaster.ActivateLandedCostMaster)
 	router.Patch("/deactivate/", LandedCostMaster.DeactivateLandedCostmaster)
+	router.Put("/{landed_cost_id}", LandedCostMaster.UpdateLandedCostMaster)
 
 	return router
 }
@@ -459,6 +503,8 @@ func OperationCodeRouter(
 
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
+	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
+	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 
@@ -504,7 +550,10 @@ func WarehouseGroupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseGroupController.GetAllWarehouseGroup)
-	router.Get("/by-id/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
+	router.Get("/by-code/{warehouse_group_code}", warehouseGroupController.GetbyGroupCode)
+	router.Get("/{warehouse_group_id}", warehouseGroupController.GetByIdWarehouseGroup)
+	router.Get("/drop-down/{warehouse_group_id}", warehouseGroupController.GetWarehouseGroupDropdownbyId)
+	router.Get("/drop-down", warehouseGroupController.GetWarehouseGroupDropDown)
 	router.Post("/", warehouseGroupController.SaveWarehouseGroup)
 	router.Patch("/{warehouse_group_id}", warehouseGroupController.ChangeStatusWarehouseGroup)
 
@@ -522,10 +571,12 @@ func WarehouseLocationDefinitionRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", WarehouseLocationDefinitionController.GetAll)
+	router.Get("/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetByLevel)
 	router.Get("/by-id/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.GetById)
-	router.Post("/", WarehouseLocationDefinitionController.Save)
-	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 	router.Get("/popup-level", WarehouseLocationDefinitionController.PopupWarehouseLocationLevel)
+	router.Post("/", WarehouseLocationDefinitionController.Save)
+	router.Put("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.SaveData)
+	router.Patch("/{warehouse_location_definition_id}", WarehouseLocationDefinitionController.ChangeStatus)
 
 	return router
 }
@@ -541,10 +592,12 @@ func WarehouseMasterRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
-	router.Get("/by-id/{warehouse_id}", warehouseMasterController.GetById)
+	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
-	router.Get("/drop-down", warehouseMasterController.GetAllIsActive)
+	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
+	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
+	router.Get("/drop-down/by-warehouse-group-id/{warehouse_group_id}", warehouseMasterController.DropdownbyGroupId)
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
@@ -602,10 +655,18 @@ func AgreementRouter(
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
+	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
+	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
+
+	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
+	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
+
+	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
+	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
 
@@ -713,96 +774,6 @@ func WarrantyFreeServiceRouter(
 	return router
 }
 
-func DiscountRouter(
-	discountController mastercontroller.DiscountController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/", discountController.GetAllDiscount)
-	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code", discountController.GetDiscountByCode)
-	router.Get("/by-id/{id}", discountController.GetDiscountById)
-	router.Post("/", discountController.SaveDiscount)
-	router.Patch("/{id}", discountController.ChangeStatusDiscount)
-
-	return router
-}
-
-func IncentiveGroupRouter(
-	incentiveGroupController mastercontroller.IncentiveGroupController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/", incentiveGroupController.GetAllIncentiveGroup)
-	router.Get("/drop-down", incentiveGroupController.GetAllIncentiveGroupIsActive)
-	router.Get("/by-id/{id}", incentiveGroupController.GetIncentiveGroupById)
-	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
-	router.Patch("/{id}", incentiveGroupController.ChangeStatusIncentiveGroup)
-
-	return router
-}
-
-func IncentiveGroupDetailRouter(
-	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	// Apply the CORS middleware to all routes
-	router.Use(middlewares.SetupCorsMiddleware)
-	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
-
-	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
-	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
-	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
-
-	return router
-}
-
-func DeductionRouter(
-	DeductionController mastercontroller.DeductionController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	router.Get("/", DeductionController.GetAllDeductionList)
-	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
-	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
-	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
-	router.Post("/detail", DeductionController.SaveDeductionDetail)
-	router.Post("/", DeductionController.SaveDeductionList)
-	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
-
-	return router
-}
-
-func WorkOrderRouter(
-	WorkOrderController transactionworkshopcontroller.WorkOrderController,
-) chi.Router {
-	router := chi.NewRouter()
-
-	router.Get("/search", WorkOrderController.GetAll)
-	router.Get("/normal", WorkOrderController.New)
-	router.Get("/booking", WorkOrderController.NewBooking)
-	router.Get("/affiliated", WorkOrderController.NewAffiliated)
-	router.Get("/find/{work_order_system_number}", WorkOrderController.GetById)
-	router.Put("/{id}", WorkOrderController.Save)
-	router.Post("/submit", WorkOrderController.Submit)
-	router.Delete("/{id}", WorkOrderController.Void)
-	router.Put("/close/{id}", WorkOrderController.CloseOrder)
-
-	return router
-}
-
 func PackageMasterRouter(
 	PackageMasterController mastercontroller.PackageMasterController,
 ) chi.Router {
@@ -824,45 +795,195 @@ func PackageMasterRouter(
 	return router
 }
 
+func DiscountRouter(
+	discountController mastercontroller.DiscountController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", discountController.GetAllDiscount)
+	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
+	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-id/{id}", discountController.GetDiscountById)
+	router.Post("/", discountController.SaveDiscount)
+	router.Patch("/{id}", discountController.ChangeStatusDiscount)
+
+	return router
+}
+
+func CampaignMasterRouter(
+	campaignmastercontroller mastercontroller.CampaignMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+	//campaign master header
+	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
+	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
+	router.Get("/history", campaignmastercontroller.GetAllCampaignMasterCodeAndName)
+	router.Post("/", campaignmastercontroller.SaveCampaignMaster)
+	router.Patch("/{campaign_id}", campaignmastercontroller.ChangeStatusCampaignMaster)
+
+	//campaign master detail
+	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
+	router.Patch("/detail/deactivate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
+	router.Patch("/detail/activate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
+	router.Put("/detail/update/{campaign_detail_id}", campaignmastercontroller.UpdateCampaignMasterDetail)
+
+	//from package master
+	router.Get("/package", campaignmastercontroller.GetAllPackageMasterToCopy)
+	// router.Get("/package-copy/{package_id}/{campaign_id}",campaignmastercontroller.SelectFromPackageMaster)
+
+	return router
+}
+
+func IncentiveGroupDetailRouter(
+	incentiveGroupDetailController mastercontroller.IncentiveGroupDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{id}", incentiveGroupDetailController.GetAllIncentiveGroupDetail)
+	router.Get("/by-id/{incentive_group_detail_id}", incentiveGroupDetailController.GetIncentiveGroupDetailById)
+	router.Post("/", incentiveGroupDetailController.SaveIncentiveGroupDetail)
+	router.Put("/{incentive_group_detail_id}", incentiveGroupDetailController.UpdateIncentiveGroupDetail)
+
+	return router
+}
+
+func DeductionRouter(
+	DeductionController mastercontroller.DeductionController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", DeductionController.GetAllDeductionList)
+	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
+	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
+	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
+	router.Post("/detail", DeductionController.SaveDeductionDetail)
+	router.Post("/", DeductionController.SaveDeductionList)
+	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
+
+	return router
+}
+
+func BookingEstimationRouter(
+	BookingEstimationController transactionworkshopcontroller.BookingEstimationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", BookingEstimationController.GetAll)
+	router.Get("/normal", BookingEstimationController.New)
+	router.Get("/find/{work_order_system_number}", BookingEstimationController.GetById)
+	router.Put("/{id}", BookingEstimationController.Save)
+	router.Post("/submit", BookingEstimationController.Submit)
+	router.Delete("/{id}", BookingEstimationController.Void)
+	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
+
+	return router
+}
+
+func WorkOrderRouter(
+	WorkOrderController transactionworkshopcontroller.WorkOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	//add trx normal
+	router.Get("/", WorkOrderController.GetAll)
+	router.Get("/normal/{work_order_system_number}", WorkOrderController.GetById)
+	router.Post("/normal", WorkOrderController.New)
+	router.Post("/normal/{work_order_system_number}/submit", WorkOrderController.Submit)
+	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
+	router.Delete("/normal/{work_order_system_number}", WorkOrderController.Void)
+	router.Patch("/normal/{work_order_system_number}/close", WorkOrderController.CloseOrder)
+
+	//add post trx sub
+	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
+	router.Get("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.GetRequestById)
+	router.Post("/normal/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
+	router.Put("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.UpdateRequest)
+	router.Delete("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
+
+	router.Get("/normal/vehicleservice", WorkOrderController.GetAllVehicleService)
+	router.Get("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.GetVehicleServiceById)
+	router.Put("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.UpdateVehicleService)
+	router.Post("/normal/{work_order_system_number}/vehicleservice", WorkOrderController.AddVehicleService)
+	router.Delete("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
+
+	//add trx detail
+	router.Get("/normal/{work_order_system_number}/detail", WorkOrderController.GetAllDetailWorkOrder)
+	router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailByIdWorkOrder)
+	router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetailWorkOrder)
+	router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetailWorkOrder)
+	router.Delete("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.DeleteDetailWorkOrder)
+
+	//new support function form
+	router.Get("/dropdown-status", WorkOrderController.NewStatus)
+	router.Get("/dropdown-type", WorkOrderController.NewType)
+	router.Get("/dropdown-bill", WorkOrderController.NewBill)
+	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
+	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
+	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
+	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
+	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
+
+	router.Post("/normalbooking", WorkOrderController.NewBooking)
+	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+
+	return router
+}
+
+func SupplySlipRouter(
+	SupplySlipController transactionsparepartcontroller.SupplySlipController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
+
+	return router
+}
+
+func SalesOrderRouter(
+	SalesOrderController transactionsparepartcontroller.SalesOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
+
+	return router
+}
+
 func SwaggerRouter() chi.Router {
 	router := chi.NewRouter()
 
 	// Izinkan akses ke Swagger di /aftersales-service/docs
 	router.Get("/aftersales-service/docs/v1/*", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server aktual Anda
+		httpSwagger.URL("/swagger/v1/doc.json"), // Ubah dengan alamat server
 	))
 
 	return router
 }
-
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
-
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
-
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }
-
-// func SwaggerRouter() chi.Router {
-// 	router := chi.NewRouter()
-// 	router.Get("/swagger/*any", adaptHandler(swaggerHandler()))
-// 	return router
-// }
-
-// func adaptHandler(h http.Handler) chi.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-// 		h.ServeHTTP(w, r)
-// 	}
-// }
-
-// func swaggerHandler() http.HandlerFunc {
-// 	return httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json"))
-// }

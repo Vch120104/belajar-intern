@@ -2,7 +2,7 @@ package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
@@ -21,7 +21,7 @@ func StartOperationCodeRepositoryImpl() masteroperationrepository.OperationCodeR
 	return &OperationCodeRepositoryImpl{}
 }
 
-func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB,filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteroperationentities.OperationCode{}
 	//define base model
 	baseModelQuery := tx.Model(&entities)
@@ -29,13 +29,13 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB,filterCond
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 	if len(entities) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -47,7 +47,7 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB,filterCond
 	return pages, nil
 }
 
-func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationCodeResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{}
 	response := masteroperationpayloads.OperationCodeResponse{}
 
@@ -59,9 +59,9 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) 
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -69,9 +69,32 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) 
 	return response, nil
 }
 
-func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req masteroperationpayloads.OperationCodeSave) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
+	entities := masteroperationentities.OperationCode{}
+	response := masteroperationpayloads.OperationCodeResponse{}
+
+	rows, err := tx.Model(&entities).
+		Where(masteroperationentities.OperationCode{
+			OperationCode: code,
+		}).
+		First(&response).
+		Rows()
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+	return response, nil
+}
+
+func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req masteroperationpayloads.OperationCodeSave) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{
 		IsActive:                req.IsActive,
+		OperationId:             req.OperationId,
 		OperationCode:           req.OperationCode,
 		OperationName:           req.OperationName,
 		OperationUsingIncentive: req.OperationUsingIncentive,
@@ -81,23 +104,23 @@ func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req mastero
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	if len(req.OperationCode) > 10 || len(req.OperationCode)>200 {
+	if len(req.OperationCode) > 10 || len(req.OperationCode) > 200 {
 		// errMessage := "Operation Group Code max 2 characters"
 
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 
 			Err: errors.New(utils.BadRequestError),
@@ -106,19 +129,19 @@ func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req mastero
 	return true, nil
 }
 
-func (r *OperationCodeRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteroperationentities.OperationCode
 
 	result := tx.Model(&entities).
 		Where("operation_id = ?", id).
 		First(&entities)
 
-		if result.Error != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        result.Error,
-			}
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
 		}
+	}
 
 	if entities.IsActive {
 		entities.IsActive = false
@@ -129,7 +152,7 @@ func (r *OperationCodeRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

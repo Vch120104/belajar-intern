@@ -1,12 +1,13 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritemlevelpayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	masteritemlevelservice "after-sales/api/services/master/item"
+	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -26,8 +27,21 @@ func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository
 	}
 }
 
+// GetItemLevelLookUp implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.structItemLevelRepo.GetItemLevelLookUp(tx, filter, pages, itemClassId)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
+}
+
 // GetItemLevelDropDown implements masteritemservice.ItemLevelService.
-func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.structItemLevelRepo.GetItemLevelDropDown(tx, itemLevel)
@@ -39,7 +53,7 @@ func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteri
 	return get, nil
 }
 
-func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 
@@ -60,7 +74,7 @@ func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLeve
 	return save, nil
 }
 
-func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.structItemLevelRepo.GetById(tx, itemLevelId)
@@ -72,10 +86,10 @@ func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads
 	return get, nil
 }
 
-func (s *ItemLevelServiceImpl) GetAll(request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	get, err := s.structItemLevelRepo.GetAll(tx, request, pages)
+	get, err := s.structItemLevelRepo.GetAll(tx, filter, pages)
 
 	if err != nil {
 		return get, err
@@ -84,7 +98,7 @@ func (s *ItemLevelServiceImpl) GetAll(request masteritemlevelpayloads.GetAllItem
 	return get, nil
 }
 
-func (s *ItemLevelServiceImpl) ChangeStatus(itemLevelId int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) ChangeStatus(itemLevelId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 

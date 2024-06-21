@@ -1,5 +1,7 @@
 package masterwarehouseentities
 
+import masteritementities "after-sales/api/entities/master/item"
+
 const TableNameWarehouseMaster = "mtr_warehouse_master"
 
 type WarehouseMaster struct {
@@ -8,6 +10,8 @@ type WarehouseMaster struct {
 	WarehouseKaroseri             *bool  `gorm:"column:warehouse_karoseri;default:false;not null" json:"warehouse_karoseri"`
 	WarehouseNegativeStock        *bool  `gorm:"column:warehouse_negative_stock;default:false;not null" json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator *bool  `gorm:"column:warehouse_replishment_indicator;default:false;not null" json:"warehouse_replishment_indicator"`
+	WarehouseGroupId              int    `gorm:"column:warehouse_group_id;size:30" json:"warehouse_group_id"`
+	WarehouseGroup                *WarehouseGroup
 	WarehouseContact              string `gorm:"column:warehouse_contact;not null;type:varchar(100)" json:"warehouse_contact"`
 	WarehouseCode                 string `gorm:"column:warehouse_code;not null;type:varchar(5);unique" json:"warehouse_code"`
 	WarehouseId                   int    `gorm:"column:warehouse_id;not null;primaryKey" json:"warehouse_id"`
@@ -20,6 +24,7 @@ type WarehouseMaster struct {
 	WarehouseName                 string `gorm:"column:warehouse_name;not null;type:varchar(100)" json:"warehouse_name"`
 	WarehouseDetailName           string `gorm:"column:warehouse_detail_name;not null;type:varchar(100)" json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `gorm:"column:warehouse_transit_default;not null;type:varchar(5)" json:"warehouse_transit_default"`
+	ItemLocation                  masteritementities.ItemLocation `gorm:"foreignkey:warehouse_id;references:warehouse_id"`
 }
 
 func (*WarehouseMaster) TableName() string {
