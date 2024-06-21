@@ -148,6 +148,7 @@ type AddressResponse struct {
 	AddressStreet1 string `json:"address_street_1"`
 	AddressStreet2 string `json:"address_street_2"`
 	AddressStreet3 string `json:"address_street_3"`
+	VillageId      int    `json:"village_id"`
 }
 
 type BrandResponse struct {

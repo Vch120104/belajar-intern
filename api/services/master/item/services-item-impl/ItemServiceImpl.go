@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -155,30 +154,7 @@ func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any,
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-	idString := strconv.Itoa(Id)
-	cacheKey := generateCacheKeyId(idString)
-
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-
-		var result map[string]any
-		if unmarshalErr := json.Unmarshal([]byte(cachedData), &result); unmarshalErr != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        unmarshalErr,
-			}
-		}
-		return result, nil
-	} else if err != redis.Nil {
-
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
+func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, repoErr := s.itemRepo.GetItemById(tx, Id)
@@ -226,6 +202,7 @@ func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *e
 func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+	fmt.Print("sini?")
 
 	if req.ItemId != 0 {
 		_, err := s.itemRepo.GetItemById(tx, req.ItemId)

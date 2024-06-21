@@ -273,7 +273,7 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 
 	create, err := r.itemservice.SaveItem(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	if formRequest.ItemId == 0 {
