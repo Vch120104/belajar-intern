@@ -11,7 +11,7 @@ import (
 
 type WarehouseMasterRepository interface {
 	Save(*gorm.DB, masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse)
-	GetById(*gorm.DB, int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse)
+	GetById(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetAll(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllIsActive(*gorm.DB) ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetWarehouseMasterByCode(*gorm.DB, string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
