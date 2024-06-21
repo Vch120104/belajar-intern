@@ -8,6 +8,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -69,7 +70,7 @@ func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any,
 	return results, nil
 }
 
-func (s *ItemServiceImpl) GetItemById(Id int) (map[string]any, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemById(tx, Id)
@@ -105,6 +106,7 @@ func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *e
 func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
+	fmt.Print("sini?")
 
 	if req.ItemId != 0 {
 		_, err := s.itemRepo.GetItemById(tx, req.ItemId)
@@ -177,43 +179,42 @@ func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptions
 	return nil
 }
 
-func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRequest)(bool,*exceptions.BaseErrorResponse){
-	tx :=s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,err:= s.itemRepo.UpdateItem(tx,id,req)
-	if err != nil {
-		return result,err
-	}
-	return result,nil
-}
-
-func (s *ItemServiceImpl) UpdateItemDetail(id int, req masteritempayloads.ItemDetailUpdateRequest)(bool,*exceptions.BaseErrorResponse){
-	tx:=s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,err:=s.itemRepo.UpdateItemDetail(tx,id,req)
-	if err !=nil{
-		return result,err
-	}
-	return result,nil
-}
-
-func (s *ItemServiceImpl) GetPrincipleBrandParent(code string)([]masteritempayloads.PrincipleBrandDropdownDescription,*exceptions.BaseErrorResponse){
+func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err:=s.itemRepo.GetPrincipleBrandParent(tx,code)
-	if err != nil{
-		return result,err
+	result, err := s.itemRepo.UpdateItem(tx, id, req)
+	if err != nil {
+		return result, err
 	}
-	return result,nil
+	return result, nil
 }
 
-
-func (s *ItemServiceImpl)GetPrincipleBrandDropdown()([]masteritempayloads.PrincipleBrandDropdownResponse,*exceptions.BaseErrorResponse){
-	tx:=s.DB.Begin()
+func (s *ItemServiceImpl) UpdateItemDetail(id int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	result,err:=s.itemRepo.GetPrincipleBrandDropdown(tx)
-	if err != nil{
-		return result,err
+	result, err := s.itemRepo.UpdateItemDetail(tx, id, req)
+	if err != nil {
+		return result, err
 	}
-	return result,nil
+	return result, nil
+}
+
+func (s *ItemServiceImpl) GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetPrincipleBrandParent(tx, code)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *ItemServiceImpl) GetPrincipleBrandDropdown() ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, err := s.itemRepo.GetPrincipleBrandDropdown(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
 }
