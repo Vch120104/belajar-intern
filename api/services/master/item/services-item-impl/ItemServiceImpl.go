@@ -157,22 +157,10 @@ func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any,
 func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	result, repoErr := s.itemRepo.GetItemById(tx, Id)
-	if repoErr != nil {
-		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
-		return nil, errorResponse
+	result, err := s.itemRepo.GetItemById(tx, Id)
+	if err != nil {
+		return result, err
 	}
-
-	cacheData, marshalErr := json.Marshal(result)
-	if marshalErr != nil {
-		fmt.Println("Failed to marshal results for caching:", marshalErr)
-	} else {
-		setErr := s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration).Err()
-		if setErr != nil {
-			fmt.Println("Failed to set cache:", setErr)
-		}
-	}
-
 	return result, nil
 }
 
