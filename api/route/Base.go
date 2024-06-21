@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	_ "after-sales/docs"
+
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -924,10 +926,10 @@ func WorkOrderRouter(
 	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal/{work_order_system_number}", WorkOrderController.GetById)
 	router.Post("/normal", WorkOrderController.New)
-	router.Post("/normal/{work_order_system_number}/submit", WorkOrderController.Submit)
+	router.Post("/normal/submit/{work_order_system_number}", WorkOrderController.Submit)
 	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
-	router.Delete("/normal/{work_order_system_number}", WorkOrderController.Void)
-	router.Patch("/normal/{work_order_system_number}/close", WorkOrderController.CloseOrder)
+	router.Delete("/normal/void/{work_order_system_number}", WorkOrderController.Void)
+	router.Patch("/normal/close/{work_order_system_number}", WorkOrderController.CloseOrder)
 
 	//add post trx sub
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
@@ -975,12 +977,13 @@ func WorkOrderRouter(
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 
-	router.Get("/normalbooking", WorkOrderController.GetAllBooking)
-	router.Get("/normalbooking/{work_order_system_number}", WorkOrderController.GetBookingById)
-	router.Post("/normalbooking", WorkOrderController.NewBooking)
-	router.Put("/normalbooking/{work_order_system_number}", WorkOrderController.SaveBooking)
-	router.Delete("/normalbooking/{work_order_system_number}", WorkOrderController.VoidBooking)
-	router.Patch("/normalbooking/{work_order_system_number}/close", WorkOrderController.CloseBooking)
+	router.Get("/booking", WorkOrderController.GetAllBooking)
+	router.Get("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.GetBookingById)
+	router.Post("/booking", WorkOrderController.NewBooking)
+	router.Put("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.SaveBooking)
+	router.Delete("/booking/void/{work_order_system_number}/{booking_system_number}", WorkOrderController.VoidBooking)
+	router.Post("/booking/submit/{work_order_system_number}", WorkOrderController.SubmitBooking)
+	router.Patch("/booking/close/{work_order_system_number}/{booking_system_number}", WorkOrderController.CloseBooking)
 
 	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
 	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)

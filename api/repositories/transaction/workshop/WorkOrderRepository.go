@@ -64,11 +64,11 @@ type WorkOrderRepository interface {
 	AddDetailWorkOrder(*gorm.DB, int, transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrder(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 
-	NewBooking(*gorm.DB, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	NewBooking(*gorm.DB, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAllBooking(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetBookingById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse)
 	SaveBooking(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
-	SubmitBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
+	SubmitBooking(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse)
 	VoidBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	CloseBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 

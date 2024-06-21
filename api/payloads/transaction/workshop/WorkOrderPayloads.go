@@ -320,6 +320,7 @@ type WorkOrderBookingRequest struct {
 	ContactVia            string `json:"contact_via"`
 
 	// Insurance details
+	WorkOrderInsuranceCheck       bool      `json:"insurance_check"`
 	WorkOrderInsurancePolicyNo    string    `json:"insurance_policy_no"`
 	WorkOrderInsuranceExpiredDate time.Time `json:"insurance_expired_date"`
 	WorkOrderInsuranceClaimNo     string    `json:"insurance_claim_no"`

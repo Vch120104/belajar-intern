@@ -789,13 +789,11 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 }
 
 func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
-
 	cacheKey := generateCacheKeyId("work_order_detail_id", idwosn, idwos)
 
 	ctx := context.Background()
 	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
 	if err == nil {
-
 		var result transactionworkshoppayloads.WorkOrderDetailRequest
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
 			return result, &exceptions.BaseErrorResponse{
@@ -803,10 +801,8 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (tr
 				Err:        err,
 			}
 		}
-
 		return result, nil
 	} else if err != redis.Nil {
-
 		return transactionworkshoppayloads.WorkOrderDetailRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -818,6 +814,10 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (tr
 
 	result, repoErr := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, idwosn, idwos)
 	if repoErr != nil {
+		// Check for NotFoundException here and handle accordingly
+		if repoErr.StatusCode == http.StatusNotFound {
+			return result, repoErr
+		}
 		return result, repoErr
 	}
 
@@ -860,9 +860,9 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) (b
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) NewBooking(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) NewBooking(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
 	defer helper.CommitOrRollback(tx)
-	save, err := s.structWorkOrderRepo.NewBooking(tx, workOrderId, request)
+	save, err := s.structWorkOrderRepo.NewBooking(tx, request)
 	if err != nil {
 		return false, err
 	}
@@ -967,13 +967,12 @@ func (s *WorkOrderServiceImpl) SaveBooking(tx *gorm.DB, workOrderId int, id int,
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) SubmitBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
-	submit, err := s.structWorkOrderRepo.SubmitBooking(tx, workOrderId, id)
+func (s *WorkOrderServiceImpl) SubmitBooking(tx *gorm.DB, id int) (bool, string, *exceptions.BaseErrorResponse) {
+	submitbooking, newDocumentNumber, err := s.structWorkOrderRepo.SubmitBooking(tx, id)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
-	return submit, nil
+	return submitbooking, newDocumentNumber, nil
 }
 
 func (s *WorkOrderServiceImpl) VoidBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
