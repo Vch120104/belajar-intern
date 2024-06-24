@@ -12,7 +12,7 @@ type ItemService interface {
 	GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
 	GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
-	GetItemCode(string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetItemCode(string) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	SaveItem(masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorResponse)
 	GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)

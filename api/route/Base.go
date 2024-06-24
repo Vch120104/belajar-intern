@@ -156,6 +156,7 @@ func ItemRouter(
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
+	// router.Put("/{item_id}", itemController.UpdateItem)
 
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
@@ -232,6 +233,7 @@ func ItemPackageRouter(
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
 	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
+	router.Get("/by-code/{item_package_code}", ItemPackageController.GetItemPackageByCode)
 
 	return router
 }
