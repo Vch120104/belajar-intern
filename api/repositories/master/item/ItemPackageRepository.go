@@ -14,4 +14,5 @@ type ItemPackageRepository interface {
 	SaveItemPackage(tx *gorm.DB, request masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse)
 	GetItemPackageById(tx *gorm.DB, id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+	GetItemPackageByCode(tx *gorm.DB, itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 }
