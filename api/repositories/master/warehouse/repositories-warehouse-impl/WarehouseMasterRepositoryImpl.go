@@ -103,26 +103,65 @@ func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousep
 	return warehouseMasterResponse, nil
 }
 
-func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
-
+func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseMaster
 	var warehouseMasterResponse masterwarehousepayloads.GetWarehouseMasterResponse
+	var getAddressResponse masterwarehousepayloads.AddressResponse
+	var getBrandResponse masterwarehousepayloads.BrandResponse
+	var getSupplierResponse masterwarehousepayloads.SupplierResponse
 
 	err := tx.Model(&entities).
-		Where(masterwarehouseentities.WarehouseMaster{
-			WarehouseId: warehouseId,
-		}).
-		First(&warehouseMasterResponse).Error
+		Where("warehouse_id = ?", warehouseId).
+		Scan(&warehouseMasterResponse).Error
 	// Find(&warehouseMasterResponse).
 
 	if err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return warehouseMasterResponse, nil
+	if warehouseMasterResponse.WarehouseId== 0{
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:  errors.New("warehouse not found"),
+		}
+	}
+	errUrlAddress := utils.Get(config.EnvConfigs.GeneralServiceUrl+"address/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getAddressResponse, nil)
+
+	if errUrlAddress != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{warehouseMasterResponse}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
+
+	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getBrandResponse, nil)
+
+	if errUrlBrand != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masterwarehousepayloads.BrandResponse{getBrandResponse}, "BrandId")
+	
+	errUrlSupplier := utils.Get(config.EnvConfigs.GeneralServiceUrl+"supplier-master/"+strconv.Itoa(warehouseMasterResponse.SupplierId), &getSupplierResponse, nil)
+
+	if errUrlSupplier != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masterwarehousepayloads.SupplierResponse{getSupplierResponse}, "SupplierId")
+	
+    return thirdJoin[0], nil
 }
 
 func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {

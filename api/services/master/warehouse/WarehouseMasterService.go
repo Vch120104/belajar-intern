@@ -9,7 +9,7 @@ import (
 
 type WarehouseMasterService interface {
 	Save(masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse)
-	GetById(int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse)
+	GetById(int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllIsActive() ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	DropdownWarehouse() ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
