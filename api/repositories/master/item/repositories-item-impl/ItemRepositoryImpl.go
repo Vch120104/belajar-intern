@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -476,24 +475,12 @@ func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempaylo
 func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// Define a slice to hold Item Detail responses
 	var responses []masteritempayloads.ItemDetailRequest
-
-	responseStruct := reflect.TypeOf(masteritempayloads.ItemDetailRequest{})
-
 	// Filter internal service conditions
-	var internalServiceFilter []utils.FilterCondition
-	for _, condition := range filterCondition {
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, condition)
-				break
-			}
-		}
-	}
 
 	// Apply internal service filter conditions
 	tableStruct := masteritempayloads.ItemDetailRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+	whereQuery := utils.ApplyFilterExact(joinTable, filterCondition)
 
 	// Fetch data from database
 	err := whereQuery.Find(&responses).Error
