@@ -1113,7 +1113,7 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 // @Param work_order_vehicle_service_id path string true "Work Order Vehicle Service ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_system_number}/vehicleservice/{work_order_vehicle_service_id} [delete]
+// @Router /v1/work-order/normal/{work_order_system_number}/vehicleservice/{work_order_vehicle_service_id} [delete]
 func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWriter, request *http.Request) {
 	// Delete vehicle service from work order
 	workorderID, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
@@ -1315,11 +1315,22 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 	db := config.InitDB()
 	success, baseErr := r.WorkOrderService.CloseOrder(db, workOrderIdInt)
 	if baseErr != nil {
-		if baseErr.StatusCode == http.StatusNotFound {
+		switch baseErr.Message {
+		case "Work order not found":
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
-		} else if baseErr.Message == "Work order cannot be closed because status is draft" {
+		case "Work order cannot be closed because status is draft":
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
-		} else {
+		case "There is still DP payment that has not been settled":
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+		case "Detail Work Order without Invoice No must be deleted":
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+		case "Warranty Item (PTP) must be supplied":
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+		case "Warranty Item (PTM)/Operation must be Invoiced":
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+		case "Service Mileage must be larger than Last Mileage.":
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+		default:
 			exceptions.NewAppException(writer, request, baseErr)
 		}
 		return
@@ -1339,7 +1350,6 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order Normal Detail
-// @Param work_order_system_number path string true "Work Order ID"
 // @Param page query string true "Page number"
 // @Param limit query string true "Items per page"
 // @Param sort_of query string false "Sort order (asc/desc)"
@@ -1560,6 +1570,7 @@ func (r *WorkOrderControllerImpl) GetAllBooking(writer http.ResponseWriter, requ
 // @Accept json
 // @Produce json
 // @Tags Transaction : Workshop Work Order Booking
+// @Param work_order_system_number path string true "Work Order ID"
 // @Param booking_system_number path string true "Work Order Booking ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse

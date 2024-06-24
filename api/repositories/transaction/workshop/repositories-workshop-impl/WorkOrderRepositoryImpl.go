@@ -77,7 +77,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Add the additional where condition
-	whereQuery = whereQuery.Where("booking_system_number = 0 OR estimation_system_number = 0")
+	whereQuery = whereQuery.Where("service_request_system_number < 1 AND booking_system_number = 0 AND estimation_system_number = 0")
 
 	rows, err := whereQuery.Find(&tableStruct).Rows()
 	if err != nil {
@@ -523,7 +523,7 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 
 	// Check if there is still DP payment that has not been settled
 	var dpPaymentAllocated float64
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).Select("downpayment_allocated").Scan(&dpPaymentAllocated).Error
+	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).Select("COALESCE(downpayment_payment_allocated, 0) as downpayment_payment_allocated").Scan(&dpPaymentAllocated).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve DP payment allocated from the database", Err: err}
 	}
@@ -532,10 +532,10 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 	}
 
 	// Check if there are any work order items without invoices
-	var count int64
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Where("work_order_system_number = ? AND work_order_line_status <> ? AND bill_code <> ? AND substitute_type <> ?",
-			Id, "closed", "no_charge", "substitute_item").
+	var count int64 //cek statusid <> 8(closed), billcode <> no_charge (5), substituteid
+	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id <> ? AND substitute_id <> ?",
+			Id, 8, 5, 0).
 		Count(&count).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order items from the database", Err: err}
@@ -545,10 +545,10 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 	}
 
 	// Check for warranty items
-	var allPtpSupply bool
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Where("work_order_system_number = ? AND work_order_line_status <> ? AND bill_code = ? AND substitute_type <> ?",
-			Id, "closed", "warranty", "substitute_item").
+	var allPtpSupply bool //cek statusid <> 8(closed), billcode <> warranty (6), substituteid
+	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_id <> ?",
+			Id, 8, 6, 0).
 		Count(&count).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve warranty items from the database", Err: err}
@@ -556,10 +556,10 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 	if count == 0 {
 		allPtpSupply = true
 	} else {
-		// Validate part-to-part supply
-		err = tx.Model(&transactionworkshopentities.WorkOrder{}).
-			Where("work_order_system_number = ? AND work_order_line_status <> ? AND bill_code = ? AND substitute_type <> ? AND warranty_claim_type = ? AND frt_qty > supply_qty",
-				Id, "closed", "warranty", "substitute_item", "part").
+		// Validate part-to-part supply //cek statusid <> 8(closed), billcode <> warranty (6), substituteid , warrantyclaim_type = 0 (part), frt_qty > supply_qty
+		err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+			Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_id <> ? AND warranty_claim_type_id = ? AND frt_qty > supply_qty",
+				Id, 8, 6, 0, 0).
 			Count(&count).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{Message: "Failed to validate part-to-part supply", Err: err}
@@ -568,10 +568,10 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 			return false, &exceptions.BaseErrorResponse{Message: "Warranty Item (PTP) must be supplied"}
 		}
 
-		// Validate part-to-money and operation status
-		err = tx.Model(&transactionworkshopentities.WorkOrder{}).
-			Where("work_order_system_number = ? AND work_order_line_status <> ? AND bill_code = ? AND substitute_type <> ? AND warranty_claim_type <> ?",
-				Id, "closed", "warranty", "substitute_item", "part").
+		// Validate part-to-money and operation status //cek statusid <> 8(closed), billcode <> warranty (6), substituteid , warrantyclaim_type = 0 (part)
+		err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+			Where("work_order_system_number = ? AND work_order_status_id <> ? AND transaction_type_id = ? AND substitute_id <> ? AND warranty_claim_type_id <> ?",
+				Id, 8, 6, 0, 0).
 			Count(&count).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{Message: "Failed to validate part-to-money and operation status", Err: err}
@@ -584,9 +584,9 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 	}
 
 	// Check if all items/operations/packages other than warranty are closed
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Where("work_order_system_number = ? AND work_order_line_status <> ? AND substitute_type <> ? AND bill_code NOT IN (?, ?)",
-			Id, "closed", "substitute_item", "warranty", "no_charge").
+	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_status_id <> ? AND substitute_id <> ? AND transaction_type_id NOT IN (?, ?)",
+			Id, 8, 0, 6, 5).
 		Count(&count).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to check if all items/operations/packages are closed", Err: err}
@@ -623,27 +623,36 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 	// }
 
 	// If Work Order still has DP Payment not allocated for Invoice
-	// var dpPayment, dpAllocToInv, dpOverpay float64
-	// err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
-	// 	Select("dp_payment, dp_alloc_to_inv").Scan(&dpPayment, &dpAllocToInv).Error
-	// if err != nil {
-	// 	return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve DP payment details", Err: err}
-	// }
-	// if dpPayment-dpAllocToInv > 0 {
-	// 	dpOverpay = dpPayment - dpAllocToInv
+	type DPPaymentDetails struct {
+		DPPayment    float64 `gorm:"column:downpayment_payment"`
+		DPAllocToInv float64 `gorm:"column:downpayment_payment_to_invoice"`
+	}
+
+	var details DPPaymentDetails
+	var dpOverpay float64
+
+	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
+		Select("downpayment_payment, downpayment_payment_to_invoice").Scan(&details).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve DP payment details", Err: err}
+	}
+
+	if details.DPPayment-details.DPAllocToInv > 0 {
+		dpOverpay = details.DPPayment - details.DPAllocToInv
+	}
 
 	// Generate DP Other
 	// Call dbo.uspg_ctDPIn_Insert and generate journal here
 	// TODO: Implement logic for uspg_ctDPIn_Insert and journal generation
 
-	// err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
-	// 	Updates(map[string]interface{}{
-	// 		"dp_alloc_to_inv": dpPayment,
-	// 		"dp_overpay":      dpOverpay,
-	// 	}).Error
-	// if err != nil {
-	// 	return false, &exceptions.BaseErrorResponse{Message: "Failed to update DP payment details", Err: err}
-	// }
+	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).
+		Updates(map[string]interface{}{
+			"downpayment_payment_allocated": details.DPPayment,
+			"downpayment_overpay":           dpOverpay,
+		}).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update DP payment details", Err: err}
+	}
 
 	// // Determine customer type and set event number
 	// var custType string
@@ -1169,6 +1178,8 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	// IF @Option = 0
 	// --USE FOR : * INSERT NEW DATA DETAIL
 
+	// Validate if the work order is still draft
+
 	// Validasi untuk chassis yang sudah pernah PDI,FSI,WR
 
 	// Validate Line Type Item must be inside item master
@@ -1187,6 +1198,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 		ItemId:                             request.ItemId,
 		FrtQuantity:                        request.FrtQuantity,
 		SupplyQuantity:                     request.SupplyQuantity,
+		WorkorderStatusId:                  0,
 		PriceListId:                        request.PriceListId,
 		OperationItemDiscountRequestAmount: request.ProposedPrice,
 		OperationItemPrice:                 request.OperationItemPrice,
@@ -1628,6 +1640,10 @@ func (r *WorkOrderRepositoryImpl) GetAllAffiliated(tx *gorm.DB, filterCondition 
 	if len(filterCondition) > 0 {
 		query = query.Where(filterCondition)
 	}
+
+	// Add conditions to filter where service request system number is not 0
+	query = query.Where("service_request_system_number > 0 AND booking_system_number = 0 AND estimation_system_number = 0")
+
 	err := query.Find(&entities).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
@@ -1639,6 +1655,10 @@ func (r *WorkOrderRepositoryImpl) GetAllAffiliated(tx *gorm.DB, filterCondition 
 		workOrderAffiliateData := make(map[string]interface{})
 
 		workOrderAffiliateData["work_order_system_number"] = entity.WorkOrderSystemNumber
+		workOrderAffiliateData["service_request_system_number"] = entity.ServiceRequestSystemNumber
+		workOrderAffiliateData["brand_id"] = entity.BrandId
+		workOrderAffiliateData["model_id"] = entity.ModelId
+		workOrderAffiliateData["vehicle_id"] = entity.VehicleId
 
 		workOrderAffiliateResponses = append(workOrderAffiliateResponses, workOrderAffiliateData)
 	}
@@ -1651,14 +1671,19 @@ func (r *WorkOrderRepositoryImpl) GetAllAffiliated(tx *gorm.DB, filterCondition 
 func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int, id int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrder
 	err := tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Where("work_order_system_number = ? AND affiliate_id = ?", IdWorkorder, id).
+		Where("work_order_system_number = ? AND service_request_system_number = ?", IdWorkorder, id).
 		First(&entity).Error
 	if err != nil {
 		return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order affiliate from the database"}
 	}
 
 	payload := transactionworkshoppayloads.WorkOrderAffiliatedRequest{
-		WorkOrderSystemNumber: entity.WorkOrderSystemNumber,
+		WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber: entity.WorkOrderDocumentNumber,
+		ServiceRequestId:        entity.ServiceRequestSystemNumber,
+		BrandId:                 entity.BrandId,
+		ModelId:                 entity.ModelId,
+		VehicleId:               entity.VehicleId,
 	}
 
 	return payload, nil
