@@ -42,6 +42,7 @@ type FilterCondition struct {
 func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	var queryWhere []string
 	var columnValue, columnName []string
+	var condition string
 
 	for _, c := range criteria {
 		columnValue, columnName = append(columnValue, c.ColumnValue), append(columnName, c.ColumnField)
@@ -53,8 +54,11 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
 			columnValue[i] = n[columnValue[i]]
 		}
-
-		condition := columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
+		if strings.Contains(columnName[i], "id") {
+			condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
+		} else {
+			condition = columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
+		}
 		queryWhere = append(queryWhere, condition)
 	}
 	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
