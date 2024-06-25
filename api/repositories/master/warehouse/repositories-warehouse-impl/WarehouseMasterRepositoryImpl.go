@@ -112,7 +112,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 
 	err := tx.Model(&entities).
 		Where("warehouse_id = ?", warehouseId).
-		Scan(&warehouseMasterResponse).Error
+		First(&warehouseMasterResponse).Error
 	// Find(&warehouseMasterResponse).
 
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]
 
 	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{warehouseMasterResponse}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
 
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getBrandResponse, nil)
+	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.BrandId), &getBrandResponse, nil)
 
 	if errUrlBrand != nil {
 		return nil, &exceptions.BaseErrorResponse{
