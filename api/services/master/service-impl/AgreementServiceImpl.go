@@ -58,6 +58,23 @@ func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest
 	return results, nil
 }
 
+func (s *AgreementServiceImpl) UpdateAgreement(id int, req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	_, err := s.AgreementRepo.GetAgreementById(tx, id)
+	if err != nil {
+		return false, err
+	}
+
+	results, err := s.AgreementRepo.UpdateAgreement(tx, id, req)
+	if err != nil {
+		return false, err
+	}
+
+	return results, nil
+}
+
 func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -91,6 +108,16 @@ func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.Disco
 	return nil
 }
 
+func (s *AgreementServiceImpl) UpdateDiscountGroup(id int, discountGroupId int, req masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.UpdateDiscountGroup(tx, id, discountGroupId, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -111,6 +138,16 @@ func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDi
 	return nil
 }
 
+func (s *AgreementServiceImpl) UpdateItemDiscount(id int, itemDiscountId int, req masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.UpdateItemDiscount(tx, id, itemDiscountId, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -125,6 +162,16 @@ func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.Disco
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	err := s.AgreementRepo.AddDiscountValue(tx, id, req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AgreementServiceImpl) UpdateDiscountValue(id int, discountValueId int, req masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	err := s.AgreementRepo.UpdateDiscountValue(tx, id, discountValueId, req)
 	if err != nil {
 		return err
 	}

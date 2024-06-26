@@ -1,9 +1,12 @@
 package masterwarehousecontroller
 
 import (
+	"after-sales/api/config"
+	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -148,7 +151,9 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/by-id/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-
+	var getAddressResponse masterwarehousepayloads.AddressResponse
+	var getBrandResponse masterwarehousepayloads.BrandResponse
+	var getSupplierResponse masterwarehousepayloads.SupplierResponse
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 
 	get, err := r.WarehouseMasterService.GetById(warehouseId)
@@ -156,8 +161,43 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		helper.ReturnError(writer, request, err)
 		return
 	}
+	if get.WarehouseId!=0{
+	errUrlAddress := utils.Get(config.EnvConfigs.GeneralServiceUrl+"address/"+strconv.Itoa(get.AddressId), &getAddressResponse, nil)
 
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
+	if errUrlAddress != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			Err: errors.New("error consume external api"),
+		})
+		return
+	}
+
+	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{get}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
+
+	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(get.BrandId), &getBrandResponse, nil)
+
+	if errUrlBrand != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			Err: errors.New("error consume external api"),
+		})
+		return
+	}
+
+	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masterwarehousepayloads.BrandResponse{getBrandResponse}, "BrandId")
+	
+	errUrlSupplier := utils.Get(config.EnvConfigs.GeneralServiceUrl+"supplier-master/"+strconv.Itoa(get.SupplierId), &getSupplierResponse, nil)
+
+	if errUrlSupplier != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			Err: errors.New("error consume external api"),
+		})
+		return
+	}
+
+	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masterwarehousepayloads.SupplierResponse{getSupplierResponse}, "SupplierId")
+	
+	
+    payloads.NewHandleSuccess(writer, thirdJoin[0], "Get Data Successfully!", http.StatusOK)
+}
 }
 
 // @Summary Get Warehouse Master By Code

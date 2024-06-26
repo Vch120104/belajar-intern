@@ -42,6 +42,7 @@ type FilterCondition struct {
 func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	var queryWhere []string
 	var columnValue, columnName []string
+	var condition string
 
 	for _, c := range criteria {
 		columnValue, columnName = append(columnValue, c.ColumnValue), append(columnName, c.ColumnField)
@@ -53,8 +54,11 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
 			columnValue[i] = n[columnValue[i]]
 		}
-
-		condition := columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
+		if strings.Contains(columnName[i], "id") {
+			condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
+		} else {
+			condition = columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
+		}
 		queryWhere = append(queryWhere, condition)
 	}
 	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
@@ -111,4 +115,19 @@ func ApplyFilterExact(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	queryFinal := db.Where(strings.Join(queryWhere, " AND "))
 
 	return queryFinal
+}
+
+// ApplyFilterForDB applies WHERE conditions based on a set of filter criteria to a GORM database query.
+//
+// Parameters:
+//   - db: A pointer to a GORM database query to which the WHERE conditions will be applied.
+//   - criteria: A slice of FilterCondition representing the filter criteria to be applied.
+//
+// Returns:
+//   - result: A modified GORM database query with WHERE conditions based on the provided filter criteria.
+func ApplyFilterForDB(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
+	for _, c := range criteria {
+		db = db.Where(c.ColumnField, c.ColumnValue)
+	}
+	return db
 }
