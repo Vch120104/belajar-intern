@@ -58,35 +58,51 @@ func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloa
 	return responses, nil
 }
 
-func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	// Define a slice to hold Item responses
 	var responses []masteritempayloads.ItemLookup
+
+	// Apply internal service filter conditions
 	tableStruct := masteritempayloads.ItemLookup{}
-
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilterForDB(joinTable, filterCondition)
 
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := joinTable.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Rows()
-
+	// Apply pagination directly in the query
+	err := whereQuery.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
 		}
 	}
 
+	// Check if responses are empty
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			Err:        errors.New("no data found"),
 		}
 	}
 
-	defer rows.Close()
+	// Define a slice to hold map responses
+	var mapResponses []map[string]interface{}
 
-	pages.Rows = responses
+	// Iterate over responses and convert them to maps
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"is_active":     response.IsActive,
+			"item_id":       response.ItemId,
+			"item_code":     response.ItemCode,
+			"item_name":     response.ItemName,
+			"item_group_id": response.ItemGroupId,
+			"item_class_id": response.ItemClassId,
+			"item_type":     response.ItemType,
+			"supplier_id":   response.SupplierId,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
 
-	return pages, nil
+	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
 }
 
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {

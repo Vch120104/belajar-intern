@@ -11,13 +11,17 @@ import (
 type AgreementService interface {
 	GetAgreementById(int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
 	SaveAgreement(masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateAgreement(int, masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusAgreement(int) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	GetAllAgreement(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	AddDiscountGroup(int, masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse
+	UpdateDiscountGroup(int, int, masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse
 	DeleteDiscountGroup(int, int) *exceptions.BaseErrorResponse
 	AddItemDiscount(int, masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse
+	UpdateItemDiscount(int, int, masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse
 	DeleteItemDiscount(int, int) *exceptions.BaseErrorResponse
 	AddDiscountValue(int, masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse
+	UpdateDiscountValue(int, int, masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse
 	DeleteDiscountValue(int, int) *exceptions.BaseErrorResponse
 	GetAllDiscountGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetAllItemDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
