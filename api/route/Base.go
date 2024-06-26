@@ -8,9 +8,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
-	_ "after-sales/docs"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
@@ -884,7 +881,7 @@ func BookingEstimationRouter(
 
 	router.Get("/", BookingEstimationController.GetAll)
 	router.Get("/normal", BookingEstimationController.New)
-	router.Get("/find/{work_order_system_number}", BookingEstimationController.GetById)
+	router.Get("/find/{batch_system_number}", BookingEstimationController.GetById)
 	router.Put("/{id}", BookingEstimationController.Save)
 	router.Post("/submit", BookingEstimationController.Submit)
 	router.Delete("/{id}", BookingEstimationController.Void)

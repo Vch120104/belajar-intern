@@ -10,6 +10,9 @@ import (
 	"after-sales/api/utils"
 	"encoding/json"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type BookingEstimationControllerImpl struct {
@@ -123,8 +126,14 @@ func (r *BookingEstimationControllerImpl) NewAffiliated(writer http.ResponseWrit
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/booking-estimation/find/{work_order_system_number} [get]
 func (r *BookingEstimationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-	// This function can be implemented to handle transaction-related logic if needed
-	// For now, it's empty
+	bookestimid, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))
+
+	result, err := r.bookingEstimationService.GetById(bookestimid)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // Save saves a new booking estimation
@@ -150,7 +159,7 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	// Panggil fungsi Save dari layanan untuk menyimpan data booking estimation
-	if _,err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
+	if _, err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
 		// Tangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
 		return

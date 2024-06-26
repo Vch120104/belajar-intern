@@ -22,8 +22,9 @@ type CampaignMasterDetailOperationPayloads struct {
 	PackageCode     int     `json:"package_code"`
 	PackageId       int     `json:"package_id"`
 	LineTypeId      int     `json:"line_type_id"`
-	OperationCode   float64 `json:"operation_code"`
-	OperationName   int     `json:"operation_name"`
+	OperationId     int     `json:"operation_id"`
+	OperationCode   string  `json:"operation_code"`
+	OperationName   string  `json:"operation_name"`
 	Quantity        float64 `json:"quantity"`
 	Price           float64 `json:"price"`
 	DiscountPercent float64 `json:"discount_percent"`
@@ -35,8 +36,8 @@ type CampaignMasterDetailItemPayloads struct {
 	PackageCode     int     `json:"package_code"`
 	PackageId       int     `json:"package_id"`
 	LineTypeId      int     `json:"line_type_id"`
-	ItemCode        float64 `json:"item_code"`
-	ItemName        int     `json:"item_name"`
+	ItemCode        string  `json:"item_code"`
+	ItemName        string  `json:"item_name"`
 	Quantity        float64 `json:"quantity"`
 	Price           float64 `json:"price"`
 	DiscountPercent float64 `json:"discount_percent"`

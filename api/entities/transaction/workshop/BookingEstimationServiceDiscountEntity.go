@@ -30,7 +30,7 @@ type BookingEstimationServiceDiscount struct {
 	DiscountApprovalBy               string                    `gorm:"column:discount_approval_by;type:varchar(10);not null" json:"discount_approval_by"`
 	DiscountApprovalDate             *time.Time                `gorm:"column:discount_approval_date;default:null" json:"discount_approval_date"`
 	TotalAfterDiscount               float32                   `gorm:"column:total_after_discount;default:null" json:"total_after_discount"`
-	BookingEstimationDetail          []BookingEstimationDetail `gorm:"foreignKey:EstimationSystemNumber;references:EstimationSystemNumber" json:"booking_estimation_service_discount_batch"`
+	// BookingEstimationDetail          []BookingEstimationDetail `gorm:"foreignKey:EstimationSystemNumber;references:EstimationSystemNumber" json:"booking_estimation_service_discount_batch"`
 }
 
 func (*BookingEstimationServiceDiscount) TableName() string {
