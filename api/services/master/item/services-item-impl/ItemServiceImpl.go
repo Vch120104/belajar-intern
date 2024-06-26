@@ -90,7 +90,7 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetItemCode(code string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetItemCode(code string) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	// Melakukan URL encoding pada parameter code
 	// encodedCode := url.PathEscape(code)
 

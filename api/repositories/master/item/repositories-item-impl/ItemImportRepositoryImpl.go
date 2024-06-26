@@ -9,8 +9,10 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -63,6 +65,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	model := masteritementities.ItemImport{}
 	var responses []masteritempayloads.ItemImportResponse
 	var supplierResponses []masteritempayloads.SupplierResponse
+	var supplierMultipleId string
 	var supplierCode string
 	var supplierName string
 
@@ -74,8 +77,35 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
+	if supplierCode != "" || supplierName != "" {
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master?page=" + strconv.Itoa(pages.Page) + "&limit=" + strconv.Itoa(pages.Limit) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+
+		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New(""),
+			}
+		}
+
+		if len(supplierResponses) == 0 {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New(""),
+			}
+		}
+		for _, value := range supplierResponses {
+			supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
+		}
+
+		fmt.Println(supplierMultipleId)
+	}
+
 	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
 		InnerJoins("Item", tx.Select(""))
+
+	if supplierCode != "" || supplierName != "" {
+		query = query.Where("mtr_item_import.supplier_id IN (" + strings.TrimSuffix(supplierMultipleId, ",") + ")")
+	}
 
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
@@ -95,7 +125,13 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master?page=0&limit=10000&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+	fmt.Println(responses)
+
+	for _, value := range responses {
+		supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
+	}
+
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master-multi-id/" + supplierMultipleId
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
