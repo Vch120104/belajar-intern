@@ -57,7 +57,7 @@ func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWar
 	return save, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
