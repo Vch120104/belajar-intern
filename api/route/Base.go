@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	_ "after-sales/docs"
+
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -154,6 +156,7 @@ func ItemRouter(
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
+	// router.Put("/{item_id}", itemController.UpdateItem)
 
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
@@ -230,6 +233,7 @@ func ItemPackageRouter(
 	router.Post("/", ItemPackageController.SaveItemPackage)
 	router.Get("/by-id/{item_package_id}", ItemPackageController.GetItemPackageById)
 	router.Patch("/{item_package_id}", ItemPackageController.ChangeStatusItemPackage)
+	router.Get("/by-code/{item_package_code}", ItemPackageController.GetItemPackageByCode)
 
 	return router
 }
@@ -352,13 +356,14 @@ func BomRouter(
 	router.Get("/", BomController.GetBomMasterList)
 	router.Get("/{bom_master_id}", BomController.GetBomMasterById)
 	router.Post("/", BomController.SaveBomMaster)
+	router.Put("/{bom_master_id}", BomController.UpdateBomMaster)
 	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
 	//bom detail
 	// Detail
-	router.Get("/detail/all", BomController.GetBomDetailList)
-	router.Get("/{bom_master_id}/detail", BomController.GetBomDetailById)
-	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailByIds)
+	router.Get("/detail", BomController.GetBomDetailList)
+	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
+	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
 	router.Post("/detail", BomController.SaveBomDetail)
 	router.Delete("/detail/{bom_detail_id}", BomController.DeleteBomDetail)
 
@@ -653,21 +658,25 @@ func AgreementRouter(
 	router.Get("/", AgreementController.GetAllAgreement)
 	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
 	router.Post("/", AgreementController.SaveAgreement)
+	router.Put("/{agreement_id}", AgreementController.UpdateAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
 
 	router.Get("/{agreement_id}/discount/group", AgreementController.GetAllDiscountGroup)
 	router.Get("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.GetDiscountGroupAgreementById)
 	router.Post("/{agreement_id}/discount/group", AgreementController.AddDiscountGroup)
+	router.Put("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.UpdateDiscountGroup)
 	router.Delete("/{agreement_id}/discount/group/{agreement_discount_group_id}", AgreementController.DeleteDiscountGroup)
 
 	router.Get("/{agreement_id}/discount/item", AgreementController.GetAllItemDiscount)
 	router.Get("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.GetDiscountItemAgreementById)
 	router.Post("/{agreement_id}/discount/item", AgreementController.AddItemDiscount)
+	router.Put("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.UpdateItemDiscount)
 	router.Delete("/{agreement_id}/discount/item/{agreement_item_id}", AgreementController.DeleteItemDiscount)
 
 	router.Get("/{agreement_id}/discount/value", AgreementController.GetAllDiscountValue)
 	router.Get("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.GetDiscountValueAgreementById)
 	router.Post("/{agreement_id}/discount/value", AgreementController.AddDiscountValue)
+	router.Put("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.UpdateDiscountValue)
 	router.Delete("/{agreement_id}/discount/value/{agreement_discount_id}", AgreementController.DeleteDiscountValue)
 
 	return router
@@ -912,14 +921,17 @@ func WorkOrderRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
+	// generate document
+	router.Post("/normal/document-number/{work_order_system_number}", WorkOrderController.GenerateDocumentNumber)
+
 	//add trx normal
 	router.Get("/", WorkOrderController.GetAll)
 	router.Get("/normal/{work_order_system_number}", WorkOrderController.GetById)
 	router.Post("/normal", WorkOrderController.New)
-	router.Post("/normal/{work_order_system_number}/submit", WorkOrderController.Submit)
+	router.Post("/normal/submit/{work_order_system_number}", WorkOrderController.Submit)
 	router.Put("/normal/{work_order_system_number}", WorkOrderController.Save)
-	router.Delete("/normal/{work_order_system_number}", WorkOrderController.Void)
-	router.Patch("/normal/{work_order_system_number}/close", WorkOrderController.CloseOrder)
+	router.Delete("/normal/void/{work_order_system_number}", WorkOrderController.Void)
+	router.Patch("/normal/close/{work_order_system_number}", WorkOrderController.CloseOrder)
 
 	//add post trx sub
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
@@ -935,7 +947,7 @@ func WorkOrderRouter(
 	router.Delete("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
 
 	//add trx detail
-	router.Get("/normal/{work_order_system_number}/detail", WorkOrderController.GetAllDetailWorkOrder)
+	router.Get("/normal/detail", WorkOrderController.GetAllDetailWorkOrder)
 	router.Get("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.GetDetailByIdWorkOrder)
 	router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetailWorkOrder)
 	router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetailWorkOrder)
@@ -943,16 +955,44 @@ func WorkOrderRouter(
 
 	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
+	router.Post("/dropdown-status", WorkOrderController.AddStatus)
+	router.Put("/dropdown-status/{status_id}", WorkOrderController.UpdateStatus)
+	router.Delete("/dropdown-status/{status_id}", WorkOrderController.DeleteStatus)
+
 	router.Get("/dropdown-type", WorkOrderController.NewType)
+	router.Post("/dropdown-type", WorkOrderController.AddType)
+	router.Put("/dropdown-type/{type_id}", WorkOrderController.UpdateType)
+	router.Delete("/dropdown-type/{type_id}", WorkOrderController.DeleteType)
+
 	router.Get("/dropdown-bill", WorkOrderController.NewBill)
+	router.Post("/dropdown-bill", WorkOrderController.AddBill)
+	router.Put("/dropdown-bill/{bill_id}", WorkOrderController.UpdateBill)
+	router.Delete("/dropdown-bill/{bill_id}", WorkOrderController.DeleteBill)
+
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
+	// router.Post("/dropdown-drop-point", WorkOrderController.AddDropPoint)
+	// router.Put("/dropdown-drop-point/{drop_point_id}", WorkOrderController.UpdateDropPoint)
+	// router.Delete("/dropdown-drop-point/{drop_point_id}", WorkOrderController.DeleteDropPoint)
+
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
 	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
 
-	router.Post("/normalbooking", WorkOrderController.NewBooking)
+	router.Get("/booking", WorkOrderController.GetAllBooking)
+	router.Get("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.GetBookingById)
+	router.Post("/booking", WorkOrderController.NewBooking)
+	router.Put("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.SaveBooking)
+	router.Delete("/booking/void/{work_order_system_number}/{booking_system_number}", WorkOrderController.VoidBooking)
+	router.Post("/booking/submit/{work_order_system_number}", WorkOrderController.SubmitBooking)
+	router.Patch("/booking/close/{work_order_system_number}/{booking_system_number}", WorkOrderController.CloseBooking)
+
+	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
+	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
+	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
+	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
 
 	return router
 }

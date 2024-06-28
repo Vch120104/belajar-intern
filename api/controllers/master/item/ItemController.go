@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -106,14 +107,27 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
+		"mtr_item.item_id":               queryValues.Get("item_id"),
 		"mtr_item.item_code":             queryValues.Get("item_code"),
 		"mtr_item.item_name":             queryValues.Get("item_name"),
 		"mtr_item.item_type":             queryValues.Get("item_type"),
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item.is_active":             queryValues.Get("is_active"),
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
-		"mtr_item.supplier_id":           queryValues.Get("supplier_id"),
+		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
+		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
+		"mtr_item.supplier_id":           queryValues.Get("supplier_id"), // Add supplier_id to queryParams
 	}
+
+	// Periksa apakah parameter query ada dan tidak kosong
+	for key, value := range queryParams {
+		if value == "" {
+			delete(queryParams, key)
+		}
+	}
+
+	// Debug log for query parameters
+	fmt.Printf("Query parameters: %+v\n", queryParams)
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -124,14 +138,14 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.itemservice.GetAllItem(criteria, paginate)
+	data, totalPages, totalRows, err := r.itemservice.GetAllItem(criteria, paginate)
 
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "success", 200)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get All Item Lookup
@@ -309,8 +323,8 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"mtr_item.item_id":               queryValues.Get("item_id"),
-		"mtr_item_detail.item_detail_id": queryValues.Get("item_detail_id"),
+		"item_id":               queryValues.Get("item_id"),
+		"item_detail_id": queryValues.Get("item_detail_id"),
 	}
 
 	paginate := pagination.Pagination{

@@ -146,9 +146,8 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/warehouse-master/by-id/{warehouse_id} [get]
+// @Router /v1/warehouse-master/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 
 	get, err := r.WarehouseMasterService.GetById(warehouseId)
@@ -157,7 +156,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Master By Code

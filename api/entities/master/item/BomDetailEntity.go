@@ -13,6 +13,8 @@ type BomDetail struct {
 	BomDetailType           string `gorm:"column:bom_detail_type;size:30;not null" json:"bom_detail_type"`
 	BomDetailMaterialCode   string `gorm:"column:bom_detail_material_code;size:30;not null" json:"bom_detail_material_code"`
 	BomDetailMaterialName   string `gorm:"column:bom_detail_material_name;size:30;not null" json:"bom_detail_material_name"`
+	BomDetailMaterialId     int    `gorm:"column:bom_detail_material_id;size:30;not null" json:"bom_detail_material_id"`
+	BomDetailTypeId         int    `gorm:"column:bom_detail_type_id;size:30;not null" json:"bom_detail_type_id"`
 	// Material                Material  `gorm:"foreignKey:MaterialId" json:"material"` //foreign key to mtr_item table
 	// MaterialId              int       `gorm:"column:material_id;size:30;not null" json:"material_id"`
 }

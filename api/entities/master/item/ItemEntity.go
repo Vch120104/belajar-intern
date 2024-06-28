@@ -7,7 +7,7 @@ var CreateItemTable = "mtr_item"
 type Item struct {
 	IsActive                     bool              `gorm:"column:is_active;type:bool;not null"        json:"is_active"`
 	ItemId                       int               `gorm:"column:item_id;type:int;size:30;primaryKey"        json:"item_id"`
-	ItemCode                     string            `gorm:"column:item_code;size:20;unique;not null"        json:"item_code"`
+	ItemCode                     string            `gorm:"column:item_code;size:50;unique;not null"        json:"item_code"`
 	ItemClassId                  int               `gorm:"column:item_class_id;type:int;size:30;not null"        json:"item_class_id"`
 	ItemName                     string            `gorm:"column:item_name;size:100;null"        json:"item_name"`
 	ItemGroupId                  int               `gorm:"column:item_group_id;type:int;size:30;not null"        json:"item_group_id"`

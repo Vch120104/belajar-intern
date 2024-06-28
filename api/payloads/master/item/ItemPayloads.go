@@ -61,6 +61,8 @@ type ItemResponse struct {
 	PersonInChargeId             int     `json:"person_in_charge_id"`
 	SourceConvertion             float64 `json:"source_convertion"`
 	TargetConvertion             float64 `json:"target_convertion"`
+	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
+	IsSellable                   bool    `json:"is_sellable"`
 }
 
 type UserDetailResponse struct {
@@ -127,6 +129,8 @@ type ItemRequest struct {
 	PersonInChargeId             int     `json:"person_in_charge_id"`
 	SourceConvertion             float32 `json:"source_convertion"`
 	TargetConvertion             float32 `json:"target_convertion"`
+	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
+	IsSellable                   bool    `json:"is_sellable"`
 }
 
 type AtpmOrderTypeResponse struct {
@@ -239,15 +243,20 @@ type AtpmSupplierCodeOrderResponse struct {
 }
 
 type PersonInChargeResponse struct {
-	PersonInChargeId     int    `json:"user_id"`
+	UserEmployeeId       int    `json:"user_employee_id"`
+	PersonInChargeId     int    `json:"person_in_charge_id"`
 	PersonInChargeName   string `json:"employee_name"`
 	PersonInChargeNumber string `json:"employee_number"`
 }
 
 type ItemUpdateRequest struct {
-	IsTechnicalDefect bool `json:"is_technical_defect"`
-	SpecialMovementId int  `json:"special_movement_id"`
-	GmmCatalogCode    int  `json:"gmm_catalog_code"`
+	IsTechnicalDefect bool    `json:"is_technical_defect"`
+	SpecialMovementId int     `json:"special_movement_id"`
+	GmmCatalogCode    int     `json:"gmm_catalog_code"`
+	IsAffiliatedTrx   bool    `json:"is_affiliated_trx"`
+	IsSellable        bool    `json:"is_sellable"`
+	SourceConvertion  float64 `json:"source_convertion"`
+	TargetConvertion  float64 `json:"target_convertion"`
 }
 
 type ItemDetailUpdateRequest struct {

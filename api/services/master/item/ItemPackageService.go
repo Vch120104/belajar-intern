@@ -12,4 +12,5 @@ type ItemPackageService interface {
 	SaveItemPackage(request masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse)
 	GetItemPackageById(Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(id int) (bool, *exceptions.BaseErrorResponse)
+	GetItemPackageByCode(itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 }
