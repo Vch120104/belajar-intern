@@ -2,6 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
+	masterentities "after-sales/api/entities/master"
 
 	// masterentities "after-sales/api/entities/master"
 	// masteritementities "after-sales/api/entities/master/item"
@@ -115,6 +116,7 @@ func Migrate() {
 	// &masterentities.DeductionList{},
 	// &masterentities.DeductionDetail{},
 	// &masterentities.FieldActionEligibleVehicleItem{},
+	&masterentities.FieldActionEligibleVehicleOperation{},
 	// &masterentities.FieldActionEligibleVehicle{},
 	// &masterentities.FieldAction{},
 	// &masterentities.Discount{},
