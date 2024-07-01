@@ -103,65 +103,96 @@ func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousep
 	return warehouseMasterResponse, nil
 }
 
-func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseMaster
-	var warehouseMasterResponse masterwarehousepayloads.GetWarehouseMasterResponse
+	var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterResponse
 	var getAddressResponse masterwarehousepayloads.AddressResponse
 	var getBrandResponse masterwarehousepayloads.BrandResponse
 	var getSupplierResponse masterwarehousepayloads.SupplierResponse
+	var getUserResponse masterwarehousepayloads.UserResponse
+	var getJobPositionResponse masterwarehousepayloads.JobPositionResponse
+	var getVillageResponse masterwarehousepayloads.VillageResponse
 
 	err := tx.Model(&entities).
 		Where("warehouse_id = ?", warehouseId).
-		Scan(&warehouseMasterResponse).Error
-	// Find(&warehouseMasterResponse).
+		First(&warehouseMasterResponse).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	if warehouseMasterResponse.WarehouseId== 0{
-		return nil, &exceptions.BaseErrorResponse{
+		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:  errors.New("warehouse not found"),
-		}
-	}
-	errUrlAddress := utils.Get(config.EnvConfigs.GeneralServiceUrl+"address/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getAddressResponse, nil)
-
-	if errUrlAddress != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{warehouseMasterResponse}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
-
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getBrandResponse, nil)
-
-	if errUrlBrand != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	// Fetch address details
+	AddressUrl := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(warehouseMasterResponse.AddressId)
+	if err := utils.Get(AddressUrl, &getAddressResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching address details",
 			Err:        err,
 		}
 	}
 
-	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masterwarehousepayloads.BrandResponse{getBrandResponse}, "BrandId")
-	
-	errUrlSupplier := utils.Get(config.EnvConfigs.GeneralServiceUrl+"supplier-master/"+strconv.Itoa(warehouseMasterResponse.SupplierId), &getSupplierResponse, nil)
-
-	if errUrlSupplier != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	// Fetch brand details
+	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(warehouseMasterResponse.BrandId)
+	if err := utils.Get(BrandUrl, &getBrandResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching brand details",
 			Err:        err,
 		}
 	}
 
-	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masterwarehousepayloads.SupplierResponse{getSupplierResponse}, "SupplierId")
-	
-    return thirdJoin[0], nil
+	// Fetch supplier details
+	SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
+	if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching supplier details",
+			Err:        err,
+		}
+	}
+
+	// fetch village details
+	VillageUrl := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(getAddressResponse.VillageId)
+	if err := utils.Get(VillageUrl, &getVillageResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching village details",
+			Err:        err,
+		}
+	}
+
+	// Fetch user details
+	UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(warehouseMasterResponse.UserId)
+	if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching user details",
+			Err:        err,
+		}
+	}
+
+	// Fetch job position details
+	JobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "/job-position/" + strconv.Itoa(getUserResponse.JobPositionId)
+	if err := utils.Get(JobPositionUrl, &getJobPositionResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching job position details",
+			Err:        err,
+		}
+	}
+
+	// Populate the nested fields
+	warehouseMasterResponse.AddressDetails = getAddressResponse
+	warehouseMasterResponse.BrandDetails = getBrandResponse
+	warehouseMasterResponse.SupplierDetails = getSupplierResponse
+	warehouseMasterResponse.UserDetails = getUserResponse
+	warehouseMasterResponse.JobPositionDetails = getJobPositionResponse
+	warehouseMasterResponse.VillageDetails = getVillageResponse
+
+	return warehouseMasterResponse, nil
 }
 
 func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
