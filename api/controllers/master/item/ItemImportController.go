@@ -213,10 +213,6 @@ func (r *ItemImportControllerImpl) DownloadTemplate(writer http.ResponseWriter, 
 
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
-	// Save spreadsheet by the given path.
-	if err := f.SaveAs("Book1.xlsx"); err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500})
-	}
 
 	// Write the Excel file to a buffer
 	var b bytes.Buffer
