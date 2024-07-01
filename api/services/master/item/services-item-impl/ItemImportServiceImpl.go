@@ -4,6 +4,7 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
@@ -17,8 +18,19 @@ type ItemImportServiceImpl struct {
 	DB             *gorm.DB
 }
 
+// GetItemImportbyItemIdandSupplierId implements masteritemservice.ItemImportService.
+func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.itemImportRepo.GetItemImportbyItemIdandSupplierId(tx, itemId, supplierId)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 // GetItemImportbyId implements masteritemservice.ItemImportService.
-func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (any, *exceptions.BaseErrorResponse) {
+func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.itemImportRepo.GetItemImportbyId(tx, Id)
