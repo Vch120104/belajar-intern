@@ -1,7 +1,7 @@
 package masterrepositoryimpl
 
 import (
-	masterentities "after-sales/api/entities/master"
+	masteritementities "after-sales/api/entities/master/item"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -22,7 +22,7 @@ func StartDiscountRepositoryImpl() masterrepository.DiscountRepository {
 }
 
 func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := masterentities.Discount{}
+	entities := masteritementities.Discount{}
 	responses := []masterpayloads.DiscountResponse{}
 
 	//define base model
@@ -52,12 +52,12 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 }
 
 func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
-	var Discounts []masterentities.Discount
+	var Discounts []masteritementities.Discount
 	response := []masterpayloads.DiscountResponse{}
 
 	rows, err := tx.
 		Model(&Discounts).
-		Where(masterentities.Discount{IsActive: true}).
+		Where(masteritementities.Discount{IsActive: true}).
 		Scan(&response).
 		Rows()
 
@@ -82,11 +82,11 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 }
 
 func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
-	var entities masterentities.Discount
+	var entities masteritementities.Discount
 	var response masterpayloads.DiscountResponse
 
 	rows, err := tx.Model(&entities).
-		Where(masterentities.Discount{
+		Where(masteritementities.Discount{
 			DiscountCodeId: Id,
 		}).
 		First(&response).
@@ -105,11 +105,11 @@ func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpay
 }
 
 func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
-	entities := masterentities.Discount{}
+	entities := masteritementities.Discount{}
 	response := masterpayloads.DiscountResponse{}
 
 	rows, err := tx.Model(&entities).
-		Where(masterentities.Discount{
+		Where(masteritementities.Discount{
 			DiscountCodeValue: Code,
 		}).
 		First(&response).
@@ -128,7 +128,7 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 }
 
 func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse) {
-	entities := masterentities.Discount{
+	entities := masteritementities.Discount{
 		IsActive:                req.IsActive,
 		DiscountCodeId:          req.DiscountCodeId,
 		DiscountCodeValue:       req.DiscountCodeValue,
@@ -148,10 +148,10 @@ func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.Di
 }
 
 func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
-	var entities masterentities.Discount
+	var entities masteritementities.Discount
 
 	result := tx.Model(&entities).
-		Where(masterentities.Discount{DiscountCodeId: Id}).
+		Where(masteritementities.Discount{DiscountCodeId: Id}).
 		First(&entities)
 
 	if result.Error != nil {
