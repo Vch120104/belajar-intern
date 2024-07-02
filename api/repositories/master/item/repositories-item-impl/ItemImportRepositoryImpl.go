@@ -20,19 +20,19 @@ import (
 type ItemImportRepositoryImpl struct {
 }
 
-// GetItemImportbyId implements masteritemrepository.ItemImportRepository.
-func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (any, *exceptions.BaseErrorResponse) {
+// GetItemImportbyItemIdandSupplierId implements masteritemrepository.ItemImportRepository.
+func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.DB, itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemImport{}
 	response := masteritempayloads.ItemImportByIdResponse{}
 	supplierResponses := masteritempayloads.SupplierResponse{}
 
-	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").Where(masteritementities.ItemImport{ItemImportId: Id}).
-		InnerJoins("Item", tx.Select(""))
+	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").Where(masteritementities.ItemImport{ItemId: itemId, SupplierId: supplierId}).
+		InnerJoins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id", tx.Select(""))
 
 	err := query.First(&response).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -41,22 +41,49 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (any, 
 	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(response.SupplierId)
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
-	joinedDataSupplier := utils.DataFrameInnerJoin([]masteritempayloads.ItemImportByIdResponse{response}, []masteritempayloads.SupplierResponse{supplierResponses}, "SupplierId")
+	response.SupplierName = supplierResponses.SupplierName
+	response.SupplierCode = supplierResponses.SupplierCode
 
-	if len(joinedDataSupplier) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
+	return response, nil
+}
+
+// GetItemImportbyId implements masteritemrepository.ItemImportRepository.
+func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
+	model := masteritementities.ItemImport{}
+	response := masteritempayloads.ItemImportByIdResponse{}
+	supplierResponses := masteritempayloads.SupplierResponse{}
+
+	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").Where(masteritementities.ItemImport{ItemImportId: Id}).
+		InnerJoins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id", tx.Select(""))
+
+	err := query.First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(response.SupplierId)
+
+	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
-	return joinedDataSupplier[0], nil
+	response.SupplierName = supplierResponses.SupplierName
+	response.SupplierCode = supplierResponses.SupplierCode
+
+	return response, nil
 
 }
 
@@ -101,7 +128,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
-		InnerJoins("Item", tx.Select(""))
+		InnerJoins("JOIN mtr_item Item ON mtr_item_import.item_id = Item.item_id", tx.Select(""))
 
 	if supplierCode != "" || supplierName != "" {
 		query = query.Where("mtr_item_import.supplier_id IN (" + strings.TrimSuffix(supplierMultipleId, ",") + ")")
@@ -150,6 +177,8 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
+
+	fmt.Print("awawd ", len(dataPaginate), " awdwa")
 
 	return dataPaginate, totalPages, totalRows, nil
 

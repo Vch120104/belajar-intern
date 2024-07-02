@@ -252,7 +252,8 @@ func ItemPackageDetailRouter(
 	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
 	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
 	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetail)
-
+	router.Patch("/activate/{item_package_detail_id}", ItemPackageDetailController.ActivateItemPackageDetail)
+	router.Patch("/deactivate/{item_package_detail_id}", ItemPackageDetailController.DeactivateItemPackageDetail)
 	return router
 }
 
@@ -270,6 +271,10 @@ func ItemImportRouter(
 	router.Get("/{item_import_id}", ItemImportController.GetItemImportbyId)
 	router.Post("/", ItemImportController.SaveItemImport)
 	router.Patch("/", ItemImportController.UpdateItemImport)
+	router.Get("/get-by-item-and-supplier-id/{item_id}/{supplier_id}", ItemImportController.GetItemImportbyItemIdandSupplierId)
+	router.Get("/download-template", ItemImportController.DownloadTemplate)
+	router.Get("/upload-template", ItemImportController.UploadTemplate)
+	router.Post("/process-template", ItemImportController.ProcessDataUpload)
 	// router.Get("/{item_import_id}", ItemImportController.GetItemPackageById)
 
 	return router
@@ -279,6 +284,11 @@ func ItemModelMappingRouter(
 	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Post("/", ItemModelMappingController.CreateItemModelMapping)
 	router.Get("/{item_id}", ItemModelMappingController.GetItemModelMappingByItemId)
@@ -293,12 +303,21 @@ func MovingCodeRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Post("/", MovingCodeController.CreateMovingCode)
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
 	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	router.Get("/drop-down", MovingCodeController.GetDropdownMovingCode)
+	router.Patch("/activate/{moving_code_id}", MovingCodeController.ActivateMovingCode)
+	router.Patch("/deactive/{moving_code_id}", MovingCodeController.DeactiveMovingCode)
+
 	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router

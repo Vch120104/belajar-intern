@@ -16,6 +16,39 @@ type MovingCodeServiceImpl struct {
 	DB             *gorm.DB
 }
 
+// ActivateMovingCode implements masterservice.MovingCodeService.
+func (s *MovingCodeServiceImpl) ActivateMovingCode(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.MovingCodeRepo.ActivateMovingCode(tx, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+// DeactiveMovingCode implements masterservice.MovingCodeService.
+func (s *MovingCodeServiceImpl) DeactiveMovingCode(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.MovingCodeRepo.DeactiveMovingCode(tx, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+// GetDropdownMovingCode implements masterservice.MovingCodeService.
+func (s *MovingCodeServiceImpl) GetDropdownMovingCode() ([]masterpayloads.MovingCodeDropDown, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.MovingCodeRepo.GetDropdownMovingCode(tx)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 // ChangeStatusMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
@@ -50,7 +83,7 @@ func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([
 }
 
 // GetMovingCodebyId implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (any, *exceptions.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (masterpayloads.MovingCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.GetMovingCodebyId(tx, Id)
@@ -72,7 +105,7 @@ func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exception
 }
 
 // UpdateMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeListUpdate) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.UpdateMovingCode(tx, req)
