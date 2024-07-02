@@ -14,4 +14,6 @@ type ForecastMasterRepository interface {
 	SaveForecastMaster(*gorm.DB, masterpayloads.ForecastMasterResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusForecastMaster(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	UpdateForecastMaster(tx *gorm.DB, req masterpayloads.ForecastMasterResponse, id int)(bool,*exceptions.BaseErrorResponse)
 }
+

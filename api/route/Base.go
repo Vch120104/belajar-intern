@@ -639,6 +639,7 @@ func ForecastMasterRouter(
 	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
 	router.Post("/", forecastMasterController.SaveForecastMaster)
 	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
+	router.Put("/{forecast_master_id}",forecastMasterController.UpdateForecastMaster)
 
 	return router
 }

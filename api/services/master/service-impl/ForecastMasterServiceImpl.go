@@ -83,3 +83,13 @@ func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils
 	}
 	return results, totalPages, totalRows, nil
 }
+
+func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int)(bool,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err := s.ForecastMasterRepo.UpdateForecastMaster(tx,req,id)
+	if err != nil{
+		return false,err
+	}
+	return result,nil
+}
