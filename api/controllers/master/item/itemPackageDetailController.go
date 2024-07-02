@@ -22,6 +22,8 @@ type ItemPackageDetailController interface {
 	CreateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request)
 	UpdateItemPackageDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPackageDetail(writer http.ResponseWriter, request *http.Request)
+	ActivateItemPackageDetail(writer http.ResponseWriter, request *http.Request)
+	DeactivateItemPackageDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPackageDetailControllerImpl struct {
@@ -32,6 +34,34 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 	return &ItemPackageDetailControllerImpl{
 		ItemPackageDetailService: ItemPackageDetailService,
 	}
+}
+
+// AactivateItemPackageDetail implements ItemPackageDetailController.
+func (r *ItemPackageDetailControllerImpl) ActivateItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "item_package_detail_id")
+
+	response, err := r.ItemPackageDetailService.ActivateItemPackageDetail(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Activate Status Successfully!", http.StatusOK)
+}
+
+// DeactivateItemPackageDetail implements ItemPackageDetailController.
+func (r *ItemPackageDetailControllerImpl) DeactivateItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "item_package_detail_id")
+
+	response, err := r.ItemPackageDetailService.DeactiveItemPackageDetail(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Deactivate Status Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Item Package Detail

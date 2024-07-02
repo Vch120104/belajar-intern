@@ -323,7 +323,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"item_id":               queryValues.Get("item_id"),
+		"item_id":        queryValues.Get("item_id"),
 		"item_detail_id": queryValues.Get("item_detail_id"),
 	}
 
@@ -354,7 +354,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 // @Param item_detail_id path int true "Item Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item/{item_id}/detail/{item_detail_id} [get]
+// @Router /v1/item/detail/{item_id}/{item_detail_id} [get]
 func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
 	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
