@@ -6,6 +6,8 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type ItemImportService interface {
@@ -14,4 +16,7 @@ type ItemImportService interface {
 	SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse)
 	GetItemImportbyItemIdandSupplierId(itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse)
+	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
+	UploadPreviewFile(rows [][]string) ([]masteritempayloads.ItemImportUploadResponse, *exceptions.BaseErrorResponse)
+	ProcessDataUpload(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse)
 }

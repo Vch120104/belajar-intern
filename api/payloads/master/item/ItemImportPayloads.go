@@ -1,6 +1,7 @@
 package masteritempayloads
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	"encoding/json"
 )
 
@@ -41,6 +42,10 @@ type ItemImportUploadResponse struct {
 	OrderQtyMultiplier float64 `json:"moq"`
 	RoyaltyFlag        string  `json:"royalty"`
 	OrderConversion    float64 `json:"order_conversion"`
+}
+
+type ItemImportUploadRequest struct {
+	Data []masteritementities.ItemImport `json:"data"`
 }
 
 func ConvertItemImportMapToStruct(maps []map[string]any) ([]ItemImportByIdResponse, error) {

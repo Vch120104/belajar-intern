@@ -13,7 +13,6 @@ import (
 	"after-sales/api/validation"
 	"bytes"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,10 +31,39 @@ type ItemImportController interface {
 	GetItemImportbyItemIdandSupplierId(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 	UploadTemplate(writer http.ResponseWriter, request *http.Request)
+	ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemImportControllerImpl struct {
 	ItemImportService masteritemservice.ItemImportService
+}
+
+// ProcessDataUpload implements ItemImportController.
+func (r *ItemImportControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.ItemImportUploadRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.ItemImportService.ProcessDataUpload(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
 }
 
 // UploadTemplate implements ItemImportController.
@@ -74,151 +102,32 @@ func (r *ItemImportControllerImpl) UploadTemplate(writer http.ResponseWriter, re
 		return
 	}
 
-	response := []masteritempayloads.ItemImportUploadResponse{}
+	previewData, errorPreview := r.ItemImportService.UploadPreviewFile(rows)
 
-	for index, value := range rows {
-		data := masteritempayloads.ItemImportUploadResponse{}
-		var failedQtyParse error
-		var failedOrderaParse error
-		if index > 0 {
-			data.ItemCode = value[0]
-			data.SupplierCode = value[1]
-			data.ItemAliasCode = value[2]
-			data.ItemAliasName = value[3]
-			data.OrderQtyMultiplier, failedQtyParse = strconv.ParseFloat(value[4], 64)
-
-			if failedQtyParse != nil {
-				helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("make sure moq value is correct"), StatusCode: 400})
-				return
-			}
-
-			data.RoyaltyFlag = value[5]
-			data.OrderConversion, failedOrderaParse = strconv.ParseFloat(value[6], 64)
-
-			if failedOrderaParse != nil {
-				helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("make sure order conversion value is correct"), StatusCode: 400})
-				return
-			}
-
-			response = append(response, data)
-		}
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
 	}
 
-	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, previewData, "Get Data Successfully!", http.StatusOK)
 
 }
 
 // DownloadTemplate implements ItemImportController.
 func (r *ItemImportControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
 
-	f := excelize.NewFile()
-	sheetName := "ItemImportMaster"
-	defer func() {
-		if err := f.Close(); err != nil {
-			helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500})
-		}
-	}()
-	// Create a new sheet.
-	index, err := f.NewSheet(sheetName)
-	if err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500})
+	f, errorGenerate := r.ItemImportService.GenerateTemplateFile()
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
 		return
 	}
-	// Set value of a cell.USPG_GMITEM2_INSERT
-	f.SetCellValue(sheetName, "A1", "Part_Number")
-	f.SetCellValue(sheetName, "B1", "Supplier_Code")
-	f.SetCellValue(sheetName, "C1", "Part_Number_Alias")
-	f.SetCellValue(sheetName, "D1", "Part_Name_Alias")
-	f.SetCellValue(sheetName, "E1", "MOQ")
-	f.SetCellValue(sheetName, "F1", "Royalty")
-	f.SetCellValue(sheetName, "G1", "Order_Conversion")
-	f.SetColWidth(sheetName, "A", "G", 21.5)
-
-	// Create a style with bold font and border
-	style, err := f.NewStyle(&excelize.Style{
-		Alignment: &excelize.Alignment{Horizontal: "left"},
-		Font: &excelize.Font{
-			Bold: true,
-		},
-		Border: []excelize.Border{
-			{
-				Type:  "left",
-				Color: "000000",
-				Style: 1,
-			},
-			{
-				Type:  "top",
-				Color: "000000",
-				Style: 1,
-			},
-			{
-				Type:  "bottom",
-				Color: "000000",
-				Style: 1,
-			},
-			{
-				Type:  "right",
-				Color: "000000",
-				Style: 1,
-			},
-		},
-	})
-	if err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500})
-	}
-
-	// Apply the style to the header cells
-	for col := 'A'; col <= 'G'; col++ {
-		cell := string(col) + "1"
-		f.SetCellStyle(sheetName, cell, cell, style)
-	}
-
-	// Get data example
-
-	id := []int{}
-
-	internalFilterCondition := map[string]string{}
-	externalFilterCondition := map[string]string{}
-
-	paginate := pagination.Pagination{
-		Limit: 3,
-		Page:  0,
-	}
-
-	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
-	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
-
-	paginatedData, _, _, _ := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
-
-	data, _ := masteritempayloads.ConvertItemImportMapToStruct(paginatedData)
-
-	for _, value := range data {
-		id = append(id, value.ItemImportId)
-	}
-
-	for i := 0; i < len(id); i++ {
-
-		result, _ := r.ItemImportService.GetItemImportbyId(id[i])
-
-		fmt.Println(result)
-		f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), result.ItemCode)
-		f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), result.SupplierCode)
-		f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), result.ItemAliasCode)
-		f.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), result.ItemAliasName)
-		f.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), result.OrderQtyMultiplier)
-		f.SetCellValue(sheetName, fmt.Sprintf("F%d", i+2), result.RoyaltyFlag)
-		f.SetCellValue(sheetName, fmt.Sprintf("G%d", i+2), result.OrderConversion)
-
-	}
-
-	// Set active sheet of the workbook.
-	f.SetActiveSheet(index)
 
 	// Write the Excel file to a buffer
 	var b bytes.Buffer
-	err = f.Write(&b)
+	err := f.Write(&b)
 	if err != nil {
-		http.Error(writer, "Failed to write file to buffer.", http.StatusInternalServerError)
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
 		return
 	}
 
