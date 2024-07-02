@@ -27,27 +27,26 @@ func StartPriceListService(priceListRepo masteritemrepository.PriceListRepositor
 
 func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceList(tx, request)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceListById(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if request.PriceListId != 0 {
 		_, err := s.priceListRepo.GetPriceListById(tx, int(request.PriceListId))
@@ -61,12 +60,12 @@ func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceLis
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.priceListRepo.GetPriceListById(tx, Id)
 
@@ -78,5 +77,6 @@ func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }

@@ -26,19 +26,19 @@ func StartSupplySlipService(supplySlipRepo transactionsparepartrepository.Supply
 }
 
 func (s *SupplySlipServiceImpl) GetSupplySlipById(tx *gorm.DB, id int) (transactionsparepartpayloads.SupplySlipResponse, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
 	value, err := s.supplySlipRepo.GetSupplySlipById(tx, id)
 	if err != nil {
 		return transactionsparepartpayloads.SupplySlipResponse{}, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return value, nil
 }
 
 func (s *SupplySlipServiceImpl) GetSupplySlipDetailById(tx *gorm.DB, id int) (transactionsparepartpayloads.SupplySlipDetailResponse, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
 	value, err := s.supplySlipRepo.GetSupplySlipDetailById(tx, id)
 	if err != nil {
 		return transactionsparepartpayloads.SupplySlipDetailResponse{}, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return value, nil
 }

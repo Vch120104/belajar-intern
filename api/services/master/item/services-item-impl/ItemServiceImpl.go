@@ -79,22 +79,22 @@ func generateCacheKeyId(prefix string, params ...interface{}) string {
 // GetUomDropDown implements masteritemservice.ItemService.
 func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetUomDropDown(tx, uomTypeId)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // GetUomTypeDropDown implements masteritemservice.ItemService.
 func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetUomTypeDropDown(tx)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -107,7 +107,7 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 		fmt.Println("Cache miss, querying database...")
 
 		tx := s.DB.Begin()
-		defer helper.CommitOrRollback(tx)
+
 		results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItem(tx, filterCondition, pages)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
@@ -122,7 +122,7 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 				fmt.Println("Failed to set cache:", setErr)
 			}
 		}
-
+		defer helper.CommitOrRollback(tx, repoErr)
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -146,31 +146,31 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 
 func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetAllItemLookup(tx, filter)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemById(tx, Id)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemWithMultiId(tx, MultiIds)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
@@ -179,17 +179,16 @@ func (s *ItemServiceImpl) GetItemCode(code string) (masteritempayloads.ItemRespo
 	// encodedCode := url.PathEscape(code)
 
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetItemCode(tx, code) // Menggunakan kode yang telah diencode
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	fmt.Print("sini?")
 
 	if req.ItemId != 0 {
@@ -204,12 +203,12 @@ func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *e
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.itemRepo.GetItemById(tx, Id)
 	if err != nil {
@@ -220,6 +219,7 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorR
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -231,7 +231,6 @@ func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterConditi
 	if err == redis.Nil {
 		fmt.Println("Cache miss, querying database...")
 		tx := s.DB.Begin()
-		defer helper.CommitOrRollback(tx)
 		results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItemDetail(tx, filterCondition, pages)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
@@ -246,7 +245,7 @@ func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterConditi
 				fmt.Println("Failed to set cache:", setErr)
 			}
 		}
-
+		defer helper.CommitOrRollback(tx, repoErr)
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -292,7 +291,6 @@ func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masterite
 	}
 
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, repoErr := s.itemRepo.GetItemDetailById(tx, itemID, itemDetailID)
 	if repoErr != nil {
 		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
@@ -308,66 +306,66 @@ func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masterite
 			fmt.Println("Failed to set cache:", setErr)
 		}
 	}
-
+	defer helper.CommitOrRollback(tx, repoErr)
 	return result, nil
 }
 
 func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	err := s.itemRepo.AddItemDetail(tx, id, req)
 	if err != nil {
 		return err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return nil
 }
 
 func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	err := s.itemRepo.DeleteItemDetail(tx, id, itemDetailID)
 	if err != nil {
 		return err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return nil
 }
 
 func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.UpdateItem(tx, id, req)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemServiceImpl) UpdateItemDetail(id int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.UpdateItemDetail(tx, id, req)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemServiceImpl) GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetPrincipleBrandParent(tx, code)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemServiceImpl) GetPrincipleBrandDropdown() ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetPrincipleBrandDropdown(tx)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }

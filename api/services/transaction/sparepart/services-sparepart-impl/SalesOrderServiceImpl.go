@@ -26,10 +26,10 @@ func StartSalesOrderService(salesOrderRepo transactionsparepartrepository.SalesO
 }
 
 func (s *SalesOrderServiceImpl) GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
 	value, err := s.salesOrderRepo.GetSalesOrderByID(tx, id)
 	if err != nil {
 		return transactionsparepartpayloads.SalesOrderResponse{}, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return value, nil
 }

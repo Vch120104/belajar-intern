@@ -29,37 +29,36 @@ func StartOperationEntriesService(operationEntriesRepo masteroperationrepository
 
 func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetAllOperationEntries(tx, filterCondition, pages)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesById(tx, id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesName(tx, request)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.OperationEntriesId != 0 {
 		_, err := s.operationEntriesRepo.GetOperationEntriesById(tx, req.OperationEntriesId)
@@ -73,15 +72,16 @@ func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpa
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }

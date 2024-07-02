@@ -29,27 +29,26 @@ func StartDiscountPercentService(discountPercentRepo masteritemrepository.Discou
 
 func (s *DiscountPercentServiceImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.discountPercentRepo.GetAllDiscountPercent(tx, filterCondition, pages)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
 func (s *DiscountPercentServiceImpl) GetDiscountPercentById(Id int) (masteritempayloads.DiscountPercentResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountPercentRepo.GetDiscountPercentById(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.DiscountPercentResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	if req.DiscountPercentId != 0 {
 		_, err := s.discountPercentRepo.GetDiscountPercentById(tx, req.DiscountPercentId)
 
@@ -62,12 +61,12 @@ func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.discountPercentRepo.GetDiscountPercentById(tx, Id)
 
@@ -79,5 +78,6 @@ func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool, 
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }

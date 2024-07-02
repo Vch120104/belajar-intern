@@ -19,99 +19,99 @@ type MovingCodeServiceImpl struct {
 // ActivateMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) ActivateMovingCode(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.ActivateMovingCode(tx, id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // DeactiveMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) DeactiveMovingCode(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.DeactiveMovingCode(tx, id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // GetDropdownMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) GetDropdownMovingCode() ([]masterpayloads.MovingCodeDropDown, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.GetDropdownMovingCode(tx)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // ChangeStatusMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.ChangeStatusMovingCode(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // CreateMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.CreateMovingCode(tx, req)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // GetAllMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.MovingCodeRepo.GetAllMovingCode(tx, pages)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
 // GetMovingCodebyId implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (masterpayloads.MovingCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.GetMovingCodebyId(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // PushMovingCodePriority implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.PushMovingCodePriority(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 // UpdateMovingCode implements masterservice.MovingCodeService.
 func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeListUpdate) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.MovingCodeRepo.UpdateMovingCode(tx, req)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 

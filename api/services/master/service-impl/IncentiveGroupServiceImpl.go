@@ -29,52 +29,48 @@ func StartIncentiveGroupService(IncentiveGroupRepository masterrepository.Incent
 
 func (s *IncentiveGroupServiceImpl) GetAllIncentiveGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.IncentiveGroupRepository.GetAllIncentiveGroup(tx, filterCondition, pages)
 
 	if err != nil {
 		return get, err
 	}
-
+	defer helper.CommitOrRollback(tx, err)
 	return get, nil
 }
 
 func (s *IncentiveGroupServiceImpl) GetAllIncentiveGroupIsActive() ([]masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.IncentiveGroupRepository.GetAllIncentiveGroupIsActive(tx)
 
 	if err != nil {
 		return result, err
 	}
-
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *IncentiveGroupServiceImpl) GetIncentiveGroupById(id int) (masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.IncentiveGroupRepository.GetIncentiveGroupById(tx, id)
 	if err != nil {
 		return result, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *IncentiveGroupServiceImpl) SaveIncentiveGroup(req masterpayloads.IncentiveGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveGroupRepository.SaveIncentiveGroup(tx, req)
 	if err != nil {
 		return results, err
 	}
-
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *IncentiveGroupServiceImpl) ChangeStatusIncentiveGroup(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.IncentiveGroupRepository.GetIncentiveGroupById(tx, id)
 
@@ -87,27 +83,27 @@ func (s *IncentiveGroupServiceImpl) ChangeStatusIncentiveGroup(id int) (bool, *e
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }
 
 func (s *IncentiveGroupServiceImpl) UpdateIncentiveGroup(req masterpayloads.UpdateIncentiveGroupRequest, id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveGroupRepository.UpdateIncentiveGroup(tx, id, req)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *IncentiveGroupServiceImpl) GetAllIncentiveGroupDropDown() ([]masterpayloads.IncentiveGroupDropDown, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.IncentiveGroupRepository.GetAllIncentiveGroupDropDown(tx)
 
 	if err != nil {
 		return result, err
 	}
-
+	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }

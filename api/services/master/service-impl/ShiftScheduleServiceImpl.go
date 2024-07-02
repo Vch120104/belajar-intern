@@ -41,11 +41,11 @@ func StartShiftScheduleService(ShiftScheduleRepo masterrepository.ShiftScheduleR
 
 func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.ShiftScheduleResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -61,17 +61,16 @@ func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.
 
 func (s *ShiftScheduleServiceImpl) GetAllShiftSchedule(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ShiftScheduleRepo.GetAllShiftSchedule(tx, filterCondition, pages)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, oprId)
 
@@ -83,12 +82,12 @@ func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool, *
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftScheduleResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.ShiftScheduleId != 0 {
 		_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, req.ShiftScheduleId)
@@ -102,5 +101,6 @@ func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftSch
 	if err != nil {
 		return false, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }

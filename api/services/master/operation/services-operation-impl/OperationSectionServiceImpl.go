@@ -33,41 +33,38 @@ func StartOperationSectionService(operationSectionRepo masteroperationrepository
 
 func (s *OperationSectionServiceImpl) GetAllOperationSectionList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetAllOperationSectionList(tx, filterCondition, pages)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationSectionServiceImpl) GetSectionCodeByGroupId(GroupId int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetSectionCodeByGroupId(tx, GroupId)
 
 	if err != nil {
 		return results, err
 	}
-
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationSectionServiceImpl) GetOperationSectionName(group_id int, section_code string) (masteroperationpayloads.OperationSectionNameResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetOperationSectionName(tx, group_id, section_code)
 
 	if err != nil {
 		return results, err
 	}
-
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpayloads.OperationSectionRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.OperationSectionId != 0 {
 		_, err := s.operationSectionRepo.GetOperationSectionById(tx, req.OperationSectionId)
@@ -93,26 +90,27 @@ func (s *OperationSectionServiceImpl) SaveOperationSection(req masteroperationpa
 			Message:    "Failed to save operation section",
 		}
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationSectionServiceImpl) GetOperationSectionById(id int) (masteroperationpayloads.OperationSectionListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.GetOperationSectionById(tx, id)
 
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationSectionRepo.ChangeStatusOperationSection(tx, Id)
 	if err != nil {
 		return results, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
