@@ -1,6 +1,7 @@
 package masteritemrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -8,8 +9,8 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,72 +24,130 @@ func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepo
 	return &ItemSubstituteRepositoryImpl{}
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemSubstitute{}
-	payloads := []masteritempayloads.ItemSubstitutePayloads{}
+func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition map[string]string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+    var responses []masteritempayloads.ItemSubstituteById
+    var getSubtituteCode []masteritempayloads.GetSubstitutePayloads
+    is_active := filterCondition["is_active"]
+    item_id := filterCondition["item_id"]
+    brand_id := filterCondition["brand_id"]
+    substitute_item_id := filterCondition["substitute_item_code"]
+    effective_date_from := filterCondition["effective_date_from"]
+    effective_date_to := filterCondition["effective_date_to"]
 
-	query := tx.Model(entities).Select("mtr_item_substitute.*, Item.item_code, Item.item_name").
-		Joins("Item", tx.Select(""))
+    layout := "2006-01-02T15:04:05.0000000-07:00"
+    var startDate, endDate time.Time
+    var err error
+    if effective_date_from != "" {
+        startDate, err = time.Parse(layout, effective_date_from)
+        if err != nil {
+            return nil, 0, 0, &exceptions.BaseErrorResponse{
+                StatusCode: http.StatusBadRequest,
+                Err:        err,
+            }
+        }
+    }
 
-	whereQuery := utils.ApplyFilter(query, filterCondition)
+    if effective_date_to != "" {
+        endDate, err = time.Parse(layout, effective_date_to)
+        if err != nil {
+            return nil, 0, 0, &exceptions.BaseErrorResponse{
+                StatusCode: http.StatusBadRequest,
+                Err:        err,
+            }
+        }
+    }
 
-	if !from.IsZero() && !to.IsZero() {
-		whereQuery.Where("effective_date BETWEEN ? AND ?", from, to)
-	} else if !from.IsZero() {
-		whereQuery.Where("effective_date >= ?", from)
-	}
+    query := tx.Table("mtr_item_substitute AS mis").
+        Select("mis.*, mi.*,ic.*").
+        Joins("JOIN mtr_item AS mi ON mi.item_id = mis.item_id").
+		Joins("JOIN mtr_item_class as ic on ic.item_class_id = mis.item_class_id")
 
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
+    if is_active != "" {
+        query = query.Where("mis.is_active = ?", is_active)
+    }
+    if item_id != "" {
+        query = query.Where("mis.item_id = ?", item_id)
+    }
+    if brand_id != "" {
+        query = query.Where("mi.brand_id = ?", brand_id)
+    }
+    if substitute_item_id != "" {
+        query = query.Where("mis.substitute_item_code = ?", substitute_item_id)
+    }
+    if !startDate.IsZero() && !endDate.IsZero() {
+        query = query.Where("mis.effective_date >= ? AND mis.effective_date <= ?", startDate, endDate)
+    }
 
-	fmt.Print(payloads[0].IsActive)
+    err = query.Scan(&responses).Error
+    if err != nil {
+        return nil, 0, 0, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusNotFound,
+            Err:        err,
+        }
+    }
 
+    if len(responses) == 0 {
+        return nil, 0, 0, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusInternalServerError,
+            Err:        err,
+        }
+    }
+
+    ItemSubstituteCodeUrl := config.EnvConfigs.GeneralServiceUrl + "/substitute-type"
+
+    errUrlSubstituteItem := utils.Get(ItemSubstituteCodeUrl, &getSubtituteCode, nil)
+    if errUrlSubstituteItem != nil {
+        return nil, 0, 0, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusInternalServerError,
+            Err:        err,
+        }
+    }
+
+    joinedData := utils.DataFrameInnerJoin(responses, getSubtituteCode, "SubstituteTypeId")
+    dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+
+    return dataPaginate, totalPages, totalRows, nil
+}
+
+
+func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	response := masteritempayloads.ItemSubstituteById{}
+	itemgroupresponse := masteritempayloads.ItemGroupResponse{}
+	err := tx.Table("mtr_item_substitute").Select("mtr_item_substitute.*,mtr_item.*,mtr_item_class.*").
+		Joins("JOIN mtr_item on mtr_item.item_id = mtr_item_substitute.item_id").
+		Joins("Join mtr_item_class on mtr_item_class.item_class_id = mtr_item_substitute.item_class_id").
+		Scan(&response).Error
 	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if len(payloads) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
+	if errItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/item-group/"+strconv.Itoa(response.ItemGroupId),&itemgroupresponse,nil); errItemGroup != nil{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			Err: errors.New(""),
 		}
 	}
-
-	pages.Rows = payloads
-
-	return pages, nil
-}
-
-func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (masteritempayloads.ItemSubstitutePayloads, *exceptions.BaseErrorResponse) {
-	entity := masteritementities.ItemSubstitute{}
-	response := masteritempayloads.ItemSubstitutePayloads{}
-
-	err := tx.Model(entity).Select("mtr_item_substitute.*, Item.item_code, Item.item_name").
-		Where(masteritementities.ItemSubstitute{ItemSubstituteId: id}).
-		Joins("Item", tx.Select("")).
-		First(&response).Error
-
-	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
+	joineddata2 := utils.DataFrameInnerJoin([]masteritempayloads.ItemSubstituteById{response},[]masteritempayloads.ItemGroupResponse{itemgroupresponse},"ItemGroupId")
+	if len(joineddata2)==0{
+		return nil,&exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err: errors.New(""),
 		}
 	}
-
-	return response, nil
+	return joineddata2[0], nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemSubstituteDetail{}
 	payloads := []masteritempayloads.ItemSubstituteDetailPayloads{}
+	tableStruct := masteritempayloads.ItemSubstituteDetailPayloads{}
 
-	query := tx.Model(entities).Select("mtr_item_substitute_detail.*, Item.item_code, Item.item_name").
-		Joins("Item", tx.Select("")).Joins("Item.ItemSubstitute")
+	baseModelQuery := utils.CreateJoinSelectStatement(tx, tableStruct).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteId: id})
 
-	err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&payloads).Error
-
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&payloads).Rows()
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -101,6 +160,8 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 			Err:        errors.New(""),
 		}
 	}
+
+	defer rows.Close()
 
 	pages.Rows = payloads
 
@@ -120,40 +181,19 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstituteDetail(tx *gorm.DB, 
 			Err:        err,
 		}
 	}
-
 	defer rows.Close()
 	return response, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req masteritempayloads.ItemSubstitutePostPayloads) (bool, *exceptions.BaseErrorResponse) {
-
-	// parseEffectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", req.EffectiveDate)
-
 	entities := masteritementities.ItemSubstitute{
-		SubstituteTypeCode: req.SubstituteTypeCode,
-		ItemSubstituteId:   req.ItemSubstituteId,
-		EffectiveDate:      req.EffectiveDate,
-		ItemId:             req.ItemId,
-	}
-	err := tx.Save(&entities).Error
-
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemSubstituteDetail{
-		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
-		ItemId:                 req.ItemId,
-		ItemSubstituteId:       id,
-		Quantity:               req.Quantity,
-		Sequence:               req.Sequence,
+		SubstituteTypeId: req.SubstituteTypeId,
+		ItemSubstituteId: req.ItemSubstituteId,
+		EffectiveDate:    req.EffectiveDate,
+		ItemId:           req.ItemId,
+		ItemGroupId:      req.ItemGroupId,
+		ItemClassId:      req.ItemClassId,
+		Description:      req.Description,
 	}
 	err := tx.Save(&entities).Error
 
@@ -167,7 +207,39 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req
 	return true, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse) {
+	var count int64
+	err := tx.Model(&masteritementities.ItemSubstituteDetail{}).
+		Where("item_substitute_id = ?", id).
+		Count(&count).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	entities := masteritementities.ItemSubstituteDetail{
+		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
+		ItemId:                 req.ItemId,
+		ItemSubstituteId:       id,
+		Quantity:               req.Quantity,
+		Sequence:               int(count) + 1,
+	}
+	err2 := tx.Save(&entities).Error
+
+	if err2 != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err2,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemOperation(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 
 	result := tx.Model(&entities).
