@@ -12,8 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	_ "after-sales/docs"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -356,8 +354,12 @@ func PriceListRouter(
 
 	router.Get("/", priceListController.GetPriceList)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
+	router.Get("/new/",priceListController.GetAllPriceListNew)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
+	router.Put("/activate/{price_list_id}",priceListController.ActivatePriceList)
+	router.Put("/deactivate/{price_list_id}",priceListController.DeactivatePriceList)
+	router.Delete("/{price_list_id}",priceListController.DeletePriceList)
 
 	return router
 }
