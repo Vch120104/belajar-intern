@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
+
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -80,11 +81,12 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 
 func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition map[string]string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
-	defer helper.CommitOrRollback(tx)
+
 	result, totalPage, totalRows, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages)
 	if err != nil {
 		return result, 0, 0, err
 	}
+	defer helper.CommitOrRollback(tx, err)
 	return result, totalPage, totalRows, nil
 }
 
