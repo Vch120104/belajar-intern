@@ -28,6 +28,16 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB,
 	}
 }
 
+func (s *ItemServiceImpl) GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItemSearch(tx, filterCondition, itemIDs, supplierIDs, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+	return results, totalPages, totalRows, nil
+}
+
 // GetUomDropDown implements masteritemservice.ItemService.
 func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
