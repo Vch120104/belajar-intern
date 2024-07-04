@@ -70,21 +70,23 @@ type DiscountGroupResponse struct {
 }
 
 type ItemDiscountRequest struct {
-	AgreementItemId          int    `json:"agreement_item_id" parent_entity:"mtr_agreement_item_detail" main_table:"mtr_agreement_item_detail"`
-	AgreementId              int    `json:"agreement_id" parent_entity:"mtr_agreement_item_detail"`
-	LineTypeId               int    `json:"line_type_id" parent_entity:"mtr_agreement_item_detail"`
-	AgreementItemOperationId int    `json:"agreement_item_operation_id" parent_entity:"mtr_agreement_item_detail"`
-	MinValue                 int    `json:"min_value" parent_entity:"mtr_agreement_item_detail"`
-	AgreementRemark          string `json:"agreement_remark" parent_entity:"mtr_agreement_item_detail"`
+	AgreementItemId          int     `json:"agreement_item_id" parent_entity:"mtr_agreement_item_detail" main_table:"mtr_agreement_item_detail"`
+	AgreementId              int     `json:"agreement_id" parent_entity:"mtr_agreement_item_detail"`
+	LineTypeId               int     `json:"line_type_id" parent_entity:"mtr_agreement_item_detail"`
+	AgreementItemOperationId int     `json:"agreement_item_operation_id" parent_entity:"mtr_agreement_item_detail"`
+	DiscountPercent          float32 `json:"discount_percent" parent_entity:"mtr_agreement_item_detail"`
+	MinValue                 int     `json:"min_value" parent_entity:"mtr_agreement_item_detail"`
+	AgreementRemark          string  `json:"agreement_remark" parent_entity:"mtr_agreement_item_detail"`
 }
 
 type ItemDiscountResponse struct {
-	AgreementItemId          int    `json:"agreement_item_id"`
-	AgreementId              int    `json:"agreement_id"`
-	LineTypeId               int    `json:"line_type_id"`
-	AgreementItemOperationId int    `json:"agreement_item_operation_id"`
-	MinValue                 int    `json:"min_value"`
-	AgreementRemark          string `json:"agreement_remark"`
+	AgreementItemId          int     `json:"agreement_item_id"`
+	AgreementId              int     `json:"agreement_id"`
+	LineTypeId               int     `json:"line_type_id"`
+	AgreementItemOperationId int     `json:"agreement_item_operation_id"`
+	DiscountPercent          float32 `json:"discount_percent"`
+	MinValue                 int     `json:"min_value"`
+	AgreementRemark          string  `json:"agreement_remark"`
 }
 
 type DiscountValueRequest struct {

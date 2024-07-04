@@ -22,6 +22,7 @@ type ForecastMasterController interface {
 	SaveForecastMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request)
 	GetAllForecastMaster(writer http.ResponseWriter, request *http.Request)
+	UpdateForecastMaster(writer http.ResponseWriter, request *http.Request)
 }
 type ForecastMasterControllerImpl struct {
 	ForecastMasterService masterservice.ForecastMasterService
@@ -68,21 +69,12 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
-
-	create, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
+	_, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-
-	if formRequest.ForecastMasterId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, nil, "Create Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Forecast Master
@@ -156,4 +148,17 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.ResponseWriter, request *http.Request){
+	forecast_master_id,_ := strconv.Atoi(chi.URLParam(request,"forecast_master_id"))
+	var formRequest masterpayloads.ForecastMasterResponse
+	helper.ReadFromRequestBody(request, &formRequest)
+	_, err := r.ForecastMasterService.UpdateForecastMaster(formRequest, forecast_master_id)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	
+	payloads.NewHandleSuccess(writer, nil, "Update Data Successfully!", http.StatusOK)
 }

@@ -145,6 +145,7 @@ func ItemRouter(
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", itemController.GetAllItem)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
@@ -157,9 +158,9 @@ func ItemRouter(
 	// router.Put("/{item_id}", itemController.UpdateItem)
 
 	router.Get("/detail", itemController.GetAllItemDetail)
-	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
+	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
-	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Delete("/detail/{item_id}/{item_detail_id}", itemController.DeleteItemDetail)
 
 	return router
 }
@@ -353,8 +354,12 @@ func PriceListRouter(
 
 	router.Get("/", priceListController.GetPriceList)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
+	router.Get("/new/",priceListController.GetAllPriceListNew)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
+	router.Put("/activate/{price_list_id}",priceListController.ActivatePriceList)
+	router.Put("/deactivate/{price_list_id}",priceListController.DeactivatePriceList)
+	router.Delete("/{price_list_id}",priceListController.DeletePriceList)
 
 	return router
 }
@@ -658,6 +663,7 @@ func ForecastMasterRouter(
 	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
 	router.Post("/", forecastMasterController.SaveForecastMaster)
 	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
+	router.Put("/{forecast_master_id}",forecastMasterController.UpdateForecastMaster)
 
 	return router
 }
@@ -741,15 +747,16 @@ func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
-	// Gunakan middleware NotFoundHandler
-	// router.Use(middleware.NotFoundHandler)
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
 	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
 	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
-
-	////router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
