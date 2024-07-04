@@ -7,9 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
-	"after-sales/api/utils"
-	"time"
-
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -28,17 +25,7 @@ func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubs
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
-	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
-	if err != nil {
-		return results, err
-	}
-	defer helper.CommitOrRollback(tx, err)
-	return results, nil
-}
-
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (masteritempayloads.ItemSubstitutePayloads, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
 	if err != nil {
@@ -91,10 +78,20 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition map[string]string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+	defer helper.CommitOrRollback(tx)
+	result, totalPage, totalRows, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages)
+	if err != nil {
+		return result, 0, 0, err
+	}
+	return result, totalPage, totalRows, nil
+}
+
+func (s *ItemSubstituteServiceImpl) ChangeStatusItemOperation(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 
-	result, err := s.itemSubstituteRepo.ChangeStatusItemSubstitute(tx, id)
+	result, err := s.itemSubstituteRepo.ChangeStatusItemOperation(tx, id)
 
 	if err != nil {
 		return result, err
