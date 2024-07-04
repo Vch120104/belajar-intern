@@ -210,9 +210,17 @@ func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritement
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 

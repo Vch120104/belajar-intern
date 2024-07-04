@@ -25,17 +25,18 @@ type ItemImportServiceImpl struct {
 // ProcessDataUpload implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) ProcessDataUpload(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
 	//Initiate db for get data example
-	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
 	var saveSuccess bool
 	for _, value := range req.Data {
+		tx := s.DB.Begin()
+
 		saveSuccess, err = s.itemImportRepo.SaveItemImport(tx, value)
+		defer helper.CommitOrRollback(tx, err)
 
 		if err != nil {
 			return saveSuccess, err
 		}
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }
 
