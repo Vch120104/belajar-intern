@@ -12,4 +12,5 @@ type ForecastMasterService interface {
 	SaveForecastMaster(masterpayloads.ForecastMasterResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusForecastMaster(int) (bool, *exceptions.BaseErrorResponse)
 	GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int)(bool,*exceptions.BaseErrorResponse)
 }

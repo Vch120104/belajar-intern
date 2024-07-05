@@ -1,7 +1,6 @@
 package masterwarehousecontroller
 
 import (
-	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
@@ -32,12 +31,27 @@ type WarehouseMasterController interface {
 	GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
+	DropdownbyGroupId(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.WarehouseMasterService) WarehouseMasterController {
 	return &WarehouseMasterControllerImpl{
 		WarehouseMasterService: WarehouseMasterService,
 	}
+}
+
+// DropdownbyGroupId implements WarehouseMasterController.
+func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWriter, request *http.Request) {
+
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+
+	get, err := r.WarehouseMasterService.DropdownbyGroupId(warehouseGroupId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Warehouse Master
@@ -78,7 +92,8 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 	get, err := r.WarehouseMasterService.GetAll(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
+
 		return
 	}
 
@@ -97,7 +112,7 @@ func (r *WarehouseMasterControllerImpl) GetAllIsActive(writer http.ResponseWrite
 
 	get, err := r.WarehouseMasterService.GetAllIsActive()
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -116,7 +131,7 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 
 	get, err := r.WarehouseMasterService.DropdownWarehouse()
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -131,14 +146,13 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Param warehouse_id path int true "warehouse_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/warehouse-master/by-id/{warehouse_id} [get]
+// @Router /v1/warehouse-master/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-
 	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 
 	get, err := r.WarehouseMasterService.GetById(warehouseId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -160,7 +174,7 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 
 	get, err := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -185,7 +199,7 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 
 	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -238,7 +252,7 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 	change_status, err := r.WarehouseMasterService.ChangeStatus(warehouseId)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

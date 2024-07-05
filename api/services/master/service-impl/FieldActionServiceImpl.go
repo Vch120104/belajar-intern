@@ -31,14 +31,14 @@ func StartFieldActionService(FieldActionRepo masterrepository.FieldActionReposit
 	}
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, totalPages, totalRows, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
+	results, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -81,20 +81,20 @@ func (s *FieldActionServiceImpl) GetFieldActionVehicleDetailById(Id int) (master
 	return results, nil
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldActionVehicleItemDetailById(Id int, pages pagination.Pagination) ([]map[string]interface{},int,int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	pages, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, pages)
+	result,totalpage,totalrows, err := s.FieldActionRepo.GetAllFieldActionVehicleItemDetailById(tx, Id, pages)
 	if err != nil {
-		return pages, err
+		return result,totalpage,totalrows, err
 	}
-	return pages, nil
+	return result,totalpage,totalrows, nil
 }
 
-func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int) (masterpayloads.FieldActionItemDetailResponse, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetFieldActionVehicleItemDetailById(Id int, linetypeid int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.FieldActionRepo.GetFieldActionVehicleItemDetailById(tx, Id)
+	results, err := s.FieldActionRepo.GetFieldActionVehicleItemDetailById(tx, Id, linetypeid)
 	if err != nil {
 		return results, err
 	}

@@ -12,6 +12,7 @@ import (
 type ItemPackageRepository interface {
 	GetAllItemPackage(tx *gorm.DB, internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
 	SaveItemPackage(tx *gorm.DB, request masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse)
-	GetItemPackageById(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetItemPackageById(tx *gorm.DB, id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+	GetItemPackageByCode(tx *gorm.DB, itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 }

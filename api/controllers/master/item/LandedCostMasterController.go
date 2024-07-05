@@ -62,12 +62,11 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result,totalpages,totalrows,err := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
+	result, totalpages, totalrows, err := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 }
 
@@ -163,13 +162,13 @@ func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *LandedCostMasterControllerImpl) UpdateLandedCostMaster(writer http.ResponseWriter, request *http.Request){
+func (r *LandedCostMasterControllerImpl) UpdateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.LandedCostMasterUpdateRequest
-	query,_:= strconv.Atoi(chi.URLParam(request,"landed_cost_id"))
-	helper.ReadFromRequestBody(request,&formRequest)
+	query, _ := strconv.Atoi(chi.URLParam(request, "landed_cost_id"))
+	helper.ReadFromRequestBody(request, &formRequest)
 
-	update,err:= r.LandedCostService.UpdateLandedCostMaster(query,formRequest)
-	if err != nil{
+	update, err := r.LandedCostService.UpdateLandedCostMaster(query, formRequest)
+	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}

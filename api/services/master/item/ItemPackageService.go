@@ -10,6 +10,7 @@ import (
 type ItemPackageService interface {
 	GetAllItemPackage(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	SaveItemPackage(request masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse)
-	GetItemPackageById(Id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetItemPackageById(Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(id int) (bool, *exceptions.BaseErrorResponse)
+	GetItemPackageByCode(itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse)
 }

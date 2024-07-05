@@ -27,6 +27,28 @@ func StartItemPackageDetailService(ItemPackageDetailRepo masteritemrepository.It
 	}
 }
 
+// ActivateItemPackageDetail implements masteritemservice.ItemPackageDetailService.
+func (s *ItemPackageDetailServiceImpl) ActivateItemPackageDetail(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.ItemPackageDetailRepo.ActivateItemPackageDetail(tx, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+// DeactiveItemPackageDetail implements masteritemservice.ItemPackageDetailService.
+func (s *ItemPackageDetailServiceImpl) DeactiveItemPackageDetail(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.ItemPackageDetailRepo.DeactiveItemPackageDetail(tx, id)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func (s *ItemPackageDetailServiceImpl) ChangeStatusItemPackageDetail(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -74,10 +96,10 @@ func (s *ItemPackageDetailServiceImpl) CreateItemPackageDetailByItemPackageId(re
 	return results, nil
 }
 
-func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetailByItemPackageId(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetail(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetailByItemPackageId(tx, req)
+	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetail(tx, req)
 	if err != nil {
 		return results, err
 	}

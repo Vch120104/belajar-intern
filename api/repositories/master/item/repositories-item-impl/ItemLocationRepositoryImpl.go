@@ -330,7 +330,6 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *ex
 	return nil
 }
 
-
 func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemLocationGetAllResponse
 
@@ -374,6 +373,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filtercondition 
 			"item_id":                 response.ItemId,
 			"item_code":               response.ItemCode,
 			"item_name":               response.ItemName,
+			"stock_opname":            response.StockOpname,
 			"warehouse_id":            response.WarehouseId,
 			"warehouse_name":          response.WarehouseName,
 			"warehouse_code":          response.WarehouseCode,
@@ -396,7 +396,7 @@ func (r *ItemLocationRepositoryImpl) GetByIdItemLoc(tx *gorm.DB, id int) (master
 	entities := masteritementities.ItemLocation{}
 	response := masteritempayloads.ItemLocationGetByIdResponse{}
 
-	result := tx.Model(&entities).Select("mtr_item.item_name,mtr_item.item_code,mtr_warehouse_location.warehouse_location_code,mtr_warehouse_location.warehouse_location_name").
+	result := tx.Model(&entities).Select("mtr_location_item.*,mtr_item.item_name,mtr_item.item_code,mtr_warehouse_location.warehouse_location_code,mtr_warehouse_location.warehouse_location_name").
 		Where("item_location_id=?", id).
 		Joins("Join mtr_item on mtr_item.item_id = mtr_location_item.item_id").
 		Joins("Join mtr_warehouse_location on mtr_warehouse_location.warehouse_location_id=mtr_location_item.warehouse_location_id").

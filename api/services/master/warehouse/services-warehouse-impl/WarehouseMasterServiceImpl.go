@@ -31,6 +31,19 @@ func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.Wareho
 	}
 }
 
+// DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
+func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId)
+
+	if err != nil {
+		return get, err
+	}
+
+	return get, nil
+}
+
 func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -44,7 +57,7 @@ func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWar
 	return save, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)

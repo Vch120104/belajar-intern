@@ -29,6 +29,7 @@ type setupDatabase struct {
 	ClientOrigin         string `mapstructure:"CLIENT_ORIGIN"`
 	ClientRedis          string `mapstructure:"REDIS_HOST"`
 	PortRedis            string `mapstructure:"REDIS_PORT"`
+	DBRedis              string `mapstructure:"REDIS_DB"`
 	GeneralServiceUrl    string `mapstructure:"GENERAL_SERVICE"`
 	SalesServiceUrl      string `mapstructure:"SALES_SERVICE"`
 	AfterSalesServiceUrl string `mapstructure:"AFTERSALES_SERVICE"`

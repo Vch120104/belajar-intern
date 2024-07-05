@@ -20,8 +20,10 @@ type ItemPackageDetailController interface {
 	GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageDetailById(writer http.ResponseWriter, request *http.Request)
 	CreateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request)
-	UpdateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request)
+	UpdateItemPackageDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPackageDetail(writer http.ResponseWriter, request *http.Request)
+	ActivateItemPackageDetail(writer http.ResponseWriter, request *http.Request)
+	DeactivateItemPackageDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPackageDetailControllerImpl struct {
@@ -32,6 +34,34 @@ func NewItemPackageDetailController(ItemPackageDetailService masteritemservice.I
 	return &ItemPackageDetailControllerImpl{
 		ItemPackageDetailService: ItemPackageDetailService,
 	}
+}
+
+// AactivateItemPackageDetail implements ItemPackageDetailController.
+func (r *ItemPackageDetailControllerImpl) ActivateItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "item_package_detail_id")
+
+	response, err := r.ItemPackageDetailService.ActivateItemPackageDetail(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Activate Status Successfully!", http.StatusOK)
+}
+
+// DeactivateItemPackageDetail implements ItemPackageDetailController.
+func (r *ItemPackageDetailControllerImpl) DeactivateItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "item_package_detail_id")
+
+	response, err := r.ItemPackageDetailService.DeactiveItemPackageDetail(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Deactivate Status Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Item Package Detail
@@ -158,7 +188,7 @@ func (r *ItemPackageDetailControllerImpl) CreateItemPackageDetailByItemPackageId
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/package [put]
-func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
+func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageDetail
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
@@ -175,7 +205,7 @@ func (r *ItemPackageDetailControllerImpl) UpdateItemPackageDetailByItemPackageId
 		return
 	}
 
-	create, err := r.ItemPackageDetailService.UpdateItemPackageDetailByItemPackageId(formRequest)
+	create, err := r.ItemPackageDetailService.UpdateItemPackageDetail(formRequest)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)

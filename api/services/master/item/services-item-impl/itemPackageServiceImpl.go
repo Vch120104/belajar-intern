@@ -27,6 +27,17 @@ func StartItemPackageService(ItemPackageRepo masteritemrepository.ItemPackageRep
 	}
 }
 
+// GetItemPackageByCode implements masteritemservice.ItemPackageService.
+func (s *ItemPackageServiceImpl) GetItemPackageByCode(itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	results, err := s.ItemPackageRepo.GetItemPackageByCode(tx, itemPackageCode)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -37,7 +48,7 @@ func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []uti
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemPackageRepo.GetItemPackageById(tx, Id)

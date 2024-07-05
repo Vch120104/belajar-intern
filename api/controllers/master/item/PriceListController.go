@@ -2,11 +2,13 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/utils"
 
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/validation"
 	"net/http"
@@ -21,6 +23,10 @@ type PriceListController interface {
 	GetPriceList(writer http.ResponseWriter, request *http.Request)
 	SavePriceList(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request)
+	DeletePriceList (writer http.ResponseWriter, request *http.Request)
+	GetAllPriceListNew(writer http.ResponseWriter,request *http.Request)
+	ActivatePriceList(writer http.ResponseWriter, request *http.Request)
+	DeactivatePriceList(writer http.ResponseWriter, request *http.Request)
 }
 
 type PriceListControllerImpl struct {
@@ -202,4 +208,67 @@ func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWrit
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,request *http.Request){
+	
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"brand_id":        queryValues.Get("brand_id"),
+		"item_group_id": queryValues.Get("item_group_id"),
+		"price_list_code":                             queryValues.Get("price_list_code"),
+		"item_class_id":                 queryValues.Get("item_class_id"),
+		"currency_id":                   queryValues.Get("currency_id"),
+		"effective_date":                 queryValues.Get("effective_date"),
+		"company_id":                   queryValues.Get("company_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, request *http.Request){
+	PriceListId :=chi.URLParam(request,"price_list_id")
+	response,err := r.pricelistservice.ActivatePriceList(PriceListId)
+	if err != nil{
+		exceptions.NewBadRequestException(writer,request,err)
+		return
+	}
+	payloads.NewHandleSuccess(writer,response,"Activate data successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) DeactivatePriceList (writer http.ResponseWriter, request *http.Request){
+	PriceListId := chi.URLParam(request,"price_list_id")
+	response,err := r.pricelistservice.DeactivatePriceList(PriceListId)
+	if err != nil{
+		exceptions.NewNotFoundException(writer,request,err)
+		return
+	}
+	payloads.NewHandleSuccess(writer,response,"Deactivate data successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) DeletePriceList (writer http.ResponseWriter, request *http.Request){
+	priceListId :=chi.URLParam(request,"price_list_id")
+	response,err := r.pricelistservice.DeletePriceList(priceListId)
+	if err != nil{
+		exceptions.NewNotFoundException(writer,request,err)
+		return
+	}
+	payloads.NewHandleSuccess(writer,response,"Deactivate data successfully!", http.StatusOK)
 }

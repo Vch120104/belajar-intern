@@ -8,6 +8,7 @@ import (
 	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
+	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -62,10 +63,10 @@ func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterw
 	return get, nil
 }
 
-func (s *WarehouseLocationServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WarehouseLocationServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	get, err := s.warehouseLocationRepo.GetAll(tx, request, pages)
+	get, err := s.warehouseLocationRepo.GetAll(tx, filter, pages)
 
 	if err != nil {
 		return get, err

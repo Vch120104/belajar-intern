@@ -31,7 +31,7 @@ func StartBomService(BomRepository masteritemrepository.BomRepository, db *gorm.
 func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
+
 	results, totalPages, totalRows, err := s.BomRepository.GetBomMasterList(tx, filterCondition, pages)
 	if err != nil {
 		return results, 0, 0, err
@@ -60,6 +60,18 @@ func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) 
 	return results, nil
 }
 
+func (s *BomServiceImpl) UpdateBomMaster(id int, req masteritempayloads.BomMasterRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	results, err := s.BomRepository.UpdateBomMaster(tx, id, req)
+	if err != nil {
+		return false, err
+	}
+
+	return results, nil
+}
+
 func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
@@ -84,26 +96,15 @@ func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterConditio
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailById(id int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailById(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	results, err := s.BomRepository.GetBomDetailById(tx, id)
-
+	results, totalPages, totalRows, err := s.BomRepository.GetBomDetailById(tx, id, filterCondition, pages)
 	if err != nil {
-		return results, err
+		return results, 0, 0, err
 	}
-	return results, nil
-}
 
-func (s *BomServiceImpl) GetBomDetailByIds(id int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, err := s.BomRepository.GetBomDetailByIds(tx, id)
-
-	if err != nil {
-		return results, err
-	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -113,6 +114,18 @@ func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) 
 	if err != nil {
 		return false, err
 	}
+	return results, nil
+}
+
+func (s *BomServiceImpl) UpdateBomDetail(id int, req masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+
+	results, err := s.BomRepository.UpdateBomDetail(tx, id, req)
+	if err != nil {
+		return false, err
+	}
+
 	return results, nil
 }
 
