@@ -13,7 +13,7 @@ import (
 type ItemImportService interface {
 	GetAllItemImport(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse)
 	GetItemImportbyId(Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse)
-	SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse)
+	SaveItemImport(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse)
 	GetItemImportbyItemIdandSupplierId(itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse)
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)

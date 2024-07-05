@@ -24,19 +24,15 @@ type ItemImportServiceImpl struct {
 
 // ProcessDataUpload implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) ProcessDataUpload(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
-	//Initiate db for get data example
-	var err *exceptions.BaseErrorResponse
-	var saveSuccess bool
-	for _, value := range req.Data {
-		tx := s.DB.Begin()
+	tx := s.DB.Begin()
 
-		saveSuccess, err = s.itemImportRepo.SaveItemImport(tx, value)
-		defer helper.CommitOrRollback(tx, err)
+	saveSuccess, err := s.itemImportRepo.SaveItemImport(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 
-		if err != nil {
-			return saveSuccess, err
-		}
+	if err != nil {
+		return saveSuccess, err
 	}
+
 	return true, nil
 }
 
@@ -161,6 +157,7 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
 	paginatedData, _, _, errorgetalldata := s.itemImportRepo.GetAllItemImport(tx, internalCriteria, externalCriteria, paginate)
+	defer helper.CommitOrRollback(tx, errorgetalldata)
 
 	data, _ := masteritempayloads.ConvertItemImportMapToStruct(paginatedData)
 
@@ -184,7 +181,6 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
-	defer helper.CommitOrRollback(tx, errorgetalldata)
 	return f, nil
 
 }
@@ -223,7 +219,7 @@ func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCo
 }
 
 // SaveItemImport implements masteritemservice.ItemImportService.
-func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemImportServiceImpl) SaveItemImport(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemImportRepo.SaveItemImport(tx, req)
 	defer helper.CommitOrRollback(tx, err)
