@@ -30,31 +30,31 @@ func StartMarkupMasterService(markupRepo masteritemrepository.MarkupMasterReposi
 func (s *MarkupMasterServiceImpl) GetMarkupMasterList(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.markupRepo.GetMarkupMasterList(tx, filter, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *MarkupMasterServiceImpl) GetMarkupMasterById(id int) (masteritempayloads.MarkupMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.markupRepo.GetMarkupMasterById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *MarkupMasterServiceImpl) GetAllMarkupMasterIsActive() ([]masteritempayloads.MarkupMasterDropDownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.markupRepo.GetAllMarkupMasterIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -70,10 +70,10 @@ func (s *MarkupMasterServiceImpl) SaveMarkupMaster(req masteritempayloads.Markup
 	}
 
 	results, err := s.markupRepo.SaveMarkupMaster(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 func (s *MarkupMasterServiceImpl) ChangeStatusMasterMarkupMaster(Id int) (bool, *exceptions.BaseErrorResponse) {
@@ -86,19 +86,19 @@ func (s *MarkupMasterServiceImpl) ChangeStatusMasterMarkupMaster(Id int) (bool, 
 	}
 
 	results, err := s.markupRepo.ChangeStatusMasterMarkupMaster(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }
 func (s *MarkupMasterServiceImpl) GetMarkupMasterByCode(markupCode string) (masteritempayloads.MarkupMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.markupRepo.GetMarkupMasterByCode(tx, markupCode)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 
 }

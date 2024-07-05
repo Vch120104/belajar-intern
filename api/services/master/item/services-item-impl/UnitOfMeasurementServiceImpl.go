@@ -30,41 +30,41 @@ func StartUnitOfMeasurementService(unitOfMeasurementRepo masteritemrepository.Un
 func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurementIsActive() ([]masteritempayloads.UomResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.unitOfMeasurementRepo.GetAllUnitOfMeasurementIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementById(id int) (masteritempayloads.UomIdCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementByCode(Code string) (masteritempayloads.UomIdCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementByCode(tx, Code)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *UnitOfMeasurementServiceImpl) GetAllUnitOfMeasurement(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.unitOfMeasurementRepo.GetAllUnitOfMeasurement(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -78,10 +78,10 @@ func (s *UnitOfMeasurementServiceImpl) ChangeStatusUnitOfMeasurement(Id int) (bo
 	}
 
 	results, err := s.unitOfMeasurementRepo.ChangeStatusUnitOfMeasurement(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -97,9 +97,9 @@ func (s *UnitOfMeasurementServiceImpl) SaveUnitOfMeasurement(req masteritempaylo
 	}
 
 	results, err := s.unitOfMeasurementRepo.SaveUnitOfMeasurement(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }

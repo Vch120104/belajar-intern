@@ -124,6 +124,7 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 		tx := s.DB.Begin()
 
 		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAll(tx, filterCondition, pages)
+		defer helper.CommitOrRollback(tx, repoErr)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
 		}
@@ -137,7 +138,6 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 
 		// Refresh cache
 		s.refreshCache(ctx, "work_orders")
-		defer helper.CommitOrRollback(tx, repoErr)
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -172,6 +172,7 @@ func (s *WorkOrderServiceImpl) VehicleLookup(filterCondition []utils.FilterCondi
 		tx := s.DB.Begin()
 
 		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.VehicleLookup(tx, filterCondition, pages)
+		defer helper.CommitOrRollback(tx, repoErr)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
 		}
@@ -182,7 +183,6 @@ func (s *WorkOrderServiceImpl) VehicleLookup(filterCondition []utils.FilterCondi
 		} else {
 			fmt.Println("Failed to marshal results for caching:", marshalErr)
 		}
-		defer helper.CommitOrRollback(tx, repoErr)
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -217,6 +217,7 @@ func (s *WorkOrderServiceImpl) CampaignLookup(filterCondition []utils.FilterCond
 		tx := s.DB.Begin()
 
 		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.CampaignLookup(tx, filterCondition, pages)
+		defer helper.CommitOrRollback(tx, repoErr)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
 		}
@@ -227,7 +228,6 @@ func (s *WorkOrderServiceImpl) CampaignLookup(filterCondition []utils.FilterCond
 		} else {
 			fmt.Println("Failed to marshal results for caching:", marshalErr)
 		}
-		defer helper.CommitOrRollback(tx, repoErr)
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -254,131 +254,131 @@ func (s *WorkOrderServiceImpl) New(tx *gorm.DB, request transactionworkshoppaylo
 	ctx := context.Background()
 
 	save, err := s.structWorkOrderRepo.New(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
 
 	// Refresh cache after adding new data
 	s.refreshCache(ctx, "work_orders")
-	defer helper.CommitOrRollback(tx, err)
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
 	statuses, err := s.structWorkOrderRepo.NewStatus(tx, filter)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return statuses, nil
 }
 
 func (s *WorkOrderServiceImpl) AddStatus(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
 	save, err := s.structWorkOrderRepo.AddStatus(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateStatus(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
 	update, err := s.structWorkOrderRepo.UpdateStatus(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return update, nil
 }
 
 func (s *WorkOrderServiceImpl) DeleteStatus(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	delete, err := s.structWorkOrderRepo.DeleteStatus(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
 	types, err := s.structWorkOrderRepo.NewType(tx, filter)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return types, nil
 }
 
 func (s *WorkOrderServiceImpl) AddType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
 	save, err := s.structWorkOrderRepo.AddType(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
 	update, err := s.structWorkOrderRepo.UpdateType(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return update, nil
 }
 
 func (s *WorkOrderServiceImpl) DeleteType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	delete, err := s.structWorkOrderRepo.DeleteType(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
 	bills, err := s.structWorkOrderRepo.NewBill(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return bills, nil
 }
 
 func (s *WorkOrderServiceImpl) AddBill(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
 	save, err := s.structWorkOrderRepo.AddBill(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateBill(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
 	update, err := s.structWorkOrderRepo.UpdateBill(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return update, nil
 
 }
 
 func (s *WorkOrderServiceImpl) DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	delete, err := s.structWorkOrderRepo.DeleteBill(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
 	dropPoints, err := s.structWorkOrderRepo.NewDropPoint(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return dropPoints, nil
 }
 
@@ -411,19 +411,19 @@ func (s *WorkOrderServiceImpl) NewDropPoint(tx *gorm.DB) ([]transactionworkshopp
 
 func (s *WorkOrderServiceImpl) NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
 	brands, err := s.structWorkOrderRepo.NewVehicleBrand(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return brands, nil
 }
 
 func (s *WorkOrderServiceImpl) NewVehicleModel(tx *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
 	models, err := s.structWorkOrderRepo.NewVehicleModel(tx, brandId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return models, nil
 }
 
@@ -449,6 +449,7 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 
 	// Retrieve data from repository
 	results, repoErr := s.structWorkOrderRepo.GetById(tx, id)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		if repoErr.StatusCode == http.StatusNotFound {
 			return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
@@ -467,7 +468,6 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 
 	// Refresh cache after adding new data
 	s.refreshCache(ctx, idString)
-	defer helper.CommitOrRollback(tx, repoErr)
 	return results, nil
 }
 
@@ -476,31 +476,31 @@ func (s *WorkOrderServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayl
 
 	// Start a new transaction
 	save, err := s.structWorkOrderRepo.Save(tx, request, workOrderId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
 
 	// Refresh cache after adding new data
 	s.refreshCache(ctx, workOrderId)
-	defer helper.CommitOrRollback(tx, err)
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
 	delete, err := s.structWorkOrderRepo.Void(tx, workOrderId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) CloseOrder(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	close, err := s.structWorkOrderRepo.CloseOrder(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return close, nil
 }
 
@@ -524,6 +524,7 @@ func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondi
 
 	// Retrieve data from repository
 	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 
 		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
@@ -538,7 +539,6 @@ func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondi
 	if err := s.RedisClient.Set(context.Background(), cacheKey, jsonData, cacheExpiration).Err(); err != nil {
 		fmt.Println("Error caching data:", err)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 	return results, totalPages, totalRows, nil
 }
 
@@ -569,6 +569,7 @@ func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactio
 	tx := s.DB.Begin()
 
 	request, repoErr := s.structWorkOrderRepo.GetRequestById(tx, idwosn, idwos)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return request, repoErr
 	}
@@ -579,17 +580,16 @@ func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactio
 	} else {
 		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 
 	return request, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateRequest(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
 	err := s.structWorkOrderRepo.UpdateRequest(tx, idwosn, idwos, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return nil
 }
@@ -597,10 +597,10 @@ func (s *WorkOrderServiceImpl) UpdateRequest(tx *gorm.DB, idwosn int, idwos int,
 func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	save, err := s.structWorkOrderRepo.AddRequest(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return save, nil
 }
@@ -608,10 +608,10 @@ func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppay
 func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	delete, err := s.structWorkOrderRepo.DeleteRequest(tx, id, IdWorkorder)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return delete, nil
 }
 
@@ -642,6 +642,7 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 	tx := s.DB.Begin()
 
 	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllVehicleService(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return results, totalPages, totalRows, repoErr
 	}
@@ -652,7 +653,6 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 	} else {
 		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 	return results, totalPages, totalRows, nil
 }
 
@@ -683,6 +683,7 @@ func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (tra
 	tx := s.DB.Begin()
 
 	result, repoErr := s.structWorkOrderRepo.GetVehicleServiceById(tx, idwosn, idwos)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return result, repoErr
 	}
@@ -693,26 +694,25 @@ func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (tra
 	} else {
 		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateVehicleService(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse {
 	err := s.structWorkOrderRepo.UpdateVehicleService(tx, idwosn, idwos, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return nil
 }
 
 func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	save, err := s.structWorkOrderRepo.AddVehicleService(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return save, nil
 }
@@ -720,20 +720,20 @@ func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionwork
 func (s *WorkOrderServiceImpl) DeleteVehicleService(id int, IdWorkorder int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	delete, err := s.structWorkOrderRepo.DeleteVehicleService(tx, id, IdWorkorder)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) Submit(tx *gorm.DB, id int) (bool, string, *exceptions.BaseErrorResponse) {
 	submit, newDocumentNumber, err := s.structWorkOrderRepo.Submit(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, "", err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return submit, newDocumentNumber, nil
 }
@@ -776,6 +776,7 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 	tx := s.DB.Begin()
 
 	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return results, totalPages, totalRows, repoErr
 	}
@@ -786,7 +787,6 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 	} else {
 		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 
 	return results, totalPages, totalRows, nil
 }
@@ -815,6 +815,7 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (tr
 	tx := s.DB.Begin()
 
 	result, repoErr := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, idwosn, idwos)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		// Check for NotFoundException here and handle accordingly
 		if repoErr.StatusCode == http.StatusNotFound {
@@ -830,17 +831,15 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (tr
 		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
 
-	defer helper.CommitOrRollback(tx, repoErr)
-
 	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(tx *gorm.DB, idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	update, err := s.structWorkOrderRepo.UpdateDetailWorkOrder(tx, idwosn, idwos, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return update, nil
 }
@@ -848,10 +847,10 @@ func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(tx *gorm.DB, idwosn int, id
 func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	submit, err := s.structWorkOrderRepo.AddDetailWorkOrder(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return submit, nil
 }
@@ -859,20 +858,20 @@ func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionwor
 func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	delete, err := s.structWorkOrderRepo.DeleteDetailWorkOrder(tx, id, IdWorkorder)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) NewBooking(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
 	save, err := s.structWorkOrderRepo.NewBooking(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return save, nil
 }
@@ -889,6 +888,7 @@ func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondi
 		tx := s.DB.Begin()
 
 		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
+		defer helper.CommitOrRollback(tx, repoErr)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
 		}
@@ -899,7 +899,6 @@ func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondi
 		} else {
 			fmt.Println("Failed to marshal results for caching:", marshalErr)
 		}
-		defer helper.CommitOrRollback(tx, repoErr)
 
 		return results, totalPages, totalRows, nil
 	} else if err != nil {
@@ -951,6 +950,7 @@ func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transact
 	tx := s.DB.Begin()
 
 	result, repoErr := s.structWorkOrderRepo.GetBookingById(tx, workOrderId, id)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return result, repoErr
 	}
@@ -961,23 +961,24 @@ func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transact
 	} else {
 		s.RedisClient.Set(ctx, cacheKey, cacheData, cacheExpiration)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 
 	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) SaveBooking(tx *gorm.DB, workOrderId int, id int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
 	save, err := s.structWorkOrderRepo.SaveBooking(tx, workOrderId, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) SubmitBooking(tx *gorm.DB, id int) (bool, string, *exceptions.BaseErrorResponse) {
 	submitbooking, newDocumentNumber, err := s.structWorkOrderRepo.SubmitBooking(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, "", err
 	}
@@ -986,20 +987,20 @@ func (s *WorkOrderServiceImpl) SubmitBooking(tx *gorm.DB, id int) (bool, string,
 
 func (s *WorkOrderServiceImpl) VoidBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
 	delete, err := s.structWorkOrderRepo.VoidBooking(tx, workOrderId, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) CloseBooking(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
 	close, err := s.structWorkOrderRepo.CloseBooking(tx, workOrderId, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return close, nil
 }
 
@@ -1015,6 +1016,7 @@ func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCo
 		tx := s.DB.Begin()
 
 		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllAffiliated(tx, filterCondition, pages)
+		defer helper.CommitOrRollback(tx, repoErr)
 		if repoErr != nil {
 			return results, totalPages, totalRows, repoErr
 		}
@@ -1025,7 +1027,6 @@ func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCo
 		} else {
 			fmt.Println("Failed to marshal results for caching:", marshalErr)
 		}
-		defer helper.CommitOrRollback(tx, repoErr)
 
 		return results, totalPages, totalRows, nil
 	}
@@ -1068,6 +1069,7 @@ func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int) (trans
 	tx := s.DB.Begin()
 
 	result, repoErr := s.structWorkOrderRepo.GetAffiliatedById(tx, workOrderId, id)
+	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return result, repoErr
 	}
@@ -1080,17 +1082,16 @@ func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int) (trans
 	if err := s.RedisClient.Set(ctx, cacheKey, jsonData, cacheExpiration).Err(); err != nil {
 		fmt.Println("Error caching data:", err)
 	}
-	defer helper.CommitOrRollback(tx, repoErr)
 
 	return result, nil
 }
 
 func (s *WorkOrderServiceImpl) NewAffiliated(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse) {
 	save, err := s.structWorkOrderRepo.NewAffiliated(tx, workOrderId, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return save, nil
 }
@@ -1099,33 +1100,33 @@ func (s *WorkOrderServiceImpl) SaveAffiliated(tx *gorm.DB, workOrderId int, id i
 	ctx := context.Background()
 
 	save, err := s.structWorkOrderRepo.SaveAffiliated(tx, workOrderId, id, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
 
 	// Refresh cache after adding new data
 	s.refreshCache(ctx, "affiliate")
-	defer helper.CommitOrRollback(tx, err)
 
 	return save, nil
 }
 
 func (s *WorkOrderServiceImpl) VoidAffiliated(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
 	delete, err := s.structWorkOrderRepo.VoidAffiliated(tx, workOrderId, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) CloseAffiliated(tx *gorm.DB, workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
 	close, err := s.structWorkOrderRepo.CloseAffiliated(tx, workOrderId, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return close, nil
 }

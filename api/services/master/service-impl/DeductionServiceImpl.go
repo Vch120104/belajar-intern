@@ -116,20 +116,20 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.deductionrepo.SaveDeductionList(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.deductionrepo.SaveDeductionDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
@@ -156,6 +156,7 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
 	result, dbErr := s.deductionrepo.GetDeductionById(tx, Id)
+	defer helper.CommitOrRollback(tx, dbErr)
 	if dbErr != nil {
 		// Handle error
 		return masterpayloads.DeductionListResponse{}, dbErr
@@ -167,18 +168,17 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 		// Log or handle error
 		log.Println("Error storing data in cache:", err)
 	}
-	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
 
 func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	detail_result, detail_err := s.deductionrepo.GetAllDeductionDetail(tx, pages, Id)
+	defer helper.CommitOrRollback(tx, detail_err)
 
 	if detail_err != nil {
 		return detail_result, detail_err
 	}
-	defer helper.CommitOrRollback(tx, detail_err)
 	return detail_result, nil
 }
 
@@ -192,9 +192,9 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (bool, *exceptions.
 	}
 
 	results, err := s.deductionrepo.ChangeStatusDeduction(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }

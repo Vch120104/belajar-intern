@@ -193,10 +193,10 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemImportRepo.GetItemImportbyItemIdandSupplierId(tx, itemId, supplierId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -204,10 +204,10 @@ func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, s
 func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemImportRepo.GetItemImportbyId(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -215,10 +215,10 @@ func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.It
 func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.itemImportRepo.GetAllItemImport(tx, internalFilter, externalFilter, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
@@ -226,10 +226,10 @@ func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCo
 func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemImportRepo.SaveItemImport(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -237,10 +237,10 @@ func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport
 func (s *ItemImportServiceImpl) UpdateItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemImportRepo.UpdateItemImport(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 

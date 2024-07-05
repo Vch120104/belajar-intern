@@ -20,10 +20,10 @@ type ItemModelMappingServiceImpl struct {
 func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.ItemModelMappingRepo.GetItemModelMappingByItemId(tx, itemId, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
@@ -31,10 +31,10 @@ func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pa
 func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.ItemModelMappingRepo.UpdateItemModelMapping(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -42,10 +42,10 @@ func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempaylo
 func (s *ItemModelMappingServiceImpl) CreateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.ItemModelMappingRepo.CreateItemModelMapping(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 

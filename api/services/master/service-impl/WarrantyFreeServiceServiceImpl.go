@@ -30,21 +30,21 @@ func StartWarrantyFreeServiceService(warrantyFreeServiceRepo masterrepository.Wa
 func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.warrantyFreeServiceRepo.GetAllWarrantyFreeService(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
 func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -59,10 +59,10 @@ func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpaylo
 	}
 
 	results, err := s.warrantyFreeServiceRepo.SaveWarrantyFreeService(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -76,9 +76,9 @@ func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int)
 	}
 
 	results, err := s.warrantyFreeServiceRepo.ChangeStatusWarrantyFreeService(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }

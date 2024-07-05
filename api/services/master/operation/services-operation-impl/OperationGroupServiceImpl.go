@@ -30,31 +30,31 @@ func StartOperationGroupService(operationGroupRepo masteroperationrepository.Ope
 func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.operationGroupRepo.GetAllOperationGroupIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return get, nil
 }
 
 func (s *OperationGroupServiceImpl) GetOperationGroupById(id int) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationGroupRepo.GetOperationGroupById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationGroupServiceImpl) GetOperationGroupByCode(Code string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationGroupRepo.GetOperationGroupByCode(tx, Code)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -68,11 +68,11 @@ func (service *OperationGroupServiceImpl) GetAllOperationGroup(filterCondition [
 	// return results
 	tx := service.DB.Begin()
 	get, err := service.operationGroupRepo.GetAllOperationGroup(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return get, nil
 }
 
@@ -86,10 +86,10 @@ func (s *OperationGroupServiceImpl) ChangeStatusOperationGroup(oprId int) (bool,
 	}
 
 	results, err := s.operationGroupRepo.ChangeStatusOperationGroup(tx, oprId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }
 
@@ -105,9 +105,9 @@ func (s *OperationGroupServiceImpl) SaveOperationGroup(req masteroperationpayloa
 	}
 
 	results, err := s.operationGroupRepo.SaveOperationGroup(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }

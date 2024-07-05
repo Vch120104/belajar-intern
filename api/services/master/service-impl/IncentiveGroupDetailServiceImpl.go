@@ -30,20 +30,20 @@ func StartIncentiveGroupDetailService(IncentiveGroupDetailRepository masterrepos
 func (s *IncentiveGroupDetailImpl) GetAllIncentiveGroupDetail(headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.IncentiveGroupDetailRepository.GetAllIncentiveGroupDetail(tx, headerId, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *IncentiveGroupDetailImpl) GetIncentiveGroupDetailById(id int) (masterpayloads.IncentiveGroupDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -59,10 +59,10 @@ func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.I
 	}
 
 	results, err := s.IncentiveGroupDetailRepository.SaveIncentiveGroupDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -70,9 +70,9 @@ func (s *IncentiveGroupDetailImpl) UpdateIncentiveGroupDetail(id int, req master
 	tx := s.DB.Begin()
 
 	results, err := s.IncentiveGroupDetailRepository.UpdateIncentiveGroupDetail(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }

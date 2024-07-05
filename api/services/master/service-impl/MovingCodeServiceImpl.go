@@ -20,10 +20,10 @@ type MovingCodeServiceImpl struct {
 func (s *MovingCodeServiceImpl) ActivateMovingCode(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.ActivateMovingCode(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -31,10 +31,10 @@ func (s *MovingCodeServiceImpl) ActivateMovingCode(id string) (bool, *exceptions
 func (s *MovingCodeServiceImpl) DeactiveMovingCode(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.DeactiveMovingCode(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -42,10 +42,10 @@ func (s *MovingCodeServiceImpl) DeactiveMovingCode(id string) (bool, *exceptions
 func (s *MovingCodeServiceImpl) GetDropdownMovingCode() ([]masterpayloads.MovingCodeDropDown, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.GetDropdownMovingCode(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -53,10 +53,10 @@ func (s *MovingCodeServiceImpl) GetDropdownMovingCode() ([]masterpayloads.Moving
 func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.ChangeStatusMovingCode(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -64,10 +64,10 @@ func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions
 func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.CreateMovingCode(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -75,10 +75,10 @@ func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeLi
 func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.MovingCodeRepo.GetAllMovingCode(tx, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
@@ -86,10 +86,10 @@ func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([
 func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (masterpayloads.MovingCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.GetMovingCodebyId(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -97,10 +97,10 @@ func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (masterpayloads.Moving
 func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.PushMovingCodePriority(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -108,10 +108,10 @@ func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exception
 func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeListUpdate) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.MovingCodeRepo.UpdateMovingCode(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 

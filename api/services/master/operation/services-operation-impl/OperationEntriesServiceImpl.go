@@ -30,30 +30,30 @@ func StartOperationEntriesService(operationEntriesRepo masteroperationrepository
 func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationEntriesRepo.GetAllOperationEntries(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationEntriesRepo.GetOperationEntriesById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationEntriesRepo.GetOperationEntriesName(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -69,19 +69,19 @@ func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpa
 	}
 
 	results, err := s.operationEntriesRepo.SaveOperationEntries(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }

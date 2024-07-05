@@ -31,41 +31,41 @@ func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *
 func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.discountRepo.GetAllDiscountIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.discountRepo.GetDiscountById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.discountRepo.GetDiscountByCode(tx, Code)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.discountRepo.GetAllDiscount(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -79,10 +79,10 @@ func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptions.Ba
 	}
 
 	results, err := s.discountRepo.ChangeStatusDiscount(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }
 
@@ -98,9 +98,9 @@ func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) 
 	}
 
 	results, err := s.discountRepo.SaveDiscount(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }

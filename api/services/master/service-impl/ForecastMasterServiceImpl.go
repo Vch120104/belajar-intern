@@ -30,10 +30,10 @@ func StartForecastMasterService(ForecastMasterRepo masterrepository.ForecastMast
 func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) (masterpayloads.ForecastMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.ForecastMasterRepo.GetForecastMasterById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -49,11 +49,11 @@ func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.Foreca
 	}
 
 	results, err := s.ForecastMasterRepo.SaveForecastMaster(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
@@ -67,30 +67,30 @@ func (s *ForecastMasterServiceImpl) ChangeStatusForecastMaster(Id int) (bool, *e
 	}
 
 	results, err := s.ForecastMasterRepo.ChangeStatusForecastMaster(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, nil
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return true, nil
 }
 
 func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.ForecastMasterRepo.GetAllForecastMaster(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, 0, 0, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
 func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ForecastMasterRepo.UpdateForecastMaster(tx, req, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 
 	return result, nil
 }

@@ -30,60 +30,60 @@ func StartItemLocationService(ItemLocationRepo masteritemrepository.ItemLocation
 func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocation(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
 func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLocationRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.ItemLocationRepo.SaveItemLocation(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	err := s.ItemLocationRepo.AddItemLocation(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return nil
 }
 
 func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.ItemLocationRepo.GetItemLocationById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, nil
 }
 
 func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocationDetail(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
 func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.ItemLocationRepo.PopupItemLocation(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return results, totalPages, totalRows, nil
 }
 
@@ -91,49 +91,49 @@ func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.Filt
 func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptions.BaseErrorResponse {
 	tx := s.DB.Begin()
 	err := s.ItemLocationRepo.DeleteItemLocation(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return nil
 }
 
 func (s *ItemLocationServiceImpl) GetAllItemLoc(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, totalpages, totalrows, err := s.ItemLocationRepo.GetAllItemLoc(tx, filtercondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, 0, 0, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, totalpages, totalrows, nil
 }
 
 func (s *ItemLocationServiceImpl) GetByIdItemLoc(id int) (masteritempayloads.ItemLocationGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemLocationRepo.GetByIdItemLoc(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemLocationServiceImpl) SaveItemLoc(req masteritempayloads.SaveItemlocation) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemLocationRepo.SaveItemLoc(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemLocationServiceImpl) DeleteItemLoc(ids []int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemLocationRepo.DeleteItemLoc(tx, ids)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
