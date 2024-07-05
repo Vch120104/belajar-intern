@@ -7,6 +7,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
+	"after-sales/api/utils"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -26,34 +28,44 @@ func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubs
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (masteritempayloads.ItemSubstitutePayloads, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, pages, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
 func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstituteDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
@@ -61,10 +73,10 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.It
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.SaveItemSubstitute(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
@@ -72,33 +84,22 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition map[string]string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 
-	result, totalPage, totalRows, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages)
-	if err != nil {
-		return result, 0, 0, err
-	}
+	result, err := s.itemSubstituteRepo.ChangeStatusItemSubstitute(tx, id)
 	defer helper.CommitOrRollback(tx, err)
-	return result, totalPage, totalRows, nil
-}
-
-func (s *ItemSubstituteServiceImpl) ChangeStatusItemOperation(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.Db.Begin()
-
-	result, err := s.itemSubstituteRepo.ChangeStatusItemOperation(tx, id)
 
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
@@ -106,10 +107,10 @@ func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) (b
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.DeactivateItemSubstituteDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }
 
@@ -117,9 +118,9 @@ func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (boo
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.ActivateItemSubstituteDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
-	defer helper.CommitOrRollback(tx, err)
 	return result, nil
 }

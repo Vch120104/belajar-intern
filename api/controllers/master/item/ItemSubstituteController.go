@@ -2,6 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"time"
 
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -17,6 +18,7 @@ import (
 )
 
 type ItemSubstituteController interface {
+	GetAllItemSubstitute(writer http.ResponseWriter, request *http.Request)
 	GetByIdItemSubstitute(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	GetByIdItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
@@ -25,7 +27,6 @@ type ItemSubstituteController interface {
 	ChangeStatusItemSubstitute(writer http.ResponseWriter, request *http.Request)
 	ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
-	GetAllItemSubstitute(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemSubstituteControllerImpl struct {
@@ -38,17 +39,34 @@ func NewItemSubstituteController(itemSubstituteService masteritemservice.ItemSub
 	}
 }
 
-func (r *ItemSubstituteControllerImpl)GetAllItemSubstitute(writer http.ResponseWriter, request *http.Request){
+// @Summary Get All Item Substitute
+// @Description REST API Item Substitute
+// @Accept json
+// @Produce json
+// @Tags Master : Item Substitute
+// @Param page query string true "page"
+// @Param limit query string true "limit"
+// @Param substitute_type_code query string false "substitute_type_code"
+// @Param item_id query string false "item_id"
+// @Param effective_date query string false "effective_date"
+// @Param is_active query string false "is_active" Enums(true,false)
+// @Param sort_by query string false "sort_by"
+// @Param sort_of query string false "sort_of"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-substitute/ [get]
+func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"is_active":           queryValues.Get("is_active"),
-		"substitute_type_id":  queryValues.Get("substitute_type_id"),
-		"effective_date_from": queryValues.Get("effective_date_from"),
-		"effective_date_to":   queryValues.Get("effective_date_to"),
-		"item_id":             queryValues.Get("item_id"),
-		"brand_id":            queryValues.Get("brand_id"),
+		"is_active":            queryValues.Get("is_active"),
+		"substitute_type_code": queryValues.Get("substitute_type_code"),
+		"mtr_item.item_id":     queryValues.Get("item_id"),
 	}
+
+	from, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("from"))
+	to, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("to"))
+
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -56,12 +74,15 @@ func (r *ItemSubstituteControllerImpl)GetAllItemSubstitute(writer http.ResponseW
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result,totalpages,totalrows,err:= r.ItemSubstituteService.GetAllItemSubstitute(queryParams,pagination)
+	filterCondition := utils.BuildFilterCondition(queryParams)
+
+	result, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination, from, to)
+
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Item Substitute By Id
@@ -239,7 +260,7 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 
 	ItemSubstituteId, _ := strconv.Atoi(chi.URLParam(request, "item_substitute_id"))
 
-	response, err := r.ItemSubstituteService.ChangeStatusItemOperation(ItemSubstituteId)
+	response, err := r.ItemSubstituteService.ChangeStatusItemSubstitute(ItemSubstituteId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -259,8 +280,9 @@ func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.Re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/activate/by-id/{item_substitute_detail_id} [patch]
 func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	queryId := query.Get("item_substitute_detail_id")
+
+	queryId := chi.URLParam(request, "item_substitute_detail_id")
+
 	response, err := r.ItemSubstituteService.ActivateItemSubstituteDetail(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -280,8 +302,9 @@ func (r *ItemSubstituteControllerImpl) ActivateItemSubstituteDetail(writer http.
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-substitute/detail/deactivate/by-id/{item_substitute_detail_id} [patch]
 func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	queryId := query.Get("item_substitute_detail_id")
+
+	queryId := chi.URLParam(request, "item_substitute_detail_id")
+
 	response, err := r.ItemSubstituteService.DeactivateItemSubstituteDetail(queryId)
 
 	if err != nil {
