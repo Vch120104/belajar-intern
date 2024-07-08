@@ -185,34 +185,50 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 }
 
 // SaveItemImport implements masteritemrepository.ItemImportRepository.
-func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemImport{
-		SupplierId:         req.SupplierId,
-		ItemId:             req.ItemId,
-		OrderQtyMultiplier: req.OrderQtyMultiplier,
-		ItemAliasCode:      req.ItemAliasCode,
-		RoyaltyFlag:        req.RoyaltyFlag,
-		ItemAliasName:      req.ItemAliasName,
-		OrderConversion:    req.OrderConversion,
-	}
-	supplierResponse := masteritempayloads.SupplierResponse{}
-	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/supplier-master/" + strconv.Itoa(req.SupplierId)
+func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
 
-	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
+	entities := []masteritementities.ItemImport{}
 
-	if errGetSupplier != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errGetSupplier,
+	for _, value := range req.Data {
+		entities = append(entities, masteritementities.ItemImport{
+			SupplierId:         value.SupplierId,
+			ItemId:             value.ItemId,
+			OrderQtyMultiplier: value.OrderQtyMultiplier,
+			ItemAliasCode:      value.ItemAliasCode,
+			RoyaltyFlag:        value.RoyaltyFlag,
+			ItemAliasName:      value.ItemAliasName,
+			OrderConversion:    value.OrderConversion,
+		})
+
+		supplierResponse := masteritempayloads.SupplierResponse{}
+		getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/supplier-master/" + strconv.Itoa(value.SupplierId)
+
+		errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
+
+		if errGetSupplier != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errGetSupplier,
+			}
 		}
 	}
 
-	err := tx.Save(&entities).Error
+	fmt.Print(entities)
+
+	err := tx.Create(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 

@@ -24,16 +24,13 @@ type ItemImportServiceImpl struct {
 
 // ProcessDataUpload implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) ProcessDataUpload(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
-	//Initiate db for get data example
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
-	for _, value := range req.Data {
-		saveSuccess, err := s.itemImportRepo.SaveItemImport(tx, value)
+	saveSuccess, err := s.itemImportRepo.SaveItemImport(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 
-		if err != nil {
-			return saveSuccess, err
-		}
+	if err != nil {
+		return saveSuccess, err
 	}
 
 	return true, nil
@@ -82,7 +79,6 @@ func (s *ItemImportServiceImpl) UploadPreviewFile(rows [][]string) ([]masteritem
 func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse) {
 	//Initiate db for get data example
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	f := excelize.NewFile()
 	sheetName := "ItemImportMaster"
@@ -160,7 +156,8 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
 	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	paginatedData, _, _, _ := s.itemImportRepo.GetAllItemImport(tx, internalCriteria, externalCriteria, paginate)
+	paginatedData, _, _, errorgetalldata := s.itemImportRepo.GetAllItemImport(tx, internalCriteria, externalCriteria, paginate)
+	defer helper.CommitOrRollback(tx, errorgetalldata)
 
 	data, _ := masteritempayloads.ConvertItemImportMapToStruct(paginatedData)
 
@@ -184,7 +181,6 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 
 	// Set active sheet of the workbook.
 	f.SetActiveSheet(index)
-
 	return f, nil
 
 }
@@ -192,8 +188,8 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 // GetItemImportbyItemIdandSupplierId implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemImportRepo.GetItemImportbyItemIdandSupplierId(tx, itemId, supplierId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -203,8 +199,8 @@ func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, s
 // GetItemImportbyId implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemImportRepo.GetItemImportbyId(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -214,8 +210,8 @@ func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.It
 // GetAllItemImport implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.itemImportRepo.GetAllItemImport(tx, internalFilter, externalFilter, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -223,10 +219,10 @@ func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCo
 }
 
 // SaveItemImport implements masteritemservice.ItemImportService.
-func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemImportServiceImpl) SaveItemImport(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemImportRepo.SaveItemImport(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -236,8 +232,8 @@ func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport
 // UpdateItemImport implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) UpdateItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemImportRepo.UpdateItemImport(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

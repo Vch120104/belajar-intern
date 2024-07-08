@@ -29,8 +29,8 @@ func OpenBookingEstimationServiceImpl(bookingEstimationRepo transactionworkshopr
 
 func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.structBookingEstimationRepo.GetAll(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -38,18 +38,18 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 }
 
 func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
 	_, err := s.structBookingEstimationRepo.New(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return true,nil
+	return true, nil
 }
 
 func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppayloads.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.structBookingEstimationRepo.GetById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -58,17 +58,17 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (transactionworkshoppaylo
 
 func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
-	defer helper.CommitOrRollback(tx)
 	_, err := s.structBookingEstimationRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return true,nil
+	return true, nil
 }
 
 func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
-	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.Submit(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
@@ -76,8 +76,8 @@ func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) *exceptions.B
 }
 
 func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
-	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.Void(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
@@ -85,8 +85,8 @@ func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) *exceptions.Bas
 }
 
 func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
-	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.CloseOrder(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}

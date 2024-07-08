@@ -153,6 +153,7 @@ func ItemRouter(
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
+	router.Get("/search", itemController.GetAllItemSearch)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem)
@@ -273,7 +274,7 @@ func ItemImportRouter(
 	router.Patch("/", ItemImportController.UpdateItemImport)
 	router.Get("/get-by-item-and-supplier-id/{item_id}/{supplier_id}", ItemImportController.GetItemImportbyItemIdandSupplierId)
 	router.Get("/download-template", ItemImportController.DownloadTemplate)
-	router.Get("/upload-template", ItemImportController.UploadTemplate)
+	router.Post("/upload-template", ItemImportController.UploadTemplate)
 	router.Post("/process-template", ItemImportController.ProcessDataUpload)
 	// router.Get("/{item_import_id}", ItemImportController.GetItemPackageById)
 
@@ -354,12 +355,12 @@ func PriceListRouter(
 
 	router.Get("/", priceListController.GetPriceList)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
-	router.Get("/new/",priceListController.GetAllPriceListNew)
+	router.Get("/new/", priceListController.GetAllPriceListNew)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
-	router.Put("/activate/{price_list_id}",priceListController.ActivatePriceList)
-	router.Put("/deactivate/{price_list_id}",priceListController.DeactivatePriceList)
-	router.Delete("/{price_list_id}",priceListController.DeletePriceList)
+	router.Put("/activate/{price_list_id}", priceListController.ActivatePriceList)
+	router.Put("/deactivate/{price_list_id}", priceListController.DeactivatePriceList)
+	router.Delete("/{price_list_id}", priceListController.DeletePriceList)
 
 	return router
 }
@@ -663,7 +664,7 @@ func ForecastMasterRouter(
 	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
 	router.Post("/", forecastMasterController.SaveForecastMaster)
 	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
-	router.Put("/{forecast_master_id}",forecastMasterController.UpdateForecastMaster)
+	router.Put("/{forecast_master_id}", forecastMasterController.UpdateForecastMaster)
 
 	return router
 }
