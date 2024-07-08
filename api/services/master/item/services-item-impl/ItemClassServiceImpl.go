@@ -30,8 +30,8 @@ func StartItemClassService(itemRepo masteritemrepository.ItemClassRepository, db
 // GetItemClassDropDownbyGroupId implements masteritemservice.ItemClassService.
 func (s *ItemClassServiceImpl) GetItemClassDropDownbyGroupId(groupId int) ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemClassDropDownbyGroupId(tx, groupId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -41,8 +41,8 @@ func (s *ItemClassServiceImpl) GetItemClassDropDownbyGroupId(groupId int) ([]mas
 // GetItemClassByCode implements masteritemservice.ItemClassService.
 func (s *ItemClassServiceImpl) GetItemClassByCode(itemClassCode string) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemClassByCode(tx, itemClassCode)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -52,8 +52,8 @@ func (s *ItemClassServiceImpl) GetItemClassByCode(itemClassCode string) (masteri
 // GetItemClassDropDown implements masteritemservice.ItemClassService.
 func (s *ItemClassServiceImpl) GetItemClassDropDown() ([]masteritempayloads.ItemClassDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.itemRepo.GetItemClassDropDown(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,8 @@ func (s *ItemClassServiceImpl) GetItemClassDropDown() ([]masteritempayloads.Item
 
 func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.itemRepo.GetAllItemClass(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -72,8 +72,8 @@ func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCon
 
 func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.itemRepo.GetItemClassById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -82,7 +82,6 @@ func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.Item
 
 func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.ItemClassId != 0 {
 		_, err := s.itemRepo.GetItemClassById(tx, req.ItemClassId)
@@ -93,6 +92,7 @@ func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassRes
 	}
 
 	results, err := s.itemRepo.SaveItemClass(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -101,7 +101,6 @@ func (s *ItemClassServiceImpl) SaveItemClass(req masteritempayloads.ItemClassRes
 
 func (s *ItemClassServiceImpl) ChangeStatusItemClass(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.itemRepo.GetItemClassById(tx, Id)
 
@@ -110,6 +109,7 @@ func (s *ItemClassServiceImpl) ChangeStatusItemClass(Id int) (bool, *exceptions.
 	}
 
 	results, err := s.itemRepo.ChangeStatusItemClass(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

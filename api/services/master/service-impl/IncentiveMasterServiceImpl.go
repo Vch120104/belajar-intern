@@ -30,8 +30,8 @@ func StartIncentiveMasterService(IncentiveMasterRepo masterrepository.IncentiveM
 
 func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.IncentiveMasterRepo.GetAllIncentiveMaster(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -40,8 +40,8 @@ func (s *IncentiveMasterServiceImpl) GetAllIncentiveMaster(filterCondition []uti
 
 func (s *IncentiveMasterServiceImpl) GetIncentiveMasterById(id int) (masterpayloads.IncentiveMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveMasterRepo.GetIncentiveMasterById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -50,8 +50,8 @@ func (s *IncentiveMasterServiceImpl) GetIncentiveMasterById(id int) (masterpaylo
 
 func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveMasterRepo.SaveIncentiveMaster(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -60,10 +60,10 @@ func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.Ince
 
 func (s *IncentiveMasterServiceImpl) ChangeStatusIncentiveMaster(Id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	// Ubah status
 	entity, err := s.IncentiveMasterRepo.ChangeStatusIncentiveMaster(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.IncentiveMaster{}, err
 	}

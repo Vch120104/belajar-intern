@@ -67,8 +67,9 @@ type Item struct {
 	ItemLocation                 ItemLocation      `gorm:"foreignKey:item_id;references:item_id"`
 	Bom                          Bom               `gorm:"foreignKey:item_id;references:item_id"`
 	ItemClass                    *ItemClass
-	ItemSubstitute               ItemSubstitute `gorm:"foreignKey:item_id;references:item_id"`
+	ItemSubstitute               ItemSubstitute                                `gorm:"foreignKey:item_id;references:item_id"`
 	FieldActionItem              masterentities.FieldActionEligibleVehicleItem `gorm:"foreignKey:item_id;references:item_id"`
+	ItemImport                   ItemImport                                    `gorm:"foreignKey:item_id;references:item_id"`
 }
 
 func (*Item) TableName() string {

@@ -29,8 +29,8 @@ func StartIncentiveGroupDetailService(IncentiveGroupDetailRepository masterrepos
 
 func (s *IncentiveGroupDetailImpl) GetAllIncentiveGroupDetail(headerId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveGroupDetailRepository.GetAllIncentiveGroupDetail(tx, headerId, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -39,8 +39,8 @@ func (s *IncentiveGroupDetailImpl) GetAllIncentiveGroupDetail(headerId int, page
 
 func (s *IncentiveGroupDetailImpl) GetIncentiveGroupDetailById(id int) (masterpayloads.IncentiveGroupDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,7 +49,6 @@ func (s *IncentiveGroupDetailImpl) GetIncentiveGroupDetailById(id int) (masterpa
 
 func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.IncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.IncentiveGroupDetailId != 0 {
 		_, err := s.IncentiveGroupDetailRepository.GetIncentiveGroupDetailById(tx, req.IncentiveGroupDetailId)
@@ -60,6 +59,7 @@ func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.I
 	}
 
 	results, err := s.IncentiveGroupDetailRepository.SaveIncentiveGroupDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -68,9 +68,9 @@ func (s *IncentiveGroupDetailImpl) SaveIncentiveGroupDetail(req masterpayloads.I
 
 func (s *IncentiveGroupDetailImpl) UpdateIncentiveGroupDetail(id int, req masterpayloads.UpdateIncentiveGroupDetailRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	results, err := s.IncentiveGroupDetailRepository.UpdateIncentiveGroupDetail(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

@@ -274,7 +274,7 @@ func ItemImportRouter(
 	router.Patch("/", ItemImportController.UpdateItemImport)
 	router.Get("/get-by-item-and-supplier-id/{item_id}/{supplier_id}", ItemImportController.GetItemImportbyItemIdandSupplierId)
 	router.Get("/download-template", ItemImportController.DownloadTemplate)
-	router.Get("/upload-template", ItemImportController.UploadTemplate)
+	router.Post("/upload-template", ItemImportController.UploadTemplate)
 	router.Post("/process-template", ItemImportController.ProcessDataUpload)
 	// router.Get("/{item_import_id}", ItemImportController.GetItemPackageById)
 
