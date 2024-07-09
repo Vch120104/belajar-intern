@@ -8,7 +8,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -19,6 +18,7 @@ type IncentiveMasterController interface {
 	GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 	GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request)
 	SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request)
+	UpdateIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -113,53 +113,49 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/incentive/ [post]
+// @Router /v1/incentive [post]
 func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.IncentiveMasterRequest
-	var message string
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	// Validasi input
-	err := validation.ValidationForm(writer, request, formRequest)
+	entity, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
 	if err != nil {
-		// Gunakan pesan kesalahan dari err
 		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
-	// Simpan atau perbarui data
-	var create bool
-	var httpStatus int // Definisikan variabel httpStatus di sini
-
 	if formRequest.IncentiveLevelId == 0 {
-		create, err = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
-		if err != nil {
-			exceptions.NewBadRequestException(writer, request, err)
-			return
-		}
-		message = "Create Data Successfully!"
-		// Set status code to http.StatusCreated (201) for creation
-		httpStatus = http.StatusCreated
+		payloads.NewHandleSuccess(writer, entity, "Save Data Successfully!", http.StatusCreated)
 	} else {
-		// Jika ID tidak 0, ini adalah operasi pembaruan
-		create, err = r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
-		if err != nil {
-			exceptions.NewBadRequestException(writer, request, err)
-			return
-		}
-		message = "Update Data Successfully!"
-		// Set status code to http.StatusOK (200) for update
-		httpStatus = http.StatusOK
+		payloads.NewHandleSuccess(writer, entity, "Update Data Successfully!", http.StatusOK)
+	}
+}
+
+// @Summary Update Incentive Master
+// @Description REST API Incentive Master
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Master
+// @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
+// @param incentive_level_id path int true "incentive_level_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive/{incentive_level_id} [put]
+
+func (r *IncentiveMasterControllerImpl) UpdateIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
+	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+
+	var formRequest masterpayloads.IncentiveMasterRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	entity, err := r.IncentiveMasterService.UpdateIncentiveMaster(formRequest, IncentiveLevelIds)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
 	}
 
-	// Tanggapan berhasil
-	if create {
-		payloads.NewHandleSuccess(writer, create, message, httpStatus)
-	} else {
-		// Jika gagal membuat atau memperbarui data
-		exceptions.NewBadRequestException(writer, request, err)
-	}
+	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Incentive Master

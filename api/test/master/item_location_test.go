@@ -2,6 +2,7 @@ package test
 
 import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -67,9 +68,9 @@ func (m *MockItemLocationService) GetByIdItemLoc(id int) (masteritempayloads.Ite
 	return args.Get(0).(masteritempayloads.ItemLocationGetByIdResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockItemLocationService) SaveItemLoc(req masteritempayloads.SaveItemlocation) (bool, *exceptions.BaseErrorResponse) {
+func (m *MockItemLocationService) SaveItemLoc(req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
 	args := m.Called(req)
-	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(masteritementities.ItemLocation), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockItemLocationService) DeleteItemLoc(ids []int) (bool, *exceptions.BaseErrorResponse) {
