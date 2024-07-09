@@ -1,6 +1,7 @@
 package masterserviceimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
@@ -37,22 +38,13 @@ func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) (masterpayload
 	return results, nil
 }
 
-func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.ForecastMasterResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.ForecastMasterResponse) (masterentities.ForecastMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-
-	if req.ForecastMasterId != 0 {
-		_, err := s.ForecastMasterRepo.GetForecastMasterById(tx, req.ForecastMasterId)
-
-		if err != nil {
-			return false, err
-		}
-	}
-
 	results, err := s.ForecastMasterRepo.SaveForecastMaster(tx, req)
 
 	if err != nil {
-		return false, err
+		return masterentities.ForecastMaster{}, err
 	}
 	return results, nil
 }
@@ -84,12 +76,12 @@ func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int)(bool,*exceptions.BaseErrorResponse){
+func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int)(masterentities.ForecastMaster,*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result,err := s.ForecastMasterRepo.UpdateForecastMaster(tx,req,id)
 	if err != nil{
-		return false,err
+		return masterentities.ForecastMaster{},err
 	}
 	return result,nil
 }

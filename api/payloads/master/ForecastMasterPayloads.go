@@ -2,6 +2,7 @@ package masterpayloads
 
 type ForecastMasterResponse struct {
 	IsActive                   bool    `json:"is_active" parent_entity:"mtr_forecast_master"`
+	CompanyId                  int     `json:"company_id" parent_entity:"mtr_forecast_master"`
 	ForecastMasterId           int     `json:"forecast_master_id" parent_entity:"mtr_forecast_master"`
 	SupplierId                 int     `json:"supplier_id" parent_entity:"mtr_forecast_master"`
 	MovingCodeId               int     `json:"moving_code_id" parent_entity:"mtr_forecast_master"`
