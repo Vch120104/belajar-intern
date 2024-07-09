@@ -593,3 +593,9 @@ type SubmitWorkOrderResponse struct {
 	DocumentNumber        string `json:"document_number"`
 	WorkOrderSystemNumber int    `json:"work_order_system_number"`
 }
+
+type WorkOrderVehicleVariant struct {
+	VariantId   int    `json:"variant_id"`
+	VariantCode string `json:"variant_code"`
+	VariantName string `json:"variant_description"`
+}
