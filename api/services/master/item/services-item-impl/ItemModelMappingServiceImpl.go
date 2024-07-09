@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -17,10 +17,10 @@ type ItemModelMappingServiceImpl struct {
 }
 
 // GetItemModelMappingByItemId implements masteritemservice.ItemModelMappingService.
-func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.ItemModelMappingRepo.GetItemModelMappingByItemId(tx, itemId, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -28,10 +28,10 @@ func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pa
 }
 
 // UpdateItemModelMapping implements masteritemservice.ItemModelMappingService.
-func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemModelMappingRepo.UpdateItemModelMapping(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -39,10 +39,10 @@ func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempaylo
 }
 
 // CreateItemModelMapping implements masteritemservice.ItemModelMappingService.
-func (s *ItemModelMappingServiceImpl) CreateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemModelMappingServiceImpl) CreateItemModelMapping(req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemModelMappingRepo.CreateItemModelMapping(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

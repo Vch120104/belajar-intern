@@ -1,9 +1,10 @@
 package masterwarehousecontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
+	"after-sales/api/utils"
 
 	"strconv"
 
@@ -50,40 +51,37 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 // @Param warehouse_location_detail_name query string false "Warehouse Location Detail Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/ [get]
 func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	warehouseLocationName := queryValues.Get("warehouse_location_code")
-	companyId := queryValues.Get("company_id")
-	warehouseLocationCode := queryValues.Get("warehouse_location_name")
-	warehouseLocationDetailName := queryValues.Get("warehouse_location_detail_name")
-	isActive := queryValues.Get("is_active")
+	filter := map[string]string{
+		"WarehouseGroup.warehouse_group_name":            queryValues.Get("warehouse_group_name"),
+		"mtr_warehouse_master.warehouse_code":            queryValues.Get("warehouse_code"),
+		"mtr_warehouse_master.warehouse_name":            queryValues.Get("warehouse_name"),
+		"mtr_warehouse_location.warehouse_location_code": queryValues.Get("warehouse_location_code"),
+		"mtr_warehouse_location.warehouse_location_name": queryValues.Get("warehouse_location_name"),
+		"mtr_warehouse_location.is_active":               queryValues.Get("is_active"),
+	}
 
-	get, err := r.WarehouseLocationService.GetAll(masterwarehousepayloads.GetAllWarehouseLocationRequest{
-		WarehouseLocationCode:       warehouseLocationName,
-		WarehouseLocationName:       warehouseLocationCode,
-		WarehouseLocationDetailName: warehouseLocationDetailName,
-		CompanyId:                   companyId,
-		IsActive:                    isActive,
-	}, pagination.Pagination{
-		Limit:  limit,
-		SortOf: sortOf,
-		SortBy: sortBy,
-		Page:   page,
-	})
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	result, err := r.WarehouseLocationService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Get Warehouse Location By Id
@@ -93,7 +91,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Tags Master : Warehouse Location
 // @Param warehouse_location_id path int true "warehouse_location_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/{warehouse_location_id} [get]
 func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
@@ -102,7 +100,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 	get, err := r.WarehouseLocationService.GetById(warehouseLocationId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
@@ -116,7 +114,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Tags Master : Warehouse Location
 // @param reqBody body masterwarehousepayloads.GetWarehouseLocationResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/ [post]
 func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
@@ -132,7 +130,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
@@ -146,7 +144,7 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Tags Master : Warehouse Location
 // @Param warehouse_location_id path int true "Warehouse Location Id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location/{warehouse_location_id} [patch]
 func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
@@ -155,7 +153,7 @@ func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWrite
 	change_status, err := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)

@@ -1,24 +1,29 @@
 package masteritemservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 )
 
 type ItemService interface {
-	GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetAllItemLookup(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse)
-	GetItemById(Id int) (map[string]any, *exceptionsss_test.BaseErrorResponse)
-	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptionsss_test.BaseErrorResponse)
-	GetItemCode(string) ([]map[string]interface{}, *exceptionsss_test.BaseErrorResponse)
-	SaveItem(masteritempayloads.ItemRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusItem(Id int) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	GetItemDetailById(int, int) (masteritempayloads.ItemDetailRequest, *exceptionsss_test.BaseErrorResponse)
-	AddItemDetail(int, masteritempayloads.ItemDetailRequest) *exceptionsss_test.BaseErrorResponse
-	DeleteItemDetail(int, int) *exceptionsss_test.BaseErrorResponse
-	GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptionsss_test.BaseErrorResponse)
-	GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptionsss_test.BaseErrorResponse)
+	GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
+	GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
+	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
+	GetItemCode(string) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
+	SaveItem(masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorResponse)
+	GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetItemDetailById(int, int) (masteritempayloads.ItemDetailRequest, *exceptions.BaseErrorResponse)
+	AddItemDetail(int, masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse
+	DeleteItemDetail(int, int) *exceptions.BaseErrorResponse
+	GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse)
+	GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse)
+	UpdateItem(int, masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateItemDetail(int, masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse)
+	GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse)
+	GetPrincipleBrandDropdown() ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse)
+	GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

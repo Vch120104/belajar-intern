@@ -1,17 +1,25 @@
 package helper
 
 import (
+	"after-sales/api/exceptions"
+
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
-func CommitOrRollback(tx *gorm.DB) {
-	err := recover()
+// CommitOrRollback commits the transaction if no error or panic occurs, otherwise rolls back.
+// It also recovers from panics and logs the error.
+func CommitOrRollback(tx *gorm.DB, err *exceptions.BaseErrorResponse) {
+	if r := recover(); r != nil {
+		tx.Rollback()
+		logrus.Info("Recovered from panic:", r)
+		return
+	}
+
 	if err != nil {
-		errorRollback := tx.Rollback()
-		PanicIfError(errorRollback.Error)
-		panic(err)
+		tx.Rollback()
+		logrus.Info(err)
 	} else {
-		errorCommit := tx.Commit()
-		PanicIfError(errorCommit.Error)
+		tx.Commit()
 	}
 }

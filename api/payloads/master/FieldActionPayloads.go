@@ -19,7 +19,7 @@ type FieldActionRequest struct {
 
 type FieldActionResponse struct {
 	IsActive                  bool   `json:"is_active" parent_entity:"mtr_field_action"`
-	FieldActionSystemNumber   int    `json:"field_action_system_number" parent_entity:"mtr_field_action"`
+	FieldActionSystemNumber   int    `json:"field_action_system_number" parent_entity:"mtr_field_action" main_table:"mtr_field_action"`
 	ApprovalStatusId          int    `json:"approval_status_id" parent_entity:"mtr_field_action"`
 	BrandId                   int    `json:"brand_id" parent_entity:"mtr_field_action"`
 	FieldActionDocumentNumber string `json:"field_action_document_number" parent_entity:"mtr_field_action"`
@@ -30,6 +30,7 @@ type FieldActionResponse struct {
 	RemarkPopup               string `json:"remark_popup" parent_entity:"mtr_field_action"`
 	IsCritical                bool   `json:"is_critical" parent_entity:"mtr_field_action"`
 	RemarkInvoice             string `json:"remark_invoice" parent_entity:"mtr_field_action"`
+	VehicleId                 int    `json:"vehicle_id" parent_entity:"mtr_field_action_eligible_vehicle" main_table:"mtr_field_action"`
 }
 
 type FieldActionDetailResponse struct {
@@ -62,4 +63,26 @@ type ApprovalStatusResponse struct {
 type VehicleChassisResponse struct {
 	VehicleId            int    `json:"vehicle_id"`
 	VehicleChassisNumber string `json:"vehicle_chassis_number"`
+}
+
+type FieldActionEligibleVehicleItem struct {
+	IsActive                                   bool    `json:"is_active"`
+	FieldActionEligibleVehicleItemSystemNumber int     `json:"field_action_eligible_vehicle_item_system_number"`
+	FieldActionEligibleVehicleSystemNumber     int     `json:"field_action_eligible_vehicle_system_number"`
+	LineTypeId                                 int     `json:"line_type_id"`
+	FieldActionEligibleVehicleItemLineNumber   float64 `json:"field_action_eligible_vehicle_item_line_number"`
+	ItemId                                     int     `json:"item_id"`
+	ItemName                                   string  `json:"item_name"`
+	FieldActionFrt                             float64 `json:"field_action_frt"`
+}
+
+type FieldActionEligibleVehicleOperation struct {
+	IsActive                                   bool    `json:"is_active"`
+	FieldActionEligibleVehicleItemSystemNumber int     `json:"field_action_eligible_vehicle_item_system_number"`
+	FieldActionEligibleVehicleSystemNumber     int     `json:"field_action_eligible_vehicle_system_number"`
+	LineTypeId                                 int     `json:"line_type_id"`
+	FieldActionEligibleVehicleItemLineNumber   float64 `json:"field_action_eligible_vehicle_item_line_number"`
+	OperationModelMappingId                    int     `json:"operation_model_mapping_id"`
+	OperationName                              string  `json:"operation_name"`
+	FieldActionFrt                             float64 `json:"field_action_frt"`
 }

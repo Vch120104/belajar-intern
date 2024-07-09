@@ -1,9 +1,9 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -20,6 +20,7 @@ type UnitOfMeasurementController interface {
 	GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request)
 	GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request)
+	GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request)
 	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 }
@@ -32,6 +33,20 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 	return &UnitOfMeasurementControllerImpl{
 		unitofmeasurementservice: UnitOfMeasurementService,
 	}
+}
+
+// GetUnitOfMeasurementById implements UnitOfMeasurementController.
+func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request) {
+	uomId, _ := strconv.Atoi(chi.URLParam(request, "uom_id"))
+
+	response, err := r.unitofmeasurementservice.GetUnitOfMeasurementById(int(uomId))
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Unit Of Measurement
@@ -48,7 +63,7 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/unit-of-measurement/ [get]
 func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -71,7 +86,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -84,14 +99,14 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 // @Produce json
 // @Tags Master : Unit Of Measurement
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/unit-of-measurement/drop-down [get]
 func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -105,7 +120,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 // @Tags Master : Unit Of Measurement
 // @Param uom_code path string true "uom_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/unit-of-measurement/by-code/{uom_code} [get]
 func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request) {
 
@@ -113,7 +128,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 	result, err := r.unitofmeasurementservice.GetUnitOfMeasurementByCode(uomCode)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -127,7 +142,7 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 // @Tags Master : Unit Of Measurement
 // @param reqBody body masteritempayloads.UomResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/unit-of-measurement/ [post]
 func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
@@ -136,20 +151,20 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 	var message = ""
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.unitofmeasurementservice.SaveUnitOfMeasurement(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -169,7 +184,7 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 // @Tags Master : Unit Of Measurement
 // @param uom_id path int true "uom_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/unit-of-measurement/{uom_id} [patch]
 func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
@@ -178,7 +193,7 @@ func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer h
 	response, err := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

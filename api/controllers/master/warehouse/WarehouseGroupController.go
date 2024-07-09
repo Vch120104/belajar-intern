@@ -1,7 +1,7 @@
 package masterwarehousecontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
@@ -26,7 +26,10 @@ type WarehouseGroupController interface {
 	GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request)
 	GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request)
 	SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseGroupDropdownbyId(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseGroupDropDown(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request)
+	GetbyGroupCode(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservice.WarehouseGroupService) WarehouseGroupController {
@@ -35,7 +38,42 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 	}
 }
 
-// @Summary Get All Warehouse Group
+// GetbyGroupCode implements WarehouseGroupController.
+func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter, request *http.Request) {
+	groupCode := chi.URLParam(request, "warehouse_group_code")
+
+	get, err := r.WarehouseGroupService.GetbyGroupCode(groupCode)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// GetWarehouseGroupDropdownbyId implements WarehouseGroupController.
+func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http.ResponseWriter, request *http.Request) {
+	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+
+	get, err := r.WarehouseGroupService.GetWarehouseGroupDropdownbyId(warehouseGroupId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// GetWarehouseGroupDropDown implements WarehouseGroupController.
+func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropDown(writer http.ResponseWriter, request *http.Request) {
+
+	get, err := r.WarehouseGroupService.GetWarehouseGroupDropdown()
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Get All Warehouse GroupF
 // @Description Get All Warehouse Group
 // @Accept json
 // @Produce json
@@ -48,7 +86,7 @@ func NewWarehouseGroupController(WarehouseGroupService masterwarehousegroupservi
 // @Param warehouse_group_name query string false "Warehouse Group Name"
 // @Param sort_by query string false "Sort Of: {column}"
 // @Param sort_of query string false "Sort By: {asc}"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-group/ [get]
 func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -69,7 +107,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 
 	get, err := r.WarehouseGroupService.GetAllWarehouseGroup(filterCondition, pagination)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
@@ -82,7 +120,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Tags Master : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-group/{warehouse_group_id} [get]
 func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -90,7 +128,8 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 
 	get, err := r.WarehouseGroupService.GetByIdWarehouseGroup(int(warehouseGroupId))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
@@ -103,7 +142,7 @@ func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.Respons
 // @Tags Master : Warehouse Group
 // @param reqBody body masterwarehousegrouppayloads.GetWarehouseGroupResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-group/warehouse-group [post]
 func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -113,7 +152,7 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 
 	save, err := r.WarehouseGroupService.SaveWarehouseGroup(formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	if formRequest.WarehouseGroupId == 0 {
@@ -133,7 +172,7 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Tags Master : Warehouse Group
 // @Param warehouse_group_id path int true "warehouse_group_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-group/{warehouse_group_id} [patch]
 func (r *WarehouseGroupControllerImpl) ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
@@ -141,7 +180,7 @@ func (r *WarehouseGroupControllerImpl) ChangeStatusWarehouseGroup(writer http.Re
 
 	change_status, err := r.WarehouseGroupService.ChangeStatusWarehouseGroup(int(warehouseGroupId))
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)

@@ -1,9 +1,9 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -47,7 +47,7 @@ func NewDiscountPercentController(discountPercentService masteritemservice.Disco
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount-percent/ [get]
 func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
@@ -73,7 +73,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 // @Tags Master : Discount Percent
 // @Param discount_percent_id path int true "discount_percent_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount-percent/{discount_percent_id} [get]
 func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request) {
 
@@ -96,7 +96,7 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 	result, err := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.Respo
 // @Tags Master : Discount Percent
 // @param reqBody body masteritempayloads.DiscountPercentResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount-percent/ [post]
 func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
@@ -119,19 +119,19 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 	var message = ""
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.DiscountPercentService.SaveDiscountPercent(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 // @Tags Master : Discount Percent
 // @param discount_percent_id path int true "discount_percent_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount-percent/{discount_percent_id} [patch]
 func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
@@ -160,7 +160,7 @@ func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.
 	response, err := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

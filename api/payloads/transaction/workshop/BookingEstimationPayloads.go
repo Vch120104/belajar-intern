@@ -2,7 +2,7 @@ package transactionworkshoppayloads
 
 import "time"
 
-type SaveBookingEstimationRequest struct {
+type BookingEstimationRequest struct {
 	BatchSystemNumber              int       `gorm:"column:batch_system_number;not null;primaryKey" json:"batch_system_number"`
 	BookingSystemNumber            int       `json:"booking_system_number"`
 	BrandId                        int       `json:"brand_id"`

@@ -2,7 +2,7 @@ package masteroperationrepositoryimpl
 
 import (
 	masteroperationentities "after-sales/api/entities/master/operation"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
@@ -20,7 +20,7 @@ func StartOperationEntriesRepositoryImpl() masteroperationrepository.OperationEn
 	return &OperationEntriesRepositoryImpl{}
 }
 
-func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteroperationentities.OperationEntries{}
 	var responses []masteroperationpayloads.OperationEntriesResponse
 
@@ -36,14 +36,14 @@ func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, fil
 	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
 	if len(responses) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -56,7 +56,7 @@ func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, fil
 	return pages, nil
 }
 
-func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(tx *gorm.DB, request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(tx *gorm.DB, request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tableStruct := masteroperationpayloads.OperationEntriesResponse{}
 
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
@@ -70,7 +70,7 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(tx *gorm.DB, re
 	rows, err := WhereQuery.First(&tableStruct).Rows()
 
 	if err != nil {
-		return tableStruct, &exceptionsss_test.BaseErrorResponse{
+		return tableStruct, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -81,7 +81,7 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesName(tx *gorm.DB, re
 	return tableStruct, nil
 }
 
-func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationEntriesResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	response := masteroperationpayloads.OperationEntriesResponse{}
 
 	joinTable := utils.CreateJoinSelectStatement(tx, response)
@@ -91,7 +91,7 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(tx *gorm.DB, Id
 	rows, err := whereQuery.First(&response).Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -104,21 +104,21 @@ func (r *OperationEntriesRepositoryImpl) GetOperationEntriesById(tx *gorm.DB, Id
 
 // func (r *OperationEntriesRepositoryImpl) GetOperationEntriesKeyCodeByGroupId
 
-func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, request masteroperationpayloads.OperationEntriesResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, request masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationEntries{
-		IsActive:             request.IsActive,
-		OperationEntriesId:   request.OperationEntriesId,
-		OperationEntriesCode: request.OperationEntriesCode,
-		OperationGroupId:     request.OperationGroupId,
-		OperationSectionId:   request.OperationSectionId,
-		OperationKeyId:       request.OperationKeyId,
-		OperationEntriesDesc: request.OperationEntriesDesc,
+		IsActive:                    request.IsActive,
+		OperationEntriesId:          request.OperationEntriesId,
+		OperationEntriesCode:        request.OperationEntriesCode,
+		OperationGroupId:            request.OperationGroupId,
+		OperationSectionId:          request.OperationSectionId,
+		OperationKeyId:              request.OperationKeyId,
+		OperationEntriesDescription: request.OperationEntriesDescription,
 	}
 
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -126,7 +126,7 @@ func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, reque
 	if len(request.OperationEntriesCode) > 6 {
 		// errMessage := "Operation Entries Code max 6 characters"
 
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 
 			Err: errors.New(utils.BadRequestError),
@@ -136,7 +136,7 @@ func (r *OperationEntriesRepositoryImpl) SaveOperationEntries(tx *gorm.DB, reque
 	return true, nil
 }
 
-func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteroperationentities.OperationEntries
 	// var response masteroperationpayloads.OperationEntriesResponse
 	result := tx.Model(&entities).
@@ -144,7 +144,7 @@ func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(tx *gorm.D
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -159,7 +159,7 @@ func (r *OperationEntriesRepositoryImpl) ChangeStatusOperationEntries(tx *gorm.D
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

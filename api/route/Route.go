@@ -17,8 +17,11 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
+	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
+	transactionsparepartrepositoryimpl "after-sales/api/repositories/transaction/sparepart/repositories-sparepart-impl"
 	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
+	transactionsparepartserviceimpl "after-sales/api/services/transaction/sparepart/services-sparepart-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
 
@@ -231,7 +234,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Campaign Master
 	CampaignMasterRepository := masterrepositoryimpl.StartCampaignMasterRepositoryImpl()
-	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository,db)
+	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository, db)
 	CampaignMasterController := mastercontroller.NewCampaignMasterController(CampaignMasterService)
 
 	// Master
@@ -241,10 +244,25 @@ func StartRouting(db *gorm.DB) {
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
 	/* Transaction */
+	//Supply Slip
+	SupplySlipRepository := transactionsparepartrepositoryimpl.StartSupplySlipRepositoryImpl()
+	SupplySlipService := transactionsparepartserviceimpl.StartSupplySlipService(SupplySlipRepository, db, rdb)
+	SupplySlipController := transactionsparepartcontroller.NewSupplySlipController(SupplySlipService)
+
+	//Booking Estimation
+	BookingEstimationRepository := transactionworkshoprepositoryimpl.OpenBookingEstimationRepositoryImpl()
+	BookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(BookingEstimationRepository, db, rdb)
+	BookingEstimationController := transactionworksopcontroller.NewBookingEstimationController(BookingEstimationService)
+
 	//Work order
 	WorkOrderRepository := transactionworkshoprepositoryimpl.OpenWorkOrderRepositoryImpl()
 	WorkOrderService := transactionworkshopserviceimpl.OpenWorkOrderServiceImpl(WorkOrderRepository, db, rdb)
 	WorkOrderController := transactionworksopcontroller.NewWorkOrderController(WorkOrderService)
+
+	//Sales Order
+	SalesOrderRepository := transactionsparepartrepositoryimpl.StartSalesOrderRepositoryImpl()
+	SalesOrderService := transactionsparepartserviceimpl.StartSalesOrderService(SalesOrderRepository, db, rdb)
+	SalesOrderController := transactionsparepartcontroller.NewSalesOrderController(SalesOrderService)
 
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -287,10 +305,13 @@ func StartRouting(db *gorm.DB) {
 	BomRouter := BomRouter(BomController)
 	DeductionRouter := DeductionRouter(DeductionController)
 	CampaignMasterRouter := CampaignMasterRouter(CampaignMasterController)
-	PackageMasterRouter:=PackageMasterRouter(PackageMasterController)
+	PackageMasterRouter := PackageMasterRouter(PackageMasterController)
 
 	/* Transaction */
+	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
+	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
+	SalesOrderRouter := SalesOrderRouter(SalesOrderController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -336,7 +357,6 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/moving-code", MovingCodeRouter)
 		r.Mount("/forecast-master", ForecastMasterRouter)
 		r.Mount("/agreement", AgreementRouter)
-		//r.Mount("/campaign", CampaignRouter)
 		r.Mount("/package-master", PackageMasterRouter)
 		r.Mount("/skill-level", SkillLevelRouter)
 		r.Mount("/shift-schedule", ShiftScheduleRouter)
@@ -344,16 +364,25 @@ func StartRouting(db *gorm.DB) {
 		//r.Mount("/work-info-massage", WorkInfoRouter)
 		r.Mount("/field-action", FieldActionRouter)
 		r.Mount("/warranty-free-service", warrantyFreeServiceRouter)
-		//prometheus route
-		r.Mount("/metrics", promhttp.Handler())
-		r.Mount("/campaign-master",CampaignMasterRouter)
+		r.Mount("/campaign-master", CampaignMasterRouter)
 		r.Mount("/discount", DiscountRouter)
 		r.Mount("/incentive-group", IncentiveGroupRouter)
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
 
 		/* Transaction */
+
+		/* Transaction JPCB */
+
+		/* Transaction Workshop */
+		r.Mount("/booking-estimation", BookingEstimationRouter)
 		r.Mount("/work-order", WorkOrderRouter)
+
+		/* Transaction Bodyshop */
+
+		/* Transaction Sparepart */
+		r.Mount("/supply-slip", SupplySlipRouter)
+		r.Mount("/sales-order", SalesOrderRouter)
 
 	})
 

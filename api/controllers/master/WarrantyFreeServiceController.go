@@ -1,8 +1,7 @@
 package mastercontroller
 
 import (
-	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
+	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -45,7 +44,7 @@ func NewWarrantyFreeServiceController(warrantyFreeServiceService masterservice.W
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warranty-free-service/ [get]
 func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
@@ -70,7 +69,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 
 	paginatedData, totalPages, totalRows, err := r.WarrantyFreeServiceService.GetAllWarrantyFreeService(criteria, paginate)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -84,7 +83,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 // @Tags Master : Warranty Free Service
 // @Param warranty_free_services_id path int true "Warranty Free Service ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warranty-free-service/{warranty_free_services_id} [get]
 func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request) {
 
@@ -92,7 +91,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer ht
 
 	result, err := r.WarrantyFreeServiceService.GetWarrantyFreeServiceById(warrantyFreeServiceId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -106,7 +105,7 @@ func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer ht
 // @Tags Master : Warranty Free Service
 // @Param reqBody body masterpayloads.WarrantyFreeServiceRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warranty-free-service/ [post]
 func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
@@ -116,7 +115,7 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 
 	create, err := r.WarrantyFreeServiceService.SaveWarrantyFreeService(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -136,7 +135,7 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 // @Tags Master : Warranty Free Service
 // @Param warranty_free_services_id path int true "Warranty Free Service ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warranty-free-service/{warranty_free_services_id} [patch]
 func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
@@ -144,7 +143,7 @@ func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writ
 
 	response, err := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(int(warrantyFreeServiceId))
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

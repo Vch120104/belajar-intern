@@ -23,6 +23,11 @@ type GetWarehouseGroupResponse struct {
 	ProfitCenterId     int    `json:"profit_center_id"`
 }
 
+type GetWarehouseGroupDropdown struct {
+	WarehouseGroupId   int    `json:"warehouse_group_id"`
+	WarehouseGroupName string `json:"warehouse_group_name"`
+}
+
 type GetAllWarehouseGroupRequest struct {
 	IsActive           string `json:"is_active"`
 	WarehouseGroupId   string `json:"warehouse_group_id"`
@@ -33,6 +38,6 @@ type GetAllWarehouseGroupRequest struct {
 
 type ProfitCenterResponse struct {
 	ProfitCenterId   int    `json:"profit_center_id"`
-	ProfitCenterCode string `json:"profit_center_code"` 
-	ProfitCenterName string `json:"profit_center_name"` 
+	ProfitCenterCode string `json:"profit_center_code"`
+	ProfitCenterName string `json:"profit_center_name"`
 }

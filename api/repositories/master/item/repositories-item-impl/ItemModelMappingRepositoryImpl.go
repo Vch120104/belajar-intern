@@ -3,14 +3,13 @@ package masteritemrepositoryimpl
 import (
 	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -20,19 +19,19 @@ type ItemModelMappingRepositoryImpl struct {
 }
 
 // GetItemModelMappingByItemId implements masteritemrepository.ItemModelMappingRepository.
-func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB, itemId int, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.ItemModelMappingReponses
 	var brandResponses []masteritempayloads.UnitBrandResponses
 	var modelResponses []masteritempayloads.UnitModelResponses
 	var variantResponses []masteritempayloads.UnitVariantResponses
 
 	model := masteritementities.ItemDetail{}
-	baseModelQuery := tx.Model(&model)
+	baseModelQuery := tx.Model(&model).Where(masteritementities.ItemDetail{ItemId: itemId})
 
 	rows, err := baseModelQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -41,17 +40,17 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
 	//// Brand
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "api/sales/unit-brand-dropdown"
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand-dropdown"
 
 	if errBrand := utils.Get(brandUrl, &brandResponses, nil); errBrand != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -60,17 +59,17 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	joinedDataBrand := utils.DataFrameInnerJoin(responses, brandResponses, "BrandId")
 
 	if len(joinedDataBrand) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
 	//// Unit Model
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "api/sales/unit-model-dropdown"
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model-dropdown"
 
 	if errModel := utils.Get(unitModelUrl, &modelResponses, nil); errModel != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -79,17 +78,17 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	joinedDataModel := utils.DataFrameInnerJoin(joinedDataBrand, modelResponses, "ModelId")
 
 	if len(joinedDataModel) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
 	//// Unit Variant
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "api/sales/unit-variant?page=" + strconv.Itoa(pages.Page) + "&limit=" + strconv.Itoa(pages.Limit)
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=1000"
 
 	if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -98,7 +97,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	joinedDataVariant := utils.DataFrameInnerJoin(joinedDataModel, variantResponses, "VariantId")
 
 	if len(joinedDataVariant) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -111,7 +110,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 }
 
 // UpdateItemModelMapping implements masteritemrepository.ItemModelMappingRepository.
-func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 
 	entities := masteritementities.ItemDetail{
 		ItemDetailId: req.ItemDetailId,
@@ -123,7 +122,7 @@ func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req
 
 	if err != nil {
 
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -133,7 +132,7 @@ func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req
 }
 
 // CreateItemModelMapping implements masteritemrepository.ItemModelMappingRepository.
-func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemDetail{
 		IsActive:     req.IsActive,
 		ItemId:       req.ItemId,
@@ -148,13 +147,13 @@ func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}

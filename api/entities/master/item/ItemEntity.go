@@ -1,11 +1,13 @@
 package masteritementities
 
+import masterentities "after-sales/api/entities/master"
+
 var CreateItemTable = "mtr_item"
 
 type Item struct {
 	IsActive                     bool              `gorm:"column:is_active;type:bool;not null"        json:"is_active"`
 	ItemId                       int               `gorm:"column:item_id;type:int;size:30;primaryKey"        json:"item_id"`
-	ItemCode                     string            `gorm:"column:item_code;size:20;unique;not null"        json:"item_code"`
+	ItemCode                     string            `gorm:"column:item_code;size:50;unique;not null"        json:"item_code"`
 	ItemClassId                  int               `gorm:"column:item_class_id;type:int;size:30;not null"        json:"item_class_id"`
 	ItemName                     string            `gorm:"column:item_name;size:100;null"        json:"item_name"`
 	ItemGroupId                  int               `gorm:"column:item_group_id;type:int;size:30;not null"        json:"item_group_id"`
@@ -61,8 +63,13 @@ type Item struct {
 	SourceTypeId                 int               `gorm:"column:source_type_id;type:int;size:30;null"        json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int               `gorm:"column:atpm_supplier_code_order_id;type:int;size:30;null"        json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int               `gorm:"column:person_in_charge_id;type:int;size:30;null"        json:"person_in_charge_id"`
-	ItemClass                    ItemClass         `gorm:"foreignKey:item_id;references:item_id"`
 	ItemPackageDetail            ItemPackageDetail `gorm:"foreignKey:item_id;references:item_id"`
+	ItemLocation                 ItemLocation      `gorm:"foreignKey:item_id;references:item_id"`
+	Bom                          Bom               `gorm:"foreignKey:item_id;references:item_id"`
+	ItemClass                    *ItemClass
+	ItemSubstitute               ItemSubstitute                                `gorm:"foreignKey:item_id;references:item_id"`
+	FieldActionItem              masterentities.FieldActionEligibleVehicleItem `gorm:"foreignKey:item_id;references:item_id"`
+	ItemImport                   ItemImport                                    `gorm:"foreignKey:item_id;references:item_id"`
 }
 
 func (*Item) TableName() string {

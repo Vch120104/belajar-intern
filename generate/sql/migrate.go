@@ -2,14 +2,13 @@ package migration
 
 import (
 	"after-sales/api/config"
-	//mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
-
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 
 	masteroperationentities "after-sales/api/entities/master/operation"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
+	transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
@@ -37,7 +36,7 @@ func Migrate() {
 		config.EnvConfigs.DBName,
 	)
 
-	//init logger
+	// Initialize logger
 	newLogger := logger.New(
 		log.New(log.Writer(), "\r\n", log.LstdFlags),
 		logger.Config{
@@ -47,7 +46,7 @@ func Migrate() {
 		},
 	)
 
-	//constraint foreign key tidak akan ke create jika DisableForeignKeyConstraintWhenMigrating: true
+	// Disable foreign key constraints when migrating
 	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{
 		Logger: newLogger, // Set the logger for GORM
 		NamingStrategy: schema.NamingStrategy{
@@ -57,13 +56,13 @@ func Migrate() {
 		DisableForeignKeyConstraintWhenMigrating: false,
 	})
 
-	// db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{
-	// 	NamingStrategy: schema.NamingStrategy{
-	// 		//TablePrefix:   "dbo.", // schema name
-	// 		SingularTable: false,
-	// 	}, DisableForeignKeyConstraintWhenMigrating: false})
+	if err != nil {
+		log.Printf("%s Failed to connect to database with error: %s", logEntry, err)
+		panic(err)
+	}
 
-	db.AutoMigrate( // sesuai urutan foreign key
+	// AutoMigrate models
+	err = db.AutoMigrate( // according to foreign key order
 		&masteroperationentities.OperationModelMapping{},
 		&masteroperationentities.OperationFrt{},
 		&masteroperationentities.OperationGroup{},
@@ -78,29 +77,32 @@ func Migrate() {
 		&masterwarehouseentities.WarehouseLocationDefinition{},
 		&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
 
-		&masteritementities.ItemLocationSource{},
-		&masteritementities.ItemLocationDetail{},
-		&masteritementities.ItemLocation{},
+		&masteritementities.LandedCost{},
 		&masteritementities.PurchasePrice{},
 		&masteritementities.PurchasePriceDetail{},
 		&masteritementities.UomType{},
 		&masteritementities.Uom{},
-		&masteritementities.Bom{},
-		&masteritementities.BomDetail{},
+		&masteritementities.UomItem{},
 		&masteritementities.MarkupRate{},
 		&masteritementities.PrincipleBrandParent{},
-		&masteritementities.DiscountPercent{},
 		&masteritementities.MarkupMaster{},
 		&masteritementities.ItemLevel{},
-		&masteritementities.ItemClass{},
 		&masteritementities.PriceList{},
 		&masteritementities.ItemSubstituteDetail{},
 		&masteritementities.ItemSubstitute{},
 		&masteritementities.ItemPackage{},
 		&masteritementities.ItemPackageDetail{},
-		&masteritementities.ItemDetail{},
 		&masteritementities.ItemImport{},
+		&masteritementities.ItemDetail{},
+		&masteritementities.ItemLocationSource{},
 		&masteritementities.Item{},
+		&masteritementities.ItemLocation{},
+		&masteritementities.ItemLocationDetail{},
+		&masteritementities.ItemClass{},
+		&masteritementities.Bom{},
+		&masteritementities.BomDetail{},
+		&masteritementities.Discount{},
+		&masteritementities.DiscountPercent{},
 
 		&masterentities.ForecastMaster{},
 		&masterentities.MovingCode{},
@@ -114,20 +116,48 @@ func Migrate() {
 		&masterentities.DeductionList{},
 		&masterentities.DeductionDetail{},
 		&masterentities.FieldActionEligibleVehicleItem{},
+		&masterentities.FieldActionEligibleVehicleOperation{},
 		&masterentities.FieldActionEligibleVehicle{},
 		&masterentities.FieldAction{},
-		&masterentities.Discount{},
+		&masteritementities.DiscountPercent{},
 		&masterentities.Agreement{},
 		&masterentities.AgreementDiscount{},
 		&masterentities.AgreementDiscountGroupDetail{},
 		&masterentities.AgreementItemDetail{},
 
+		&masterentities.FieldAction{},
+		&masterentities.FieldActionEligibleVehicleItem{},
+		&masterentities.FieldActionEligibleVehicle{},
+		&masterentities.Agreement{},
+		&masterentities.AgreementDiscount{},
+		&masterentities.AgreementDiscountGroupDetail{},
+		&masterentities.AgreementItemDetail{},
+
+		&transactionsparepartpentities.SupplySlip{},
+		&transactionsparepartpentities.SupplySlipDetail{},
+		&transactionworkshopentities.WorkOrderMaster{},
+		&transactionworkshopentities.WorkOrderMasterStatus{},
+		&transactionworkshopentities.WorkOrderMasterType{},
+		&transactionworkshopentities.WorkOrderMasterBillAbleto{},
 		&transactionworkshopentities.WorkOrder{},
+		&transactionworkshopentities.WorkOrderRequestDescription{},
+		&transactionworkshopentities.WorkOrderDetail{},
+		&transactionworkshopentities.WorkOrderHistory{},
+		&transactionworkshopentities.WorkOrderHistoryRequest{},
+		&transactionworkshopentities.WorkOrderHistoryDetail{},
+		&transactionworkshopentities.WorkOrderService{},
+		&transactionworkshopentities.WorkOrderServiceVehicle{},
+
 		&transactionworkshopentities.BookingEstimation{},
+		&transactionworkshopentities.BookingEstimationAllocation{},
+		&transactionworkshopentities.BookingEstimationRequest{},
+		&transactionworkshopentities.BookingEstimationServiceReminder{},
+		&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		&transactionworkshopentities.BookingEstimationDetail{},
 	)
 
-	if db != nil && db.Error != nil {
-		log.Printf("%s Failed with error %s", logEntry, db.Error)
+	if err != nil {
+		log.Printf("%s Failed with error: %s", logEntry, err)
 		panic(err)
 	}
 

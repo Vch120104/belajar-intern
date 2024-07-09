@@ -2,7 +2,7 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"errors"
 	"net/http"
 
@@ -22,7 +22,7 @@ func StartIncentiveGroupRepositoryImpl() masterrepository.IncentiveGroupReposito
 	return &IncentiveGroupRepositoryImpl{}
 }
 
-func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	IncentiveGroupMapping := []masterentities.IncentiveGroup{}
 	IncentiveGroupResponse := []masterpayloads.IncentiveGroupResponse{}
 	// IncentiveGroupResponse1 := masterpayloads.IncentiveGroupResponse{}
@@ -43,7 +43,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterC
 		Error
 
 	if len(IncentiveGroupResponse) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -51,7 +51,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterC
 
 	if err != nil {
 
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -62,7 +62,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroup(tx *gorm.DB, filterC
 	return pages, nil
 }
 
-func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupIsActive(tx *gorm.DB) ([]masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupIsActive(tx *gorm.DB) ([]masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse) {
 	// var IncentiveGroupResponse masterpayloads.IncentiveGroupResponse
 	IncentiveGroupResponse := []masterpayloads.IncentiveGroupResponse{}
 
@@ -73,7 +73,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupIsActive(tx *gorm.DB)
 		Rows()
 
 	if len(IncentiveGroupResponse) == 0 {
-		return IncentiveGroupResponse, &exceptionsss_test.BaseErrorResponse{
+		return IncentiveGroupResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -81,7 +81,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupIsActive(tx *gorm.DB)
 
 	if err != nil {
 
-		return IncentiveGroupResponse, &exceptionsss_test.BaseErrorResponse{
+		return IncentiveGroupResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -91,7 +91,7 @@ func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupIsActive(tx *gorm.DB)
 	return IncentiveGroupResponse, nil
 }
 
-func (*IncentiveGroupRepositoryImpl) GetIncentiveGroupById(tx *gorm.DB, Id int) (masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse) {
+func (*IncentiveGroupRepositoryImpl) GetIncentiveGroupById(tx *gorm.DB, Id int) (masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse) {
 	var IncentiveGroupMapping masterentities.IncentiveGroup
 	var IncentiveGroupResponse masterpayloads.IncentiveGroupResponse
 
@@ -103,7 +103,7 @@ func (*IncentiveGroupRepositoryImpl) GetIncentiveGroupById(tx *gorm.DB, Id int) 
 
 	if err != nil {
 
-		return IncentiveGroupResponse, &exceptionsss_test.BaseErrorResponse{
+		return IncentiveGroupResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -113,7 +113,7 @@ func (*IncentiveGroupRepositoryImpl) GetIncentiveGroupById(tx *gorm.DB, Id int) 
 	return IncentiveGroupResponse, nil
 }
 
-func (r *IncentiveGroupRepositoryImpl) SaveIncentiveGroup(tx *gorm.DB, req masterpayloads.IncentiveGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupRepositoryImpl) SaveIncentiveGroup(tx *gorm.DB, req masterpayloads.IncentiveGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	IncentiveGroup := masterentities.IncentiveGroup{
 		IsActive:           req.IsActive,
 		IncentiveGroupId:   req.IncentiveGroupId,
@@ -127,7 +127,7 @@ func (r *IncentiveGroupRepositoryImpl) SaveIncentiveGroup(tx *gorm.DB, req maste
 
 	if err != nil {
 		logrus.Info(err)
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
@@ -136,7 +136,7 @@ func (r *IncentiveGroupRepositoryImpl) SaveIncentiveGroup(tx *gorm.DB, req maste
 	return true, nil
 }
 
-func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	// var entities masterentities.IncentiveGroup
 	var IncentiveGroupMapping masterentities.IncentiveGroup
 	// var IncentiveGroupResponse masterpayloads.IncentiveGroupResponse
@@ -151,7 +151,7 @@ func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, I
 	// 	First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -166,7 +166,7 @@ func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, I
 	result = tx.Save(&IncentiveGroupMapping)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -175,39 +175,38 @@ func (r *IncentiveGroupRepositoryImpl) ChangeStatusIncentiveGroup(tx *gorm.DB, I
 	return true, nil
 }
 
-func (r *IncentiveGroupRepositoryImpl) UpdateIncentiveGroup(tx *gorm.DB, req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *IncentiveGroupRepositoryImpl) UpdateIncentiveGroup(tx *gorm.DB, id int, req masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	model := masterentities.IncentiveGroup{}
-	if err := tx.Model(&model).Where(masterentities.IncentiveGroup{IncentiveGroupId: req.IncentiveGroupId}).First(&model).Error; err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+	result := tx.Model(&model).Where(masterentities.IncentiveGroup{IncentiveGroupId: id}).First(&model).Updates(req)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        result.Error,
 		}
 	}
 
 	if model == (masterentities.IncentiveGroup{}) {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
-	entities := masterentities.IncentiveGroup{
-		IncentiveGroupId:   req.IncentiveGroupId,
-		IncentiveGroupCode: req.IncentiveGroupCode,
-		IncentiveGroupName: req.IncentiveGroupName,
-		EffectiveDate:      req.EffectiveDate,
-	}
+	return true, nil
+}
 
-	err := tx.Updates(&entities).Where(masterentities.IncentiveGroup{IncentiveGroupId: req.IncentiveGroupId}).Error
+func (r *IncentiveGroupRepositoryImpl) GetAllIncentiveGroupDropDown(tx *gorm.DB) ([]masterpayloads.IncentiveGroupDropDown, *exceptions.BaseErrorResponse) {
+	// var IncentiveGroupResponse masterpayloads.IncentiveGroupResponse
+	DropDownResponse := []masterpayloads.IncentiveGroupDropDown{}
 
+	err := tx.Model(masterentities.IncentiveGroup{}).Select("mtr_incentive_group.*, CONCAT(incentive_group_code, ' - ', incentive_group_name) AS incentive_group_code_name").Where("is_active = 'true'").Find(&DropDownResponse).Error
 	if err != nil {
-
-		return false, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+		return DropDownResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return DropDownResponse, nil
 }
