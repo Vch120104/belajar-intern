@@ -58,16 +58,66 @@ func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloa
 	return responses, nil
 }
 
+func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+
+	tableStruct := masteritempayloads.ItemSearch{}
+
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+	// Handle item_id filter
+	if len(itemIDs) > 0 && itemIDs[0] != "" {
+		whereQuery = whereQuery.Where("mtr_item.item_id IN (?)", itemIDs)
+	}
+
+	// Handle supplier_id filter
+	if len(supplierIDs) > 0 && supplierIDs[0] != "" {
+		whereQuery = whereQuery.Where("mtr_item.supplier_id IN (?)", supplierIDs)
+	}
+
+	var responses []masteritempayloads.ItemSearch
+	err := whereQuery.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch data from database",
+			Err:        errors.New("failed to fetch data from database"),
+		}
+	}
+	if len(responses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "no data found",
+			Err:        errors.New("no data found"),
+		}
+	}
+
+	var mapResponses []map[string]interface{}
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"is_active":     response.IsActive,
+			"item_id":       response.ItemId,
+			"item_code":     response.ItemCode,
+			"item_name":     response.ItemName,
+			"item_group_id": response.ItemGroupId,
+			"item_class_id": response.ItemClassId,
+			"item_type":     response.ItemType,
+			"supplier_id":   response.SupplierId,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
+
+}
+
 func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define a slice to hold Item responses
+
 	var responses []masteritempayloads.ItemLookup
 
-	// Apply internal service filter conditions
 	tableStruct := masteritempayloads.ItemLookup{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	whereQuery := utils.ApplyFilterForDB(joinTable, filterCondition)
 
-	// Apply pagination directly in the query
 	err := whereQuery.Scopes(pagination.Paginate(&tableStruct, &pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -76,7 +126,6 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 		}
 	}
 
-	// Check if responses are empty
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -84,10 +133,8 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 		}
 	}
 
-	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
 
-	// Iterate over responses and convert them to maps
 	for _, response := range responses {
 		responseMap := map[string]interface{}{
 			"is_active":     response.IsActive,

@@ -34,69 +34,64 @@ func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.Wareho
 // DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
 func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	save, err := s.warehouseMasterRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
 	}
-
 	return save, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) DropdownWarehouse() ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.DropdownWarehouse(tx)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetAllIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(tx, MultiIds)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
@@ -106,37 +101,34 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) 
 
 func (s *WarehouseMasterServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetAll(tx, filter, pages)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	change_status, err := s.warehouseMasterRepo.ChangeStatus(tx, warehouseId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return change_status, err
 	}
-
 	return change_status, nil
 }

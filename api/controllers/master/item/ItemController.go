@@ -34,6 +34,7 @@ type ItemController interface {
 	UpdateItemDetail(writer http.ResponseWriter, request *http.Request)
 	GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request)
 	GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request)
+	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
@@ -44,6 +45,41 @@ func NewItemController(ItemService masteritemservice.ItemService) ItemController
 	return &ItemControllerImpl{
 		itemservice: ItemService,
 	}
+}
+
+// GetAllItemSearch
+func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"mtr_item.item_code":             queryValues.Get("item_code"),
+		"mtr_item.item_name":             queryValues.Get("item_name"),
+		"mtr_item.item_type":             queryValues.Get("item_type"),
+		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
+		"mtr_item.is_active":             queryValues.Get("is_active"),
+		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
+	}
+
+	// Handle multi_id and supplier_id as multiple parameters
+	itemIDs := strings.Split(queryValues.Get("item_id"), ",")
+	supplierIDs := strings.Split(queryValues.Get("supplier_id"), ",")
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	data, totalPages, totalRows, err := r.itemservice.GetAllItemSearch(criteria, itemIDs, supplierIDs, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // GetItembyId implements ItemController.
@@ -323,7 +359,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"item_id":               queryValues.Get("item_id"),
+		"item_id":        queryValues.Get("item_id"),
 		"item_detail_id": queryValues.Get("item_detail_id"),
 	}
 
@@ -354,7 +390,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 // @Param item_detail_id path int true "Item Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item/{item_id}/detail/{item_detail_id} [get]
+// @Router /v1/item/detail/{item_id}/{item_detail_id} [get]
 func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
 	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))

@@ -29,8 +29,8 @@ func StartOperationEntriesService(operationEntriesRepo masteroperationrepository
 
 func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetAllOperationEntries(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -39,8 +39,8 @@ func (s *OperationEntriesServiceImpl) GetAllOperationEntries(filterCondition []u
 
 func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,8 +49,8 @@ func (s *OperationEntriesServiceImpl) GetOperationEntriesById(id int) (masterope
 
 func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroperationpayloads.OperationEntriesRequest) (masteroperationpayloads.OperationEntriesResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.GetOperationEntriesName(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -59,7 +59,6 @@ func (s *OperationEntriesServiceImpl) GetOperationEntriesName(request masteroper
 
 func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpayloads.OperationEntriesResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.OperationEntriesId != 0 {
 		_, err := s.operationEntriesRepo.GetOperationEntriesById(tx, req.OperationEntriesId)
@@ -70,6 +69,7 @@ func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpa
 	}
 
 	results, err := s.operationEntriesRepo.SaveOperationEntries(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -78,8 +78,8 @@ func (s *OperationEntriesServiceImpl) SaveOperationEntries(req masteroperationpa
 
 func (s *OperationEntriesServiceImpl) ChangeStatusOperationEntries(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationEntriesRepo.ChangeStatusOperationEntries(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

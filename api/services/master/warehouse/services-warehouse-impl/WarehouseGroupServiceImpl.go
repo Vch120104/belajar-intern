@@ -31,45 +31,41 @@ func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.Warehous
 // GetbyGroupCode implements masterwarehouseservice.WarehouseGroupService.
 func (s *WarehouseGroupServiceImpl) GetbyGroupCode(groupCode string) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetbyGroupCode(tx, groupCode)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 // GetWarehouseGroupDropdownbyId implements masterwarehouseservice.WarehouseGroupService.
 func (s *WarehouseGroupServiceImpl) GetWarehouseGroupDropdownbyId(Id int) (masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetWarehouseGroupDropdownbyId(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 // GetWarehouseGroupDropdown implements masterwarehouseservice.WarehouseGroupService.
 func (s *WarehouseGroupServiceImpl) GetWarehouseGroupDropdown() ([]masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetWarehouseGroupDropdown(tx)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if request.WarehouseGroupId != 0 {
 		_, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, request.WarehouseGroupId)
@@ -80,41 +76,38 @@ func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepa
 	}
 
 	save, err := s.warehouseGroupRepo.SaveWarehouseGroup(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
 	}
-
 	return save, nil
 }
 
 func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseGroupRepo.GetAllWarehouseGroup(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
 
@@ -123,10 +116,10 @@ func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId 
 	}
 
 	change_status, err := s.warehouseGroupRepo.ChangeStatusWarehouseGroup(tx, warehouseGroupId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return change_status, err
 	}
-
 	return change_status, nil
 }

@@ -29,8 +29,8 @@ func StartOperationCodeService(operationCodeRepo masteroperationrepository.Opera
 
 func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationCodeRepo.GetAllOperationCode(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -39,8 +39,8 @@ func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.F
 
 func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationCodeRepo.GetOperationCodeById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,8 +49,8 @@ func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperation
 
 func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationCodeRepo.GetOperationCodeByCode(tx, code)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -59,8 +59,8 @@ func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masterop
 
 func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.operationCodeRepo.SaveOperationCode(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -69,8 +69,8 @@ func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads
 
 func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Statement.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.operationCodeRepo.ChangeStatusItemSubstitute(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return result, err

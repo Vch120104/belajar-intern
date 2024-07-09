@@ -145,6 +145,7 @@ func ItemRouter(
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", itemController.GetAllItem)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
@@ -152,14 +153,15 @@ func ItemRouter(
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
+	router.Get("/search", itemController.GetAllItemSearch)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem)
 
 	router.Get("/detail", itemController.GetAllItemDetail)
-	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
+	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
-	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Delete("/detail/{item_id}/{item_detail_id}", itemController.DeleteItemDetail)
 
 	return router
 }
@@ -251,7 +253,8 @@ func ItemPackageDetailRouter(
 	router.Post("/", ItemPackageDetailController.CreateItemPackageDetailByItemPackageId)
 	router.Patch("/{item_package_detail_id}", ItemPackageDetailController.ChangeStatusItemPackageDetail)
 	router.Put("/", ItemPackageDetailController.UpdateItemPackageDetail)
-
+	router.Patch("/activate/{item_package_detail_id}", ItemPackageDetailController.ActivateItemPackageDetail)
+	router.Patch("/deactivate/{item_package_detail_id}", ItemPackageDetailController.DeactivateItemPackageDetail)
 	return router
 }
 
@@ -269,6 +272,10 @@ func ItemImportRouter(
 	router.Get("/{item_import_id}", ItemImportController.GetItemImportbyId)
 	router.Post("/", ItemImportController.SaveItemImport)
 	router.Patch("/", ItemImportController.UpdateItemImport)
+	router.Get("/get-by-item-and-supplier-id/{item_id}/{supplier_id}", ItemImportController.GetItemImportbyItemIdandSupplierId)
+	router.Get("/download-template", ItemImportController.DownloadTemplate)
+	router.Post("/upload-template", ItemImportController.UploadTemplate)
+	router.Post("/process-template", ItemImportController.ProcessDataUpload)
 	// router.Get("/{item_import_id}", ItemImportController.GetItemPackageById)
 
 	return router
@@ -278,6 +285,11 @@ func ItemModelMappingRouter(
 	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Post("/", ItemModelMappingController.CreateItemModelMapping)
 	router.Get("/{item_id}", ItemModelMappingController.GetItemModelMappingByItemId)
@@ -292,12 +304,21 @@ func MovingCodeRouter(
 ) chi.Router {
 	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Post("/", MovingCodeController.CreateMovingCode)
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
 	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
 	router.Get("/", MovingCodeController.GetAllMovingCode)
 	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	router.Get("/drop-down", MovingCodeController.GetDropdownMovingCode)
+	router.Patch("/activate/{moving_code_id}", MovingCodeController.ActivateMovingCode)
+	router.Patch("/deactive/{moving_code_id}", MovingCodeController.DeactiveMovingCode)
+
 	//router.PanicHandler = exceptions.ErrorHandler
 
 	return router
@@ -334,8 +355,12 @@ func PriceListRouter(
 
 	router.Get("/", priceListController.GetPriceList)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
+	router.Get("/new/", priceListController.GetAllPriceListNew)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
+	router.Put("/activate/{price_list_id}", priceListController.ActivatePriceList)
+	router.Put("/deactivate/{price_list_id}", priceListController.DeactivatePriceList)
+	router.Delete("/{price_list_id}", priceListController.DeletePriceList)
 
 	return router
 }
@@ -639,7 +664,7 @@ func ForecastMasterRouter(
 	router.Get("/{forecast_master_id}", forecastMasterController.GetForecastMasterById)
 	router.Post("/", forecastMasterController.SaveForecastMaster)
 	router.Patch("/{forecast_master_id}", forecastMasterController.ChangeStatusForecastMaster)
-	router.Put("/{forecast_master_id}",forecastMasterController.UpdateForecastMaster)
+	router.Put("/{forecast_master_id}", forecastMasterController.UpdateForecastMaster)
 
 	return router
 }
@@ -723,15 +748,16 @@ func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
-	// Gunakan middleware NotFoundHandler
-	// router.Use(middleware.NotFoundHandler)
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
 	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
 	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
-
-	////router.PanicHandler = exceptions.ErrorHandler
 
 	return router
 }
@@ -751,7 +777,7 @@ func FieldActionRouter(
 	router.Get("/vehicle-detail/all/by-id/{field_action_system_number}", FieldActionController.GetAllFieldActionVehicleDetailById)
 	router.Get("/vehicle-detail/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetFieldActionVehicleDetailById)
 	router.Get("/item-detail/all/by-id/{field_action_eligible_vehicle_system_number}", FieldActionController.GetAllFieldActionVehicleItemDetailById)
-	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}", FieldActionController.GetFieldActionVehicleItemDetailById)
+	router.Get("/item-detail/by-id/{field_action_eligible_vehicle_item_system_number}/{line_type_id}", FieldActionController.GetFieldActionVehicleItemDetailById)
 	router.Post("/", FieldActionController.SaveFieldAction)
 	router.Post("/vehicle-detail/{field_action_system_number}", FieldActionController.PostFieldActionVehicleDetail)
 	router.Post("/multi-vehicle-detail/{field_action_system_number}", FieldActionController.PostMultipleVehicleDetail)

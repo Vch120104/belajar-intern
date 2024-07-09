@@ -30,8 +30,8 @@ func StartSkillLevelService(SkillLevelRepo masterrepository.SkillLevelRepository
 
 func (s *SkillLevelServiceImpl) GetSkillLevelById(id int) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.SkillLevelRepo.GetSkillLevelById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -41,8 +41,8 @@ func (s *SkillLevelServiceImpl) GetSkillLevelById(id int) (masterpayloads.SkillL
 
 func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.SkillLevelRepo.GetAllSkillLevel(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -51,7 +51,6 @@ func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterC
 
 func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.SkillLevelRepo.GetSkillLevelById(tx, Id)
 
@@ -60,6 +59,7 @@ func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exception
 	}
 
 	results, err := s.SkillLevelRepo.ChangeStatusSkillLevel(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -68,7 +68,6 @@ func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exception
 
 func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.SkillLevelId != 0 {
 		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
@@ -78,6 +77,7 @@ func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResp
 	}
 
 	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

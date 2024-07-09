@@ -23,15 +23,58 @@ type MovingCodeController interface {
 	UpdateMovingCode(writer http.ResponseWriter, request *http.Request)
 	GetMovingCodebyId(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request)
+	GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request)
+	ActivateMovingCode(writer http.ResponseWriter, request *http.Request)
+	DeactiveMovingCode(writer http.ResponseWriter, request *http.Request)
 }
 
 type MovingCodeControllerImpl struct {
 	MovingCodeService masterservice.MovingCodeService
 }
 
+// ActivateMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) ActivateMovingCode(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "moving_code_id")
+
+	response, err := r.MovingCodeService.ActivateMovingCode(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Activate Status Successfully!", http.StatusOK)
+}
+
+// DeactiveMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "moving_code_id")
+
+	response, err := r.MovingCodeService.DeactiveMovingCode(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Deactive Status Successfully!", http.StatusOK)
+}
+
+// GetDropdownMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.MovingCodeService.GetDropdownMovingCode()
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
 // ChangeStatusMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+	id, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
 
 	response, err := r.MovingCodeService.ChangeStatusMovingCode(id)
 
@@ -121,7 +164,7 @@ func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWr
 
 // UpdateMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) UpdateMovingCode(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masterpayloads.MovingCodeListRequest
+	var formRequest masterpayloads.MovingCodeListUpdate
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {

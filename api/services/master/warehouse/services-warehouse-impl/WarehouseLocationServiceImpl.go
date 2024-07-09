@@ -32,7 +32,6 @@ func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.Wa
 
 func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetWarehouseLocationResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if request.WarehouseLocationId != 0 {
 		_, err := s.warehouseLocationRepo.GetById(tx, request.WarehouseLocationId)
@@ -43,41 +42,38 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehousepayloads.GetW
 	}
 
 	save, err := s.warehouseLocationRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
 	}
-
 	return save, err
 }
 
 func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseLocationServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseLocationRepo.GetAll(tx, filter, pages)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 
@@ -86,10 +82,10 @@ func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) (bo
 	}
 
 	change_status, err := s.warehouseLocationRepo.ChangeStatus(tx, warehouseLocationId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return change_status, err
 	}
-
 	return change_status, nil
 }
