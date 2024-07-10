@@ -1,7 +1,6 @@
 package transactionworkshopcontroller
 
 import (
-	"after-sales/api/config"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
@@ -11,6 +10,7 @@ import (
 	utils "after-sales/api/utils"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -28,12 +28,14 @@ type WorkOrderController interface {
 	UpdateRequest(writer http.ResponseWriter, request *http.Request)
 	AddRequest(writer http.ResponseWriter, request *http.Request)
 	DeleteRequest(writer http.ResponseWriter, request *http.Request)
+	DeleteRequestMultiId(writer http.ResponseWriter, request *http.Request)
 
 	GetAllVehicleService(writer http.ResponseWriter, request *http.Request)
 	GetVehicleServiceById(writer http.ResponseWriter, request *http.Request)
 	UpdateVehicleService(writer http.ResponseWriter, request *http.Request)
 	AddVehicleService(writer http.ResponseWriter, request *http.Request)
 	DeleteVehicleService(writer http.ResponseWriter, request *http.Request)
+	DeleteVehicleServiceMultiId(writer http.ResponseWriter, request *http.Request)
 
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
@@ -59,9 +61,6 @@ type WorkOrderController interface {
 	DeleteBill(writer http.ResponseWriter, request *http.Request)
 
 	NewDropPoint(writer http.ResponseWriter, request *http.Request)
-	// AddDropPoint(writer http.ResponseWriter, request *http.Request)
-	// UpdateDropPoint(writer http.ResponseWriter, request *http.Request)
-	// DeleteDropPoint(writer http.ResponseWriter, request *http.Request)
 
 	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
 	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
@@ -72,6 +71,7 @@ type WorkOrderController interface {
 	AddDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
 	UpdateDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
 	DeleteDetailWorkOrder(writer http.ResponseWriter, request *http.Request)
+	DeleteDetailWorkOrderMultiId(writer http.ResponseWriter, request *http.Request)
 
 	GetAllBooking(writer http.ResponseWriter, request *http.Request)
 	GetBookingById(writer http.ResponseWriter, request *http.Request)
@@ -121,7 +121,7 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryParams := map[string]string{
 		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
 		"trx_work_order.work_order_type_id":       queryValues.Get("work_order_type_id"),
-		"work_order_status_id":                    queryValues.Get("work_order_status_id"),
+		"trx_work_order.work_order_status_id":     queryValues.Get("work_order_status_id"),
 		"trx_work_order.brand_id":                 queryValues.Get("brand_id"),
 		"trx_work_order.model_id":                 queryValues.Get("model_id"),
 		"trx_work_order.vehicle_id":               queryValues.Get("vehicle_id"),
@@ -164,13 +164,10 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Router /v1/work-order/normal [post]
 func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
 
-	// Menginisialisasi koneksi database
-	db := config.InitDB()
-
 	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	success, err := r.WorkOrderService.New(db, workOrderRequest)
+	success, err := r.WorkOrderService.New(workOrderRequest)
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -209,9 +206,7 @@ func (r *WorkOrderControllerImpl) NewStatus(writer http.ResponseWriter, request 
 		}
 	}
 
-	db := config.InitDB()
-
-	statuses, err := r.WorkOrderService.NewStatus(db, filters)
+	statuses, err := r.WorkOrderService.NewStatus(filters)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -239,8 +234,7 @@ func (r *WorkOrderControllerImpl) AddStatus(writer http.ResponseWriter, request 
 	var statusRequest transactionworkshoppayloads.WorkOrderStatusRequest
 	helper.ReadFromRequestBody(request, &statusRequest)
 
-	db := config.InitDB()
-	success, err := r.WorkOrderService.AddStatus(db, statusRequest)
+	success, err := r.WorkOrderService.AddStatus(statusRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -271,8 +265,7 @@ func (r *WorkOrderControllerImpl) UpdateStatus(writer http.ResponseWriter, reque
 	var statusRequest transactionworkshoppayloads.WorkOrderStatusRequest
 	helper.ReadFromRequestBody(request, &statusRequest)
 
-	db := config.InitDB()
-	update, err := r.WorkOrderService.UpdateStatus(db, int(statusID), statusRequest)
+	update, err := r.WorkOrderService.UpdateStatus(int(statusID), statusRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -299,8 +292,7 @@ func (r *WorkOrderControllerImpl) DeleteStatus(writer http.ResponseWriter, reque
 	// Delete status from work order
 	statusID, _ := strconv.Atoi(chi.URLParam(request, "work_order_status_id"))
 
-	db := config.InitDB()
-	delete, err := r.WorkOrderService.DeleteStatus(db, int(statusID))
+	delete, err := r.WorkOrderService.DeleteStatus(int(statusID))
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -324,10 +316,9 @@ func (r *WorkOrderControllerImpl) DeleteStatus(writer http.ResponseWriter, reque
 // @Router /v1/work-order/dropdown-bill [get]
 func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
-	db := config.InitDB()
 
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
-	statuses, err := r.WorkOrderService.NewBill(db)
+	statuses, err := r.WorkOrderService.NewBill()
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -356,8 +347,7 @@ func (r *WorkOrderControllerImpl) AddBill(writer http.ResponseWriter, request *h
 	var billRequest transactionworkshoppayloads.WorkOrderBillableRequest
 	helper.ReadFromRequestBody(request, &billRequest)
 
-	db := config.InitDB()
-	success, err := r.WorkOrderService.AddBill(db, billRequest)
+	success, err := r.WorkOrderService.AddBill(billRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -388,8 +378,7 @@ func (r *WorkOrderControllerImpl) UpdateBill(writer http.ResponseWriter, request
 	var billRequest transactionworkshoppayloads.WorkOrderBillableRequest
 	helper.ReadFromRequestBody(request, &billRequest)
 
-	db := config.InitDB()
-	update, err := r.WorkOrderService.UpdateBill(db, int(billID), billRequest)
+	update, err := r.WorkOrderService.UpdateBill(int(billID), billRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -415,8 +404,7 @@ func (r *WorkOrderControllerImpl) DeleteBill(writer http.ResponseWriter, request
 	// Delete bill from work order
 	billID, _ := strconv.Atoi(chi.URLParam(request, "work_order_bill_id"))
 
-	db := config.InitDB()
-	delete, err := r.WorkOrderService.DeleteBill(db, int(billID))
+	delete, err := r.WorkOrderService.DeleteBill(int(billID))
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -452,10 +440,8 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 		}
 	}
 
-	db := config.InitDB()
-
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
-	statuses, err := r.WorkOrderService.NewType(db, filters)
+	statuses, err := r.WorkOrderService.NewType(filters)
 	if err != nil {
 		// Menangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
@@ -484,8 +470,7 @@ func (r *WorkOrderControllerImpl) AddType(writer http.ResponseWriter, request *h
 	var typeRequest transactionworkshoppayloads.WorkOrderTypeRequest
 	helper.ReadFromRequestBody(request, &typeRequest)
 
-	db := config.InitDB()
-	success, err := r.WorkOrderService.AddType(db, typeRequest)
+	success, err := r.WorkOrderService.AddType(typeRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -516,8 +501,7 @@ func (r *WorkOrderControllerImpl) UpdateType(writer http.ResponseWriter, request
 	var typeRequest transactionworkshoppayloads.WorkOrderTypeRequest
 	helper.ReadFromRequestBody(request, &typeRequest)
 
-	db := config.InitDB()
-	update, err := r.WorkOrderService.UpdateType(db, int(typeID), typeRequest)
+	update, err := r.WorkOrderService.UpdateType(int(typeID), typeRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -544,8 +528,7 @@ func (r *WorkOrderControllerImpl) DeleteType(writer http.ResponseWriter, request
 	// Delete type from work order
 	typeID, _ := strconv.Atoi(chi.URLParam(request, "work_order_type_id"))
 
-	db := config.InitDB()
-	delete, err := r.WorkOrderService.DeleteType(db, int(typeID))
+	delete, err := r.WorkOrderService.DeleteType(int(typeID))
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -568,9 +551,8 @@ func (r *WorkOrderControllerImpl) DeleteType(writer http.ResponseWriter, request
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-drop-point [get]
 func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, request *http.Request) {
-	db := config.InitDB()
 
-	statuses, err := r.WorkOrderService.NewDropPoint(db)
+	statuses, err := r.WorkOrderService.NewDropPoint()
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -584,83 +566,6 @@ func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, reque
 	}
 }
 
-// // AddDropPoint adds a new drop point to a work order
-// // @Summary Add Work Order Drop Point
-// // @Description Add a new drop point to a work order
-// // @Accept json
-// // @Produce json
-// // @Tags Transaction : Workshop Work Order
-// // @Param reqBody body transactionworkshoppayloads.WorkOrderDropPointRequest true "Work Order Drop Point Data"
-// // @Success 201 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// // @Router /v1/work-order/dropdown-drop-point [post]
-// func (r *WorkOrderControllerImpl) AddDropPoint(writer http.ResponseWriter, request *http.Request) {
-// 	// Add drop point to work order
-// 	var dropPointRequest transactionworkshoppayloads.WorkOrderDropPointRequest
-// 	helper.ReadFromRequestBody(request, &dropPointRequest)
-
-// 	db := config.InitDB()
-// 	err := r.WorkOrderService.AddDropPoint(db, dropPointRequest)
-// 	if err != nil {
-// 		exceptions.NewAppException(writer, request, err)
-// 		return
-// 	}
-
-// 	payloads.NewHandleSuccess(writer, nil, "Drop point added successfully", http.StatusCreated)
-// }
-
-// // UpdateDropPoint updates a drop point of a work order
-// // @Summary Update Work Order Drop Point
-// // @Description Update a drop point of a work order
-// // @Accept json
-// // @Produce json
-// // @Tags Transaction : Workshop Work Order
-// // @Param work_order_drop_point_id path string true "Work Order Drop Point ID"
-// // @Param reqBody body transactionworkshoppayloads.WorkOrderDropPointRequest true "Work Order Drop Point Data"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// // @Router /v1/work-order/dropdown-drop-point/{work_order_drop_point_id} [put]
-// func (r *WorkOrderControllerImpl) UpdateDropPoint(writer http.ResponseWriter, request *http.Request) {
-// 	// Update drop point of a work order
-// 	dropPointID, _ := strconv.Atoi(chi.URLParam(request, "work_order_drop_point_id"))
-
-// 	var dropPointRequest transactionworkshoppayloads.WorkOrderDropPointRequest
-// 	helper.ReadFromRequestBody(request, &dropPointRequest)
-
-// 	db := config.InitDB()
-// 	err := r.WorkOrderService.UpdateDropPoint(db, int(dropPointID), dropPointRequest)
-// 	if err != nil {
-// 		exceptions.NewAppException(writer, request, err)
-// 		return
-// 	}
-
-// 	payloads.NewHandleSuccess(writer, nil, "Drop point updated successfully", http.StatusOK)
-// }
-
-// // DeleteDropPoint deletes a drop point from a work order
-// // @Summary Delete Work Order Drop Point
-// // @Description Delete a drop point from a work order
-// // @Accept json
-// // @Produce json
-// // @Tags Transaction : Workshop Work Order
-// // @Param work_order_drop_point_id path string true "Work Order Drop Point ID"
-// // @Success 204 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// // @Router /v1/work-order/dropdown-drop-point/{work_order_drop_point_id} [delete]
-// func (r *WorkOrderControllerImpl) DeleteDropPoint(writer http.ResponseWriter, request *http.Request) {
-// 	// Delete drop point from work order
-// 	dropPointID, _ := strconv.Atoi(chi.URLParam(request, "work_order_drop_point_id"))
-
-// 	db := config.InitDB()
-// 	err := r.WorkOrderService.DeleteDropPoint(db, int(dropPointID))
-// 	if err != nil {
-// 		exceptions.NewAppException(writer, request, err)
-// 		return
-// 	}
-
-// 	payloads.NewHandleSuccess(writer, nil, "Drop point deleted successfully", http.StatusNoContent)
-// }
-
 // NewVehicleBrand gets the vehicle brands of new work orders
 // @Summary Get Work Order Vehicle Brands
 // @Description Retrieve all work order vehicle brands
@@ -672,10 +577,9 @@ func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, reque
 // @Router /v1/work-order/dropdown-vehicle-brand [get]
 func (r *WorkOrderControllerImpl) NewVehicleBrand(writer http.ResponseWriter, request *http.Request) {
 	// Menginisialisasi koneksi database
-	db := config.InitDB()
 
 	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
-	statuses, err := r.WorkOrderService.NewVehicleBrand(db)
+	statuses, err := r.WorkOrderService.NewVehicleBrand()
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -707,8 +611,7 @@ func (r *WorkOrderControllerImpl) NewVehicleModel(writer http.ResponseWriter, re
 		return
 	}
 
-	db := config.InitDB()
-	create, baseErr := r.WorkOrderService.NewVehicleModel(db, brandId)
+	create, baseErr := r.WorkOrderService.NewVehicleModel(brandId)
 
 	// Periksa apakah ada error yang dikembalikan
 	if baseErr != nil {
@@ -900,8 +803,7 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
 
-	db := config.InitDB()
-	err := r.WorkOrderService.UpdateRequest(db, int(workorderID), int(requestID), groupRequest)
+	err := r.WorkOrderService.UpdateRequest(int(workorderID), int(requestID), groupRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -968,6 +870,63 @@ func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, requ
 		payloads.NewHandleSuccess(writer, nil, "Request deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+
+}
+
+// DeleteRequestMultiId deletes multiple request from a work order
+// @Summary Delete Multiple Request from Work Order
+// @Description Delete multiple request from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Detail
+// @Param work_order_system_number path string true "Work Order ID"
+// @param multi_id query string true "Multiple Request ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/requestservice/{multi_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteRequestMultiId(writer http.ResponseWriter, request *http.Request) {
+	// Delete request from work order
+	workorderstrID := chi.URLParam(request, "work_order_system_number")
+	workorderID, err := strconv.Atoi(workorderstrID)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order system number", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.WorkOrderService.DeleteRequestMultiId(workorderID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "request detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Service Detail deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete service detail", http.StatusInternalServerError)
 	}
 
 }
@@ -1061,8 +1020,7 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 	var vehicleRequest transactionworkshoppayloads.WorkOrderServiceVehicleRequest
 	helper.ReadFromRequestBody(request, &vehicleRequest)
 
-	db := config.InitDB()
-	err := r.WorkOrderService.UpdateVehicleService(db, int(workorderID), int(vehicleServiceID), vehicleRequest)
+	err := r.WorkOrderService.UpdateVehicleService(int(workorderID), int(vehicleServiceID), vehicleRequest)
 
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -1133,6 +1091,63 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 
 }
 
+// DeleteVehicleServiceMultiId deletes multiple a vehicle service from a work order
+// @Summary Delete multiple vehicle service
+// @Description  Delete multiple vehicle service
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Detail
+// @Param work_order_system_number path string true "Service Detail System ID"
+// @Param multi_id path string true "Service Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/vehicleservice/{multi_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteVehicleServiceMultiId(writer http.ResponseWriter, request *http.Request) {
+	// Delete request from work order
+	workorderstrID := chi.URLParam(request, "work_order_system_number")
+	workorderID, err := strconv.Atoi(workorderstrID)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order system number", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.WorkOrderService.DeleteVehicleServiceMultiId(workorderID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "request detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Vehicle service deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete Vehicle detail", http.StatusInternalServerError)
+	}
+
+}
+
 // GetById handles the transaction for all work orders
 // @Summary Get Work Order By ID
 // @Description Retrieve work order by ID
@@ -1144,7 +1159,6 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number} [get]
 func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-	// Get work order by ID
 	workOrderIdStr := chi.URLParam(request, "work_order_system_number")
 	workOrderId, err := strconv.Atoi(workOrderIdStr)
 	if err != nil {
@@ -1190,10 +1204,9 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
 	// Initialize the database connection
-	db := config.InitDB()
 
 	// Save the work order
-	success, baseErr := r.WorkOrderService.Save(db, workOrderRequest, workOrderId)
+	success, baseErr := r.WorkOrderService.Save(workOrderRequest, workOrderId)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
@@ -1228,10 +1241,9 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 	}
 
 	// Initialize database connection
-	db := config.InitDB()
 
 	// Submit work order
-	success, newDocumentNumber, baseErr := r.WorkOrderService.Submit(db, workOrderIdInt)
+	success, newDocumentNumber, baseErr := r.WorkOrderService.Submit(workOrderIdInt)
 	if baseErr != nil {
 		if baseErr.Message == "Document number has already been generated" {
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
@@ -1274,8 +1286,7 @@ func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http
 		return
 	}
 
-	db := config.InitDB()
-	success, baseErr := r.WorkOrderService.Void(db, workOrderId)
+	success, baseErr := r.WorkOrderService.Void(workOrderId)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
@@ -1312,8 +1323,7 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 		return
 	}
 
-	db := config.InitDB()
-	success, baseErr := r.WorkOrderService.CloseOrder(db, workOrderIdInt)
+	success, baseErr := r.WorkOrderService.CloseOrder(workOrderIdInt)
 	if baseErr != nil {
 		switch baseErr.Message {
 		case "Work order not found":
@@ -1358,18 +1368,24 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/detail [get]
 func (r *WorkOrderControllerImpl) GetAllDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
-	// Get the detail of a work order
 	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_work_order_detail.work_order_system_number": queryValues.Get("work_order_system_number"),
+		"trx_work_order_detail.work_order_detail_id":     queryValues.Get("work_order_detail_id"),
+		"trx_work_order_detail.transaction_type_id":      queryValues.Get("transaction_type_id"),
+		"trx_work_order_detail.supply_quantity":          queryValues.Get("supply_quantity"),
+		"trx_work_order_detail.price_list_id":            queryValues.Get("price_list_id"),
+		"trx_work_order_detail.line_type_id":             queryValues.Get("line_type_id"),
+		"trx_work_order_detail.job_type_id":              queryValues.Get("job_type_id"),
+		"trx_work_order_detail.frt_quantity":             queryValues.Get("frt_quantity"),
+	}
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
-	}
-
-	queryParams := map[string]string{
-		"trx_work_order_detail.work_order_system_number": chi.URLParam(request, "work_order_system_number"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
@@ -1385,6 +1401,7 @@ func (r *WorkOrderControllerImpl) GetAllDetailWorkOrder(writer http.ResponseWrit
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+
 }
 
 // GetDetailWorkOrderById gets the detail of a work order by ID
@@ -1445,8 +1462,7 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 	var detailRequest transactionworkshoppayloads.WorkOrderDetailRequest
 	helper.ReadFromRequestBody(request, &detailRequest)
 
-	db := config.InitDB()
-	update, err := r.WorkOrderService.UpdateDetailWorkOrder(db, int(workOrderId), int(detailId), detailRequest)
+	update, err := r.WorkOrderService.UpdateDetailWorkOrder(int(workOrderId), int(detailId), detailRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1521,6 +1537,63 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWrit
 
 }
 
+// DeleteDetailWorkOrder deletes a multiple detail from a work order
+// @Summary Delete multiple Work Order Detail
+// @Description  Delete multiple Work Order Detail
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal Detail
+// @Param work_order_system_number path string true "Work Order System Number ID"
+// @Param multi_id path string true "Work Order Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/detail/{multi_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteDetailWorkOrderMultiId(writer http.ResponseWriter, request *http.Request) {
+	// Delete request from work order
+	workorderstrID := chi.URLParam(request, "work_order_system_number")
+	workorderID, err := strconv.Atoi(workorderstrID)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order system number", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.WorkOrderService.DeleteDetailWorkOrderMultiId(workorderID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "request detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Vehicle service deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete Vehicle detail", http.StatusInternalServerError)
+	}
+
+}
+
 // GetAllWorkOrderBooking gets all work order bookings
 // @Summary Get All Work Order Booking
 // @Description Retrieve all work order bookings
@@ -1538,15 +1611,21 @@ func (r *WorkOrderControllerImpl) GetAllBooking(writer http.ResponseWriter, requ
 	// Get all work order bookings
 	queryValues := request.URL.Query()
 
+	queryParams := map[string]string{
+		"trx_work_order.work_order_system_number":      chi.URLParam(request, "work_order_system_number"),
+		"trx_work_order.booking_system_number":         chi.URLParam(request, "booking_system_number"),
+		"trx_work_order.estimation_system_number":      chi.URLParam(request, "estimation_system_number"),
+		"trx_work_order.service_request_system_number": chi.URLParam(request, "service_request_system_number"),
+		"trx_work_order.brand_id":                      chi.URLParam(request, "brand_id"),
+		"trx_work_order.model_id":                      chi.URLParam(request, "model_id"),
+		"trx_work_order.vehicle_id":                    chi.URLParam(request, "vehicle_id"),
+	}
+
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
-	}
-
-	queryParams := map[string]string{
-		"trx_work_order.work_order_system_number": chi.URLParam(request, "work_order_system_number"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
@@ -1580,12 +1659,15 @@ func (r *WorkOrderControllerImpl) GetBookingById(writer http.ResponseWriter, req
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	workOrderBookId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
 
-	workOrder, err := r.WorkOrderService.GetBookingById(workOrderId, workOrderBookId)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	workOrder, baseErr := r.WorkOrderService.GetBookingById(workOrderId, workOrderBookId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
 		return
 	}
-
 	payloads.NewHandleSuccess(writer, workOrder, "Get Data Successfully", http.StatusOK)
 }
 
@@ -1609,8 +1691,7 @@ func (r *WorkOrderControllerImpl) SaveBooking(writer http.ResponseWriter, reques
 	var workOrderRequest transactionworkshoppayloads.WorkOrderBookingRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.SaveBooking(db, workOrderId, workOrderBookId, workOrderRequest)
+	result, err := r.WorkOrderService.SaveBooking(workOrderId, workOrderBookId, workOrderRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1640,8 +1721,7 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 	var workOrderRequest transactionworkshoppayloads.WorkOrderBookingRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.NewBooking(db, workOrderRequest)
+	result, err := r.WorkOrderService.NewBooking(workOrderRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1675,10 +1755,9 @@ func (r *WorkOrderControllerImpl) SubmitBooking(writer http.ResponseWriter, requ
 	}
 
 	// Initialize database connection
-	db := config.InitDB()
 
 	// Submit work order
-	success, newDocumentNumber, baseErr := r.WorkOrderService.SubmitBooking(db, workOrderIdInt)
+	success, newDocumentNumber, baseErr := r.WorkOrderService.SubmitBooking(workOrderIdInt)
 	if baseErr != nil {
 		if baseErr.Message == "Document number has already been generated" {
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
@@ -1718,8 +1797,7 @@ func (r *WorkOrderControllerImpl) VoidBooking(writer http.ResponseWriter, reques
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	bookingId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.VoidBooking(db, workOrderId, bookingId)
+	result, err := r.WorkOrderService.VoidBooking(workOrderId, bookingId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1744,8 +1822,7 @@ func (r *WorkOrderControllerImpl) CloseBooking(writer http.ResponseWriter, reque
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	bookingId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
 
-	db := config.InitDB()
-	close, baseErr := r.WorkOrderService.CloseBooking(db, workOrderId, bookingId)
+	close, baseErr := r.WorkOrderService.CloseBooking(workOrderId, bookingId)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
@@ -1813,18 +1890,22 @@ func (r *WorkOrderControllerImpl) GetAllAffiliated(writer http.ResponseWriter, r
 // @Produce json
 // @Tags Transaction : Workshop Work Order Affiliated
 // @Param work_order_system_number path string true "Work Order ID"
-// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
+// @Param service_request_system_number path string true "Affiliated Work Order ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/affiliated/{work_order_system_number}/{affiliated_work_order_system_number} [get]
+// @Router /v1/work-order/affiliated/{work_order_system_number}/{service_request_system_number} [get]
 func (r *WorkOrderControllerImpl) GetAffiliatedById(writer http.ResponseWriter, request *http.Request) {
 	// Get affiliated work order by ID
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
-	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
+	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "service_request_system_number"))
 
-	workOrder, err := r.WorkOrderService.GetAffiliatedById(workOrderId, affiliatedWorkOrderId)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	workOrder, baseErr := r.WorkOrderService.GetAffiliatedById(workOrderId, affiliatedWorkOrderId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
 		return
 	}
 
@@ -1846,8 +1927,7 @@ func (r *WorkOrderControllerImpl) NewAffiliated(writer http.ResponseWriter, requ
 	var workOrderRequest transactionworkshoppayloads.WorkOrderAffiliatedRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.NewAffiliated(db, workOrderId, workOrderRequest)
+	result, err := r.WorkOrderService.NewAffiliated(workOrderId, workOrderRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1876,8 +1956,7 @@ func (r *WorkOrderControllerImpl) SaveAffiliated(writer http.ResponseWriter, req
 	var workOrderRequest transactionworkshoppayloads.WorkOrderAffiliatedRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.SaveAffiliated(db, workOrderId, affiliatedWorkOrderId, workOrderRequest)
+	result, err := r.WorkOrderService.SaveAffiliated(workOrderId, affiliatedWorkOrderId, workOrderRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1903,8 +1982,7 @@ func (r *WorkOrderControllerImpl) VoidAffiliated(writer http.ResponseWriter, req
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.VoidAffiliated(db, workOrderId, affiliatedWorkOrderId)
+	result, err := r.WorkOrderService.VoidAffiliated(workOrderId, affiliatedWorkOrderId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1930,8 +2008,7 @@ func (r *WorkOrderControllerImpl) CloseAffiliated(writer http.ResponseWriter, re
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
 
-	db := config.InitDB()
-	result, err := r.WorkOrderService.CloseAffiliated(db, workOrderId, affiliatedWorkOrderId)
+	result, err := r.WorkOrderService.CloseAffiliated(workOrderId, affiliatedWorkOrderId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -1954,9 +2031,7 @@ func (r *WorkOrderControllerImpl) GenerateDocumentNumber(writer http.ResponseWri
 	// Generate a new work order document number
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 
-	db := config.InitDB()
-
-	result, err := r.WorkOrderService.GenerateDocumentNumber(db, workOrderId)
+	result, err := r.WorkOrderService.GenerateDocumentNumber(workOrderId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
