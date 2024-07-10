@@ -244,7 +244,6 @@ func (r *ServiceRequestControllerImp) Save(writer http.ResponseWriter, request *
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/submit/{service_request_system_number} [post]
 func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request *http.Request) {
-
 	ServiceRequestStrId := chi.URLParam(request, "service_request_system_number")
 	ServiceRequestId, err := strconv.Atoi(ServiceRequestStrId)
 	if err != nil {
@@ -254,10 +253,23 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 
 	success, newDocumentNumber, baseErr := r.ServiceRequestService.Submit(ServiceRequestId)
 	if baseErr != nil {
-
 		switch baseErr.Message {
 		case "Service request has been submitted or the document number is already generated":
-			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+			responseDataError := struct {
+				ServiceRequestSystemNumber int    `json:"service_request_system_number"`
+				DocumentNumber             string `json:"service_request_document_number,omitempty"`
+			}{
+				ServiceRequestSystemNumber: ServiceRequestId,
+			}
+			if newDocumentNumber != "" {
+				responseDataError.DocumentNumber = newDocumentNumber
+			}
+			response := payloads.Response{
+				StatusCode: http.StatusConflict,
+				Message:    baseErr.Message,
+				Data:       responseDataError,
+			}
+			helper.WriteToResponseBody(writer, response)
 		case "Data not found":
 			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
 		default:
@@ -271,6 +283,7 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 			DocumentNumber:             newDocumentNumber,
 			ServiceRequestSystemNumber: ServiceRequestId,
 		}
+
 		payloads.NewHandleSuccess(writer, responseData, "Service request submitted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to submit service request", http.StatusInternalServerError)

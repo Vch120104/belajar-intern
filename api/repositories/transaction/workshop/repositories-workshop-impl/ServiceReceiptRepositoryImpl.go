@@ -24,89 +24,43 @@ func OpenServiceReceiptRepositoryImpl() transactionworkshoprepository.ServiceRec
 }
 
 func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var entities []transactionworkshoppayloads.ServiceReceiptNew
 
-	tableStruct := transactionworkshoppayloads.ServiceReceiptNew{}
-
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.ServiceReceiptNew{})
 
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	// Add the additional where condition
 	whereQuery = whereQuery.Where("service_request_system_number != 0 AND service_request_status_id = 2")
 
-	rows, err := whereQuery.Find(&tableStruct).Rows()
-	if err != nil {
+	if err := whereQuery.Find(&entities).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
 	var convertedResponses []transactionworkshoppayloads.ServiceReceiptResponse
-	for rows.Next() {
-		var (
-			ServiceReceiptReq transactionworkshoppayloads.ServiceReceiptNew
-			ServiceReceiptRes transactionworkshoppayloads.ServiceReceiptResponse
-		)
-
-		if err := rows.Scan(
-			&ServiceReceiptReq.ServiceRequestSystemNumber,
-			&ServiceReceiptReq.ServiceRequestDocumentNumber,
-			&ServiceReceiptReq.ServiceRequestDate,
-			&ServiceReceiptReq.ServiceRequestBy,
-			&ServiceReceiptReq.ServiceRequestStatusId,
-			&ServiceReceiptReq.BrandId,
-			&ServiceReceiptReq.ModelId,
-			&ServiceReceiptReq.VariantId,
-			&ServiceReceiptReq.VehicleId,
-			&ServiceReceiptReq.BookingSystemNumber,
-			&ServiceReceiptReq.EstimationSystemNumber,
-			&ServiceReceiptReq.WorkOrderSystemNumber,
-			&ServiceReceiptReq.ReferenceDocSystemNumber,
-			&ServiceReceiptReq.ProfitCenterId,
-			&ServiceReceiptReq.CompanyId,
-			&ServiceReceiptReq.DealerRepresentativeId,
-			&ServiceReceiptReq.ServiceTypeId,
-			&ServiceReceiptReq.ReferenceTypeId,
-			&ServiceReceiptReq.ServiceRemark,
-			&ServiceReceiptReq.ServiceCompanyId,
-			&ServiceReceiptReq.ServiceDate,
-			&ServiceReceiptReq.ReplyId,
-		); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		ServiceReceiptRes = transactionworkshoppayloads.ServiceReceiptResponse{
-			ServiceRequestSystemNumber:   ServiceReceiptRes.ServiceRequestSystemNumber,
-			ServiceRequestDocumentNumber: ServiceReceiptRes.ServiceRequestDocumentNumber,
-			//ServiceRequestDate:           ServiceReceiptRes.ServiceRequestDate.Format("2006-01-02 15:04:05"),
-			ServiceRequestBy:         ServiceReceiptRes.ServiceRequestBy,
-			ServiceRequestStatusId:   ServiceReceiptRes.ServiceRequestStatusId,
-			BrandId:                  ServiceReceiptRes.BrandId,
-			ModelId:                  ServiceReceiptRes.ModelId,
-			VehicleId:                ServiceReceiptRes.VehicleId,
-			CompanyId:                ServiceReceiptRes.CompanyId,
-			DealerRepresentativeId:   ServiceReceiptRes.DealerRepresentativeId,
-			ProfitCenterId:           ServiceReceiptRes.ProfitCenterId,
-			WorkOrderSystemNumber:    ServiceReceiptRes.WorkOrderSystemNumber,
-			BookingSystemNumber:      ServiceReceiptRes.BookingSystemNumber,
-			EstimationSystemNumber:   ServiceReceiptRes.EstimationSystemNumber,
-			ReferenceDocSystemNumber: ServiceReceiptRes.ReferenceDocSystemNumber,
-			ReplyId:                  ServiceReceiptRes.ReplyId,
-			ServiceCompanyId:         ServiceReceiptRes.ServiceCompanyId,
-			//ServiceDate:                  ServiceReceiptRes.ServiceDate.Format("2006-01-02 15:04:05"),
-		}
-
-		convertedResponses = append(convertedResponses, ServiceReceiptRes)
+	for _, entity := range entities {
+		convertedResponses = append(convertedResponses, transactionworkshoppayloads.ServiceReceiptResponse{
+			ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
+			ServiceRequestDocumentNumber: entity.ServiceRequestDocumentNumber,
+			ServiceRequestDate:           entity.ServiceRequestDate.Format("2006-01-02 15:04:05"),
+			ServiceRequestBy:             entity.ServiceRequestBy,
+			CompanyId:                    entity.CompanyId,
+			ServiceCompanyId:             entity.ServiceCompanyId,
+			BrandId:                      entity.BrandId,
+			ModelId:                      entity.ModelId,
+			VehicleId:                    entity.VehicleId,
+			ServiceRequestStatusId:       entity.ServiceRequestStatusId,
+			WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
+			BookingSystemNumber:          entity.BookingSystemNumber,
+			EstimationSystemNumber:       entity.EstimationSystemNumber,
+			ReferenceDocSystemNumber:     entity.ReferenceDocSystemNumber,
+			ReplyId:                      entity.ReplyId,
+			ServiceDate:                  entity.ServiceDate.Format("2006-01-02 15:04:05"),
+		})
 	}
 
 	var mapResponses []map[string]interface{}
-
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
 			"service_request_system_number":   response.ServiceRequestSystemNumber,
@@ -122,8 +76,9 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			"work_order_system_number":        response.WorkOrderSystemNumber,
 			"booking_system_number":           response.BookingSystemNumber,
 			"reference_doc_system_number":     response.ReferenceDocSystemNumber,
+			"reply_id":                        response.ReplyId,
+			"service_date":                    response.ServiceDate,
 		}
-
 		mapResponses = append(mapResponses, responseMap)
 	}
 
@@ -246,55 +201,75 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 	return payload, nil
 }
 
-func (s *ServiceReceiptRepositoryImpl) Save(tx *gorm.DB, Id int, request transactionworkshoppayloads.ServiceReceiptSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceReceiptRepositoryImpl) Save(tx *gorm.DB, Id int, request transactionworkshoppayloads.ServiceReceiptSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ServiceRequest
 	currentDate := time.Now()
 
-	// cek service request system number
+	// Check if the service request exists
 	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).Where("service_request_system_number = ?", Id).First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found", Err: err}
 		}
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Message: "Query error", Err: err}
 	}
 
-	// Check current service request status
-	if entity.ServiceRequestStatusId != 1 {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Service request status is not in draft"}
-	}
-
-	// Check if ServiceDate is less than currentDate
-	if request.ServiceDate.Before(currentDate) {
-		return false, &exceptions.BaseErrorResponse{
+	// Check if ServiceRequestStatusId is in draft (1) status
+	if entity.ServiceRequestStatusId == 1 {
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Message:    "Service date cannot be before the current date",
-			Err:        errors.New("service date cannot be before the current date"),
+			Message:    "Service request is in draft status",
+			Err:        errors.New("service request is in draft status"),
 		}
 	}
 
-	entity.BrandId = request.BrandId
-	entity.ModelId = request.ModelId
-	entity.VehicleId = request.VehicleId
-	entity.CompanyId = request.CompanyId
-	entity.DealerRepresentativeId = request.DealerRepresentativeId
-	entity.ProfitCenterId = request.ProfitCenterId
-	entity.WorkOrderSystemNumber = request.WorkOrderSystemNumber
-	entity.BookingSystemNumber = request.BookingSystemNumber
-	entity.EstimationSystemNumber = request.EstimationSystemNumber
-	entity.ReferenceDocSystemNumber = request.ReferenceDocSystemNumber
-	entity.ReplyId = request.ReplyId
-	entity.ServiceCompanyId = request.ServiceCompanyId
-	entity.ServiceDate = request.ServiceDate
-	entity.ServiceRequestBy = request.ServiceRequestBy
+	// Check if ServiceRequestStatusId is 2 (can save data)
+	if entity.ServiceRequestStatusId == 2 {
+		// Check if ServiceDate is before the current date
+		if entity.ServiceDate.Before(currentDate) {
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Service date cannot be before the current date",
+				Err:        errors.New("service date cannot be before the current date"),
+			}
+		}
 
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save the service request",
-			Err:        err}
+		// Update entity fields
+		entity.ReplyRemark = request.ReplyRemark
+		entity.ReplyBy = "Admin" // Hardcoded value; this should be passed from the session user
+		entity.ReplyDate = currentDate
+
+		// Set ServiceRequestStatusId based on request.ServiceRequestStatusId
+		switch request.ServiceRequestStatusId {
+		case 3:
+			entity.ServiceRequestStatusId = 3 // Accept
+		case 6:
+			entity.ServiceRequestStatusId = 6 // Reject
+		default:
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid ServiceRequestStatusId provided",
+				Err:        errors.New("invalid ServiceRequestStatusId"),
+			}
+		}
+
+		// Save the updated entity
+		err = tx.Save(&entity).Error
+		if err != nil {
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to save the service request",
+				Err:        err,
+			}
+		}
+
+		return entity, nil
 	}
 
-	return true, nil
+	return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Message:    "Service request status is not in a valid state for saving data",
+		Err:        errors.New("service request status is not valid for saving data"),
+	}
+
 }

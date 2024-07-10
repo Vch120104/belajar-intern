@@ -78,11 +78,10 @@ func (r *ServiceReceiptControllerImp) GetAll(writer http.ResponseWriter, request
 	}
 
 	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+		payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
-
 }
 
 // GetById gets service receipt by id
@@ -122,11 +121,11 @@ func (r *ServiceReceiptControllerImp) GetById(writer http.ResponseWriter, reques
 // @Tags Transaction : Workshop Service Receipts
 // @Accept json
 // @Produce json
-// @Param id path string true "Service receipt ID"
-// @Param request body transactionworkshoppayloads.ServiceReceiptSaveRequest true "Service receipt request"
+// @Param service_request_system_number path int true "Service Request ID"
+// @Param request body transactionworkshoppayloads.ServiceReceiptSaveDataRequest true "Service receipt request"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-receipt/{service_request_system_number} [post]
+// @Router /v1/service-receipt/{service_request_system_number} [put]
 func (r *ServiceReceiptControllerImp) Save(writer http.ResponseWriter, request *http.Request) {
 	ServiceRequestStrId := chi.URLParam(request, "service_request_system_number")
 	ServiceRequestId, err := strconv.Atoi(ServiceRequestStrId)
@@ -135,18 +134,14 @@ func (r *ServiceReceiptControllerImp) Save(writer http.ResponseWriter, request *
 		return
 	}
 
-	var serviceReceiptSaveRequest transactionworkshoppayloads.ServiceReceiptSaveRequest
+	var serviceReceiptSaveRequest transactionworkshoppayloads.ServiceReceiptSaveDataRequest
 	helper.ReadFromRequestBody(request, &serviceReceiptSaveRequest)
 
-	isSaved, baseErr := r.ServiceReceiptService.Save(ServiceRequestId, serviceReceiptSaveRequest)
+	savedData, baseErr := r.ServiceReceiptService.Save(ServiceRequestId, serviceReceiptSaveRequest)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	if isSaved {
-		payloads.NewHandleSuccess(writer, nil, "Data saved successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Failed to save data", http.StatusInternalServerError)
-	}
+	payloads.NewHandleSuccess(writer, savedData, "Data saved successfully", http.StatusOK)
 }

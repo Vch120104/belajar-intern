@@ -1,6 +1,7 @@
 package transactionworkshopserviceimpl
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -129,7 +130,7 @@ func (s *ServiceRequestServiceImpl) GetById(id int) (transactionworkshoppayloads
 	return result, nil
 }
 
-func (s *ServiceRequestServiceImpl) New(request transactionworkshoppayloads.ServiceRequestSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) New(request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 
 	ctx := context.Background()
 	tx := s.DB.Begin()
@@ -137,7 +138,7 @@ func (s *ServiceRequestServiceImpl) New(request transactionworkshoppayloads.Serv
 
 	save, err := s.ServiceRequestRepository.New(tx, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.ServiceRequest{}, err
 	}
 
 	utils.RefreshCaches(ctx, "service_request")
@@ -145,7 +146,7 @@ func (s *ServiceRequestServiceImpl) New(request transactionworkshoppayloads.Serv
 	return save, nil
 }
 
-func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayloads.ServiceRequestSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 
 	tx := s.DB.Begin()
@@ -153,7 +154,7 @@ func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayl
 
 	save, err := s.ServiceRequestRepository.Save(tx, id, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.ServiceRequest{}, err
 	}
 
 	utils.RefreshCaches(ctx, "service_request")
@@ -164,10 +165,12 @@ func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayl
 func (s *ServiceRequestServiceImpl) Submit(id int) (bool, string, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
+
 	submit, newDocumentNumber, err := s.ServiceRequestRepository.Submit(tx, id)
 	if err != nil {
 		return false, "", err
 	}
+
 	return submit, newDocumentNumber, nil
 }
 
@@ -254,26 +257,26 @@ func (s *ServiceRequestServiceImpl) GetServiceDetailById(idsys int) (transaction
 
 }
 
-func (s *ServiceRequestServiceImpl) AddServiceDetail(idsys int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) AddServiceDetail(idsys int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	success, err := s.ServiceRequestRepository.AddServiceDetail(tx, idsys, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.ServiceRequestDetail{}, err
 	}
 
 	return success, nil
 }
 
-func (s *ServiceRequestServiceImpl) UpdateServiceDetail(idsys int, idservice int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) UpdateServiceDetail(idsys int, idservice int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	save, err := s.ServiceRequestRepository.UpdateServiceDetail(tx, idsys, idservice, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.ServiceRequestDetail{}, err
 	}
 
 	return save, nil

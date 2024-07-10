@@ -1,6 +1,7 @@
 package transactionworkshopserviceimpl
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -37,7 +38,6 @@ func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterConditi
 
 	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
 	if err == nil {
-		fmt.Println("Cache hit, returning cached data...")
 		var mapResponses []map[string]interface{}
 		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -55,7 +55,6 @@ func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterConditi
 		}
 	}
 
-	fmt.Println("Cache miss, querying database...")
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
@@ -74,7 +73,6 @@ func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterConditi
 	}
 
 	return results, totalPages, totalRows, nil
-
 }
 
 func (s *ServiceReceiptServiceImpl) GetById(id int) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse) {
@@ -117,7 +115,7 @@ func (s *ServiceReceiptServiceImpl) GetById(id int) (transactionworkshoppayloads
 	return result, nil
 }
 
-func (s *ServiceReceiptServiceImpl) Save(id int, request transactionworkshoppayloads.ServiceReceiptSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceReceiptServiceImpl) Save(id int, request transactionworkshoppayloads.ServiceReceiptSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 
 	tx := s.DB.Begin()
@@ -125,7 +123,7 @@ func (s *ServiceReceiptServiceImpl) Save(id int, request transactionworkshoppayl
 
 	save, err := s.ServiceReceiptRepository.Save(tx, id, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.ServiceRequest{}, err
 	}
 
 	utils.RefreshCaches(ctx, "service_receipt")

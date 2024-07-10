@@ -325,7 +325,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 	return payload, nil
 }
 
-func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.ServiceRequestSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	defaultServiceRequestDocumentNumber := ""
 	defaultWorkOrderStatusId := 1 // 1:Draft, 2:Ready, 3:Accept, 4:Work Order, 5:Booking, 6:Reject, 7:Cancel, 8:Closed
 	currentDate := time.Now()
@@ -336,7 +336,7 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 
 	// Check if ServiceDate is less than currentDate
 	if request.ServiceDate.Before(currentDate) {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Service date cannot be before the current date",
 			Err:        errors.New("service date cannot be before the current date"),
@@ -353,7 +353,7 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 		refType = "SO" // Use "SO" for Sales Order reference type
 		ReferenceTypeId = 3
 	} else {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Invalid reference document type",
 			Err:        errors.New("invalid reference document type"),
@@ -391,7 +391,7 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 	case "WO":
 		jobType := getJobType(request.ProfitCenterId, request.ServiceProfitCenterId)
 		if jobType == "" {
-			return false, &exceptions.BaseErrorResponse{
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Invalid profit center combination",
 				Err:        errors.New("invalid profit center combination"),
@@ -441,7 +441,7 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 		}
 
 	default:
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Invalid reference document type",
 			Err:        errors.New("invalid reference document type"),
@@ -450,13 +450,13 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 
 	err := tx.Create(&entities).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 func getJobType(profitCenterId, serviceProfitCenterId int) string {
@@ -474,7 +474,7 @@ func getJobType(profitCenterId, serviceProfitCenterId int) string {
 	}
 }
 
-func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transactionworkshoppayloads.ServiceRequestSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ServiceRequest
 	currentDate := time.Now()
 
@@ -482,19 +482,19 @@ func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).Where("service_request_system_number = ?", Id).First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
 		}
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
 	}
 
 	// Check current service request status
 	if entity.ServiceRequestStatusId != 1 {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Service request status is not in draft"}
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Service request status is not in draft"}
 	}
 
 	// Check if ServiceDate is less than currentDate
 	if request.ServiceDate.Before(currentDate) {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Service date cannot be before the current date",
 			Err:        errors.New("service date cannot be before the current date"),
@@ -518,13 +518,13 @@ func (s *ServiceRequestRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to save the service request",
 			Err:        err}
 	}
 
-	return true, nil
+	return entity, nil
 }
 
 func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse) {
@@ -538,11 +538,6 @@ func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string
 		return false, "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve service request from the database: %v", err)}
 	}
 
-	// Check if the status is not draft
-	if entity.ServiceRequestStatusId != 1 {
-		return false, "", &exceptions.BaseErrorResponse{Message: "Service Request cannot be submitted."}
-	}
-
 	if entity.BrandId == 0 {
 		return false, "", &exceptions.BaseErrorResponse{Message: "Brand must be filled"}
 	}
@@ -550,16 +545,24 @@ func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string
 		return false, "", &exceptions.BaseErrorResponse{Message: "Model must be filled"}
 	}
 
-	// Check if the document number is not generated and the status is draft
-	if entity.ServiceRequestDocumentNumber == "" && entity.ServiceRequestStatusId == 1 {
+	// Check if there are service request details with non-zero FrtQuantity
+	var detailCount int64
+	tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
+		Where("service_request_system_number = ? AND frt_quantity > 0", Id).
+		Count(&detailCount)
 
+	if detailCount == 0 {
+		return false, "", &exceptions.BaseErrorResponse{Message: "Cannot submit service request ftr / qty must be > 0"}
+	}
+
+	if entity.ServiceRequestDocumentNumber == "" && entity.ServiceRequestStatusId == 1 {
 		newDocumentNumber, genErr := s.GenerateDocumentNumberServiceRequest(tx, entity.ServiceRequestSystemNumber)
 		if genErr != nil {
 			return false, "", genErr
 		}
 
 		entity.ServiceRequestDocumentNumber = newDocumentNumber
-		entity.ServiceRequestStatusId = 2 // 1:Draft, 2:Ready, 3:Accept, 4:Work Order, 5:Booking, 6:Reject, 7:Cancel, 8:Closed
+		entity.ServiceRequestStatusId = 2 // Ready
 
 		err = tx.Save(&entity).Error
 		if err != nil {
@@ -567,9 +570,10 @@ func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string
 		}
 
 		return true, newDocumentNumber, nil
-	}
+	} else {
 
-	return false, "", &exceptions.BaseErrorResponse{Message: "Service request has been submitted or the document number is already generated"}
+		return false, entity.ServiceRequestDocumentNumber, &exceptions.BaseErrorResponse{Message: "Service request has been submitted or the document number is already generated"}
+	}
 }
 
 func (s *ServiceRequestRepositoryImpl) Void(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
@@ -853,7 +857,7 @@ func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int)
 	return payload, nil
 }
 
-func (s *ServiceRequestRepositoryImpl) AddServiceDetail(tx *gorm.DB, id int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestRepositoryImpl) AddServiceDetail(tx *gorm.DB, id int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {
 
 	entity := transactionworkshopentities.ServiceRequestDetail{
 		ServiceRequestId:           request.ServiceRequestId,
@@ -867,37 +871,37 @@ func (s *ServiceRequestRepositoryImpl) AddServiceDetail(tx *gorm.DB, id int, req
 
 	err := tx.Create(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return entity, nil
 }
 
-func (s *ServiceRequestRepositoryImpl) UpdateServiceDetail(tx *gorm.DB, Id int, DetailId int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestRepositoryImpl) UpdateServiceDetail(tx *gorm.DB, Id int, DetailId int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {
 
 	var serviceRequest transactionworkshopentities.ServiceRequest
 	err := tx.Where("service_request_system_number = ?", Id).First(&serviceRequest).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+			return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
 		}
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
 	}
 
 	if serviceRequest.ServiceRequestStatusId != 1 {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Service request status is not in draft"}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Service request status is not in draft"}
 	}
 
 	var entity transactionworkshopentities.ServiceRequestDetail
 	err = tx.Where("service_request_detail_id = ?", DetailId).First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+			return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
 		}
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
 	}
 
 	// Validate the service request detail
@@ -906,25 +910,25 @@ func (s *ServiceRequestRepositoryImpl) UpdateServiceDetail(tx *gorm.DB, Id int, 
 		Where("service_request_system_number = ? AND service_request_detail_id = ?", Id, DetailId).
 		Count(&count).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Message: fmt.Sprintf("Failed to validate service request detail: %v", err)}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Message: fmt.Sprintf("Failed to validate service request detail: %v", err)}
 	}
 	if count == 0 {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Service request detail not found for the given service request"}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Service request detail not found for the given service request"}
 	}
 
 	// Validate the FRT / Qty value
 	if request.FrtQuantity <= 0 {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "FRT / Qty must be bigger than 0"}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "FRT / Qty must be bigger than 0"}
 	}
 
 	entity.FrtQuantity = request.FrtQuantity
 
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshopentities.ServiceRequestDetail{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
 	}
 
-	return true, nil
+	return entity, nil
 }
 
 func (s *ServiceRequestRepositoryImpl) DeleteServiceDetail(tx *gorm.DB, Id int, DetailId int) (bool, *exceptions.BaseErrorResponse) {

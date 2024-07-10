@@ -1,6 +1,7 @@
 package transactionworkshoprepository
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 
@@ -13,5 +14,5 @@ import (
 type ServiceReceiptRepository interface {
 	GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(tx *gorm.DB, id int) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse)
-	Save(tx *gorm.DB, id int, request transactionworkshoppayloads.ServiceReceiptSaveRequest) (bool, *exceptions.BaseErrorResponse)
+	Save(tx *gorm.DB, id int, request transactionworkshoppayloads.ServiceReceiptSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
 }

@@ -54,6 +54,12 @@ type ServiceReceiptSaveRequest struct {
 	ReferenceJobType             string    `json:"reference_job_type"`
 }
 
+type ServiceReceiptSaveDataRequest struct {
+	ServiceRequestSystemNumber int    `json:"service_request_system_number"`
+	ReplyRemark                string `json:"reply_remark"`
+	ServiceRequestStatusId     int    `json:"service_request_status_id"`
+}
+
 type ServiceReceiptResponse struct {
 	ServiceRequestSystemNumber   int    `json:"service_request_system_number"`
 	ServiceRequestDocumentNumber string `json:"service_request_document_number"`

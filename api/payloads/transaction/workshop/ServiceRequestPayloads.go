@@ -89,7 +89,7 @@ type ServiceRequestResponse struct {
 }
 
 type SubmitServiceRequestResponse struct {
-	DocumentNumber             string `json:"document_number"`
+	DocumentNumber             string `json:"service_request_document_number"`
 	ServiceRequestSystemNumber int    `json:"service_request_system_number"`
 }
 
