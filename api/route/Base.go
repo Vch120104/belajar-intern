@@ -159,6 +159,7 @@ func ItemRouter(
 	router.Get("/{item_id}/detail/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Post("/{item_id}/{brand_id}",itemController.AddItemDetailByBrand)
 
 	return router
 }

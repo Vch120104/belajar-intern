@@ -27,4 +27,5 @@ type ItemRepository interface {
 	UpdateItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse)
+	AddItemDetailByBrand(tx *gorm.DB,id int,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse)
 }

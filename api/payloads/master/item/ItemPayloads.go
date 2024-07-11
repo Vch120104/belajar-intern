@@ -265,3 +265,15 @@ type PrincipleBrandDropdownDescription struct {
 	PrincipleBrandId          int    `json:"principle_brand_id"`
 	PrincipleBrandDescription string `json:"principle_brand_description"`
 }
+
+type BrandModelVariantResponse struct{
+	VariantId int `json:"variant_id"`
+	VariantCode string `json:"variant_code"`
+	VariantDescription string `json:"variant_description"`
+	ModelId int `json:"model_id"`
+	ModelCode string `json:"model_code"`
+	ModelDescription string `json:"model_description"`
+	BrandId int `json:"brand_id"`
+	BrandCode string `json:"brand_code"`
+	BrandName string `json:"brand_name"`
+}

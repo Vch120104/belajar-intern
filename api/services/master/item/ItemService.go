@@ -25,4 +25,5 @@ type ItemService interface {
 	UpdateItemDetail(int, masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandDropdown() ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse)
+	AddItemDetailByBrand(id int,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse)
 }
