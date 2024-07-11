@@ -58,6 +58,12 @@ func GenerateCacheKeys(prefix string, filterCondition []FilterCondition, paginat
 
 // Function to refresh cache
 func RefreshCaches(ctx context.Context, prefix interface{}) {
+	// Ensure RedisClient is initialized
+	if RedisClient == nil {
+		fmt.Println("RedisClient is not initialized")
+		return
+	}
+
 	var prefixStr string
 	switch v := prefix.(type) {
 	case string:
@@ -75,5 +81,7 @@ func RefreshCaches(ctx context.Context, prefix interface{}) {
 	}
 	if err := iter.Err(); err != nil {
 		fmt.Println("Error while scanning Redis keys:", err)
+	} else {
+		fmt.Println("Cache refresh completed successfully for prefix:", prefixStr)
 	}
 }
