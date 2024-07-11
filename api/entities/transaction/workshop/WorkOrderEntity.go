@@ -45,7 +45,7 @@ type WorkOrder struct {
 	AgreementBodyRepairId              int               `gorm:"column:agreement_body_repair_id;size:30;" json:"agreement_body_repair_id"`
 	BookingSystemNumber                int               `gorm:"column:booking_system_number;size:30;" json:"booking_system_number"`
 	EstimationSystemNumber             int               `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`
-	PDISystemNumber                    *float32          `gorm:"column:pdi_system_number;default:null" json:"pdi_system_number"`
+	PDISystemNumber                    *float64          `gorm:"column:pdi_system_number;default:null" json:"pdi_system_number"`
 	PDIDocumentNumber                  string            `gorm:"column:pdi_document_number;size:50;" json:"pdi_document_number"`
 	PDILineNumber                      int               `gorm:"column:pdi_line_number;size:30;" json:"pdi_line_number"`
 	ServiceRequestSystemNumber         int               `gorm:"column:service_request_system_number;size:30;" json:"service_request_system_number"`
@@ -56,32 +56,32 @@ type WorkOrder struct {
 	InsuranceExpiredDate               *time.Time        `gorm:"column:insurance_expired_date;default:null" json:"insurance_expired_date"`
 	InsuranceClaimNumber               string            `gorm:"column:insurance_claim_number;size:50;" json:"insurance_claim_number"`
 	InsurancePersonInCharge            string            `gorm:"column:insurance_person_in_charge;size:50;" json:"insurance_person_in_charge"`
-	InsuranceOwnRisk                   *float32          `gorm:"column:insurance_own_risk;default:null" json:"insurance_own_risk"`
+	InsuranceOwnRisk                   *float64          `gorm:"column:insurance_own_risk;default:null" json:"insurance_own_risk"`
 	InsuranceWorkOrderNumber           string            `gorm:"column:insurance_work_order_number;size:50;" json:"insurance_work_order_number"`
-	TotalPackage                       *float32          `gorm:"column:total_package;default:null" json:"total_package"`
-	TotalOperation                     *float32          `gorm:"column:total_operation;default:null" json:"total_operation"`
-	TotalPart                          *float32          `gorm:"column:total_part;default:null" json:"total_part"`
-	TotalOil                           *float32          `gorm:"column:total_oil;default:null" json:"total_oil"`
-	TotalMaterial                      *float32          `gorm:"column:total_material;default:null" json:"total_material"`
-	TotalConsumableMaterial            *float32          `gorm:"column:total_consumable_material;default:null" json:"total_consumable_material"`
-	TotalSublet                        *float32          `gorm:"column:total_sublet;default:null" json:"total_sublet"`
-	TotalPriceAccessories              *float32          `gorm:"column:total_price_accessories;default:null" json:"total_price_accessories"`
-	TotalDiscount                      *float32          `gorm:"column:total_discount;default:null" json:"total_discount"`
-	Total                              *float32          `gorm:"column:total;default:null" json:"total"`
-	TotalVAT                           *float32          `gorm:"column:total_vat;default:null" json:"total_vat"`
-	TotalAfterVAT                      *float32          `gorm:"column:total_after_vat;default:null" json:"total_after_vat"`
-	TotalPPH                           *float32          `gorm:"column:total_pph;default:null" json:"total_pph"`
-	DiscountRequestPercent             *float32          `gorm:"column:discount_request_percent;default:null" json:"discount_request_percent"`
-	DiscountRequestAmount              *float32          `gorm:"column:discount_request_amount;default:null" json:"discount_request_amount"`
+	TotalPackage                       *float64          `gorm:"column:total_package;default:null" json:"total_package"`
+	TotalOperation                     *float64          `gorm:"column:total_operation;default:null" json:"total_operation"`
+	TotalPart                          *float64          `gorm:"column:total_part;default:null" json:"total_part"`
+	TotalOil                           *float64          `gorm:"column:total_oil;default:null" json:"total_oil"`
+	TotalMaterial                      *float64          `gorm:"column:total_material;default:null" json:"total_material"`
+	TotalConsumableMaterial            *float64          `gorm:"column:total_consumable_material;default:null" json:"total_consumable_material"`
+	TotalSublet                        *float64          `gorm:"column:total_sublet;default:null" json:"total_sublet"`
+	TotalPriceAccessories              *float64          `gorm:"column:total_price_accessories;default:null" json:"total_price_accessories"`
+	TotalDiscount                      *float64          `gorm:"column:total_discount;default:null" json:"total_discount"`
+	Total                              *float64          `gorm:"column:total;default:null" json:"total"`
+	TotalVAT                           *float64          `gorm:"column:total_vat;default:null" json:"total_vat"`
+	TotalAfterVAT                      *float64          `gorm:"column:total_after_vat;default:null" json:"total_after_vat"`
+	TotalPPH                           *float64          `gorm:"column:total_pph;default:null" json:"total_pph"`
+	DiscountRequestPercent             *float64          `gorm:"column:discount_request_percent;default:null" json:"discount_request_percent"`
+	DiscountRequestAmount              *float64          `gorm:"column:discount_request_amount;default:null" json:"discount_request_amount"`
 	TaxId                              int               `gorm:"column:tax_id;size:30;" json:"tax_id"`
-	VATTaxRate                         *float32          `gorm:"column:vat_tax_rate;default:null" json:"vat_tax_rate"`
+	VATTaxRate                         *float64          `gorm:"column:vat_tax_rate;default:null" json:"vat_tax_rate"`
 	AdditionalDiscountStatusApprovalId int               `gorm:"column:additional_discount_status_approval;size:30;" json:"additional_discount_status_approval"`
 	LastApprovalBy                     int               `gorm:"column:last_approval_by_id;size:30;" json:"last_approval_by_id"`
 	LastApprovalDate                   *time.Time        `gorm:"column:last_approval_date;default:null" json:"last_approval_date"`
 	Remark                             string            `gorm:"column:remark;size:50;" json:"remark"`
 	Foreman                            int               `gorm:"column:foreman_id;size:30;" json:"foreman_id"`
 	ProductionHead                     int               `gorm:"column:production_head_id;size:30;" json:"production_head_id"`
-	EstTime                            *float32          `gorm:"column:estimate_time;default:null" json:"estimate_time"`
+	EstTime                            *float64          `gorm:"column:estimate_time;default:null" json:"estimate_time"`
 	Notes                              string            `gorm:"column:notes;size:50;" json:"notes"`
 	Suggestion                         string            `gorm:"column:suggestion;size:50;" json:"suggestion"`
 	FSCouponNo                         string            `gorm:"column:fs_coupon_number;size:50;" json:"fs_coupon_number"`
@@ -94,18 +94,18 @@ type WorkOrder struct {
 	ATPMWCFDate                        *time.Time        `gorm:"column:atpm_warranty_claim_form_date;default:null" json:"atpm_warranty_claim_form_date"`
 	ATPMFSDocNo                        string            `gorm:"column:atpm_free_service_document_number;size:50;" json:"atpm_free_service_document_number"`
 	ATPMFSDate                         *time.Time        `gorm:"column:atpm_free_service_date;default:null" json:"atpm_free_service_date"`
-	TotalAfterDisc                     *float32          `gorm:"column:total_after_discount;default:null" json:"total_after_discount"`
+	TotalAfterDisc                     *float64          `gorm:"column:total_after_discount;default:null" json:"total_after_discount"`
 	ApprovalReqNo                      int               `gorm:"column:approval_request_number;size:30;" json:"approval_request_number"`
 	JournalSysNo                       int               `gorm:"column:journal_system_number;size:30;" json:"journal_system_number"`
 	ApprovalGatepassReqNo              int               `gorm:"column:approval_gatepass_request_number;size:30;" json:"approval_gatepass_request_number"`
-	DPAmount                           *float32          `gorm:"column:downpayment_amount;default:null" json:"downpayment_amount"`
-	DPPayment                          *float32          `gorm:"column:downpayment_payment;default:null" json:"downpayment_payment"`
-	DPPaymentAllocated                 *float32          `gorm:"column:downpayment_payment_allocated;default:null" json:"downpayment_payment_allocated"`
-	DPPaymentVAT                       *float32          `gorm:"column:downpayment_payment_vat;default:null" json:"downpayment_payment_vat"`
-	DPAllocToInv                       *float32          `gorm:"column:downpayment_payment_to_invoice;default:null" json:"downpayment_payment_to_invoice"`
-	DPVATAllocToInv                    *float32          `gorm:"column:downpayment_payment_vat_to_invoice;default:null" json:"downpayment_payment_vat_to_invoice"`
+	DPAmount                           *float64          `gorm:"column:downpayment_amount;default:null" json:"downpayment_amount"`
+	DPPayment                          *float64          `gorm:"column:downpayment_payment;default:null" json:"downpayment_payment"`
+	DPPaymentAllocated                 *float64          `gorm:"column:downpayment_payment_allocated;default:null" json:"downpayment_payment_allocated"`
+	DPPaymentVAT                       *float64          `gorm:"column:downpayment_payment_vat;default:null" json:"downpayment_payment_vat"`
+	DPAllocToInv                       *float64          `gorm:"column:downpayment_payment_to_invoice;default:null" json:"downpayment_payment_to_invoice"`
+	DPVATAllocToInv                    *float64          `gorm:"column:downpayment_payment_vat_to_invoice;default:null" json:"downpayment_payment_vat_to_invoice"`
 	JournalOverpaySysNo                int               `gorm:"column:journal_overpay_system_number;size:30;" json:"journal_overpay_system_number"`
-	DPOverpay                          *float32          `gorm:"column:downpayment_overpay;default:null" json:"downpayment_overpay"`
+	DPOverpay                          *float64          `gorm:"column:downpayment_overpay;default:null" json:"downpayment_overpay"`
 	SiteTypeId                         int               `gorm:"column:work_order_site_type_id;size:30;" json:"work_order_site_type_id"`
 	CostCenterId                       int               `gorm:"column:cost_center_id;size:30;" json:"cost_center_id"`
 	PromiseDate                        *time.Time        `gorm:"column:promise_date;default:null" json:"promise_date"`
