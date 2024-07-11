@@ -2,8 +2,7 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
-	helper_test "after-sales/api/helper"
+	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -218,7 +217,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 	}
 	result, err := r.CampaignMasterService.GetAllCampaignMasterCodeAndName(pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -234,7 +233,7 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 	var message = ""
 	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	message = "Update Data Successfully!"
@@ -252,7 +251,7 @@ func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.Res
 	}
 	result, err := r.CampaignMasterService.GetAllPackageMasterToCopy(pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -265,7 +264,7 @@ func (r *CampaignMasterControllerImpl) SelectFromPackageMaster(writer http.Respo
 
 	result, err := r.CampaignMasterService.SelectFromPackageMaster(PackageMaster, CampaignMasterId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)

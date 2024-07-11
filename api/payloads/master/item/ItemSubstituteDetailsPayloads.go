@@ -8,7 +8,6 @@ type ItemSubstituteDetailPayloads struct {
 	ItemName               string  `json:"item_name" parent_entity:"mtr_item"`
 	Quantity               float64 `json:"quantity" parent_entity:"mtr_item_substitute_detail"`
 	Sequence               int     `json:"sequence" parent_entity:"mtr_item_substitute_detail"`
-	IsActive               bool    `json:"is_active"`
 }
 
 type ItemSubstituteDetailPostPayloads struct {

@@ -29,8 +29,8 @@ func StartMarkupRateService(markupRepo masteritemrepository.MarkupRateRepository
 
 func (s *MarkupRateServiceImpl) GetAllMarkupRate(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.markupRepo.GetAllMarkupRate(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -39,8 +39,8 @@ func (s *MarkupRateServiceImpl) GetAllMarkupRate(filterCondition []utils.FilterC
 
 func (s *MarkupRateServiceImpl) GetMarkupRateById(id int) (masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupRateById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,7 +49,6 @@ func (s *MarkupRateServiceImpl) GetMarkupRateById(id int) (masteritempayloads.Ma
 
 func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRateRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.MarkupRateId != 0 {
 		_, err := s.markupRepo.GetMarkupRateById(tx, req.MarkupRateId)
@@ -60,6 +59,7 @@ func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRate
 	}
 
 	results, err := s.markupRepo.SaveMarkupRate(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -68,7 +68,6 @@ func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRate
 
 func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.markupRepo.GetMarkupRateById(tx, Id)
 
@@ -77,6 +76,7 @@ func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exception
 	}
 
 	results, err := s.markupRepo.ChangeStatusMarkupRate(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -85,8 +85,8 @@ func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exception
 
 func (s *MarkupRateServiceImpl) GetMarkupRateByMarkupMasterAndOrderType(MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.markupRepo.GetMarkupRateByMarkupMasterAndOrderType(tx, MarkupMasterId, OrderTypeId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

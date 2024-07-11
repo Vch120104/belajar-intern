@@ -11,11 +11,73 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
 
 type MovingCodeRepositoryImpl struct {
+}
+
+// ActivateMovingCode implements masterrepository.MovingCodeRepository.
+func (r *MovingCodeRepositoryImpl) ActivateMovingCode(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+	multiId := strings.Split(id, ",")
+	entities := masterentities.MovingCode{}
+
+	for _, value := range multiId {
+		id, _ := strconv.Atoi(value)
+		if err := tx.Model(entities).Where(masterentities.MovingCode{MovingCodeId: id}).Update("is_active", true).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+
+}
+
+// DeactiveMovingCode implements masterrepository.MovingCodeRepository.
+func (r *MovingCodeRepositoryImpl) DeactiveMovingCode(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+	multiId := strings.Split(id, ",")
+	entities := masterentities.MovingCode{}
+
+	for _, value := range multiId {
+		id, _ := strconv.Atoi(value)
+		if err := tx.Model(entities).Where(masterentities.MovingCode{MovingCodeId: id}).Update("is_active", false).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+// GetDropdownMovingCode implements masterrepository.MovingCodeRepository.
+func (r *MovingCodeRepositoryImpl) GetDropdownMovingCode(tx *gorm.DB) ([]masterpayloads.MovingCodeDropDown, *exceptions.BaseErrorResponse) {
+
+	entities := masterentities.MovingCode{}
+
+	responses := []masterpayloads.MovingCodeDropDown{}
+
+	if err := tx.Model(entities).Scan(&responses).Error; err != nil {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
+	return responses, nil
 }
 
 // ChangeStatusMovingCode implements masterrepository.MovingCodeRepository.
@@ -52,53 +114,39 @@ func (r *MovingCodeRepositoryImpl) ChangeStatusMovingCode(tx *gorm.DB, Id int) (
 }
 
 // GetMovingCodebyId implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (any, *exceptions.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) GetMovingCodebyId(tx *gorm.DB, Id int) (masterpayloads.MovingCodeResponse, *exceptions.BaseErrorResponse) {
 	model := masterentities.MovingCode{}
-	responses := masterentities.MovingCode{}
+	responses := masterpayloads.MovingCodeResponse{}
 	companyResponses := masterpayloads.CompanyResponse{}
 
-	err := tx.Model(&model).First(&responses).Where(masterentities.MovingCode{MovingCodeId: Id}).Error
+	err := tx.Model(&model).Where(masterentities.MovingCode{MovingCodeId: Id}).Select("mtr_moving_code.*").First(&responses).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-		}
-	}
-
-	if responses == (masterentities.MovingCode{}) {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
 		}
 	}
 
 	companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "/company-list/" + strconv.Itoa(responses.CompanyId)
 
 	if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
 	if companyResponses == (masterpayloads.CompanyResponse{}) {
-		return nil, &exceptions.BaseErrorResponse{
+		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin([]masterentities.MovingCode{responses}, []masterpayloads.CompanyResponse{companyResponses}, "CompanyId")
+	responses.CompanyName = &companyResponses.CompanyName
 
-	if len(joinedData) == 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
-	}
-
-	return joinedData[0], nil
+	return responses, nil
 
 }
 
@@ -140,6 +188,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 	//SAVE
 	entities := masterentities.MovingCode{
 		CompanyId:             req.CompanyId,
+		MovingCode:            req.MovingCode,
 		MovingCodeDescription: req.MovingCodeDescription,
 		MinimumQuantityDemand: req.MinimumQuantityDemand,
 		AgingMonthFrom:        req.AgingMonthFrom,
@@ -275,7 +324,7 @@ func (r *MovingCodeRepositoryImpl) PushMovingCodePriority(tx *gorm.DB, Id int) (
 }
 
 // UpdateMovingCode implements masterrepository.MovingCodeRepository.
-func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *MovingCodeRepositoryImpl) UpdateMovingCode(tx *gorm.DB, req masterpayloads.MovingCodeListUpdate) (bool, *exceptions.BaseErrorResponse) {
 
 	model := masterentities.MovingCode{}
 	if err := tx.Model(&model).Where(masterentities.MovingCode{MovingCodeId: req.MovingCodeId}).First(&model).Error; err != nil {

@@ -8,12 +8,53 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
 )
 
 type ItemPackageDetailRepositoryImpl struct {
+}
+
+func StartItemPackageDetailRepositoryImpl() masteritemrepository.ItemPackageDetailRepository {
+	return &ItemPackageDetailRepositoryImpl{}
+}
+
+// ActivateItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
+func (r *ItemPackageDetailRepositoryImpl) ActivateItemPackageDetail(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+	multiId := strings.Split(id, ",")
+	entities := masteritementities.ItemPackageDetail{}
+
+	for _, value := range multiId {
+		id, _ := strconv.Atoi(value)
+		if err := tx.Model(entities).Where(masteritementities.ItemPackageDetail{ItemPackageDetailId: id}).Update("is_active", true).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+// DeactiveItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
+func (r *ItemPackageDetailRepositoryImpl) DeactiveItemPackageDetail(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+	multiId := strings.Split(id, ",")
+	entities := masteritementities.ItemPackageDetail{}
+
+	for _, value := range multiId {
+		id, _ := strconv.Atoi(value)
+		if err := tx.Model(entities).Where(masteritementities.ItemPackageDetail{ItemPackageDetailId: id}).Update("is_active", false).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
 }
 
 // ChangeStatusItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
@@ -47,10 +88,6 @@ func (r *ItemPackageDetailRepositoryImpl) ChangeStatusItemPackageDetail(tx *gorm
 	}
 
 	return true, nil
-}
-
-func StartItemPackageDetailRepositoryImpl() masteritemrepository.ItemPackageDetailRepository {
-	return &ItemPackageDetailRepositoryImpl{}
 }
 
 func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx *gorm.DB, itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {

@@ -12,4 +12,6 @@ type ItemPackageDetailService interface {
 	UpdateItemPackageDetail(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse)
 	GetItemPackageDetailById(itemPackageDetailId int) (masteritempayloads.ItemPackageDetailResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackageDetail(id int) (bool, *exceptions.BaseErrorResponse)
+	DeactiveItemPackageDetail(id string) (bool, *exceptions.BaseErrorResponse)
+	ActivateItemPackageDetail(id string) (bool, *exceptions.BaseErrorResponse)
 }

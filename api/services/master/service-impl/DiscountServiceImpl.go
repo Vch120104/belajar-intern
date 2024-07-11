@@ -30,8 +30,8 @@ func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *
 
 func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetAllDiscountIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -40,8 +40,8 @@ func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.Discoun
 
 func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetDiscountById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -51,8 +51,8 @@ func (s *DiscountServiceImpl) GetDiscountById(id int) (masterpayloads.DiscountRe
 
 func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetDiscountByCode(tx, Code)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -61,8 +61,8 @@ func (s *DiscountServiceImpl) GetDiscountByCode(Code string) (masterpayloads.Dis
 
 func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountRepo.GetAllDiscount(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -71,7 +71,6 @@ func (s *DiscountServiceImpl) GetAllDiscount(filterCondition []utils.FilterCondi
 
 func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.discountRepo.GetDiscountById(tx, Id)
 
@@ -80,6 +79,7 @@ func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptions.Ba
 	}
 
 	results, err := s.discountRepo.ChangeStatusDiscount(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -88,7 +88,6 @@ func (s *DiscountServiceImpl) ChangeStatusDiscount(Id int) (bool, *exceptions.Ba
 
 func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.DiscountCodeId != 0 {
 		_, err := s.discountRepo.GetDiscountById(tx, req.DiscountCodeId)
@@ -99,6 +98,7 @@ func (s *DiscountServiceImpl) SaveDiscount(req masterpayloads.DiscountResponse) 
 	}
 
 	results, err := s.discountRepo.SaveDiscount(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

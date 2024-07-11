@@ -29,8 +29,8 @@ func StartDiscountPercentService(discountPercentRepo masteritemrepository.Discou
 
 func (s *DiscountPercentServiceImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.discountPercentRepo.GetAllDiscountPercent(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -39,8 +39,8 @@ func (s *DiscountPercentServiceImpl) GetAllDiscountPercent(filterCondition []uti
 
 func (s *DiscountPercentServiceImpl) GetDiscountPercentById(Id int) (masteritempayloads.DiscountPercentResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountPercentRepo.GetDiscountPercentById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,7 +49,6 @@ func (s *DiscountPercentServiceImpl) GetDiscountPercentById(Id int) (masteritemp
 
 func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.DiscountPercentResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	if req.DiscountPercentId != 0 {
 		_, err := s.discountPercentRepo.GetDiscountPercentById(tx, req.DiscountPercentId)
 
@@ -59,6 +58,7 @@ func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.
 	}
 
 	results, err := s.discountPercentRepo.SaveDiscountPercent(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -67,7 +67,6 @@ func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.
 
 func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.discountPercentRepo.GetDiscountPercentById(tx, Id)
 
@@ -76,6 +75,7 @@ func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool, 
 	}
 
 	results, err := s.discountPercentRepo.ChangeStatusDiscountPercent(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

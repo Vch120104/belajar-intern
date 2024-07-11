@@ -10,11 +10,11 @@ import (
 )
 
 type ItemRepository interface {
-	GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetAllItemLookup(tx *gorm.DB, filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
 	GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
-	GetItemCode(*gorm.DB, string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetItemCode(*gorm.DB, string) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	SaveItem(*gorm.DB, masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 	GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse)
@@ -28,4 +28,5 @@ type ItemRepository interface {
 	GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse)
 	AddItemDetailByBrand(tx *gorm.DB,id int,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse)
+	GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

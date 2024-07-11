@@ -8,7 +8,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -40,8 +39,6 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
 
-	fmt.Print(payloads[0].IsActive)
-
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -65,9 +62,10 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int
 	entity := masteritementities.ItemSubstitute{}
 	response := masteritempayloads.ItemSubstitutePayloads{}
 
-	err := tx.Model(entity).Select("mtr_item_substitute.*, Item.item_code, Item.item_name").
+	err := tx.Model(entity).Select("mtr_item_substitute.*, Item.item_code, Item.item_name, Item.item_class_id, mi").
 		Where(masteritementities.ItemSubstitute{ItemSubstituteId: id}).
 		Joins("Item", tx.Select("")).
+		Joins("JOIN mtr_item_class ON Item.item_class_id = mtr_item_class.item_class_id", tx.Select("")).
 		First(&response).Error
 
 	if err != nil {
@@ -85,7 +83,7 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 	payloads := []masteritempayloads.ItemSubstituteDetailPayloads{}
 
 	query := tx.Model(entities).Select("mtr_item_substitute_detail.*, Item.item_code, Item.item_name").
-		Joins("Item", tx.Select("")).Joins("Item.ItemSubstitute")
+		Joins("Item", tx.Select("")).Where("mtr_item_substitute_detail.item_substitute_id = ?", id)
 
 	err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&payloads).Error
 
@@ -93,12 +91,6 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-		}
-	}
-	if len(payloads) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
 		}
 	}
 

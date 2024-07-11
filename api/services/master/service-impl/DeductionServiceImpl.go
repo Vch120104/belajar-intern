@@ -57,7 +57,6 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, dbErr := s.deductionrepo.GetAllDeduction(tx, filterCondition, pages)
 	if dbErr != nil {
 		// Handle error from the database operation
@@ -72,6 +71,7 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 		// Atau lakukan penanganan kesalahan yang sesuai
 	}
 
+	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
 
@@ -97,7 +97,6 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, dbErr := s.deductionrepo.GetByIdDeductionDetail(tx, Id)
 	if dbErr != nil {
 		// Handle error
@@ -110,14 +109,14 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 		// Log or handle error
 		log.Println("Error storing data in cache:", err)
 	}
-
+	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
 
 func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.deductionrepo.SaveDeductionList(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -126,8 +125,8 @@ func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionLis
 
 func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.deductionrepo.SaveDeductionDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -156,8 +155,8 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, dbErr := s.deductionrepo.GetDeductionById(tx, Id)
+	defer helper.CommitOrRollback(tx, dbErr)
 	if dbErr != nil {
 		// Handle error
 		return masterpayloads.DeductionListResponse{}, dbErr
@@ -169,25 +168,22 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 		// Log or handle error
 		log.Println("Error storing data in cache:", err)
 	}
-
 	return result, nil
 }
 
 func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	detail_result, detail_err := s.deductionrepo.GetAllDeductionDetail(tx, pages, Id)
+	defer helper.CommitOrRollback(tx, detail_err)
 
 	if detail_err != nil {
 		return detail_result, detail_err
 	}
-
 	return detail_result, nil
 }
 
 func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.deductionrepo.GetDeductionById(tx, Id)
 
@@ -196,6 +192,7 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (bool, *exceptions.
 	}
 
 	results, err := s.deductionrepo.ChangeStatusDeduction(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

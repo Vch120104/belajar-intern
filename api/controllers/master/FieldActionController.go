@@ -240,13 +240,13 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 
 	// filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
+	result,totalpage,totalrows, err := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, totalrows, totalpage, int64(totalrows), totalpage)
 }
 
 // @Summary Get All Field Action Vehicle Item Detail By Id
@@ -264,8 +264,9 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 // @Router /v1/field-action/vehicle-item/by-id/{field_action_eligible_vehicle_item_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	FieldActionVehicleItemDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
+	LineTypeId,_ :=strconv.Atoi(chi.URLParam(request,"line_type_id"))
 
-	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId)
+	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId,LineTypeId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
