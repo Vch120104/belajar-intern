@@ -234,10 +234,10 @@ func (s *ItemServiceImpl) GetPrincipleBrandDropdown() ([]masteritempayloads.Prin
 	return result, nil
 }
 
-func (s *ItemServiceImpl) AddItemDetailByBrand(id int,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse){
+func (s *ItemServiceImpl) AddItemDetailByBrand(id int, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result, err := s.itemRepo.AddItemDetailByBrand(tx,id,itemId)
+	result, err := s.itemRepo.AddItemDetailByBrand(tx, id, itemId)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil {
 		return result, err
 	}
