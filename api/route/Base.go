@@ -915,6 +915,7 @@ func DeductionRouter(
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
+	router.Put("/{id}",DeductionController.UpdateDeductionDetail)
 
 	return router
 }
