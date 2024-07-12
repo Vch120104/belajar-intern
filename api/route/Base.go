@@ -161,7 +161,8 @@ func ItemRouter(
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
-	router.Delete("/detail/{item_id}/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Post("/{item_id}/{brand_id}",itemController.AddItemDetailByBrand)
 
 	return router
 }

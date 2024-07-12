@@ -2,7 +2,8 @@ package migration
 
 import (
 	"after-sales/api/config"
-	masterentities "after-sales/api/entities/master"
+	// masterentities "after-sales/api/entities/master"
+	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	// masteritementities "after-sales/api/entities/master/item"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
@@ -113,8 +114,8 @@ func Migrate() {
 		// &masterentities.IncentiveGroupDetail{},
 		// &masterentities.SkillLevel{},
 		// &masterentities.WarrantyFreeService{},
-		&masterentities.DeductionList{},
-		&masterentities.DeductionDetail{},
+		// &masterentities.DeductionList{},
+		// &masterentities.DeductionDetail{},
 		// &masterentities.FieldActionEligibleVehicleItem{},
 		// &masterentities.FieldActionEligibleVehicleOperation{},
 		// &masterentities.FieldActionEligibleVehicle{},
@@ -132,6 +133,10 @@ func Migrate() {
 		// &masterentities.AgreementDiscount{},
 		// &masterentities.AgreementDiscountGroupDetail{},
 		// &masterentities.AgreementItemDetail{},
+
+		// &mastercampaignmasterentities.CampaignMaster{},
+		// &mastercampaignmasterentities.CampaignMasterDetailItem{},
+		// &mastercampaignmasterentities.CampaignMasterOperationDetail{},
 
 		// &transactionsparepartpentities.SupplySlip{},
 		// &transactionsparepartpentities.SupplySlipDetail{},

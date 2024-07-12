@@ -1,6 +1,9 @@
 package masteritementities
 
-import masterentities "after-sales/api/entities/master"
+import (
+	masterentities "after-sales/api/entities/master"
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+)
 
 var CreateItemTable = "mtr_item"
 
@@ -67,9 +70,10 @@ type Item struct {
 	ItemLocation                 ItemLocation      `gorm:"foreignKey:item_id;references:item_id"`
 	Bom                          Bom               `gorm:"foreignKey:item_id;references:item_id"`
 	ItemClass                    *ItemClass
-	ItemSubstitute               ItemSubstitute                                `gorm:"foreignKey:item_id;references:item_id"`
-	FieldActionItem              masterentities.FieldActionEligibleVehicleItem `gorm:"foreignKey:item_id;references:item_id"`
-	ItemImport                   ItemImport                                    `gorm:"foreignKey:item_id;references:item_id"`
+	ItemSubstitute               ItemSubstitute                                        `gorm:"foreignKey:ItemId;references:ItemId"`
+	FieldActionItem              masterentities.FieldActionEligibleVehicleItem         `gorm:"foreignKey:ItemId;references:ItemId"`
+	ItemImport                   ItemImport                                            `gorm:"foreignKey:ItemId;references:ItemId"`
+	CampaignMasterDetailItem     mastercampaignmasterentities.CampaignMasterDetailItem `gorm:"foreignkey:ItemId;references:ItemId"`
 }
 
 func (*Item) TableName() string {
