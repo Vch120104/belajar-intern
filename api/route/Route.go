@@ -67,11 +67,6 @@ func StartRouting(db *gorm.DB) {
 	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db, rdb)
 	priceListController := masteritemcontroller.NewPriceListController(priceListService)
 
-	// Landed Cost Master
-	LandedCostMasterRepository := masteritemrepositoryimpl.StartLandedCostMasterRepositoryImpl()
-	LandedCostMasterService := masteritemserviceimpl.StartLandedCostMasterService(LandedCostMasterRepository,db)
-	LandedCostMasterController := masteritemcontroller.NewLandedCostMasterController(LandedCostMasterService)
-
 	// Item Class
 	itemClassRepository := masteritemrepositoryimpl.StartItemClassRepositoryImpl()
 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db, rdb)

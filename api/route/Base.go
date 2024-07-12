@@ -366,24 +366,26 @@ func PriceListRouter(
 	return router
 }
 
-func LandedCostMasterRouter(
-	landedCostMaster masteritemcontroller.LandedCostMasterController,
-) *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/", landedCostMaster.GetAllLandedCostMaster)
-	router.GET("/by-id/:landed_cost_id", landedCostMaster.GetByIdLandedCost)
-	router.POST("/", landedCostMaster.SaveLandedCostMaster)
-	router.PATCH("/activate/", landedCostMaster.ActivateLandedCostMaster)
-	router.PATCH("/deactivate/", landedCostMaster.DeactivateLandedCostmaster)
+// func LandedCostMasterRouter(
+// 	landedCostMaster masteritemcontroller.LandedCostMasterController,
+// ) *httprouter.Router {
+// 	router := httprouter.New()
+// 	router.GET("/", landedCostMaster.GetAllLandedCostMaster)
+// 	router.GET("/by-id/:landed_cost_id", landedCostMaster.GetByIdLandedCost)
+// 	router.POST("/", landedCostMaster.SaveLandedCostMaster)
+// 	router.PATCH("/activate/", landedCostMaster.ActivateLandedCostMaster)
+// 	router.PATCH("/deactivate/", landedCostMaster.DeactivateLandedCostmaster)
 
-	router.PanicHandler = exceptions.ErrorHandler
+// 	router.PanicHandler = exceptions.ErrorHandler
 
-	return router
-}
+// 	return router
+// }
 
-func SwaggerRouter() *httprouter.Router {
-	router := httprouter.New()
-	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
+// func SwaggerRouter() *httprouter.Router {
+// 	router := httprouter.New()
+// 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
+
+	
 func BomRouter(
 	BomController masteritemcontroller.BomController,
 ) chi.Router {
@@ -453,8 +455,8 @@ func LandedCostMasterRouter(
 	router.Get("/", LandedCostMaster.GetAllLandedCostMaster)
 	router.Get("/{landed_cost_id}", LandedCostMaster.GetByIdLandedCost)
 	router.Post("/", LandedCostMaster.SaveLandedCostMaster)
-	router.Patch("/activate/", LandedCostMaster.ActivateLandedCostMaster)
-	router.Patch("/deactivate/", LandedCostMaster.DeactivateLandedCostmaster)
+	router.Patch("/activate/{landed_cost_id}", LandedCostMaster.ActivateLandedCostMaster)
+	router.Patch("/deactivate/{landed_cost_id}", LandedCostMaster.DeactivateLandedCostmaster)
 	router.Put("/{landed_cost_id}", LandedCostMaster.UpdateLandedCostMaster)
 
 	return router
