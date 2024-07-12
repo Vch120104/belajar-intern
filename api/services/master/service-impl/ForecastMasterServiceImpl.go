@@ -40,7 +40,6 @@ func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) (masterpayload
 
 func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.ForecastMasterResponse) (masterentities.ForecastMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ForecastMasterRepo.SaveForecastMaster(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 
@@ -79,8 +78,8 @@ func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils
 
 func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.ForecastMasterResponse, id int)(masterentities.ForecastMaster,*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.ForecastMasterRepo.UpdateForecastMaster(tx,req,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return masterentities.ForecastMaster{},err
 	}

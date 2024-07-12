@@ -1,6 +1,7 @@
 package masterrepository
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -14,7 +15,8 @@ type DeductionRepository interface {
 	GetAllDeductionDetail(*gorm.DB, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetDeductionById(*gorm.DB, int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse)
 	GetByIdDeductionDetail(*gorm.DB, int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse)
-	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (bool, *exceptions.BaseErrorResponse)
-	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse) (bool, *exceptions.BaseErrorResponse)
-	ChangeStatusDeduction(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
+	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (masterentities.DeductionList, *exceptions.BaseErrorResponse)
+	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse)
+	ChangeStatusDeduction(*gorm.DB,  int) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	UpdateDeductionDetail( *gorm.DB, int, masterpayloads.DeductionDetailUpdate)(masterentities.DeductionDetail,*exceptions.BaseErrorResponse)
 }

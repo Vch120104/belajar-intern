@@ -1,6 +1,7 @@
 package masterserviceimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"context"
@@ -113,7 +114,7 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionListResponse) (masterentities.DeductionList, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.deductionrepo.SaveDeductionList(tx, req)
 	defer helper.CommitOrRollback(tx, err)
@@ -123,7 +124,7 @@ func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionLis
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.deductionrepo.SaveDeductionDetail(tx, req)
 	defer helper.CommitOrRollback(tx, err)
@@ -182,19 +183,28 @@ func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pa
 	return detail_result, nil
 }
 
-func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	_, err := s.deductionrepo.GetDeductionById(tx, Id)
 
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	results, err := s.deductionrepo.ChangeStatusDeduction(tx, Id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results, err
+		return nil, err
 	}
-	return true, nil
+	return results, nil
+}
+
+func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.DeductionDetailUpdate)(masterentities.DeductionDetail,*exceptions.BaseErrorResponse){
+	tx:=s.DB.Begin()
+	result,err := s.deductionrepo.UpdateDeductionDetail(tx,id,req)
+	if err !=nil{
+		return masterentities.DeductionDetail{},err
+	}
+	return result,nil
 }

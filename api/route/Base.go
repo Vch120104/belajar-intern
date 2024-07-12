@@ -12,8 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	_ "after-sales/docs"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -913,6 +911,7 @@ func DeductionRouter(
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
+	router.Put("/{id}",DeductionController.UpdateDeductionDetail)
 
 	return router
 }
