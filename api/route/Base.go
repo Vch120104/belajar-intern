@@ -351,11 +351,11 @@ func LandedCostMasterRouter(
 	landedCostMaster masteritemcontroller.LandedCostMasterController,
 ) *httprouter.Router {
 	router := httprouter.New()
-	router.GET("/landed-cost-master/", landedCostMaster.GetAllLandedCostMaster)
-	router.GET("/landed-cost-master/:landed_cost_id", landedCostMaster.GetByIdLandedCost)
-	router.POST("/landed-cost-master/", landedCostMaster.SaveLandedCostMaster)
-	router.PATCH("/landed-cost-master/activate/", landedCostMaster.ActivateLandedCostMaster)
-	router.PATCH("/landed-cost-master/deactivate/", landedCostMaster.DeactivateLandedCostmaster)
+	router.GET("/", landedCostMaster.GetAllLandedCostMaster)
+	router.GET("/by-id/:landed_cost_id", landedCostMaster.GetByIdLandedCost)
+	router.POST("/", landedCostMaster.SaveLandedCostMaster)
+	router.PATCH("/activate/", landedCostMaster.ActivateLandedCostMaster)
+	router.PATCH("/deactivate/", landedCostMaster.DeactivateLandedCostmaster)
 
 	router.PanicHandler = exceptions.ErrorHandler
 
