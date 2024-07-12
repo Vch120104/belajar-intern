@@ -1,6 +1,7 @@
 package masterserviceimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
@@ -66,20 +67,13 @@ func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exception
 	return true, nil
 }
 
-func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (masterentities.SkillLevel, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-
-	if req.SkillLevelId != 0 {
-		_, err := s.SkillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
-		if err != nil {
-			return false, err
-		}
-	}
 
 	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masterentities.SkillLevel{}, err
 	}
 	return results, nil
 }

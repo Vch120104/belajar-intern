@@ -96,10 +96,8 @@ func (r *SkillLevelRepositoryImpl) GetSkillLevelByCode(tx *gorm.DB, Code string)
 	return response, nil
 }
 
-func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayloads.SkillLevelResponse) (bool, *exceptions.BaseErrorResponse) {
+func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayloads.SkillLevelResponse) (masterentities.SkillLevel, *exceptions.BaseErrorResponse) {
 	entities := masterentities.SkillLevel{
-		IsActive:              req.IsActive,
-		SkillLevelId:          req.SkillLevelId,
 		SkillLevelCode:        req.SkillLevelCode,
 		SkillLevelDescription: req.SkillLevelDescription,
 	}
@@ -108,20 +106,20 @@ func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayload
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return masterentities.SkillLevel{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return masterentities.SkillLevel{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 func (r *SkillLevelRepositoryImpl) ChangeStatusSkillLevel(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
