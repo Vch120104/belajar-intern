@@ -1,6 +1,7 @@
 package masteritemserviceimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -118,12 +119,12 @@ func (s *ItemLocationServiceImpl) GetByIdItemLoc(id int) (masteritempayloads.Ite
 	return result, nil
 }
 
-func (s *ItemLocationServiceImpl) SaveItemLoc(req masteritempayloads.SaveItemlocation) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) SaveItemLoc(req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemLocationRepo.SaveItemLoc(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.ItemLocation{}, err
 	}
 	return result, nil
 }

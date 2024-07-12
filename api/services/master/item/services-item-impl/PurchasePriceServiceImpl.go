@@ -38,12 +38,12 @@ func (s *PurchasePriceServiceImpl) GetAllPurchasePrice(filterCondition []utils.F
 	return results, totalPages, totalRows, nil
 }
 
-func (s *PurchasePriceServiceImpl) SavePurchasePrice(req masteritempayloads.PurchasePriceRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) SavePurchasePrice(req masteritempayloads.PurchasePriceRequest) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.PurchasePriceRepo.SavePurchasePrice(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.PurchasePrice{}, err
 	}
 	return results, nil
 }
@@ -58,12 +58,12 @@ func (s *PurchasePriceServiceImpl) GetPurchasePriceById(id int) (masteritempaylo
 	return results, nil
 }
 
-func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) AddPurchasePrice(req masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.PurchasePriceRepo.AddPurchasePrice(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.PurchasePriceDetail{}, err
 	}
 	return results, nil
 }

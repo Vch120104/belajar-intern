@@ -52,8 +52,8 @@ type AgreementCompanyResponse struct {
 type DiscountGroupRequest struct {
 	AgreementDiscountGroupId int     `json:"agreement_discount_group_id" parent_entity:"mtr_agreement_discount_group_detail" main_table:"mtr_agreement_discount_group_detail"`
 	AgreementId              int     `json:"agreement_id" parent_entity:"mtr_agreement_discount_group_detail"`
-	AgreementSelection       string  `json:"agreement_selection" parent_entity:"mtr_agreement_discount_group_detail"`
-	AgreementLineTypeId      string  `json:"agreement_order_type" parent_entity:"mtr_agreement_discount_group_detail"`
+	AgreementSelection       int     `json:"agreement_selection_id" parent_entity:"mtr_agreement_discount_group_detail"`
+	AgreementLineTypeId      int     `json:"agreement_order_type_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDiscountMarkup  int     `json:"agreement_discount_markup_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDiscount        float32 `json:"agreement_discount" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDetailRemaks    string  `json:"agreement_detail_remarks" parent_entity:"mtr_agreement_discount_group_detail"`
@@ -62,8 +62,8 @@ type DiscountGroupRequest struct {
 type DiscountGroupResponse struct {
 	AgreementDiscountGroupId int     `json:"agreement_discount_group_id"`
 	AgreementId              int     `json:"agreement_id"`
-	AgreementSelection       string  `json:"agreement_selection"`
-	AgreementLineTypeId      string  `json:"agreement_order_type"`
+	AgreementSelection       int     `json:"agreement_selection_id"`
+	AgreementLineTypeId      int     `json:"agreement_order_type_id"`
 	AgreementDiscountMarkup  int     `json:"agreement_discount_markup_id"`
 	AgreementDiscount        float32 `json:"agreement_discount"`
 	AgreementDetailRemaks    string  `json:"agreement_detail_remarks"`

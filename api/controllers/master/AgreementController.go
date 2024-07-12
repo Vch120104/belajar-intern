@@ -221,12 +221,13 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
 
-	if err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest); err != nil {
+	add, err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount group added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, add, "Discount group added successfully", http.StatusCreated)
 }
 
 // @Summary Update Discount Group
@@ -247,12 +248,13 @@ func (r *AgreementControllerImpl) UpdateDiscountGroup(writer http.ResponseWriter
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
 
-	if err := r.AgreementService.UpdateDiscountGroup(int(agreementID), int(groupID), groupRequest); err != nil {
+	update, err := r.AgreementService.UpdateDiscountGroup(int(agreementID), int(groupID), groupRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount group updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Discount group updated successfully", http.StatusOK)
 }
 
 // @Summary Delete Discount Group
@@ -293,12 +295,13 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
 
-	if err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest); err != nil {
+	add, err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item discount added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, add, "Item discount added successfully", http.StatusCreated)
 }
 
 // @Summary Update Item Discount
@@ -319,12 +322,13 @@ func (r *AgreementControllerImpl) UpdateItemDiscount(writer http.ResponseWriter,
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
 
-	if err := r.AgreementService.UpdateItemDiscount(int(agreementID), int(itemID), itemRequest); err != nil {
+	update, err := r.AgreementService.UpdateItemDiscount(int(agreementID), int(itemID), itemRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item discount updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Item discount updated successfully", http.StatusOK)
 }
 
 // @Summary Delete Item Discount
@@ -365,12 +369,13 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
 
-	if err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest); err != nil {
+	add, err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount value added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, add, "Discount value added successfully", http.StatusCreated)
 }
 
 // @Summary Update Discount Value
@@ -391,12 +396,13 @@ func (r *AgreementControllerImpl) UpdateDiscountValue(writer http.ResponseWriter
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
 
-	if err := r.AgreementService.UpdateDiscountValue(int(agreementID), int(valueID), valueRequest); err != nil {
+	update, err := r.AgreementService.UpdateDiscountValue(int(agreementID), int(valueID), valueRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount value updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Discount value updated successfully", http.StatusOK)
 }
 
 // @Summary Delete Discount Value

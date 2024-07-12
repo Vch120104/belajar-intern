@@ -12,6 +12,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	_ "after-sales/docs"
+
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -178,9 +180,9 @@ func ItemLocationRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	//master
-	router.Get("/", ItemLocationController.GetAllItemLocation)
-	router.Get("/{item_location_id}", ItemLocationController.GetItemLocationById)
-	router.Post("/", ItemLocationController.SaveItemLocation)
+	// router.Get("/", ItemLocationController.GetAllItemLocation)
+	// router.Get("/{item_location_id}", ItemLocationController.GetItemLocationById)
+	// router.Post("/", ItemLocationController.SaveItemLocation)
 
 	//detail
 	router.Get("/detail", ItemLocationController.GetAllItemLocationDetail)
@@ -189,10 +191,10 @@ func ItemLocationRouter(
 	router.Delete("/detail/{item_location_detail_id}", ItemLocationController.DeleteItemLocation)
 
 	// new
-	router.Get("/new/get-all/", ItemLocationController.GetAllItemLoc)
-	router.Get("/new/get-by-id/{item_location_id}", ItemLocationController.GetByIdItemLoc)
-	router.Post("/new/save", ItemLocationController.SaveItemLoc)
-	router.Delete("/new/delete/{item_location_id}", ItemLocationController.DeleteItemLoc)
+	router.Get("/", ItemLocationController.GetAllItemLoc)
+	router.Get("/{item_location_id}", ItemLocationController.GetByIdItemLoc)
+	router.Post("/", ItemLocationController.SaveItemLoc)
+	router.Delete("/{item_location_id}", ItemLocationController.DeleteItemLoc)
 
 	return router
 }
@@ -758,6 +760,7 @@ func IncentiveMasterRouter(
 	router.Get("/", IncentiveMasterController.GetAllIncentiveMaster)
 	router.Get("/{incentive_level_id}", IncentiveMasterController.GetIncentiveMasterById)
 	router.Post("/", IncentiveMasterController.SaveIncentiveMaster)
+	router.Put("/{incentive_level_id}", IncentiveMasterController.UpdateIncentiveMaster)
 	router.Patch("/{incentive_level_id}", IncentiveMasterController.ChangeStatusIncentiveMaster)
 
 	return router
