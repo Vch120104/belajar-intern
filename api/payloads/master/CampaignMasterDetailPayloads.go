@@ -1,7 +1,6 @@
 package masterpayloads
 
 type CampaignMasterDetailPayloads struct {
-	CampaignDetailId int     `json:"campaign_detail_id"`
 	CampaignId       int     `json:"campaign_id"`
 	LineTypeId       int     `json:"line_type_id"`
 	Quantity         float64 `json:"quantity"`
