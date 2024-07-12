@@ -163,7 +163,8 @@ func ItemRouter(
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
-	router.Delete("/detail/{item_id}/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Post("/{item_id}/{brand_id}",itemController.AddItemDetailByBrand)
 
 	return router
 }
@@ -967,12 +968,14 @@ func WorkOrderRouter(
 	router.Post("/normal/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
 	router.Put("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.UpdateRequest)
 	router.Delete("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
+	router.Delete("/normal/{work_order_system_number}/requestservice/{multi_id}", WorkOrderController.DeleteRequestMultiId)
 
 	router.Get("/normal/vehicleservice", WorkOrderController.GetAllVehicleService)
 	router.Get("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.GetVehicleServiceById)
 	router.Put("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.UpdateVehicleService)
 	router.Post("/normal/{work_order_system_number}/vehicleservice", WorkOrderController.AddVehicleService)
 	router.Delete("/normal/{work_order_system_number}/vehicleservice/{work_order_service_vehicle_id}", WorkOrderController.DeleteVehicleService)
+	router.Delete("/normal/{work_order_system_number}/vehicleservice/{multi_id}", WorkOrderController.DeleteVehicleServiceMultiId)
 
 	//add trx detail
 	router.Get("/normal/detail", WorkOrderController.GetAllDetailWorkOrder)
@@ -980,6 +983,7 @@ func WorkOrderRouter(
 	router.Post("/normal/{work_order_system_number}/detail", WorkOrderController.AddDetailWorkOrder)
 	router.Put("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.UpdateDetailWorkOrder)
 	router.Delete("/normal/{work_order_system_number}/detail/{work_order_detail_id}", WorkOrderController.DeleteDetailWorkOrder)
+	router.Delete("/normal/{work_order_system_number}/detail/{multi_id}", WorkOrderController.DeleteDetailWorkOrderMultiId)
 
 	//new support function form
 	router.Get("/dropdown-status", WorkOrderController.NewStatus)
@@ -998,9 +1002,6 @@ func WorkOrderRouter(
 	router.Delete("/dropdown-bill/{bill_id}", WorkOrderController.DeleteBill)
 
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
-	// router.Post("/dropdown-drop-point", WorkOrderController.AddDropPoint)
-	// router.Put("/dropdown-drop-point/{drop_point_id}", WorkOrderController.UpdateDropPoint)
-	// router.Delete("/dropdown-drop-point/{drop_point_id}", WorkOrderController.DeleteDropPoint)
 
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
@@ -1021,6 +1022,54 @@ func WorkOrderRouter(
 	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
 	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
 	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
+
+	return router
+}
+
+func ServiceRequestRouter(
+	ServiceRequestController transactionworkshopcontroller.ServiceRequestController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	// generate document
+	router.Post("/document-number/{service_request_system_number}", ServiceRequestController.GenerateDocumentNumberServiceRequest)
+
+	router.Get("/", ServiceRequestController.GetAll)
+	router.Get("/{service_request_system_number}", ServiceRequestController.GetById)
+	router.Post("/", ServiceRequestController.New)
+	router.Put("/{service_request_system_number}", ServiceRequestController.Save)
+	router.Post("/submit/{service_request_system_number}", ServiceRequestController.Submit)
+	router.Delete("/void/{service_request_system_number}", ServiceRequestController.Void)
+	router.Patch("/close/{service_request_system_number}", ServiceRequestController.CloseOrder)
+
+	router.Get("/detail", ServiceRequestController.GetAllServiceDetail)
+	router.Get("/detail/{service_request_detail_id}", ServiceRequestController.GetServiceDetailById)
+	router.Post("/detail/{service_request_system_number}", ServiceRequestController.AddServiceDetail)
+	router.Put("/detail/{service_request_system_number}/{service_request_detail_id}", ServiceRequestController.UpdateServiceDetail)
+	router.Delete("/detail/{service_request_system_number}/{service_request_detail_id}", ServiceRequestController.DeleteServiceDetail)
+	router.Delete("/detail/{service_request_system_number}/{multi_id}", ServiceRequestController.DeleteServiceDetailMultiId)
+
+	return router
+}
+
+func ServiceReceiptRouter(
+	ServiceReceiptController transactionworkshopcontroller.ServiceReceiptController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ServiceReceiptController.GetAll)
+	router.Get("/{service_request_system_number}", ServiceReceiptController.GetById)
+	router.Put("/{service_request_system_number}", ServiceReceiptController.Save)
 
 	return router
 }

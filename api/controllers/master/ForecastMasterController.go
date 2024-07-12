@@ -69,12 +69,12 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
-	_, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
+	result, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, nil, "Create Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Create Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Forecast Master
@@ -154,11 +154,11 @@ func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.Response
 	forecast_master_id,_ := strconv.Atoi(chi.URLParam(request,"forecast_master_id"))
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
-	_, err := r.ForecastMasterService.UpdateForecastMaster(formRequest, forecast_master_id)
+	result, err := r.ForecastMasterService.UpdateForecastMaster(formRequest, forecast_master_id)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 	
-	payloads.NewHandleSuccess(writer, nil, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
