@@ -11,6 +11,8 @@ import (
 type SkillLevelService interface {
 	GetAllSkillLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetSkillLevelById(Id int) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse)
+	GetSkillLevelByCode(code string) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse)
 	SaveSkillLevel(req masterpayloads.SkillLevelResponse) (masterentities.SkillLevel, *exceptions.BaseErrorResponse)
-	ChangeStatusSkillLevel(Id int) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusSkillLevel(Id int) (masterpayloads.SkillLevelPatchResponse, *exceptions.BaseErrorResponse)
+	UpdateSkillLevel(req masterpayloads.SkillLevelResponse, id int)(masterentities.SkillLevel,*exceptions.BaseErrorResponse)
 }

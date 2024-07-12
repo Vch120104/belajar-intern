@@ -122,15 +122,16 @@ func (r *SkillLevelRepositoryImpl) SaveSkillLevel(tx *gorm.DB, req masterpayload
 	return entities, nil
 }
 
-func (r *SkillLevelRepositoryImpl) ChangeStatusSkillLevel(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
+func (r *SkillLevelRepositoryImpl) ChangeStatusSkillLevel(tx *gorm.DB, Id int) (masterpayloads.SkillLevelPatchResponse, *exceptions.BaseErrorResponse) {
 	var entities masterentities.SkillLevel
+	var response masterpayloads.SkillLevelPatchResponse
 
 	result := tx.Model(&entities).
 		Where(masterentities.SkillLevel{SkillLevelId: Id}).
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -145,11 +146,35 @@ func (r *SkillLevelRepositoryImpl) ChangeStatusSkillLevel(tx *gorm.DB, Id int) (
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	data := tx.Model(&entities).
+		Where(masterentities.SkillLevel{SkillLevelId: Id}).
+		First(&response)
+
+	if data.Error != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return response, nil
+}
+
+func (r *SkillLevelRepositoryImpl) UpdateSkillLevel(tx *gorm.DB, req masterpayloads.SkillLevelResponse, id int) (masterentities.SkillLevel, *exceptions.BaseErrorResponse) {
+	var entity masterentities.SkillLevel
+
+	err := tx.Model(&entity).Where("skill_level_id = ?", id).First(&entity).Updates(req)
+	if err.Error != nil {
+		return masterentities.SkillLevel{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err.Error,
+		}
+	}
+	return entity, nil
 }
