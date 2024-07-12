@@ -721,8 +721,10 @@ func SkillLevelRouter(
 
 	router.Get("/", SkillLevelController.GetAllSkillLevel)
 	router.Get("/{skill_level_id}", SkillLevelController.GetSkillLevelById)
+	router.Get("/code/{skill_level_code}", SkillLevelController.GetSkillLevelByCode)
 	router.Post("/", SkillLevelController.SaveSkillLevel)
 	router.Patch("/{skill_level_id}", SkillLevelController.ChangeStatusSkillLevel)
+	router.Put("/{skill_level_id}", SkillLevelController.UpdateSkillLevel)
 
 	return router
 }
