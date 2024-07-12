@@ -34,6 +34,7 @@ type ItemController interface {
 	UpdateItemDetail(writer http.ResponseWriter, request *http.Request)
 	GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request)
 	GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request)
+	AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -488,6 +489,17 @@ func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWrite
 func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request) {
 	principleBrandCode := chi.URLParam(request, "principle_brand_code")
 	result, err := r.itemservice.GetPrincipleBrandParent(principleBrandCode)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "success", 200)
+}
+
+func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request) {
+	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	Id, _ := strconv.Atoi(chi.URLParam(request, "brand_id"))
+	result, err := r.itemservice.AddItemDetailByBrand(Id, ItemId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
