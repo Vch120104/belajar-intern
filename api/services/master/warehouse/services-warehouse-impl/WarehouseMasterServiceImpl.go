@@ -1,128 +1,134 @@
 package masterwarehouseserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouseservice "after-sales/api/services/master/warehouse"
+	"after-sales/api/utils"
 
 	// "log"
 
 	// "after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type WarehouseMasterServiceImpl struct {
 	warehouseMasterRepo masterwarehouserepository.WarehouseMasterRepository
 	DB                  *gorm.DB
+	RedisClient         *redis.Client // Redis client
 }
 
-func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.WarehouseMasterRepository, db *gorm.DB) masterwarehouseservice.WarehouseMasterService {
+func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.WarehouseMasterRepository, db *gorm.DB, redisClient *redis.Client) masterwarehouseservice.WarehouseMasterService {
 	return &WarehouseMasterServiceImpl{
 		warehouseMasterRepo: warehouseMaster,
 		DB:                  db,
+		RedisClient:         redisClient,
 	}
 }
 
-func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) bool {
+// DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
+func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId)
+	defer helper.CommitOrRollback(tx, err)
 
-	if request.WarehouseId != 0 {
-		_, err := s.warehouseMasterRepo.GetById(tx, request.WarehouseId)
-
-		if err != nil {
-			panic(exceptions.NewNotFoundError(err.Error()))
-		}
+	if err != nil {
+		return get, err
 	}
+	return get, nil
+}
+
+func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 
 	save, err := s.warehouseMasterRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-
-	return save
+	return save, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) masterwarehousepayloads.GetWarehouseMasterResponse {
+func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
-
-	return get
+	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAllIsActive() []masterwarehousepayloads.IsActiveWarehouseMasterResponse {
+func (s *WarehouseMasterServiceImpl) DropdownWarehouse() ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	get, err := s.warehouseMasterRepo.DropdownWarehouse(tx)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}
+
+func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetAllIsActive(tx)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
-
-	return get
+	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) []masterwarehousepayloads.GetAllWarehouseMasterResponse {
+func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(tx, MultiIds)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
-
-	return get
+	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAll(request masterwarehousepayloads.GetAllWarehouseMasterRequest, pages pagination.Pagination) pagination.Pagination {
+func (s *WarehouseMasterServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	get, err := s.warehouseMasterRepo.GetAll(tx, request, pages)
+	get, err := s.warehouseMasterRepo.GetAll(tx, filter, pages)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
-
-	return get
+	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) []map[string]interface{} {
+func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return get, err
 	}
-
-	return get
+	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) masterwarehousepayloads.GetWarehouseMasterResponse {
+func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-
-	_, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
-
-	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
-	}
 
 	change_status, err := s.warehouseMasterRepo.ChangeStatus(tx, warehouseId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return change_status, err
 	}
-
-	return change_status
+	return change_status, nil
 }

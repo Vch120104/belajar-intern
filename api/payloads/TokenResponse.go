@@ -1,19 +1,24 @@
 package payloads
 
-import "github.com/gin-gonic/gin"
+import (
+	"encoding/json"
+	"net/http"
+)
 
 type ResponseAuth struct {
-	Status int `json:"status"`
+	Status  int    `json:"status"`
 	Message string `json:"message"`
-	Token string `json:"token"`
+	Token   string `json:"token"`
 }
 
-func ResponseToken(c *gin.Context, message string, token string, status int) {
+func WriteResponseToken(w http.ResponseWriter, message string, token string, status int) {
 	res := ResponseAuth{
-		Status: status,
+		Status:  status,
 		Message: message,
-		Token: token,
+		Token:   token,
 	}
 
-	c.JSON(status, res)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(res)
 }

@@ -44,8 +44,9 @@ go.work
 docs.go
 swagger.json
 swagger.yaml
-
-
+# tmp
+tmp/
+build-errors.log
 
 # NEXTJS
 # playwright testing
@@ -78,3 +79,4 @@ yarn-error.log*
 next-env.d.ts
 
 */webapp-service/
+.air.toml

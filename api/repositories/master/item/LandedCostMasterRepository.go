@@ -1,6 +1,7 @@
 package masteritemrepository
 
 import (
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -9,9 +10,10 @@ import (
 )
 
 type LandedCostMasterRepository interface {
-	GetAllLandedCost(*gorm.DB,[]utils.FilterCondition,pagination.Pagination)(pagination.Pagination,error)
-	GetByIdLandedCost(*gorm.DB, int)(masteritempayloads.LandedCostMasterPayloads,error)
-	SaveLandedCost(*gorm.DB,masteritempayloads.LandedCostMasterPayloads)(bool,error)
-	DeactivateLandedCostmaster(*gorm.DB, string)(bool,error)
-	ActivateLandedCostMaster(*gorm.DB, string)(bool,error)
+	GetAllLandedCost(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{},int,int,*exceptions.BaseErrorResponse)
+	GetByIdLandedCost(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	SaveLandedCost(*gorm.DB, masteritempayloads.LandedCostMasterRequest) (bool, *exceptions.BaseErrorResponse)
+	DeactivateLandedCostmaster(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
+	ActivateLandedCostMaster(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
+	UpdateLandedCostMaster(tx *gorm.DB,id int, req masteritempayloads.LandedCostMasterUpdateRequest)(bool,*exceptions.BaseErrorResponse)
 }

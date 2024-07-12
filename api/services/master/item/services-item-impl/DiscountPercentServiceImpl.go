@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	"after-sales/api/exceptions"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -9,64 +9,75 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type DiscountPercentServiceImpl struct {
 	discountPercentRepo masteritemrepository.DiscountPercentRepository
 	DB                  *gorm.DB
+	RedisClient         *redis.Client // Redis client
 }
 
-func StartDiscountPercentService(discountPercentRepo masteritemrepository.DiscountPercentRepository, db *gorm.DB) masteritemservice.DiscountPercentService {
+func StartDiscountPercentService(discountPercentRepo masteritemrepository.DiscountPercentRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.DiscountPercentService {
 	return &DiscountPercentServiceImpl{
 		discountPercentRepo: discountPercentRepo,
 		DB:                  db,
+		RedisClient:         redisClient,
 	}
 }
 
-func (s *DiscountPercentServiceImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int) {
+func (s *DiscountPercentServiceImpl) GetAllDiscountPercent(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.discountPercentRepo.GetAllDiscountPercent(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, totalPages, totalRows, err
 	}
-	return results, totalPages, totalRows
+	return results, totalPages, totalRows, nil
 }
 
-func (s *DiscountPercentServiceImpl) GetDiscountPercentById(Id int) masteritempayloads.DiscountPercentResponse {
+func (s *DiscountPercentServiceImpl) GetDiscountPercentById(Id int) (masteritempayloads.DiscountPercentResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.discountPercentRepo.GetDiscountPercentById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return results, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.DiscountPercentResponse) bool {
+func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.DiscountPercentResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	if req.DiscountPercentId != 0 {
+		_, err := s.discountPercentRepo.GetDiscountPercentById(tx, req.DiscountPercentId)
+
+		if err != nil {
+			return false, err
+		}
+	}
+
 	results, err := s.discountPercentRepo.SaveDiscountPercent(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
-	return results
+	return results, nil
 }
 
-func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool) {
+func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.discountPercentRepo.GetDiscountPercentById(tx, Id)
 
 	if err != nil {
-		panic(exceptions.NewNotFoundError(err.Error()))
+		return false, err
 	}
 
 	results, err := s.discountPercentRepo.ChangeStatusDiscountPercent(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results
+		return results, err
 	}
-	return true
+	return true, nil
 }

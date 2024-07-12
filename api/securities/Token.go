@@ -27,5 +27,5 @@ func GenerateToken(username string, userId int32, client string) (string, error)
 		return "", err
 	}
 
-	return tokenString, err
+	return tokenString, nil
 }

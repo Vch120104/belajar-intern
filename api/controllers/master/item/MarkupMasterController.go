@@ -1,8 +1,11 @@
 package masteritemcontroller
 
 import (
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -16,14 +19,16 @@ import (
 
 	// "strconv"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type MarkupMasterController interface {
-	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request)
+	GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request)
+	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request)
+	GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request)
+	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request)
 }
 
 type MarkupMasterControllerImpl struct {
@@ -49,9 +54,9 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master [get]
-func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/ [get]
+func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"markup_master_code":        queryValues.Get("markup_master_code"),
@@ -68,9 +73,28 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
+	result, err := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request) {
+
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	result, err := r.markupMasterService.GetMarkupMasterById(markupMasterId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Markup Master Description by code
@@ -80,13 +104,30 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 // @Tags Master : Markup Master
 // @Param markup_master_code path string true "markup_master_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master-by-code/{markup_master_code} [get]
-func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/by-code/{markup_master_code} [get]
+func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request) {
 
-	markupMasterCode := params.ByName("markup_master_code")
+	markupMasterCode := chi.URLParam(request, "markup_master_code")
 
-	result := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
+	result, err := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request) {
+
+	result, err := r.markupMasterService.GetAllMarkupMasterIsActive()
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -98,16 +139,30 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 // @Tags Master : Markup Master
 // @param reqBody body masteritempayloads.MarkupMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master [post]
-func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/ [post]
+func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.MarkupMasterResponse
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
 
-	create := r.markupMasterService.SaveMarkupMaster(formRequest)
+	create, err := r.markupMasterService.SaveMarkupMaster(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.MarkupMasterId == 0 {
 		message = "Create Data Successfully!"
@@ -125,13 +180,18 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Tags Master : Markup Master
 // @param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master/{markup_master_id} [patch]
-func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/{markup_master_id} [patch]
+func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
-	markupMasterId, _ := strconv.Atoi(params.ByName("markup_master_id"))
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
 
-	response := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
+	response, err := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

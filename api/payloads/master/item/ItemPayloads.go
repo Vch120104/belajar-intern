@@ -13,6 +13,8 @@ type ItemResponse struct {
 	ItemLevel_3                  string  `json:"item_level_3"`
 	ItemLevel_4                  string  `json:"item_level_4"`
 	SupplierId                   int     `json:"supplier_id"`
+	SupplierName                 *string `json:"supplier_name"`
+	SupplierCode                 *string `json:"supplier_code"`
 	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  int     `json:"unit_of_measurement_purchase_id"`
@@ -57,9 +59,20 @@ type ItemResponse struct {
 	SourceTypeId                 int     `json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int     `json:"person_in_charge_id"`
+	SourceConvertion             float64 `json:"source_convertion"`
+	TargetConvertion             float64 `json:"target_convertion"`
+	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
+	IsSellable                   bool    `json:"is_sellable"`
+}
+
+type UserDetailResponse struct {
+	UserEmployeeId int    `json:"user_employee_id"`
+	EmployeNo      int    `json:"employee_no"`
+	EmployeeName   string `json:"employee_name"`
 }
 
 type ItemRequest struct {
+	ItemId                       int     `json:"item_id"`
 	ItemCode                     string  `json:"item_code"`
 	ItemClassId                  int     `json:"item_class_id"`
 	ItemName                     string  `json:"item_name"`
@@ -114,23 +127,45 @@ type ItemRequest struct {
 	SourceTypeId                 int     `json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int     `json:"person_in_charge_id"`
+	SourceConvertion             float32 `json:"source_convertion"`
+	TargetConvertion             float32 `json:"target_convertion"`
+	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
+	IsSellable                   bool    `json:"is_sellable"`
+}
+
+type AtpmOrderTypeResponse struct {
+	AtpmOrderTypeDescription string `json:"atpm_order_type_description"`
+	AtpmOrderTypeCode        string `json:"atpm_order_type_code"`
+	AtpmOrderTypeId          int    `json:"atpm_order_type_id"`
 }
 
 type ItemLookup struct {
-	IsActive      bool   `json:"is_active" parent_entity:"mtr_item"`
-	ItemId        int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
-	ItemCode      string `json:"item_code" parent_entity:"mtr_item"`
-	ItemName      string `json:"item_name" parent_entity:"mtr_item"`
-	ItemType      string `json:"item_type" parent_entity:"mtr_item"`
-	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                   //fk luar mtr_item_group -> item_group_name
-	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class"` //fk dalam item_class_id -> ItemClassName
-	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class"`
-	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"` //fk luar mtr_supplier, supplier_code dan supplier_name
+	IsActive    bool   `json:"is_active" parent_entity:"mtr_item"`
+	ItemId      int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
+	ItemCode    string `json:"item_code" parent_entity:"mtr_item"`
+	ItemName    string `json:"item_name" parent_entity:"mtr_item"`
+	ItemType    string `json:"item_type" parent_entity:"mtr_item"`
+	ItemGroupId int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
+	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
+	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
+}
+
+type UomTypeDropdownResponse struct {
+	IsActive           bool   `json:"is_active"`
+	UomTypeId          int    `json:"uom_type_id"`
+	UomTypeDescription string `json:"uom_type_description"`
+}
+
+type UomDropdownResponse struct {
+	IsActive       bool   `json:"is_active"`
+	UomId          int    `json:"uom_id"`
+	UomCode        string `json:"uom_code"`
+	UomDescription string `json:"uom_description"`
 }
 
 type ItemDetailResponse struct {
 	ItemDetailId int     `json:"item_detail_id"`
-	IsActive     bool    `json:"is_active"`
+	IsActive     bool    `gorm:"column:is_active" json:"is_active"`
 	ItemId       int     `json:"item_id"`
 	BrandId      int     `json:"brand_id"`
 	ModelId      int     `json:"model_id"`
@@ -139,10 +174,27 @@ type ItemDetailResponse struct {
 	ReturnEvery  float64 `json:"return_every"`
 }
 
+type ItemDetailRequest struct {
+	ItemDetailId int     `json:"item_detail_id" parent_entity:"mtr_item_detail" main_table:"mtr_item_detail"`
+	ItemId       int     `json:"item_id" parent_entity:"mtr_item_detail"`
+	BrandId      int     `json:"brand_id" parent_entity:"mtr_item_detail"`
+	ModelId      int     `json:"model_id" parent_entity:"mtr_item_detail"`
+	VariantId    int     `json:"variant_id" parent_entity:"mtr_item_detail"`
+	MillageEvery float64 `json:"millage_every" parent_entity:"mtr_item_detail"`
+	ReturnEvery  float64 `json:"return_every" parent_entity:"mtr_item_detail"`
+	IsActive     bool    `json:"is_active" parent_entity:"mtr_item_detail"`
+}
+
 type ItemGroupResponse struct {
 	ItemGroupId   int    `json:"item_group_id"`
 	ItemGroupCode string `json:"item_group_code"`
 	ItemGroupName string `json:"item_group_name"`
+}
+
+type ItemClassDetailResponse struct {
+	ItemClassId   int    `json:"item_class_id"`
+	ItemClassCode string `json:"item_class_code"`
+	ItemClassName string `json:"item_class_name"`
 }
 
 type LineTypeResponse struct {
@@ -191,5 +243,56 @@ type AtpmSupplierCodeOrderResponse struct {
 }
 
 type PersonInChargeResponse struct {
-	PersonInChargeId int `json:"user_id"`
+	UserEmployeeId       int    `json:"user_employee_id"`
+	PersonInChargeId     int    `json:"person_in_charge_id"`
+	PersonInChargeName   string `json:"employee_name"`
+	PersonInChargeNumber string `json:"employee_number"`
+}
+
+type ItemUpdateRequest struct {
+	IsTechnicalDefect bool    `json:"is_technical_defect"`
+	SpecialMovementId int     `json:"special_movement_id"`
+	GmmCatalogCode    int     `json:"gmm_catalog_code"`
+	IsAffiliatedTrx   bool    `json:"is_affiliated_trx"`
+	IsSellable        bool    `json:"is_sellable"`
+	SourceConvertion  float64 `json:"source_convertion"`
+	TargetConvertion  float64 `json:"target_convertion"`
+}
+
+type ItemDetailUpdateRequest struct {
+	MillageEvery float64 `json:"millage_every"`
+	ReturnEvery  float64 `json:"return_every"`
+}
+
+type PrincipleBrandDropdownResponse struct {
+	IsActive           bool   `json:"is_active"`
+	PrincipleBrandId   int    `json:"principle_brand_id"`
+	PrincipleBrandCode string `json:"principle_brand_code"`
+}
+
+type PrincipleBrandDropdownDescription struct {
+	PrincipleBrandId          int    `json:"principle_brand_id"`
+	PrincipleBrandDescription string `json:"principle_brand_description"`
+}
+
+type BrandModelVariantResponse struct{
+	VariantId int `json:"variant_id"`
+	VariantCode string `json:"variant_code"`
+	VariantDescription string `json:"variant_description"`
+	ModelId int `json:"model_id"`
+	ModelCode string `json:"model_code"`
+	ModelDescription string `json:"model_description"`
+	BrandId int `json:"brand_id"`
+	BrandCode string `json:"brand_code"`
+	BrandName string `json:"brand_name"`
+}
+type ItemSearch struct {
+	IsActive    bool   `json:"is_active" parent_entity:"mtr_item"`
+	ItemId      int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
+	ItemCode    string `json:"item_code" parent_entity:"mtr_item"`
+	ItemName    string `json:"item_name" parent_entity:"mtr_item"`
+	ItemType    string `json:"item_type" parent_entity:"mtr_item"`
+	ItemGroupId int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
+	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
+	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
 }

@@ -1,22 +1,32 @@
 package masteritemcontroller
 
 import (
-	"after-sales/api/helper"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/utils"
+
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type PriceListController interface {
-	GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetPriceListLookup(writer http.ResponseWriter, request *http.Request)
+	GetPriceList(writer http.ResponseWriter, request *http.Request)
+	SavePriceList(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request)
+	DeletePriceList (writer http.ResponseWriter, request *http.Request)
+	GetAllPriceListNew(writer http.ResponseWriter,request *http.Request)
+	ActivatePriceList(writer http.ResponseWriter, request *http.Request)
+	DeactivatePriceList(writer http.ResponseWriter, request *http.Request)
 }
 
 type PriceListControllerImpl struct {
@@ -42,9 +52,9 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Produce json
 // @Tags Master : Price List
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list/get-all-lookup [get]
-func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/price-list/lookup [get]
+func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
 	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
@@ -56,15 +66,20 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode: PriceListCode,
-		CompanyId:     int32(companyId),
-		BrandId:       int32(brandId),
-		CurrencyId:    int32(currencyId),
+		CompanyId:     companyId,
+		BrandId:       brandId,
+		CurrencyId:    currencyId,
 		EffectiveDate: effectiveDate,
-		ItemGroupId:   int32(itemGroupId),
-		ItemClassId:   int32(itemClassId),
+		ItemGroupId:   itemGroupId,
+		ItemClassId:   itemClassId,
 	}
 
-	result := r.pricelistservice.GetPriceList(priceListRequest)
+	result, err := r.pricelistservice.GetPriceList(priceListRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -87,9 +102,9 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 // @Produce json
 // @Tags Master : Price List
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list/get-all [get]
-func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/price-list/ [get]
+func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
 	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
@@ -106,20 +121,24 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode:       PriceListCode,
-		CompanyId:           int32(companyId),
-		BrandId:             int32(brandId),
-		CurrencyId:          int32(currencyId),
+		CompanyId:           companyId,
+		BrandId:             brandId,
+		CurrencyId:          currencyId,
 		EffectiveDate:       effectiveDate,
-		ItemId:              int32(itemId),
-		ItemGroupId:         int32(itemGroupId),
-		ItemClassId:         int32(itemClassId),
+		ItemId:              itemId,
+		ItemGroupId:         itemGroupId,
+		ItemClassId:         itemClassId,
 		PriceListAmount:     priceListAmount,
 		PriceListModifiable: priceListModifiable,
 		AtpmSyncronize:      atpmSyncronize,
 		AtpmSyncronizeTime:  atpmSyncronizeTime,
 	}
 
-	result := r.pricelistservice.GetPriceList(priceListRequest)
+	result, err := r.pricelistservice.GetPriceList(priceListRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
@@ -131,16 +150,33 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 // @Tags Master : Price List
 // @param reqBody body masteritempayloads.PriceListResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list [post]
-func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/price-list/ [post]
+func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.PriceListResponse
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
-	create := r.pricelistservice.SavePriceList(formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.pricelistservice.SavePriceList(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.PriceListId == 0 {
 		message = "Create Data Successfully!"
@@ -158,13 +194,81 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 // @Tags Master : Price List
 // @param price_list_id path int true "price_list_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/price-list/{price_list_id} [patch]
-func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/price-list/{price_list_id} [patch]
+func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request) {
 
-	PriceListId, _ := strconv.Atoi(params.ByName("price_list_id"))
+	PriceListId, _ := strconv.Atoi(chi.URLParam(request, "price_list_id"))
 
-	response := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+	response, err := r.pricelistservice.ChangeStatusPriceList(int(PriceListId))
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,request *http.Request){
+	
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"brand_id":        queryValues.Get("brand_id"),
+		"item_group_id": queryValues.Get("item_group_id"),
+		"price_list_code":                             queryValues.Get("price_list_code"),
+		"item_class_id":                 queryValues.Get("item_class_id"),
+		"currency_id":                   queryValues.Get("currency_id"),
+		"effective_date":                 queryValues.Get("effective_date"),
+		"company_id":                   queryValues.Get("company_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, request *http.Request){
+	PriceListId :=chi.URLParam(request,"price_list_id")
+	response,err := r.pricelistservice.ActivatePriceList(PriceListId)
+	if err != nil{
+		exceptions.NewBadRequestException(writer,request,err)
+		return
+	}
+	payloads.NewHandleSuccess(writer,response,"Activate data successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) DeactivatePriceList (writer http.ResponseWriter, request *http.Request){
+	PriceListId := chi.URLParam(request,"price_list_id")
+	response,err := r.pricelistservice.DeactivatePriceList(PriceListId)
+	if err != nil{
+		exceptions.NewNotFoundException(writer,request,err)
+		return
+	}
+	payloads.NewHandleSuccess(writer,response,"Deactivate data successfully!", http.StatusOK)
+}
+
+func (r *PriceListControllerImpl) DeletePriceList (writer http.ResponseWriter, request *http.Request){
+	priceListId :=chi.URLParam(request,"price_list_id")
+	response,err := r.pricelistservice.DeletePriceList(priceListId)
+	if err != nil{
+		exceptions.NewNotFoundException(writer,request,err)
+		return
+	}
+	payloads.NewHandleSuccess(writer,response,"Deactivate data successfully!", http.StatusOK)
 }

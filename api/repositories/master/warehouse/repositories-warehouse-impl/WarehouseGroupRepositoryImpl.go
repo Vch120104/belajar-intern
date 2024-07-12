@@ -1,12 +1,16 @@
 package masterwarehouserepositoryimpl
 
 import (
+	exceptions "after-sales/api/exceptions"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	"after-sales/api/payloads/pagination"
 	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	utils "after-sales/api/utils"
+	"errors"
+	"net/http"
 
 	// masterwarehousegroupservice "after-sales/api/services/master/warehouse"
-	masterwarehouseentites "after-sales/api/entities/master/warehouse"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	// "after-sales/api/payloads/pagination"
 
 	"gorm.io/gorm"
@@ -19,9 +23,70 @@ func OpenWarehouseGroupImpl() masterwarehouserepository.WarehouseGroupRepository
 	return &WarehouseGroupImpl{}
 }
 
-func (r *WarehouseGroupImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, error) {
+// GetbyGroupCode implements masterwarehouserepository.WarehouseGroupRepository.
+func (r *WarehouseGroupImpl) GetbyGroupCode(tx *gorm.DB, groupCode string) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
+	entity := masterwarehouseentities.WarehouseGroup{}
+	response := masterwarehousepayloads.GetWarehouseGroupResponse{}
 
-	var warehouseGroup = masterwarehouseentites.WarehouseGroup{
+	err := tx.Model(&entity).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupCode: groupCode}).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+// GetWarehouseGroupDropdownbyId implements masterwarehouserepository.WarehouseGroupRepository.
+func (r *WarehouseGroupImpl) GetWarehouseGroupDropdownbyId(tx *gorm.DB, Id int) (masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
+	entity := masterwarehouseentities.WarehouseGroup{}
+	response := masterwarehousepayloads.GetWarehouseGroupDropdown{}
+
+	err := tx.Model(&entity).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupId: Id}).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+// GetWarehouseGroupDropdown implements masterwarehouserepository.WarehouseGroupRepository.
+func (r *WarehouseGroupImpl) GetWarehouseGroupDropdown(tx *gorm.DB) ([]masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
+	entity := masterwarehouseentities.WarehouseGroup{}
+	response := []masterwarehousepayloads.GetWarehouseGroupDropdown{}
+
+	err := tx.Model(&entity).
+		Scan(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	if len(response) == 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+
+	return response, nil
+}
+
+func (r *WarehouseGroupImpl) SaveWarehouseGroup(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptions.BaseErrorResponse) {
+
+	var warehouseGroup = masterwarehouseentities.WarehouseGroup{
 		IsActive:           utils.BoolPtr(request.IsActive),
 		WarehouseGroupId:   request.WarehouseGroupId,
 		WarehouseGroupCode: request.WarehouseGroupCode,
@@ -34,7 +99,10 @@ func (r *WarehouseGroupImpl) Save(tx *gorm.DB, request masterwarehousepayloads.G
 		Rows()
 
 	if err != nil {
-		return false, err
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -42,55 +110,60 @@ func (r *WarehouseGroupImpl) Save(tx *gorm.DB, request masterwarehousepayloads.G
 	return true, nil
 }
 
-func (r *WarehouseGroupImpl) GetById(tx *gorm.DB, warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, error) {
+func (r *WarehouseGroupImpl) GetByIdWarehouseGroup(tx *gorm.DB, warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
+	entity := masterwarehouseentities.WarehouseGroup{}
+	response := masterwarehousepayloads.GetWarehouseGroupResponse{}
 
-	var entities masterwarehouseentites.WarehouseGroup
-	var warehouseGroupResponse masterwarehousepayloads.GetWarehouseGroupResponse
-
-	rows, err := tx.Model(&entities).
-		Where(masterwarehousepayloads.GetWarehouseGroupResponse{
-			WarehouseGroupId: warehouseGroupId,
-		}).
-		Find(&warehouseGroupResponse).
-		First(&warehouseGroupResponse).
+	rows, err := tx.Model(&entity).
+		Where("warehouse_group_id = ?", warehouseGroupId).
+		First(&response).
 		Rows()
 
 	if err != nil {
-		return warehouseGroupResponse, err
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
 
-	return warehouseGroupResponse, nil
+	return response, nil
 }
 
-func (r *WarehouseGroupImpl) GetAll(tx *gorm.DB, request masterwarehousepayloads.GetAllWarehouseGroupRequest) ([]masterwarehousepayloads.GetWarehouseGroupResponse, error) {
-	var entities []masterwarehouseentites.WarehouseGroup
-	var warehouseGroupResponse []masterwarehousepayloads.GetWarehouseGroupResponse
-	tempRows := tx.
-		Model(&entities).
-		Where("warehouse_group_code like ?", "%"+request.WarehouseGroupCode+"%").
-		Where("warehouse_group_name like ?", "%"+request.WarehouseGroupName+"%")
+func (r *WarehouseGroupImpl) GetAllWarehouseGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := []masterwarehouseentities.WarehouseGroup{}
 
-	if request.IsActive != "" {
-		tempRows = tempRows.Where("is_active = ?", request.IsActive)
-	}
+	//ON PROGRESS JOIN WAREHOUSMASTER AND WAREHOUSELOCATION
+	baseModelQuery := tx.Model(&entities).Joins("WarehouseMaster")
 
-	rows, err := tempRows.
-		Scan(&warehouseGroupResponse).
-		Rows()
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
 	if err != nil {
-		return nil, err
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
 
-	return warehouseGroupResponse, nil
+	pages.Rows = entities
+
+	return pages, nil
 }
 
-func (r *WarehouseGroupImpl) ChangeStatus(tx *gorm.DB, warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, error) {
-	var entities masterwarehouseentites.WarehouseGroup
+func (r *WarehouseGroupImpl) ChangeStatusWarehouseGroup(tx *gorm.DB, warehouseGroupId int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masterwarehouseentities.WarehouseGroup
 	var warehouseGroupPayloads masterwarehousepayloads.GetWarehouseGroupResponse
 
 	rows, err := tx.Model(&entities).
@@ -101,7 +174,10 @@ func (r *WarehouseGroupImpl) ChangeStatus(tx *gorm.DB, warehouseGroupId int) (ma
 		Rows()
 
 	if err != nil {
-		return warehouseGroupPayloads, err
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -115,10 +191,13 @@ func (r *WarehouseGroupImpl) ChangeStatus(tx *gorm.DB, warehouseGroupId int) (ma
 		Rows()
 
 	if err != nil {
-		return warehouseGroupPayloads, err
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
 
-	return warehouseGroupPayloads, nil
+	return false, nil
 }

@@ -1,8 +1,12 @@
 package masteritemcontroller
 
 import (
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
@@ -13,14 +17,16 @@ import (
 	masteritemlevelservice "after-sales/api/services/master/item"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi/v5"
 )
 
 type ItemLevelController interface {
-	GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
-	ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params)
+	GetAll(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
+	ChangeStatus(writer http.ResponseWriter, request *http.Request)
+	GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request)
+	GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLevelControllerImpl struct {
@@ -33,12 +39,63 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 	}
 }
 
+// GetItemLevelLookUp implements ItemLevelController.
+func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	filter := map[string]string{
+		"mtr_item_level.item_level_code": queryValues.Get("item_level_1"),
+		"mtr_item_level.item_level_name": queryValues.Get("item_level_1_name"),
+		"B.item_level_code":              queryValues.Get("item_level_2"),
+		"B.item_level_name":              queryValues.Get("item_level_2_name"),
+		"C.item_level_code":              queryValues.Get("item_level_3"),
+		"C.item_level_name":              queryValues.Get("item_level_3_name"),
+		"D.item_level_code":              queryValues.Get("item_level_4"),
+		"D.item_level_name":              queryValues.Get("item_level_4_name"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	get, err := r.itemLevelService.GetItemLevelLookUp(internalCriteria, paginate, itemClassId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+
+}
+
+// GetItemLevelDropDown implements ItemLevelController.
+func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request) {
+	itemLevelId := chi.URLParam(request, "item_level")
+
+	get, err := r.itemLevelService.GetItemLevelDropDown(itemLevelId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+
+}
+
 // @Summary Get All Item Level
 // @Description Get All Item Level
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Success 200 {object} payloads.Response
 // @Param page query string true "Page"
 // @Param limit query string true "Limit"
@@ -50,34 +107,35 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 // @Param item_level_code query string false "Item Level Code"
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level [get]
-func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-level/ [get]
+func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	itemLevel := queryValues.Get("item_level")
-	itemClassCode := queryValues.Get("item_class_code")
-	itemLevelParent := queryValues.Get("item_level_parent")
-	itemLevelCode := queryValues.Get("item_level_code")
-	itemLevelName := queryValues.Get("item_level_name")
-	isActive := queryValues.Get("is_active")
 
-	get := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
-		ItemLevel:       itemLevel,
-		ItemClassCode:   itemClassCode,
-		ItemLevelParent: itemLevelParent,
-		ItemLevelCode:   itemLevelCode,
-		ItemLevelName:   itemLevelName,
-		IsActive:        isActive,
-	}, pagination.Pagination{
-		Limit:  limit,
-		SortOf: sortOf,
-		SortBy: sortBy,
-		Page:   page,
-	})
+	filter := map[string]string{
+		"mtr_item_level.item_level":        queryValues.Get("item_level"),
+		"mtr_item_class.item_class_code":   queryValues.Get("item_class_code"),
+		"mtr_item_level.item_level_parent": queryValues.Get("item_level_parent"),
+		"mtr_item_level.item_level_code":   queryValues.Get("item_level_code"),
+		"mtr_item_level.item_level_name":   queryValues.Get("item_level_name"),
+		"mtr_item_level.is_active":         queryValues.Get("is_active"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	get, err := r.itemLevelService.GetAll(internalCriteria, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
 }
@@ -87,16 +145,20 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level-by-id [get]
-func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-level/by-id/{item_level_id} [get]
+func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	itemLevelId, _ := strconv.Atoi(params.ByName("item_level_id"))
+	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
 
-	get := r.itemLevelService.GetById(itemLevelId)
+	get, err := r.itemLevelService.GetById(itemLevelId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
@@ -106,19 +168,32 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level [post]
-func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-level/ [post]
+func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritemlevelpayloads.SaveItemLevelRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
 
-	create := r.itemLevelService.Save(formRequest)
+	create, err := r.itemLevelService.Save(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
 
 	if formRequest.ItemLevelId == 0 {
 		message = "Create Data Successfully!"
@@ -134,16 +209,20 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Accept json
 // @Produce json
 // @Tags Master : Item Level
-// @Security BearerAuth
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/item-level/{item_level_id} [patch]
-func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/item-level/{item_level_id} [patch]
+func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	itemLevelId, _ := strconv.Atoi(params.ByName("item_level_id"))
+	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
 
-	response := r.itemLevelService.ChangeStatus(int(itemLevelId))
+	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

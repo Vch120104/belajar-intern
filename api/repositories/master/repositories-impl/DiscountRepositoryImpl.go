@@ -1,18 +1,17 @@
 package masterrepositoryimpl
 
 import (
-	masterentities "after-sales/api/entities/master"
+	masteritementities "after-sales/api/entities/master/item"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
+	"net/http"
+
+	exceptions "after-sales/api/exceptions"
 
 	"after-sales/api/utils"
-	"log"
-
-	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 type DiscountRepositoryImpl struct {
@@ -22,30 +21,29 @@ func StartDiscountRepositoryImpl() masterrepository.DiscountRepository {
 	return &DiscountRepositoryImpl{}
 }
 
-func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, error) {
-	entities := masterentities.Discount{}
-	var responses []masterpayloads.DiscountResponse
-	newLogger := logger.New(
-		log.New(log.Writer(), "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold: time.Second,
-			LogLevel:      logger.Info,
-			Colorful:      true,
-		},
-	)
+func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Discount{}
+	responses := []masterpayloads.DiscountResponse{}
 
-	tx.Logger = newLogger
 	//define base model
-	baseModelQuery := tx.Model(&entities)
+	baseModelQuery := tx.Model(&entities).Scan(&responses)
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
-	rows, _ := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
-	if len(responses) == 0 {
-		return pages, gorm.ErrRecordNotFound
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
-
+	if len(responses) == 0 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
 	defer rows.Close()
 
 	pages.Rows = responses
@@ -53,25 +51,29 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 	return pages, nil
 }
 
-func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpayloads.DiscountResponse, error) {
-	var Discounts []masterentities.Discount
+func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
+	var Discounts []masteritementities.Discount
 	response := []masterpayloads.DiscountResponse{}
 
-	newLogger := logger.New(
-		log.New(log.Writer(), "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold: time.Second,
-			LogLevel:      logger.Info,
-			Colorful:      true,
-		},
-	)
-
-	tx.Logger = newLogger
-
-	rows, _ := tx.Model(&Discounts).Where("is_active = 'true'").Scan(&response).Rows()
+	rows, err := tx.
+		Model(&Discounts).
+		Where(masteritementities.Discount{IsActive: true}).
+		Scan(&response).
+		Rows()
 
 	if len(response) == 0 {
-		return response, gorm.ErrRecordNotFound
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if err != nil {
+
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -79,19 +81,22 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpayloads.DiscountResponse, error) {
-	entities := masterentities.Discount{}
-	response := masterpayloads.DiscountResponse{}
+func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.Discount
+	var response masterpayloads.DiscountResponse
 
 	rows, err := tx.Model(&entities).
-		Where(masterentities.Discount{
+		Where(masteritementities.Discount{
 			DiscountCodeId: Id,
 		}).
 		First(&response).
 		Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -99,19 +104,22 @@ func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpay
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (masterpayloads.DiscountResponse, error) {
-	entities := masterentities.Discount{}
+func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Discount{}
 	response := masterpayloads.DiscountResponse{}
 
 	rows, err := tx.Model(&entities).
-		Where(masterentities.Discount{
+		Where(masteritementities.Discount{
 			DiscountCodeValue: Code,
 		}).
 		First(&response).
 		Rows()
 
 	if err != nil {
-		return response, err
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	defer rows.Close()
@@ -119,8 +127,8 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 	return response, nil
 }
 
-func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, error) {
-	entities := masterentities.Discount{
+func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Discount{
 		IsActive:                req.IsActive,
 		DiscountCodeId:          req.DiscountCodeId,
 		DiscountCodeValue:       req.DiscountCodeValue,
@@ -130,21 +138,27 @@ func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.Di
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, err
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
 	return true, nil
 }
 
-func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool, error) {
-	var entities masterentities.Discount
+func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.Discount
 
 	result := tx.Model(&entities).
-		Where("discount_code_id = ?", Id).
+		Where(masteritementities.Discount{DiscountCodeId: Id}).
 		First(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	if entities.IsActive {
@@ -156,7 +170,10 @@ func (r *DiscountRepositoryImpl) ChangeStatusDiscount(tx *gorm.DB, Id int) (bool
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, result.Error
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
 	}
 
 	return true, nil

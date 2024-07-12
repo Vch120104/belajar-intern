@@ -5,14 +5,16 @@ import (
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 
+	exceptions "after-sales/api/exceptions"
+
 	"gorm.io/gorm"
 )
 
 type DiscountRepository interface {
-	GetAllDiscount(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, error)
-	GetAllDiscountIsActive(*gorm.DB) ([]masterpayloads.DiscountResponse, error)
-	GetDiscountById(*gorm.DB, int) (masterpayloads.DiscountResponse, error)
-	GetDiscountByCode(*gorm.DB, string) (masterpayloads.DiscountResponse, error)
-	SaveDiscount(*gorm.DB, masterpayloads.DiscountResponse) (bool, error)
-	ChangeStatusDiscount(*gorm.DB, int) (bool, error)
+	GetAllDiscount(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllDiscountIsActive(*gorm.DB) ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
+	GetDiscountById(*gorm.DB, int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
+	GetDiscountByCode(*gorm.DB, string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
+	SaveDiscount(*gorm.DB, masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusDiscount(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }
