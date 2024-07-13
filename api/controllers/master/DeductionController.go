@@ -24,6 +24,7 @@ type DeductionController interface {
 	SaveDeductionList(writer http.ResponseWriter, request *http.Request)
 	SaveDeductionDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusDeduction(writer http.ResponseWriter, request *http.Request)
+	UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type DeductionControllerImpl struct {
@@ -56,6 +57,7 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
+		"deduction_id":   queryValues.Get("deduction_id"),
 		"is_active":      queryValues.Get("is_active"),
 		"deduction_name": queryValues.Get("deduction_name"),
 		"effective_date": queryValues.Get("effective_date"),
@@ -159,7 +161,7 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	if DeductionRequest.DeductionListId == 0 {
+	if DeductionRequest.DeductionId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -222,4 +224,25 @@ func (r *DeductionControllerImpl) ChangeStatusDeduction(writer http.ResponseWrit
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *DeductionControllerImpl) UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request) {
+	DeductionDetailRequest := masterpayloads.DeductionDetailUpdate{}
+	DeductionId, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	err := jsonchecker.ReadFromRequestBody(request, &DeductionDetailRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, DeductionDetailRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	res, err := r.DeductionService.UpdateDeductionDetail(DeductionId, DeductionDetailRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Update Data Successfully!", http.StatusOK)
 }

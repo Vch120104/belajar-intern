@@ -48,12 +48,22 @@ func (s *IncentiveMasterServiceImpl) GetIncentiveMasterById(id int) (masterpaylo
 	return results, nil
 }
 
-func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *IncentiveMasterServiceImpl) SaveIncentiveMaster(req masterpayloads.IncentiveMasterRequest) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.IncentiveMasterRepo.SaveIncentiveMaster(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masterentities.IncentiveMaster{}, err
+	}
+	return results, nil
+}
+
+func (s *IncentiveMasterServiceImpl) UpdateIncentiveMaster(req masterpayloads.IncentiveMasterRequest, id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.IncentiveMasterRepo.UpdateIncentiveMaster(tx, req, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masterentities.IncentiveMaster{}, err
 	}
 	return results, nil
 }

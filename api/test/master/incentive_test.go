@@ -44,11 +44,15 @@ func (m *MockIncentiveMasterService) ChangeStatusIncentiveMaster(id int) (master
 	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockIncentiveMasterService) SaveIncentiveMaster(payload masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
+func (m *MockIncentiveMasterService) SaveIncentiveMaster(payload masterpayloads.IncentiveMasterRequest) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
 	args := m.Called(payload)
-	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
+func (m *MockIncentiveMasterService) UpdateIncentiveMaster(req masterpayloads.IncentiveMasterRequest, id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
+	args := m.Called(req, id)
+	return args.Get(0).(masterentities.IncentiveMaster), args.Get(1).(*exceptions.BaseErrorResponse)
+}
 func TestSaveIncentiveMaster_Success(t *testing.T) {
 	payload := masterpayloads.IncentiveMasterRequest{
 		IncentiveLevelId:      1,
@@ -70,7 +74,7 @@ func TestSaveIncentiveMaster_Success(t *testing.T) {
 	statusCode := rr.Code
 	fmt.Println("Status code:", statusCode)
 
-	// Periksa apakah ini pembuatan data baru atau pembaruan data yang sudah ada
+	// Check whether this is a new data creation or an update of existing data
 	expectedStatusCode := http.StatusOK
 	expectedMessage := "Update Data Successfully!"
 
@@ -87,7 +91,7 @@ func TestSaveIncentiveMaster_Success(t *testing.T) {
 
 	fmt.Println("Response:", response)
 
-	// Periksa pesan dan status code
+	// Check message and status code
 	assert.Equal(t, expectedMessage, response["message"], "Message should match expected")
 	assert.Equal(t, expectedStatusCode, int(response["status_code"].(float64)), "Status code should match expected")
 }

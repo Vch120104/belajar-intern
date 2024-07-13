@@ -277,24 +277,24 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, nil, "Item location deleted successfully", http.StatusOK)
 }
 
-func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, request *http.Request){
-	queryValues:=request.URL.Query()
-	queryParams:=map[string]string{
-		"warehouse_group_name":queryValues.Get("warehouse_group_name"),
-		"warehouse_group_code":queryValues.Get("warehouse_group_code"),
-		"warehouse_code":queryValues.Get("warehouse_code"),
-		"warehouse_name":queryValues.Get("warehouse_name"),
-		"item_id":queryValues.Get("item_id"),
+func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"warehouse_code":       queryValues.Get("warehouse_code"),
+		"warehouse_name":       queryValues.Get("warehouse_name"),
+		"item_id":              queryValues.Get("item_id"),
 	}
-	paginate:=pagination.Pagination{
+	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	result,totalpage,totalrows,err:=r.ItemLocationService.GetAllItemLoc(criteria,paginate)
-	if err != nil{
+	result, totalpage, totalrows, err := r.ItemLocationService.GetAllItemLoc(criteria, paginate)
+	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
@@ -305,7 +305,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, r
 	}
 }
 
-func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request){
+func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
 	ItemLocationIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
 
 	result, err := r.ItemLocationService.GetByIdItemLoc(ItemLocationIds)
@@ -317,7 +317,7 @@ func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, request *http.Request){
+func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.SaveItemlocation
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -336,16 +336,16 @@ func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, req
 	}
 }
 
-func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, request *http.Request){
-	itemlocationids:=chi.URLParam(request,"item_location_id")
-	itemlocationidint,err:=strconv.Atoi(itemlocationids)
+func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, request *http.Request) {
+	itemlocationids := chi.URLParam(request, "item_location_id")
+	itemlocationidint, err := strconv.Atoi(itemlocationids)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
 			Err: errors.New("invalid item_location_id"),
 		})
 		return
 	}
-	if deleted,err:=r.ItemLocationService.DeleteItemLoc([]int{itemlocationidint});err != nil {
+	if deleted, err := r.ItemLocationService.DeleteItemLoc([]int{itemlocationidint}); err != nil {
 		exceptions.NewAppException(writer, request, err)
 	} else if deleted {
 		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)
