@@ -166,7 +166,7 @@ func (r *OperationCodeControllerImpl) UpdateOperationCode(writer http.ResponseWr
 	OperationCodeId,_ := strconv.Atoi(chi.URLParam(request,"operation_id"))
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
