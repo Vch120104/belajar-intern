@@ -2,6 +2,7 @@ package masteroperationrepositoryimpl
 
 import (
 	"after-sales/api/config"
+	// masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	"errors"
@@ -518,34 +519,34 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationDocumentRequireme
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) AddOperationLevel(tx *gorm.DB, pages pagination.Pagination)(pagination.Pagination,*exceptions.BaseErrorResponse){
-	OperationLevelEtity:= []masteroperationentities.OperationLevel{}
-	OperationEntries:= []masteroperationentities.OperationEntries{}
-	OperationLevelPayloads:= []masteroperationpayloads.OperationLevelGetAll{}
+// func (r *OperationModelMappingRepositoryImpl) AddOperationLevel(tx *gorm.DB, pages pagination.Pagination)(pagination.Pagination,*exceptions.BaseErrorResponse){
+// 	OperationLevelEtity:= []masteroperationentities.OperationLevel{}
+// 	OperationEntries:= []masteroperationentities.OperationEntries{}
+// 	OperationLevelPayloads:= []masteroperationpayloads.OperationLevelGetAll{}
 
-	_,err:=tx.Model(&OperationEntries).
-	Joins("Inner Join mtr_operation_group On mtr_operation_entries.operation_group_id=mtr_operation_group.operation_group_id").
-	Joins("Inner Join mtr_operation_section On mtr_operation_section.operation_section_id=mtr_operation_entries.operation_section_id").
-	Joins("Inner Join mtr_operation_key on mtr_operation_key.operation_key_id=mtr_operation_entries.operation_key_id").
-	Group("mtr_operation_entries.operation_entries_code,mtr_operation_entries.operation_entries_description,mtr_operation_group.operation_group_code,mtr_operation_group.operation_group_description,mtr_operation_section.operation_section_code,mtr_operation_section.operation_section_description,mtr_operation_key.operation_key_code,mtr_operation_key.operation_key_code,mtr_operation_code_entries.is_active").
-	Scan(&OperationLevelPayloads).Rows()
-	if err != nil{
-		return pages,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	if len(OperationLevelPayloads)==0{
-		return pages,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	// defer query.close{}
-	pages.Rows=OperationLevelPayloads
-	return pages,nil
-}
+// 	_,err:=tx.Model(&OperationEntries).
+// 	Joins("Inner Join mtr_operation_group On mtr_operation_entries.operation_group_id=mtr_operation_group.operation_group_id").
+// 	Joins("Inner Join mtr_operation_section On mtr_operation_section.operation_section_id=mtr_operation_entries.operation_section_id").
+// 	Joins("Inner Join mtr_operation_key on mtr_operation_key.operation_key_id=mtr_operation_entries.operation_key_id").
+// 	Group("mtr_operation_entries.operation_entries_code,mtr_operation_entries.operation_entries_description,mtr_operation_group.operation_group_code,mtr_operation_group.operation_group_description,mtr_operation_section.operation_section_code,mtr_operation_section.operation_section_description,mtr_operation_key.operation_key_code,mtr_operation_key.operation_key_code,mtr_operation_code_entries.is_active").
+// 	Scan(&OperationLevelPayloads).Rows()
+// 	if err != nil{
+// 		return pages,&exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        err,
+// 		}
+// 	}
+// 	if len(OperationLevelPayloads)==0{
+// 		return pages,&exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        err,
+// 		}
+// 	}
+// 	// defer query.close{}
+// 	pages.Rows=OperationLevelPayloads
+// 	return pages,nil
+// }
 
-func (r *OperationModelMappingRepositoryImpl) Delete OperationLevel(tx *gorm.DB, ids string)(bool,*exceptions.BaseErrorResponse){
-	
-}
+// func (r *OperationModelMappingRepositoryImpl) DeleteOperationLevel(tx *gorm.DB, ids string)(bool,*exceptions.BaseErrorResponse){
+// 	err:=tx.Model(masteroperationentities.OperationModelMapping).Delete()
+// }

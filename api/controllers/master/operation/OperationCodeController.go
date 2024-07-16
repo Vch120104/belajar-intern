@@ -22,6 +22,7 @@ type OperationCodeController interface {
 	GetByCodeOperationCode(writer http.ResponseWriter, request *http.Request)
 	SaveOperationCode(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request)
+	UpdateOperationCode(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationCodeControllerImpl struct {
@@ -126,7 +127,6 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
 		return
 	}
-	var message = ""
 
 	create, err := r.operationCodeService.SaveOperationCode(formRequest)
 
@@ -135,13 +135,7 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 		return
 	}
 
-	if formRequest.OperationId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Patch Operation Code
@@ -165,4 +159,24 @@ func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.Resp
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationCodeControllerImpl) UpdateOperationCode(writer http.ResponseWriter, request *http.Request){
+	var formRequest masteroperationpayloads.OperationCodeUpdate
+
+	OperationCodeId,_ := strconv.Atoi(chi.URLParam(request,"operation_id"))
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		return
+	}
+
+	update, err := r.operationCodeService.UpdateItemCode(OperationCodeId,formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Create Data Successfully!", http.StatusOK)
 }

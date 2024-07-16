@@ -1,6 +1,7 @@
 package masteroperationserviceimpl
 
 import (
+	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -57,7 +58,7 @@ func (s *OperationCodeServiceImpl) GetOperationCodeByCode(code string) (masterop
 	return results, nil
 }
 
-func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (bool, *exceptions.BaseErrorResponse) {
+func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads.OperationCodeSave) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx)
 	result, err := s.operationCodeRepo.SaveOperationCode(tx, req)
@@ -67,13 +68,23 @@ func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads
 	return result, nil
 }
 
-func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Statement.DB.Begin()
 	defer helper.CommitOrRollback(tx)
-	result, err := s.operationCodeRepo.ChangeStatusItemSubstitute(tx, id)
+	result, err := s.operationCodeRepo.ChangeStatusItemCode(tx, id)
 
 	if err != nil {
 		return result, err
 	}
 	return result, nil
+}
+
+func (s *OperationCodeServiceImpl) UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate)(masteroperationentities.OperationCode,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx)
+	result,err := s.operationCodeRepo.UpdateItemCode(tx,id,req)
+	if err != nil{
+		return result,err
+	}
+	return result,nil
 }
