@@ -10,7 +10,6 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -27,7 +26,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	var variantResponses []masteritempayloads.UnitVariantResponses
 
 	model := masteritementities.ItemDetail{}
-	baseModelQuery := tx.Model(&model)
+	baseModelQuery := tx.Model(&model).Where(masteritementities.ItemDetail{ItemId: itemId})
 
 	rows, err := baseModelQuery.Scan(&responses).Rows()
 
@@ -48,7 +47,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	}
 
 	//// Brand
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "api/sales/unit-brand-dropdown"
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand-dropdown"
 
 	if errBrand := utils.Get(brandUrl, &brandResponses, nil); errBrand != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -67,7 +66,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	}
 
 	//// Unit Model
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "api/sales/unit-model-dropdown"
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model-dropdown"
 
 	if errModel := utils.Get(unitModelUrl, &modelResponses, nil); errModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -86,7 +85,7 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 	}
 
 	//// Unit Variant
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "api/sales/unit-variant?page=" + strconv.Itoa(pages.Page) + "&limit=" + strconv.Itoa(pages.Limit)
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=1000"
 
 	if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{

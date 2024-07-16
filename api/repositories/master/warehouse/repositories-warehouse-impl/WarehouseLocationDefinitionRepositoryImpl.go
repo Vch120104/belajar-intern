@@ -32,7 +32,7 @@ func OpenWarehouseLocationDefinitionImpl() masterwarehouserepository.WarehouseLo
 	return &WarehouseLocationDefinitionRepositoryImpl{}
 }
 
-func (r *WarehouseLocationDefinitionRepositoryImpl) Save(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptions.BaseErrorResponse) {
+func (r *WarehouseLocationDefinitionRepositoryImpl) Save(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (masterwarehouseentities.WarehouseLocationDefinition, *exceptions.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseLocationDefinition{
 		IsActive:                               request.IsActive,
@@ -46,23 +46,23 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) Save(tx *gorm.DB, request ma
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return warehouseMaster, nil
 }
 
-func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptions.BaseErrorResponse) {
+func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (masterwarehouseentities.WarehouseLocationDefinition, *exceptions.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseLocationDefinition{
 		WarehouseLocationDefinitionId:          request.WarehouseLocationDefinitionId,
@@ -75,20 +75,20 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) SaveData(tx *gorm.DB, reques
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return masterwarehouseentities.WarehouseLocationDefinition{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return warehouseMaster, nil
 }
 
 func (r *WarehouseLocationDefinitionRepositoryImpl) GetById(tx *gorm.DB, Id int) (masterwarehousepayloads.WarehouseLocationDefinitionResponse, *exceptions.BaseErrorResponse) {
@@ -147,7 +147,7 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "No data found",
+			Err:        errors.New(""),
 		}
 	}
 
@@ -240,9 +240,10 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) PopupWarehouseLocationLevel(
 
 	// Check if responses are empty
 	if len(responses) == 0 {
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "No data found",
+			Err:        err,
 		}
 	}
 

@@ -2,11 +2,10 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -25,6 +24,7 @@ import (
 
 type MarkupMasterController interface {
 	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request)
+	GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request)
 	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request)
 	GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request)
 	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request)
@@ -76,11 +76,25 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 	result, err := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request) {
+
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	result, err := r.markupMasterService.GetMarkupMasterById(markupMasterId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Markup Master Description by code
@@ -99,7 +113,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 	result, err := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -111,7 +125,7 @@ func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.Resp
 	result, err := r.markupMasterService.GetAllMarkupMasterIsActive()
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -134,12 +148,12 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -175,7 +189,7 @@ func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.Respon
 	response, err := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("data Not Found"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

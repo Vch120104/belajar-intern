@@ -3,7 +3,6 @@ package masteroperationcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
-	"errors"
 
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -76,7 +75,7 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 	result, err := r.operationsectionservice.GetAllOperationSectionList(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -98,7 +97,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.Res
 
 	result, err := r.operationsectionservice.GetOperationSectionById(int(operationSectionId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -121,7 +120,7 @@ func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.Res
 	result, err := r.operationsectionservice.GetSectionCodeByGroupId(groupId)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -146,7 +145,7 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 
 	result, err := r.operationsectionservice.GetOperationSectionName(operationGroupId, section_code)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -171,7 +170,7 @@ func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.Respon
 	create, err := r.operationsectionservice.SaveOperationSection(formRequest)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -200,7 +199,7 @@ func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer htt
 	response, err := r.operationsectionservice.ChangeStatusOperationSection(int(operationSectionId))
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

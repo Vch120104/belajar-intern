@@ -13,12 +13,15 @@ import (
 type BomRepository interface {
 	GetBomMasterList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetBomMasterById(*gorm.DB, int) (masteritempayloads.BomMasterRequest, *exceptions.BaseErrorResponse)
-	SaveBomMaster(*gorm.DB, masteritempayloads.BomMasterRequest) (bool, *exceptions.BaseErrorResponse)
+	SaveBomMaster(*gorm.DB, masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
+	UpdateBomMaster(*gorm.DB, int, masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	ChangeStatusBomMaster(tx *gorm.DB, Id int) (masteritementities.Bom, *exceptions.BaseErrorResponse)
+
 	GetBomDetailList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetBomDetailById(*gorm.DB, int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse)
-	GetBomDetailByIds(*gorm.DB, int) ([]masteritempayloads.BomDetailListResponse, *exceptions.BaseErrorResponse)
-	SaveBomDetail(*gorm.DB, masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse)
-	GetBomItemList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetBomDetailById(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	SaveBomDetail(*gorm.DB, masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
+	UpdateBomDetail(*gorm.DB, int, masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	DeleteByIds(*gorm.DB, []int) (bool, *exceptions.BaseErrorResponse)
+
+	GetBomItemList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

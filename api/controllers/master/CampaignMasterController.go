@@ -8,7 +8,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -49,14 +48,8 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 
 	create, err := r.CampaignMasterService.PostCampaignMaster(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("conflict error"))
+		exceptions.NewConflictException(writer, request, err)
 		return
-	}
-
-	if formRequest.CampaignId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
 	}
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
@@ -69,7 +62,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 
 	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 	message = "Create Data Successfully!"
@@ -83,7 +76,7 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 	var message = ""
 	response, err := r.CampaignMasterService.PostCampaignMasterDetailFromHistory(CampaignId1, CampaignId2)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 	message = "Create Data Successfully!"
@@ -95,7 +88,7 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 	CampaignId, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
 	response, err := r.CampaignMasterService.ChangeStatusCampaignMaster(CampaignId)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", 200)
 }
@@ -103,25 +96,25 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
 	idhead, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
-	response, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId, idhead)
+	_,id, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId, idhead)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, id, "Update Data Successfully!", http.StatusOK)
 }
 
 func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
 	idhead, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
-	response, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId, idhead)
+	_,id, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId, idhead)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, id, "Update Data Successfully!", http.StatusOK)
 }
 
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.ResponseWriter, request *http.Request) {
@@ -179,7 +172,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 	result, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -228,11 +221,12 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
+	LineTypeId,_ := strconv.Atoi(chi.URLParam(request,"line_type_id"))
 
 	CampaignDetailId, _ := strconv.Atoi(CampaignDetailIdstr)
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
-	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, formRequest)
+	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId,LineTypeId, formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

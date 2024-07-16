@@ -2,7 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -23,6 +23,10 @@ type ItemLocationController interface {
 	PopupItemLocation(writer http.ResponseWriter, request *http.Request)
 	AddItemLocation(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLocation(writer http.ResponseWriter, request *http.Request)
+	GetAllItemLoc(writer http.ResponseWriter, request *http.Request)
+	GetByIdItemLoc(writer http.ResponseWriter, request *http.Request)
+	SaveItemLoc(writer http.ResponseWriter, request *http.Request)
+	DeleteItemLoc(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLocationControllerImpl struct {
@@ -68,7 +72,7 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.PopupItemLocation(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -107,7 +111,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocation(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -135,7 +139,7 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 
 	create, err := r.ItemLocationService.SaveItemLocation(formRequest)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.ItemLocationId == 0 {
@@ -183,7 +187,7 @@ func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWri
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/detail/all [get]
+// @Router /v1/item-location/detail [get]
 func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -208,7 +212,7 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocationDetail(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -226,10 +230,10 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Produce json
 // @Tags Master : Item Location
 // @Param item_location_id path int true "Item Location Detail ID"
-// @param reqBody body masteritempayloads.ItemLocationResponse true "Form Request"
+// @param reqBody body masteritempayloads.ItemLocationDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/{item_location_id}/detail [post]
+// @Router /v1/item-location/detail [post]
 func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter, request *http.Request) {
 	itemLocID, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
 
@@ -237,7 +241,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 	helper.ReadFromRequestBody(request, &formRequest)
 
 	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -252,7 +256,7 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 // @Param item_location_detail_id path int true "item_location_detail_id"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/all/detail/{item_location_detail_id} [delete]
+// @Router /v1/item-location/detail/{item_location_detail_id} [delete]
 func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
 	itemLocationID, err := strconv.Atoi(chi.URLParam(request, "item_location_detail_id"))
@@ -265,10 +269,87 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 	// Memanggil service untuk menghapus item lokasi
 	if deleteErr := r.ItemLocationService.DeleteItemLocation(itemLocationID); deleteErr != nil {
 		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid data id not found"))
+		exceptions.NewNotFoundException(writer, request, deleteErr)
 		return
 	}
 
 	// Jika berhasil, kirim respons berhasil
 	payloads.NewHandleSuccess(writer, nil, "Item location deleted successfully", http.StatusOK)
+}
+
+func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"warehouse_code":       queryValues.Get("warehouse_code"),
+		"warehouse_name":       queryValues.Get("warehouse_name"),
+		"item_id":              queryValues.Get("item_id"),
+	}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	result, totalpage, totalrows, err := r.ItemLocationService.GetAllItemLoc(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	if len(result) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
+	ItemLocationIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+
+	result, err := r.ItemLocationService.GetByIdItemLoc(ItemLocationIds)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.SaveItemlocation
+	var message = ""
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	create, err := r.ItemLocationService.SaveItemLoc(formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	if formRequest.ItemLocationId == 0 {
+		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
+	} else {
+		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	}
+}
+
+func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, request *http.Request) {
+	itemlocationids := chi.URLParam(request, "item_location_id")
+	itemlocationidint, err := strconv.Atoi(itemlocationids)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			Err: errors.New("invalid item_location_id"),
+		})
+		return
+	}
+	if deleted, err := r.ItemLocationService.DeleteItemLoc([]int{itemlocationidint}); err != nil {
+		exceptions.NewAppException(writer, request, err)
+	} else if deleted {
+		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
+	}
 }

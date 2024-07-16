@@ -21,7 +21,7 @@ func StartOperationCodeRepositoryImpl() masteroperationrepository.OperationCodeR
 	return &OperationCodeRepositoryImpl{}
 }
 
-func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB,filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteroperationentities.OperationCode{}
 	//define base model
 	baseModelQuery := tx.Model(&entities)
@@ -61,7 +61,7 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -69,7 +69,7 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) 
 	return response, nil
 }
 
-func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse){
+func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{}
 	response := masteroperationpayloads.OperationCodeResponse{}
 
@@ -83,7 +83,7 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code s
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -94,6 +94,7 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code s
 func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req masteroperationpayloads.OperationCodeSave) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{
 		IsActive:                req.IsActive,
+		OperationId:             req.OperationId,
 		OperationCode:           req.OperationCode,
 		OperationName:           req.OperationName,
 		OperationUsingIncentive: req.OperationUsingIncentive,
@@ -115,7 +116,7 @@ func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req mastero
 		}
 	}
 
-	if len(req.OperationCode) > 10 || len(req.OperationCode)>200 {
+	if len(req.OperationCode) > 10 || len(req.OperationCode) > 200 {
 		// errMessage := "Operation Group Code max 2 characters"
 
 		return masteroperationentities.OperationCode{}, &exceptions.BaseErrorResponse{

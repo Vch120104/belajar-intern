@@ -2,13 +2,12 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -19,6 +18,7 @@ type IncentiveMasterController interface {
 	GetAllIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 	GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request)
 	SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request)
+	UpdateIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -113,26 +113,49 @@ func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.Respo
 // @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/incentive/ [post]
+// @Router /v1/incentive [post]
 func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.IncentiveMasterRequest
-	var message string
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
+	entity, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	if formRequest.IncentiveLevelId == 0 {
-		message = "Create Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
+		payloads.NewHandleSuccess(writer, entity, "Save Data Successfully!", http.StatusCreated)
 	} else {
-		message = "Update Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+		payloads.NewHandleSuccess(writer, entity, "Update Data Successfully!", http.StatusOK)
 	}
+}
+
+// @Summary Update Incentive Master
+// @Description REST API Incentive Master
+// @Accept json
+// @Produce json
+// @Tags Master : Incentive Master
+// @param reqBody body masterpayloads.IncentiveMasterRequest true "Form Request"
+// @param incentive_level_id path int true "incentive_level_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/incentive/{incentive_level_id} [put]
+
+func (r *IncentiveMasterControllerImpl) UpdateIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
+	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+
+	var formRequest masterpayloads.IncentiveMasterRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	entity, err := r.IncentiveMasterService.UpdateIncentiveMaster(formRequest, IncentiveLevelIds)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Incentive Master
@@ -150,7 +173,7 @@ func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.
 
 	entity, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid incentive_level_id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

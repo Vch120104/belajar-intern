@@ -1,4 +1,4 @@
-package masteritemcontroller
+	package masteritemcontroller
 
 import (
 	helper "after-sales/api/helper"
@@ -19,6 +19,7 @@ type LandedCostMasterController interface {
 	SaveLandedCostMaster(writer http.ResponseWriter, request *http.Request)
 	ActivateLandedCostMaster(writer http.ResponseWriter, request *http.Request)
 	DeactivateLandedCostmaster(writer http.ResponseWriter, request *http.Request)
+	UpdateLandedCostMaster(writer http.ResponseWriter, request *http.Request)
 }
 
 type LandedCostMasterControllerImpl struct {
@@ -61,13 +62,12 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
+	result, totalpages, totalrows, err := r.LandedCostService.GetAllLandedCost(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "success", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 }
 
 // @Summary Get Landed Cost Master By Id
@@ -103,7 +103,7 @@ func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseW
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/ [post]
 func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masteritempayloads.LandedCostMasterPayloads
+	var formRequest masteritempayloads.LandedCostMasterRequest
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
 
@@ -132,8 +132,7 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/activate/{landed_cost_id}  [patch]
 func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	queryId := query.Get("landed_cost_id")
+	queryId := chi.URLParam(request,"landed_cost_id")
 	response, err := r.LandedCostService.ActivateLandedCostMaster(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -152,12 +151,24 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/deactivate/{landed_cost_id} [patch]
 func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	queryId := query.Get("landed_cost_id")
+	queryId := chi.URLParam(request,"landed_cost_id")
 	response, err := r.LandedCostService.DeactivateLandedCostMaster(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *LandedCostMasterControllerImpl) UpdateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.LandedCostMasterUpdateRequest
+	query, _ := strconv.Atoi(chi.URLParam(request, "landed_cost_id"))
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	update, err := r.LandedCostService.UpdateLandedCostMaster(query, formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }

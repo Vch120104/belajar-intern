@@ -2,7 +2,6 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"errors"
 
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -23,6 +22,7 @@ type ItemPackageController interface {
 	SaveItemPackage(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageById(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request)
+	GetItemPackageByCode(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPackageControllerImpl struct {
@@ -33,6 +33,19 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 	return &ItemPackageControllerImpl{
 		ItemPackageService: ItemPackageService,
 	}
+}
+
+// GetItemPackageByCode implements ItemPackageController.
+func (r *ItemPackageControllerImpl) GetItemPackageByCode(writer http.ResponseWriter, request *http.Request) {
+	itemPackageCode := chi.URLParam(request, "item_package_code")
+
+	result, err := r.ItemPackageService.GetItemPackageByCode(itemPackageCode)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Item Packages
@@ -126,14 +139,14 @@ func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid format request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

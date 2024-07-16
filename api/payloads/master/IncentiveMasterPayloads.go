@@ -21,6 +21,7 @@ type IncentiveMasterRequest struct {
 	IncentiveLevelCode    int     `json:"incentive_level_code"`
 	JobPositionId         int     `json:"job_position_id"`
 	IncentiveLevelPercent float64 `json:"incentive_level_percent"`
+	IsActive              bool    `json:"is_active"`
 }
 
 type JobPositionResponse struct {

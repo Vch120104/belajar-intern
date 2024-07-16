@@ -29,8 +29,8 @@ func StartWarrantyFreeServiceService(warrantyFreeServiceRepo masterrepository.Wa
 
 func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.warrantyFreeServiceRepo.GetAllWarrantyFreeService(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -39,8 +39,8 @@ func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterConditi
 
 func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -50,7 +50,6 @@ func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map
 
 func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.WarrantyFreeServicesId != 0 {
 		_, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, req.WarrantyFreeServicesId)
@@ -60,6 +59,7 @@ func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpaylo
 	}
 
 	results, err := s.warrantyFreeServiceRepo.SaveWarrantyFreeService(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -68,7 +68,6 @@ func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpaylo
 
 func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
 
@@ -77,6 +76,7 @@ func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int)
 	}
 
 	results, err := s.warrantyFreeServiceRepo.ChangeStatusWarrantyFreeService(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

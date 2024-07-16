@@ -108,7 +108,7 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondi
 
 		// Fetch warehouse data if warehouse ID is not zero
 		if response.WarehouseId != 0 {
-			warehouseURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-master/by-id/" + strconv.Itoa(response.WarehouseId)
+			warehouseURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-master/" + strconv.Itoa(response.WarehouseId)
 			fmt.Println("Fetching warehouse_id data from:", warehouseURL)
 			if err := utils.Get(warehouseURL, &getWarehouseResponse, nil); err != nil {
 				return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -281,9 +281,10 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 
 	// Check if responses are empty
 	if len(responses) == 0 {
+		// notFoundErr := exceptions.NewNotFoundError("No data found")
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    " data not found",
+			Err:        err,
 		}
 	}
 
@@ -327,4 +328,115 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLocation(tx *gorm.DB, Id int) *ex
 
 	// Jika data berhasil dihapus, kembalikan nil untuk error
 	return nil
+}
+
+func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var responses []masteritempayloads.ItemLocationGetAllResponse
+
+	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationGetAllResponse{})
+
+	var internalServiceFilter []utils.FilterCondition
+	for _, condition := range filtercondition {
+		for j := 0; j < responseStruct.NumField(); j++ {
+			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, condition)
+				break
+			}
+		}
+	}
+
+	tableStruct := masteritempayloads.ItemLocationGetAllResponse{}
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
+
+	err := whereQuery.Find(&responses).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
+		}
+	}
+
+	if len(responses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
+		}
+	}
+
+	var mapResponses []map[string]interface{}
+
+	// Iterate over responses and convert them to maps
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"item_location_id":        response.ItemLocationId,
+			"item_id":                 response.ItemId,
+			"item_code":               response.ItemCode,
+			"item_name":               response.ItemName,
+			"stock_opname":            response.StockOpname,
+			"warehouse_id":            response.WarehouseId,
+			"warehouse_name":          response.WarehouseName,
+			"warehouse_code":          response.WarehouseCode,
+			"warehouse_group_id":      response.WarehouseGroupId,
+			"warehouse_group_name":    response.WarehouseGroupName,
+			"warehouse_group_code":    response.WarehouseGroupCode,
+			"warehouse_location_id":   response.WarehouseLocationId,
+			"warehouse_location_name": response.WarehouseLocationName,
+			"warehouse_location_code": response.WarehouseLocationCode,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
+
+	return paginatedData, totalPages, totalRows, nil
+}
+
+func (r *ItemLocationRepositoryImpl) GetByIdItemLoc(tx *gorm.DB, id int) (masteritempayloads.ItemLocationGetByIdResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemLocation{}
+	response := masteritempayloads.ItemLocationGetByIdResponse{}
+
+	result := tx.Model(&entities).Select("mtr_location_item.*,mtr_item.item_name,mtr_item.item_code,mtr_warehouse_location.warehouse_location_code,mtr_warehouse_location.warehouse_location_name").
+		Where("item_location_id=?", id).
+		Joins("Join mtr_item on mtr_item.item_id = mtr_location_item.item_id").
+		Joins("Join mtr_warehouse_location on mtr_warehouse_location.warehouse_location_id=mtr_location_item.warehouse_location_id").
+		Where("mtr_location_item.item_location_id=?", id).Scan(&response)
+
+	if result.Error != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
+		}
+	}
+	return response, nil
+}
+
+func (r *ItemLocationRepositoryImpl) SaveItemLoc(tx *gorm.DB, req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemLocation{
+		ItemLocationId:      req.ItemLocationId,
+		WarehouseGroupId:    req.WarehouseGroupId,
+		ItemId:              req.ItemId,
+		WarehouseId:         req.WarehouseId,
+		WarehouseLocationId: req.WarehouseLocationId,
+	}
+	err := tx.Save(&entities).Error
+	if err != nil {
+		return masteritementities.ItemLocation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
+	}
+	return entities, nil
+}
+
+func (r *ItemLocationRepositoryImpl) DeleteItemLoc(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.ItemLocation
+	if err := tx.Delete(&entities, ids).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }

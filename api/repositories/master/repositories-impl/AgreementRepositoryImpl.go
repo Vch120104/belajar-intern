@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -41,7 +42,6 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 		}
 	}
 
-	// Copying values from entities to response
 	response.AgreementId = entities.AgreementId
 	response.AgreementCode = entities.AgreementCode
 	response.IsActive = entities.IsActive
@@ -57,7 +57,7 @@ func (r *AgreementRepositoryImpl) GetAgreementById(tx *gorm.DB, AgreementId int)
 	return response, nil
 }
 
-func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	entities := masterentities.Agreement{
 		AgreementCode:     req.AgreementCode,
 		BrandId:           req.BrandId,
@@ -74,13 +74,42 @@ func (r *AgreementRepositoryImpl) SaveAgreement(tx *gorm.DB, req masterpayloads.
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return entities, nil
+}
+
+func (r *AgreementRepositoryImpl) UpdateAgreement(tx *gorm.DB, Id int, req masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
+	var entities masterentities.Agreement
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ?", Id).
+		Updates(map[string]interface{}{
+			"aggreement_id":       Id,
+			"agreement_code":      req.AgreementCode,
+			"brand_id":            req.BrandId,
+			"company_id":          req.DealerId,
+			"top_id":              req.TopId,
+			"agreement_date_from": req.AgreementDateFrom,
+			"agreement_date_to":   req.AgreementDateTo,
+			"agreement_remark":    req.AgreementRemark,
+			"profit_center_id":    req.ProfitCenterId,
+			"is_active":           req.IsActive,
+			"customer_id":         req.CustomerId,
+		})
+
+	if result.Error != nil {
+		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return entities, nil
 }
 
 func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
@@ -97,7 +126,7 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (ma
 				Err:        fmt.Errorf("agreement with ID %d not found", Id),
 			}
 		}
-		// Jika ada galat lain, kembalikan galat internal server
+
 		return masterentities.Agreement{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
@@ -123,19 +152,15 @@ func (r *AgreementRepositoryImpl) ChangeStatusAgreement(tx *gorm.DB, Id int) (ma
 }
 
 func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define a slice to hold Agreement responses
+
 	var responses []masterpayloads.AgreementRequest
 
-	// Define table struct
 	tableStruct := masterpayloads.AgreementRequest{}
 
-	// Define join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	// Execute query
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -145,18 +170,15 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 	}
 	defer rows.Close()
 
-	// Define a slice to hold Agreement responses
 	var convertedResponses []masterpayloads.AgreementResponse
 
-	// Iterate over rows
 	for rows.Next() {
-		// Define variables to hold row data
+
 		var (
 			AgreementReq masterpayloads.AgreementRequest
 			AgreementRes masterpayloads.AgreementResponse
 		)
 
-		// Scan the row into PurchasePriceRequest struct
 		if err := rows.Scan(
 			&AgreementReq.AgreementId,
 			&AgreementReq.AgreementCode,
@@ -196,7 +218,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 				Err:        err,
 			}
 		}
-		// Create AgreementResponse
+
 		AgreementRes = masterpayloads.AgreementResponse{
 			AgreementId:       AgreementReq.AgreementId,
 			AgreementCode:     AgreementReq.AgreementCode,
@@ -215,14 +237,11 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 			AgreementRemark:   AgreementReq.AgreementRemark,
 		}
 
-		// Append PurchasePriceResponse to the slice
 		convertedResponses = append(convertedResponses, AgreementRes)
 	}
 
-	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
 
-	// Iterate over convertedResponses and convert them to maps
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
 			"agreement_id":        response.AgreementId,
@@ -244,13 +263,12 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Paginate the response data
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse {
+func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscountGroupDetail{
 		AgreementId:               AgreementId,
 		AgreementSelection:        req.AgreementSelection,
@@ -263,13 +281,38 @@ func (r *AgreementRepositoryImpl) AddDiscountGroup(tx *gorm.DB, AgreementId int,
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return masterentities.AgreementDiscountGroupDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return nil
+	return entities, nil
+}
+
+func (r *AgreementRepositoryImpl) UpdateDiscountGroup(tx *gorm.DB, AgreementId int, DiscountGroupId int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementDiscountGroupDetail
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_group_id = ?", AgreementId, DiscountGroupId).
+		Updates(map[string]interface{}{
+			"agreement_selection_id":       req.AgreementSelection,
+			"agreement_order_type_id":      req.AgreementLineTypeId,
+			"agreement_discount_markup_id": req.AgreementDiscountMarkup,
+			"agreement_discount":           req.AgreementDiscount,
+			"agreement_detail_remarks":     req.AgreementDetailRemaks,
+			"agreement_id":                 AgreementId,
+			"agreement_discount_group_id":  DiscountGroupId,
+		})
+
+	if result.Error != nil {
+		return masterentities.AgreementDiscountGroupDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return entities, nil
 }
 
 func (r *AgreementRepositoryImpl) DeleteDiscountGroup(tx *gorm.DB, AgreementId int, DiscountGroupId int) *exceptions.BaseErrorResponse {
@@ -289,11 +332,12 @@ func (r *AgreementRepositoryImpl) DeleteDiscountGroup(tx *gorm.DB, AgreementId i
 	return nil
 }
 
-func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, req masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse {
+func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, req masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementItemDetail{
 		AgreementId:              AgreementId,
 		LineTypeId:               req.LineTypeId,
 		AgreementItemOperationId: req.AgreementItemOperationId,
+		DiscountPercent:          req.DiscountPercent,
 		MinValue:                 req.MinValue,
 		AgreementRemark:          req.AgreementRemark,
 	}
@@ -301,13 +345,37 @@ func (r *AgreementRepositoryImpl) AddItemDiscount(tx *gorm.DB, AgreementId int, 
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return masterentities.AgreementItemDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return nil
+	return entities, nil
+}
+
+func (r *AgreementRepositoryImpl) UpdateItemDiscount(tx *gorm.DB, AgreementId int, ItemDiscountId int, req masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementItemDetail
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_item_id = ?", AgreementId, ItemDiscountId).
+		Updates(map[string]interface{}{
+			"line_type_id":                req.LineTypeId,
+			"agreement_item_operation_id": req.AgreementItemOperationId,
+			"discount_percent":            req.DiscountPercent,
+			"min_value":                   req.MinValue,
+			"agreement_remark":            req.AgreementRemark,
+			"agreement_id":                AgreementId,
+		})
+
+	if result.Error != nil {
+		return masterentities.AgreementItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return entities, nil
 }
 
 func (r *AgreementRepositoryImpl) DeleteItemDiscount(tx *gorm.DB, AgreementId int, ItemDiscountId int) *exceptions.BaseErrorResponse {
@@ -327,7 +395,7 @@ func (r *AgreementRepositoryImpl) DeleteItemDiscount(tx *gorm.DB, AgreementId in
 	return nil
 }
 
-func (r *AgreementRepositoryImpl) AddDiscountValue(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse {
+func (r *AgreementRepositoryImpl) AddDiscountValue(tx *gorm.DB, AgreementId int, req masterpayloads.DiscountValueRequest) (masterentities.AgreementDiscount, *exceptions.BaseErrorResponse) {
 	entities := masterentities.AgreementDiscount{
 		AgreementId:     AgreementId,
 		LineTypeId:      req.LineTypeId,
@@ -339,13 +407,35 @@ func (r *AgreementRepositoryImpl) AddDiscountValue(tx *gorm.DB, AgreementId int,
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return masterentities.AgreementDiscount{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return nil
+	return entities, nil
+}
+
+func (r *AgreementRepositoryImpl) UpdateDiscountValue(tx *gorm.DB, AgreementId int, DiscountValueId int, req masterpayloads.DiscountValueRequest) (masterentities.AgreementDiscount, *exceptions.BaseErrorResponse) {
+	var entities masterentities.AgreementDiscount
+
+	result := tx.Model(&entities).
+		Where("agreement_id = ? AND agreement_discount_id = ?", AgreementId, DiscountValueId).
+		Updates(map[string]interface{}{
+			"line_type_id":     req.LineTypeId,
+			"min_value":        req.MinValue,
+			"discount_percent": req.DiscountPercent,
+			"discount_remarks": req.DiscountRemarks,
+		})
+
+	if result.Error != nil {
+		return masterentities.AgreementDiscount{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return entities, nil
 }
 
 func (r *AgreementRepositoryImpl) DeleteDiscountValue(tx *gorm.DB, AgreementId int, DiscountValueId int) *exceptions.BaseErrorResponse {
@@ -366,19 +456,15 @@ func (r *AgreementRepositoryImpl) DeleteDiscountValue(tx *gorm.DB, AgreementId i
 }
 
 func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define a slice to hold Agreement responses
+
 	var responses []masterpayloads.DiscountGroupRequest
 
-	// Define table struct
 	tableStruct := masterpayloads.DiscountGroupRequest{}
 
-	// Define join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	// Execute query
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -388,15 +474,12 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 	}
 	defer rows.Close()
 
-	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
 
-	// Iterate over rows
 	for rows.Next() {
-		// Define variables to hold row data
+
 		var DiscountGroupRes masterpayloads.DiscountGroupResponse
 
-		// Scan the row into DiscountGroupResponse struct
 		if err := rows.Scan(
 			&DiscountGroupRes.AgreementDiscountGroupId,
 			&DiscountGroupRes.AgreementId,
@@ -411,7 +494,6 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 			}
 		}
 
-		// Convert DiscountGroupResponse to map
 		responseMap := map[string]interface{}{
 			"agreement_discount_group_id": DiscountGroupRes.AgreementDiscountGroupId,
 			"agreement_id":                DiscountGroupRes.AgreementId,
@@ -422,30 +504,23 @@ func (r *AgreementRepositoryImpl) GetAllDiscountGroup(tx *gorm.DB, filterConditi
 			"agreement_detail_remarks":    DiscountGroupRes.AgreementDetailRemaks,
 		}
 
-		// Append responseMap to the slice
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Paginate the response data
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
 
 func (r *AgreementRepositoryImpl) GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define a slice to hold ItemDiscount responses
 	var responses []masterpayloads.ItemDiscountRequest
 
-	// Define table struct
 	tableStruct := masterpayloads.ItemDiscountRequest{}
 
-	// Define join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	// Execute query
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -455,21 +530,20 @@ func (r *AgreementRepositoryImpl) GetAllItemDiscount(tx *gorm.DB, filterConditio
 	}
 	defer rows.Close()
 
-	// Define a slice to hold ItemDiscount responses
 	var convertedResponses []masterpayloads.ItemDiscountResponse
 
-	// Iterate over rows
 	for rows.Next() {
-		// Define variables to hold row data
-		var ItemDiscountRes masterpayloads.ItemDiscountResponse
 
-		// Scan the row into ItemDiscountResponse struct
+		var ItemDiscountRes masterpayloads.ItemDiscountResponse
+		var discountPercent, minValue sql.NullFloat64
+
 		if err := rows.Scan(
 			&ItemDiscountRes.AgreementItemId,
 			&ItemDiscountRes.AgreementId,
 			&ItemDiscountRes.LineTypeId,
 			&ItemDiscountRes.AgreementItemOperationId,
-			&ItemDiscountRes.MinValue,
+			&discountPercent,
+			&minValue,
 			&ItemDiscountRes.AgreementRemark); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -477,46 +551,50 @@ func (r *AgreementRepositoryImpl) GetAllItemDiscount(tx *gorm.DB, filterConditio
 			}
 		}
 
-		// Append ItemDiscountResponse to the slice
+		if discountPercent.Valid {
+			ItemDiscountRes.DiscountPercent = float32(discountPercent.Float64)
+		} else {
+			ItemDiscountRes.DiscountPercent = 0
+		}
+		if minValue.Valid {
+			ItemDiscountRes.MinValue = int(minValue.Float64)
+		} else {
+			ItemDiscountRes.MinValue = 0
+		}
+
 		convertedResponses = append(convertedResponses, ItemDiscountRes)
 	}
 
-	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
 
-	// Iterate over convertedResponses and convert them to maps
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
 			"agreement_item_id":           response.AgreementItemId,
 			"agreement_id":                response.AgreementId,
 			"line_type_id":                response.LineTypeId,
 			"agreement_item_operation_id": response.AgreementItemOperationId,
+			"discount_percent":            response.DiscountPercent,
 			"min_value":                   response.MinValue,
 			"agreement_remark":            response.AgreementRemark,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Paginate the response data
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
 
 func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define a slice to hold DiscountValue requests
+
 	var responses []masterpayloads.DiscountValueRequest
 
-	// Define table struct
 	tableStruct := masterpayloads.DiscountValueRequest{}
 
-	// Define join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	// Execute query
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -526,15 +604,12 @@ func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterConditi
 	}
 	defer rows.Close()
 
-	// Define a slice to hold DiscountValue responses
 	var convertedResponses []masterpayloads.DiscountValueResponse
 
-	// Iterate over rows
 	for rows.Next() {
-		// Define variables to hold row data
+
 		var DiscountValueRes masterpayloads.DiscountValueResponse
 
-		// Scan the row into DiscountValueResponse struct
 		if err := rows.Scan(
 			&DiscountValueRes.AgreementDiscountId,
 			&DiscountValueRes.AgreementId,
@@ -548,14 +623,11 @@ func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterConditi
 			}
 		}
 
-		// Append DiscountValueResponse to the slice
 		convertedResponses = append(convertedResponses, DiscountValueRes)
 	}
 
-	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
 
-	// Iterate over convertedResponses and convert them to maps
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
 			"agreement_discount_id": response.AgreementDiscountId,
@@ -568,7 +640,6 @@ func (r *AgreementRepositoryImpl) GetAllDiscountValue(tx *gorm.DB, filterConditi
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Paginate the response data
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
@@ -626,6 +697,7 @@ func (r *AgreementRepositoryImpl) GetDiscountItemAgreementById(tx *gorm.DB, Item
 	response.AgreementId = entities.AgreementId
 	response.LineTypeId = entities.LineTypeId
 	response.AgreementItemOperationId = entities.AgreementItemOperationId
+	response.DiscountPercent = entities.DiscountPercent
 	response.MinValue = entities.MinValue
 	response.AgreementRemark = entities.AgreementRemark
 

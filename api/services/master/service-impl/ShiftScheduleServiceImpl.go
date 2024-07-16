@@ -41,8 +41,8 @@ func StartShiftScheduleService(ShiftScheduleRepo masterrepository.ShiftScheduleR
 
 func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.ShiftScheduleResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -61,8 +61,8 @@ func (s *ShiftScheduleServiceImpl) GetShiftScheduleById(id int) (masterpayloads.
 
 func (s *ShiftScheduleServiceImpl) GetAllShiftSchedule(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ShiftScheduleRepo.GetAllShiftSchedule(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -71,7 +71,6 @@ func (s *ShiftScheduleServiceImpl) GetAllShiftSchedule(filterCondition []utils.F
 
 func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, oprId)
 
@@ -80,6 +79,7 @@ func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool, *
 	}
 
 	results, err := s.ShiftScheduleRepo.ChangeStatusShiftSchedule(tx, oprId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -88,7 +88,6 @@ func (s *ShiftScheduleServiceImpl) ChangeStatusShiftSchedule(oprId int) (bool, *
 
 func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftScheduleResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.ShiftScheduleId != 0 {
 		_, err := s.ShiftScheduleRepo.GetShiftScheduleById(tx, req.ShiftScheduleId)
@@ -99,6 +98,7 @@ func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftSch
 	}
 
 	results, err := s.ShiftScheduleRepo.SaveShiftSchedule(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

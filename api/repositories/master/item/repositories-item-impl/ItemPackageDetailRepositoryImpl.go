@@ -8,12 +8,53 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
 )
 
 type ItemPackageDetailRepositoryImpl struct {
+}
+
+func StartItemPackageDetailRepositoryImpl() masteritemrepository.ItemPackageDetailRepository {
+	return &ItemPackageDetailRepositoryImpl{}
+}
+
+// ActivateItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
+func (r *ItemPackageDetailRepositoryImpl) ActivateItemPackageDetail(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+	multiId := strings.Split(id, ",")
+	entities := masteritementities.ItemPackageDetail{}
+
+	for _, value := range multiId {
+		id, _ := strconv.Atoi(value)
+		if err := tx.Model(entities).Where(masteritementities.ItemPackageDetail{ItemPackageDetailId: id}).Update("is_active", true).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+// DeactiveItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
+func (r *ItemPackageDetailRepositoryImpl) DeactiveItemPackageDetail(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+	multiId := strings.Split(id, ",")
+	entities := masteritementities.ItemPackageDetail{}
+
+	for _, value := range multiId {
+		id, _ := strconv.Atoi(value)
+		if err := tx.Model(entities).Where(masteritementities.ItemPackageDetail{ItemPackageDetailId: id}).Update("is_active", false).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	return true, nil
 }
 
 // ChangeStatusItemPackageDetail implements masteritemrepository.ItemPackageDetailRepository.
@@ -49,10 +90,6 @@ func (r *ItemPackageDetailRepositoryImpl) ChangeStatusItemPackageDetail(tx *gorm
 	return true, nil
 }
 
-func StartItemPackageDetailRepositoryImpl() masteritemrepository.ItemPackageDetailRepository {
-	return &ItemPackageDetailRepositoryImpl{}
-}
-
 func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx *gorm.DB, itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	// entities := masteritementities.ItemPackageDetail{}
@@ -71,7 +108,7 @@ func (r *ItemPackageDetailRepositoryImpl) GetItemPackageDetailByItemPackageId(tx
 			"ItemPackageDetail__Item.item_class_id item_class_id",
 			"ItemPackageDetail__Item__ItemClass.item_class_code item_class_code",
 			"ItemPackageDetail.quantity quantity",
-		).
+		).Where(masteritementities.ItemPackage{ItemPackageId: itemPackageId}).
 		InnerJoins("ItemPackageDetail", tx.Select("1")).
 		InnerJoins("ItemPackageDetail.Item", tx.Select("1")).
 		InnerJoins("ItemPackageDetail.Item.ItemClass", tx.Select("1"))
@@ -163,7 +200,7 @@ func (r *ItemPackageDetailRepositoryImpl) CreateItemPackageDetailByItemPackageId
 	return true, nil
 }
 
-func (r *ItemPackageDetailRepositoryImpl) UpdateItemPackageDetailByItemPackageId(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemPackageDetailRepositoryImpl) UpdateItemPackageDetail(tx *gorm.DB, req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemPackageDetail{
 		ItemPackageDetailId: req.ItemPackageDetailId,
 		Quantity:            req.Quantity,

@@ -16,163 +16,135 @@ type BaseErrorResponse struct {
 	Err        error       `json:"-"`
 }
 
-// CustomError defines a custom error structure
-type CustomError struct {
-	StatusCode int    `json:"status_code"`
-	Message    string `json:"message"`
-	Error      string `json:"error"`
-}
-
-// NotFoundError defines a custom error for resource not found
-type NotFoundError struct {
-	Resource string // Resource yang tidak ditemukan
-}
-
-// Error returns the error message
-func (e NotFoundError) Error() string {
-	return e.Resource + " not found"
-}
-
-// NewBaseErrorResponse creates a new BaseErrorResponse from an error
-func NewBaseErrorResponse(statusCode int, defaultMessage string, err error) *BaseErrorResponse {
-	message := defaultMessage
-	if err != nil {
-		message = err.Error()
-	}
-
-	return &BaseErrorResponse{
-		StatusCode: statusCode,
-		Message:    message,
-		Err:        err,
-	}
-}
-
-// WriteErrorResponse writes the error response to the HTTP response writer
-func WriteErrorResponse(writer http.ResponseWriter, err interface{}) {
-	writer.Header().Add("Content-Type", "application/json")
-	var statusCode int
-	var message string
-	var errorString string
-
-	switch e := err.(type) {
-	case *BaseErrorResponse:
-		statusCode = e.StatusCode
-		message = e.Message
-		errorString = e.Err.Error()
-	case CustomError:
-		statusCode = e.StatusCode
-		message = e.Message
-		errorString = e.Error
-	default:
-		statusCode = http.StatusInternalServerError
-		message = "Internal Server Error"
-		errorString = ""
-	}
-
-	writer.WriteHeader(statusCode)
-	response := CustomError{
-		StatusCode: statusCode,
-		Message:    message,
-		Error:      errorString,
-	}
-	jsonresponse.WriteToResponseBody(writer, response)
-	logrus.Info(err)
-}
-
 // NewAppException creates a new AppException with a customizable HTTP status code
-func NewAppException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewAppException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusInternalServerError
-	message := utils.SomethingWrong
-
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.SomethingWrong
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(err.StatusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }
 
-// NewAuthorizationException creates a new AuthorizationException with a customizable HTTP status code
-func NewAuthorizationException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewAuthorizationException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusUnauthorized
-	message := utils.SessionError
-
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.SessionError
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }
-
-// NewBadRequestException creates a new BadRequestException with a customizable HTTP status code
-func NewBadRequestException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewBadRequestException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusBadRequest
-	message := utils.BadRequestError
 
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.BadRequestError
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Err.Error(),
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }
 
-// NewConflictException creates a new ConflictException with a customizable HTTP status code
-func NewConflictException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewConflictException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusConflict
-	message := utils.DataExists
-
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.DataExists
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }
-
-// NewEntityException creates a new EntityException with a customizable HTTP status code
-func NewEntityException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewEntityException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusUnprocessableEntity
-	message := utils.JsonError
-
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.JsonError
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Err.Error(),
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }
 
-// NewNotFoundException creates a new NotFoundException with a customizable HTTP status code
-func NewNotFoundException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewNotFoundException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusNotFound
-	message := utils.GetDataNotFound
-
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.GetDataNotFound
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Message,
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }
-
-// NewRoleException creates a new RoleException with a customizable HTTP status code
-func NewRoleException(writer http.ResponseWriter, request *http.Request, err error) {
+func NewRoleException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	statusCode := http.StatusForbidden
-	message := utils.PermissionError
 
-	if err != nil {
-		logrus.Error(err)
-		message = err.Error()
+	if err.Message == "" {
+		err.Message = utils.PermissionError
 	}
+	if err.Err != nil {
+		logrus.Info(err)
+		res := &BaseErrorResponse{
+			StatusCode: statusCode,
+			Message:    err.Err.Error(),
+			//Data:       err,
+		}
 
-	res := NewBaseErrorResponse(statusCode, message, err)
-	WriteErrorResponse(writer, res)
+		writer.WriteHeader(statusCode)
+		jsonresponse.WriteToResponseBody(writer, res)
+		return
+	}
 }

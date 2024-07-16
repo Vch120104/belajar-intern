@@ -11,7 +11,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -21,22 +20,26 @@ import (
 type AgreementController interface {
 	GetAgreementById(writer http.ResponseWriter, request *http.Request)
 	SaveAgreement(writer http.ResponseWriter, request *http.Request)
+	UpdateAgreement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request)
 	GetAllAgreement(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDiscountGroup(writer http.ResponseWriter, request *http.Request)
 	GetDiscountGroupAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddDiscountGroup(writer http.ResponseWriter, request *http.Request)
+	UpdateDiscountGroup(writer http.ResponseWriter, request *http.Request)
 	DeleteDiscountGroup(writer http.ResponseWriter, request *http.Request)
 
 	GetAllItemDiscount(writer http.ResponseWriter, request *http.Request)
 	GetDiscountItemAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddItemDiscount(writer http.ResponseWriter, request *http.Request)
+	UpdateItemDiscount(writer http.ResponseWriter, request *http.Request)
 	DeleteItemDiscount(writer http.ResponseWriter, request *http.Request)
 
 	GetAllDiscountValue(writer http.ResponseWriter, request *http.Request)
 	GetDiscountValueAgreementById(writer http.ResponseWriter, request *http.Request)
 	AddDiscountValue(writer http.ResponseWriter, request *http.Request)
+	UpdateDiscountValue(writer http.ResponseWriter, request *http.Request)
 	DeleteDiscountValue(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -65,7 +68,7 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 
 	result, err := r.AgreementService.GetAgreementById(int(AgreementId))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -80,7 +83,7 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 // @Param reqBody body masterpayloads.AgreementRequest true "Agreement Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/agreement/ [post]
+// @Router /v1/agreement [post]
 func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masterpayloads.AgreementRequest
@@ -89,7 +92,7 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 
 	create, err := r.AgreementService.SaveAgreement(formRequest)
 	if err != nil {
-		exceptions.NewConflictException(writer, request, errors.New("invalid format request"))
+		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 
@@ -100,6 +103,32 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 		message = "Update Data Successfully!"
 		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
+}
+
+// @Summary Update Agreement
+// @Description Update an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param reqBody body masterpayloads.AgreementRequest true "Agreement Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id} [put]
+func (r *AgreementControllerImpl) UpdateAgreement(writer http.ResponseWriter, request *http.Request) {
+
+	AgreementId, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	var formRequest masterpayloads.AgreementRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	response, err := r.AgreementService.UpdateAgreement(int(AgreementId), formRequest)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Agreement
@@ -117,7 +146,7 @@ func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWrit
 
 	response, err := r.AgreementService.ChangeStatusAgreement(int(agreement_id))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -165,7 +194,7 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllAgreement(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -192,12 +221,40 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
 
-	if err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+	add, err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount group added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, add, "Discount group added successfully", http.StatusCreated)
+}
+
+// @Summary Update Discount Group
+// @Description Update a discount group from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_discount_group_id path int true "Group ID"
+// @Param reqBody body masterpayloads.DiscountGroupRequest true "Discount Group Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/group/{agreement_discount_group_id} [put]
+func (r *AgreementControllerImpl) UpdateDiscountGroup(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+
+	var groupRequest masterpayloads.DiscountGroupRequest
+	helper.ReadFromRequestBody(request, &groupRequest)
+
+	update, err := r.AgreementService.UpdateDiscountGroup(int(agreementID), int(groupID), groupRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Discount group updated successfully", http.StatusOK)
 }
 
 // @Summary Delete Discount Group
@@ -215,7 +272,7 @@ func (r *AgreementControllerImpl) DeleteDiscountGroup(writer http.ResponseWriter
 	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
 
 	if err := r.AgreementService.DeleteDiscountGroup(int(agreementID), int(groupID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -238,12 +295,40 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
 
-	if err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+	add, err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item discount added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, add, "Item discount added successfully", http.StatusCreated)
+}
+
+// @Summary Update Item Discount
+// @Description Update an item discount from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_item_id path int true "Item ID"
+// @Param reqBody body masterpayloads.ItemDiscountRequest true "Item Discount Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/item/{agreement_item_id} [put]
+func (r *AgreementControllerImpl) UpdateItemDiscount(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+
+	var itemRequest masterpayloads.ItemDiscountRequest
+	helper.ReadFromRequestBody(request, &itemRequest)
+
+	update, err := r.AgreementService.UpdateItemDiscount(int(agreementID), int(itemID), itemRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Item discount updated successfully", http.StatusOK)
 }
 
 // @Summary Delete Item Discount
@@ -261,7 +346,7 @@ func (r *AgreementControllerImpl) DeleteItemDiscount(writer http.ResponseWriter,
 	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
 
 	if err := r.AgreementService.DeleteItemDiscount(int(agreementID), int(itemID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -284,12 +369,40 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
 
-	if err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+	add, err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Discount value added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, add, "Discount value added successfully", http.StatusCreated)
+}
+
+// @Summary Update Discount Value
+// @Description Update a discount value from an agreement by its ID
+// @Accept json
+// @Produce json
+// @Tags Master : Agreement
+// @Param agreement_id path int true "Agreement ID"
+// @Param agreement_discount_id path int true "Value ID"
+// @Param reqBody body masterpayloads.DiscountValueRequest true "Discount Value Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/agreement/{agreement_id}/discount/value/{agreement_discount_id} [put]
+func (r *AgreementControllerImpl) UpdateDiscountValue(writer http.ResponseWriter, request *http.Request) {
+	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+
+	var valueRequest masterpayloads.DiscountValueRequest
+	helper.ReadFromRequestBody(request, &valueRequest)
+
+	update, err := r.AgreementService.UpdateDiscountValue(int(agreementID), int(valueID), valueRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Discount value updated successfully", http.StatusOK)
 }
 
 // @Summary Delete Discount Value
@@ -307,7 +420,7 @@ func (r *AgreementControllerImpl) DeleteDiscountValue(writer http.ResponseWriter
 	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
 
 	if err := r.AgreementService.DeleteDiscountValue(int(agreementID), int(valueID)); err != nil {
-		exceptions.NewAppException(writer, request, errors.New("data Not Found"))
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
@@ -345,7 +458,7 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountGroup(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -372,7 +485,7 @@ func (r *AgreementControllerImpl) GetDiscountGroupAgreementById(writer http.Resp
 
 	result, err := r.AgreementService.GetDiscountGroupAgreementById(int(agreementID), int(groupID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -410,7 +523,7 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllItemDiscount(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -437,7 +550,7 @@ func (r *AgreementControllerImpl) GetDiscountItemAgreementById(writer http.Respo
 
 	result, err := r.AgreementService.GetDiscountItemAgreementById(int(agreementID), int(itemID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -475,7 +588,7 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 	paginatedData, totalPages, totalRows, err := r.AgreementService.GetAllDiscountValue(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -502,7 +615,7 @@ func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.Resp
 
 	result, err := r.AgreementService.GetDiscountValueAgreementById(int(agreementID), int(valueID))
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 

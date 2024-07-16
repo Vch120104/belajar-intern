@@ -2,14 +2,14 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	helper "after-sales/api/helper"
+	"after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
+	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -17,11 +17,13 @@ import (
 )
 
 type ItemClassController interface {
-	GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request)
 	GetAllItemClass(writer http.ResponseWriter, request *http.Request)
+	GetItemClassDropdown(writer http.ResponseWriter, request *http.Request)
 	GetItemClassbyId(writer http.ResponseWriter, request *http.Request)
+	GetItemClassByCode(writer http.ResponseWriter, request *http.Request)
 	SaveItemClass(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request)
+	GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request)
 }
 type ItemClassControllerImpl struct {
 	ItemClassService masteritemservice.ItemClassService
@@ -33,6 +35,34 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 	}
 }
 
+// GetItemClassDropDownbyGroupId implements ItemClassController.
+func (r *ItemClassControllerImpl) GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request) {
+	itemGroupId, _ := strconv.Atoi(chi.URLParam(request, "item_group_id"))
+
+	response, err := r.ItemClassService.GetItemClassDropDownbyGroupId(itemGroupId)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
+}
+
+// GetItemClassByCode implements ItemClassController.
+func (r *ItemClassControllerImpl) GetItemClassByCode(writer http.ResponseWriter, request *http.Request) {
+	itemClassCode := chi.URLParam(request, "item_class_code")
+
+	response, err := r.ItemClassService.GetItemClassByCode(itemClassCode)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
+}
+
 // GetItemClassbyId implements ItemClassController.
 func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, request *http.Request) {
 	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
@@ -40,7 +70,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 	response, err := r.ItemClassService.GetItemClassById(itemClassId)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid item class id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -65,7 +95,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-class/pop-up [get]
-func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWriter, request *http.Request) {
+func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
 		"mtr_item_class.is_active":       queryValues.Get("is_active"),
@@ -76,23 +106,23 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 		"line_type_code":                 queryValues.Get("line_type_code"),
 	}
 
-	limit := utils.NewGetQueryInt(queryValues, "limit")
-	page := utils.NewGetQueryInt(queryValues, "page")
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.ItemClassService.GetAllItemClass(criteria)
+	result, totalPages, totalRows, err := r.ItemClassService.GetAllItemClass(criteria, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 
-	paginatedData, totalPages, totalRows := utils.DataFramePaginate(result, page, limit, utils.SnaketoPascalCase(sortOf), sortBy)
-
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, limit, page, int64(totalRows), totalPages)
 }
 
 // @Summary Get All Item Class
@@ -109,27 +139,14 @@ func (r *ItemClassControllerImpl) GetAllItemClassLookup(writer http.ResponseWrit
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-class/ [get]
-func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-	queryParams := map[string]string{
-		"mtr_item_class.is_active":       queryValues.Get("is_active"),
-		"mtr_item_class.item_class_id":   queryValues.Get("item_class_id"),
-		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
-		"mtr_item_class.item_class_name": queryValues.Get("item_class_name"),
-		"item_group_name":                queryValues.Get("item_group_name"),
-		"line_type_code":                 queryValues.Get("line_type_code"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	result, err := r.ItemClassService.GetAllItemClass(criteria)
+func (r *ItemClassControllerImpl) GetItemClassDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.ItemClassService.GetItemClassDropDown()
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, errors.New("data Not Found"))
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "success", 200)
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
 // @Summary Save Item Class
@@ -148,13 +165,13 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 	var message = ""
 
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -190,7 +207,7 @@ func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWrit
 	response, err := r.ItemClassService.ChangeStatusItemClass(int(itemClassId))
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid item class id"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

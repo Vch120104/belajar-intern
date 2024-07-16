@@ -2,8 +2,6 @@ package mastercontroller
 
 import (
 	masterpayloads "after-sales/api/payloads/master"
-	"errors"
-
 	// masterrepository "after-sales/api/repositories/master"
 	exceptions "after-sales/api/exceptions"
 	helper "after-sales/api/helper"
@@ -26,6 +24,7 @@ type IncentiveGroupDetailController interface {
 	GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request)
 	GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request)
 	SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request)
 }
 type IncentiveGroupDetailControllerImpl struct {
 	IncentiveGroupDetailService masterservice.IncentiveGroupDetailService
@@ -37,19 +36,6 @@ func NewIncentiveGroupDetailController(IncentiveGroupDetailService masterservice
 	}
 }
 
-// @Summary Get All Incentive Group Detail
-// @Description REST API Incentive Group Detail
-// @Accept json
-// @Produce json
-// @Tags Master : Incentive Group Detail
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param id path int true "incentive_group_id"  // Update this line
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/incentive-group-detail/by-header-id/{id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	IncentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "id"))
@@ -70,16 +56,6 @@ func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer h
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
-// @Summary Save Incentive Group Detail
-// @Description REST API Incentive Group Detail
-// @Accept json
-// @Produce json
-// @Tags Master : Incentive Group Detail
-// @Param reqBody body masterpayloads.IncentiveGroupDetailResponse true "Form Request"
-// @Param incentive_group_id_detail path int true "incentive_group_id_detail"  // Update this line
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/incentive-group-detail/{incentive_group_id_detail} [post]
 func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var incentiveGroupDetailRequest masterpayloads.IncentiveGroupDetailRequest
@@ -87,12 +63,12 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 
 	err := jsonchecker.ReadFromRequestBody(request, &incentiveGroupDetailRequest)
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid entity"))
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, incentiveGroupDetailRequest)
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, errors.New("invalid form request"))
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 	create, err := r.IncentiveGroupDetailService.SaveIncentiveGroupDetail(incentiveGroupDetailRequest)
@@ -109,21 +85,14 @@ func (r *IncentiveGroupDetailControllerImpl) SaveIncentiveGroupDetail(writer htt
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 }
-
-// @Summary Get Incentive Group Detail By Id
-// @Description REST API Incentive Group Detail
-// @Accept json
-// @Produce json
-// @Tags Master : Incentive Group Detail
-// @Param incentive_group_detail_id path string true "incentive_group_detail_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/incentive-group-detail/by-detail-id/{incentive_group_detail_id} [get]
 func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer http.ResponseWriter, request *http.Request) {
 	// IncentiveGrouDetailId, _ := strconv.Atoi(params.ByName("incentive_group_detail_id"))
 	IncentiveGrouDetailId, err := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
 	if err != nil {
-		exceptions.NewEntityException(writer, request, errors.New("invalid incentive_group_detail_id"))
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+			Err: err,
+		})
+		return
 	}
 	IncentiveGroupDetailResponse, errors := r.IncentiveGroupDetailService.GetIncentiveGroupDetailById(IncentiveGrouDetailId)
 
@@ -132,4 +101,31 @@ func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer 
 		return
 	}
 	payloads.NewHandleSuccess(writer, IncentiveGroupDetailResponse, utils.GetDataSuccess, http.StatusOK)
+}
+
+func (r *IncentiveGroupDetailControllerImpl) UpdateIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
+
+	var incentiveGroupDetailRequest masterpayloads.UpdateIncentiveGroupDetailRequest
+	var message string
+
+	err := jsonchecker.ReadFromRequestBody(request, &incentiveGroupDetailRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, incentiveGroupDetailRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	create, err := r.IncentiveGroupDetailService.UpdateIncentiveGroupDetail(id, incentiveGroupDetailRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	message = "Update Data Successfully!"
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 }
