@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	_ "after-sales/docs"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -558,6 +557,7 @@ func OperationCodeRouter(
 	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
+	router.Put("/{operation_id}",operationCodeController.UpdateOperationCode)
 
 	return router
 }
