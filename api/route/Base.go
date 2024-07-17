@@ -556,6 +556,7 @@ func OperationCodeRouter(
 	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
+	router.Put("/{operation_id}",operationCodeController.UpdateOperationCode)
 
 	return router
 }
