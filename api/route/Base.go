@@ -8,10 +8,9 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -162,7 +161,7 @@ func ItemRouter(
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
-	router.Post("/{item_id}/{brand_id}",itemController.AddItemDetailByBrand)
+	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 
 	return router
 }
@@ -762,7 +761,16 @@ func IncentiveMasterRouter(
 
 	return router
 }
-
+func VehicleHistoryRouter(VehicleHistory transactionworkshopcontroller.VehicleHistoryController) chi.Router {
+	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+	router.Get("/by-id/{work_order_system_number_id}", VehicleHistory.GetVehicleHistoryById)
+	router.Get("/", VehicleHistory.GetAllFieldVehicleHistory)
+	return router
+}
 func FieldActionRouter(
 	FieldActionController mastercontroller.FieldActionController,
 ) chi.Router {
