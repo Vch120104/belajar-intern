@@ -26,5 +26,5 @@ type CampaignMaster struct {
 }
 
 func (*CampaignMaster) TableName() string {
-	return "campaign_masters"
+	return CreateCampaignMasterTable
 }

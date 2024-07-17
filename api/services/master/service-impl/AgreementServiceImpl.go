@@ -38,14 +38,14 @@ func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.Agreemen
 	return results, nil
 }
 
-func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	if req.AgreementId != 0 {
 		_, err := s.AgreementRepo.GetAgreementById(tx, req.AgreementId)
 
 		if err != nil {
-			return false, err
+			return masterentities.Agreement{}, err
 		}
 	}
 
@@ -53,24 +53,24 @@ func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return masterentities.Agreement{}, err
 	}
 
 	return results, nil
 }
 
-func (s *AgreementServiceImpl) UpdateAgreement(id int, req masterpayloads.AgreementRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *AgreementServiceImpl) UpdateAgreement(id int, req masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	_, err := s.AgreementRepo.GetAgreementById(tx, id)
 	if err != nil {
-		return false, err
+		return masterentities.Agreement{}, err
 	}
 
 	results, err := s.AgreementRepo.UpdateAgreement(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masterentities.Agreement{}, err
 	}
 	return results, nil
 }
@@ -97,24 +97,24 @@ func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCon
 	return results, totalPages, totalRows, nil
 }
 
-func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse {
+func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.AgreementRepo.AddDiscountGroup(tx, id, req)
+	results, err := s.AgreementRepo.AddDiscountGroup(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masterentities.AgreementDiscountGroupDetail{}, err
 	}
-	return nil
+	return results, nil
 }
 
-func (s *AgreementServiceImpl) UpdateDiscountGroup(id int, discountGroupId int, req masterpayloads.DiscountGroupRequest) *exceptions.BaseErrorResponse {
+func (s *AgreementServiceImpl) UpdateDiscountGroup(id int, discountGroupId int, req masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.AgreementRepo.UpdateDiscountGroup(tx, id, discountGroupId, req)
+	results, err := s.AgreementRepo.UpdateDiscountGroup(tx, id, discountGroupId, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masterentities.AgreementDiscountGroupDetail{}, err
 	}
-	return nil
+	return results, nil
 }
 
 func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) *exceptions.BaseErrorResponse {
@@ -127,24 +127,24 @@ func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) 
 	return nil
 }
 
-func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse {
+func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.AgreementRepo.AddItemDiscount(tx, id, req)
+	results, err := s.AgreementRepo.AddItemDiscount(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masterentities.AgreementItemDetail{}, err
 	}
-	return nil
+	return results, nil
 }
 
-func (s *AgreementServiceImpl) UpdateItemDiscount(id int, itemDiscountId int, req masterpayloads.ItemDiscountRequest) *exceptions.BaseErrorResponse {
+func (s *AgreementServiceImpl) UpdateItemDiscount(id int, itemDiscountId int, req masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.AgreementRepo.UpdateItemDiscount(tx, id, itemDiscountId, req)
+	results, err := s.AgreementRepo.UpdateItemDiscount(tx, id, itemDiscountId, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masterentities.AgreementItemDetail{}, err
 	}
-	return nil
+	return results, nil
 }
 
 func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *exceptions.BaseErrorResponse {
@@ -157,24 +157,24 @@ func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *e
 	return nil
 }
 
-func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse {
+func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.DiscountValueRequest) (masterentities.AgreementDiscount, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.AgreementRepo.AddDiscountValue(tx, id, req)
+	results, err := s.AgreementRepo.AddDiscountValue(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masterentities.AgreementDiscount{}, err
 	}
-	return nil
+	return results, nil
 }
 
-func (s *AgreementServiceImpl) UpdateDiscountValue(id int, discountValueId int, req masterpayloads.DiscountValueRequest) *exceptions.BaseErrorResponse {
+func (s *AgreementServiceImpl) UpdateDiscountValue(id int, discountValueId int, req masterpayloads.DiscountValueRequest) (masterentities.AgreementDiscount, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.AgreementRepo.UpdateDiscountValue(tx, id, discountValueId, req)
+	results, err := s.AgreementRepo.UpdateDiscountValue(tx, id, discountValueId, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masterentities.AgreementDiscount{}, err
 	}
-	return nil
+	return results, nil
 }
 
 func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) *exceptions.BaseErrorResponse {

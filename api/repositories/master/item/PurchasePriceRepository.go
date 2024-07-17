@@ -12,8 +12,8 @@ import (
 
 type PurchasePriceRepository interface {
 	DeletePurchasePrice(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse
-	AddPurchasePrice(*gorm.DB, masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse)
-	SavePurchasePrice(*gorm.DB, masteritempayloads.PurchasePriceRequest) (bool, *exceptions.BaseErrorResponse)
+	AddPurchasePrice(*gorm.DB, masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse)
+	SavePurchasePrice(*gorm.DB, masteritempayloads.PurchasePriceRequest) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse)
 	GetAllPurchasePrice(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetPurchasePriceById(tx *gorm.DB, Id int) (masteritempayloads.PurchasePriceRequest, *exceptions.BaseErrorResponse)
 	GetAllPurchasePriceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
