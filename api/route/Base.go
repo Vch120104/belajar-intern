@@ -12,8 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	_ "after-sales/docs"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -845,7 +843,6 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
 	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)

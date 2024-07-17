@@ -448,7 +448,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 	}
 }
 
-func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterpayloads.PackageMasterResponse) (bool, *exceptions.BaseErrorResponse) {
+func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMaster{
 		IsActive:       req.IsActive,
 		PackageId:      req.PackageId,
@@ -467,62 +467,41 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 	}
 	err := tx.Save(&entities).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	return true, nil
+	return entities, nil
 }
 
-func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailBodyshop(tx *gorm.DB, req masterpayloads.PackageMasterDetailOperationBodyshop, id int) (bool, *exceptions.BaseErrorResponse) {
-	var rowsAffected int64
-	err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?", id).Count(&rowsAffected).Error
+func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.DB, req masterpayloads.PackageMasterDetailWorkshop) (int, *exceptions.BaseErrorResponse) {
+	if req.LineTypeId == 1 {
+		var rowsAffected int64
+	err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?", req.PackageId).Count(&rowsAffected).Error
 	if err != nil {
 		tx.Rollback()
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 	entities := masterpackagemasterentity.PackageMasterDetailOperation{
 		IsActive:                 req.IsActive,
-		PackageDetailOperationId: req.PackageDetailOperationId,
-		PackageId:                id,
+		PackageDetailOperationId: req.PackageDetailItemId,
+		PackageId:                req.PackageId,
 		LineTypeId:               req.LineTypeId,
-		OperationId:              req.OperationId,
+		OperationId:              req.PackageDetailItemId,
 		Sequence:                 int(rowsAffected) + 1,
 	}
 	err2 := tx.Save(&entities).Error
 	if err2 != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err2,
 		}
 	}
-	return true, nil
-}
-
-func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.DB, req masterpayloads.PackageMasterDetailWorkshop) (bool, *exceptions.BaseErrorResponse) {
-	if req.LineTypeId == 1 {
-		entities := masterpackagemasterentity.PackageMasterDetailOperation{
-			IsActive:                 req.IsActive,
-			PackageId:                req.PackageId,
-			PackageDetailOperationId: req.PackageDetailItemId,
-			LineTypeId:               req.LineTypeId,
-			OperationId:              req.ItemOperationId,
-			FrtQuantity:              req.FrtQuantity,
-			TransactionTypeId:        req.WorkorderTransactionTypeId,
-			JobTypeId:                req.JobTypeId,
-		}
-		err := tx.Save(&entities).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		return true, nil
+	return entities.PackageId,nil
 	} else {
 		entities := masterpackagemasterentity.PackageMasterDetailItem{
 			IsActive:                   req.IsActive,
@@ -536,16 +515,16 @@ func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.D
 		}
 		err := tx.Save(&entities).Error
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
-		return true, nil
+		return entities.PackageId, nil
 	}
 }
 
-func (r *PackageMasterRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+func (r *PackageMasterRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
 	var entities masterentities.PackageMaster
 
 	result := tx.Model(&entities).
@@ -553,7 +532,7 @@ func (r *PackageMasterRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id in
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -568,23 +547,23 @@ func (r *PackageMasterRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id in
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
-func (r *PackageMasterRepositoryImpl) DeactivateMultiIdPackageMasterDetail(tx *gorm.DB, ids string, idHeader int) (bool, *exceptions.BaseErrorResponse) {
+func (r *PackageMasterRepositoryImpl) DeactivateMultiIdPackageMasterDetail(tx *gorm.DB, ids string, idHeader int) (int, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMaster{}
 
 	result, err := tx.Model(&entities).Where(masterentities.PackageMaster{
 		PackageId: idHeader,
 	}).Scan(&entities).Rows()
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -598,13 +577,13 @@ func (r *PackageMasterRepositoryImpl) DeactivateMultiIdPackageMasterDetail(tx *g
 			var entityToUpdate masterpackagemasterentity.PackageMasterDetailOperation
 			result := tx.Model(&entityToUpdate).Where("package_detail_operation_id = ?", id).Update("is_active", false)
 			if result.Error != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        result.Error,
 				}
 			}
 		}
-		return true, nil
+		return idHeader, nil
 	} else {
 		idSlice := strings.Split(ids, ",")
 
@@ -613,24 +592,24 @@ func (r *PackageMasterRepositoryImpl) DeactivateMultiIdPackageMasterDetail(tx *g
 			var entityToUpdate masterpackagemasterentity.PackageMasterDetailItem
 			result := tx.Model(&entityToUpdate).Where("package_detail_item_id = ?", id).Update("is_active", false)
 			if result.Error != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        result.Error,
 				}
 			}
 		}
-		return true, nil
+		return idHeader, nil
 	}
 }
 
-func (r *PackageMasterRepositoryImpl) ActivateMultiIdPackageMasterDetail(tx *gorm.DB, ids string, idHeader int) (bool, *exceptions.BaseErrorResponse) {
+func (r *PackageMasterRepositoryImpl) ActivateMultiIdPackageMasterDetail(tx *gorm.DB, ids string, idHeader int) (int, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMaster{}
 
 	result, err := tx.Model(&entities).Where(masterentities.PackageMaster{
 		PackageId: idHeader,
 	}).Scan(&entities).Rows()
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -644,13 +623,13 @@ func (r *PackageMasterRepositoryImpl) ActivateMultiIdPackageMasterDetail(tx *gor
 			var entityToUpdate masterpackagemasterentity.PackageMasterDetailOperation
 			result := tx.Model(&entityToUpdate).Where("package_detail_id = ?", id).Update("is_active", true)
 			if result.Error != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        result.Error,
 				}
 			}
 		}
-		return true, nil
+		return idHeader, nil
 	} else {
 		idSlice := strings.Split(ids, ",")
 
@@ -659,17 +638,17 @@ func (r *PackageMasterRepositoryImpl) ActivateMultiIdPackageMasterDetail(tx *gor
 			var entityToUpdate masterpackagemasterentity.PackageMasterDetailItem
 			result := tx.Model(&entityToUpdate).Where("package_detail_item_id = ?", id).Update("is_active", true)
 			if result.Error != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        result.Error,
 				}
 			}
 		}
-		return true, nil
+		return idHeader, nil
 	}
 }
 
-func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code string, modelId int) (bool, *exceptions.BaseErrorResponse) {
+func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code string, modelId int) (int, *exceptions.BaseErrorResponse) {
 	var entity masterentities.PackageMaster
 	var payloads masterpayloads.PackageMasterResponse
 
@@ -678,7 +657,7 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 		PackageId: id,
 	}).First(&payloads).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -703,7 +682,7 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 
 	err = tx.Save(&newEntity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
@@ -715,7 +694,7 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 		PackageId: id,
 	}).Find(&detailEntitiesoperation).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -735,7 +714,7 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 
 		err := tx.Save(&operationdetailentities).Error
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
@@ -748,7 +727,7 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 		PackageId: id,
 	}).Find(&detailEntitiesitem).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -767,12 +746,12 @@ func (r *PackageMasterRepositoryImpl) CopyToOtherModel(tx *gorm.DB, id int, code
 
 		err := tx.Save(&operationdetailentities).Error
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return id, nil
 }
