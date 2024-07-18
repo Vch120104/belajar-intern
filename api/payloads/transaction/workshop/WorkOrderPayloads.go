@@ -510,13 +510,11 @@ type WorkOrderBillable struct {
 	IsActive       bool   `json:"is_active"`
 	BillableToCode string `json:"billable_to_code"`
 }
-
 type WorkOrderDropPoint struct {
 	CompanyId   int    `json:"company_id"`
 	CompanyCode string `json:"company_code"`
 	CompanyName string `json:"company_name"`
 }
-
 type WorkOrderVehicleBrand struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`
