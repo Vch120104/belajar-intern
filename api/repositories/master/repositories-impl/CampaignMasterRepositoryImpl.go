@@ -403,7 +403,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 			Err:        err,
 		}
 	}
-	brandIdUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(payloads.BrandId)
+	brandIdUrl := "http://172.16.5.101/sales-service/api/sales/unit-brand/" + strconv.Itoa(payloads.BrandId)
 	errUrlBrandId := utils.Get(brandIdUrl, &brandresponse, nil)
 	if errUrlBrandId != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -413,7 +413,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 	}
 	BrandJoinData := utils.DataFrameInnerJoin([]masterpayloads.CampaignMasterResponse{payloads}, []masterpayloads.GetBrandResponse{brandresponse}, "BrandId")
 
-	modelIdUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(payloads.ModelId)
+	modelIdUrl := "http://172.16.5.101/sales-service/api/sales/unit-model/" + strconv.Itoa(payloads.ModelId)
 	errUrlModelId := utils.Get(modelIdUrl, &modelresponse, nil)
 	if errUrlModelId != nil {
 		return nil, &exceptions.BaseErrorResponse{

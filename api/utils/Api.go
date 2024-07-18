@@ -7,8 +7,8 @@ import (
 )
 
 const serverUrl = ""
-const SalesURL = "http://10.1.32.26:8000/sales-service/v1"
-const GeneralURL = "http://10.1.32.26:8000/general-service/v1"
+const SalesURL = "http://172.16.5.101/sales-service/v1"
+const GeneralURL = "http://172.16.5.101/general-service/v1"
 
 type ResponseBody struct {
 	StatusCode int         `json:"status_code"`
