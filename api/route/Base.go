@@ -8,7 +8,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-	_ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -845,6 +844,12 @@ func PackageMasterRouter(
 	PackageMasterController mastercontroller.PackageMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", PackageMasterController.GetAllPackageMaster)
 	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
 	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
@@ -886,6 +891,12 @@ func CampaignMasterRouter(
 	campaignmastercontroller mastercontroller.CampaignMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
