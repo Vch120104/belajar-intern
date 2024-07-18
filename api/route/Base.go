@@ -317,9 +317,9 @@ func MovingCodeRouter(
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
 	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
-	router.Get("/", MovingCodeController.GetAllMovingCode)
-	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
-	router.Get("/drop-down", MovingCodeController.GetDropdownMovingCode)
+	router.Get("/company/{company_id}", MovingCodeController.GetAllMovingCode)
+	router.Patch("/push-priority/{company_id}/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	router.Get("/drop-down/{company_id}", MovingCodeController.GetDropdownMovingCode)
 	router.Patch("/activate/{moving_code_id}", MovingCodeController.ActivateMovingCode)
 	router.Patch("/deactive/{moving_code_id}", MovingCodeController.DeactiveMovingCode)
 
