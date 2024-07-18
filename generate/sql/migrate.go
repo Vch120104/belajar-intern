@@ -2,8 +2,12 @@ package migration
 
 import (
 	"after-sales/api/config"
+	masteritementities "after-sales/api/entities/master/item"
+	masteroperationentities "after-sales/api/entities/master/operation"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+
 	// masterentities "after-sales/api/entities/master"
-	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	// masteritementities "after-sales/api/entities/master/item"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
@@ -64,7 +68,7 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-		// &masteroperationentities.OperationModelMapping{},
+		&masteroperationentities.OperationModelMapping{},
 		// &masteroperationentities.OperationFrt{},
 		// &masteroperationentities.OperationGroup{},
 		// &masteroperationentities.OperationSection{},
@@ -96,7 +100,7 @@ func Migrate() {
 		// &masteritementities.ItemImport{},
 		// &masteritementities.ItemDetail{},
 		// &masteritementities.ItemLocationSource{},
-		// &masteritementities.Item{},
+		&masteritementities.Item{},
 		// &masteritementities.ItemLocation{},
 		// &masteritementities.ItemLocationDetail{},
 		// &masteritementities.ItemClass{},
@@ -134,11 +138,11 @@ func Migrate() {
 		// &masterentities.AgreementDiscountGroupDetail{},
 		// &masterentities.AgreementItemDetail{},
 
-		// &mastercampaignmasterentities.CampaignMaster{},
-		// &mastercampaignmasterentities.CampaignMasterDetailItem{},
-		// &mastercampaignmasterentities.CampaignMasterOperationDetail{},
+		&mastercampaignmasterentities.CampaignMaster{},
+		&mastercampaignmasterentities.CampaignMasterDetailItem{},
+		&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 
-		// &transactionsparepartpentities.SupplySlip{},
+		&transactionsparepartentities.SupplySlip{},
 		// &transactionsparepartpentities.SupplySlipDetail{},
 		// &transactionworkshopentities.WorkOrderMaster{},
 		// &transactionworkshopentities.WorkOrderMasterStatus{},
