@@ -1,7 +1,8 @@
 package masterrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,14 +11,24 @@ import (
 )
 
 type AgreementRepository interface {
-	GetAgreementById(*gorm.DB, int) (masterpayloads.AgreementRequest, *exceptionsss_test.BaseErrorResponse)
-	SaveAgreement(*gorm.DB, masterpayloads.AgreementResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusAgreement(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
-	AddDiscountGroup(*gorm.DB, int, masterpayloads.DiscountGroupRequest) *exceptionsss_test.BaseErrorResponse
-	DeleteDiscountGroup(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
-	AddItemDiscount(*gorm.DB, int, masterpayloads.ItemDiscountRequest) *exceptionsss_test.BaseErrorResponse
-	DeleteItemDiscount(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
-	AddDiscountValue(*gorm.DB, int, masterpayloads.DiscountValueRequest) *exceptionsss_test.BaseErrorResponse
-	DeleteDiscountValue(*gorm.DB, int, int) *exceptionsss_test.BaseErrorResponse
+	GetAgreementById(*gorm.DB, int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
+	SaveAgreement(*gorm.DB, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
+	UpdateAgreement(*gorm.DB, int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
+	ChangeStatusAgreement(*gorm.DB, int) (masterentities.Agreement, *exceptions.BaseErrorResponse)
+	GetAllAgreement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	AddDiscountGroup(*gorm.DB, int, masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse)
+	UpdateDiscountGroup(*gorm.DB, int, int, masterpayloads.DiscountGroupRequest) (masterentities.AgreementDiscountGroupDetail, *exceptions.BaseErrorResponse)
+	DeleteDiscountGroup(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	AddItemDiscount(*gorm.DB, int, masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse)
+	UpdateItemDiscount(*gorm.DB, int, int, masterpayloads.ItemDiscountRequest) (masterentities.AgreementItemDetail, *exceptions.BaseErrorResponse)
+	DeleteItemDiscount(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	AddDiscountValue(*gorm.DB, int, masterpayloads.DiscountValueRequest) (masterentities.AgreementDiscount, *exceptions.BaseErrorResponse)
+	UpdateDiscountValue(*gorm.DB, int, int, masterpayloads.DiscountValueRequest) (masterentities.AgreementDiscount, *exceptions.BaseErrorResponse)
+	DeleteDiscountValue(*gorm.DB, int, int) *exceptions.BaseErrorResponse
+	GetDiscountGroupAgreementById(*gorm.DB, int, int) (masterpayloads.DiscountGroupRequest, *exceptions.BaseErrorResponse)
+	GetDiscountItemAgreementById(*gorm.DB, int, int) (masterpayloads.ItemDiscountRequest, *exceptions.BaseErrorResponse)
+	GetDiscountValueAgreementById(*gorm.DB, int, int) (masterpayloads.DiscountValueRequest, *exceptions.BaseErrorResponse)
+	GetAllDiscountGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllItemDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllDiscountValue(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

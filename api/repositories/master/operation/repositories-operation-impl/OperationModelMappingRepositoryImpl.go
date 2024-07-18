@@ -2,8 +2,9 @@ package masteroperationrepositoryimpl
 
 import (
 	"after-sales/api/config"
+	// masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"errors"
 	"net/http"
 	"strings"
@@ -26,7 +27,7 @@ func StartOperationModelMappingRepositoryImpl() masteroperationrepository.Operat
 	return &OperationModelMappingRepositoryImpl{}
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationModelMapping{}
 	response := masteroperationpayloads.OperationModelMappingResponse{}
 
@@ -38,7 +39,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingById(tx *g
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -49,7 +50,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingById(tx *g
 	return response, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandModelOperationCode(tx *gorm.DB, request masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandModelOperationCode(tx *gorm.DB, request masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationModelMapping{}
 	response := masteroperationpayloads.OperationModelMappingResponse{}
 
@@ -70,7 +71,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandMod
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -81,7 +82,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandMod
 	return response, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []map[string]interface{}
 
 	// Fetch OperationModelMapping data
@@ -99,7 +100,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 	// Execute query
 	rows, err := whereQuery.Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -118,7 +119,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 			&response.BrandId,
 			&response.ModelId,
 		); err != nil {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -127,7 +128,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 	}
 
 	if len(operationModelMappingResponses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("no data found"),
 		}
@@ -138,7 +139,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 	brandUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-brand?page=0&limit=10"
 	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
 	if errUrlBrand != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errUrlBrand,
 		}
@@ -149,7 +150,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 	modelUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-model?page=0&limit=10"
 	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
 	if errUrlModel != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errUrlModel,
 		}
@@ -174,7 +175,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 		model, modelExists := modelMap[mapping.ModelId]
 
 		if !brandExists || !modelExists {
-			return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errors.New("brand or model data not found"),
 			}
@@ -201,7 +202,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationModelMapping{
 		IsActive:                request.IsActive,
 		OperationModelMappingId: request.OperationModelMappingId,
@@ -216,7 +217,7 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -225,7 +226,7 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteroperationentities.OperationModelMapping
 
 	result := tx.Model(&entities).
@@ -233,7 +234,7 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -249,7 +250,7 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -258,7 +259,7 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	OperationFrtMapping := []masteroperationentities.OperationFrt{}
 	OperationFrtResponse := []masteroperationpayloads.OperationModelMappingFrtRequest{}
 
@@ -273,7 +274,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 		Error
 
 	if len(OperationFrtResponse) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -281,7 +282,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 
 	if err != nil {
 
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -292,7 +293,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 	return pages, nil
 }
 
-func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse) {
 	var OperationFrtMapping masteroperationentities.OperationFrt
 	var OperationFrtResponse masteroperationpayloads.OperationModelMappingFrtRequest
 
@@ -304,7 +305,7 @@ func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id 
 
 	if err != nil {
 
-		return OperationFrtResponse, &exceptionsss_test.BaseErrorResponse{
+		return OperationFrtResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -314,7 +315,7 @@ func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id 
 	return OperationFrtResponse, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingFrt(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingFrt(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationFrt{
 		IsActive:                request.IsActive,
 		OperationFrtId:          request.OperationFrtId,
@@ -327,7 +328,7 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingFrt(tx *g
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -336,14 +337,14 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingFrt(tx *g
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) DeactivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) DeactivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteroperationentities.OperationFrt
 		err := tx.Model(&entityToUpdate).Where("operation_frt_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
@@ -352,7 +353,7 @@ func (r *OperationModelMappingRepositoryImpl) DeactivateOperationFrt(tx *gorm.DB
 		entityToUpdate.IsActive = false
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        result.Error,
 			}
@@ -362,14 +363,14 @@ func (r *OperationModelMappingRepositoryImpl) DeactivateOperationFrt(tx *gorm.DB
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) ActivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) ActivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteroperationentities.OperationFrt
 		err := tx.Model(&entityToUpdate).Where("operation_frt_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
@@ -378,7 +379,7 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationFrt(tx *gorm.DB, 
 		entityToUpdate.IsActive = true
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        result.Error,
 			}
@@ -388,7 +389,7 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationFrt(tx *gorm.DB, 
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	OperationDocumentRequirementMapping := []masteroperationentities.OperationDocumentRequirement{}
 	OperationDocumentRequirementResponse := []masteroperationpayloads.OperationModelMappingDocumentRequirementRequest{}
 	// OperationDocumentRequirementResponse1 := masteroperationpayloads.OperationDocumentRequirementResponse{}
@@ -404,7 +405,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement
 		Error
 
 	if len(OperationDocumentRequirementResponse) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -412,7 +413,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement
 
 	if err != nil {
 
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -423,7 +424,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement
 	return pages, nil
 }
 
-func (*OperationModelMappingRepositoryImpl) GetOperationDocumentRequirementById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptionsss_test.BaseErrorResponse) {
+func (*OperationModelMappingRepositoryImpl) GetOperationDocumentRequirementById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse) {
 	var OperationDocumentRequirementMapping masteroperationentities.OperationDocumentRequirement
 	var OperationDocumentRequirementResponse masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
 
@@ -435,7 +436,7 @@ func (*OperationModelMappingRepositoryImpl) GetOperationDocumentRequirementById(
 
 	if err != nil {
 
-		return OperationDocumentRequirementResponse, &exceptionsss_test.BaseErrorResponse{
+		return OperationDocumentRequirementResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -445,7 +446,7 @@ func (*OperationModelMappingRepositoryImpl) GetOperationDocumentRequirementById(
 	return OperationDocumentRequirementResponse, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingDocumentRequirement(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingDocumentRequirement(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationDocumentRequirement{
 		IsActive:                                request.IsActive,
 		OperationModelMappingId:                 request.OperationModelMappingId,
@@ -457,7 +458,7 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingDocumentR
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -466,14 +467,14 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingDocumentR
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) DeactivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) DeactivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteroperationentities.OperationDocumentRequirement
 		err := tx.Model(&entityToUpdate).Where("operation_document_requirement_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
@@ -482,7 +483,7 @@ func (r *OperationModelMappingRepositoryImpl) DeactivateOperationDocumentRequire
 		entityToUpdate.IsActive = false
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        result.Error,
 			}
@@ -492,14 +493,14 @@ func (r *OperationModelMappingRepositoryImpl) DeactivateOperationDocumentRequire
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) ActivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) ActivateOperationDocumentRequirement(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
 	for _, Ids := range idSlice {
 		var entityToUpdate masteroperationentities.OperationDocumentRequirement
 		err := tx.Model(&entityToUpdate).Where("operation_document_requirement_id = ?", Ids).First(&entityToUpdate).Error
 		if err != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
@@ -508,7 +509,7 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationDocumentRequireme
 		entityToUpdate.IsActive = true
 		result := tx.Save(&entityToUpdate)
 		if result.Error != nil {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        result.Error,
 			}
@@ -517,3 +518,35 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationDocumentRequireme
 
 	return true, nil
 }
+
+// func (r *OperationModelMappingRepositoryImpl) AddOperationLevel(tx *gorm.DB, pages pagination.Pagination)(pagination.Pagination,*exceptions.BaseErrorResponse){
+// 	OperationLevelEtity:= []masteroperationentities.OperationLevel{}
+// 	OperationEntries:= []masteroperationentities.OperationEntries{}
+// 	OperationLevelPayloads:= []masteroperationpayloads.OperationLevelGetAll{}
+
+// 	_,err:=tx.Model(&OperationEntries).
+// 	Joins("Inner Join mtr_operation_group On mtr_operation_entries.operation_group_id=mtr_operation_group.operation_group_id").
+// 	Joins("Inner Join mtr_operation_section On mtr_operation_section.operation_section_id=mtr_operation_entries.operation_section_id").
+// 	Joins("Inner Join mtr_operation_key on mtr_operation_key.operation_key_id=mtr_operation_entries.operation_key_id").
+// 	Group("mtr_operation_entries.operation_entries_code,mtr_operation_entries.operation_entries_description,mtr_operation_group.operation_group_code,mtr_operation_group.operation_group_description,mtr_operation_section.operation_section_code,mtr_operation_section.operation_section_description,mtr_operation_key.operation_key_code,mtr_operation_key.operation_key_code,mtr_operation_code_entries.is_active").
+// 	Scan(&OperationLevelPayloads).Rows()
+// 	if err != nil{
+// 		return pages,&exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        err,
+// 		}
+// 	}
+// 	if len(OperationLevelPayloads)==0{
+// 		return pages,&exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        err,
+// 		}
+// 	}
+// 	// defer query.close{}
+// 	pages.Rows=OperationLevelPayloads
+// 	return pages,nil
+// }
+
+// func (r *OperationModelMappingRepositoryImpl) DeleteOperationLevel(tx *gorm.DB, ids string)(bool,*exceptions.BaseErrorResponse){
+// 	err:=tx.Model(masteroperationentities.OperationModelMapping).Delete()
+// }

@@ -2,19 +2,35 @@ package masterpayloads
 
 import "time"
 
+type FieldActionRequest struct {
+	IsActive                  bool      `json:"is_active" parent_entity:"mtr_field_action"`
+	FieldActionSystemNumber   int       `json:"field_action_system_number" parent_entity:"mtr_field_action"`
+	ApprovalStatusId          int       `json:"approval_status_id" parent_entity:"mtr_field_action"`
+	BrandId                   int       `json:"brand_id" parent_entity:"mtr_field_action"`
+	FieldActionDocumentNumber string    `json:"field_action_document_number" parent_entity:"mtr_field_action"`
+	FieldActionName           string    `json:"field_action_name" parent_entity:"mtr_field_action"`
+	FieldActionPeriodFrom     time.Time `json:"field_action_period_from" parent_entity:"mtr_field_action"`
+	FieldActionPeriodTo       time.Time `json:"field_action_period_to" parent_entity:"mtr_field_action"`
+	IsNeverExpired            bool      `json:"is_never_expired" parent_entity:"mtr_field_action"`
+	RemarkPopup               string    `json:"remark_popup" parent_entity:"mtr_field_action"`
+	IsCritical                bool      `json:"is_critical" parent_entity:"mtr_field_action"`
+	RemarkInvoice             string    `json:"remark_invoice" parent_entity:"mtr_field_action"`
+}
+
 type FieldActionResponse struct {
-	IsActive                  bool      `json:"is_active"`
-	FieldActionSystemNumber   int       `json:"field_action_system_number"`
-	ApprovalValue             int       `json:"approval_value"`
-	BrandId                   int       `json:"brand_id"`
-	FieldActionDocumentNumber string    `json:"field_action_document_number"`
-	FieldActionName           string    `json:"field_action_name"`
-	FieldActionPeriodFrom     time.Time `json:"field_action_period_from"`
-	FieldActionPeriodTo       time.Time `json:"field_action_period_to"`
-	IsNeverExpired            bool      `json:"is_never_expired"`
-	RemarkPopup               string    `json:"remark_popup"`
-	IsCritical                bool      `json:"is_critical"`
-	RemarkInvoice             string    `json:"remark_invoice"`
+	IsActive                  bool   `json:"is_active" parent_entity:"mtr_field_action"`
+	FieldActionSystemNumber   int    `json:"field_action_system_number" parent_entity:"mtr_field_action" main_table:"mtr_field_action"`
+	ApprovalStatusId          int    `json:"approval_status_id" parent_entity:"mtr_field_action"`
+	BrandId                   int    `json:"brand_id" parent_entity:"mtr_field_action"`
+	FieldActionDocumentNumber string `json:"field_action_document_number" parent_entity:"mtr_field_action"`
+	FieldActionName           string `json:"field_action_name" parent_entity:"mtr_field_action"`
+	FieldActionPeriodFrom     string `json:"field_action_period_from" parent_entity:"mtr_field_action"`
+	FieldActionPeriodTo       string `json:"field_action_period_to" parent_entity:"mtr_field_action"`
+	IsNeverExpired            bool   `json:"is_never_expired" parent_entity:"mtr_field_action"`
+	RemarkPopup               string `json:"remark_popup" parent_entity:"mtr_field_action"`
+	IsCritical                bool   `json:"is_critical" parent_entity:"mtr_field_action"`
+	RemarkInvoice             string `json:"remark_invoice" parent_entity:"mtr_field_action"`
+	VehicleId                 int    `json:"vehicle_id" parent_entity:"mtr_field_action_eligible_vehicle" main_table:"mtr_field_action"`
 }
 
 type FieldActionDetailResponse struct {
@@ -38,23 +54,35 @@ type FieldActionItemDetailResponse struct {
 	FieldActionFrt                             float64 `json:"field_action_frt"`
 }
 
-// type FieldActionMultiVehicleRequest struct {
-// 	IsActive                bool   `json:"is_active"`
-// 	CompanyId               int    `json:"company_id"`
-// 	FieldActionSystemNumber int    `json:"field_action_system_number"`
-// 	VehicleIdArray          string `json:"multiple_vehicle_id"`
-// }
+type ApprovalStatusResponse struct {
+	ApprovalStatusId   int    `json:"approval_status_id"`
+	ApprovalStatusName string `json:"approval_status_description"`
+	ApprovalStatusCode int    `json:"approval_status_code"`
+}
 
-// type FieldActionItemDetailRequest struct {
-// 	LineTypeId                                 int     `json:"line_type_id"`
-// 	ItemOperationCode                          int     `json:"item_operation_code"`
-// 	FieldActionFrt                             float64 `json:"field_action_frt"`
-// }
+type VehicleChassisResponse struct {
+	VehicleId            int    `json:"vehicle_id"`
+	VehicleChassisNumber string `json:"vehicle_chassis_number"`
+}
 
-// type FieldActionByIdResponse struct {
+type FieldActionEligibleVehicleItem struct {
+	IsActive                                   bool    `json:"is_active"`
+	FieldActionEligibleVehicleItemSystemNumber int     `json:"field_action_eligible_vehicle_item_system_number"`
+	FieldActionEligibleVehicleSystemNumber     int     `json:"field_action_eligible_vehicle_system_number"`
+	LineTypeId                                 int     `json:"line_type_id"`
+	FieldActionEligibleVehicleItemLineNumber   float64 `json:"field_action_eligible_vehicle_item_line_number"`
+	ItemId                                     int     `json:"item_id"`
+	ItemName                                   string  `json:"item_name"`
+	FieldActionFrt                             float64 `json:"field_action_frt"`
+}
 
-// 	Data       interface{} `json:"data"`
-// 	detail []ResponsePagination
-
-// 	RemarkInvoice           string    `json:"remark_invoice"`
-// }
+type FieldActionEligibleVehicleOperation struct {
+	IsActive                                   bool    `json:"is_active"`
+	FieldActionEligibleVehicleItemSystemNumber int     `json:"field_action_eligible_vehicle_item_system_number"`
+	FieldActionEligibleVehicleSystemNumber     int     `json:"field_action_eligible_vehicle_system_number"`
+	LineTypeId                                 int     `json:"line_type_id"`
+	FieldActionEligibleVehicleItemLineNumber   float64 `json:"field_action_eligible_vehicle_item_line_number"`
+	OperationModelMappingId                    int     `json:"operation_model_mapping_id"`
+	OperationName                              string  `json:"operation_name"`
+	FieldActionFrt                             float64 `json:"field_action_frt"`
+}

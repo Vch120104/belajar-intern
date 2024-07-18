@@ -1,7 +1,7 @@
 package masterrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,9 +10,11 @@ import (
 )
 
 type IncentiveGroupRepository interface {
-	GetAllIncentiveGroup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetAllIncentiveGroupIsActive(*gorm.DB) ([]masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse)
-	GetIncentiveGroupById(*gorm.DB, int) (masterpayloads.IncentiveGroupResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveIncentiveGroup(*gorm.DB, masterpayloads.IncentiveGroupResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusIncentiveGroup(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllIncentiveGroup(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllIncentiveGroupIsActive(*gorm.DB) ([]masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse)
+	GetIncentiveGroupById(*gorm.DB, int) (masterpayloads.IncentiveGroupResponse, *exceptions.BaseErrorResponse)
+	SaveIncentiveGroup(*gorm.DB, masterpayloads.IncentiveGroupResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusIncentiveGroup(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
+	UpdateIncentiveGroup(*gorm.DB, int, masterpayloads.UpdateIncentiveGroupRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllIncentiveGroupDropDown(tx *gorm.DB) ([]masterpayloads.IncentiveGroupDropDown, *exceptions.BaseErrorResponse)
 }

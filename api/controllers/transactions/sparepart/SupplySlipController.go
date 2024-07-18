@@ -1,37 +1,46 @@
 package transactionsparepartcontroller
 
 import (
-	"after-sales/api/exceptions"
-	"after-sales/api/payloads"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
-
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
-	"gorm.io/gorm"
 )
 
-type SupplySlipController struct {
+type SupplySlipControllerImpl struct {
 	supplyslipservice transactionsparepartservice.SupplySlipService
 }
 
-func StartSupplySlipRoutes(
-	db *gorm.DB,
-	r chi.Router,
-	supplyslipservice transactionsparepartservice.SupplySlipService,
-) {
-	supplySlipHandler := SupplySlipController{supplyslipservice: supplyslipservice}
-	r.Get("/supply-slip/{supply_system_number}", supplySlipHandler.GetSupplySlipByID)
+type SupplySlipController interface {
+	GetSupplySlipByID(writer http.ResponseWriter, request *http.Request)
 }
 
-// Get Supply Slip By ID
-func (r *SupplySlipController) GetSupplySlipByID(w http.ResponseWriter, req *http.Request) {
-	supplySystemNumber, _ := strconv.Atoi(chi.URLParam(req, "supply_system_number"))
-	result, err := r.supplyslipservice.GetSupplySlipById(int32(supplySystemNumber))
-	if err != nil {
-		exceptions.NotFoundException(w, err.Error())
-		return
+func NewSupplySlipController(supplyslipservice transactionsparepartservice.SupplySlipService) SupplySlipController {
+	return &SupplySlipControllerImpl{
+		supplyslipservice: supplyslipservice,
 	}
-	payloads.NewHandleSuccess(w, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// GetSupplySlipByID retrieves a supply slip by ID
+// @Summary Get Supply Slip By ID
+// @Description Retrieve a supply slip by its ID
+// @Accept json
+// @Produce json
+// @Tags Transaction : Spare Part Supply Slip
+// @Param supply_slip_id path int true "Supply Slip ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,404 {object} exceptions.BaseErrorResponse
+// @Router /v1/supply-slip/{supply_slip_id} [get]
+func (r *SupplySlipControllerImpl) GetSupplySlipByID(writer http.ResponseWriter, request *http.Request) {
+	// Get ID from URL
+	// id := mux.Vars(request)["id"]
+
+	// Get data from service
+	// data, err := r.supplyslipservice.GetSupplySlipByID(id)
+	// if err != nil {
+	// 	// Return error
+	// 	exceptions.NewNotFoundException(writer, request, err)
+	// 	return
+	// }
+
+	// Return success
+	// payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
 }

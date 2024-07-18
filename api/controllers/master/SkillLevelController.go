@@ -4,9 +4,9 @@ import (
 
 	// "after-sales/api/helper"
 
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -23,8 +23,10 @@ import (
 type SkillLevelController interface {
 	GetAllSkillLevel(writer http.ResponseWriter, request *http.Request)
 	GetSkillLevelById(writer http.ResponseWriter, request *http.Request)
+	GetSkillLevelByCode(writer http.ResponseWriter, request *http.Request)
 	SaveSkillLevel(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusSkillLevel(writer http.ResponseWriter, request *http.Request)
+	UpdateSkillLevel(writer http.ResponseWriter, request *http.Request)
 }
 
 type SkillLevelControllerImpl struct {
@@ -50,7 +52,7 @@ func NewSkillLevelController(SkillLevelService masterservice.SkillLevelService) 
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/skill-level/ [get]
 func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
@@ -71,7 +73,7 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 
 	result, err := r.SkillLevelService.GetAllSkillLevel(filterCondition, pagination)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -85,14 +87,14 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 // @Tags Master : Skill Level
 // @param skill_level_id path int true "skill_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/skill-level/{skill_level_id} [get]
 func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter, request *http.Request) {
 	skillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
 
 	result, err := r.SkillLevelService.GetSkillLevelById(skillLevelId)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -106,7 +108,7 @@ func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter,
 // @Tags Master : Skill Level
 // @param reqBody body masterpayloads.SkillLevelResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/skill-level/ [post]
 func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, request *http.Request) {
 
@@ -115,19 +117,19 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 	var message string
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.SkillLevelService.SaveSkillLevel(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -147,7 +149,7 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 // @Tags Master : Skill Level
 // @param skill_level_id path int true "skill_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/skill-level/{skill_level_id} [patch]
 func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWriter, request *http.Request) {
 	SkillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
@@ -155,9 +157,34 @@ func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWr
 	response, err := r.SkillLevelService.ChangeStatusSkillLevel(int(SkillLevelId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, request *http.Request){
+	skill_level_id,_ := strconv.Atoi(chi.URLParam(request,"skill_level_id"))
+	var formRequest masterpayloads.SkillLevelResponse
+	helper.ReadFromRequestBody(request, &formRequest)
+	result, err := r.SkillLevelService.UpdateSkillLevel(formRequest, skill_level_id)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *SkillLevelControllerImpl) GetSkillLevelByCode(writer http.ResponseWriter, request *http.Request) {
+	skillLevelCode:= chi.URLParam(request, "skill_level_code")
+
+	result, err := r.SkillLevelService.GetSkillLevelByCode(skillLevelCode)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }

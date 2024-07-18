@@ -52,8 +52,8 @@ type AgreementCompanyResponse struct {
 type DiscountGroupRequest struct {
 	AgreementDiscountGroupId int     `json:"agreement_discount_group_id" parent_entity:"mtr_agreement_discount_group_detail" main_table:"mtr_agreement_discount_group_detail"`
 	AgreementId              int     `json:"agreement_id" parent_entity:"mtr_agreement_discount_group_detail"`
-	AgreementSelection       string  `json:"agreement_selection" parent_entity:"mtr_agreement_discount_group_detail"`
-	AgreementLineTypeId      string  `json:"agreement_order_type" parent_entity:"mtr_agreement_discount_group_detail"`
+	AgreementSelection       int     `json:"agreement_selection_id" parent_entity:"mtr_agreement_discount_group_detail"`
+	AgreementLineTypeId      int     `json:"agreement_order_type_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDiscountMarkup  int     `json:"agreement_discount_markup_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDiscount        float32 `json:"agreement_discount" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDetailRemaks    string  `json:"agreement_detail_remarks" parent_entity:"mtr_agreement_discount_group_detail"`
@@ -62,29 +62,31 @@ type DiscountGroupRequest struct {
 type DiscountGroupResponse struct {
 	AgreementDiscountGroupId int     `json:"agreement_discount_group_id"`
 	AgreementId              int     `json:"agreement_id"`
-	AgreementSelection       string  `json:"agreement_selection"`
-	AgreementLineTypeId      string  `json:"agreement_order_type"`
+	AgreementSelection       int     `json:"agreement_selection_id"`
+	AgreementLineTypeId      int     `json:"agreement_order_type_id"`
 	AgreementDiscountMarkup  int     `json:"agreement_discount_markup_id"`
 	AgreementDiscount        float32 `json:"agreement_discount"`
 	AgreementDetailRemaks    string  `json:"agreement_detail_remarks"`
 }
 
 type ItemDiscountRequest struct {
-	AgreementItemId          int    `json:"agreement_item_id" parent_entity:"mtr_item_discount" main_table:"mtr_item_discount"`
-	AgreementId              int    `json:"agreement_id" parent_entity:"mtr_item_discount"`
-	LineTypeId               int    `json:"line_type_id" parent_entity:"mtr_item_discount"`
-	AgreementItemOperationId int    `json:"agreement_item_operation_id" parent_entity:"mtr_item_discount"`
-	MinValue                 int    `json:"min_value" parent_entity:"mtr_item_discount"`
-	AgreementRemark          string `json:"agreement_remark" parent_entity:"mtr_item_discount"`
+	AgreementItemId          int     `json:"agreement_item_id" parent_entity:"mtr_agreement_item_detail" main_table:"mtr_agreement_item_detail"`
+	AgreementId              int     `json:"agreement_id" parent_entity:"mtr_agreement_item_detail"`
+	LineTypeId               int     `json:"line_type_id" parent_entity:"mtr_agreement_item_detail"`
+	AgreementItemOperationId int     `json:"agreement_item_operation_id" parent_entity:"mtr_agreement_item_detail"`
+	DiscountPercent          float32 `json:"discount_percent" parent_entity:"mtr_agreement_item_detail"`
+	MinValue                 int     `json:"min_value" parent_entity:"mtr_agreement_item_detail"`
+	AgreementRemark          string  `json:"agreement_remark" parent_entity:"mtr_agreement_item_detail"`
 }
 
 type ItemDiscountResponse struct {
-	AgreementItemId          int    `json:"agreement_item_id"`
-	AgreementId              int    `json:"agreement_id"`
-	LineTypeId               int    `json:"line_type_id"`
-	AgreementItemOperationId int    `json:"agreement_item_operation_id"`
-	MinValue                 int    `json:"min_value"`
-	AgreementRemark          string `json:"agreement_remark"`
+	AgreementItemId          int     `json:"agreement_item_id"`
+	AgreementId              int     `json:"agreement_id"`
+	LineTypeId               int     `json:"line_type_id"`
+	AgreementItemOperationId int     `json:"agreement_item_operation_id"`
+	DiscountPercent          float32 `json:"discount_percent"`
+	MinValue                 int     `json:"min_value"`
+	AgreementRemark          string  `json:"agreement_remark"`
 }
 
 type DiscountValueRequest struct {

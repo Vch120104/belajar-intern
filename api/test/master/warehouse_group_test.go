@@ -1,85 +1,108 @@
 package test
 
-// import (
-// 	"after-sales/api/config"
-// 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+import (
+	"after-sales/api/config"
+	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	"after-sales/api/payloads/pagination"
+	"after-sales/api/utils"
 
-// 	// "after-sales/api/payloads/pagination"
-// 	masterwarehouserepo "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
-// 	masterwarehousegroupservice "after-sales/api/services/master/warehouse/services-warehouse-impl"
-// 	"fmt"
-// 	"testing"
-// )
+	// "after-sales/api/payloads/pagination"
+	masterwarehouserepo "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
+	masterwarehousegroupservice "after-sales/api/services/master/warehouse/services-warehouse-impl"
+	"fmt"
+	"testing"
 
-// func TestSaveWarehouseGroup(t *testing.T) {
-// 	config.InitEnvConfigs(true, "")
-// 	db := config.InitDB()
-// 	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl(db)
-// 	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo)
+	"github.com/stretchr/testify/assert"
+)
 
-// 	save, err := warehouseGroupService.Save(
-// 		masterwarehousepayloads.GetWarehouseGroupResponse{
-// 			IsActive:           true,
-// 			WarehouseGroupCode: "01",
-// 			WarehouseGroupName: "01",
-// 			ProfitCenterId:     01,
-// 		},
-// 	)
+func TestSaveWarehouseGroup(t *testing.T) {
+	config.InitEnvConfigs(true, "")
+	db := config.InitDB()
+	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl()
+	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo, db, nil)
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	save, err := warehouseGroupService.SaveWarehouseGroup(
+		masterwarehousepayloads.GetWarehouseGroupResponse{
+			IsActive:           true,
+			WarehouseGroupCode: "01",
+			WarehouseGroupName: "01",
+			ProfitCenterId:     01,
+		},
+	)
 
-// 	fmt.Println(save)
-// }
+	if err != nil {
+		panic(err)
+	}
 
-// func TestGetWarehouseGroup(t *testing.T) {
-// 	config.InitEnvConfigs(true, "")
-// 	db := config.InitDB()
-// 	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl(db)
-// 	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo)
+	fmt.Println(save)
+}
 
-// 	get, err := warehouseGroupService.GetById(
-// 		1,
-// 	)
+func TestGetWarehouseGroup(t *testing.T) {
+	config.InitEnvConfigs(true, "")
+	db := config.InitDB()
+	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl()
+	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo, db, nil)
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	get, err := warehouseGroupService.GetByIdWarehouseGroup(
+		1,
+	)
 
-// 	fmt.Println(get)
-// }
+	if err != nil {
+		panic(err)
+	}
 
-// func TestGetAllWarehouseGroup(t *testing.T) {
-// 	config.InitEnvConfigs(true, "")
-// 	db := config.InitDB()
-// 	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl(db)
-// 	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo)
+	fmt.Println(get)
+}
 
-// 	get, err := warehouseGroupService.GetAll(
-// 		masterwarehousepayloads.GetAllWarehouseGroupRequest{},
-// 	)
+func TestGetAllWarehouseGroup(t *testing.T) {
+	// Initialize environment configurations
+	config.InitEnvConfigs(true, "")
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	// Initialize the database
+	db := config.InitDB()
 
-// 	fmt.Println(get)
-// }
+	// Initialize the repository and service
+	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl()
+	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo, db, nil)
 
-// func TestChangeStatusWarehouseGroup(t *testing.T) {
-// 	config.InitEnvConfigs(true, "")
-// 	db := config.InitDB()
-// 	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl(db)
-// 	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo)
+	// Define filter conditions (if any)
+	filterConditions := []utils.FilterCondition{}
 
-// 	changeStatus, err := warehouseGroupService.ChangeStatus(
-// 		1,
-// 	)
+	// Define pagination parameters
+	paginationParams := pagination.Pagination{
+		Page:  1,
+		Limit: 10,
+	}
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	// Make the request to the service
+	paginatedResult, err := warehouseGroupService.GetAllWarehouseGroup(filterConditions, paginationParams)
 
-// 	fmt.Println(changeStatus)
-// }
+	// Handle any errors
+	if err != nil {
+		panic(err)
+	}
+
+	// Print the response for debugging purposes
+	fmt.Println(paginatedResult)
+
+	// Add assertions to validate the response
+	assert.NotNil(t, paginatedResult)
+	assert.GreaterOrEqual(t, nil, 0, "Length of warehouse groups should be >= 0")
+}
+
+func TestChangeStatusWarehouseGroup(t *testing.T) {
+	config.InitEnvConfigs(true, "")
+	db := config.InitDB()
+	warehouseGroupRepo := masterwarehouserepo.OpenWarehouseGroupImpl()
+	warehouseGroupService := masterwarehousegroupservice.OpenWarehouseGroupService(warehouseGroupRepo, db, nil)
+
+	changeStatus, err := warehouseGroupService.ChangeStatusWarehouseGroup(
+		1,
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(changeStatus)
+}

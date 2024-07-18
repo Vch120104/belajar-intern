@@ -1,9 +1,9 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -23,20 +23,63 @@ type MovingCodeController interface {
 	UpdateMovingCode(writer http.ResponseWriter, request *http.Request)
 	GetMovingCodebyId(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request)
+	GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request)
+	ActivateMovingCode(writer http.ResponseWriter, request *http.Request)
+	DeactiveMovingCode(writer http.ResponseWriter, request *http.Request)
 }
 
 type MovingCodeControllerImpl struct {
 	MovingCodeService masterservice.MovingCodeService
 }
 
+// ActivateMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) ActivateMovingCode(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "moving_code_id")
+
+	response, err := r.MovingCodeService.ActivateMovingCode(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Activate Status Successfully!", http.StatusOK)
+}
+
+// DeactiveMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter, request *http.Request) {
+	id := chi.URLParam(request, "moving_code_id")
+
+	response, err := r.MovingCodeService.DeactiveMovingCode(id)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Deactive Status Successfully!", http.StatusOK)
+}
+
+// GetDropdownMovingCode implements MovingCodeController.
+func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.MovingCodeService.GetDropdownMovingCode()
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
 // ChangeStatusMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+	id, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
 
 	response, err := r.MovingCodeService.ChangeStatusMovingCode(id)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -49,21 +92,21 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.MovingCodeService.CreateMovingCode(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -84,7 +127,7 @@ func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, 
 	paginatedData, totalPages, totalRows, err := r.MovingCodeService.GetAllMovingCode(paginate)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -99,7 +142,7 @@ func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter,
 	result, err := r.MovingCodeService.GetMovingCodebyId(movingCodeId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -112,7 +155,7 @@ func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWr
 	result, err := r.MovingCodeService.PushMovingCodePriority(itemPackageId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -121,25 +164,25 @@ func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWr
 
 // UpdateMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) UpdateMovingCode(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masterpayloads.MovingCodeListRequest
+	var formRequest masterpayloads.MovingCodeListUpdate
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.MovingCodeService.UpdateMovingCode(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

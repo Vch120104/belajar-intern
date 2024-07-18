@@ -1,10 +1,10 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -22,6 +22,7 @@ type ItemPackageController interface {
 	SaveItemPackage(writer http.ResponseWriter, request *http.Request)
 	GetItemPackageById(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request)
+	GetItemPackageByCode(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPackageControllerImpl struct {
@@ -32,6 +33,19 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 	return &ItemPackageControllerImpl{
 		ItemPackageService: ItemPackageService,
 	}
+}
+
+// GetItemPackageByCode implements ItemPackageController.
+func (r *ItemPackageControllerImpl) GetItemPackageByCode(writer http.ResponseWriter, request *http.Request) {
+	itemPackageCode := chi.URLParam(request, "item_package_code")
+
+	result, err := r.ItemPackageService.GetItemPackageByCode(itemPackageCode)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Item Packages
@@ -50,7 +64,7 @@ func NewItemPackageController(ItemPackageService masteritemservice.ItemPackageSe
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package/ [get]
 func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -80,7 +94,7 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 	paginatedData, totalPages, totalRows, err := r.ItemPackageService.GetAllItemPackage(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -94,7 +108,7 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 // @Tags Master : Item Package
 // @Param item_package_id path int true "Item Package ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package/{item_package_id} [get]
 func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWriter, request *http.Request) {
 
@@ -102,7 +116,7 @@ func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWrite
 
 	result, err := r.ItemPackageService.GetItemPackageById(itemPackageId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -116,29 +130,29 @@ func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWrite
 // @Tags Master : Item Package
 // @Param reqBody body masteritempayloads.SaveItemPackageRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package/ [post]
 func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.SaveItemPackageRequest
-	var message = ""
+	var message string
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.ItemPackageService.SaveItemPackage(formRequest)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -158,7 +172,7 @@ func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, 
 // @Tags Master : Item Package
 // @Param item_package_id path int true "Item Package ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package/{item_package_id} [patch]
 func (r *ItemPackageControllerImpl) ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request) {
 
@@ -167,7 +181,7 @@ func (r *ItemPackageControllerImpl) ChangeStatusItemPackage(writer http.Response
 	response, err := r.ItemPackageService.ChangeStatusItemPackage(PriceListId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

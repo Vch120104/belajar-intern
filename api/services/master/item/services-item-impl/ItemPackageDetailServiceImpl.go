@@ -1,7 +1,7 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -27,9 +27,30 @@ func StartItemPackageDetailService(ItemPackageDetailRepo masteritemrepository.It
 	}
 }
 
-func (s *ItemPackageDetailServiceImpl) ChangeStatusItemPackageDetail(id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+// ActivateItemPackageDetail implements masteritemservice.ItemPackageDetailService.
+func (s *ItemPackageDetailServiceImpl) ActivateItemPackageDetail(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	results, err := s.ItemPackageDetailRepo.ActivateItemPackageDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+// DeactiveItemPackageDetail implements masteritemservice.ItemPackageDetailService.
+func (s *ItemPackageDetailServiceImpl) DeactiveItemPackageDetail(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.ItemPackageDetailRepo.DeactiveItemPackageDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *ItemPackageDetailServiceImpl) ChangeStatusItemPackageDetail(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 
 	_, err := s.ItemPackageDetailRepo.GetItemPackageDetailById(tx, id)
 
@@ -38,46 +59,47 @@ func (s *ItemPackageDetailServiceImpl) ChangeStatusItemPackageDetail(id int) (bo
 	}
 
 	results, err := s.ItemPackageDetailRepo.ChangeStatusItemPackageDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
 	return results, nil
 }
 
-func (s *ItemPackageDetailServiceImpl) GetItemPackageDetailByItemPackageId(itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageDetailServiceImpl) GetItemPackageDetailByItemPackageId(itemPackageId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemPackageDetailRepo.GetItemPackageDetailByItemPackageId(tx, itemPackageId, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
 	return results, nil
 }
 
-func (s *ItemPackageDetailServiceImpl) GetItemPackageDetailById(itemPackageDetailId int) (masteritempayloads.ItemPackageDetailResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageDetailServiceImpl) GetItemPackageDetailById(itemPackageDetailId int) (masteritempayloads.ItemPackageDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemPackageDetailRepo.GetItemPackageDetailById(tx, itemPackageDetailId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
 	return results, nil
 }
 
-func (s *ItemPackageDetailServiceImpl) CreateItemPackageDetailByItemPackageId(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageDetailServiceImpl) CreateItemPackageDetailByItemPackageId(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.ItemPackageDetailRepo.CreateItemPackageDetailByItemPackageId(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
 	return results, nil
 }
 
-func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetailByItemPackageId(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *ItemPackageDetailServiceImpl) UpdateItemPackageDetail(req masteritempayloads.SaveItemPackageDetail) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetailByItemPackageId(tx, req)
+	results, err := s.ItemPackageDetailRepo.UpdateItemPackageDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

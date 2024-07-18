@@ -1,9 +1,8 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -19,10 +18,11 @@ type PurchasePriceController interface {
 	GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	SavePurchasePrice(writer http.ResponseWriter, request *http.Request)
 	GetPurchasePriceById(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request)
+	GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request)
 	GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 	AddPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	DeletePurchasePrice(writer http.ResponseWriter, request *http.Request)
-	ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchasePriceControllerImpl struct {
@@ -46,7 +46,7 @@ func NewPurchasePriceController(PurchasePriceService masteritemservice.PurchaseP
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -69,11 +69,15 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 
 	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePrice(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
 
 // @Summary Save Purchase Price
@@ -81,9 +85,9 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
-// @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
+// @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price [post]
 func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
@@ -93,16 +97,17 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 
 	create, err := r.PurchasePriceService.SavePurchasePrice(formRequest)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.PurchasePriceId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
 // @Summary Get Purchase Price By ID
@@ -112,7 +117,7 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 // @Tags Master : Purchase Price
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/by-id/{purchase_price_id} [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseWriter, request *http.Request) {
 
@@ -120,7 +125,7 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 
 	result, err := r.PurchasePriceService.GetPurchasePriceById(PurchasePriceIds)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -134,18 +139,23 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 // @Tags Master : Purchase Price
 // @param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/{purchase_price_id} [patch]
 func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
 	PurchasePricesId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
 
-	response, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
+	entity, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+	responseData := map[string]interface{}{
+		"is_active":         entity.IsActive,
+		"purchase_price_id": entity.PurchasePriceId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Purchase Price Detail
@@ -156,13 +166,12 @@ func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.Resp
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
-// @Param purchase_price_id path int true "purchase_price_id"
 // @Param purchase_price_detail_id query string false "purchase_price_detail_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
-// @Router /v1/purchase-price/{purchase_price_id}/detail  [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/detail  [get]
 func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -186,7 +195,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetAllPurchasePriceDetail(criteria, paginate)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -194,14 +203,46 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+// @Summary Get Purchase Price Detail By Purchase Price ID
+// @Description REST API  Purchase Price Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param purchase_price_id path int true "purchase_price_id"
+// @Success 200 {object} payloads.ResponsePagination
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/{purchase_price_id}/detail [get]
+func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+
+	// Extract pagination parameters
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	// Call service to get paginated data
+	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetPurchasePriceDetailById(PurchasePriceIds, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	// Construct the response
+	payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
 // @Summary Save Purchase Price Detail
 // @Description REST API Purchase Price
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
-// @param reqBody body masteritempayloads.PurchasePriceResponse true "Form Request"
+// @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/detail [post]
 func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
@@ -211,7 +252,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 
 	create, err := r.PurchasePriceService.AddPurchasePrice(formRequest)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.PurchasePriceDetailId == 0 {
@@ -230,7 +271,7 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Tags Master : Purchase Price
 // @Param purchase_price_detail_id path int true "purchase_price_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/all/detail/{purchase_price_detail_id} [get]
 func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
@@ -244,7 +285,7 @@ func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWr
 	// Memanggil service untuk menghapus item lokasi
 	if deleteErr := r.PurchasePriceService.DeletePurchasePrice(PurchasePriceID); deleteErr != nil {
 		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptionsss_test.NewNotFoundException(writer, request, deleteErr)
+		exceptions.NewNotFoundException(writer, request, deleteErr)
 		return
 	}
 

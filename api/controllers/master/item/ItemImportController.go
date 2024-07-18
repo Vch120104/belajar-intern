@@ -2,16 +2,23 @@ package masteritemcontroller
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"bytes"
+	"errors"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/xuri/excelize/v2"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -21,10 +28,132 @@ type ItemImportController interface {
 	GetItemImportbyId(writer http.ResponseWriter, request *http.Request)
 	SaveItemImport(writer http.ResponseWriter, request *http.Request)
 	UpdateItemImport(writer http.ResponseWriter, request *http.Request)
+	GetItemImportbyItemIdandSupplierId(writer http.ResponseWriter, request *http.Request)
+	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+	UploadTemplate(writer http.ResponseWriter, request *http.Request)
+	ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemImportControllerImpl struct {
 	ItemImportService masteritemservice.ItemImportService
+}
+
+// ProcessDataUpload implements ItemImportController.
+func (r *ItemImportControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.ItemImportUploadRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.ItemImportService.ProcessDataUpload(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
+}
+
+// UploadTemplate implements ItemImportController.
+func (r *ItemImportControllerImpl) UploadTemplate(writer http.ResponseWriter, request *http.Request) {
+	// Parse the multipart form
+	err := request.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("file size max 10MB"), StatusCode: 500})
+		return
+	}
+
+	// Retrieve the file from form data
+	file, handler, err := request.FormFile("ItemImportMaster-File")
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("key name must be ItemImportMaster-File"), StatusCode: 401})
+		return
+	}
+	defer file.Close()
+
+	//Check file is XML
+	if !strings.Contains(handler.Header.Get("Content-Type"), "xml") {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("make sure to upload xml file"), StatusCode: 400})
+		return
+	}
+	// Read the uploaded file into an excelize.File
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500})
+		return
+	}
+
+	// Get all the rows in the ItemImportMaster.
+	rows, err := f.GetRows("ItemImportMaster")
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("please check the sheet name must be ItemImportMaster"), StatusCode: 400})
+		return
+	}
+
+	previewData, errorPreview := r.ItemImportService.UploadPreviewFile(rows)
+
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, previewData, "Get Data Successfully!", http.StatusOK)
+
+}
+
+// DownloadTemplate implements ItemImportController.
+func (r *ItemImportControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
+
+	f, errorGenerate := r.ItemImportService.GenerateTemplateFile()
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
+		return
+	}
+
+	// Write the Excel file to a buffer
+	var b bytes.Buffer
+	err := f.Write(&b)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("Template-Upload-ItemImportMaster.xlsx")
+
+	writer.Header().Set("Content-Description", "File Transfer")
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+
+	writer.Write(b.Bytes())
+
+}
+
+// GetItemImportbyItemIdandSupplierId implements ItemImportController.
+func (r *ItemImportControllerImpl) GetItemImportbyItemIdandSupplierId(writer http.ResponseWriter, request *http.Request) {
+	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	supplierId, _ := strconv.Atoi(chi.URLParam(request, "supplier_id"))
+
+	result, err := r.ItemImportService.GetItemImportbyItemIdandSupplierId(itemId, supplierId)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // GetItemImportbyId implements ItemImportController.
@@ -35,7 +164,7 @@ type ItemImportControllerImpl struct {
 // @Tags Master : Item Import
 // @Param item_import_id path int true "Item Import ID"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/{item_import_id} [get]
 func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter, request *http.Request) {
 
@@ -44,7 +173,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 	result, err := r.ItemImportService.GetItemImportbyId(itemPackageId)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -66,7 +195,7 @@ func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter,
 // @Param sort_by query string false "Field to sort by"
 // @Param sort_of query string false "Sort order (asc/desc)"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import [get]
 func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
@@ -76,7 +205,6 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 		"mtr_item.item_name": queryValues.Get("item_name"),
 	}
 	externalFilterCondition := map[string]string{
-
 		"mtr_supplier.supplier_code": queryValues.Get("supplier_code"),
 		"mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
 	}
@@ -94,7 +222,7 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	paginatedData, totalPages, totalRows, err := r.ItemImportService.GetAllItemImport(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -109,28 +237,28 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 // @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/save [post]
 func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masteritementities.ItemImport
+	var formRequest masteritempayloads.ItemImportUploadRequest
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.ItemImportService.SaveItemImport(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -145,28 +273,28 @@ func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, re
 // @Tags Master : Item Import
 // @Param reqBody body masteritempayloads.ItemImportResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/update [put]
 func (r *ItemImportControllerImpl) UpdateItemImport(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritementities.ItemImport
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	err = validation.ValidationForm(writer, request, formRequest)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.ItemImportService.UpdateItemImport(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

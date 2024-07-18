@@ -1,7 +1,7 @@
 package masteroperationrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -11,10 +11,10 @@ import (
 )
 
 type OperationSectionRepository interface {
-	GetOperationSectionById(*gorm.DB, int) (masteroperationpayloads.OperationSectionListResponse, *exceptionsss_test.BaseErrorResponse)
-	GetSectionCodeByGroupId(*gorm.DB, int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptionsss_test.BaseErrorResponse)
-	GetOperationSectionName(*gorm.DB, int, string) (masteroperationpayloads.OperationSectionNameResponse, *exceptionsss_test.BaseErrorResponse)
-	GetAllOperationSectionList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	SaveOperationSection(*gorm.DB, masteroperationpayloads.OperationSectionRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusOperationSection(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetOperationSectionById(*gorm.DB, int) (masteroperationpayloads.OperationSectionListResponse, *exceptions.BaseErrorResponse)
+	GetSectionCodeByGroupId(*gorm.DB, int) ([]masteroperationpayloads.OperationSectionCodeResponse, *exceptions.BaseErrorResponse)
+	GetOperationSectionName(*gorm.DB, int, string) (masteroperationpayloads.OperationSectionNameResponse, *exceptions.BaseErrorResponse)
+	GetAllOperationSectionList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	SaveOperationSection(*gorm.DB, masteroperationpayloads.OperationSectionRequest) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusOperationSection(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }

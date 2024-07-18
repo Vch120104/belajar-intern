@@ -1,10 +1,11 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
+	"after-sales/api/utils"
 	"after-sales/api/validation"
 	"strconv"
 
@@ -25,6 +26,7 @@ type ItemLevelController interface {
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request)
+	GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLevelControllerImpl struct {
@@ -37,6 +39,43 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 	}
 }
 
+// GetItemLevelLookUp implements ItemLevelController.
+func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	filter := map[string]string{
+		"mtr_item_level.item_level_code": queryValues.Get("item_level_1"),
+		"mtr_item_level.item_level_name": queryValues.Get("item_level_1_name"),
+		"B.item_level_code":              queryValues.Get("item_level_2"),
+		"B.item_level_name":              queryValues.Get("item_level_2_name"),
+		"C.item_level_code":              queryValues.Get("item_level_3"),
+		"C.item_level_name":              queryValues.Get("item_level_3_name"),
+		"D.item_level_code":              queryValues.Get("item_level_4"),
+		"D.item_level_name":              queryValues.Get("item_level_4_name"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	get, err := r.itemLevelService.GetItemLevelLookUp(internalCriteria, paginate, itemClassId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)
+
+}
+
 // GetItemLevelDropDown implements ItemLevelController.
 func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request) {
 	itemLevelId := chi.URLParam(request, "item_level")
@@ -44,7 +83,7 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 	get, err := r.itemLevelService.GetItemLevelDropDown(itemLevelId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -68,37 +107,33 @@ func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWrite
 // @Param item_level_code query string false "Item Level Code"
 // @Param item_level_name query string false "Item Level Name"
 // @Param is_active query bool false "Is Active"
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/ [get]
 func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	page, _ := strconv.Atoi(queryValues.Get("page"))
-	limit, _ := strconv.Atoi(queryValues.Get("limit"))
-	sortOf := queryValues.Get("sort_of")
-	sortBy := queryValues.Get("sort_by")
-	itemLevel := queryValues.Get("item_level")
-	itemClassCode := queryValues.Get("item_class_code")
-	itemLevelParent := queryValues.Get("item_level_parent")
-	itemLevelCode := queryValues.Get("item_level_code")
-	itemLevelName := queryValues.Get("item_level_name")
-	isActive := queryValues.Get("is_active")
 
-	get, err := r.itemLevelService.GetAll(masteritemlevelpayloads.GetAllItemLevelResponse{
-		ItemLevel:       itemLevel,
-		ItemClassCode:   itemClassCode,
-		ItemLevelParent: itemLevelParent,
-		ItemLevelCode:   itemLevelCode,
-		ItemLevelName:   itemLevelName,
-		IsActive:        isActive,
-	}, pagination.Pagination{
-		Limit:  limit,
-		SortOf: sortOf,
-		SortBy: sortBy,
-		Page:   page,
-	})
+	filter := map[string]string{
+		"mtr_item_level.item_level":        queryValues.Get("item_level"),
+		"mtr_item_class.item_class_code":   queryValues.Get("item_class_code"),
+		"mtr_item_level.item_level_parent": queryValues.Get("item_level_parent"),
+		"mtr_item_level.item_level_code":   queryValues.Get("item_level_code"),
+		"mtr_item_level.item_level_name":   queryValues.Get("item_level_name"),
+		"mtr_item_level.is_active":         queryValues.Get("is_active"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
+
+	get, err := r.itemLevelService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -112,7 +147,7 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Tags Master : Item Level
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/by-id/{item_level_id} [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
@@ -121,7 +156,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 	get, err := r.itemLevelService.GetById(itemLevelId)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -135,7 +170,7 @@ func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *h
 // @Tags Master : Item Level
 // @param reqBody body masteritemlevelpayloads.SaveItemLevelRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/ [post]
 func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 
@@ -144,19 +179,19 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 	var message = ""
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.itemLevelService.Save(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -176,7 +211,7 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Tags Master : Item Level
 // @Param item_level_id path string true "item_level_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptionsss_test.BaseErrorResponse
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
@@ -185,7 +220,7 @@ func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, reque
 	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
