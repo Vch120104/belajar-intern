@@ -16,5 +16,5 @@ type CampaignMasterOperationDetail struct {
 }
 
 func (*CampaignMasterOperationDetail) TableName() string {
-	return "campaign_master_operation_details"
+	return CreateCampaignMasterDetailOperationTable
 }
