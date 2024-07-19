@@ -69,6 +69,7 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 		WarehouseName:                 request.WarehouseName,
 		WarehouseDetailName:           request.WarehouseDetailName,
 		WarehouseTransitDefault:       request.WarehouseTransitDefault,
+		WarehouseGroupId:              request.WarehouseGroupId,
 	}
 
 	rows, err := tx.Model(&warehouseMaster).
@@ -221,7 +222,7 @@ func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition
 	var entities masterwarehouseentities.WarehouseMaster
 	response := []masterwarehousepayloads.GetLookupWarehouseMasterResponse{}
 	query := tx.Model(entities).
-		Select("*").
+		Select("mtr_warehouse_group.*,mtr_warehouse_master.*").
 		Joins("LEFT JOIN mtr_warehouse_group on mtr_warehouse_master.warehouse_group_id = mtr_warehouse_group.warehouse_group_id")
 
 	whereQuery := utils.ApplyFilter(query, filter)

@@ -57,6 +57,7 @@ type GetWarehouseMasterResponse struct {
 	WarehouseName                 string `json:"warehouse_name"`
 	WarehouseDetailName           string `json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `json:"warehouse_transit_default"`
+	WarehouseGroupId              int    `json:"warehouse_group_id"`
 }
 
 type GetAllWarehouseMasterRequest struct {
@@ -97,6 +98,9 @@ type GetAllWarehouseMasterResponse struct {
 	WarehouseName                 string `json:"warehouse_name"`
 	WarehouseDetailName           string `json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `json:"warehouse_transit_default"`
+	WarehouseGroupId              int    `json:"warehouse_group_id"`
+	PhoneNumber                   string `json:"phone_number"`
+	FaxNumber                     string `json:"fax_number"`
 
 	AddressDetails     AddressResponse     `json:"address_details"  gorm:"-"`
 	BrandDetails       BrandResponse       `json:"brand_details"  gorm:"-"`
