@@ -1,6 +1,7 @@
 package transactionsparepartentities
 
 import (
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	"time"
 )
 
@@ -17,7 +18,8 @@ type SupplySlip struct {
 	WorkOrderSystemNumber int        `gorm:"column:work_order_system_number;size:30;not null" json:"work_order_system_number"`
 	TechnicianId          int        `gorm:"column:technician_id;size:30;not null" json:"technician_id"`
 	CampaignId            int        `gorm:"column:campaign_id;size:30;null" json:"campaign_id"`
-	Remark                string     `gorm:"column:remark;size:50;null" json:"remark"`
+	Campaign              *mastercampaignmasterentities.CampaignMaster
+	Remark                string `gorm:"column:remark;size:50;null" json:"remark"`
 }
 
 func (*SupplySlip) TableName() string {

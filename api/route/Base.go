@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	_ "after-sales/docs"
+	// _ "after-sales/docs"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -164,7 +164,7 @@ func ItemRouter(
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
-	router.Post("/{item_id}/{brand_id}",itemController.AddItemDetailByBrand)
+	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 
 	return router
 }
@@ -387,7 +387,6 @@ func PriceListRouter(
 // 	router := httprouter.New()
 // 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
 
-	
 func BomRouter(
 	BomController masteritemcontroller.BomController,
 ) chi.Router {
@@ -937,7 +936,7 @@ func DeductionRouter(
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
-	router.Put("/{id}",DeductionController.UpdateDeductionDetail)
+	router.Put("/{id}", DeductionController.UpdateDeductionDetail)
 
 	return router
 }

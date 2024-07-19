@@ -2,6 +2,10 @@ package migration
 
 import (
 	"after-sales/api/config"
+	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+
 	// masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	// masteritementities "after-sales/api/entities/master/item"
@@ -134,17 +138,17 @@ func Migrate() {
 		// &masterentities.AgreementDiscountGroupDetail{},
 		// &masterentities.AgreementItemDetail{},
 
-		// &mastercampaignmasterentities.CampaignMaster{},
-		// &mastercampaignmasterentities.CampaignMasterDetailItem{},
-		// &mastercampaignmasterentities.CampaignMasterOperationDetail{},
+		&mastercampaignmasterentities.CampaignMaster{},
+		&mastercampaignmasterentities.CampaignMasterDetailItem{},
+		&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 
-		// &transactionsparepartpentities.SupplySlip{},
-		// &transactionsparepartpentities.SupplySlipDetail{},
+		&transactionsparepartentities.SupplySlip{},
+		&transactionsparepartentities.SupplySlipDetail{},
 		// &transactionworkshopentities.WorkOrderMaster{},
 		// &transactionworkshopentities.WorkOrderMasterStatus{},
 		// &transactionworkshopentities.WorkOrderMasterType{},
 		// &transactionworkshopentities.WorkOrderMasterBillAbleto{},
-		// &transactionworkshopentities.WorkOrder{},
+		&transactionworkshopentities.WorkOrder{},
 		// &transactionworkshopentities.WorkOrderRequestDescription{},
 		// &transactionworkshopentities.WorkOrderDetail{},
 		// &transactionworkshopentities.WorkOrderHistory{},
