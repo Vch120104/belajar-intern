@@ -23,7 +23,7 @@ type BookingEstimationRequest struct {
 	BookingEstimationBatchDate     time.Time `json:"booking_estimation_batch_date"`
 	BookingEstimationVehicleNumber string    `json:"booking_estimation_vehicle_number"`
 	AgreementNumberBr              string    `json:"agreement_number_br"`
-	IsUnregistered                 string    `json:"is_unregistered"`
+	IsUnregistered                 bool      `json:"is_unregistered"`
 	ContactPersonName              string    `json:"contact_person_name"`
 	ContactPersonPhone             string    `json:"contact_person_phone"`
 	ContactPersonMobile            string    `json:"contact_person_mobile"`
@@ -232,29 +232,126 @@ type BookEstimOperationPayloads struct {
 	DiscountApprovalDate           *time.Time `json:"discount_approval_date"`
 }
 
-type BookEstimationPayloadsDiscount struct{
-	PackageDiscount int `json:"disccount_request_percent"`
-	Operation int `json:"disccount_request_percent"`
-	Sparepart int `json:"disccount_request_percent"`
-	Oil int `json:"disccount_request_percent"`
-	Material int `json:"disccount_request_percent"`
-	Fee int `json:"disccount_request_percent"`
-	Accessories int `json:"disccount_request_percent"`
-	Souvenir int `json:"disccount_request_percent"`
+type BookEstimationPayloadsDiscount struct {
+	PackageDiscount int `json:"package_discount"`
+	Operation       int `json:"operation"`
+	Sparepart       int `json:"sparepart"`
+	Oil             int `json:"oil"`
+	Material        int `json:"material"`
+	Fee             int `json:"fee"`
+	Accessories     int `json:"accessories"`
+	Souvenir        int `json:"souvenir"`
 }
 
-type BookingEstimationPostPayloads struct{
-	BrandId int `json:"brand_id"`
-	ModelId int `json:"model_id"`
-	VehicleId int `json:"vehicle_id"`
-	DealerRepCodeId int `json:"dealer_rep_code_id"`
-	ContactPersonName string `json:"contact_person_name"`
-	ContactPersonPhone string `json:"contact_person_phne"`
-	ContactPersonMobile string `json:"contact_person_mobile"`
-	ContactViaId int `json:"contact_person_via"`
-	InsPolicyNo string `json:"insurance_policy_number"`  
-	InsExpireDate time.Time `json:"insurance_expire_date"`
-	InsClaimNo string `json:"insurance_claim_no"`
-	InsPIC string `json:"insurace_pic"`
-	CampagnCodeId int `json:"campaign_code_id"`
+type BookingEstimationPostPayloads struct {
+	BrandId             int       `json:"brand_id"`
+	ModelId             int       `json:"model_id"`
+	VehicleId           int       `json:"vehicle_id"`
+	DealerRepCodeId     int       `json:"dealer_rep_code_id"`
+	ContactPersonName   string    `json:"contact_person_name"`
+	ContactPersonPhone  string    `json:"contact_person_phne"`
+	ContactPersonMobile string    `json:"contact_person_mobile"`
+	ContactViaId        int       `json:"contact_person_via"`
+	InsPolicyNo         string    `json:"insurance_policy_number"`
+	InsExpireDate       time.Time `json:"insurance_expire_date"`
+	InsClaimNo          string    `json:"insurance_claim_no"`
+	InsPIC              string    `json:"insurace_pic"`
+	CampagnCodeId       int       `json:"campaign_code_id"`
+}
+
+type BookingEstimationCalculationPayloads struct {
+	EstimationSystemNumber           int       `json:"estimation_system_number"`
+	BatchSystemNumber                int       `json:"batch_system_number"`
+	DocumentStatusId                 int       `json:"document_status_id"`
+	EstimationDiscountApprovalStatus int       `json:"estimation_discount_approval_status"`
+	CompanyId                        int       `json:"company_id"`
+	ApprovalRequestNumber            int       `json:"approval_request_number"`
+	EstimationDoumentNumber          string    `json:"estimation_document_number"`
+	EstimationDate                   time.Time `json:"estimation_date"`
+	TotalPricePackage                float64   `json:"total_price_package"`
+	TotalPriceOperation              float64   `json:"total_price_operation"`
+	TotalPricePart                   float64   `json:"total_price_part"`
+	TotalPriceOil                    float64   `json:"total_price_oil"`
+	TotalPriceMaterial               float64   `json:"total_price_material"`
+	TotalPriceConsumableMaterial     float64   `json:"total_price_consumable_material"`
+	TotalSublet                      float64   `json:"total_sublet"`
+	TotalPriceAccessories            float64   `json:"total_price_accessories"`
+	TotalDiscount                    float64   `json:"total_discount"`
+	TotalVat                         float64   `json:"total_vat"`
+	TotalAfterVat                    float64   `json:"total_after_vat"`
+	AdditionalDiscountRequestPercent float64   `json:"additional_discount_request_percent"`
+	AdditionalDiscountRequestAmount  float64   `json:"additional_discount_request_amount"`
+	VatTaxRate                       float64   `json:"vat_tax_rate"`
+	DiscountApprovalBy               string    `json:"discount_approval_by"`
+	DiscountApprovalDate             time.Time `json:"discount_approval_date"`
+	TotalAfterDiscount               float64   `json:"total_after_discount"`
+}
+
+type BookEstimDetailPayloadsOperation struct {
+	LineTypeid int `json:"line_type_id"`
+	TransactionTypeId int `json:"transaction_type_id"`
+	OperationId int `json:"operation_id"`
+	OperationName string `json:"operation_name"`
+	Quantity int `json:"quantity"`
+	Price float64 `json:"price"`
+	SubTotal float64 `json:"subtotal"`
+	OriginalDiscount float64 `json:"original_discount"`
+	ProposalDiscount float64 `json:"proposal_discount"`
+	Total float64 `json:"total"`
+}
+
+type TransactionTypePayloads struct{
+	TransactionTypeId int `json:"transaction_type_id"`
+	TransactionTypeCode string `jon:"transaction_type_code"`
+}
+
+type BookEstimDetailPayloadsItem struct {
+	LineTypeid int `json:"line_type_id"`
+	TransactionTypeId int `json:"transaction_type_id"`
+	ItemId int `json:"item_id"`
+	ItemName string `json:"item_name"`
+	Quantity int `json:"quantity"`
+	Price float64 `json:"price"`
+	SubTotal float64 `json:"subtotal"`
+	OriginalDiscount float64 `json:"original_discount"`
+	ProposalDiscount float64 `json:"proposal_discount"`
+	Total float64 `json:"total"`
+}
+
+
+type VehicleDetailPayloads struct{
+	EngineNo string `json:"engine_no"`
+	VariantId int `json:"variant_id"`
+	OptionId int `json:"option_id"`
+	ColourId int `json:"colour_id"`
+	DeliveryDate string  `json:"delivery_date"`
+	LastServiceDate string `json:"last_service_date"`
+	LastServiceMileage string `json:"last_service_mileage"`
+	StnkName string `json:"stnk_name"`
+	StnkAddress string `json:"stnk_address"`
+	BillingName string `json:"billing_name"`
+	BillingAddress string `json:"billing_address"`
+	BillingZipNo string `json:"billing_zip_number"`
+	
+}
+
+type BillingDetail struct{
+	Name string `json:"name"`
+	AddressId int `json:"address_id"`
+	VillageId int `json:"villgae_id"`
+	DistrictId int `json:"district_id"`
+	CityId int `json:"cistr_id"`
+	ZipCode string `json:"zip_code"`
+	PhoneNo string `json:"phone_number"`
+	FaxNumber string `json:"fax_number"`
+}
+
+type StnkDetail struct{
+	STNKName string `json:"stnk_name"`
+	STNKAddress string `json:"stnk_address"`
+	Village string `json:"village"`
+	Disrict string `json:"dictrict"`
+	City string `json:"city"`
+	Province string `json:"province"`
+	ZipCode string `json:"zip_code"`
 }
