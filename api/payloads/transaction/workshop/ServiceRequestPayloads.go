@@ -53,6 +53,13 @@ type ServiceRequestSaveRequest struct {
 	ReferenceJobType           string    `json:"reference_job_type"`
 }
 
+type ServiceRequestSaveDataRequest struct {
+	ServiceTypeId    int       `json:"service_type_id"`
+	ServiceRemark    string    `json:"service_remark"`
+	ServiceCompanyId int       `json:"service_company_id"`
+	ServiceDate      time.Time `json:"service_date"`
+}
+
 type ServiceRequestResponse struct {
 	ServiceRequestSystemNumber   int                     `json:"service_request_system_number"`
 	ServiceRequestDocumentNumber string                  `json:"service_request_document_number"`
@@ -105,13 +112,14 @@ type WorkOrderRequestResponse struct {
 }
 
 type ServiceDetailSaveRequest struct {
-	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
-	ServiceRequestId           int     `json:"service_request_id"`
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
 	LineTypeId                 int     `json:"line_type_id"`
 	OperationItemId            int     `json:"operation_item_id"`
-	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
-	ReferenceDocId             int     `json:"reference_doc_id"`
+	FrtQuantity                float64 `json:"frt_quantity"`
+}
+
+type ServiceDetailUpdateRequest struct {
+	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 }
 

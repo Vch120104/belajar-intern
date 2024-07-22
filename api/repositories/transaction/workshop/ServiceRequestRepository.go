@@ -17,7 +17,7 @@ type ServiceRequestRepository interface {
 	GetAll(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(*gorm.DB, int) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse)
 	New(*gorm.DB, transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
-	Save(*gorm.DB, int, transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
+	Save(*gorm.DB, int, transactionworkshoppayloads.ServiceRequestSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
 	Submit(*gorm.DB, int) (bool, string, *exceptions.BaseErrorResponse)
 	Void(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	CloseOrder(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
@@ -25,7 +25,7 @@ type ServiceRequestRepository interface {
 	GetAllServiceDetail(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetServiceDetailById(*gorm.DB, int) (transactionworkshoppayloads.ServiceDetailResponse, *exceptions.BaseErrorResponse)
 	AddServiceDetail(*gorm.DB, int, transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse)
-	UpdateServiceDetail(*gorm.DB, int, int, transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse)
+	UpdateServiceDetail(*gorm.DB, int, int, transactionworkshoppayloads.ServiceDetailUpdateRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse)
 	DeleteServiceDetail(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteServiceDetailMultiId(*gorm.DB, int, []int) (bool, *exceptions.BaseErrorResponse)
 }

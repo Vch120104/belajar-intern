@@ -156,7 +156,7 @@ func (s *ServiceRequestServiceImpl) New(request transactionworkshoppayloads.Serv
 	return save, nil
 }
 
-func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayloads.ServiceRequestSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 
 	tx := s.DB.Begin()
@@ -278,7 +278,7 @@ func (s *ServiceRequestServiceImpl) AddServiceDetail(idsys int, request transact
 	return success, nil
 }
 
-func (s *ServiceRequestServiceImpl) UpdateServiceDetail(idsys int, idservice int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) UpdateServiceDetail(idsys int, idservice int, request transactionworkshoppayloads.ServiceDetailUpdateRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)

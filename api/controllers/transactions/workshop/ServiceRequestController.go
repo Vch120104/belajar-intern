@@ -210,7 +210,7 @@ func (r *ServiceRequestControllerImp) New(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
-// @Param reqBody body transactionworkshoppayloads.ServiceRequestSaveRequest true "Service Request Data"
+// @Param reqBody body transactionworkshoppayloads.ServiceRequestSaveDataRequest true "Service Request Data"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/{service_request_system_number} [put]
@@ -222,7 +222,7 @@ func (r *ServiceRequestControllerImp) Save(writer http.ResponseWriter, request *
 		return
 	}
 
-	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveRequest
+	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveDataRequest
 	helper.ReadFromRequestBody(request, &ServiceRequestSaveRequest)
 
 	success, baseErr := r.ServiceRequestService.Save(ServiceRequestId, ServiceRequestSaveRequest)
@@ -442,7 +442,7 @@ func (r *ServiceRequestControllerImp) GetServiceDetailById(writer http.ResponseW
 // @Param reqBody body transactionworkshoppayloads.ServiceDetailSaveRequest true "Service Detail Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-request/detail/{service_request_system_number} [post]
+// @Router /v1/service-request/detail [post]
 func (r *ServiceRequestControllerImp) AddServiceDetail(writer http.ResponseWriter, request *http.Request) {
 
 	serviceRequestSystemNumberStr := chi.URLParam(request, "service_request_system_number")
@@ -472,7 +472,7 @@ func (r *ServiceRequestControllerImp) AddServiceDetail(writer http.ResponseWrite
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
 // @Param service_request_detail_id path string true "Service Detail ID"
-// @Param reqBody body transactionworkshoppayloads.ServiceDetailSaveRequest true "Service Detail Data"
+// @Param reqBody body transactionworkshoppayloads.ServiceDetailUpdateRequest true "Service Detail Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/detail/{service_request_system_number}/{service_request_detail_id} [put]
@@ -491,20 +491,26 @@ func (r *ServiceRequestControllerImp) UpdateServiceDetail(writer http.ResponseWr
 		return
 	}
 
-	var serviceDetailSaveRequest transactionworkshoppayloads.ServiceDetailSaveRequest
+	var serviceDetailSaveRequest transactionworkshoppayloads.ServiceDetailUpdateRequest
 	helper.ReadFromRequestBody(request, &serviceDetailSaveRequest)
 
-	success, baseErr := r.ServiceRequestService.UpdateServiceDetail(serviceDetailSystemId, serviceDetailId, serviceDetailSaveRequest)
+	entity, baseErr := r.ServiceRequestService.UpdateServiceDetail(serviceDetailSystemId, serviceDetailId, serviceDetailSaveRequest)
 	if baseErr != nil {
-		if baseErr.StatusCode == http.StatusNotFound {
-			payloads.NewHandleError(writer, "Service detail not found", http.StatusNotFound)
-		} else {
+		switch baseErr.StatusCode {
+		case http.StatusNotFound:
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
+		case http.StatusBadRequest:
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusBadRequest)
+		case http.StatusInternalServerError:
+			exceptions.NewAppException(writer, request, baseErr)
+		default:
 			exceptions.NewAppException(writer, request, baseErr)
 		}
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, success, "Update Data Successfully", http.StatusOK)
+	// If successful, return the updated entity
+	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully", http.StatusOK)
 }
 
 // DeleteServiceDetail deletes service detail
