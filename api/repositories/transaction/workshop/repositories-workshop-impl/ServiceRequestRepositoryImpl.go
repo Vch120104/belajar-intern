@@ -312,8 +312,9 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 
 func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ServiceRequest
-	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).Where("service_request_system_number = ?", Id).First(&entity).Error
-
+	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).
+		Where("service_request_system_number = ?", Id).
+		First(&entity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
@@ -321,7 +322,6 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 				Message:    "Data not found",
 			}
 		}
-
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -333,7 +333,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 	ServiceRequestDate := utils.SafeConvertDateFormat(entity.ServiceRequestDate)
 	ReplyDate := utils.SafeConvertDateFormat(entity.ReplyDate)
 
-	// fetch data brand from external api
+	// Fetch data brand from external API
 	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
 	var brandResponse transactionworkshoppayloads.WorkOrderVehicleBrand
 	errBrand := utils.Get(brandUrl, &brandResponse, nil)
@@ -345,7 +345,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		}
 	}
 
-	// fetch data model from external api
+	// Fetch data model from external API
 	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
 	var modelResponse transactionworkshoppayloads.WorkOrderVehicleModel
 	errModel := utils.Get(modelUrl, &modelResponse, nil)
@@ -357,7 +357,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		}
 	}
 
-	// fetch data variant from external api
+	// Fetch data variant from external API
 	variantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(entity.VariantId)
 	var variantResponse transactionworkshoppayloads.WorkOrderVehicleVariant
 	errVariant := utils.Get(variantUrl, &variantResponse, nil)
@@ -369,7 +369,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		}
 	}
 
-	// fetch data company from external api
+	// Fetch data company from external API
 	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(entity.CompanyId)
 	var companyResponses []transactionworkshoppayloads.CompanyResponse
 	errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
@@ -387,12 +387,12 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 	if errserviceCompany != nil || len(servicecompanyResponses) == 0 {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve company data from the external API",
+			Message:    "Failed to retrieve service company data from the external API",
 			Err:        errserviceCompany,
 		}
 	}
 
-	// fetch data colour from external API
+	// Fetch data colour from external API
 	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
 	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
 	errColour := utils.GetArray(ColourUrl, &colourResponses, nil)
@@ -404,7 +404,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		}
 	}
 
-	// fetch data vehicle from external api
+	// Fetch data vehicle from external API
 	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=1&vehicle_id=" + strconv.Itoa(entity.VehicleId)
 	var vehicleResponses []transactionworkshoppayloads.VehicleResponse
 	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
@@ -418,8 +418,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 
 	// Fetch data Service Request Status from external API
 	ServiceRequestStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "service-request/dropdown-status?service_request_status_id=" + strconv.Itoa(entity.ServiceRequestStatusId)
-	//fmt.Println("Fetching Work Order Status data from:", ServiceRequestStatusURL)
-	var StatusResponses []transactionworkshoppayloads.ServiceRequestStatusResponse // Use slice of ServiceRequestStatusResponse
+	var StatusResponses []transactionworkshoppayloads.ServiceRequestStatusResponse
 	errStatus := utils.GetArray(ServiceRequestStatusURL, &StatusResponses, nil)
 	if errStatus != nil || len(StatusResponses) == 0 {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
@@ -429,26 +428,29 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		}
 	}
 
-	// fetch doc work order from external api
+	// Fetch work order from external API
 	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order?work_order_system_number=" + strconv.Itoa(entity.WorkOrderSystemNumber)
 	var WorkOrderResponses []transactionworkshoppayloads.WorkOrderRequestResponse
 	errWorkOrder := utils.GetArray(WorkOrderUrl, &WorkOrderResponses, nil)
-	if errWorkOrder != nil {
-		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order data from the external API",
-			Err:        errWorkOrder,
-		}
-	}
 
-	// Check if WorkOrderDocumentNumber is empty or null, and set it to blank if so
+	// Check for error and assign blank value if a 404 error
 	workOrderDocumentNumber := ""
-	if len(WorkOrderResponses) > 0 {
+	if errWorkOrder != nil {
+		if strings.Contains(errWorkOrder.Error(), "404") {
+			workOrderDocumentNumber = ""
+		} else {
+			return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve work order data from the external API",
+				Err:        errWorkOrder,
+			}
+		}
+	} else if len(WorkOrderResponses) > 0 {
 		workOrderDocumentNumber = WorkOrderResponses[0].WorkOrderDocumentNumber
 	}
 
 	// Fetch service details
-	// detailResponses, detailErr := s.GetServiceDetailById(tx, Id)
+	// serviceDetails, detailErr := s.GetServiceDetailById(tx, entity.ServiceRequestSystemNumber)
 	// if detailErr != nil {
 	// 	return transactionworkshoppayloads.ServiceRequestResponse{}, detailErr
 	// }
@@ -474,10 +476,12 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		DealerRepresentativeId:       entity.DealerRepresentativeId,
 		ProfitCenterId:               entity.ProfitCenterId,
 		WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber:      workOrderDocumentNumber, // Set blank value if empty or null
+		WorkOrderDocumentNumber:      workOrderDocumentNumber,
 		BookingSystemNumber:          entity.BookingSystemNumber,
 		EstimationSystemNumber:       entity.EstimationSystemNumber,
 		ReferenceDocSystemNumber:     entity.ReferenceDocSystemNumber,
+		ReferenceDocNumber:           0,  //entity.ReferenceDocNumber,
+		ReferenceDocDate:             "", //entity.ReferenceDocDate,
 		ReplyId:                      entity.ReplyId,
 		ReplyBy:                      entity.ReplyBy,
 		ReplyDate:                    ReplyDate,
@@ -486,14 +490,14 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		ServiceCompanyName:           servicecompanyResponses[0].CompanyName,
 		ServiceDate:                  serviceDate,
 		ServiceRequestBy:             entity.ServiceRequestBy,
-		//ServiceDetails:               detailResponses,
+
+		//ServiceDetails:               serviceDetails,
 	}
 
 	return payload, nil
 }
 
 func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
-	defaultServiceRequestDocumentNumber := ""
 	defaultWorkOrderStatusId := 1 // 1:Draft, 2:Ready, 3:Accept, 4:Work Order, 5:Booking, 6:Reject, 7:Cancel, 8:Closed
 	currentDate := time.Now()
 	defaultReplyId := 0
@@ -533,26 +537,25 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 	case "SR":
 		jobType := ""
 		entities = transactionworkshopentities.ServiceRequest{
-			ServiceRequestDocumentNumber: defaultServiceRequestDocumentNumber,
-			ServiceRequestStatusId:       defaultWorkOrderStatusId,
-			ServiceRequestDate:           currentDate,
-			BrandId:                      request.BrandId,
-			ModelId:                      request.ModelId,
-			VariantId:                    request.VariantId,
-			VehicleId:                    request.VehicleId,
-			CompanyId:                    request.CompanyId,
-			DealerRepresentativeId:       request.DealerRepresentativeId,
-			ProfitCenterId:               request.ProfitCenterId,
-			WorkOrderSystemNumber:        request.WorkOrderSystemNumber,
-			BookingSystemNumber:          request.BookingSystemNumber,
-			EstimationSystemNumber:       request.EstimationSystemNumber,
-			ReferenceDocSystemNumber:     request.ReferenceDocSystemNumber,
-			ReplyId:                      defaultReplyId,
-			ServiceCompanyId:             request.ServiceCompanyId,
-			ServiceDate:                  request.ServiceDate,
-			ServiceRequestBy:             request.ServiceRequestBy,
-			ReferenceTypeId:              ReferenceTypeId,
-			ReferenceJobType:             jobType,
+			ServiceRequestStatusId:   defaultWorkOrderStatusId,
+			ServiceRequestDate:       currentDate,
+			BrandId:                  request.BrandId,
+			ModelId:                  request.ModelId,
+			VariantId:                request.VariantId,
+			VehicleId:                request.VehicleId,
+			CompanyId:                request.CompanyId,
+			DealerRepresentativeId:   request.DealerRepresentativeId,
+			ProfitCenterId:           request.ProfitCenterId,
+			WorkOrderSystemNumber:    request.WorkOrderSystemNumber,
+			BookingSystemNumber:      request.BookingSystemNumber,
+			EstimationSystemNumber:   request.EstimationSystemNumber,
+			ReferenceDocSystemNumber: request.ReferenceDocSystemNumber,
+			ReplyId:                  defaultReplyId,
+			ServiceCompanyId:         request.ServiceCompanyId,
+			ServiceDate:              request.ServiceDate,
+			ServiceRequestBy:         request.ServiceRequestBy,
+			ReferenceTypeId:          ReferenceTypeId,
+			ReferenceJobType:         jobType,
 		}
 
 	case "WO":
@@ -566,45 +569,44 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 		}
 
 		entities = transactionworkshopentities.ServiceRequest{
-			ServiceRequestDocumentNumber: defaultServiceRequestDocumentNumber,
-			ServiceRequestStatusId:       defaultWorkOrderStatusId,
-			ServiceRequestDate:           currentDate,
-			BrandId:                      request.BrandId,
-			ModelId:                      request.ModelId,
-			VariantId:                    request.VariantId,
-			VehicleId:                    request.VehicleId,
-			CompanyId:                    request.CompanyId,
-			DealerRepresentativeId:       request.DealerRepresentativeId,
-			ProfitCenterId:               request.ProfitCenterId,
-			WorkOrderSystemNumber:        request.WorkOrderSystemNumber,
-			BookingSystemNumber:          request.BookingSystemNumber,
-			ReferenceDocSystemNumber:     request.ReferenceDocSystemNumber,
-			ServiceRequestBy:             request.ServiceRequestBy,
-			ServiceDate:                  request.ServiceDate,
-			ReferenceTypeId:              ReferenceTypeId,
-			ReferenceJobType:             jobType,
+
+			ServiceRequestStatusId:   defaultWorkOrderStatusId,
+			ServiceRequestDate:       currentDate,
+			BrandId:                  request.BrandId,
+			ModelId:                  request.ModelId,
+			VariantId:                request.VariantId,
+			VehicleId:                request.VehicleId,
+			CompanyId:                request.CompanyId,
+			DealerRepresentativeId:   request.DealerRepresentativeId,
+			ProfitCenterId:           request.ProfitCenterId,
+			WorkOrderSystemNumber:    request.WorkOrderSystemNumber,
+			BookingSystemNumber:      request.BookingSystemNumber,
+			ReferenceDocSystemNumber: request.ReferenceDocSystemNumber,
+			ServiceRequestBy:         request.ServiceRequestBy,
+			ServiceDate:              request.ServiceDate,
+			ReferenceTypeId:          ReferenceTypeId,
+			ReferenceJobType:         jobType,
 		}
 
 	case "SO":
 		jobType := ""
 		entities = transactionworkshopentities.ServiceRequest{
-			ServiceRequestDocumentNumber: defaultServiceRequestDocumentNumber,
-			ServiceRequestStatusId:       defaultWorkOrderStatusId,
-			ServiceRequestDate:           currentDate,
-			BrandId:                      request.BrandId,
-			ModelId:                      request.ModelId,
-			VariantId:                    request.VariantId,
-			VehicleId:                    request.VehicleId,
-			CompanyId:                    request.CompanyId,
-			DealerRepresentativeId:       request.DealerRepresentativeId,
-			ProfitCenterId:               request.ProfitCenterId,
-			EstimationSystemNumber:       request.EstimationSystemNumber,
-			ReplyId:                      request.ReplyId,
-			ServiceCompanyId:             request.ServiceCompanyId,
-			ServiceDate:                  request.ServiceDate,
-			ServiceRequestBy:             request.ServiceRequestBy,
-			ReferenceTypeId:              ReferenceTypeId,
-			ReferenceJobType:             jobType,
+			ServiceRequestStatusId: defaultWorkOrderStatusId,
+			ServiceRequestDate:     currentDate,
+			BrandId:                request.BrandId,
+			ModelId:                request.ModelId,
+			VariantId:              request.VariantId,
+			VehicleId:              request.VehicleId,
+			CompanyId:              request.CompanyId,
+			DealerRepresentativeId: request.DealerRepresentativeId,
+			ProfitCenterId:         request.ProfitCenterId,
+			EstimationSystemNumber: request.EstimationSystemNumber,
+			ReplyId:                request.ReplyId,
+			ServiceCompanyId:       request.ServiceCompanyId,
+			ServiceDate:            request.ServiceDate,
+			ServiceRequestBy:       request.ServiceRequestBy,
+			ReferenceTypeId:        ReferenceTypeId,
+			ReferenceJobType:       jobType,
 		}
 
 	default:
@@ -738,7 +740,6 @@ func (s *ServiceRequestRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, string
 
 		return true, newDocumentNumber, nil
 	} else {
-
 		return false, entity.ServiceRequestDocumentNumber, &exceptions.BaseErrorResponse{Message: "Service request has been submitted or the document number is already generated"}
 	}
 }

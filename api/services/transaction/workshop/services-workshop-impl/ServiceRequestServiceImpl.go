@@ -251,7 +251,6 @@ func (s *ServiceRequestServiceImpl) GetAllServiceDetail(filterCondition []utils.
 }
 
 func (s *ServiceRequestServiceImpl) GetServiceDetailById(idsys int) (transactionworkshoppayloads.ServiceDetailResponse, *exceptions.BaseErrorResponse) {
-
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
