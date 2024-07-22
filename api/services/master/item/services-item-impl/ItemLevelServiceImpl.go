@@ -27,6 +27,18 @@ func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository
 	}
 }
 
+// GetItemLevelLookUpbyId implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelLookUpbyId(itemLevelId int) (masteritemlevelpayloads.GetItemLevelLookUp, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	get, err := s.structItemLevelRepo.GetItemLevelLookUpbyId(tx, itemLevelId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}
+
 // GetItemLevelLookUp implements masteritemservice.ItemLevelService.
 func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()

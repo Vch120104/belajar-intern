@@ -128,6 +128,7 @@ func ItemLevelRouter(
 
 	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
 	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
+	router.Get("/look-up-item-level-by-id/{item_level_id}", itemLevelController.GetItemLevelLookUpbyId)
 
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
@@ -313,9 +314,9 @@ func MovingCodeRouter(
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
 	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
-	router.Get("/", MovingCodeController.GetAllMovingCode)
-	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
-	router.Get("/drop-down", MovingCodeController.GetDropdownMovingCode)
+	router.Get("/company/{company_id}", MovingCodeController.GetAllMovingCode)
+	router.Patch("/push-priority/{company_id}/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	router.Get("/drop-down/{company_id}", MovingCodeController.GetDropdownMovingCode)
 	router.Patch("/activate/{moving_code_id}", MovingCodeController.ActivateMovingCode)
 	router.Patch("/deactive/{moving_code_id}", MovingCodeController.DeactiveMovingCode)
 
