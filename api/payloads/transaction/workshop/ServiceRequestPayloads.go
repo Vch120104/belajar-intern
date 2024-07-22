@@ -60,18 +60,21 @@ type ServiceRequestResponse struct {
 	ServiceRequestDate           string `json:"service_request_date"`
 	ServiceRequestBy             string `json:"service_request_by"`
 	ServiceRequestStatusId       int    `json:"service_request_status_id"`
+	ServiceRequestStatusName     string `json:"service_request_status_description"`
 	BrandId                      int    `json:"brand_id"`
 	BrandName                    string `json:"brand_name"`
 	ModelId                      int    `json:"model_id"`
 	ModelName                    string `json:"model_name"`
 	VariantId                    int    `json:"variant_id"`
 	VariantName                  string `json:"variant_name"`
+	VariantColourName            string `json:"variant_colour_name"`
 	VehicleId                    int    `json:"vehicle_id"`
 	VehicleCode                  string `json:"vehicle_chassis_number"`
 	VehicleTnkb                  string `json:"vehicle_registration_certificate_tnkb"`
 	BookingSystemNumber          int    `json:"booking_system_number"`
 	EstimationSystemNumber       int    `json:"estimation_system_number"`
 	WorkOrderSystemNumber        int    `json:"work_order_system_number"`
+	WorkOrderDocumentNumber      string `json:"work_order_document_number"`
 	ReferenceDocSystemNumber     int    `json:"reference_doc_system_number"`
 	ProfitCenterId               int    `json:"profit_center_id"`
 	CompanyId                    int    `json:"company_id"`
@@ -81,6 +84,7 @@ type ServiceRequestResponse struct {
 	ReferenceTypeId              int    `json:"reference_type_id"`
 	ServiceRemark                string `json:"service_remark"`
 	ServiceCompanyId             int    `json:"service_company_id"`
+	ServiceCompanyName           string `json:"service_company_name"`
 	ServiceDate                  string `json:"service_date"`
 	ReplyId                      int    `json:"reply_id"`
 	ReplyDate                    string `json:"reply_date"`
@@ -88,9 +92,19 @@ type ServiceRequestResponse struct {
 	ReplyRemark                  string `json:"reply_remark"`
 }
 
+// type ServiceRequestDetailsResponse struct {
+// 	// Existing fields
+// 	ServiceDetails []ServiceDetailResponse `json:"service_details"` // New field for details
+// }
+
 type SubmitServiceRequestResponse struct {
 	DocumentNumber             string `json:"service_request_document_number"`
 	ServiceRequestSystemNumber int    `json:"service_request_system_number"`
+}
+
+type WorkOrderRequestResponse struct {
+	WorkOrderDocumentNumber string `json:"work_order_document_number"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
 }
 
 type ServiceDetailSaveRequest struct {
@@ -150,4 +164,10 @@ type CompanyResponse struct {
 	CompanyId   int    `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	BizCategory string `json:"biz_category"`
+}
+
+type ServiceRequestStatusResponse struct {
+	ServiceRequestStatusId   int    `json:"service_request_status_id"`
+	ServiceRequestStatusCode string `json:"service_request_status_code"`
+	ServiceRequestStatusName string `json:"service_request_status_description"`
 }

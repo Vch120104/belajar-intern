@@ -534,6 +534,12 @@ type WorkOrderVehicleVariant struct {
 	VariantName string `json:"variant_description"`
 }
 
+type WorkOrderVehicleColour struct {
+	VariantColourId   int    `json:"colour_id"`
+	VariantColourCode string `json:"colour_commercial_name"`
+	VariantColourName string `json:"colour_police_name"`
+}
+
 type WorkOrderTypeResponse struct {
 	WorkOrderTypeId   int    `json:"work_order_type_id"`
 	WorkOrderTypeCode string `json:"work_order_type_code"`
@@ -675,13 +681,13 @@ type BrandDocResponse struct {
 }
 
 type VehicleResponse struct {
-	VehicleId               int    `json:"vehicle_id"`
-	VehicleCode             string `json:"vehicle_chassis_number"`
-	VehicleTnkb             string `json:"vehicle_registration_certificate_tnkb"`
-	VehicleCertificateOwner string `json:"vehicle_registration_certificate_owner_name"`
-	VehicleProduction       string `json:"vehicle_production_year"`
-	VehicleVariantColour    string `json:"model_variant_colour_description"`
-	VehicleServiceBookingNo string `json:"vehicle_service_booking_number"`
-	VehicleLastServiceDate  string `json:"vehicle_last_service_date"`
-	VehicleLastKm           int    `json:"vehicle_last_km"`
+	VehicleId               int     `json:"vehicle_id"`
+	VehicleCode             string  `json:"vehicle_chassis_number"`
+	VehicleTnkb             string  `json:"vehicle_registration_certificate_tnkb"`
+	VehicleCertificateOwner string  `json:"vehicle_registration_certificate_owner_name"`
+	VehicleProduction       float64 `json:"vehicle_production_year"`
+	VehicleVariantColour    string  `json:"model_variant_colour_description"`
+	VehicleServiceBookingNo string  `json:"vehicle_service_booking_number"`
+	VehicleLastServiceDate  string  `json:"vehicle_last_service_date"`
+	VehicleLastKm           float64 `json:"vehicle_last_km"`
 }

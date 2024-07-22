@@ -45,6 +45,16 @@ func (s *ServiceRequestServiceImpl) GenerateDocumentNumberServiceRequest(Service
 	return documentNumber, nil
 }
 
+func (s *ServiceRequestServiceImpl) NewStatus(filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterStatus, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	statuses, err := s.ServiceRequestRepository.NewStatus(tx, filter)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return nil, err
+	}
+	return statuses, nil
+}
+
 func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 	cacheKey := utils.GenerateCacheKeys("service_request", filterCondition, pages)

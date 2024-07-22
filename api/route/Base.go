@@ -1068,6 +1068,7 @@ func ServiceRequestRouter(
 
 	// generate document
 	router.Post("/document-number/{service_request_system_number}", ServiceRequestController.GenerateDocumentNumberServiceRequest)
+	router.Get("/dropdown-status", ServiceRequestController.NewStatus)
 
 	router.Get("/", ServiceRequestController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceRequestController.GetById)

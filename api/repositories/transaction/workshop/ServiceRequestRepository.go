@@ -12,6 +12,7 @@ import (
 
 type ServiceRequestRepository interface {
 	GenerateDocumentNumberServiceRequest(tx *gorm.DB, ServiceRequestId int) (string, *exceptions.BaseErrorResponse)
+	NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterStatus, *exceptions.BaseErrorResponse)
 
 	GetAll(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(*gorm.DB, int) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse)
