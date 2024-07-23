@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -129,6 +128,7 @@ func ItemLevelRouter(
 
 	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
 	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
+	router.Get("/look-up-item-level-by-id/{item_level_id}", itemLevelController.GetItemLevelLookUpbyId)
 
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
@@ -162,7 +162,7 @@ func ItemRouter(
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
-	router.Post("/{item_id}/{brand_id}",itemController.AddItemDetailByBrand)
+	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 
 	return router
 }
@@ -314,9 +314,9 @@ func MovingCodeRouter(
 	router.Get("/{moving_code_id}", MovingCodeController.GetMovingCodebyId)
 	router.Put("/", MovingCodeController.UpdateMovingCode)
 	router.Patch("/{moving_code_id}", MovingCodeController.ChangeStatusMovingCode)
-	router.Get("/", MovingCodeController.GetAllMovingCode)
-	router.Patch("/push-priority/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
-	router.Get("/drop-down", MovingCodeController.GetDropdownMovingCode)
+	router.Get("/company/{company_id}", MovingCodeController.GetAllMovingCode)
+	router.Patch("/push-priority/{company_id}/{moving_code_id}", MovingCodeController.PushMovingCodePriority)
+	router.Get("/drop-down/{company_id}", MovingCodeController.GetDropdownMovingCode)
 	router.Patch("/activate/{moving_code_id}", MovingCodeController.ActivateMovingCode)
 	router.Patch("/deactive/{moving_code_id}", MovingCodeController.DeactiveMovingCode)
 
@@ -385,7 +385,6 @@ func PriceListRouter(
 // 	router := httprouter.New()
 // 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
 
-	
 func BomRouter(
 	BomController masteritemcontroller.BomController,
 ) chi.Router {
@@ -556,7 +555,7 @@ func OperationCodeRouter(
 	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
-	router.Put("/{operation_id}",operationCodeController.UpdateOperationCode)
+	router.Put("/{operation_id}", operationCodeController.UpdateOperationCode)
 
 	return router
 }
@@ -639,7 +638,7 @@ func WarehouseMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
@@ -786,7 +785,16 @@ func IncentiveMasterRouter(
 
 	return router
 }
-
+func VehicleHistoryRouter(VehicleHistory transactionworkshopcontroller.VehicleHistoryController) chi.Router {
+	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+	router.Get("/by-id/{work_order_system_number_id}", VehicleHistory.GetVehicleHistoryById)
+	router.Get("/", VehicleHistory.GetAllFieldVehicleHistory)
+	return router
+}
 func FieldActionRouter(
 	FieldActionController mastercontroller.FieldActionController,
 ) chi.Router {
@@ -829,6 +837,7 @@ func WarrantyFreeServiceRouter(
 	router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
 	router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
+	router.Put("/{warranty_free_services_id}", warrantyFreeServiceController.UpdateWarrantyFreeService) 
 
 	return router
 }
@@ -837,6 +846,12 @@ func PackageMasterRouter(
 	PackageMasterController mastercontroller.PackageMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", PackageMasterController.GetAllPackageMaster)
 	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
 	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
@@ -877,6 +892,12 @@ func CampaignMasterRouter(
 	campaignmastercontroller mastercontroller.CampaignMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
@@ -935,7 +956,7 @@ func DeductionRouter(
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
-	router.Put("/{id}",DeductionController.UpdateDeductionDetail)
+	router.Put("/{id}", DeductionController.UpdateDeductionDetail)
 
 	return router
 }
