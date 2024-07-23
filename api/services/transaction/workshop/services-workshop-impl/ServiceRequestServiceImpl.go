@@ -47,8 +47,9 @@ func (s *ServiceRequestServiceImpl) GenerateDocumentNumberServiceRequest(Service
 
 func (s *ServiceRequestServiceImpl) NewStatus(filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterStatus, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	statuses, err := s.ServiceRequestRepository.NewStatus(tx, filter)
 	defer helper.CommitOrRollbackTrx(tx)
+
+	statuses, err := s.ServiceRequestRepository.NewStatus(tx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterConditi
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ServiceRequestServiceImpl) GetById(id int) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestServiceImpl) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
 
 	cacheKey := utils.GenerateCacheKeyIds("service_request_id", id)
 
@@ -125,7 +126,7 @@ func (s *ServiceRequestServiceImpl) GetById(id int) (transactionworkshoppayloads
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	result, repoErr := s.ServiceRequestRepository.GetById(tx, id)
+	result, repoErr := s.ServiceRequestRepository.GetById(tx, id, pages)
 	if repoErr != nil {
 		return result, repoErr
 	}

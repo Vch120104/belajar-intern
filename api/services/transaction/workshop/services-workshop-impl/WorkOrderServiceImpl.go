@@ -353,16 +353,16 @@ func (s *WorkOrderServiceImpl) New(request transactionworkshoppayloads.WorkOrder
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderResponseDetail, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 	idString := strconv.Itoa(id)
 	cacheKey := utils.GenerateCacheKeyIds("work_orders", idString)
 
 	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
 	if err == nil {
-		var result transactionworkshoppayloads.WorkOrderRequest
+		var result transactionworkshoppayloads.WorkOrderResponseDetail
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{
+			return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Error unmarshalling cached data",
 				Err:        err,
@@ -370,7 +370,7 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 		}
 		return result, nil
 	} else if err != redis.Nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Error retrieving data from cache",
 			Err:        err,
@@ -380,15 +380,15 @@ func (s *WorkOrderServiceImpl) GetById(id int) (transactionworkshoppayloads.Work
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	results, repoErr := s.structWorkOrderRepo.GetById(tx, id)
+	results, repoErr := s.structWorkOrderRepo.GetById(tx, id, pages)
 	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, repoErr
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, repoErr
 	}
 
 	jsonData, err := json.Marshal(results)
 	if err != nil {
-		return transactionworkshoppayloads.WorkOrderRequest{}, &exceptions.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Error marshalling data",
 			Err:        err,

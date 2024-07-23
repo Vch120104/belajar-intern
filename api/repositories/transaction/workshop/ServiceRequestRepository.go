@@ -15,7 +15,7 @@ type ServiceRequestRepository interface {
 	NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterStatus, *exceptions.BaseErrorResponse)
 
 	GetAll(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetById(*gorm.DB, int) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse)
+	GetById(*gorm.DB, int, pagination.Pagination) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse)
 	New(*gorm.DB, transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
 	Save(*gorm.DB, int, transactionworkshoppayloads.ServiceRequestSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
 	Submit(*gorm.DB, int) (bool, string, *exceptions.BaseErrorResponse)

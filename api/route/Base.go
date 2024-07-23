@@ -837,7 +837,7 @@ func WarrantyFreeServiceRouter(
 	router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
 	router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
-	router.Put("/{warranty_free_services_id}", warrantyFreeServiceController.UpdateWarrantyFreeService) 
+	router.Put("/{warranty_free_services_id}", warrantyFreeServiceController.UpdateWarrantyFreeService)
 
 	return router
 }

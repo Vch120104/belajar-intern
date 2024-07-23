@@ -1166,7 +1166,16 @@ func (r *WorkOrderControllerImpl) GetById(writer http.ResponseWriter, request *h
 		return
 	}
 
-	workOrder, baseErr := r.WorkOrderService.GetById(workOrderId)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	workOrder, baseErr := r.WorkOrderService.GetById(workOrderId, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)

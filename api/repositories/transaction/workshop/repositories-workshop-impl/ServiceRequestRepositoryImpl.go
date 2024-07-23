@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -69,7 +70,7 @@ func (s *ServiceRequestRepositoryImpl) GenerateDocumentNumberServiceRequest(tx *
 		}
 	}
 
-	// Check if BrandAbbreviation is not empty before using it
+	// Check if the brand code is empty
 	if brandResponse.BrandCode == "" {
 		return "", &exceptions.BaseErrorResponse{Message: "Brand code is empty"}
 	}
@@ -77,7 +78,6 @@ func (s *ServiceRequestRepositoryImpl) GenerateDocumentNumberServiceRequest(tx *
 	// Get the initial of the brand abbreviation
 	brandInitial := brandResponse.BrandCode[0]
 
-	// Handle the case when there is no last service request or the format is invalid
 	newDocumentNumber := fmt.Sprintf("WSSQ/%c/%02d/%02d/00001", brandInitial, month, year)
 	if lastServiceRequest.ServiceRequestSystemNumber != 0 {
 		lastServiceRequestDate := lastServiceRequest.ServiceRequestDate
@@ -111,7 +111,11 @@ func (r *ServiceRequestRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.Fil
 	query := utils.ApplyFilter(tx, filter)
 
 	if err := query.Find(&statuses).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve service request statuses from the database"}
+		return nil, &exceptions.BaseErrorResponse{
+			Message:    "Failed to retrieve service request statuses from the database",
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 	return statuses, nil
 }
@@ -218,21 +222,26 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data company from external API
-		CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(ServiceRequestReq.CompanyId)
-		var companyResponses []transactionworkshoppayloads.CompanyResponse
-		errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
-		if errCompany != nil || len(companyResponses) == 0 {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve company data from the external API",
-				Err:        errCompany,
-			}
-		}
+		// CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(ServiceRequestReq.CompanyId)
+		// var companyResponses []transactionworkshoppayloads.CompanyResponse
+		// errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
+		// if errCompany != nil || len(companyResponses) == 0 {
+		// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to retrieve company data from the external API",
+		// 		Err:        errCompany,
+		// 	}
+		// }
 
 		// Fetch data vehicle from external API
 		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(ServiceRequestReq.VehicleId)
+		fmt.Println("Fetching URL: ", VehicleUrl) // Debug: Print URL
+
 		var vehicleResponses transactionworkshoppayloads.VehicleResponse
 		errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
+		// Debug: Print the fetched vehicle response
+		vehicleResponseJSON, _ := json.Marshal(vehicleResponses)
+		fmt.Println("Vehicle Response: ", string(vehicleResponseJSON))
 		if errVehicle != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -265,10 +274,10 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ModelName:                    modelResponses.ModelName,
 			VariantName:                  variantResponses.VariantName,
 			VariantColourName:            colourResponses[0].VariantColourName,
-			VehicleCode:                  vehicleResponses.VehicleCode,
-			VehicleTnkb:                  vehicleResponses.VehicleTnkb,
+			VehicleCode:                  vehicleResponses.Master.VehicleCode,
+			VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
 			CompanyId:                    ServiceRequestReq.CompanyId,
-			CompanyName:                  companyResponses[0].CompanyName,
+			CompanyName:                  "", //companyResponses[0].CompanyName,
 			DealerRepresentativeId:       ServiceRequestReq.DealerRepresentativeId,
 			ProfitCenterId:               ServiceRequestReq.ProfitCenterId,
 			WorkOrderSystemNumber:        ServiceRequestReq.WorkOrderSystemNumber,
@@ -286,21 +295,21 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	var mapResponses []map[string]interface{}
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"service_request_system_number":   response.ServiceRequestSystemNumber,
-			"service_request_document_number": response.ServiceRequestDocumentNumber,
-			"service_request_date":            response.ServiceRequestDate,
-			"service_request_by":              response.ServiceRequestBy,
-			"company_name":                    response.CompanyName,
-			"brand_name":                      response.BrandName,
-			"model_description":               response.ModelName,
-			"variant_description":             response.VariantName,
-			"colour_name":                     response.VariantColourName,
-			"chassis_number":                  response.VehicleCode,
-			"no_polisi":                       response.VehicleTnkb,
-			"status_name":                     response.ServiceRequestStatusName,
-			"work_order_system_number":        response.WorkOrderSystemNumber,
-			"booking_system_number":           response.BookingSystemNumber,
-			"reference_doc_system_number":     response.ReferenceDocSystemNumber,
+			"service_request_system_number":         response.ServiceRequestSystemNumber,
+			"service_request_document_number":       response.ServiceRequestDocumentNumber,
+			"service_request_date":                  response.ServiceRequestDate,
+			"service_request_by":                    response.ServiceRequestBy,
+			"company_name":                          response.CompanyName,
+			"brand_name":                            response.BrandName,
+			"model_description":                     response.ModelName,
+			"variant_description":                   response.VariantName,
+			"colour_name":                           response.VariantColourName,
+			"vehicle_chassis_number":                response.VehicleCode,
+			"vehicle_registration_certificate_tnkb": response.VehicleTnkb,
+			"service_request_status_name":           response.ServiceRequestStatusName,
+			"work_order_system_number":              response.WorkOrderSystemNumber,
+			"booking_system_number":                 response.BookingSystemNumber,
+			"reference_doc_system_number":           response.ReferenceDocSystemNumber,
 		}
 
 		mapResponses = append(mapResponses, responseMap)
@@ -310,7 +319,7 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
+func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagination.Pagination) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ServiceRequest
 	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).
 		Where("service_request_system_number = ?", Id).
@@ -369,29 +378,6 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		}
 	}
 
-	// Fetch data company from external API
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(entity.CompanyId)
-	var companyResponses []transactionworkshoppayloads.CompanyResponse
-	errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
-	if errCompany != nil || len(companyResponses) == 0 {
-		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve company data from the external API",
-			Err:        errCompany,
-		}
-	}
-
-	ServiceCompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(entity.ServiceCompanyId)
-	var servicecompanyResponses []transactionworkshoppayloads.CompanyResponse
-	errserviceCompany := utils.GetArray(ServiceCompanyUrl, &servicecompanyResponses, nil)
-	if errserviceCompany != nil || len(servicecompanyResponses) == 0 {
-		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve service company data from the external API",
-			Err:        errserviceCompany,
-		}
-	}
-
 	// Fetch data colour from external API
 	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
 	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
@@ -406,7 +392,6 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 
 	// Fetch data vehicle from external API
 	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-	fmt.Println("Fetching Vehicle data from:", VehicleUrl)
 	var vehicleResponses transactionworkshoppayloads.VehicleResponse
 	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
@@ -450,12 +435,22 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		workOrderDocumentNumber = WorkOrderResponses[0].WorkOrderDocumentNumber
 	}
 
-	// Fetch service details
-	// serviceDetails, detailErr := s.GetServiceDetailById(tx, entity.ServiceRequestSystemNumber)
-	// if detailErr != nil {
-	// 	return transactionworkshoppayloads.ServiceRequestResponse{}, detailErr
-	// }
+	// Fetch service details with pagination
+	var serviceDetails []transactionworkshoppayloads.ServiceRequestDetailResponse
+	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
+		Where("service_request_system_number = ?", Id).
+		Offset(pagination.GetOffset()).
+		Limit(pagination.GetLimit())
+	errServiceDetails := query.Find(&serviceDetails).Error
+	if errServiceDetails != nil {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve service details from the database",
+			Err:        errServiceDetails,
+		}
+	}
 
+	// Construct the payload with pagination information
 	payload := transactionworkshoppayloads.ServiceRequestResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
 		ServiceRequestStatusId:       entity.ServiceRequestStatusId,
@@ -470,10 +465,10 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		VariantName:                  variantResponse.VariantName,
 		VariantColourName:            colourResponses[0].VariantColourName,
 		VehicleId:                    entity.VehicleId,
-		VehicleCode:                  vehicleResponses.VehicleCode,
-		VehicleTnkb:                  vehicleResponses.VehicleTnkb,
+		VehicleCode:                  vehicleResponses.Master.VehicleCode,
+		VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
 		CompanyId:                    entity.CompanyId,
-		CompanyName:                  companyResponses[0].CompanyName,
+		CompanyName:                  "", //companyResponses[0].CompanyName,
 		DealerRepresentativeId:       entity.DealerRepresentativeId,
 		ProfitCenterId:               entity.ProfitCenterId,
 		WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
@@ -488,11 +483,16 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int) (transaction
 		ReplyDate:                    ReplyDate,
 		ReplyRemark:                  entity.ReplyRemark,
 		ServiceCompanyId:             entity.ServiceCompanyId,
-		ServiceCompanyName:           servicecompanyResponses[0].CompanyName,
+		ServiceCompanyName:           "", //servicecompanyResponses[0].CompanyName,
 		ServiceDate:                  serviceDate,
 		ServiceRequestBy:             entity.ServiceRequestBy,
-
-		//ServiceDetails:               serviceDetails,
+		ServiceDetails: transactionworkshoppayloads.ServiceRequestDetailsResponse{
+			Page:       pagination.GetPage(),
+			Limit:      pagination.GetLimit(),
+			TotalPages: pagination.TotalPages,
+			TotalRows:  int(pagination.TotalRows),
+			Data:       serviceDetails,
+		},
 	}
 
 	return payload, nil
@@ -960,15 +960,22 @@ func (s *ServiceRequestRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *e
 }
 
 func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
 	var entities []transactionworkshopentities.ServiceRequestDetail
 	var getItemResponse transactionworkshoppayloads.ItemServiceRequestDetail
 	var getUomItems []transactionworkshoppayloads.UomItemServiceRequestDetail
 
+	// Build the query with filters
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{})
 	if len(filterCondition) > 0 {
-		query = query.Where(filterCondition)
+		for _, condition := range filterCondition {
+			if condition.ColumnField == "service_request_system_number" {
+				query = query.Where("service_request_system_number = ?", condition.ColumnValue)
+			} else {
+				query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
+			}
+		}
 	}
+
 	err := query.Find(&entities).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -977,24 +984,25 @@ func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCo
 		}
 	}
 
-	// fetch data Item from api external
-	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entities[0].OperationItemId)
-	fmt.Println(entities[0].OperationItemId)
-	errItem := utils.Get(itemUrl, &getItemResponse, nil)
-	if errItem != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errItem,
+	// Fetch data Item from external API
+	if len(entities) > 0 {
+		itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entities[0].OperationItemId)
+		errItem := utils.Get(itemUrl, &getItemResponse, nil)
+		if errItem != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errItem,
+			}
 		}
-	}
 
-	// fetch data Uom from api external
-	uomUrl := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/?page=0&limit=10&uom_id=" + strconv.Itoa(getItemResponse.UomId)
-	errUom := utils.Get(uomUrl, &getUomItems, nil)
-	if errUom != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUom,
+		// Fetch data Uom from external API
+		uomUrl := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/?page=0&limit=10&uom_id=" + strconv.Itoa(getItemResponse.UomId)
+		errUom := utils.Get(uomUrl, &getUomItems, nil)
+		if errUom != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errUom,
+			}
 		}
 	}
 
@@ -1002,11 +1010,13 @@ func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCo
 
 	for _, entity := range entities {
 		ServiceRequestDetailResponse := map[string]interface{}{
-			"uom_name":          getUomItems[0].UomName,
-			"item_name":         getItemResponse.ItemName,
-			"line_type_id":      entity.LineTypeId,
-			"operation_item_id": entity.OperationItemId,
-			"frt_quantity":      entity.FrtQuantity,
+			"service_request_system_number": entity.ServiceRequestSystemNumber,
+			"uom_name":                      getUomItems[0].UomName,
+			"item_code":                     getItemResponse.ItemCode,
+			"item_name":                     getItemResponse.ItemName,
+			"line_type_id":                  entity.LineTypeId,
+			"operation_item_id":             entity.OperationItemId,
+			"frt_quantity":                  entity.FrtQuantity,
 		}
 
 		ServiceRequestDetailResponses = append(ServiceRequestDetailResponses, ServiceRequestDetailResponse)
@@ -1018,25 +1028,36 @@ func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCo
 }
 
 func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int) (transactionworkshoppayloads.ServiceDetailResponse, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.ServiceRequestDetail
-	err := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).Where("service_request_detail_id = ?", Id).First(&entity).Error
+	var detail transactionworkshopentities.ServiceRequestDetail
+	err := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
+		Where("service_request_detail_id = ?", Id).
+		First(&detail).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+			return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Service detail not found",
+			}
 		}
-		return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+		return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
 	}
 
-	payload := transactionworkshoppayloads.ServiceDetailResponse{
-		ServiceRequestDetailId:     entity.ServiceRequestDetailId,
-		ServiceRequestId:           entity.ServiceRequestId,
-		ServiceRequestSystemNumber: entity.ServiceRequestSystemNumber,
-		LineTypeId:                 entity.LineTypeId,
-		OperationItemId:            entity.OperationItemId,
-		FrtQuantity:                entity.FrtQuantity,
+	serviceDetail := transactionworkshoppayloads.ServiceDetailResponse{
+		ServiceRequestDetailId:     detail.ServiceRequestDetailId,
+		ServiceRequestId:           detail.ServiceRequestId,
+		ServiceRequestSystemNumber: detail.ServiceRequestSystemNumber,
+		LineTypeId:                 detail.LineTypeId,
+		OperationItemId:            detail.OperationItemId,
+		FrtQuantity:                detail.FrtQuantity,
+		ReferenceDocSystemNumber:   detail.ReferenceDocSystemNumber,
+		ReferenceDocId:             detail.ReferenceDocId,
 	}
 
-	return payload, nil
+	return serviceDetail, nil
+
 }
 
 func (s *ServiceRequestRepositoryImpl) AddServiceDetail(tx *gorm.DB, id int, request transactionworkshoppayloads.ServiceDetailSaveRequest) (transactionworkshopentities.ServiceRequestDetail, *exceptions.BaseErrorResponse) {

@@ -107,12 +107,13 @@ func (r *ServiceRequestControllerImp) GetAll(writer http.ResponseWriter, request
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"service_request_system_number": queryValues.Get("service_request_system_number"),
-		"service_request_id":            queryValues.Get("service_request_id"),
-		"brand_id":                      queryValues.Get("brand_id"),
-		"model_id":                      queryValues.Get("model_id"),
-		"vehicle_id":                    queryValues.Get("vehicle_id"),
-		"service_request_date":          queryValues.Get("service_request_date"),
+		"service_request_system_number":   queryValues.Get("service_request_system_number"),
+		"service_request_document_number": queryValues.Get("service_request_document_number"),
+		"service_request_status_id":       queryValues.Get("service_request_status_id"),
+		"brand_id":                        queryValues.Get("brand_id"),
+		"model_id":                        queryValues.Get("model_id"),
+		"vehicle_id":                      queryValues.Get("vehicle_id"),
+		"service_request_date":            queryValues.Get("service_request_date"),
 	}
 
 	paginate := pagination.Pagination{
@@ -156,7 +157,16 @@ func (r *ServiceRequestControllerImp) GetById(writer http.ResponseWriter, reques
 		return
 	}
 
-	serviceRequest, baseErr := r.ServiceRequestService.GetById(ServiceRequestId)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	serviceRequest, baseErr := r.ServiceRequestService.GetById(ServiceRequestId, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Service request not found", http.StatusNotFound)
@@ -509,7 +519,6 @@ func (r *ServiceRequestControllerImp) UpdateServiceDetail(writer http.ResponseWr
 		return
 	}
 
-	// If successful, return the updated entity
 	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully", http.StatusOK)
 }
 
@@ -622,9 +631,8 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetailMultiId(writer http.Res
 // @Produce json
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-request/status [get]
+// @Router /v1/service-request/dropdown-status [get]
 func (r *ServiceRequestControllerImp) NewStatus(writer http.ResponseWriter, request *http.Request) {
-
 	queryParams := request.URL.Query()
 	var filters []utils.FilterCondition
 
