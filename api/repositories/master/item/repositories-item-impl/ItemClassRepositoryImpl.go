@@ -173,8 +173,12 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
-	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
+	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group"
 
+	if groupName != "" {
+		groupServiceUrl += "?item_group_name=" + groupName
+	}
+	
 	fmt.Print("URL ", groupServiceUrl)
 
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
