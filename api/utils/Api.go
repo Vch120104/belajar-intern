@@ -44,17 +44,11 @@ func Get(url string, data interface{}, body interface{}) error {
 
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
-	
-	fmt.Println("GET NewReq ", serverUrl+url)
-
-
 	if err != nil {
 		return err
 	}
 
 	newResponse, err := client.Do(newRequest)
-
-	fmt.Print("GET newResponse ", newResponse)
 
 	if err != nil {
 		return err
@@ -66,8 +60,6 @@ func Get(url string, data interface{}, body interface{}) error {
 	responseBody = APIResponse{
 		Data: data,
 	}
-
-	fmt.Print("GET responseBody ", responseBody)
 
 	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
