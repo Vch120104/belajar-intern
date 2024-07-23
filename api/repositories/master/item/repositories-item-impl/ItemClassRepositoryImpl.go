@@ -147,6 +147,9 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
+	fmt.Println("internal filter", internalServiceFilter)
+	fmt.Println("external filter", externalServiceFilter)
+
 	//define base model
 	baseModelQuery := tx.Model(&entities)
 	//apply where query
@@ -154,7 +157,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	//apply pagination and execute
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
-	fmt.Print(responses)
+	fmt.Println("responses ", responses)
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -183,6 +186,8 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
+	fmt.Println("Joined Data ", joinedData)
+
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
 
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
@@ -195,6 +200,8 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	}
 
 	joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
+
+	fmt.Println("join data sec ", joinedDataSecond)
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSecond, &pages)
 
