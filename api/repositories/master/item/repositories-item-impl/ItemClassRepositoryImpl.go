@@ -244,8 +244,11 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
+	fmt.Println(lineTypeResponse)
+	fmt.Println(response)
 	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
-
+	
+	
 	value, ok := joinedData[0]["LineTypeName_1"]
 
 	if ok {
