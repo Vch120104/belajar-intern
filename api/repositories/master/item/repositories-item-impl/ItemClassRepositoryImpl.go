@@ -236,7 +236,9 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
-
+	
+	fmt.Println("url"+lineTypeUrl)
+	
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
