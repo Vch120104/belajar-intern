@@ -44,8 +44,8 @@ func Get(url string, data interface{}, body interface{}) error {
 
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
 
-
-	fmt.Print("GET NewREq ", newRequest)
+	
+	fmt.Println("GET NewReq ", serverUrl+url)
 
 
 	if err != nil {
