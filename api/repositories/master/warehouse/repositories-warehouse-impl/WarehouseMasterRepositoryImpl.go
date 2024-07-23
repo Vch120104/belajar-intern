@@ -343,7 +343,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 
 	defer rows.Close()
 
-	// AddressId                     int    `json:"address_id"` http://10.1.32.26:8000/general-service/api/general/address/
+	// AddressId                     int    `json:"address_id"` http://172.16.5.101/general-service/api/general/address/
 	errUrlAddress := utils.Get(config.EnvConfigs.GeneralServiceUrl+"address/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getAddressResponse, nil)
 
 	if errUrlAddress != nil {
@@ -355,7 +355,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 
 	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{warehouseMasterResponse}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
 
-	// BrandId                       int    `json:"brand_id"` http://10.1.32.26:8000/sales-service/api/sales/unit-brand/
+	// BrandId                       int    `json:"brand_id"` http://172.16.5.101/sales-service/api/sales/unit-brand/
 	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getBrandResponse, nil)
 
 	if errUrlBrand != nil {
@@ -367,7 +367,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 
 	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masterwarehousepayloads.BrandResponse{getBrandResponse}, "BrandId")
 
-	// SupplierId                    int    `json:"supplier_id"` http://10.1.32.26:8000/general-service/api/general/supplier-master/
+	// SupplierId                    int    `json:"supplier_id"` http://172.16.5.101/general-service/api/general/supplier-master/
 	errUrlSupplier := utils.Get(config.EnvConfigs.GeneralServiceUrl+"supplier-master/"+strconv.Itoa(warehouseMasterResponse.SupplierId), &getSupplierResponse, nil)
 
 	if errUrlSupplier != nil {
@@ -381,7 +381,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 
 	// ON DEVELOPMENT
 
-	// UserId                        int    `json:"user_id"` http://10.1.32.26:8000/general-service/api/general/user-details/
+	// UserId                        int    `json:"user_id"` http://172.16.5.101/general-service/api/general/user-details/
 	// errUrUser := utils.Get(config.EnvConfigs.GeneralServiceUrl+"user-details/"+strconv.Itoa(warehouseMasterResponse.UserId), &getUserResponse, nil)
 
 	// if errUrUser != nil {
@@ -393,7 +393,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 
 	// fourthJoin := utils.DataFrameLeftJoin(thirdJoin, []masterwarehousepayloads.UserResponse{getUserResponse}, "UserId")
 
-	// JobPositionId int http://10.1.32.26:8000/general-service/api/general/job-position/
+	// JobPositionId int http://172.16.5.101/general-service/api/general/job-position/
 	// errUrlJobPosition := utils.Get(config.EnvConfigs.GeneralServiceUrl+"job-position/"+strconv.Itoa(getUserResponse.JobPositionId), &getJobPositionResponse, nil)
 
 	// if errUrlJobPosition != nil {
