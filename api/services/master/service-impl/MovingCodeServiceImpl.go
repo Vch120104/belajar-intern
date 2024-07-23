@@ -39,9 +39,9 @@ func (s *MovingCodeServiceImpl) DeactiveMovingCode(id string) (bool, *exceptions
 }
 
 // GetDropdownMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) GetDropdownMovingCode() ([]masterpayloads.MovingCodeDropDown, *exceptions.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) GetDropdownMovingCode(companyId int) ([]masterpayloads.MovingCodeDropDown, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.MovingCodeRepo.GetDropdownMovingCode(tx)
+	results, err := s.MovingCodeRepo.GetDropdownMovingCode(tx, companyId)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
@@ -72,14 +72,14 @@ func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeLi
 }
 
 // GetAllMovingCode implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) GetAllMovingCode(pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) GetAllMovingCode(companyId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, totalPages, totalRows, err := s.MovingCodeRepo.GetAllMovingCode(tx, pages)
+	results, err := s.MovingCodeRepo.GetAllMovingCode(tx, companyId, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 // GetMovingCodebyId implements masterservice.MovingCodeService.
@@ -94,9 +94,9 @@ func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (masterpayloads.Moving
 }
 
 // PushMovingCodePriority implements masterservice.MovingCodeService.
-func (s *MovingCodeServiceImpl) PushMovingCodePriority(Id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *MovingCodeServiceImpl) PushMovingCodePriority(companyId int, Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.MovingCodeRepo.PushMovingCodePriority(tx, Id)
+	results, err := s.MovingCodeRepo.PushMovingCodePriority(tx, companyId, Id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err

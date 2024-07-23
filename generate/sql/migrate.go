@@ -2,8 +2,9 @@ package migration
 
 import (
 	"after-sales/api/config"
+
 	// masterentities "after-sales/api/entities/master"
-	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+
 	// masteritementities "after-sales/api/entities/master/item"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
