@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -42,12 +43,16 @@ func Get(url string, data interface{}, body interface{}) error {
 	var responseBody APIResponse
 
 	newRequest, err := http.NewRequest("GET", serverUrl+url, &buf)
-	
+
+	fmt.Print("GET NewREq ", newRequest)
+
 	if err != nil {
 		return err
 	}
 
 	newResponse, err := client.Do(newRequest)
+
+	fmt.Print("GET newResponse ", newResponse)
 
 	if err != nil {
 		return err
@@ -59,6 +64,8 @@ func Get(url string, data interface{}, body interface{}) error {
 	responseBody = APIResponse{
 		Data: data,
 	}
+
+	fmt.Print("GET responseBody ", responseBody)
 
 	//jika status != ok, maka return nothing
 	if newResponse.StatusCode != http.StatusOK {
