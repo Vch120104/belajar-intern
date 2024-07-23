@@ -175,6 +175,8 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
 
+	fmt.Print("URL ", config.EnvConfigs.GeneralServiceUrl)
+
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
 	if errUrlItemGroup != nil {
@@ -189,6 +191,8 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	fmt.Println("Joined Data ", joinedData)
 
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
+
+	fmt.Print("URL ", config.EnvConfigs.GeneralServiceUrl)
 
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 
