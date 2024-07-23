@@ -335,7 +335,29 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 	}
 
 	joinedData5 := utils.DataFrameInnerJoin(joinedData4, []masterpayloads.CurrencyResponse{getCurrencyResponse}, "CurrencyId")
-	result := joinedData5[0]
+
+	result := map[string]interface{}{
+		"brand_code": joinedData5[0]["BrandCode"],
+		"brand_id": joinedData5[0]["BrandId"],
+		"brand_name": joinedData5[0]["BrandName"],
+		"currency_code": joinedData5[0]["CurrencyCode"],
+		"currency_id": joinedData5[0]["CurrencyId"],
+		"is_active": joinedData5[0]["IsActive"],
+		"item_group_id": joinedData5[0]["ItemGroupId"],
+		"model_code": joinedData5[0]["ModelCode"],
+		"model_description": joinedData5[0]["ModelDescription"],
+		"model_id": joinedData5[0]["ModelId"],
+		"package_code": joinedData5[0]["PackageCode"],
+		"package_name": joinedData5[0]["PackageName"],
+		"package_price": joinedData5[0]["PackagePrice"],
+		"package_remark": joinedData5[0]["PackageRemark"],
+		"package_set": joinedData5[0]["PackageSet"],
+		"profit_center_id": joinedData5[0]["ProfitCenterId"],
+		"profit_center_name": joinedData5[0]["ProfitCenterName"],
+		"tax_type_id": joinedData5[0]["TaxTypeId"],
+		"variant_description": joinedData5[0]["VariantDescription"],
+		"variant_id": joinedData5[0]["VariantId"],
+	}
 	return result, nil
 }
 
