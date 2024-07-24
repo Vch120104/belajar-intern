@@ -30,8 +30,8 @@ func OpenBookingEstimationServiceImpl(bookingEstimationRepo transactionworkshopr
 
 func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.structBookingEstimationRepo.GetAll(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -39,18 +39,19 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 }
 
 func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
+	
 	_, err := s.structBookingEstimationRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return true,nil
+	return true, nil
 }
 
 func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.structBookingEstimationRepo.GetById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -59,17 +60,18 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, 
 
 func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
 	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
-	defer helper.CommitOrRollback(tx)
 	_, err := s.structBookingEstimationRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false,err
+		return false, err
 	}
-	return true,nil
+	return true, nil
 }
 
 func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool,*exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
+	
 	result,err := s.structBookingEstimationRepo.Submit(tx, id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil {
 		return false,err
 	}
@@ -77,8 +79,8 @@ func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool,*except
 }
 
 func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) (bool,*exceptions.BaseErrorResponse) {
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.Void(tx, id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil {
 		return false,err
 	}
@@ -86,8 +88,8 @@ func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) (bool,*exceptio
 }
 
 func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptions.BaseErrorResponse {
-	defer helper.CommitOrRollback(tx)
 	err := s.structBookingEstimationRepo.CloseOrder(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return err
 	}
@@ -96,8 +98,9 @@ func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptio
 
 func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	
 	result,err := s.structBookingEstimationRepo.SaveBookEstimReq(tx,req,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -106,8 +109,9 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshopp
 
 func(s *BookingEstimationServiceImpl) UpdateBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	
 	result,err := s.structBookingEstimationRepo.UpdateBookEstimReq(tx,req,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -116,8 +120,9 @@ func(s *BookingEstimationServiceImpl) UpdateBookEstimReq(req transactionworkshop
 
 func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq( id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	
 	result,err := s.structBookingEstimationRepo.GetByIdBookEstimReq(tx,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return transactionworkshoppayloads.BookEstimRemarkRequest{},err
 	}
@@ -126,8 +131,9 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq( id int) (transaction
 
 func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(pages *pagination.Pagination, id int) ([]transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	
 	result,err := s.structBookingEstimationRepo.GetAllBookEstimReq(tx,pages,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return []transactionworkshoppayloads.BookEstimRemarkRequest{},err
 	}
@@ -136,8 +142,8 @@ func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(pages *pagination.Pagi
 
 func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transactionworkshoppayloads.ReminderServicePost, id int) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.SaveBookEstimReminderServ(tx,req,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -146,8 +152,9 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transaction
 
 func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworkshoppayloads.BookEstimDetailReq) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+	
 	result,err := s.structBookingEstimationRepo.SaveDetailBookEstim(tx,req)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -156,8 +163,8 @@ func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworksh
 
 func (s *BookingEstimationServiceImpl) AddPackage(id int, packId int) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.AddPackage(tx,id,packId)
+	defer helper.CommitOrRollback(tx,err)
 	if err !=nil{
 		return 0,err
 	}
@@ -166,8 +173,8 @@ func (s *BookingEstimationServiceImpl) AddPackage(id int, packId int) (int, *exc
 
 func (s *BookingEstimationServiceImpl) AddContractService(id int, contractserviceid int) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.AddContractService(tx,id,contractserviceid)
+	defer helper.CommitOrRollback(tx,err)
 	if err !=nil{
 		return 0,err
 	}
@@ -176,8 +183,8 @@ func (s *BookingEstimationServiceImpl) AddContractService(id int, contractservic
 
 func (s *BookingEstimationServiceImpl) InputDiscount(id int, req transactionworkshoppayloads.BookEstimationPayloadsDiscount) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.InputDiscount(tx,id,req)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -186,8 +193,8 @@ func (s *BookingEstimationServiceImpl) InputDiscount(id int, req transactionwork
 
 func (s *BookingEstimationServiceImpl) AddFieldAction(id int, idrecall int) (int, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err:= s.structBookingEstimationRepo.AddFieldAction(tx,id,idrecall)
+	defer helper.CommitOrRollback(tx,err)
 	if err !=nil{
 		return 0,err
 	}
@@ -196,8 +203,8 @@ func (s *BookingEstimationServiceImpl) AddFieldAction(id int, idrecall int) (int
 
 func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail (id int ,LineTypeID int)(map[string]interface{},*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.GetByIdBookEstimDetail(tx,id,LineTypeID)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return nil,err
 	}
@@ -206,8 +213,8 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail (id int ,LineTypeI
 
 func (s *BookingEstimationServiceImpl) PostBookingEstimationCalculation(id int)(int,*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.PostBookingEstimationCalculation(tx,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -216,8 +223,8 @@ func (s *BookingEstimationServiceImpl) PostBookingEstimationCalculation(id int)(
 
 func (s *BookingEstimationServiceImpl) PutBookingEstimationCalculation (id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads)(int,*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx,id,linetypeid,req)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return 0,err
 	}
@@ -226,8 +233,8 @@ func (s *BookingEstimationServiceImpl) PutBookingEstimationCalculation (id int, 
 
 func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromPDI( id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	result,err := s.structBookingEstimationRepo.SaveBookingEstimationFromPDI(tx,id)
+	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return transactionworkshopentities.BookingEstimation{},err
 	}

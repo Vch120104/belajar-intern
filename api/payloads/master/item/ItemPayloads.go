@@ -275,6 +275,17 @@ type PrincipleBrandDropdownDescription struct {
 	PrincipleBrandDescription string `json:"principle_brand_description"`
 }
 
+type BrandModelVariantResponse struct {
+	VariantId          int    `json:"variant_id"`
+	VariantCode        string `json:"variant_code"`
+	VariantDescription string `json:"variant_description"`
+	ModelId            int    `json:"model_id"`
+	ModelCode          string `json:"model_code"`
+	ModelDescription   string `json:"model_description"`
+	BrandId            int    `json:"brand_id"`
+	BrandCode          string `json:"brand_code"`
+	BrandName          string `json:"brand_name"`
+}
 type ItemSearch struct {
 	IsActive    bool   `json:"is_active" parent_entity:"mtr_item"`
 	ItemId      int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`

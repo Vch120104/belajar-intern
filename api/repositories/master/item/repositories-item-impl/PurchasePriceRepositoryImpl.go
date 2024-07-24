@@ -132,7 +132,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *PurchasePriceRepositoryImpl) SavePurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *PurchasePriceRepositoryImpl) SavePurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceRequest) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PurchasePrice{
 		IsActive:                   request.IsActive,
 		SupplierId:                 request.SupplierId,
@@ -144,20 +144,20 @@ func (r *PurchasePriceRepositoryImpl) SavePurchasePrice(tx *gorm.DB, request mas
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return masteritementities.PurchasePrice{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return masteritementities.PurchasePrice{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int) (masteritempayloads.PurchasePriceRequest, *exceptions.BaseErrorResponse) {
@@ -350,7 +350,7 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailById(tx *gorm.DB, Id
 	return response, totalPages, totalRows, nil
 }
 
-func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PurchasePriceDetail{
 		ItemId:          request.ItemId,
 		PurchasePriceId: request.PurchasePriceId,
@@ -362,20 +362,20 @@ func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request mast
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return masteritementities.PurchasePriceDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return masteritementities.PurchasePriceDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 // DeletePurchasePrice deletes an item location by ID

@@ -161,7 +161,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*").
+	rows, err := tx.Model(&entities).Select("u.*,mtr_item.*").
 		Where(masteritementities.Item{
 			ItemId: Id,
 		}).InnerJoins("Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
@@ -642,4 +642,42 @@ func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) (
 		}
 	}
 	return payloads, nil
+}
+
+func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id int, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse) {
+	var getdatabybrand []masteritempayloads.BrandModelVariantResponse
+	var itemDetails []masteritempayloads.ItemDetailResponse
+	err := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant-by-brand/"+strconv.Itoa(id), &getdatabybrand, nil)
+	if err != nil {
+		return []masteritempayloads.ItemDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errors.New("brand has no variant and model"),
+		}
+	}
+
+	for _, detail := range getdatabybrand {
+		entities := masteritementities.ItemDetail{
+			IsActive:  true,
+			ItemId:    itemId,
+			BrandId:   detail.BrandId,
+			ModelId:   detail.ModelId,
+			VariantId: detail.VariantId,
+		}
+		err := tx.Save(&entities).Error
+		if err != nil {
+			return []masteritempayloads.ItemDetailResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		}
+		itemDetails = append(itemDetails, masteritempayloads.ItemDetailResponse{
+			ItemDetailId: entities.ItemDetailId,
+			IsActive:     entities.IsActive,
+			ItemId:       itemId,
+			BrandId:      detail.BrandId,
+			ModelId:      detail.ModelId,
+			VariantId:    detail.VariantId,
+		})
+	}
+	return itemDetails, nil
 }

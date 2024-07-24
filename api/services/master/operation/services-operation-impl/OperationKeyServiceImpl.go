@@ -29,8 +29,8 @@ func StartOperationKeyService(operationKeyRepo masteroperationrepository.Operati
 
 func (s *OperationKeyServiceImpl) GetAllOperationKeyList(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.GetAllOperationKeyList(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -39,8 +39,8 @@ func (s *OperationKeyServiceImpl) GetAllOperationKeyList(filterCondition []utils
 
 func (s *OperationKeyServiceImpl) GetOperationKeyById(id int) (masteroperationpayloads.OperationkeyListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.GetOperationKeyById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,8 +49,8 @@ func (s *OperationKeyServiceImpl) GetOperationKeyById(id int) (masteroperationpa
 
 func (s *OperationKeyServiceImpl) GetOperationKeyName(req masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.GetOperationKeyName(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 
@@ -61,7 +61,6 @@ func (s *OperationKeyServiceImpl) GetOperationKeyName(req masteroperationpayload
 func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.OperationKeyResponse) (bool, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if req.OperationKeyId != 0 {
 		_, err := s.operationKeyRepo.GetOperationKeyById(tx, req.OperationKeyId)
@@ -72,6 +71,7 @@ func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.O
 	}
 
 	results, err := s.operationKeyRepo.SaveOperationKey(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -80,8 +80,8 @@ func (s *OperationKeyServiceImpl) SaveOperationKey(req masteroperationpayloads.O
 
 func (s *OperationKeyServiceImpl) ChangeStatusOperationKey(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.operationKeyRepo.ChangeStatusOperationKey(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

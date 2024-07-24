@@ -411,7 +411,7 @@ func (r *ItemLocationRepositoryImpl) GetByIdItemLoc(tx *gorm.DB, id int) (master
 	return response, nil
 }
 
-func (r *ItemLocationRepositoryImpl) SaveItemLoc(tx *gorm.DB, req masteritempayloads.SaveItemlocation) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemLocationRepositoryImpl) SaveItemLoc(tx *gorm.DB, req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemLocation{
 		ItemLocationId:      req.ItemLocationId,
 		WarehouseGroupId:    req.WarehouseGroupId,
@@ -421,12 +421,12 @@ func (r *ItemLocationRepositoryImpl) SaveItemLoc(tx *gorm.DB, req masteritempayl
 	}
 	err := tx.Save(&entities).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masteritementities.ItemLocation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
 	}
-	return true, nil
+	return entities, nil
 }
 
 func (r *ItemLocationRepositoryImpl) DeleteItemLoc(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {

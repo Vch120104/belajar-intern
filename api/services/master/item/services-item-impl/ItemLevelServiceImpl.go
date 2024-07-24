@@ -27,35 +27,44 @@ func StartItemLevelService(itemlevelrepo masteritemlevelrepo.ItemLevelRepository
 	}
 }
 
-// GetItemLevelLookUp implements masteritemservice.ItemLevelService.
-func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+// GetItemLevelLookUpbyId implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelLookUpbyId(itemLevelId int) (masteritemlevelpayloads.GetItemLevelLookUp, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	get, err := s.structItemLevelRepo.GetItemLevelLookUp(tx, filter, pages, itemClassId)
+	get, err := s.structItemLevelRepo.GetItemLevelLookUpbyId(tx, itemLevelId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
+	return get, nil
+}
 
+// GetItemLevelLookUp implements masteritemservice.ItemLevelService.
+func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	get, err := s.structItemLevelRepo.GetItemLevelLookUp(tx, filter, pages, itemClassId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
 	return get, nil
 }
 
 // GetItemLevelDropDown implements masteritemservice.ItemLevelService.
 func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.structItemLevelRepo.GetItemLevelDropDown(tx, itemLevel)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if request.ItemLevelId != 0 {
 		_, err := s.structItemLevelRepo.GetById(tx, request.ItemLevelId)
@@ -66,41 +75,38 @@ func (s *ItemLevelServiceImpl) Save(request masteritemlevelpayloads.SaveItemLeve
 	}
 
 	save, err := s.structItemLevelRepo.Save(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return false, err
 	}
-
 	return save, nil
 }
 
 func (s *ItemLevelServiceImpl) GetById(itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.structItemLevelRepo.GetById(tx, itemLevelId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *ItemLevelServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	get, err := s.structItemLevelRepo.GetAll(tx, filter, pages)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return get, err
 	}
-
 	return get, nil
 }
 
 func (s *ItemLevelServiceImpl) ChangeStatus(itemLevelId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.structItemLevelRepo.GetById(tx, itemLevelId)
 
@@ -109,6 +115,7 @@ func (s *ItemLevelServiceImpl) ChangeStatus(itemLevelId int) (bool, *exceptions.
 	}
 
 	change_status, err := s.structItemLevelRepo.ChangeStatus(tx, itemLevelId)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return change_status, err

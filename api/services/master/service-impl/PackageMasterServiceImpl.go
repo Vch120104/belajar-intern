@@ -26,8 +26,8 @@ func StartPackageMasterService(PackageMasterRepo masterrepository.PackageMasterR
 
 func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMaster(tx, filtercondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -36,8 +36,8 @@ func (s *PackageMasterServiceImpl) GetAllPackageMaster(filtercondition []utils.F
 
 func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, totalPages, totalRows, err := s.PackageMasterRepo.GetAllPackageMasterDetail(tx, id, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -46,8 +46,8 @@ func (s *PackageMasterServiceImpl) GetAllPackageMasterDetail(pages pagination.Pa
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.GetByIdPackageMaster(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -56,8 +56,8 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 
 func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int, idhead int, LineTypeId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id, idhead, LineTypeId)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -66,8 +66,8 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int, idhead int
 
 func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.PostpackageMaster(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -76,8 +76,8 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 
 func (s *PackageMasterServiceImpl) PostPackageMasterDetailBodyshop(req masterpayloads.PackageMasterDetailOperationBodyshop, id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.PostPackageMasterDetailBodyshop(tx, req, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -86,8 +86,8 @@ func (s *PackageMasterServiceImpl) PostPackageMasterDetailBodyshop(req masterpay
 
 func (s *PackageMasterServiceImpl) PostPackageMasterDetailWorkshop(req masterpayloads.PackageMasterDetailWorkshop) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.PostPackageMasterDetailWorkshop(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -96,8 +96,8 @@ func (s *PackageMasterServiceImpl) PostPackageMasterDetailWorkshop(req masterpay
 
 func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.ChangeStatusItemPackage(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -106,8 +106,8 @@ func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (bool, *excep
 
 func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string, idhead int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx, ids, idhead)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -116,8 +116,8 @@ func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string
 
 func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string, idhead int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx, ids, idhead)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -126,8 +126,8 @@ func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids stri
 
 func (s *PackageMasterServiceImpl) CopyToOtherModel(id int, name string, idmodel int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	defer helper.CommitOrRollback(tx)
 	result, err := s.PackageMasterRepo.CopyToOtherModel(tx, id, name, idmodel)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

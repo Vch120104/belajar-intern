@@ -29,8 +29,8 @@ func StartPriceListService(priceListRepo masteritemrepository.PriceListRepositor
 
 func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceList(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -39,8 +39,8 @@ func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceList
 
 func (s *PriceListServiceImpl) GetPriceListById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.priceListRepo.GetPriceListById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -49,7 +49,6 @@ func (s *PriceListServiceImpl) GetPriceListById(Id int) (map[string]interface{},
 
 func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	if request.PriceListId != 0 {
 		_, err := s.priceListRepo.GetPriceListById(tx, int(request.PriceListId))
@@ -60,6 +59,7 @@ func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceLis
 	}
 
 	result, err := s.priceListRepo.SavePriceList(tx, request)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -68,7 +68,6 @@ func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.PriceLis
 
 func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.priceListRepo.GetPriceListById(tx, Id)
 
@@ -77,48 +76,53 @@ func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.
 	}
 
 	result, err := s.priceListRepo.ChangeStatusPriceList(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
 	return result, nil
 }
 
-func (s *PriceListServiceImpl) GetAllPriceListNew (filterCondition []utils.FilterCondition, pages pagination.Pagination)([]map[string]interface{},int,int, *exceptions.BaseErrorResponse){
+func (s *PriceListServiceImpl) GetAllPriceListNew(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,total_page,total_rows,err := s.priceListRepo.GetAllPriceListNew(tx,filterCondition,pages)
-	if err != nil{
-		return nil,0,0,err
+	result, total_page, total_rows, err := s.priceListRepo.GetAllPriceListNew(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, 0, 0, err
 	}
-	return result,total_page,total_rows,nil
+
+	return result, total_page, total_rows, nil
 }
 
-func (s *PriceListServiceImpl) DeactivatePriceList(id string)(bool,*exceptions.BaseErrorResponse){
+func (s *PriceListServiceImpl) DeactivatePriceList(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,err := s.priceListRepo.DeactivatePriceList(tx,id)
-	if err != nil{
-		return false,err
+	result, err := s.priceListRepo.DeactivatePriceList(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+
+	return result, nil
 }
 
-func (s *PriceListServiceImpl) ActivatePriceList(id string)(bool,*exceptions.BaseErrorResponse){
-	tx :=s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,err := s.priceListRepo.ActivatePriceList(tx,id)
-	if err != nil{
-		return false,err
+func (s *PriceListServiceImpl) ActivatePriceList(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.priceListRepo.ActivatePriceList(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+
+	return result, nil
 }
 
-func (s *PriceListServiceImpl) DeletePriceList(id string)(bool,*exceptions.BaseErrorResponse){
+func (s *PriceListServiceImpl) DeletePriceList(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	result,err := s.priceListRepo.DeletePriceList(tx,id)
-	if err != nil{
-		return false,err
+	result, err := s.priceListRepo.DeletePriceList(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+
+	return result, nil
 }

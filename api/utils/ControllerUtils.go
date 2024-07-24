@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -83,4 +84,50 @@ func GetQueryInt(c *gin.Context, param string) int {
 func NewGetQueryInt(queryValues url.Values, param string) int {
 	value, _ := strconv.Atoi(queryValues.Get(param))
 	return value
+}
+
+// ConvertDateTimeFormat converts ISO8601 format to separate date and time components
+func ConvertDateFormat(dateTime time.Time) (string, error) {
+	date := dateTime.Format("2006-01-02")
+	return date, nil
+}
+
+func ConvertTimeFormat(dateTimeStr string) (string, error) {
+	// Parse the input string into time.Time
+	parsedTime, err := time.Parse(time.RFC3339Nano, dateTimeStr)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract time component
+	time := parsedTime.Format("15:04:05")
+
+	return time, nil
+}
+
+func ConvertDateTimeFormat(dateTimeStr string) (string, string, error) {
+	// Parse the input string into time.Time
+	parsedTime, err := time.Parse(time.RFC3339Nano, dateTimeStr)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Extract date and time components
+	date := parsedTime.Format("2006-01-02")
+	time := parsedTime.Format("15:04:05")
+
+	return date, time, nil
+}
+
+// SafeConvertDateFormat attempts to convert time.Time to string format "2006-01-02"
+// If conversion fails, it returns an empty string
+func SafeConvertDateFormat(dateTime time.Time) string {
+	if dateTime.IsZero() {
+		return ""
+	}
+	date, err := ConvertDateFormat(dateTime)
+	if err != nil {
+		return ""
+	}
+	return date
 }

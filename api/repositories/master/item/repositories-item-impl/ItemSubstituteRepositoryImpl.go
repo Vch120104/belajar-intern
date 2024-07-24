@@ -8,7 +8,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -39,8 +38,6 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	}
 
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
-
-	fmt.Print(payloads[0].IsActive)
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

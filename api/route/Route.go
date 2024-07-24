@@ -264,6 +264,19 @@ func StartRouting(db *gorm.DB) {
 	SalesOrderService := transactionsparepartserviceimpl.StartSalesOrderService(SalesOrderRepository, db, rdb)
 	SalesOrderController := transactionsparepartcontroller.NewSalesOrderController(SalesOrderService)
 
+	//Service Request
+	ServiceRequestRepository := transactionworkshoprepositoryimpl.OpenServiceRequestRepositoryImpl()
+	ServiceRequestService := transactionworkshopserviceimpl.OpenServiceRequestServiceImpl(ServiceRequestRepository, db, rdb)
+	ServiceRequestController := transactionworksopcontroller.NewServiceRequestController(ServiceRequestService)
+	//vehicle history
+	VehicleHistoryRepository := transactionworkshoprepositoryimpl.NewVehicleHistoryImpl()
+	VehicleHistoryServices := transactionworkshopserviceimpl.NewVehicleHistoryServiceImpl(VehicleHistoryRepository, db, rdb)
+	VehicleHistoryController := transactionworksopcontroller.NewVehicleHistoryController(VehicleHistoryServices)
+	//Service Receipt
+	ServiceReceiptRepository := transactionworkshoprepositoryimpl.OpenServiceReceiptRepositoryImpl()
+	ServiceReceiptService := transactionworkshopserviceimpl.OpenServiceReceiptServiceImpl(ServiceReceiptRepository, db, rdb)
+	ServiceReceiptController := transactionworksopcontroller.NewServiceReceiptController(ServiceReceiptService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -312,7 +325,9 @@ func StartRouting(db *gorm.DB) {
 	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
 	SalesOrderRouter := SalesOrderRouter(SalesOrderController)
-
+	ServiceRequestRouter := ServiceRequestRouter(ServiceRequestController)
+	ServiceReceiptRouter := ServiceReceiptRouter(ServiceReceiptController)
+	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -377,6 +392,9 @@ func StartRouting(db *gorm.DB) {
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
 		r.Mount("/work-order", WorkOrderRouter)
+		r.Mount("/service-request", ServiceRequestRouter)
+		r.Mount("/service-receipt", ServiceReceiptRouter)
+		r.Mount("/vehicle-history", VehicleHistoryRouter)
 
 		/* Transaction Bodyshop */
 
