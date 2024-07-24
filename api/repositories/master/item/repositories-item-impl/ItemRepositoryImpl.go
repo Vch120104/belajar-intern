@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -645,16 +646,20 @@ func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) (
 }
 
 
-func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB,id int,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse){
+func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB,id string,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse){
 	var getdatabybrand []masteritempayloads.BrandModelVariantResponse
 	var itemDetails []masteritempayloads.ItemDetailResponse
-	err := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant-by-brand/"+strconv.Itoa(id),&getdatabybrand,nil)
-	if err != nil{
-		return []masteritempayloads.ItemDetailResponse{},&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err: errors.New("brand has no variant and model"),
+	brandid := strings.Split(id,",")
+	for _,id:= range brandid{
+		err := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant-by-brand/"+id,&getdatabybrand,nil)
+		if err != nil{
+			return []masteritempayloads.ItemDetailResponse{},&exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err: errors.New("brand has no variant and model"),
+			}
 		}
 	}
+	
 	
 	for _,detail := range getdatabybrand{
 		entities:= masteritementities.ItemDetail{
