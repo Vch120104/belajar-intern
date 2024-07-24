@@ -11,10 +11,10 @@ import (
 type PurchasePriceService interface {
 	DeletePurchasePrice(id int) *exceptions.BaseErrorResponse
 	GetPurchasePriceById(id int) (masteritempayloads.PurchasePriceRequest, *exceptions.BaseErrorResponse)
-	SavePurchasePrice(masteritempayloads.PurchasePriceRequest) (bool, *exceptions.BaseErrorResponse)
+	SavePurchasePrice(masteritempayloads.PurchasePriceRequest) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse)
 	GetAllPurchasePrice(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetAllPurchasePriceDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetPurchasePriceDetailById(id int, pages pagination.Pagination) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse)
 }

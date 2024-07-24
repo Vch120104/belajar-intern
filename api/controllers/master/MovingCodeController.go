@@ -62,7 +62,9 @@ func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter
 
 // GetDropdownMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request) {
-	result, err := r.MovingCodeService.GetDropdownMovingCode()
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	result, err := r.MovingCodeService.GetDropdownMovingCode(companyId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -115,23 +117,26 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 
 // GetAllMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, request *http.Request) {
+
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
 	queryValues := request.URL.Query()
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: "Priority",
-		SortBy: "asc",
+		SortOf: "asc",
+		SortBy: "Priority",
 	}
 
-	paginatedData, totalPages, totalRows, err := r.MovingCodeService.GetAllMovingCode(paginate)
+	result, err := r.MovingCodeService.GetAllMovingCode(companyId, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 
 }
 
@@ -152,7 +157,9 @@ func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter,
 // PushMovingCodePriority implements MovingCodeController.
 func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWriter, request *http.Request) {
 	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
-	result, err := r.MovingCodeService.PushMovingCodePriority(itemPackageId)
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	result, err := r.MovingCodeService.PushMovingCodePriority(companyId, itemPackageId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)

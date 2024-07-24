@@ -162,7 +162,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*").
+	rows, err := tx.Model(&entities).Select("u.*,mtr_item.*").
 		Where(masteritementities.Item{
 			ItemId: Id,
 		}).InnerJoins("Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
@@ -669,21 +669,21 @@ func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB,id string,itemId i
 			ModelId: detail.ModelId,
 			VariantId: detail.VariantId,
 		}
-		err:=tx.Save(&entities).Error
-		if err != nil{
-			return []masteritempayloads.ItemDetailResponse{},&exceptions.BaseErrorResponse{
+		err := tx.Save(&entities).Error
+		if err != nil {
+			return []masteritempayloads.ItemDetailResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
-				Err: err,
+				Err:        err,
 			}
 		}
 		itemDetails = append(itemDetails, masteritempayloads.ItemDetailResponse{
 			ItemDetailId: entities.ItemDetailId,
-			IsActive: entities.IsActive,
-            ItemId:    itemId,
-            BrandId:   detail.BrandId,
-            ModelId:   detail.ModelId,
-            VariantId: detail.VariantId,
-        })
+			IsActive:     entities.IsActive,
+			ItemId:       itemId,
+			BrandId:      detail.BrandId,
+			ModelId:      detail.ModelId,
+			VariantId:    detail.VariantId,
+		})
 	}
-	return itemDetails,nil
+	return itemDetails, nil
 }

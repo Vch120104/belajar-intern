@@ -32,7 +32,7 @@ func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterConditio
 	tx := s.DB.Begin()
 
 	results, totalPages, totalRows, err := s.BomRepository.GetBomMasterList(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	defer func() { helper.CommitOrRollback(tx, err) }()
 	if err != nil {
 		return results, 0, 0, err
 	}
@@ -51,23 +51,23 @@ func (s *BomServiceImpl) GetBomMasterById(id int) (masteritempayloads.BomMasterR
 	return results, nil
 }
 
-func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.BomRepository.SaveBomMaster(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.Bom{}, err
 	}
 	return results, nil
 }
 
-func (s *BomServiceImpl) UpdateBomMaster(id int, req masteritempayloads.BomMasterRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) UpdateBomMaster(id int, req masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, err := s.BomRepository.UpdateBomMaster(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.Bom{}, err
 	}
 
 	return results, nil
@@ -108,23 +108,23 @@ func (s *BomServiceImpl) GetBomDetailById(id int, filterCondition []utils.Filter
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.BomRepository.SaveBomDetail(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.BomDetail{}, err
 	}
 	return results, nil
 }
 
-func (s *BomServiceImpl) UpdateBomDetail(id int, req masteritempayloads.BomDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BomServiceImpl) UpdateBomDetail(id int, req masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, err := s.BomRepository.UpdateBomDetail(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.BomDetail{}, err
 	}
 	return results, nil
 }

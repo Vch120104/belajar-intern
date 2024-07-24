@@ -23,3 +23,9 @@ type OperationCodeSave struct {
 	OperationUsingIncentive bool   `json:"operation_using_incentive"`
 	OperationUsingActual    bool   `json:"operation_using_actual"`
 }
+
+type OperationCodeUpdate struct{
+	OperationName           string `json:"operation_name"`
+	OperationUsingIncentive bool   `json:"operation_using_incentive"`
+	OperationUsingActual    bool   `json:"operation_using_actual"`
+}

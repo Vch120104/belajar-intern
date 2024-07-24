@@ -1,4 +1,4 @@
-package masteritemcontroller
+	package masteritemcontroller
 
 import (
 	helper "after-sales/api/helper"
@@ -132,8 +132,7 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/activate/{landed_cost_id}  [patch]
 func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	queryId := query.Get("landed_cost_id")
+	queryId := chi.URLParam(request,"landed_cost_id")
 	response, err := r.LandedCostService.ActivateLandedCostMaster(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -152,8 +151,7 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/deactivate/{landed_cost_id} [patch]
 func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	queryId := query.Get("landed_cost_id")
+	queryId := chi.URLParam(request,"landed_cost_id")
 	response, err := r.LandedCostService.DeactivateLandedCostMaster(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

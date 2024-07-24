@@ -31,14 +31,14 @@ func OpenWarehouseLocationDefinitionService(WarehouseLocationDefinition masterwa
 	}
 }
 
-func (s *WarehouseLocationDefinitionServiceImpl) Save(request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *WarehouseLocationDefinitionServiceImpl) Save(request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (masterwarehouseentities.WarehouseLocationDefinition, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	if request.WarehouseLocationDefinitionId != 0 {
 		_, err := s.WarehouseLocationDefinitionRepo.GetById(tx, request.WarehouseLocationDefinitionId)
 
 		if err != nil {
-			return false, err
+			return masterwarehouseentities.WarehouseLocationDefinition{}, err
 		}
 	}
 
@@ -46,19 +46,19 @@ func (s *WarehouseLocationDefinitionServiceImpl) Save(request masterwarehousepay
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return masterwarehouseentities.WarehouseLocationDefinition{}, err
 	}
 	return save, err
 }
 
-func (s *WarehouseLocationDefinitionServiceImpl) SaveData(request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *WarehouseLocationDefinitionServiceImpl) SaveData(request masterwarehousepayloads.WarehouseLocationDefinitionResponse) (masterwarehouseentities.WarehouseLocationDefinition, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	if request.WarehouseLocationDefinitionId != 0 {
 		_, err := s.WarehouseLocationDefinitionRepo.GetById(tx, request.WarehouseLocationDefinitionId)
 
 		if err != nil {
-			return false, err
+			return masterwarehouseentities.WarehouseLocationDefinition{}, err
 		}
 	}
 
@@ -66,7 +66,7 @@ func (s *WarehouseLocationDefinitionServiceImpl) SaveData(request masterwarehous
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return masterwarehouseentities.WarehouseLocationDefinition{}, err
 	}
 	return save, err
 }

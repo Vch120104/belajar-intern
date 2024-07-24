@@ -1,4 +1,4 @@
-	package masterrepositoryimpl
+package masterrepositoryimpl
 
 import (
 	"after-sales/api/config"
@@ -114,7 +114,7 @@ func (r *IncentiveMasterRepositoryImpl) GetIncentiveMasterById(tx *gorm.DB, Id i
 	return response, nil
 }
 
-func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
 	entities := masterentities.IncentiveMaster{
 		IncentiveLevelId:      request.IncentiveLevelId,
 		IncentiveLevelCode:    request.IncentiveLevelCode,
@@ -130,13 +130,13 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 			// Check for duplicate entry error
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// If it's a duplicate entry error, panic duplicate
-				return false, &exceptions.BaseErrorResponse{
+				return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
 			}
 			// For other errors, return the error
-			return false, &exceptions.BaseErrorResponse{
+			return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -147,14 +147,37 @@ func (r *IncentiveMasterRepositoryImpl) SaveIncentiveMaster(tx *gorm.DB, request
 			Where("incentive_level_id = ?", request.IncentiveLevelId).
 			Updates(entities).Error
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return entities, nil
+}
+
+func (r *IncentiveMasterRepositoryImpl) UpdateIncentiveMaster(tx *gorm.DB, request masterpayloads.IncentiveMasterRequest, Id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {
+	entities := masterentities.IncentiveMaster{
+		IncentiveLevelId:      request.IncentiveLevelId,
+		IncentiveLevelCode:    request.IncentiveLevelCode,
+		JobPositionId:         request.JobPositionId,
+		IncentiveLevelPercent: request.IncentiveLevelPercent,
+		IsActive:              request.IsActive,
+	}
+
+	err := tx.Model(&masterentities.IncentiveMaster{}).
+		Where("incentive_level_id = ?", Id).
+		Updates(entities).Error
+
+	if err != nil {
+		return masterentities.IncentiveMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return entities, nil
 }
 
 func (r *IncentiveMasterRepositoryImpl) ChangeStatusIncentiveMaster(tx *gorm.DB, Id int) (masterentities.IncentiveMaster, *exceptions.BaseErrorResponse) {

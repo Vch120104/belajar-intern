@@ -68,10 +68,10 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.R
 func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_uom.is_active":          queryValues.Get("is_active"),
-		"mtr_uom.uom_code":           queryValues.Get("uom_code"),
-		"mtr_uom.uom_description":    queryValues.Get("uom_description"),
-		"mtr_uom_type.uom_type_desc": queryValues.Get("uom_type_desc"),
+		"mtr_uom.is_active":                 queryValues.Get("is_active"),
+		"mtr_uom.uom_code":                  queryValues.Get("uom_code"),
+		"mtr_uom.uom_description":           queryValues.Get("uom_description"),
+		"mtr_uom_type.uom_type_description": queryValues.Get("uom_type_description"),
 	}
 
 	pagination := pagination.Pagination{
