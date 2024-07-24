@@ -16,7 +16,8 @@ type WarrantyFreeService struct {
 	VariantId                     int       `gorm:"column:variant_id;size:30;null"        json:"variant_id"` //Fk with mtr_unit_variant on sales service
 	ExpireMileageExtendedWarranty float64   `gorm:"column:expire_mileage_extended_warranty;null"        json:"expire_mileage_extended_warranty"`
 	ExpireMonthExtendedWarranty   float64   `gorm:"column:expire_month_extended_warranty;null"        json:"expire_month_extended_warranty"`
-	Remark                        string    `gorm:"column:remark;null"        json:"remark"`
+	Remark                        string    `gorm:"column:remark;size:256;null"        json:"remark"`
+	ExtendedWarranty              *bool      `gorm:"column:extended_warranty;null"        json:"extended_warranty"`
 }
 
 func (*WarrantyFreeService) TableName() string {

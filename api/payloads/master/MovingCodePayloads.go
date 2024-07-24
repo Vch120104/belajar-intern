@@ -5,7 +5,6 @@ type MovingCodeResponse struct {
 	MovingCodeId          int     `json:"moving_code_id"`
 	MovingCode            string  `json:"moving_code"`
 	CompanyId             int     `json:"company_id"`
-	CompanyName           *string `json:"company_name"`
 	MovingCodeDescription string  `json:"moving_code_description"`
 	MinimumQuantityDemand float64 `json:"minimum_quantity_demand"`
 	Priority              float64 `json:"priority"`

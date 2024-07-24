@@ -31,7 +31,7 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCon
 	if len(entities) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 	if err != nil {
