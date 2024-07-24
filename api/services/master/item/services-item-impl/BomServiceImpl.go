@@ -32,7 +32,7 @@ func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterConditio
 	tx := s.DB.Begin()
 
 	results, totalPages, totalRows, err := s.BomRepository.GetBomMasterList(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	defer func() { helper.CommitOrRollback(tx, err) }()
 	if err != nil {
 		return results, 0, 0, err
 	}

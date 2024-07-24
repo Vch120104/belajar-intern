@@ -5,8 +5,8 @@ var CreateMovingCodeTable = "mtr_moving_code"
 type MovingCode struct {
 	IsActive              bool    `gorm:"column:is_active;not null;default:true"        json:"is_active"`
 	MovingCodeId          int     `gorm:"column:moving_code_id;size:30;not null;primaryKey"        json:"moving_code_id"`
-	MovingCode            string  `gorm:"column:moving_code;size:3;not null" json:"moving_code"`
-	CompanyId             int     `gorm:"column:company_id;size:30;not null"        json:"company_id"`
+	MovingCode            string  `gorm:"column:moving_code;size:3;not null;uniqueindex:idx_moving_code" json:"moving_code"`
+	CompanyId             int     `gorm:"column:company_id;size:30;not null;uniqueindex:idx_moving_code"        json:"company_id"`
 	MovingCodeDescription string  `gorm:"column:moving_code_description;size:40;not null" json:"moving_code_description"`
 	MinimumQuantityDemand float64 `gorm:"column:minimum_quantity_demand;null" json:"minimum_quantity_demand"`
 	Priority              float64 `gorm:"column:priority;null" json:"priority"`
