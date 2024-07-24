@@ -638,7 +638,7 @@ func WarehouseMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
@@ -859,7 +859,6 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
 	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
