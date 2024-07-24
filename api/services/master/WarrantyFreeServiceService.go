@@ -13,5 +13,5 @@ type WarrantyFreeServiceService interface {
 	GetWarrantyFreeServiceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	SaveWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse)
 	ChangeStatusWarrantyFreeService(Id int) (masterpayloads.WarrantyFreeServicePatchResponse, *exceptions.BaseErrorResponse)
-	UpdateWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest, id int)(masterentities.WarrantyFreeService,*exceptions.BaseErrorResponse)
+	UpdateWarrantyFreeService(req masterentities.WarrantyFreeService, id int)(masterentities.WarrantyFreeService,*exceptions.BaseErrorResponse)
 }

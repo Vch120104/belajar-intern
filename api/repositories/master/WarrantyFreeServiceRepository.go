@@ -15,5 +15,5 @@ type WarrantyFreeServiceRepository interface {
 	GetWarrantyFreeServiceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	SaveWarrantyFreeService(tx *gorm.DB, request masterpayloads.WarrantyFreeServiceRequest) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse)
 	ChangeStatusWarrantyFreeService(tx *gorm.DB, Id int) (masterpayloads.WarrantyFreeServicePatchResponse, *exceptions.BaseErrorResponse)
-	UpdateWarrantyFreeService(tx *gorm.DB, req masterpayloads.WarrantyFreeServiceRequest, id int) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse)
+	UpdateWarrantyFreeService(tx *gorm.DB, req masterentities.WarrantyFreeService, id int) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse)
 }

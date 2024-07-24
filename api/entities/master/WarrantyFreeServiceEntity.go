@@ -17,7 +17,7 @@ type WarrantyFreeService struct {
 	ExpireMileageExtendedWarranty float64   `gorm:"column:expire_mileage_extended_warranty;null"        json:"expire_mileage_extended_warranty"`
 	ExpireMonthExtendedWarranty   float64   `gorm:"column:expire_month_extended_warranty;null"        json:"expire_month_extended_warranty"`
 	Remark                        string    `gorm:"column:remark;size:256;null"        json:"remark"`
-	ExtendedWarranty              bool      `gorm:"column:extended_warranty;null"        json:"extended_warranty"`
+	ExtendedWarranty              *bool      `gorm:"column:extended_warranty;null"        json:"extended_warranty"`
 }
 
 func (*WarrantyFreeService) TableName() string {
