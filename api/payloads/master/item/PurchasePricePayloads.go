@@ -12,6 +12,7 @@ type PurchasePriceResponse struct {
 	CurrencyName               string    `json:"currency_name"`
 	PurchasePriceEffectiveDate time.Time `json:"purchase_price_effective_date"`
 	IsActive                   bool      `json:"is_active"`
+	IdentitySysNumber          int       `json:"identity_system_number"`
 }
 
 type PurchasePriceRequest struct {
