@@ -24,13 +24,13 @@ type ItemImportServiceImpl struct {
 
 // ProcessDataUpload implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) ProcessDataUpload(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
 
-	saveSuccess, err := s.itemImportRepo.SaveItemImport(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+	for _, value := range req.Data {
+		_, err := s.SaveItemImport(value)
+		if err != nil {
+			return false, err
+		}
 
-	if err != nil {
-		return saveSuccess, err
 	}
 
 	return true, nil
@@ -219,7 +219,7 @@ func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCo
 }
 
 // SaveItemImport implements masteritemservice.ItemImportService.
-func (s *ItemImportServiceImpl) SaveItemImport(req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemImportRepo.SaveItemImport(tx, req)
 	defer helper.CommitOrRollback(tx, err)

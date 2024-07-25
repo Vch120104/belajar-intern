@@ -8,7 +8,8 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-	_ "after-sales/docs"
+
+	// _ "after-sales/docs"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -668,6 +669,9 @@ func WarehouseLocationRouter(
 	router.Get("/by-id/{warehouse_location_id}", warehouseLocationController.GetById)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
+	router.Get("/download-template", warehouseLocationController.DownloadTemplate)
+	router.Post("/upload-template/{company_id}", warehouseLocationController.UploadPreviewFile)
+	router.Post("/process-template", warehouseLocationController.ProcessWarehouseLocationTemplate)
 
 	return router
 }
