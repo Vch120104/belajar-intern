@@ -9,8 +9,6 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
-	// _ "after-sales/docs"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -842,6 +840,7 @@ func WarrantyFreeServiceRouter(
 	router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
 	router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
+	router.Put("/{warranty_free_services_id}", warrantyFreeServiceController.UpdateWarrantyFreeService)
 
 	return router
 }
@@ -850,6 +849,12 @@ func PackageMasterRouter(
 	PackageMasterController mastercontroller.PackageMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	router.Get("/", PackageMasterController.GetAllPackageMaster)
 	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
 	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
@@ -857,7 +862,6 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
 	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
@@ -891,6 +895,12 @@ func CampaignMasterRouter(
 	campaignmastercontroller mastercontroller.CampaignMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
@@ -1073,6 +1083,7 @@ func ServiceRequestRouter(
 
 	// generate document
 	router.Post("/document-number/{service_request_system_number}", ServiceRequestController.GenerateDocumentNumberServiceRequest)
+	router.Get("/dropdown-status", ServiceRequestController.NewStatus)
 
 	router.Get("/", ServiceRequestController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceRequestController.GetById)

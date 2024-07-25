@@ -33,7 +33,7 @@ type WorkOrderRepository interface {
 
 	New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse)
+	GetById(tx *gorm.DB, Id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderResponseDetail, *exceptions.BaseErrorResponse)
 	Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse)
 	Submit(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse)
 	Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse)
