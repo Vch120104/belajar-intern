@@ -27,6 +27,6 @@ type ItemRepository interface {
 	UpdateItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse)
-	AddItemDetailByBrand(tx *gorm.DB,id int,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse)
+	AddItemDetailByBrand(tx *gorm.DB,id string,itemId int)([]masteritempayloads.ItemDetailResponse,*exceptions.BaseErrorResponse)
 	GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }
