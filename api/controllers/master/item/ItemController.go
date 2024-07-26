@@ -361,7 +361,6 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 
 	queryParams := map[string]string{
 		"item_id":        queryValues.Get("item_id"),
-		"item_detail_id": queryValues.Get("item_detail_id"),
 	}
 
 	paginate := pagination.Pagination{
