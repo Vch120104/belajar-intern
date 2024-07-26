@@ -104,7 +104,7 @@ func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]m
 
 	itemlevelInt, _ := strconv.Atoi(itemLevel)
 
-	err := tx.Model(&model).Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemlevelInt - 1)}).Scan(&result).Error
+	err := tx.Model(&model).Select("mtr_item_level.*,CONCAT(item_level_code , ' - ',item_level_name)AS item_level_name").Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemlevelInt - 1)}).Scan(&result).Error
 
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{

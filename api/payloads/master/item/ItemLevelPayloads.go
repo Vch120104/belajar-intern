@@ -22,8 +22,8 @@ type GetItemLevelResponse struct {
 }
 
 type GetItemLevelDropdownResponse struct {
-	ItemLevelId     int    `json:"item_level_id"`
-	ItemLevelParent string `json:"item_level_parent"`
+	ItemLevelId   int    `json:"item_level_id"`
+	ItemLevelName string `json:"item_level_name"`
 }
 
 type GetItemLevelResponseById struct {

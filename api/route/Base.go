@@ -674,6 +674,9 @@ func WarehouseLocationRouter(
 	router.Get("/by-id/{warehouse_location_id}", warehouseLocationController.GetById)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
+	router.Get("/download-template", warehouseLocationController.DownloadTemplate)
+	router.Post("/upload-template/{company_id}", warehouseLocationController.UploadPreviewFile)
+	router.Post("/process-template", warehouseLocationController.ProcessWarehouseLocationTemplate)
 
 	return router
 }
