@@ -238,7 +238,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) SaveWarrantyFreeService(tx *gorm.DB,
 		ExpireMileageExtendedWarranty: request.ExpireMileageExtendedWarranty,
 		ExpireMonthExtendedWarranty:   request.ExpireMonthExtendedWarranty,
 		Remark:                        request.Remark,
-		ExtendedWarranty:              request.ExtendedWarranty,
+		ExtendedWarranty:              &request.ExtendedWarranty,
 	}
 
 	err := tx.Save(&entities).Error
@@ -297,14 +297,14 @@ func (r *WarrantyFreeServiceRepositoryImpl) ChangeStatusWarrantyFreeService(tx *
 	return response, nil
 }
 
-func (r *WarrantyFreeServiceRepositoryImpl) UpdateWarrantyFreeService(tx *gorm.DB, req masterpayloads.WarrantyFreeServiceRequest, id int) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse) {
+func (r *WarrantyFreeServiceRepositoryImpl) UpdateWarrantyFreeService(tx *gorm.DB, req masterentities.WarrantyFreeService, id int) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse) {
 	var entity masterentities.WarrantyFreeService
 
-	err := tx.Model(&entity).Where("warranty_free_services_id = ?", id).First(&entity).Updates(req)
-	if err.Error != nil {
+	err := tx.Model(entity).Where(masterentities.WarrantyFreeService{WarrantyFreeServicesId: id}).Updates(req).First(&entity).Error
+	if err != nil {
 		return masterentities.WarrantyFreeService{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err:        err.Error,
+			Err:        err,
 		}
 	}
 	return entity, nil

@@ -638,7 +638,7 @@ func WarehouseMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
-	router.Use(middlewares.MetricsMiddleware)
+																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
@@ -837,7 +837,7 @@ func WarrantyFreeServiceRouter(
 	router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
 	router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
-	router.Put("/{warranty_free_services_id}", warrantyFreeServiceController.UpdateWarrantyFreeService) 
+	router.Put("/{warranty_free_services_id}", warrantyFreeServiceController.UpdateWarrantyFreeService)
 
 	return router
 }
@@ -859,7 +859,6 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/bodyshop/{package_id}", PackageMasterController.SavePackageMasterDetailBodyshop)
 	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
@@ -1081,6 +1080,7 @@ func ServiceRequestRouter(
 
 	// generate document
 	router.Post("/document-number/{service_request_system_number}", ServiceRequestController.GenerateDocumentNumberServiceRequest)
+	router.Get("/dropdown-status", ServiceRequestController.NewStatus)
 
 	router.Get("/", ServiceRequestController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceRequestController.GetById)

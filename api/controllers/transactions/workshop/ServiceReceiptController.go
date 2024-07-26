@@ -54,12 +54,13 @@ func (r *ServiceReceiptControllerImp) GetAll(writer http.ResponseWriter, request
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"service_request_system_number": queryValues.Get("service_request_system_number"),
-		"service_request_id":            queryValues.Get("service_request_id"),
-		"brand_id":                      queryValues.Get("brand_id"),
-		"model_id":                      queryValues.Get("model_id"),
-		"vehicle_id":                    queryValues.Get("vehicle_id"),
-		"service_request_date":          queryValues.Get("service_request_date"),
+		"service_request_system_number":   queryValues.Get("service_request_system_number"),
+		"service_request_document_number": queryValues.Get("service_request_document_number"),
+		"service_request_status_id":       queryValues.Get("service_request_status_id"),
+		"brand_id":                        queryValues.Get("brand_id"),
+		"model_id":                        queryValues.Get("model_id"),
+		"vehicle_id":                      queryValues.Get("vehicle_id"),
+		"service_request_date":            queryValues.Get("service_request_date"),
 	}
 
 	paginate := pagination.Pagination{
@@ -102,7 +103,16 @@ func (r *ServiceReceiptControllerImp) GetById(writer http.ResponseWriter, reques
 		return
 	}
 
-	serviceRequest, baseErr := r.ServiceReceiptService.GetById(ServiceRequestId)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	serviceRequest, baseErr := r.ServiceReceiptService.GetById(ServiceRequestId, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Service request not found", http.StatusNotFound)

@@ -77,7 +77,7 @@ func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int)
 	return results, nil
 }
 
-func (s *WarrantyFreeServiceServiceImpl) UpdateWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest, id int)(masterentities.WarrantyFreeService,*exceptions.BaseErrorResponse){
+func (s *WarrantyFreeServiceServiceImpl) UpdateWarrantyFreeService(req masterentities.WarrantyFreeService, id int)(masterentities.WarrantyFreeService,*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
 	result,err := s.warrantyFreeServiceRepo.UpdateWarrantyFreeService(tx,req,id)
 	defer helper.CommitOrRollback(tx,err)

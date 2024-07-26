@@ -188,7 +188,6 @@ func TestGetServiceRequestById_Success(t *testing.T) {
 		t.Error("Expected non-zero result for service_request_system_number")
 		return
 	}
-
 }
 
 func BenchmarkGetServiceRequestById(b *testing.B) {
@@ -199,10 +198,17 @@ func BenchmarkGetServiceRequestById(b *testing.B) {
 	ServiceRequestRepository := transactionworkshoprepositoryimpl.OpenServiceRequestRepositoryImpl()
 	ServiceRequestService := transactionworkshopserviceimpl.OpenServiceRequestServiceImpl(ServiceRequestRepository, db, rdb)
 
+	paginate := pagination.Pagination{
+		Limit:  10, // Example limit
+		Page:   1,  // Example page
+		SortOf: "", // Example sort field
+		SortBy: "", // Example sort order
+	}
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, err := ServiceRequestService.GetById(1)
+		_, err := ServiceRequestService.GetById(1, paginate)
 		if err != nil {
 			b.Fatalf("Error: %v", err)
 		}

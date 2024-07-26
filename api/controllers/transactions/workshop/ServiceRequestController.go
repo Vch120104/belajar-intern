@@ -21,6 +21,7 @@ type ServiceRequestControllerImp struct {
 
 type ServiceRequestController interface {
 	GenerateDocumentNumberServiceRequest(writer http.ResponseWriter, request *http.Request)
+	NewStatus(writer http.ResponseWriter, request *http.Request)
 
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
@@ -106,12 +107,13 @@ func (r *ServiceRequestControllerImp) GetAll(writer http.ResponseWriter, request
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"service_request_system_number": queryValues.Get("service_request_system_number"),
-		"service_request_id":            queryValues.Get("service_request_id"),
-		"brand_id":                      queryValues.Get("brand_id"),
-		"model_id":                      queryValues.Get("model_id"),
-		"vehicle_id":                    queryValues.Get("vehicle_id"),
-		"service_request_date":          queryValues.Get("service_request_date"),
+		"service_request_system_number":   queryValues.Get("service_request_system_number"),
+		"service_request_document_number": queryValues.Get("service_request_document_number"),
+		"service_request_status_id":       queryValues.Get("service_request_status_id"),
+		"brand_id":                        queryValues.Get("brand_id"),
+		"model_id":                        queryValues.Get("model_id"),
+		"vehicle_id":                      queryValues.Get("vehicle_id"),
+		"service_request_date":            queryValues.Get("service_request_date"),
 	}
 
 	paginate := pagination.Pagination{
@@ -155,7 +157,16 @@ func (r *ServiceRequestControllerImp) GetById(writer http.ResponseWriter, reques
 		return
 	}
 
-	serviceRequest, baseErr := r.ServiceRequestService.GetById(ServiceRequestId)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	serviceRequest, baseErr := r.ServiceRequestService.GetById(ServiceRequestId, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Service request not found", http.StatusNotFound)
@@ -209,7 +220,7 @@ func (r *ServiceRequestControllerImp) New(writer http.ResponseWriter, request *h
 // @Accept json
 // @Produce json
 // @Param service_request_system_number path int true "Service Request ID"
-// @Param reqBody body transactionworkshoppayloads.ServiceRequestSaveRequest true "Service Request Data"
+// @Param reqBody body transactionworkshoppayloads.ServiceRequestSaveDataRequest true "Service Request Data"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/{service_request_system_number} [put]
@@ -221,7 +232,7 @@ func (r *ServiceRequestControllerImp) Save(writer http.ResponseWriter, request *
 		return
 	}
 
-	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveRequest
+	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveDataRequest
 	helper.ReadFromRequestBody(request, &ServiceRequestSaveRequest)
 
 	success, baseErr := r.ServiceRequestService.Save(ServiceRequestId, ServiceRequestSaveRequest)
@@ -441,7 +452,7 @@ func (r *ServiceRequestControllerImp) GetServiceDetailById(writer http.ResponseW
 // @Param reqBody body transactionworkshoppayloads.ServiceDetailSaveRequest true "Service Detail Data"
 // @Success 201 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-request/detail/{service_request_system_number} [post]
+// @Router /v1/service-request/detail [post]
 func (r *ServiceRequestControllerImp) AddServiceDetail(writer http.ResponseWriter, request *http.Request) {
 
 	serviceRequestSystemNumberStr := chi.URLParam(request, "service_request_system_number")
@@ -471,7 +482,7 @@ func (r *ServiceRequestControllerImp) AddServiceDetail(writer http.ResponseWrite
 // @Produce json
 // @Param service_request_system_number path string true "Service Detail System ID"
 // @Param service_request_detail_id path string true "Service Detail ID"
-// @Param reqBody body transactionworkshoppayloads.ServiceDetailSaveRequest true "Service Detail Data"
+// @Param reqBody body transactionworkshoppayloads.ServiceDetailUpdateRequest true "Service Detail Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request/detail/{service_request_system_number}/{service_request_detail_id} [put]
@@ -490,20 +501,25 @@ func (r *ServiceRequestControllerImp) UpdateServiceDetail(writer http.ResponseWr
 		return
 	}
 
-	var serviceDetailSaveRequest transactionworkshoppayloads.ServiceDetailSaveRequest
+	var serviceDetailSaveRequest transactionworkshoppayloads.ServiceDetailUpdateRequest
 	helper.ReadFromRequestBody(request, &serviceDetailSaveRequest)
 
-	success, baseErr := r.ServiceRequestService.UpdateServiceDetail(serviceDetailSystemId, serviceDetailId, serviceDetailSaveRequest)
+	entity, baseErr := r.ServiceRequestService.UpdateServiceDetail(serviceDetailSystemId, serviceDetailId, serviceDetailSaveRequest)
 	if baseErr != nil {
-		if baseErr.StatusCode == http.StatusNotFound {
-			payloads.NewHandleError(writer, "Service detail not found", http.StatusNotFound)
-		} else {
+		switch baseErr.StatusCode {
+		case http.StatusNotFound:
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
+		case http.StatusBadRequest:
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusBadRequest)
+		case http.StatusInternalServerError:
+			exceptions.NewAppException(writer, request, baseErr)
+		default:
 			exceptions.NewAppException(writer, request, baseErr)
 		}
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, success, "Update Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully", http.StatusOK)
 }
 
 // DeleteServiceDetail deletes service detail
@@ -605,4 +621,39 @@ func (r *ServiceRequestControllerImp) DeleteServiceDetailMultiId(writer http.Res
 		payloads.NewHandleError(writer, "Failed to delete service detail", http.StatusInternalServerError)
 	}
 
+}
+
+// NewStatus get dropdown status
+// @Summary Get dropdown status
+// @Description Get dropdown status
+// @Tags Transaction : Workshop Service Request
+// @Accept json
+// @Produce json
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/service-request/dropdown-status [get]
+func (r *ServiceRequestControllerImp) NewStatus(writer http.ResponseWriter, request *http.Request) {
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	statuses, err := r.ServiceRequestService.NewStatus(filters)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of service request statuses", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }
