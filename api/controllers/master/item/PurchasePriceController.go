@@ -8,8 +8,11 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"bytes"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -17,12 +20,18 @@ import (
 type PurchasePriceController interface {
 	GetAllPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	SavePurchasePrice(writer http.ResponseWriter, request *http.Request)
+	UpdatePurchasePrice(writer http.ResponseWriter, request *http.Request)
 	GetPurchasePriceById(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request)
 	GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 	AddPurchasePrice(writer http.ResponseWriter, request *http.Request)
+	UpdatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 	DeletePurchasePrice(writer http.ResponseWriter, request *http.Request)
+
+	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+	//Upload(writer http.ResponseWriter, request *http.Request)
+	//ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchasePriceControllerImpl struct {
@@ -52,10 +61,14 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_purchase_price.purchase_price_id": queryValues.Get("purchase_price_id"),
-		"mtr_purchase_price.supplier_id":       queryValues.Get("supplier_id"),
-		"mtr_purchase_price.currency_id":       queryValues.Get("currency_id"),
-		"mtr_purchase_price.is_active":         queryValues.Get("is_active"),
+		"mtr_purchase_price.purchase_price_id":             queryValues.Get("purchase_price_id"),
+		"mtr_purchase_price.supplier_id":                   queryValues.Get("supplier_id"),
+		"mtr_purchase_price.supplier_code":                 queryValues.Get("supplier_code"),
+		"mtr_purchase_price.supplier_name":                 queryValues.Get("supplier_name"),
+		"mtr_purchase_price.currency_id":                   queryValues.Get("currency_id"),
+		"mtr_purchase_price.currency_code":                 queryValues.Get("currency_code"),
+		"mtr_purchase_price.purchase_price_effective_date": queryValues.Get("purchase_price_effective_date"),
+		"mtr_purchase_price.is_active":                     queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
@@ -78,6 +91,34 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// @Summary Update Purchase Price
+// @Description REST API Purchase Price
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @param reqBody body masteritempayloads.PurchasePriceRequest true "Form Request"
+// @param purchase_price_id path int true "purchase_price_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/{purchase_price_id} [put]
+func (r *PurchasePriceControllerImpl) UpdatePurchasePrice(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest masteritempayloads.PurchasePriceRequest
+	var message = ""
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	PurchasePriceId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id")) // Get Purchase Price ID from URL
+
+	update, err := r.PurchasePriceService.UpdatePurchasePrice(PurchasePriceId, formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	message = "Update Data Successfully!"
+	payloads.NewHandleSuccess(writer, update, message, http.StatusOK)
 }
 
 // @Summary Save Purchase Price
@@ -123,7 +164,16 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 
 	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
 
-	result, err := r.PurchasePriceService.GetPurchasePriceById(PurchasePriceIds)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, err := r.PurchasePriceService.GetPurchasePriceById(PurchasePriceIds, paginate)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -211,28 +261,45 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Param purchase_price_id path int true "purchase_price_id"
 // @Success 200 {object} payloads.ResponsePagination
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/purchase-price/{purchase_price_id}/detail [get]
+// @Router /v1/purchase-price/detail/{purchase_price_detail_id} [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id"))
 
-	// Extract pagination parameters
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.PurchasePriceService.GetPurchasePriceDetailById(PurchasePriceIds, paginate)
+	result, err := r.PurchasePriceService.GetPurchasePriceDetailById(PurchasePriceIds)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	// Construct the response
-	payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+// @Summary Update Purchase Price Detail
+// @Description REST API Purchase Price
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @param reqBody body masteritempayloads.PurchasePriceDetailRequest true "Form Request"
+// @param purchase_price_detail_id path int true "purchase_price_detail_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/detail/{purchase_price_detail_id} [put]
+func (r *PurchasePriceControllerImpl) UpdatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest masteritempayloads.PurchasePriceDetailRequest
+	var message = ""
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	PurchasePriceDetailId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id")) // Get Purchase Price ID from URL
+
+	update, err := r.PurchasePriceService.UpdatePurchasePriceDetail(PurchasePriceDetailId, formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	message = "Update Data Successfully!"
+	payloads.NewHandleSuccess(writer, update, message, http.StatusOK)
 }
 
 // @Summary Save Purchase Price Detail
@@ -269,26 +336,186 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Accept json
 // @Produce json
 // @Tags Master : Purchase Price
-// @Param purchase_price_detail_id path int true "purchase_price_detail_id"
+// @Param purchase_price_id path int true "purchase_price_id"
+// @Param multi_id path string true "Purchase Detail ID"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/purchase-price/all/detail/{purchase_price_detail_id} [get]
+// @Router /v1/purchase-price/detail/{purchase_price_id}/{multi_id} [get]
 func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWriter, request *http.Request) {
 	// Mendapatkan ID item lokasi dari URL
-	PurchasePriceID, err := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id"))
+	PurchasePriceID, err := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
 	if err != nil {
 		// Jika gagal mendapatkan ID dari URL, kirim respons error
 		payloads.NewHandleError(writer, "Invalid Purchase Price ID", http.StatusBadRequest)
 		return
 	}
 
-	// Memanggil service untuk menghapus item lokasi
-	if deleteErr := r.PurchasePriceService.DeletePurchasePrice(PurchasePriceID); deleteErr != nil {
-		// Jika terjadi kesalahan saat menghapus, kirim respons error
-		exceptions.NewNotFoundException(writer, request, deleteErr)
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid service request detail multi ID", http.StatusBadRequest)
 		return
 	}
 
-	// Jika berhasil, kirim respons berhasil
-	payloads.NewHandleSuccess(writer, nil, "Purchase Price deleted successfully", http.StatusOK)
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.PurchasePriceService.DeletePurchasePrice(PurchasePriceID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Purchase detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Purchase Detail deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete Purchase detail", http.StatusInternalServerError)
+	}
+
 }
+
+// DownloadTemplate godoc
+// @Summary Download Template
+// @Description REST API Download Template
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/download-template [get]
+func (r *PurchasePriceControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
+	// Generate the template file
+	f, err := r.PurchasePriceService.GenerateTemplateFile()
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	// Write the Excel file to a buffer
+	var b bytes.Buffer
+	if err := f.Write(&b); err != nil {
+		baseErr := &exceptions.BaseErrorResponse{
+			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+		}
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	// Set headers and send the response
+	downloadName := time.Now().UTC().Format("2006-01-02_15-04-05") + "_Template_Upload_PriceListSupplier.xlsx"
+	writer.Header().Set("Content-Description", "File Transfer")
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+	writer.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	writer.Header().Set("Content-Transfer-Encoding", "binary")
+	writer.Header().Set("Expires", "0")
+	writer.Header().Set("Cache-Control", "must-revalidate")
+	writer.Header().Set("Pragma", "public")
+	writer.Write(b.Bytes())
+}
+
+// // Upload godoc
+// // @Summary Upload
+// // @Description REST API Upload
+// // @Accept json
+// // @Produce json
+// // @Tags Master : Purchase Price
+// // @Param file formData file true "File"
+// // @Success 200 {object} payloads.Response
+// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// // @Router /v1/purchase-price/upload [post]
+// func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request *http.Request) {
+
+// 	// Parse the multipart form
+// 	err := request.ParseMultipartForm(10 << 20) // 10 MB
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+
+// 	// Retrieve the file from form data
+// 	file, handler, err := request.FormFile("file")
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+// 	defer file.Close()
+
+// 	//Check file is XML
+// 	if !strings.Contains(handler.Filename, ".xlsx") {
+// 		exceptions.NewNotFoundException(writer, request, "File must be in xlsx format")
+// 		return
+// 	}
+
+// 	// Read the uploaded file into an excelize.File
+// 	f, err := excelize.OpenReader(file)
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+
+// 	// Get all the rows in the purchase price sheet
+// 	rows, err := f.GetRows("purchase_price")
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+
+// 	previewData, errorPreview := r.PurchasePriceService.PreviewUploadData(rows)
+// 	if errorPreview != nil {
+// 		exceptions.NewNotFoundException(writer, request, errorPreview)
+// 		return
+// 	}
+
+// 	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
+
+// }
+
+// // ProcessDataUpload godoc
+// // @Summary Process Data Upload
+// // @Description REST API Process Data Upload
+// // @Accept json
+// // @Produce json
+// // @Tags Master : Purchase Price
+// // @Param file formData file true "File"
+// // @Param data formData string true "Data"
+// // @Success 200 {object} payloads.Response
+// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// // @Router /v1/purchase-price/process [post]
+// func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
+// 	var formRequest masteritempayloads.UploadRequest
+
+// 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+
+// 	err = validation.ValidationForm(formRequest)
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+
+// 	createfile, err := r.PurchasePriceService.ProcessUploadData(formRequest)
+// 	if err != nil {
+// 		exceptions.NewNotFoundException(writer, request, err)
+// 		return
+// 	}
+
+// 	payloads.NewHandleSuccess(writer, createfile, "Upload Data Successfully!", http.StatusOK)
+// }

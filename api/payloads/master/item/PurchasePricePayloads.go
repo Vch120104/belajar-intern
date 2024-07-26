@@ -1,18 +1,30 @@
 package masteritempayloads
 
-import "time"
+import (
+	masteritementities "after-sales/api/entities/master/item"
+	"time"
+)
+
+type PurchasePriceDetailsResponse struct {
+	Page       int                           `json:"page"`
+	Limit      int                           `json:"limit"`
+	TotalPages int                           `json:"total_pages"`
+	TotalRows  int                           `json:"total_rows"`
+	Data       []PurchasePriceDetailResponse `json:"data"`
+}
 
 type PurchasePriceResponse struct {
-	PurchasePriceId            int       `json:"purchase_price_id"`
-	SupplierId                 int       `json:"supplier_id"`
-	SupplierCode               string    `json:"supplier_code"`
-	SupplierName               string    `json:"supplier_name"`
-	CurrencyId                 int       `json:"currency_id"`
-	CurrencyCode               string    `json:"currency_code"`
-	CurrencyName               string    `json:"currency_name"`
-	PurchasePriceEffectiveDate time.Time `json:"purchase_price_effective_date"`
-	IsActive                   bool      `json:"is_active"`
-	IdentitySysNumber          int       `json:"identity_system_number"`
+	PurchasePriceId            int                          `json:"purchase_price_id"`
+	SupplierId                 int                          `json:"supplier_id"`
+	SupplierCode               string                       `json:"supplier_code"`
+	SupplierName               string                       `json:"supplier_name"`
+	CurrencyId                 int                          `json:"currency_id"`
+	CurrencyCode               string                       `json:"currency_code"`
+	CurrencyName               string                       `json:"currency_name"`
+	PurchasePriceEffectiveDate time.Time                    `json:"purchase_price_effective_date"`
+	IsActive                   bool                         `json:"is_active"`
+	IdentitySysNumber          int                          `json:"identity_system_number"`
+	PurchasePriceDetails       PurchasePriceDetailsResponse `json:"purchase_price_details"`
 }
 
 type PurchasePriceRequest struct {
@@ -43,12 +55,24 @@ type PurchasePriceDetailRequest struct {
 	PurchasePrice         int  `json:"purchase_price" parent_entity:"mtr_purchase_price_detail"`
 }
 
+type PurchasePriceDetailResponses struct {
+	PurchasePriceDetailId int    `json:"purchase_price_detail_id"`
+	PurchasePriceId       int    `json:"purchase_price_id"`
+	ItemId                int    `json:"item_id"`
+	ItemCode              string `json:"item_code"`
+	ItemName              string `json:"item_name"`
+	IsActive              bool   `json:"is_active"`
+	PurchasePrice         int    `json:"purchase_price"`
+}
+
 type PurchasePriceDetailResponse struct {
-	PurchasePriceDetailId int  `json:"purchase_price_detail_id"`
-	PurchasePriceId       int  `json:"purchase_price_id"`
-	ItemId                int  `json:"item_id"`
-	IsActive              bool `json:"is_active"`
-	PurchasePrice         int  `json:"purchase_price"`
+	PurchasePriceDetailId int    `json:"purchase_price_detail_id"`
+	PurchasePriceId       int    `json:"purchase_price_id"`
+	ItemId                int    `json:"item_id"`
+	ItemCode              string `json:"item_code"`
+	ItemName              string `json:"item_name"`
+	IsActive              bool   `json:"is_active"`
+	PurchasePrice         int    `json:"purchase_price"`
 }
 
 type PurchasePriceItemResponse struct {
@@ -68,4 +92,16 @@ type PurchasePriceSubDetailResponse struct {
 	PurchasePriceEffectiveDate time.Time                   `json:"purchase_price_effective_date"`
 	IsActive                   bool                        `json:"is_active"`
 	PurchasePriceDetail        PurchasePriceDetailResponse `json:"purchase_price_detail"`
+}
+
+type PurchasePriceByIdResponse struct {
+	PurchasePriceId int    `json:"purchase_price_id"`
+	ItemId          int    `json:"item_id"`
+	ItemCode        string `json:"item_code"`
+	ItemName        string `json:"item_name"`
+	PurchasePrice   int    `json:"purchase_price"`
+}
+
+type UploadRequest struct {
+	Data []masteritementities.PurchasePrice `json:"data"`
 }

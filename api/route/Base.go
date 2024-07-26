@@ -428,15 +428,22 @@ func PurchasePriceRouter(
 
 	//master
 	router.Get("/", PurchasePriceController.GetAllPurchasePrice)
-	router.Get("/by-id/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
+	router.Get("/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
 	router.Post("/", PurchasePriceController.SavePurchasePrice)
+	router.Put("/{purchase_price_id}", PurchasePriceController.UpdatePurchasePrice)
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
 	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
-	router.Get("/{purchase_price_id}/detail", PurchasePriceController.GetPurchasePriceDetailById)
+	router.Get("/detail/{purchase_price_detail_id}", PurchasePriceController.GetPurchasePriceDetailById)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
-	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
+	router.Put("/detail/{purchase_price_detail_id}", PurchasePriceController.UpdatePurchasePriceDetail)
+	router.Delete("/detail/{multi_id}", PurchasePriceController.DeletePurchasePrice)
+
+	//upload
+	router.Get("/download-template", PurchasePriceController.DownloadTemplate)
+	//router.Post("/upload", PurchasePriceController.Upload)
+	//router.Post("/process", PurchasePriceController.ProcessDataUpload)
 
 	return router
 }
@@ -638,7 +645,7 @@ func WarehouseMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												router.Use(middlewares.MetricsMiddleware)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
