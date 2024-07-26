@@ -1,5 +1,9 @@
 package masterwarehousepayloads
 
+import (
+	"encoding/json"
+)
+
 type SaveWarehouseLocationRequest struct {
 	IsActive                      *bool   `json:"is_active"`
 	CompanyId                     int     `json:"company_id"`
@@ -9,6 +13,17 @@ type SaveWarehouseLocationRequest struct {
 	WarehouseLocationDetailName   string  `json:"warehouse_location_detail_name"`
 	WarehouseLocationPickSequence int     `json:"warehouse_location_pick_sequence"`
 	WarehouseLocationCapacityInM3 float64 `json:"warehouse_location_capacity_in_m3"`
+}
+
+type WarehouseLocationTemplate struct {
+	WarehouseCode         string `json:"warehouse_code"`
+	WarehouseLocationCode string `json:"warehouse_location_code"`
+	WarehouseLocationName string `json:"warehouse_location_name"`
+	Validation            string `json:"vaidation"`
+}
+
+type ProcessWarehouseLocationTemplate struct {
+	Data []WarehouseLocationTemplate `json:"data"`
 }
 
 type UpdateWarehouseLocationRequest struct {
@@ -51,6 +66,30 @@ type GetWarehouseLocationResponse struct {
 	WarehouseLocationDetailName   string  `json:"warehouse_location_detail_name"`
 	WarehouseLocationPickSequence int     `json:"warehouse_location_pick_sequence"`
 	WarehouseLocationCapacityInM3 float64 `json:"warehouse_location_capacity_in_m3"`
+}
+
+type GetWarehouseLocationPreviewResponse struct {
+	WarehouseCode         string `json:"warehouse_code"`
+	WarehouseLocationCode string `json:"warehouse_location_code"`
+	WarehouseLocationName string `json:"warehouse_location_name"`
+	Validation            string `json:"validation"`
+}
+
+func ConvertWarehouseLocationMapToStruct(maps []map[string]any) ([]GetWarehouseLocationResponse, error) {
+	var result []GetWarehouseLocationResponse
+	// Marshal the maps into JSON
+	jsonData, err := json.Marshal(maps)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the JSON into the struct
+	err = json.Unmarshal(jsonData, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 type GetAllWarehouseLocationRequest struct {

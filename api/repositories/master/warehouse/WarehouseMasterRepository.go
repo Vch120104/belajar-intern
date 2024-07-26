@@ -15,6 +15,8 @@ type WarehouseMasterRepository interface {
 	GetAll(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllIsActive(*gorm.DB) ([]masterwarehousepayloads.IsActiveWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetWarehouseMasterByCode(*gorm.DB, string) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	IsWarehouseMasterByCodeAndCompanyIdExist(*gorm.DB, int, string) (bool, *exceptions.BaseErrorResponse)
+	GetWarehouseGroupAndMasterbyCodeandCompanyId(*gorm.DB, int, string) (int, int, *exceptions.BaseErrorResponse)
 	GetWarehouseWithMultiId(*gorm.DB, []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	ChangeStatus(*gorm.DB, int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	DropdownWarehouse(*gorm.DB) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
