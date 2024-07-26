@@ -59,7 +59,6 @@ type GetWarehouseLocationRequest struct {
 type GetWarehouseLocationResponse struct {
 	IsActive                      bool    `json:"is_active"`
 	WarehouseLocationId           int     `json:"warehouse_location_id"`
-	CompanyId                     int     `json:"company_id"`
 	WarehouseGroupId              int     `json:"warehouse_group_id"`
 	WarehouseLocationCode         string  `json:"warehouse_location_code"`
 	WarehouseLocationName         string  `json:"warehouse_location_name"`
