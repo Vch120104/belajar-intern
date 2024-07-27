@@ -16,6 +16,7 @@ require (
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.9.0
 	github.com/swaggo/http-swagger v1.3.4
+	github.com/swaggo/swag v1.16.3
 	github.com/xuri/excelize/v2 v2.8.1
 	golang.org/x/crypto v0.22.0
 	gorm.io/driver/postgres v1.5.3
@@ -46,7 +47,6 @@ require (
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
-	github.com/swaggo/swag v1.16.3 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/xuri/efp v0.0.0-20231025114914-d1ff6096ae53 // indirect

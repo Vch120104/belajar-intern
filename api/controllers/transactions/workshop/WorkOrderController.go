@@ -169,16 +169,14 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 
 	success, err := r.WorkOrderService.New(workOrderRequest)
 	if err != nil {
-
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	// Kirim respons ke klien sesuai hasil penyimpanan
-	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusCreated)
+	if success.WorkOrderSystemNumber > 0 {
+		payloads.NewHandleSuccess(writer, nil, "Work order created successfully", http.StatusCreated)
 	} else {
-		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
 
 }
@@ -803,13 +801,13 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
 
-	err := r.WorkOrderService.UpdateRequest(int(workorderID), int(requestID), groupRequest)
+	update, err := r.WorkOrderService.UpdateRequest(int(workorderID), int(requestID), groupRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Request updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Request updated successfully", http.StatusOK)
 
 }
 
@@ -837,7 +835,7 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 		return
 	}
 
-	if success {
+	if success.WorkOrderRequestId > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Request added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
@@ -1020,14 +1018,14 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 	var vehicleRequest transactionworkshoppayloads.WorkOrderServiceVehicleRequest
 	helper.ReadFromRequestBody(request, &vehicleRequest)
 
-	err := r.WorkOrderService.UpdateVehicleService(int(workorderID), int(vehicleServiceID), vehicleRequest)
+	update, err := r.WorkOrderService.UpdateVehicleService(int(workorderID), int(vehicleServiceID), vehicleRequest)
 
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Vehicle service updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Vehicle service updated successfully", http.StatusOK)
 }
 
 // AddVehicleService adds a new vehicle service to a work order
@@ -1054,7 +1052,7 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 		return
 	}
 
-	if success {
+	if success.WorkOrderServiceVehicleId > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Vehicle service added successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to add vehicle service", http.StatusInternalServerError)
@@ -1477,7 +1475,7 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 		return
 	}
 
-	if update {
+	if update.WorkOrderSystemNumber > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Detail updated successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
@@ -1508,7 +1506,7 @@ func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter,
 		return
 	}
 
-	if success {
+	if success.WorkOrderSystemNumber > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Detail added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
