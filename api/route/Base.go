@@ -1127,6 +1127,24 @@ func ServiceReceiptRouter(
 	return router
 }
 
+func WorkOrderBypassRouter(
+	WorkOrderBypassController transactionworkshopcontroller.WorkOrderBypassController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", WorkOrderBypassController.GetAll)
+	router.Get("/{work_order_system_number}", WorkOrderBypassController.GetById)
+	router.Post("/bypass", WorkOrderBypassController.Bypass)
+
+	return router
+
+}
+
 func SupplySlipRouter(
 	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {

@@ -268,14 +268,21 @@ func StartRouting(db *gorm.DB) {
 	ServiceRequestRepository := transactionworkshoprepositoryimpl.OpenServiceRequestRepositoryImpl()
 	ServiceRequestService := transactionworkshopserviceimpl.OpenServiceRequestServiceImpl(ServiceRequestRepository, db, rdb)
 	ServiceRequestController := transactionworksopcontroller.NewServiceRequestController(ServiceRequestService)
+
 	//vehicle history
 	VehicleHistoryRepository := transactionworkshoprepositoryimpl.NewVehicleHistoryImpl()
 	VehicleHistoryServices := transactionworkshopserviceimpl.NewVehicleHistoryServiceImpl(VehicleHistoryRepository, db, rdb)
 	VehicleHistoryController := transactionworksopcontroller.NewVehicleHistoryController(VehicleHistoryServices)
+
 	//Service Receipt
 	ServiceReceiptRepository := transactionworkshoprepositoryimpl.OpenServiceReceiptRepositoryImpl()
 	ServiceReceiptService := transactionworkshopserviceimpl.OpenServiceReceiptServiceImpl(ServiceReceiptRepository, db, rdb)
 	ServiceReceiptController := transactionworksopcontroller.NewServiceReceiptController(ServiceReceiptService)
+
+	//Work order bypass
+	WorkOrderBypassRepository := transactionworkshoprepositoryimpl.OpenWorkOrderBypassRepositoryImpl()
+	WorkOrderBypassService := transactionworkshopserviceimpl.OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepository, db, rdb)
+	WorkOrderBypassController := transactionworksopcontroller.NewWorkOrderBypassController(WorkOrderBypassService)
 
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -328,6 +335,8 @@ func StartRouting(db *gorm.DB) {
 	ServiceRequestRouter := ServiceRequestRouter(ServiceRequestController)
 	ServiceReceiptRouter := ServiceReceiptRouter(ServiceReceiptController)
 	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
+	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
+
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -395,6 +404,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/service-request", ServiceRequestRouter)
 		r.Mount("/service-receipt", ServiceReceiptRouter)
 		r.Mount("/vehicle-history", VehicleHistoryRouter)
+		r.Mount("/work-order-bypass", WorkOrderBypassRouter)
 
 		/* Transaction Bodyshop */
 
