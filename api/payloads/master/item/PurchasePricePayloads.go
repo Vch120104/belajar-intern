@@ -103,5 +103,5 @@ type PurchasePriceByIdResponse struct {
 }
 
 type UploadRequest struct {
-	Data []masteritementities.PurchasePrice `json:"data"`
+	Data []masteritementities.PurchasePriceDetail `json:"data"`
 }

@@ -24,6 +24,6 @@ type PurchasePriceService interface {
 	DeletePurchasePrice(id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
 
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
-	//UploadPreviewFile(rows [][]string) ([]masteritempayloads.PurchasePriceDetailRequest, *exceptions.BaseErrorResponse)
-	//ProcessDataUpload(req masteritempayloads.UploadRequest) (bool, *exceptions.BaseErrorResponse)
+	PreviewUploadData(rows [][]string) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse)
+	ProcessDataUpload(req masteritempayloads.UploadRequest) (bool, *exceptions.BaseErrorResponse)
 }

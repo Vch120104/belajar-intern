@@ -10,7 +10,10 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 
 	"github.com/labstack/gommon/log"
 	"github.com/redis/go-redis/v9"
@@ -140,18 +143,17 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 
 	// Generate template file
 	f := excelize.NewFile()
-	sheetName := "PurchasePrice"
+	sheetName := "purchase_price"
 	defer func() {
 		if err := f.Close(); err != nil {
-			// Handle file close error, if any
-			log.Error(err)
+			log.Error(err) // Ensure the error is logged if closing fails
 		}
 	}()
 
 	// Create a new sheet.
 	index, err := f.NewSheet(sheetName)
 	if err != nil {
-		return f, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500}
+		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
 	// Set value of a cell.
@@ -190,7 +192,7 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 		},
 	})
 	if err != nil {
-		return f, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500}
+		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
 	// Apply the style to the header cells
@@ -202,19 +204,24 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 	// Fetch data for the template
 	internalFilterCondition := []utils.FilterCondition{} // Adjust as needed
 	paginate := pagination.Pagination{
-		Limit: 3,
+		Limit: 1,
 		Page:  1,
 	}
 
 	// Ensure GetAllPurchasePrice returns *exceptions.BaseErrorResponse
 	results, _, _, errResp := s.PurchasePriceRepo.GetAllPurchasePrice(tx, internalFilterCondition, paginate)
 	if errResp != nil {
-		return f, errResp
+		return nil, errResp
+	}
+
+	// Check if results are nil or empty before proceeding
+	if results == nil {
+		results = []map[string]interface{}{}
 	}
 
 	data, err := ConvertPurchasePriceMapToStruct(results)
 	if err != nil {
-		return f, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500}
+		return nil, &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
 	}
 
 	for i, value := range data {
@@ -231,13 +238,16 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 func ConvertPurchasePriceMapToStruct(maps []map[string]interface{}) ([]masteritempayloads.PurchasePriceByIdResponse, error) {
 	var result []masteritempayloads.PurchasePriceByIdResponse
 
-	// Marshal the maps into JSON
+	// Handle nil or empty maps
+	if maps == nil {
+		return nil, errors.New("maps is nil")
+	}
+
 	jsonData, err := json.Marshal(maps)
 	if err != nil {
 		return nil, err
 	}
 
-	// Unmarshal the JSON into the struct
 	err = json.Unmarshal(jsonData, &result)
 	if err != nil {
 		return nil, err
@@ -246,32 +256,95 @@ func ConvertPurchasePriceMapToStruct(maps []map[string]interface{}) ([]masterite
 	return result, nil
 }
 
-// func (s *PurchasePriceServiceImpl) UploadPreviewFile(rows [][]string) ([]masteritempayloads.PurchasePriceDetailRequest, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+	var results []masteritempayloads.PurchasePriceDetailResponses
 
-// 	// Upload preview file
-// 	var results []masteritempayloads.PurchasePriceDetailRequest
-// 	for i, row := range rows {
-// 		if i == 0 {
-// 			continue
-// 		}
-// 		results = append(results, masteritempayloads.PurchasePriceDetailRequest{
-// 			ItemCode:      row[0],
-// 			ItemName:      row[1],
-// 			PurchasePrice: row[2],
-// 		})
-// 	}
-// 	return results, nil
-// }
+	for i, row := range rows {
+		if i == 0 {
+			// Skip header row
+			continue
+		}
+		if len(row) < 3 {
+			// Validate row length
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid row length",
+			}
+		}
+		purchasePrice, err := strconv.Atoi(row[2])
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Invalid purchase price format",
+			}
+		}
+		results = append(results, masteritempayloads.PurchasePriceDetailResponses{
+			ItemCode:      row[0],
+			ItemName:      row[1],
+			PurchasePrice: purchasePrice,
+		})
+	}
 
-// func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.UploadRequest) (bool, *exceptions.BaseErrorResponse) {
-// 	tx := s.DB.Begin()
+	return results, nil
+}
 
-// 	// Process data upload
-// 	for _, value := range req.Data {
-// 		_, err := s.PurchasePriceRepo.SavePurchasePrice(tx, value)
-// 		if err != nil {
-// 			return false, err
-// 		}
-// 	}
-// 	return true, nil
-// }
+func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.UploadRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	for _, value := range req.Data {
+		// Convert `PurchasePriceDetail` to `PurchasePriceRequest`
+		requestData := convertToPurchasePriceRequest(value)
+
+		// Fetch or create PurchasePrice
+		_, err := s.PurchasePriceRepo.GetPurchasePriceById(tx, requestData.PurchasePriceId, pagination.Pagination{})
+		if err != nil && err.StatusCode != http.StatusNotFound {
+			tx.Rollback()
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error checking purchase price existence",
+				Err:        err.Err,
+			}
+		}
+
+		if err != nil && err.StatusCode == http.StatusNotFound {
+			// Create new PurchasePrice if it does not exist
+			purchasePriceRequest := masteritempayloads.PurchasePriceRequest{
+				PurchasePriceId: requestData.PurchasePriceId,
+				IsActive:        requestData.IsActive,
+			}
+			_, err := s.PurchasePriceRepo.SavePurchasePrice(tx, purchasePriceRequest)
+			if err != nil {
+				tx.Rollback()
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Error creating new purchase price",
+					Err:        err.Err,
+				}
+			}
+		}
+
+		// Add purchase price detail
+		_, err = s.PurchasePriceRepo.AddPurchasePrice(tx, requestData)
+		if err != nil {
+			tx.Rollback()
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error adding purchase price detail",
+				Err:        err.Err,
+			}
+		}
+	}
+
+	tx.Commit()
+	return true, nil
+}
+
+func convertToPurchasePriceRequest(detail masteritementities.PurchasePriceDetail) masteritempayloads.PurchasePriceDetailRequest {
+	return masteritempayloads.PurchasePriceDetailRequest{
+		PurchasePriceDetailId: detail.PurchasePriceDetailId,
+		PurchasePriceId:       detail.PurchasePriceId,
+		ItemId:                detail.ItemId,
+		PurchasePrice:         detail.PurchasePrice,
+		IsActive:              detail.IsActive,
+	}
+}

@@ -442,8 +442,8 @@ func PurchasePriceRouter(
 
 	//upload
 	router.Get("/download-template", PurchasePriceController.DownloadTemplate)
-	//router.Post("/upload", PurchasePriceController.Upload)
-	//router.Post("/process", PurchasePriceController.ProcessDataUpload)
+	router.Post("/upload", PurchasePriceController.Upload)
+	router.Post("/process", PurchasePriceController.ProcessDataUpload)
 
 	return router
 }

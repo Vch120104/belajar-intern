@@ -1,6 +1,7 @@
 package masteritemcontroller
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xuri/excelize/v2"
 )
 
 type PurchasePriceController interface {
@@ -30,8 +32,8 @@ type PurchasePriceController interface {
 	DeletePurchasePrice(writer http.ResponseWriter, request *http.Request)
 
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
-	//Upload(writer http.ResponseWriter, request *http.Request)
-	//ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
+	Upload(writer http.ResponseWriter, request *http.Request)
+	ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchasePriceControllerImpl struct {
@@ -400,13 +402,14 @@ func (r *PurchasePriceControllerImpl) DownloadTemplate(writer http.ResponseWrite
 	// Generate the template file
 	f, err := r.PurchasePriceService.GenerateTemplateFile()
 	if err != nil {
+		// Return error response if template generation fails
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	// Write the Excel file to a buffer
 	var b bytes.Buffer
 	if err := f.Write(&b); err != nil {
+		// Create BaseErrorResponse for file write error
 		baseErr := &exceptions.BaseErrorResponse{
 			Err:        err,
 			StatusCode: http.StatusInternalServerError,
@@ -415,7 +418,6 @@ func (r *PurchasePriceControllerImpl) DownloadTemplate(writer http.ResponseWrite
 		return
 	}
 
-	// Set headers and send the response
 	downloadName := time.Now().UTC().Format("2006-01-02_15-04-05") + "_Template_Upload_PriceListSupplier.xlsx"
 	writer.Header().Set("Content-Description", "File Transfer")
 	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
@@ -424,98 +426,178 @@ func (r *PurchasePriceControllerImpl) DownloadTemplate(writer http.ResponseWrite
 	writer.Header().Set("Expires", "0")
 	writer.Header().Set("Cache-Control", "must-revalidate")
 	writer.Header().Set("Pragma", "public")
-	writer.Write(b.Bytes())
+
+	// Write the buffer to the HTTP response
+	_, writeErr := writer.Write(b.Bytes())
+	if writeErr != nil {
+		// Create BaseErrorResponse for writer.Write error
+		baseErr := &exceptions.BaseErrorResponse{
+			Err:        writeErr,
+			StatusCode: http.StatusInternalServerError,
+		}
+		// Use a generic error handling function to respond with the error
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
 }
 
-// // Upload godoc
-// // @Summary Upload
-// // @Description REST API Upload
-// // @Accept json
-// // @Produce json
-// // @Tags Master : Purchase Price
-// // @Param file formData file true "File"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// // @Router /v1/purchase-price/upload [post]
-// func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request *http.Request) {
+// Upload godoc
+// @Summary Upload
+// @Description REST API Upload
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param file formData file true "File"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/upload [post]
+func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request *http.Request) {
+	// Parse the multipart form with a 10 MB limit
+	if err := request.ParseMultipartForm(10 << 20); err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error parsing multipart form",
+			Err:        err,
+		})
+		return
+	}
 
-// 	// Parse the multipart form
-// 	err := request.ParseMultipartForm(10 << 20) // 10 MB
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
+	// Retrieve the file from the form data
+	file, handler, err := request.FormFile("file")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error retrieving file from form data",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
 
-// 	// Retrieve the file from form data
-// 	file, handler, err := request.FormFile("file")
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
-// 	defer file.Close()
+	// Check that the file is an xlsx format
+	if !strings.HasSuffix(handler.Filename, ".xlsx") {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "File must be in xlsx format",
+		})
+		return
+	}
 
-// 	//Check file is XML
-// 	if !strings.Contains(handler.Filename, ".xlsx") {
-// 		exceptions.NewNotFoundException(writer, request, "File must be in xlsx format")
-// 		return
-// 	}
+	// Read the uploaded file into an excelize.File
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
 
-// 	// Read the uploaded file into an excelize.File
-// 	f, err := excelize.OpenReader(file)
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
+	rows, err := f.GetRows("purchase_price")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error retrieving rows from sheet",
+			Err:        err,
+		})
+		return
+	}
 
-// 	// Get all the rows in the purchase price sheet
-// 	rows, err := f.GetRows("purchase_price")
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
+	previewData, errResponse := r.PurchasePriceService.PreviewUploadData(rows)
+	if errResponse != nil {
+		exceptions.NewNotFoundException(writer, request, errResponse)
+		return
+	}
 
-// 	previewData, errorPreview := r.PurchasePriceService.PreviewUploadData(rows)
-// 	if errorPreview != nil {
-// 		exceptions.NewNotFoundException(writer, request, errorPreview)
-// 		return
-// 	}
+	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
+}
 
-// 	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
+// ProcessDataUpload godoc
+// @Summary Process Data Upload
+// @Description REST API Process Data Upload
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param file formData file true "File"
+// @Param data formData string true "Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/process [post]
 
-// }
+func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
+	file, _, err := request.FormFile("file")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error retrieving file from form data",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
 
-// // ProcessDataUpload godoc
-// // @Summary Process Data Upload
-// // @Description REST API Process Data Upload
-// // @Accept json
-// // @Produce json
-// // @Tags Master : Purchase Price
-// // @Param file formData file true "File"
-// // @Param data formData string true "Data"
-// // @Success 200 {object} payloads.Response
-// // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// // @Router /v1/purchase-price/process [post]
-// func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
-// 	var formRequest masteritempayloads.UploadRequest
+	// Read and process the file
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
 
-// 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	rows, err := f.GetRows("purchase_price")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error retrieving rows from sheet",
+			Err:        err,
+		})
+		return
+	}
 
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
+	data, errResp := r.PurchasePriceService.PreviewUploadData(rows)
+	if errResp != nil {
+		exceptions.NewNotFoundException(writer, request, errResp)
+		return
+	}
 
-// 	err = validation.ValidationForm(formRequest)
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
+	// Create the upload request
+	formRequest := masteritempayloads.UploadRequest{
+		Data: convertToPurchasePriceDetails(data), // Convert preview data to required type
+	}
 
-// 	createfile, err := r.PurchasePriceService.ProcessUploadData(formRequest)
-// 	if err != nil {
-// 		exceptions.NewNotFoundException(writer, request, err)
-// 		return
-// 	}
+	// Process the upload
+	success, errResp := r.PurchasePriceService.ProcessDataUpload(formRequest)
+	if errResp != nil {
+		exceptions.NewNotFoundException(writer, request, errResp)
+		return
+	}
 
-// 	payloads.NewHandleSuccess(writer, createfile, "Upload Data Successfully!", http.StatusOK)
-// }
+	if !success {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to process data",
+		})
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, nil, "Upload Data Successfully!", http.StatusOK)
+}
+
+// Convert preview data to PurchasePriceDetail type
+func convertToPurchasePriceDetails(previewData []masteritempayloads.PurchasePriceDetailResponses) []masteritementities.PurchasePriceDetail {
+	var details []masteritementities.PurchasePriceDetail
+	for _, item := range previewData {
+		details = append(details, masteritementities.PurchasePriceDetail{
+			PurchasePriceDetailId: item.PurchasePriceDetailId,
+			PurchasePriceId:       item.PurchasePriceId,
+			ItemId:                item.ItemId,
+			PurchasePrice:         item.PurchasePrice,
+			IsActive:              item.IsActive,
+		})
+	}
+	return details
+}
