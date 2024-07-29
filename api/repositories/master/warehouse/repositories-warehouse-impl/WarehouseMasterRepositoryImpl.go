@@ -484,58 +484,58 @@ func (r *WarehouseMasterImpl) ChangeStatus(tx *gorm.DB, warehouseId int) (master
 	return warehouseMasterPayloads, nil
 }
 
-func (r *WarehouseMasterImpl)GetAuthorizeUser(tx *gorm.DB,pages pagination.Pagination, id int)(pagination.Pagination,*exceptions.BaseErrorResponse){
+func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities []masterwarehouseentities.WarehouseAuthorize
 	var employee []masterwarehousepayloads.AuthorizedUser
-	query:= tx.Model(&entities).Where("warehouse_id = ?",id)
+	query := tx.Model(&entities).Where("warehouse_id = ?", id)
 	err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&entities).Error
-	if err != nil{
-		return pages,&exceptions.BaseErrorResponse{
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: err,
+			Err:        err,
 		}
 	}
-	ErrUrlEmployee := utils.Get(config.EnvConfigs.GeneralServiceUrl+"user-details?page=0&limit=1000000",&employee,nil)
-	if ErrUrlEmployee != nil{
-		return pages,&exceptions.BaseErrorResponse{
+	ErrUrlEmployee := utils.Get(config.EnvConfigs.GeneralServiceUrl+"user-details?page=0&limit=1000000", &employee, nil)
+	if ErrUrlEmployee != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: ErrUrlEmployee,
+			Err:        ErrUrlEmployee,
 		}
 	}
-	joineddata1 := utils.DataFrameInnerJoin(entities,employee,"EmployeeId")
-	pages.Rows= joineddata1
-	return pages,nil
+	joineddata1 := utils.DataFrameInnerJoin(entities, employee, "EmployeeId")
+	pages.Rows = joineddata1
+	return pages, nil
 }
 
-func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB,req masterwarehousepayloads.WarehouseAuthorize)(masterwarehousepayloads.WarehouseAuthorize,*exceptions.BaseErrorResponse){
+func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB, req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {
 	var entities = masterwarehouseentities.WarehouseAuthorize{
-		EmployeeId: req.EmployeeId,
-		CompanyId: req.CompanyId,
+		EmployeeId:  req.EmployeeId,
+		CompanyId:   req.CompanyId,
 		WarehouseId: req.WarehouseId,
-	}	
+	}
 	err := tx.Save(&entities).Error
 
-	if err != nil{
-		return masterwarehousepayloads.WarehouseAuthorize{},&exceptions.BaseErrorResponse{
+	if err != nil {
+		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: err,
+			Err:        err,
 		}
 	}
-	return req,nil
+	return req, nil
 }
 
-func (r *WarehouseMasterImpl)DeleteMultiIdAuthorizeUser(tx *gorm.DB, id string)(bool,*exceptions.BaseErrorResponse){
+func (r *WarehouseMasterImpl) DeleteMultiIdAuthorizeUser(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	var authorizeuser masterwarehouseentities.WarehouseAuthorize
-	ids:= strings.Split(id,",")
+	ids := strings.Split(id, ",")
 
-	for _,loop := range ids{
+	for _, loop := range ids {
 		err := tx.Model(&authorizeuser).Where("warehouse_authorize_id = ?", loop).Delete(&authorizeuser).Error
-		if err != nil{
+		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Err: err,
+				Err:        err,
 			}
 		}
 	}
-	return true,nil
+	return true, nil
 }

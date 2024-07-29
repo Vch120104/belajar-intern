@@ -147,6 +147,9 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
+	fmt.Println("internal filter", internalServiceFilter)
+	fmt.Println("external filter", externalServiceFilter)
+
 	//define base model
 	baseModelQuery := tx.Model(&entities)
 	//apply where query
@@ -154,7 +157,7 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	//apply pagination and execute
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
-	fmt.Print(responses)
+	fmt.Println("responses ", responses)
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -170,7 +173,13 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
-	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
+	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group"
+
+	if groupName != "" {
+		groupServiceUrl += "?item_group_name=" + groupName
+	}
+
+	fmt.Print("URL ", groupServiceUrl)
 
 	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
 
@@ -183,7 +192,11 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
+	fmt.Println("Joined Data ", joinedData)
+
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
+
+	fmt.Print("URL ", lineTypeUrl)
 
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 
@@ -195,6 +208,8 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 	}
 
 	joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
+
+	fmt.Println("join data sec ", joinedDataSecond)
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSecond, &pages)
 
@@ -221,7 +236,6 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
-
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -229,6 +243,8 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
+	fmt.Println(lineTypeResponse)
+	fmt.Println(response)
 	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
 
 	value, ok := joinedData[0]["LineTypeName_1"]
