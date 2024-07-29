@@ -11,7 +11,7 @@ import (
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
 	// transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
-	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
 
@@ -139,6 +139,15 @@ func Migrate() {
 	// &mastercampaignmasterentities.CampaignMaster{},
 	// &mastercampaignmasterentities.CampaignMasterDetailItem{},
 	// &mastercampaignmasterentities.CampaignMasterOperationDetail{},
+
+	&transactionworkshopentities.BookingEstimation{},
+	&transactionworkshopentities.BookingEstimationAllocation{},
+	&transactionworkshopentities.BookingEstimationRequest{},
+	&transactionworkshopentities.BookingEstimationServiceReminder{},
+	&transactionworkshopentities.BookingEstimationServiceDiscount{},
+	&transactionworkshopentities.BookingEstimationItemDetail{},
+	&transactionworkshopentities.BookingEstimationOperationDetail{},
+	&transactionworkshopentities.BookingEstimationRequest{},
 
 	// &transactionsparepartpentities.SupplySlip{},
 	// &transactionsparepartpentities.SupplySlipDetail{},
