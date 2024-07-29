@@ -161,7 +161,8 @@ func Migrate() {
 		&transactionworkshopentities.BookingEstimationRequest{},
 		&transactionworkshopentities.BookingEstimationServiceReminder{},
 		&transactionworkshopentities.BookingEstimationServiceDiscount{},
-		&transactionworkshopentities.BookingEstimationDetail{},
+		&transactionworkshopentities.BookingEstimationItemDetail{},
+		&transactionworkshopentities.BookingEstimationOperationDetail{},
 	)
 
 	if err != nil {
