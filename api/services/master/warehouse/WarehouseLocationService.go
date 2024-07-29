@@ -12,7 +12,7 @@ import (
 
 type WarehouseLocationService interface {
 	Save(masterwarehouseentities.WarehouseLocation) (bool, *exceptions.BaseErrorResponse)
-	GetById(int) (masterwarehousepayloads.GetWarehouseLocationResponse, *exceptions.BaseErrorResponse)
+	GetById(int) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse)
 	GetAll([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ChangeStatus(int) (bool, *exceptions.BaseErrorResponse)
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
