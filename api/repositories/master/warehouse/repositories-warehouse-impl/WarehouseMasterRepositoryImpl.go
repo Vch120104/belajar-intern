@@ -30,7 +30,7 @@ func OpenWarehouseMasterImpl() masterwarehouserepository.WarehouseMasterReposito
 func (r *WarehouseMasterImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(tx *gorm.DB, companyId int, warehouseCode string) (int, int, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
 
-	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyID: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
+	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyId: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
 		return entities.WarehouseGroupId, entities.WarehouseId, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -44,7 +44,7 @@ func (r *WarehouseMasterImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(tx *g
 func (r *WarehouseMasterImpl) IsWarehouseMasterByCodeAndCompanyIdExist(tx *gorm.DB, companyId int, warehouseCode string) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
 
-	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyID: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
+	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyId: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
