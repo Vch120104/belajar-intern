@@ -5,6 +5,7 @@ import masteritementities "after-sales/api/entities/master/item"
 const TableNameWarehouseMaster = "mtr_warehouse_master"
 
 type WarehouseMaster struct {
+	CompanyId                     int    `gorm:"column:company_id;size:30;not null" json:"company_id"`
 	IsActive                      *bool  `gorm:"column:is_active;default:true;not null" json:"is_active"`
 	WarehouseCostingType          string `gorm:"column:warehouse_costing_type;not null;type:varchar(50)" json:"warehouse_costing_type"`
 	WarehouseKaroseri             *bool  `gorm:"column:warehouse_karoseri;default:false;not null" json:"warehouse_karoseri"`
@@ -13,7 +14,6 @@ type WarehouseMaster struct {
 	WarehouseGroupId              int    `gorm:"column:warehouse_group_id;size:30" json:"warehouse_group_id"`
 	WarehouseContact              string `gorm:"column:warehouse_contact;not null;type:varchar(100)" json:"warehouse_contact"`
 	WarehouseCode                 string `gorm:"column:warehouse_code;not null;type:varchar(5);unique" json:"warehouse_code"`
-	CompanyID                     int    `gorm:"column:company_id;size:30;not null" json:"company_id"`
 	WarehouseId                   int    `gorm:"column:warehouse_id;size:30;not null;primaryKey" json:"warehouse_id"`
 	AddressId                     int    `gorm:"column:address_id;size:30;not null" json:"address_id"`
 	BrandId                       int    `gorm:"column:brand_id;size:30;not null" json:"brand_id"`
@@ -24,8 +24,11 @@ type WarehouseMaster struct {
 	WarehouseName                 string `gorm:"column:warehouse_name;not null;type:varchar(100)" json:"warehouse_name"`
 	WarehouseDetailName           string `gorm:"column:warehouse_detail_name;not null;type:varchar(100)" json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `gorm:"column:warehouse_transit_default;not null;type:varchar(5)" json:"warehouse_transit_default"`
+	WarehousePhoneNumber          string `gorm:"collumn:warehouse_phone_number;not null;size:30;default:-" json:"warehouse_phone_number"`
+	WarehouseFaxNumber            string `gorm:"collumn:warehouse_fax_number;size:30" json:"warehouse_fax_number"`
 	WarehouseGroup                *WarehouseGroup
 	ItemLocation                  masteritementities.ItemLocation `gorm:"foreignkey:warehouse_id;references:warehouse_id"`
+	WarehouseAuthorized           WarehouseAuthorize              `gorm:"foreignkey:warehouse_id;references:warehouse_id"`
 }
 
 func (*WarehouseMaster) TableName() string {

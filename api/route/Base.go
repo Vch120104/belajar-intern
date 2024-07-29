@@ -649,6 +649,9 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
+	router.Get("/authorize-user/{warehouse_id}", warehouseMasterController.GetAuthorizeUser)
+	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
+	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	return router
 }
 
@@ -663,7 +666,7 @@ func WarehouseLocationRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseLocationController.GetAll)
-	router.Get("/by-id/{warehouse_location_id}", warehouseLocationController.GetById)
+	router.Get("/{warehouse_location_id}", warehouseLocationController.GetById)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
 	router.Get("/download-template", warehouseLocationController.DownloadTemplate)

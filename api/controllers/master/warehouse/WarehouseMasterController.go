@@ -32,6 +32,9 @@ type WarehouseMasterController interface {
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	DropdownbyGroupId(writer http.ResponseWriter, request *http.Request)
+	GetAuthorizeUser(writer http.ResponseWriter, request *http.Request)
+	PostAuthorizeUser(writer http.ResponseWriter, request *http.Request)
+	DeleteMultiIdAuthorizeUser(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.WarehouseMasterService) WarehouseMasterController {
@@ -258,4 +261,42 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
 
+}
+
+func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWriter, request *http.Request){
+	queryValues := request.URL.Query()
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	warehouseId,_ := strconv.Atoi(chi.URLParam(request,"warehouse_id"))
+	result,err := r.WarehouseMasterService.GetAuthorizeUser(pagination,warehouseId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request){
+	formRequest:= masterwarehousepayloads.WarehouseAuthorize{}
+	helper.ReadFromRequestBody(request, &formRequest)
+	save,err := r.WarehouseMasterService.PostAuthorizeUser(formRequest)
+	if err != nil{
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, save, "data saved succesfully", http.StatusOK)
+}
+
+func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.ResponseWriter, request *http.Request){
+	warehouseAuthorizeId := chi.URLParam(request,"warehouse_authorize_id")
+	delete,err:= r.WarehouseMasterService.DeleteMultiIdAuthorizeUser(warehouseAuthorizeId)
+	if err != nil{
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, delete, "data deleted succesfully", http.StatusOK)
 }
