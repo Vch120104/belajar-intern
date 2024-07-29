@@ -227,7 +227,7 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehouseentities.Ware
 	return save, err
 }
 
-func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseLocationRepo.GetById(tx, warehouseLocationId)
 	defer helper.CommitOrRollback(tx, err)

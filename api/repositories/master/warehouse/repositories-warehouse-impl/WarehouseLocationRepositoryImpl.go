@@ -93,18 +93,28 @@ func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehouseentitie
 	return true, nil
 }
 
-func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (masterwarehousepayloads.GetWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
+func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
 
 	var entities masterwarehouseentities.WarehouseLocation
-	var warehouseLocationResponse masterwarehousepayloads.GetWarehouseLocationResponse
+	var warehouseLocationResponse masterwarehousepayloads.GetAllWarehouseLocationResponse
 
-	rows, err := tx.Model(&entities).
-		Where(masterwarehousepayloads.GetWarehouseLocationResponse{
-			WarehouseLocationId: warehouseLocationId,
-		}).
-		First(&warehouseLocationResponse).
-		// Find(&warehouseMasterResponse).
-		Rows()
+	err := tx.Model(entities).
+		Select(`"mtr_warehouse_location"."is_active",
+		"mtr_warehouse_location"."warehouse_location_id",
+		mtr_warehouse_master.company_id,
+		"mtr_warehouse_location"."warehouse_group_id",
+		"mtr_warehouse_location"."warehouse_location_code",
+		"mtr_warehouse_location"."warehouse_location_name",
+		"mtr_warehouse_location"."warehouse_location_detail_name",
+		"mtr_warehouse_location"."warehouse_location_pick_sequence",
+		"mtr_warehouse_location"."warehouse_location_capacity_in_m3",
+		mtr_warehouse_group.warehouse_group_id,
+        mtr_warehouse_group.warehouse_group_name,
+        mtr_warehouse_group.warehouse_group_code,
+		mtr_warehouse_master.warehouse_code,
+		mtr_warehouse_master.warehouse_name`).
+		Joins("LEFT OUTER JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
+		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").First(&warehouseLocationResponse).Error
 
 	if err != nil {
 		return warehouseLocationResponse, &exceptions.BaseErrorResponse{
@@ -112,8 +122,6 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	return warehouseLocationResponse, nil
 }
@@ -125,7 +133,7 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
 	query := tx.Model(entities).
 		Select(`"mtr_warehouse_location"."is_active",
 		"mtr_warehouse_location"."warehouse_location_id",
-		"mtr_warehouse_master"."company_id",
+		mtr_warehouse_master.company_id,
 		"mtr_warehouse_location"."warehouse_group_id",
 		"mtr_warehouse_location"."warehouse_location_code",
 		"mtr_warehouse_location"."warehouse_location_name",
