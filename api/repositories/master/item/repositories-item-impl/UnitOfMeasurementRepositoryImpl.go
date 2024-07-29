@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -42,7 +43,7 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(tx *gorm.DB, f
 	if len(responses) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errors.New(""),
 		}
 	}
 

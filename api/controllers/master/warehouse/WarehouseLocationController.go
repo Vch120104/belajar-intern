@@ -1,14 +1,22 @@
 package masterwarehousecontroller
 
 import (
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
+	"bytes"
+	"errors"
+	"strings"
+	"time"
 
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
+
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
 
@@ -17,6 +25,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xuri/excelize/v2"
 )
 
 type WarehouseLocationControllerImpl struct {
@@ -28,12 +37,120 @@ type WarehouseLocationController interface {
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
+	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+	UploadPreviewFile(writer http.ResponseWriter, request *http.Request)
+	ProcessWarehouseLocationTemplate(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseLocationController(WarehouseLocationService masterwarehouseservice.WarehouseLocationService) WarehouseLocationController {
 	return &WarehouseLocationControllerImpl{
 		WarehouseLocationService: WarehouseLocationService,
 	}
+}
+
+// ProcessWarehouseLocationTemplate implements WarehouseLocationController.
+func (r *WarehouseLocationControllerImpl) ProcessWarehouseLocationTemplate(writer http.ResponseWriter, request *http.Request) {
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	var formRequest masterwarehousepayloads.ProcessWarehouseLocationTemplate
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.WarehouseLocationService.ProcessWarehouseLocationTemplate(formRequest, companyId)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
+}
+
+// UploadPreviewFile implements WarehouseLocationController.
+func (r *WarehouseLocationControllerImpl) UploadPreviewFile(writer http.ResponseWriter, request *http.Request) {
+
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	// Parse the multipart form
+	err := request.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("file size max 10MB"), StatusCode: 500})
+		return
+	}
+
+	// Retrieve the file from form data
+	file, handler, err := request.FormFile("WarehouseLocation-File")
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("key name must be WarehouseLocation-File"), StatusCode: 401})
+		return
+	}
+	defer file.Close()
+
+	//Check file is XML
+	if !strings.Contains(handler.Header.Get("Content-Type"), "xml") {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("make sure to upload xml file"), StatusCode: 400})
+		return
+	}
+	// Read the uploaded file into an excelize.File
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500})
+		return
+	}
+
+	// Get all the rows in the ItemImportMaster.
+	rows, err := f.GetRows("WarehouseLocation")
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("please check the sheet name must be WarehouseLocation"), StatusCode: 400})
+		return
+	}
+
+	previewData, errorPreview := r.WarehouseLocationService.UploadPreviewFile(rows, companyId)
+
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, previewData, "Get Data Successfully!", http.StatusOK)
+}
+
+// DownloadTemplate implements WarehouseLocationController.
+func (r *WarehouseLocationControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
+	f, errorGenerate := r.WarehouseLocationService.GenerateTemplateFile()
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
+		return
+	}
+
+	// Write the Excel file to a buffer
+	var b bytes.Buffer
+	err := f.Write(&b)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("Template-Upload-WarehouseLocation.xlsx")
+
+	writer.Header().Set("Content-Description", "File Transfer")
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+
+	writer.Write(b.Bytes())
 }
 
 // @Summary Get All Warehouse Location
@@ -118,7 +235,7 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 // @Router /v1/warehouse-location/ [post]
 func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
-	var formRequest masterwarehousepayloads.GetWarehouseLocationResponse
+	var formRequest masterwarehouseentities.WarehouseLocation
 	helper.ReadFromRequestBody(request, &formRequest)
 
 	save, err := r.WarehouseLocationService.Save(formRequest)

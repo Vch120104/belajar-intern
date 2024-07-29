@@ -26,6 +26,35 @@ func OpenWarehouseMasterImpl() masterwarehouserepository.WarehouseMasterReposito
 	return &WarehouseMasterImpl{}
 }
 
+// GetWarehouseGroupbyCodeandCompanyId implements masterwarehouserepository.WarehouseMasterRepository.
+func (r *WarehouseMasterImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(tx *gorm.DB, companyId int, warehouseCode string) (int, int, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseMaster{}
+
+	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyID: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
+		return entities.WarehouseGroupId, entities.WarehouseId, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return entities.WarehouseGroupId, entities.WarehouseId, nil
+}
+
+// IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouserepository.WarehouseMasterRepository.
+func (r *WarehouseMasterImpl) IsWarehouseMasterByCodeAndCompanyIdExist(tx *gorm.DB, companyId int, warehouseCode string) (bool, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseMaster{}
+
+	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyID: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+
+}
+
 // DropdownbyGroupId implements masterwarehouserepository.WarehouseMasterRepository.
 func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 

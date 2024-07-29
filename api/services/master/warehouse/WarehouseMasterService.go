@@ -16,6 +16,8 @@ type WarehouseMasterService interface {
 	DropdownWarehouse() ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse)
+	IsWarehouseMasterByCodeAndCompanyIdExist(int, string) bool
+	GetWarehouseGroupAndMasterbyCodeandCompanyId(int, string) (int, int, *exceptions.BaseErrorResponse)
 	ChangeStatus(int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	DropdownbyGroupId(int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetAuthorizeUser(pages pagination.Pagination,id int)(pagination.Pagination,*exceptions.BaseErrorResponse)

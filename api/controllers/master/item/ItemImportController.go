@@ -240,7 +240,7 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-import/save [post]
 func (r *ItemImportControllerImpl) SaveItemImport(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masteritempayloads.ItemImportUploadRequest
+	var formRequest masteritementities.ItemImport
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {

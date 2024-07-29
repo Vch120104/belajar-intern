@@ -32,6 +32,26 @@ func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.Wareho
 	}
 }
 
+// GetWarehouseGroupbyCodeandCompanyId implements masterwarehouseservice.WarehouseMasterService.
+func (s *WarehouseMasterServiceImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(companyId int, warehouseCode string) (int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	groupId, warehouseId, err := s.warehouseMasterRepo.GetWarehouseGroupAndMasterbyCodeandCompanyId(tx, companyId, warehouseCode)
+
+	defer helper.CommitOrRollback(tx, err)
+
+	return groupId, warehouseId, nil
+}
+
+// IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouseservice.WarehouseMasterService.
+func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(companyId int, warehouseCode string) bool {
+	tx := s.DB.Begin()
+	isExist, err := s.warehouseMasterRepo.IsWarehouseMasterByCodeAndCompanyIdExist(tx, companyId, warehouseCode)
+
+	defer helper.CommitOrRollback(tx, err)
+
+	return isExist
+}
+
 // DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
 func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()

@@ -11,6 +11,6 @@ import (
 
 type ServiceReceiptService interface {
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetById(id int) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse)
+	GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse)
 	Save(id int, request transactionworkshoppayloads.ServiceReceiptSaveDataRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse)
 }

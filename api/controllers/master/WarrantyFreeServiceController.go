@@ -1,6 +1,8 @@
 package mastercontroller
 
 import (
+	masterentities "after-sales/api/entities/master"
+	"after-sales/api/exceptions"
 	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -18,6 +20,7 @@ type WarrantyFreeServiceController interface {
 	GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request)
 	SaveWarrantyFreeService(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusWarrantyFreeService(writer http.ResponseWriter, request *http.Request)
+	UpdateWarrantyFreeService(writer http.ResponseWriter, request *http.Request)
 }
 type WarrantyFreeServiceControllerImpl struct {
 	WarrantyFreeServiceService masterservice.WarrantyFreeServiceService
@@ -141,11 +144,24 @@ func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writ
 
 	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
 
-	response, err := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(int(warrantyFreeServiceId))
+	response, err := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(warrantyFreeServiceId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *WarrantyFreeServiceControllerImpl) UpdateWarrantyFreeService(writer http.ResponseWriter, request *http.Request){
+	warranty_free_services_id,_ := strconv.Atoi(chi.URLParam(request,"warranty_free_services_id"))
+	var formRequest masterentities.WarrantyFreeService
+	helper.ReadFromRequestBody(request, &formRequest)
+	result, err := r.WarrantyFreeServiceService.UpdateWarrantyFreeService(formRequest, warranty_free_services_id)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
