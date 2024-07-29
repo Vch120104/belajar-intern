@@ -73,11 +73,12 @@ func Migrate() {
 	// &masteroperationentities.OperationEntries{},
 	// &masteroperationentities.OperationCode{},
 
-	// &masterwarehouseentities.WarehouseGroup{},
-	// &masterwarehouseentities.WarehouseMaster{},
-	// &masterwarehouseentities.WarehouseLocation{},
-	// &masterwarehouseentities.WarehouseLocationDefinition{},
-	// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+		// &masterwarehouseentities.WarehouseGroup{},
+		// &masterwarehouseentities.WarehouseMaster{},
+		// &masterwarehouseentities.WarehouseLocation{},
+		// &masterwarehouseentities.WarehouseLocationDefinition{},
+		// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+		// &masterwarehouseentities.WarehouseAuthorize{},
 
 	// &masteritementities.LandedCost{},
 	// &masteritementities.PurchasePrice{},
