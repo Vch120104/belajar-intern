@@ -978,7 +978,20 @@ func BookingEstimationRouter(
 	router.Post("/submit", BookingEstimationController.Submit)
 	router.Delete("/{id}", BookingEstimationController.Void)
 	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
-
+	router.Post("/request", BookingEstimationController.SaveBookEstimReq)
+	router.Put("/request/{booking_estimation_request_id}",BookingEstimationController.UpdateBookEstimReq)
+	router.Get("/request/{booking_estimation_request_id}",BookingEstimationController.GetByIdBookEstimReq)
+	router.Get("/request/all",BookingEstimationController.GetAllBookEstimReq)
+	router.Post("/reminder-service",BookingEstimationController.SaveBookEstimReminderServ)
+	router.Post("/booking-estimation",BookingEstimationController.SaveDetailBookEstim)
+	router.Post("/package/{booking_estimation_id}/{package_id}",BookingEstimationController.AddPackage)
+	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}",BookingEstimationController.AddContractService)
+	router.Put("/input-discount/{booking_estimation_id}",BookingEstimationController.InputDiscount)
+	router.Post("/field-action/{booking_stimation_id}/{field_action_id}",BookingEstimationController.AddFieldAction)
+	router.Get("/detail/{booking_estimation_id}/{line_type_id}",BookingEstimationController.GetByIdBookEstimDetail)
+	router.Post("/calculation/{booking_estimation_id}",BookingEstimationController.PostBookingEstimationCalculation)
+	router.Put("/calculation/{booking_estimation_id/{line_type_id}}",BookingEstimationController.PutBookingEstimationCalculation)
+	router.Post("/book-estim-pdi/{pdi_system_number}",BookingEstimationController.SaveBookingEstimationFromPDI)
 	return router
 }
 

@@ -30,6 +30,20 @@ type BookingEstimationController interface {
 	Submit(writer http.ResponseWriter, request *http.Request)
 	Void(writer http.ResponseWriter, request *http.Request)
 	CloseOrder(writer http.ResponseWriter, request *http.Request)
+	SaveBookEstimReq(writer http.ResponseWriter, request *http.Request)
+	UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request)
+	GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request)
+	GetAllBookEstimReq(writer http.ResponseWriter,request *http.Request)
+	SaveBookEstimReminderServ(writer http.ResponseWriter, request *http.Request)
+	SaveDetailBookEstim(writer http.ResponseWriter, request *http.Request)
+	AddPackage(writer http.ResponseWriter, request *http.Request)
+	AddContractService(writer http.ResponseWriter, request *http.Request)
+	InputDiscount(writer http.ResponseWriter, request *http.Request)
+	AddFieldAction(writer http.ResponseWriter, request *http.Request)
+	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
+	PostBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
+	SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request)
+	PutBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewBookingEstimationController(BookingEstimationService transactionworkshopservice.BookingEstimationService) BookingEstimationController {
@@ -227,8 +241,8 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReq(writer http.ResponseW
 func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request){
 	var formrequest transactionworkshoppayloads.BookEstimRemarkRequest
 	helper.ReadFromRequestBody(request,&formrequest)
-	BookingEstimationId,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_id"))
-	update,err := r.bookingEstimationService.UpdateBookEstimReq(formrequest,BookingEstimationId)
+	BookingEstimationRequestId,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_request_id"))
+	update,err := r.bookingEstimationService.UpdateBookEstimReq(formrequest,BookingEstimationRequestId)
 	if err != nil{
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -237,8 +251,8 @@ func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.Respons
 }
 
 func (r *BookingEstimationControllerImpl)GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request){
-	bookingestimationid,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_id"))
-	get,err:= r.bookingEstimationService.GetByIdBookEstimReq(bookingestimationid)
+	bookingestimationrequestid,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_request_id"))
+	get,err:= r.bookingEstimationService.GetByIdBookEstimReq(bookingestimationrequestid)
 	if err != nil{
 		exceptions.NewNotFoundException(writer, request, err)
 		return
