@@ -162,6 +162,15 @@ func Migrate() {
 	// &transactionworkshopentities.WorkOrderHistoryDetail{},
 	// &transactionworkshopentities.WorkOrderService{},
 	// &transactionworkshopentities.WorkOrderServiceVehicle{},
+	// &transactionworkshopentities.ServiceRequest{},
+	// &transactionworkshopentities.ServiceRequestDetail{},
+	// &transactionworkshopentities.ServiceRequestMasterStatus{},
+	// &transactionworkshopentities.BookingEstimation{},
+	// &transactionworkshopentities.BookingEstimationAllocation{},
+	// &transactionworkshopentities.BookingEstimationRequest{},
+	// &transactionworkshopentities.BookingEstimationServiceReminder{},
+	// &transactionworkshopentities.BookingEstimationServiceDiscount{},
+	// &transactionworkshopentities.BookingEstimationDetail{},
 	)
 
 	if err != nil {

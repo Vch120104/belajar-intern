@@ -197,15 +197,15 @@ func StartRouting(db *gorm.DB) {
 	WarehouseLocationDefinitionService := masterwarehouseserviceimpl.OpenWarehouseLocationDefinitionService(WarehouseLocationDefinitionRepository, db, rdb)
 	WarehouseLocationDefinitionController := masterwarehousecontroller.NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService)
 
-	// Warehouse Location
-	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
-	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db, rdb)
-	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
-
 	// Warehouse Master
 	warehouseMasterRepository := masterwarehouserepositoryimpl.OpenWarehouseMasterImpl()
 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db, rdb)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
+
+	// Warehouse Location
+	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
+	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, warehouseMasterService, db, rdb)
+	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
 
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()

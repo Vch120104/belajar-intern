@@ -65,7 +65,7 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
-	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
 
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -220,7 +220,7 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
-	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/line-type/" + strconv.Itoa(response.LineTypeId)
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
 
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
