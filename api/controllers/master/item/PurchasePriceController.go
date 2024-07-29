@@ -1,7 +1,6 @@
 package masteritemcontroller
 
 import (
-	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
@@ -10,12 +9,17 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/labstack/gommon/log"
 	"github.com/xuri/excelize/v2"
 )
 
@@ -34,6 +38,7 @@ type PurchasePriceController interface {
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 	Upload(writer http.ResponseWriter, request *http.Request)
 	ProcessDataUpload(writer http.ResponseWriter, request *http.Request)
+	Download(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchasePriceControllerImpl struct {
@@ -504,7 +509,17 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 		return
 	}
 
-	previewData, errResponse := r.PurchasePriceService.PreviewUploadData(rows)
+	purchasePriceID, err := strconv.Atoi(request.FormValue("purchase_price_id"))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error parsing purchase_price_id",
+			Err:        err,
+		})
+		return
+	}
+
+	previewData, errResponse := r.PurchasePriceService.PreviewUploadData(rows, purchasePriceID)
 	if errResponse != nil {
 		exceptions.NewNotFoundException(writer, request, errResponse)
 		return
@@ -524,7 +539,6 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/process [post]
-
 func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWriter, request *http.Request) {
 	file, _, err := request.FormFile("file")
 	if err != nil {
@@ -558,46 +572,122 @@ func (r *PurchasePriceControllerImpl) ProcessDataUpload(writer http.ResponseWrit
 		return
 	}
 
-	data, errResp := r.PurchasePriceService.PreviewUploadData(rows)
-	if errResp != nil {
-		exceptions.NewNotFoundException(writer, request, errResp)
+	purchasePriceID, err := strconv.Atoi(request.FormValue("purchase_price_id"))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Error parsing purchase_price_id",
+			Err:        err,
+		})
 		return
 	}
 
-	// Create the upload request
+	data, errResp := r.PurchasePriceService.PreviewUploadData(rows, purchasePriceID)
+	if errResp != nil {
+		// Set status code from errResp
+		writer.WriteHeader(errResp.StatusCode)
+		json.NewEncoder(writer).Encode(errResp)
+		return
+	}
+
+	// Directly use the data if it matches the expected type
 	formRequest := masteritempayloads.UploadRequest{
-		Data: convertToPurchasePriceDetails(data), // Convert preview data to required type
+		Data: data, // Use data of type []masteritempayloads.PurchasePriceDetailResponses
 	}
 
 	// Process the upload
 	success, errResp := r.PurchasePriceService.ProcessDataUpload(formRequest)
 	if errResp != nil {
-		exceptions.NewNotFoundException(writer, request, errResp)
+		// Set status code from errResp
+		writer.WriteHeader(errResp.StatusCode)
+		json.NewEncoder(writer).Encode(errResp)
 		return
 	}
 
 	if !success {
-		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+		// Set status code for internal server error
+		writer.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(writer).Encode(&exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to process data",
 		})
 		return
 	}
 
+	writer.WriteHeader(http.StatusOK)
 	payloads.NewHandleSuccess(writer, nil, "Upload Data Successfully!", http.StatusOK)
 }
 
-// Convert preview data to PurchasePriceDetail type
-func convertToPurchasePriceDetails(previewData []masteritempayloads.PurchasePriceDetailResponses) []masteritementities.PurchasePriceDetail {
-	var details []masteritementities.PurchasePriceDetail
-	for _, item := range previewData {
-		details = append(details, masteritementities.PurchasePriceDetail{
-			PurchasePriceDetailId: item.PurchasePriceDetailId,
-			PurchasePriceId:       item.PurchasePriceId,
-			ItemId:                item.ItemId,
-			PurchasePrice:         item.PurchasePrice,
-			IsActive:              item.IsActive,
+// Download godoc
+// @Summary Download
+// @Description REST API Download
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/download [get]
+func (r *PurchasePriceControllerImpl) Download(writer http.ResponseWriter, request *http.Request) {
+	// Extract purchase_price_id from query parameters
+	purchasePriceIDStr := request.URL.Query().Get("purchase_price_id")
+	if purchasePriceIDStr == "" {
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Missing purchase_price_id parameter",
 		})
+		return
 	}
-	return details
+
+	purchasePriceID, err := strconv.Atoi(purchasePriceIDStr)
+	if err != nil {
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid purchase_price_id parameter",
+			Err:        err,
+		})
+		return
+	}
+
+	// Fetch the data and save to file
+	filePath, errResp := r.PurchasePriceService.DownloadData(purchasePriceID)
+	if errResp != nil {
+		exceptions.NewAppException(writer, request, errResp)
+		return
+	}
+
+	// Open the file to be served
+	file, err := os.Open(filePath)
+	if err != nil {
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+		})
+		return
+	}
+	defer file.Close() // Ensure the file is closed
+
+	// Set headers
+	writer.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(filePath))
+	writer.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	writer.Header().Set("Content-Transfer-Encoding", "binary")
+	writer.Header().Set("Expires", "0")
+	writer.Header().Set("Cache-Control", "must-revalidate")
+	writer.Header().Set("Pragma", "public")
+
+	// Write the file content to the response
+	if _, err := io.Copy(writer, file); err != nil {
+		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+		})
+		return
+	}
+
+	// Optionally, delete the temporary file after it's been served
+	go func() {
+		time.Sleep(1 * time.Second) // Give a small delay to ensure the file is released
+		if err := os.Remove(filePath); err != nil {
+			log.Errorf("Error deleting file: %v", err)
+		}
+	}()
 }
