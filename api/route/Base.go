@@ -649,6 +649,9 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
+	router.Get("/authorize-user/{warehouse_id}", warehouseMasterController.GetAuthorizeUser)
+	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
+	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	return router
 }
 

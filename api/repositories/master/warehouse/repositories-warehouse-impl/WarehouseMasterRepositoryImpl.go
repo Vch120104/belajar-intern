@@ -10,6 +10,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	// masterwarehousegroupservice "after-sales/api/services/master/warehouse"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -49,9 +50,10 @@ func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId in
 	return warehouseMasterResponse, nil
 }
 
-func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.GetWarehouseMasterResponse) (masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
 
 	var warehouseMaster = masterwarehouseentities.WarehouseMaster{
+		CompanyId:                     request.CompanyId,
 		IsActive:                      utils.BoolPtr(request.IsActive),
 		WarehouseId:                   request.WarehouseId,
 		WarehouseCostingType:          request.WarehouseCostingType,
@@ -70,6 +72,8 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 		WarehouseDetailName:           request.WarehouseDetailName,
 		WarehouseTransitDefault:       request.WarehouseTransitDefault,
 		WarehouseGroupId:              request.WarehouseGroupId,
+		WarehousePhoneNumber:          request.WarehousePhoneNumber,
+		WarehouseFaxNumber:            request.WarehouseFaxNumber,
 	}
 
 	rows, err := tx.Model(&warehouseMaster).
@@ -77,7 +81,7 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 		Rows()
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masterwarehouseentities.WarehouseMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -85,7 +89,7 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 
 	defer rows.Close()
 
-	return true, nil
+	return warehouseMaster, nil
 }
 
 func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
@@ -318,95 +322,96 @@ func (r *WarehouseMasterImpl) GetAllIsActive(tx *gorm.DB) ([]masterwarehousepayl
 	return response, nil
 }
 
-func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-
-	entities := masterwarehouseentities.WarehouseMaster{}
-	warehouseMasterResponse := masterwarehousepayloads.GetWarehouseMasterResponse{}
+func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+	var entities masterwarehouseentities.WarehouseMaster
+	var warehouseMasterResponse masterwarehousepayloads.GetAllWarehouseMasterResponse
 	var getAddressResponse masterwarehousepayloads.AddressResponse
 	var getBrandResponse masterwarehousepayloads.BrandResponse
 	var getSupplierResponse masterwarehousepayloads.SupplierResponse
-	// var getUserResponse masterwarehousepayloads.UserResponse
-	// var getJobPositionResponse masterwarehousepayloads.JobPositionResponse
+	var getUserResponse masterwarehousepayloads.UserResponse
+	var getJobPositionResponse masterwarehousepayloads.JobPositionResponse
+	var getVillageResponse masterwarehousepayloads.VillageResponse
 
-	rows, err := tx.Model(&entities).
-		Where(masterwarehousepayloads.GetWarehouseMasterResponse{
-			WarehouseCode: Code,
-		}).
-		First(&warehouseMasterResponse).
-		Rows()
+	err := tx.Model(&entities).
+		Where("warehouse_code = ?", Code).
+		First(&warehouseMasterResponse).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	defer rows.Close()
-
-	// AddressId                     int    `json:"address_id"` http://10.1.32.26:8000/general-service/api/general/address/
-	errUrlAddress := utils.Get(config.EnvConfigs.GeneralServiceUrl+"address/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getAddressResponse, nil)
-
-	if errUrlAddress != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	// Fetch address details
+	AddressUrl := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(warehouseMasterResponse.AddressId)
+	if err := utils.Get(AddressUrl, &getAddressResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching address details",
 			Err:        err,
 		}
 	}
 
-	firstJoin := utils.DataFrameLeftJoin([]masterwarehousepayloads.GetWarehouseMasterResponse{warehouseMasterResponse}, []masterwarehousepayloads.AddressResponse{getAddressResponse}, "AddressId")
-
-	// BrandId                       int    `json:"brand_id"` http://10.1.32.26:8000/sales-service/api/sales/unit-brand/
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(warehouseMasterResponse.AddressId), &getBrandResponse, nil)
-
-	if errUrlBrand != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	// Fetch brand details
+	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(warehouseMasterResponse.BrandId)
+	if err := utils.Get(BrandUrl, &getBrandResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching brand details",
 			Err:        err,
 		}
 	}
 
-	secondJoin := utils.DataFrameLeftJoin(firstJoin, []masterwarehousepayloads.BrandResponse{getBrandResponse}, "BrandId")
-
-	// SupplierId                    int    `json:"supplier_id"` http://10.1.32.26:8000/general-service/api/general/supplier-master/
-	errUrlSupplier := utils.Get(config.EnvConfigs.GeneralServiceUrl+"supplier-master/"+strconv.Itoa(warehouseMasterResponse.SupplierId), &getSupplierResponse, nil)
-
-	if errUrlSupplier != nil {
-		return nil, &exceptions.BaseErrorResponse{
+	// Fetch supplier details
+	SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
+	if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching supplier details",
 			Err:        err,
 		}
 	}
 
-	thirdJoin := utils.DataFrameLeftJoin(secondJoin, []masterwarehousepayloads.SupplierResponse{getSupplierResponse}, "SupplierId")
+	// fetch village details
+	VillageUrl := config.EnvConfigs.GeneralServiceUrl + "village/" + strconv.Itoa(getAddressResponse.VillageId)
+	if err := utils.Get(VillageUrl, &getVillageResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching village details",
+			Err:        err,
+		}
+	}
 
-	// ON DEVELOPMENT
+	// Fetch user details
+	UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(warehouseMasterResponse.UserId)
+	if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching user details",
+			Err:        err,
+		}
+	}
 
-	// UserId                        int    `json:"user_id"` http://10.1.32.26:8000/general-service/api/general/user-details/
-	// errUrUser := utils.Get(config.EnvConfigs.GeneralServiceUrl+"user-details/"+strconv.Itoa(warehouseMasterResponse.UserId), &getUserResponse, nil)
+	// Fetch job position details
+	JobPositionUrl := config.EnvConfigs.GeneralServiceUrl + "/job-position/" + strconv.Itoa(getUserResponse.JobPositionId)
+	if err := utils.Get(JobPositionUrl, &getJobPositionResponse, nil); err != nil {
+		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching job position details",
+			Err:        err,
+		}
+	}
 
-	// if errUrUser != nil {
-	// 	return nil, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
+	// Populate the nested fields
+	warehouseMasterResponse.AddressDetails = getAddressResponse
+	warehouseMasterResponse.BrandDetails = getBrandResponse
+	warehouseMasterResponse.SupplierDetails = getSupplierResponse
+	warehouseMasterResponse.UserDetails = getUserResponse
+	warehouseMasterResponse.JobPositionDetails = getJobPositionResponse
+	warehouseMasterResponse.VillageDetails = getVillageResponse
 
-	// fourthJoin := utils.DataFrameLeftJoin(thirdJoin, []masterwarehousepayloads.UserResponse{getUserResponse}, "UserId")
-
-	// JobPositionId int http://10.1.32.26:8000/general-service/api/general/job-position/
-	// errUrlJobPosition := utils.Get(config.EnvConfigs.GeneralServiceUrl+"job-position/"+strconv.Itoa(getUserResponse.JobPositionId), &getJobPositionResponse, nil)
-
-	// if errUrlJobPosition != nil {
-	// 	return nil, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
-
-	// finalJoin := utils.DataFrameLeftJoin(thirdJoin, []masterwarehousepayloads.JobPositionResponse{getJobPositionResponse}, "JobPositionId")
-
-	return thirdJoin, nil
+	return warehouseMasterResponse, nil
 }
 
 func (r *WarehouseMasterImpl) ChangeStatus(tx *gorm.DB, warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
@@ -448,4 +453,60 @@ func (r *WarehouseMasterImpl) ChangeStatus(tx *gorm.DB, warehouseId int) (master
 	defer rows.Close()
 
 	return warehouseMasterPayloads, nil
+}
+
+func (r *WarehouseMasterImpl)GetAuthorizeUser(tx *gorm.DB,pages pagination.Pagination, id int)(pagination.Pagination,*exceptions.BaseErrorResponse){
+	var entities []masterwarehouseentities.WarehouseAuthorize
+	var employee []masterwarehousepayloads.AuthorizedUser
+	query:= tx.Model(&entities).Where("warehouse_id = ?",id)
+	err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&entities).Error
+	if err != nil{
+		return pages,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err: err,
+		}
+	}
+	ErrUrlEmployee := utils.Get(config.EnvConfigs.GeneralServiceUrl+"user-details?page=0&limit=1000000",&employee,nil)
+	if ErrUrlEmployee != nil{
+		return pages,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err: ErrUrlEmployee,
+		}
+	}
+	joineddata1 := utils.DataFrameInnerJoin(entities,employee,"EmployeeId")
+	pages.Rows= joineddata1
+	return pages,nil
+}
+
+func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB,req masterwarehousepayloads.WarehouseAuthorize)(masterwarehousepayloads.WarehouseAuthorize,*exceptions.BaseErrorResponse){
+	var entities = masterwarehouseentities.WarehouseAuthorize{
+		EmployeeId: req.EmployeeId,
+		CompanyId: req.CompanyId,
+		WarehouseId: req.WarehouseId,
+	}	
+	err := tx.Save(&entities).Error
+
+	if err != nil{
+		return masterwarehousepayloads.WarehouseAuthorize{},&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err: err,
+		}
+	}
+	return req,nil
+}
+
+func (r *WarehouseMasterImpl)DeleteMultiIdAuthorizeUser(tx *gorm.DB, id string)(bool,*exceptions.BaseErrorResponse){
+	var authorizeuser masterwarehouseentities.WarehouseAuthorize
+	ids:= strings.Split(id,",")
+
+	for _,loop := range ids{
+		err := tx.Model(&authorizeuser).Where("warehouse_authorize_id = ?", loop).Delete(&authorizeuser).Error
+		if err != nil{
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err: err,
+			}
+		}
+	}
+	return true,nil
 }

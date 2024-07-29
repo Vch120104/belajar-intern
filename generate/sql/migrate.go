@@ -7,7 +7,7 @@ import (
 	// masteritementities "after-sales/api/entities/master/item"
 
 	// masteroperationentities "after-sales/api/entities/master/operation"
-	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
 	// transactionsparepartpentities "after-sales/api/entities/transaction/sparepart"
 	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
@@ -73,10 +73,11 @@ func Migrate() {
 		// &masteroperationentities.OperationCode{},
 
 		// &masterwarehouseentities.WarehouseGroup{},
-		// &masterwarehouseentities.WarehouseMaster{},
+		&masterwarehouseentities.WarehouseMaster{},
 		// &masterwarehouseentities.WarehouseLocation{},
 		// &masterwarehouseentities.WarehouseLocationDefinition{},
 		// &masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+		&masterwarehouseentities.WarehouseAuthorize{},
 
 		// &masteritementities.LandedCost{},
 		// &masteritementities.PurchasePrice{},
