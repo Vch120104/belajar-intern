@@ -994,6 +994,7 @@ func BookingEstimationRouter(
 	router.Post("/calculation/{booking_estimation_id}",BookingEstimationController.PostBookingEstimationCalculation)
 	router.Put("/calculation/{booking_estimation_id/{line_type_id}}",BookingEstimationController.PutBookingEstimationCalculation)
 	router.Post("/book-estim-pdi/{pdi_system_number}",BookingEstimationController.SaveBookingEstimationFromPDI)
+	router.Post("/book-estim-service-request/{service_request_system_number}",BookingEstimationController.SaveBookingEstimationFromServiceRequest)
 	return router
 }
 
