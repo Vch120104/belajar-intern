@@ -14,8 +14,8 @@ type PriceListRepository interface {
 	SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse)
 	GetPriceListById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
-	DeactivatePriceList (tx *gorm.DB, id string)(bool, *exceptions.BaseErrorResponse)
-	ActivatePriceList (tx *gorm.DB, id string)(bool, *exceptions.BaseErrorResponse)
-	DeletePriceList (tx*gorm.DB, id string)(bool,*exceptions.BaseErrorResponse)
-	GetAllPriceListNew(tx *gorm.DB, filtercondition []utils.FilterCondition,pages pagination.Pagination)([]map[string]interface{},int,int,*exceptions.BaseErrorResponse)
+	DeactivatePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	ActivatePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	DeletePriceList(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	GetAllPriceListNew(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 }

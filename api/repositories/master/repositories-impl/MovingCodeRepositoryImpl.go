@@ -155,7 +155,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 		//CHECK COMPANY
 		companyResponses := []masterpayloads.CompanyResponse{}
 
-		companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "/company-id/" + strconv.Itoa(req.CompanyId)
+		companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(req.CompanyId)
 
 		if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -167,7 +167,7 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 		if len(companyResponses) == 0 {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+				Err:        errors.New("failed to find company"),
 			}
 		}
 		//
@@ -175,8 +175,8 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 
 		if err := tx.Model(&model).Where(masterentities.MovingCode{CompanyId: req.CompanyId}).Scan(&responses).Error; err != nil {
 			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
 			}
 		}
 
