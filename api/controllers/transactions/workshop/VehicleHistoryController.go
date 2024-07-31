@@ -43,9 +43,9 @@ func NewVehicleHistoryController(VehicleHIstoryService transactionworkshopservic
 func (r *VehicleHistoryControllerImpl) GetAllFieldVehicleHistory(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"vehicle_model": queryValues.Get("vehicle_model"),
-		"chassis_no":    queryValues.Get("chassis_no"),
-		"brand_id":      queryValues.Get("brand_id"),
+		"vehicle_model":          queryValues.Get("vehicle_model"),
+		"vehicle_chassis_number": queryValues.Get("chassis_no"),
+		"brand_id":               queryValues.Get("brand_id"),
 		//"approval_status_id":           queryValues.Get("approval_status_id"),
 	}
 

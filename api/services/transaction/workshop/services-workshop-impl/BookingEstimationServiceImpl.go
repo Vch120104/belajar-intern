@@ -240,3 +240,13 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromPDI( id int) (tr
 	}
 	return result,nil
 }
+
+func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromServiceRequest(id int)(transactionworkshopentities.BookingEstimation,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	result,err := s.structBookingEstimationRepo.SaveBookingEstimationFromServiceRequest(tx,id)
+	defer helper.CommitOrRollback(tx,err)
+	if err != nil{
+		return transactionworkshopentities.BookingEstimation{},err
+	}
+	return result,nil
+}

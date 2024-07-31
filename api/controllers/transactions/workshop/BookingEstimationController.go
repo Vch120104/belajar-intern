@@ -44,6 +44,7 @@ type BookingEstimationController interface {
 	PostBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request)
 	PutBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
+	SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewBookingEstimationController(BookingEstimationService transactionworkshopservice.BookingEstimationService) BookingEstimationController {
@@ -387,5 +388,15 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromPDI(writer ht
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, save, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
+}
+
+func (r *BookingEstimationControllerImpl)SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request){
+	serviceRequestSystemNumber,_ := strconv.Atoi(chi.URLParam(request,"service_request_system_number"))
+	save,err := r.bookingEstimationService.SaveBookingEstimationFromServiceRequest(serviceRequestSystemNumber)
+	if err != nil{
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
 }
