@@ -43,7 +43,7 @@ func TestSaveBookingEstimation(t *testing.T) {
 		BookingEstimationBatchDate:     time.Now(),
 		BookingEstimationVehicleNumber: "TEST1",
 		AgreementNumberBr:              "TEST1",
-		IsUnregistered:                 "T",
+		IsUnregistered:                 true,
 		ContactPersonName:              "TEST1",
 		ContactPersonPhone:             "TEST1",
 		ContactPersonMobile:            "TEST1",

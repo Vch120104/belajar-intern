@@ -361,7 +361,6 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 
 	queryParams := map[string]string{
 		"item_id":        queryValues.Get("item_id"),
-		"item_detail_id": queryValues.Get("item_detail_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -498,7 +497,7 @@ func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter,
 
 func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request) {
 	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
-	Id, _ := strconv.Atoi(chi.URLParam(request, "brand_id"))
+	Id := chi.URLParam(request, "brand_id")
 	result, err := r.itemservice.AddItemDetailByBrand(Id, ItemId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
