@@ -12,8 +12,8 @@ type PriceListService interface {
 	GetPriceListById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	SavePriceList(request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse)
-	GetAllPriceListNew (filterCondition []utils.FilterCondition, pages pagination.Pagination)([]map[string]interface{},int,int,*exceptions.BaseErrorResponse)
-	DeactivatePriceList(id string)(bool,*exceptions.BaseErrorResponse)
-	ActivatePriceList(id string)(bool,*exceptions.BaseErrorResponse)
-	DeletePriceList(id string)(bool,*exceptions.BaseErrorResponse)
+	GetAllPriceListNew(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	DeactivatePriceList(id string) (bool, *exceptions.BaseErrorResponse)
+	ActivatePriceList(id string) (bool, *exceptions.BaseErrorResponse)
+	DeletePriceList(id string) (bool, *exceptions.BaseErrorResponse)
 }
