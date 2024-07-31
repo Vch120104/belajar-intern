@@ -89,6 +89,7 @@ func (s *WarehouseLocationServiceImpl) UploadPreviewFile(rows [][]string, compan
 			if warehouseCodeExist := s.warehouseMasterService.IsWarehouseMasterByCodeAndCompanyIdExist(companyId, value[0]); warehouseCodeExist {
 				tx := s.DB.Begin()
 
+				//Check warehouslocation exist
 				isExist, err := s.warehouseLocationRepo.CheckIfLocationExist(tx, value[0], value[1], value[2])
 
 				defer helper.CommitOrRollback(tx, err)
