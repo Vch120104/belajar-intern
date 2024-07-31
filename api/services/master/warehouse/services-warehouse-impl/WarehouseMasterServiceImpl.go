@@ -45,9 +45,15 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseGroupAndMasterbyCodeandCompanyI
 // IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouseservice.WarehouseMasterService.
 func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(companyId int, warehouseCode string) bool {
 	tx := s.DB.Begin()
+
+	var err *exceptions.BaseErrorResponse
+	defer helper.CommitOrRollback(tx, err)
+
 	isExist, err := s.warehouseMasterRepo.IsWarehouseMasterByCodeAndCompanyIdExist(tx, companyId, warehouseCode)
 
-	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return isExist
+	}
 
 	return isExist
 }
@@ -154,32 +160,32 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwareho
 	return change_status, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(pages pagination.Pagination,id int)(pagination.Pagination,*exceptions.BaseErrorResponse){
+func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,err := s.warehouseMasterRepo.GetAuthorizeUser(tx,pages,id)
-	defer helper.CommitOrRollback(tx,err)
-	if err != nil{
-		return pages,err
+	result, err := s.warehouseMasterRepo.GetAuthorizeUser(tx, pages, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return pages, err
 	}
-	return result,nil
+	return result, nil
 }
 
-func (s *WarehouseMasterServiceImpl) PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize)(masterwarehousepayloads.WarehouseAuthorize,*exceptions.BaseErrorResponse){
+func (s *WarehouseMasterServiceImpl) PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,err := s.warehouseMasterRepo.PostAuthorizeUser(tx,req)
-	defer helper.CommitOrRollback(tx,err)
-	if err != nil{
-		return masterwarehousepayloads.WarehouseAuthorize{},err
+	result, err := s.warehouseMasterRepo.PostAuthorizeUser(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masterwarehousepayloads.WarehouseAuthorize{}, err
 	}
-	return result,err
+	return result, err
 }
 
-func (s *WarehouseMasterServiceImpl) DeleteMultiIdAuthorizeUser(id string)(bool,*exceptions.BaseErrorResponse){
-	tx :=s.DB.Begin()
-	result,err := s.warehouseMasterRepo.DeleteMultiIdAuthorizeUser(tx,id)
-	defer helper.CommitOrRollback(tx,err)
-	if err != nil{
-		return false,err
+func (s *WarehouseMasterServiceImpl) DeleteMultiIdAuthorizeUser(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.warehouseMasterRepo.DeleteMultiIdAuthorizeUser(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
 }

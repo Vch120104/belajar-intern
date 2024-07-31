@@ -464,7 +464,7 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transaction
 	if err != nil{
 		return 0,&exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: errors.New("Discount can'r be created"),
+			Err: err,
 		}
 	}
 	return bookestimpayloads[0].BatchSystemNumber, nil
@@ -1021,15 +1021,16 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx*gorm.DB,id i
 	return id,nil
 }
 
-func (r *BookingEstimationImpl) PutBookingEstimationCalculation (tx *gorm.DB, id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads)(int,*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads) (int, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.BookingEstimationServiceDiscount
 	var columnName string
 	var value int
-	err := tx.Model(&entity).Where("batch_system_number =?",id).Scan(&entity).Error
-	if err != nil{
-		return 0,&exceptions.BaseErrorResponse{
+
+	err := tx.Model(&entity).Where("batch_system_number = ?", id).Scan(&entity).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -1050,15 +1051,19 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation (tx *gorm.DB, id
 		columnName = "total_price_material"
 		value = int(req.TotalPriceMaterial)
 	case 4:
-		columnName = "total_price_oil"																																																										
+		columnName = "total_price_oil"
 		value = int(req.TotalPriceOil)
 	case 9:
 		columnName = "total_sublet"
 		value = int(req.TotalSublet)
+	default:
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("invalid line type id"),
+		}
+	}
 
-
-
-	err := tx.Model(&transactionworkshopentities.BookingEstimationOperationDetail{}).
+	err = tx.Model(&transactionworkshopentities.BookingEstimationOperationDetail{}).
 		Where("batch_system_number = ? ", id).
 		Update(columnName, value).
 		Update("total", gorm.Expr("total_price_operation + total_price_package + total_price_accessories + total_price_part + total_price_material + total_price_oil + total_sublet")).
@@ -1070,10 +1075,9 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation (tx *gorm.DB, id
 		}
 	}
 
-	}
-	
 	return id, nil
 }
+
 
 func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
 	var pdipayloads transactionunitpayloads.PdiRequest
@@ -1132,4 +1136,56 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 		}
 	}
 	return entities, nil
+}
+
+func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm.DB, id int)(transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse){
+	var servicerequestentity transactionworkshoppayloads.ServiceRequestResponse
+	var vehiclepayload masterpayloads.VehicleChassisResponse
+
+	err := tx.Table("trx_service_request").Select("trx_service_request.service_profit_center_id, trx_service_request.company_id,trx_service_request.vehicle_id, trx_service_request.service_request_document_number,trx_contract_service.contract_service_system_number").
+	Joins("Join trx_contract_service on trx_service_request.vehicle_id==trx_contract_service.vehicle_id").Where("trx_service_request.service_request_system_number = ?", id).Scan(&servicerequestentity).Error
+
+	if err != nil{
+		return transactionworkshopentities.BookingEstimation{},&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err: err,
+		}
+	}
+	errVehicleUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(servicerequestentity.VehicleId),vehiclepayload,nil)
+	joineddata1 := utils.DataFrameInnerJoin([]transactionworkshoppayloads.ServiceRequestResponse{servicerequestentity},[]masterpayloads.VehicleChassisResponse{vehiclepayload},"VehicleId")
+	if errVehicleUrl != nil{
+		return transactionworkshopentities.BookingEstimation{},&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err: errVehicleUrl,
+		}
+	}
+	entities := transactionworkshopentities.BookingEstimation{
+		BrandId:               joineddata1[0]["BrandId"].(int),
+		ModelId:               joineddata1[0]["ModelId"].(int),
+		VariantId:             joineddata1[0]["VariantID"].(int),
+		VehicleId:             joineddata1[0]["VehicleID"].(int),
+		ContractSystemNumber:  joineddata1[0]["ContractSystemNumber"].(int),
+		CompanyId:             joineddata1[0]["CompanyID"].(int),
+		BookingSystemNumber: 0,
+		ServiceRequestSystemNumber: 0,
+		EstimationSystemNumber: 0,
+		AgreementNumberBr: "",
+		AgreementId: 0,
+		ContactPersonName: "",
+		ContactPersonPhone: "",
+		ContactPersonVia: "",
+		ContactPersonMobile: "",
+		InsurancePolicyNo: "",
+		InsuranceExpiredDate: time.Time{},
+		InsuranceClaimNo: "",
+		InsurancePic: "",
+	}
+	err2 := tx.Save(&entities).Error
+	if err2 != nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err: err2,
+		}
+	}
+	return entities,nil
 }

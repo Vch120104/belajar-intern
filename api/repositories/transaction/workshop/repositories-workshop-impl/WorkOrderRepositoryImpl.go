@@ -245,7 +245,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
 
 	// uspg_wtWorkOrder0_Insert
 	// IF @Option = 0
@@ -282,7 +282,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 
 	// check company session
 	if request.CompanyId == 0 {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("parameter has lost session, please refresh the data"),
 		}
@@ -361,7 +361,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 
 	err := tx.Create(&entitieswo).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -387,7 +387,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 			if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Select("batch_system_number").
 				Where("booking_system_number = ?", bookingSystemNo).
 				Scan(&batchSystemNoResult).Error; err != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
@@ -399,7 +399,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
 			Where("booking_system_number = ?", bookingSystemNo).
 			Update("booking_status_id", bookingStatusClosed).Error; err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -416,7 +416,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 			if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Select("batch_system_number").
 				Where("estimation_system_number = ?", estimationSystemNo).
 				Scan(&batchSystemNoResult).Error; err != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
@@ -428,7 +428,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
 			Where("estimation_system_number = ?", estimationSystemNo).
 			Update("estimation_status_id", bookingStatusClosed).Error; err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -440,7 +440,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
 			Where("batch_system_number = ?", batchSystemNo).
 			Update("batch_status_id", bookingStatusClosed).Error; err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -449,13 +449,13 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 
 	// Handle error after create
 	if tx.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        tx.Error,
 		}
 	}
 
-	return true, nil
+	return entitieswo, nil
 }
 
 func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagination.Pagination) (transactionworkshoppayloads.WorkOrderResponseDetail, *exceptions.BaseErrorResponse) {
@@ -985,45 +985,53 @@ func (r *WorkOrderRepositoryImpl) GetRequestById(tx *gorm.DB, id int, IdWorkorde
 	return payload, nil
 }
 
-func (r *WorkOrderRepositoryImpl) UpdateRequest(tx *gorm.DB, id int, IdWorkorder int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
+func (r *WorkOrderRepositoryImpl) UpdateRequest(tx *gorm.DB, id int, IdWorkorder int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
 
 	var entity transactionworkshopentities.WorkOrderService
 	err := tx.Model(&transactionworkshopentities.WorkOrderService{}).
 		Where("work_order_system_number = ? AND work_order_service_id = ?", id, IdWorkorder).
 		First(&entity).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order service request from the database"}
+		return transactionworkshopentities.WorkOrderRequestDescription{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "failed to retrieve work order service request from the database",
+			Err:        errors.New("failed to retrieve work order service request from the database"),
+		}
 	}
 
 	entity.WorkOrderServiceRemark = request.WorkOrderServiceRemark
 
-	err = tx.Save(&entity).Error
+	err = tx.Model(&entity).Updates(map[string]interface{}{
+		"work_order_service_remark": entity.WorkOrderServiceRemark,
+	}).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order service request"}
+		return transactionworkshopentities.WorkOrderRequestDescription{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to update the work order service request",
+			Err:        errors.New("failed to update the work order service request"),
+		}
 	}
 
-	return nil
+	workOrderRequestDescription := transactionworkshopentities.WorkOrderRequestDescription{}
+
+	return workOrderRequestDescription, nil
 }
 
-func (r *WorkOrderRepositoryImpl) AddRequest(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) AddRequest(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
 
-	CurrentTime := time.Now()
-
-	entities := transactionworkshopentities.WorkOrderService{
-
-		WorkOrderSystemNumber:  request.WorkOrderSystemNumber,
-		WorkOrderServiceRemark: request.WorkOrderServiceRemark,
-		WorkOrderServiceDate:   CurrentTime,
+	entities := transactionworkshopentities.WorkOrderRequestDescription{
+		WorkOrderSystemNumber:   request.WorkOrderSystemNumber,
+		WorkOrderServiceRequest: request.WorkOrderServiceRemark,
 	}
 
 	err := tx.Create(&entities).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.WorkOrderRequestDescription{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	return true, nil
+	return entities, nil
 }
 
 func (r *WorkOrderRepositoryImpl) DeleteRequest(tx *gorm.DB, id int, IdWorkorder int) (bool, *exceptions.BaseErrorResponse) {
@@ -1095,28 +1103,37 @@ func (r *WorkOrderRepositoryImpl) GetVehicleServiceById(tx *gorm.DB, id int, IdW
 	return payload, nil
 }
 
-func (r *WorkOrderRepositoryImpl) UpdateVehicleService(tx *gorm.DB, id int, IdWorkorder int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse {
+func (r *WorkOrderRepositoryImpl) UpdateVehicleService(tx *gorm.DB, id int, IdWorkorder int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
 
 	var entity transactionworkshopentities.WorkOrderServiceVehicle
 	err := tx.Model(&transactionworkshopentities.WorkOrderServiceVehicle{}).
 		Where("work_order_system_number = ? AND work_order_service_id = ?", id, IdWorkorder).
 		First(&entity).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order service request from the database"}
+		return transactionworkshopentities.WorkOrderServiceVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "failed to retrieve work order service vehicle from the database",
+			Err:        errors.New("failed to retrieve work order service vehicle from the database"),
+		}
 	}
 
+	// Update the fields
 	entity.WorkOrderVehicleDate = request.WorkOrderVehicleDate
 	entity.WorkOrderVehicleRemark = request.WorkOrderVehicleRemark
 
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order service request"}
+		return transactionworkshopentities.WorkOrderServiceVehicle{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to save the updated work order service vehicle",
+			Err:        errors.New("failed to save the updated work order service vehicle"),
+		}
 	}
 
-	return nil
+	return entity, nil
 }
 
-func (r *WorkOrderRepositoryImpl) AddVehicleService(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) AddVehicleService(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
 
 	CurrentDate := time.Now()
 
@@ -1129,12 +1146,12 @@ func (r *WorkOrderRepositoryImpl) AddVehicleService(tx *gorm.DB, id int, request
 
 	err := tx.Create(&entities).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.WorkOrderServiceVehicle{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	return true, nil
+	return entities, nil
 }
 
 func (r *WorkOrderRepositoryImpl) DeleteVehicleService(tx *gorm.DB, id int, IdWorkorder int) (bool, *exceptions.BaseErrorResponse) {
@@ -1476,20 +1493,19 @@ func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrder
 	return workOrderDetailResponses, nil
 }
 
-func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
-
-	currentDate := time.Now()
-
+func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	// uspg_wtWorkOrder2_Insert
 	// IF @Option = 0
 	// --USE FOR : * INSERT NEW DATA DETAIL
-	// Retrieve work order type id from work order system number
+
+	currentDate := time.Now()
+
 	var workOrderTypeId int
 	if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
 		Select("work_order_system_number").
 		Where("work_order_system_number = ?", id).
 		Scan(&workOrderTypeId).Error; err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve work order type id",
 			Err:        err,
@@ -1509,12 +1525,10 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Insert detil work order (WO2) berdasarkan tipe work order (Normal, Campaign, Affiliated, Repeat Job):
-
 	var woOprItemLine int
 
 	// cek type work order normal
 	if workOrderTypeId == 1 {
-
 		var estimSystemNo int
 		tx.Model(&transactionworkshopentities.WorkOrder{}).
 			Where("work_order_system_number = ?", id).
@@ -1534,11 +1548,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				Where("BE.ESTIM_SYSTEM_NO = ?", estimSystemNo).
 				Find(&bookingEstim21)
 
-			//currently get value from request but after dev bookestim get value from bookestim
-			//for _, req := range bookingEstim21 {
-
-			entities := transactionworkshopentities.WorkOrderDetail{
-
+			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:              id,
 				LineTypeId:                         request.LineTypeId,
 				TransactionTypeId:                  request.TransactionTypeId,
@@ -1553,20 +1563,18 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				OperationItemPrice:                 request.OperationItemPrice,
 			}
 
-			err := tx.Create(&entities).Error
+			err := tx.Create(&workOrderDetail).Error
 			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
 			}
 
-			// Call CalculateWorkOrderTotal to update the totals in trx_work_order
 			_, calcErr := r.CalculateWorkOrderTotal(tx, id, request.LineTypeId)
 			if calcErr != nil {
-				return false, calcErr
+				return transactionworkshopentities.WorkOrderDetail{}, calcErr
 			}
-			//}
 		}
 
 		//cek type work order campaign
@@ -1583,9 +1591,8 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				First(&campaignExists).Error
 
 			if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-				// Campaign does not exist
 				tx.Rollback()
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusBadRequest,
 					Err:        errors.New("campaign Code is not valid"),
 				}
@@ -1603,11 +1610,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					Where("C1.campaign_id = ?", campaignId).
 					Find(&campaignItems)
 
-				//currently get value from request but after dev campaign get value from campaign
-				//for _, item := range campaignItems {
-
-				entities := transactionworkshopentities.WorkOrderDetail{
-
+				workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 					WorkOrderSystemNumber:              id,
 					LineTypeId:                         request.LineTypeId,
 					TransactionTypeId:                  request.TransactionTypeId,
@@ -1622,20 +1625,18 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					OperationItemPrice:                 request.OperationItemPrice,
 				}
 
-				err := tx.Create(&entities).Error
+				err := tx.Create(&workOrderDetail).Error
 				if err != nil {
-					return false, &exceptions.BaseErrorResponse{
+					return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
 						Err:        err,
 					}
 				}
 
-				// Call CalculateWorkOrderTotal to update the totals in trx_work_order
 				_, calcErr := r.CalculateWorkOrderTotal(tx, id, request.LineTypeId)
 				if calcErr != nil {
-					return false, calcErr
+					return transactionworkshopentities.WorkOrderDetail{}, calcErr
 				}
-				//}
 			}
 		}
 
@@ -1643,7 +1644,6 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	} else if workOrderTypeId == 3 {
 		var pdiSystemNo, pdiLineNo, servReqSysNo int
 
-		//  Retrieve values from wtWorkOrder0
 		result := tx.Model(&transactionworkshopentities.WorkOrder{}).
 			Select("ISNULL(pdi_system_number, 0) AS PDI_SYSTEM_NO, ISNULL(pdi_line_number, 0) AS PDI_LINE_NO, ISNULL(system_request_system_number, 0) AS SERV_REQ_SYS_NO").
 			Where("work_order_system_number = ?", id).
@@ -1659,16 +1659,13 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 
 		if result.Error != nil {
 			tx.Rollback()
-			return false, &exceptions.BaseErrorResponse{
+			return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        result.Error,
 			}
 		}
 
-		// Check conditions
 		if pdiSystemNo != 0 && servReqSysNo == 0 {
-			// Logic for PDI_SYSTEM_NO case
-			// Fetch max WO_OPR_ITEM_LINE
 			var maxWoOprItemLine int
 			tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 				Select("ISNULL(MAX(work_order_operation_item_line), 0)").
@@ -1715,8 +1712,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 			// 		"WO_DATE":     request.WorkOrderDate,
 			// 		"LINE_STATUS": request.PDIStatusWO,
 			// 	})
-			entities := transactionworkshopentities.WorkOrderDetail{
-
+			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:              id,
 				LineTypeId:                         request.LineTypeId,
 				TransactionTypeId:                  request.TransactionTypeId,
@@ -1731,22 +1727,19 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				OperationItemPrice:                 request.OperationItemPrice,
 			}
 
-			err := tx.Create(&entities).Error
+			err := tx.Create(&workOrderDetail).Error
 			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
 			}
 
-			// Call CalculateWorkOrderTotal to update the totals in trx_work_order
 			_, calcErr := r.CalculateWorkOrderTotal(tx, id, request.LineTypeId)
 			if calcErr != nil {
-				return false, calcErr
+				return transactionworkshopentities.WorkOrderDetail{}, calcErr
 			}
-
 		} else if pdiSystemNo == 0 && servReqSysNo != 0 {
-			// Logic for SERV_REQ_SYS_NO case
 			var maxWoOprItemLine int
 			tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 				Select("ISNULL(MAX(work_order_operation_item_line), 0)").
@@ -1798,8 +1791,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 			// 		"WO_DATE":                    request.WorkOrderDate,
 			// 		"LINE_STATUS":                request.PDIStatusWO,
 			// })
-			entities := transactionworkshopentities.WorkOrderDetail{
-
+			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:              id,
 				LineTypeId:                         request.LineTypeId,
 				TransactionTypeId:                  request.TransactionTypeId,
@@ -1814,43 +1806,32 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				OperationItemPrice:                 request.OperationItemPrice,
 			}
 
-			err := tx.Create(&entities).Error
+			err := tx.Create(&workOrderDetail).Error
 			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
 			}
 
-			// Call CalculateWorkOrderTotal to update the totals in trx_work_order
 			_, calcErr := r.CalculateWorkOrderTotal(tx, id, request.LineTypeId)
 			if calcErr != nil {
-				return false, calcErr
-			}
-		}
-
-		if tx.Error != nil {
-			tx.Rollback()
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        tx.Error,
+				return transactionworkshopentities.WorkOrderDetail{}, calcErr
 			}
 		}
 
 		//cek type work order repeat job
 	} else if workOrderTypeId == 4 {
-		var repeatedWoSysNo int
+		var jobId int
 		tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", id).
-			Select("work_order_repeated_system_number").
-			First(&repeatedWoSysNo)
+			Select("job_id").
+			First(&jobId)
 
-		if repeatedWoSysNo > 0 {
-			// Get the maximum WO_OPR_ITEM_LINE from wtWorkOrder2
-			var maxWoOprItemLine int
-			tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-				Select("ISNULL(MAX(work_order_operation_item_line), 0)").
-				Where("work_order_system_number = ?", id).
-				Scan(&maxWoOprItemLine)
+		if jobId != 0 {
+			var job []transactionworkshopentities.WorkOrderDetail
+			tx.Model(&job).Select("ISNULL(MAX(work_order_operation_item_line), 0)").
+				Where("job_id = ?", jobId).
+				First(&woOprItemLine)
 
 			// Insert into wtWorkOrder2
 			// tx.Exec(`
@@ -1873,8 +1854,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 			// 	repeatedWoSysNo, request.LineTypeOpr,
 			// )
 
-			entities := transactionworkshopentities.WorkOrderDetail{
-
+			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:              id,
 				LineTypeId:                         request.LineTypeId,
 				TransactionTypeId:                  request.TransactionTypeId,
@@ -1889,29 +1869,19 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				OperationItemPrice:                 request.OperationItemPrice,
 			}
 
-			err := tx.Create(&entities).Error
+			err := tx.Create(&workOrderDetail).Error
 			if err != nil {
-				return false, &exceptions.BaseErrorResponse{
+				return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Err:        err,
 				}
 			}
 
-			// Call CalculateWorkOrderTotal to update the totals in trx_work_order
 			_, calcErr := r.CalculateWorkOrderTotal(tx, id, request.LineTypeId)
 			if calcErr != nil {
-				return false, calcErr
-			}
-
-			if tx.Error != nil {
-				tx.Rollback()
-				return false, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        tx.Error,
-				}
+				return transactionworkshopentities.WorkOrderDetail{}, calcErr
 			}
 		}
-
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1995,17 +1965,17 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 
 	// Menghitung total diskon dan PPN, serta memperbarui work order
 
-	return true, nil
+	return transactionworkshopentities.WorkOrderDetail{}, nil
 }
 
-func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder int, id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder int, id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 
 	var entity transactionworkshopentities.WorkOrderDetail
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Where("work_order_system_number = ? AND work_order_detail_id = ?", IdWorkorder, id).
 		First(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order detail from the database"}
+		return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order detail from the database"}
 	}
 
 	entity.LineTypeId = request.LineTypeId
@@ -2021,16 +1991,16 @@ func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder
 
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order detail"}
+		return transactionworkshopentities.WorkOrderDetail{}, &exceptions.BaseErrorResponse{Message: "Failed to save the updated work order detail"}
 	}
 
 	// Call CalculateWorkOrderTotal to update the totals in trx_work_order
 	_, calcErr := r.CalculateWorkOrderTotal(tx, id, request.LineTypeId)
 	if calcErr != nil {
-		return false, calcErr
+		return transactionworkshopentities.WorkOrderDetail{}, calcErr
 	}
 
-	return true, nil
+	return entity, nil
 }
 
 func (r *WorkOrderRepositoryImpl) DeleteDetailWorkOrder(tx *gorm.DB, id int, IdWorkorder int) (bool, *exceptions.BaseErrorResponse) {
