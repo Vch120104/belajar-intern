@@ -32,4 +32,5 @@ type BookingEstimationRepository interface {
 	PostBookingEstimationCalculation(tx*gorm.DB,id int)(int,*exceptions.BaseErrorResponse)
 	PutBookingEstimationCalculation (tx *gorm.DB, id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads)(int,*exceptions.BaseErrorResponse)
 	SaveBookingEstimationFromPDI(tx *gorm.DB, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
+	SaveBookingEstimationFromServiceRequest(tx *gorm.DB, id int)(transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
 }

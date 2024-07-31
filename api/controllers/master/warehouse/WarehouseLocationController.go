@@ -86,14 +86,14 @@ func (r *WarehouseLocationControllerImpl) UploadPreviewFile(writer http.Response
 	// Parse the multipart form
 	err := request.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("file size max 10MB"), StatusCode: 500})
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("file size max 10MB"), StatusCode: 400})
 		return
 	}
 
 	// Retrieve the file from form data
 	file, handler, err := request.FormFile("WarehouseLocation-File")
 	if err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("key name must be WarehouseLocation-File"), StatusCode: 401})
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("key name must be WarehouseLocation-File"), StatusCode: 400})
 		return
 	}
 	defer file.Close()
