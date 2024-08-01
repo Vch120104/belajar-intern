@@ -330,7 +330,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 	entities := transactionsparepartentities.PurchaseRequestDetail{}
 	var response []transactionsparepartpayloads.PurchaseRequestDetailRequestPayloads
 	Jointable := db.Table("trx_purchase_request_detail").
-		Select("item_code,item_quantity,item_remark,item_unit_of_measure")
+		Select("item_code,item_quantity,item_remark,item_unit_of_measure,purchase_request_system_number,purchase_request_line_number,reference_system_number,reference_line,purchase_request_system_number_detail")
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
 	err := WhereQuery.Scopes(pagination.Paginate(&entities, &paginationResponses, WhereQuery)).Scan(&response).Error
 	if err != nil {
@@ -369,16 +369,20 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 		UomRate = QtyRes * *UomItemResponse.SourceConvertion
 		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
 		result := transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
-			ItemCode:              res.ItemCode,
-			ItemName:              ItemResponse.ItemName,
-			ItemQuantity:          res.ItemQuantity,
-			ItemUnitOfMeasure:     res.ItemUnitOfMeasure,
-			ItemUnitOfMeasureRate: UomRate,
-			ItemRemark:            res.ItemRemark,
+			PurchaseRequestDetailSystemNumber: res.PurchaseRequestDetailSystemNumber,
+			PurchaseRequestSystemNumber:       res.PurchaseRequestSystemNumber,
+			PurchaseRequestLineNumber:         res.PurchaseRequestLineNumber,
+			ReferenceSystemNumber:             res.ReferenceSystemNumber,
+			ReferenceLine:                     res.ReferenceLine,
+			ItemCode:                          res.ItemCode,
+			ItemName:                          ItemResponse.ItemName,
+			ItemQuantity:                      res.ItemQuantity,
+			ItemUnitOfMeasure:                 res.ItemUnitOfMeasure,
+			ItemUnitOfMeasureRate:             UomRate,
+			ItemRemark:                        res.ItemRemark,
 		}
 		NormalResponses = append(NormalResponses, result)
 	}
-
 	paginationResponses.Rows = NormalResponses
 	return paginationResponses, nil
 }
@@ -411,12 +415,17 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	}
 
 	result = transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
-		ItemCode:              response.ItemCode,
-		ItemName:              ItemResponse.ItemName,
-		ItemQuantity:          response.ItemQuantity,
-		ItemUnitOfMeasure:     response.ItemUnitOfMeasure,
-		ItemUnitOfMeasureRate: 0,
-		ItemRemark:            response.ItemRemark,
+		PurchaseRequestDetailSystemNumber: response.PurchaseRequestDetailSystemNumber,
+		PurchaseRequestSystemNumber:       response.PurchaseRequestSystemNumber,
+		PurchaseRequestLineNumber:         response.PurchaseRequestLineNumber,
+		ReferenceSystemNumber:             response.ReferenceSystemNumber,
+		ReferenceLine:                     response.ReferenceLine,
+		ItemCode:                          response.ItemCode,
+		ItemName:                          ItemResponse.ItemName,
+		ItemQuantity:                      response.ItemQuantity,
+		ItemUnitOfMeasure:                 response.ItemUnitOfMeasure,
+		ItemUnitOfMeasureRate:             0,
+		ItemRemark:                        response.ItemRemark,
 	}
 	return result, nil
 }
@@ -466,4 +475,58 @@ func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveHeader(db *gorm.DB, r
 		}
 	}
 	return purchaserequestentities, nil
+}
+func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
+	//get header data
+	var Response = transactionsparepartentities.PurchaseRequestDetail{}
+	entities := transactionsparepartentities.PurchaseRequestEntities{}
+	rows, err := db.Model(&entities).
+		Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: payloads.PurchaseRequestSystemNumber}).
+		First(&entities).
+		Rows()
+	if err != nil {
+		return Response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+	LineNumber := 1
+	//default value
+	LineStatus := "10"
+	Price := 0.000
+	//validation
+	TotalPrice := Price * *payloads.ItemQuantity
+	PRDetailEntities := transactionsparepartentities.PurchaseRequestDetail{
+		//PurchaseRequestSystemNumberDetail: 0,
+		PurchaseRequestSystemNumber: payloads.PurchaseRequestSystemNumber,
+		PurchaseRequestLineNumber:   LineNumber,
+		PurchaseRequestLineStatus:   LineStatus,
+		ItemCode:                    payloads.ItemCode,
+		ItemQuantity:                payloads.ItemQuantity,
+		ItemUnitOfMeasure:           payloads.ItemUnitOfMeasure,
+		ItemPrice:                   &Price,
+		ItemTotal:                   &TotalPrice,
+		ItemRemark:                  payloads.ItemRemark,
+		PurchaseOrderSystemNumber:   0,
+		PurchaseOrderLine:           0,
+		ReferenceTypeId:             entities.ReferenceTypeId,
+		ReferenceSystemNumber:       entities.ReferenceSystemNumber,
+		ReferenceLine:               payloads.ReferenceLine,
+		VehicleId:                   0,
+		CreatedByUserId:             payloads.CreatedByUserId,
+		CreatedDate:                 &payloads.CreatedDate,
+		UpdatedByUserId:             payloads.CreatedByUserId,
+		UpdatedDate:                 &payloads.UpdatedDate,
+	}
+	errCreate := db.Create(&PRDetailEntities).Scan(&PRDetailEntities).Error
+	if errCreate != nil {
+		return PRDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    errCreate.Error(),
+			Data:       PRDetailEntities,
+			Err:        errCreate,
+		}
+	}
+	return PRDetailEntities, nil
 }

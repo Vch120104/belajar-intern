@@ -74,3 +74,13 @@ func (p *PurchaseRequestServiceImpl) PurchaseRequestSaveNewHeader(request transa
 	}
 	return result, nil
 }
+
+func (p *PurchaseRequestServiceImpl) PurchaseRequestSaveNewDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	result, err := p.PurchaseRequestRepo.PurchaseRequestSaveDetail(tx, payloads)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

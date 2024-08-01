@@ -19,7 +19,8 @@ type PurchaseRequestController interface {
 	GetByIdPurchaseRequest(writer http.ResponseWriter, request *http.Request)
 	GetAllPurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 	GetByIdPurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
-	SaveHeader(writer http.ResponseWriter, request *http.Request)
+	SavePurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
+	SavePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchaseRequestControllerImpl struct {
@@ -165,7 +166,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequestDetail(wr
 	panic("implement me")
 }
 
-// SaveHeader
+// SavePurchaseRequestHeader
 //
 //	@Summary		Create New Purchase Request
 //	@Description	Create a new SaveHeader
@@ -176,7 +177,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequestDetail(wr
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-request [post]
-func (controller *PurchaseRequestControllerImpl) SaveHeader(writer http.ResponseWriter, request *http.Request) {
+func (controller *PurchaseRequestControllerImpl) SavePurchaseRequestHeader(writer http.ResponseWriter, request *http.Request) {
 	var purchaseRequest transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
 
 	helper.ReadFromRequestBody(request, &purchaseRequest)
@@ -189,4 +190,18 @@ func (controller *PurchaseRequestControllerImpl) SaveHeader(writer http.Response
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
 	panic("implement me")
 
+}
+func (controller *PurchaseRequestControllerImpl) SavePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request) {
+	var purchaseRequest transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
+	//var purchaseRequest transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
+
+	helper.ReadFromRequestBody(request, &purchaseRequest)
+
+	success, err := controller.PurchaseRequestService.PurchaseRequestSaveNewDetail(purchaseRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
+	panic("implement me")
 }

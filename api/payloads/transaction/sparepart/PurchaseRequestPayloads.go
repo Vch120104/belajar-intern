@@ -194,18 +194,61 @@ type PurchaseRequestGetByIdNormalizeResponses struct {
 }
 
 type PurchaseRequestDetailRequestPayloads struct {
+	PurchaseRequestDetailSystemNumber int `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int `json:"purchase_request_system_number" parent_entity:"trx_purchase_request_detail"`
+	PurchaseRequestLineNumber         int `json:"purchase_request_line_number" parent_entity:"trx_purchase_request_detail"`
+	ReferenceSystemNumber             int `json:"reference_system_number" parent_entity:"trx_purchase_request_detail"`
+	ReferenceLine                     int `json:"reference_line" parent_entity:"trx_purchase_request_detail"
+`
 	ItemCode          string   `json:"item_code" parent_entity:"trx_purchase_request_detail"`
 	ItemQuantity      *float64 `json:"item_quantity" parent_entity:"trx_purchase_request_detail"`
 	ItemUnitOfMeasure string   `json:"item_unit_of_measures" parent_entity:"trx_purchase_request_detail"`
 	ItemRemark        string   `json:"item_remark" parent_entity:"trx_purchase_request_detail"`
 }
 type PurchaseRequestDetailResponsesPayloads struct {
-	ItemCode              string   `json:"item_code"`
-	ItemName              string   `json:"item_name"`
-	ItemQuantity          *float64 `json:"item_quantity"`
-	ItemUnitOfMeasure     string   `json:"item_unit_of_measures"`
-	ItemUnitOfMeasureRate float64  `json:"item_unit_of_measure_rate"`
-	ItemRemark            string   `json:"item_remark"`
+
+	//If Not IRead.Item("PR_SYS_NO") Is DBNull.Value Then .PrSysNo = CDec(IRead.Item("PR_SYS_NO"))
+	//If Not IRead.Item("PR_LINE") Is DBNull.Value Then .PrLine = CDec(IRead.Item("PR_LINE"))
+	//If Not IRead.Item("ITEM_CODE") Is DBNull.Value Then .ItemCode = IRead.Item("ITEM_CODE").ToString.Trim
+	//If Not IRead.Item("ITEM_NAME") Is DBNull.Value Then .ItemName = IRead.Item("ITEM_NAME").ToString.Trim
+	//If Not IRead.Item("ITEM_QTY") Is DBNull.Value Then .ItemQty = CDec(IRead.Item("ITEM_QTY"))
+	//If Not IRead.Item("ITEM_UOM") Is DBNull.Value Then .ItemUom = IRead.Item("ITEM_UOM").ToString.Trim
+	//If Not IRead.Item("ITEM_REMARK") Is DBNull.Value Then .ItemRemark = IRead.Item("ITEM_REMARK").ToString.Trim
+	//If Not IRead.Item("REF_SYS_NO") Is DBNull.Value Then .RefSysNo = CDec(IRead.Item("REF_SYS_NO"))
+	//If Not IRead.Item("REF_LINE") Is DBNull.Value Then .RefLine = CDec(IRead.Item("REF_LINE"))
+	//If Not IRead.Item("UOM_RATE") Is DBNull.Value Then .UomRate = CDec(IRead.Item("UOM_RATE"))
+
+	//PurchaseRequestSystemNumberDetail int        `gorm:"column:purchase_request_system_number_detail;size:50;not null;primaryKey;" json:"purchase_request_system_number_detail"`
+	//PurchaseRequestSystemNumber       int        `gorm:"column:purchase_request_system_number;size:50" json:"purchase_request_system_number"`
+	//PurchaseRequestLineNumber         int        `gorm:"column:purchase_request_line_number;size:30" json:"purchase_request_line_number"`
+	//PurchaseRequestLineStatus         string     `gorm:"column:purchase_request_line_status;size:2;" json:"purchase_request_line_status"`
+	//ItemCode                          string     `gorm:"column:item_code;size:30;" json:"item_id"`
+	//ItemQuantity                      *float64   `gorm:"column:item_quantity;" json:"item_quantity"`
+	//ItemUnitOfMeasure                 string     `gorm:"column:item_unit_of_measure;size:5;" json:"item_unit_of_measures"`
+	//ItemPrice                         *float64   `gorm:"column:item_price;" json:"item_price"`
+	//ItemTotal                         *float64   `gorm:"column:item_total;" json:"item_total"`
+	//ItemRemark                        string     `gorm:"column:item_remark;size:256;" json:"item_remark"`
+	//PurchaseOrderSystemNumber         int        `gorm:"column:purchase_order_system_number;size:30;" json:"purchase_order_system_number"`
+	//PurchaseOrderLine                 int        `gorm:"column:purchase_order_line;size:30;" json:"purchase_order_line"`
+	//ReferenceTypeId                   int        `gorm:"column:reference_type_id;size:10;" json:"reference_type_id"`
+	//ReferenceSystemNumber             int        `gorm:"column:reference_system_number;size:30;" json:"reference_system_number"`
+	//ReferenceLine                     int        `gorm:"column:reference_line;size:30;" json:"reference_line"`
+	//VehicleId                         int        `gorm:"column:vehicle_id;size:30;" json:"vehicle_id"`
+	//CreatedByUserId                   int        `gorm:"column:created_by_user_id;size:30;" json:"created_by_user_id"`
+	//CreatedDate                       *time.Time `gorm:"column:created_date" json:"created_date"`
+	//UpdatedByUserId                   int        `gorm:"column:updated_by_user_id;size:30;" json:"updated_by_user_id"`
+	//UpdatedDate                       *time.Time `gorm:"column:updated_date" json:"updated_date"`
+	PurchaseRequestDetailSystemNumber int      `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int      `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber         int      `json:"purchase_request_line_number"`
+	ReferenceSystemNumber             int      `json:"reference_system_number"`
+	ReferenceLine                     int      `json:"reference_line"`
+	ItemCode                          string   `json:"item_code"`
+	ItemName                          string   `json:"item_name"`
+	ItemQuantity                      *float64 `json:"item_quantity"`
+	ItemUnitOfMeasure                 string   `json:"item_unit_of_measures"`
+	ItemUnitOfMeasureRate             float64  `json:"item_unit_of_measure_rate"`
+	ItemRemark                        string   `json:"item_remark"`
 }
 
 type PurchaseRequestHeaderSaveRequest struct {
@@ -247,4 +290,19 @@ type PurchaseRequestHeaderSaveRequest struct {
 	CreatedDate                time.Time `json:"created_date" parent_entity:"trx_purchase_request"`
 	UpdatedByUserId            int       `json:"updated_by_user_id" parent_entity:"trx_purchase_request"`
 	UpdatedDate                time.Time `json:"updated_date" parent_entity:"trx_purchase_request"`
+}
+
+type PurchaseRequestSaveDetailRequestPayloads struct {
+	ReferenceLine               int       `json:"reference_line"`
+	PurchaseRequestSystemNumber int       `json:"purchase_request_system_number"`
+	ItemCode                    string    `json:"item_code"`
+	ItemName                    string    `json:"item_name"`
+	ItemQuantity                *float64  `json:"item_quantity"`
+	ItemUnitOfMeasure           string    `json:"item_unit_of_measures"`
+	ItemUnitOfMeasureRate       *float64  `json:"item_unit_of_measure_rate"`
+	ItemRemark                  string    `json:"item_remark"`
+	CreatedByUserId             int       `json:"created_by_user_id"`
+	CreatedDate                 time.Time `json:"created_date"`
+	UpdatedByUserId             int       `json:"updated_by_user_id"`
+	UpdatedDate                 time.Time `json:"updated_date"`
 }

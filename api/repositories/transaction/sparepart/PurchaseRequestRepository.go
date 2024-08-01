@@ -15,4 +15,5 @@ type PurchaseRequestRepository interface {
 	GetAllPurchaseRequestDetail(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPurchaseRequestDetail(*gorm.DB, int) (transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads, *exceptions.BaseErrorResponse)
 	PurchaseRequestSaveHeader(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse)
+	PurchaseRequestSaveDetail(*gorm.DB, transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse)
 }

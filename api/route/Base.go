@@ -428,7 +428,8 @@ func PurchaseRequestRouter(
 	router.Get("/by-id/{purchase_request_system_number}", PurchaseRequest.GetByIdPurchaseRequest)
 	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
 	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
-	router.Post("/", PurchaseRequest.SaveHeader)
+	router.Post("/", PurchaseRequest.SavePurchaseRequestHeader)
+	router.Post("/detail", PurchaseRequest.SavePurchaseRequestDetail)
 
 	//router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	//router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
