@@ -191,6 +191,18 @@ func (controller *PurchaseRequestControllerImpl) SavePurchaseRequestHeader(write
 	panic("implement me")
 
 }
+
+// SavePurchaseRequestDetail
+//
+//	@Summary		Create New Purchase Request Detail
+//	@Description	Create a new Save Detail
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Request
+//	@Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads	true	"Purchase Request Header Data"
+//	@Success		201						{object}	payloads.Response
+//	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-request [post]
 func (controller *PurchaseRequestControllerImpl) SavePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request) {
 	var purchaseRequest transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
 	//var purchaseRequest transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
