@@ -28,64 +28,74 @@ type ServiceRequestNew struct {
 }
 
 type ServiceRequestSaveRequest struct {
-	ServiceRequestSystemNumber   int       `json:"service_request_system_number"`
-	ServiceRequestDocumentNumber string    `json:"service_request_document_number"`
-	ServiceRequestDate           time.Time `json:"service_request_date"`
-	ServiceRequestBy             string    `json:"service_request_by"`
-	ServiceRequestStatusId       int       `json:"service_request_status_id"`
-	BrandId                      int       `json:"brand_id"`
-	ModelId                      int       `json:"model_id"`
-	VariantId                    int       `json:"variant_id"`
-	VehicleId                    int       `json:"vehicle_id"`
-	BookingSystemNumber          int       `json:"booking_system_number"`
-	EstimationSystemNumber       int       `json:"estimation_system_number"`
-	WorkOrderSystemNumber        int       `json:"work_order_system_number"`
-	ReferenceDocSystemNumber     int       `json:"reference_doc_system_number"`
-	ProfitCenterId               int       `json:"profit_center_id"`
-	CompanyId                    int       `json:"company_id"`
-	DealerRepresentativeId       int       `json:"dealer_representative_id"`
-	ServiceTypeId                int       `json:"service_type_id"`
-	ReferenceTypeId              int       `json:"reference_type_id"`
-	ServiceRemark                string    `json:"service_remark"`
-	ServiceCompanyId             int       `json:"service_company_id"`
-	ServiceDate                  time.Time `json:"service_date"`
-	ReplyId                      int       `json:"reply_id"`
-	ServiceProfitCenterId        int       `json:"service_profit_center_id"`
-	ReferenceJobType             string    `json:"reference_job_type"`
+	ServiceRequestSystemNumber int       `json:"service_request_system_number"`
+	ServiceRequestDate         time.Time `json:"service_request_date"`
+	ServiceRequestBy           string    `json:"service_request_by"`
+	ServiceRequestStatusId     int       `json:"service_request_status_id"`
+	BrandId                    int       `json:"brand_id"`
+	ModelId                    int       `json:"model_id"`
+	VariantId                  int       `json:"variant_id"`
+	VehicleId                  int       `json:"vehicle_id"`
+	BookingSystemNumber        int       `json:"booking_system_number"`
+	EstimationSystemNumber     int       `json:"estimation_system_number"`
+	WorkOrderSystemNumber      int       `json:"work_order_system_number"`
+	ReferenceDocSystemNumber   int       `json:"reference_doc_system_number"`
+	ProfitCenterId             int       `json:"profit_center_id"`
+	CompanyId                  int       `json:"company_id"`
+	DealerRepresentativeId     int       `json:"dealer_representative_id"`
+	ServiceTypeId              int       `json:"service_type_id"`
+	ReferenceTypeId            int       `json:"reference_type_id"`
+	ServiceRemark              string    `json:"service_remark"`
+	ServiceCompanyId           int       `json:"service_company_id"`
+	ServiceDate                time.Time `json:"service_date"`
+	ReplyId                    int       `json:"reply_id"`
+	ServiceProfitCenterId      int       `json:"service_profit_center_id"`
+	ReferenceJobType           string    `json:"reference_job_type"`
+}
+
+type ServiceRequestSaveDataRequest struct {
+	ServiceTypeId    int       `json:"service_type_id"`
+	ServiceRemark    string    `json:"service_remark"`
+	ServiceCompanyId int       `json:"service_company_id"`
+	ServiceDate      time.Time `json:"service_date"`
 }
 
 type ServiceRequestResponse struct {
-	ServiceRequestSystemNumber   int    `json:"service_request_system_number"`
-	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
-	ServiceRequestDate           string `json:"service_request_date"`
-	ServiceRequestBy             string `json:"service_request_by"`
-	ServiceRequestStatusId       int    `json:"service_request_status_id"`
-	BrandId                      int    `json:"brand_id"`
-	BrandName                    string `json:"brand_name"`
-	ModelId                      int    `json:"model_id"`
-	ModelName                    string `json:"model_name"`
-	VariantId                    int    `json:"variant_id"`
-	VariantName                  string `json:"variant_name"`
-	VehicleId                    int    `json:"vehicle_id"`
-	VehicleCode                  string `json:"vehicle_chassis_number"`
-	VehicleTnkb                  string `json:"vehicle_registration_certificate_tnkb"`
-	BookingSystemNumber          int    `json:"booking_system_number"`
-	EstimationSystemNumber       int    `json:"estimation_system_number"`
-	WorkOrderSystemNumber        int    `json:"work_order_system_number"`
-	ReferenceDocSystemNumber     int    `json:"reference_doc_system_number"`
-	ProfitCenterId               int    `json:"profit_center_id"`
-	CompanyId                    int    `json:"company_id"`
-	CompanyName                  string `json:"company_name"`
-	DealerRepresentativeId       int    `json:"dealer_representative_id"`
-	ServiceTypeId                int    `json:"service_type_id"`
-	ReferenceTypeId              int    `json:"reference_type_id"`
-	ServiceRemark                string `json:"service_remark"`
-	ServiceCompanyId             int    `json:"service_company_id"`
-	ServiceDate                  string `json:"service_date"`
-	ReplyId                      int    `json:"reply_id"`
-	ReplyDate                    string `json:"reply_date"`
-	ReplyBy                      string `json:"reply_by"`
-	ReplyRemark                  string `json:"reply_remark"`
+	ServiceRequestSystemNumber   int                           `json:"service_request_system_number"`
+	ServiceRequestStatusId       int                           `json:"service_request_status_id"`
+	ServiceRequestStatusName     string                        `json:"service_request_status_name"`
+	ServiceRequestDocumentNumber string                        `json:"service_request_document_number"`
+	ServiceRequestDate           string                        `json:"service_request_date"`
+	BrandId                      int                           `json:"brand_id"`
+	BrandName                    string                        `json:"brand_name"`
+	ModelId                      int                           `json:"model_id"`
+	ModelName                    string                        `json:"model_name"`
+	VariantId                    int                           `json:"variant_id"`
+	VariantName                  string                        `json:"variant_name"`
+	VariantColourName            string                        `json:"variant_colour_name"`
+	VehicleId                    int                           `json:"vehicle_id"`
+	VehicleCode                  string                        `json:"vehicle_code"`
+	VehicleTnkb                  string                        `json:"vehicle_tnkb"`
+	CompanyId                    int                           `json:"company_id"`
+	CompanyName                  string                        `json:"company_name"`
+	DealerRepresentativeId       int                           `json:"dealer_representative_id"`
+	ProfitCenterId               int                           `json:"profit_center_id"`
+	WorkOrderSystemNumber        int                           `json:"work_order_system_number"`
+	WorkOrderDocumentNumber      string                        `json:"work_order_document_number"`
+	BookingSystemNumber          int                           `json:"booking_system_number"`
+	EstimationSystemNumber       int                           `json:"estimation_system_number"`
+	ReferenceDocSystemNumber     int                           `json:"reference_doc_system_number"`
+	ReferenceDocNumber           int                           `json:"reference_doc_number"`
+	ReferenceDocDate             string                        `json:"reference_doc_date"`
+	ReplyId                      int                           `json:"reply_id"`
+	ReplyBy                      string                        `json:"reply_by"`
+	ReplyDate                    string                        `json:"reply_date"`
+	ReplyRemark                  string                        `json:"reply_remark"`
+	ServiceCompanyId             int                           `json:"service_company_id"`
+	ServiceCompanyName           string                        `json:"service_company_name"`
+	ServiceDate                  string                        `json:"service_date"`
+	ServiceRequestBy             string                        `json:"service_request_by"`
+	ServiceDetails               ServiceRequestDetailsResponse `json:"service_details"`
 }
 
 type SubmitServiceRequestResponse struct {
@@ -93,14 +103,20 @@ type SubmitServiceRequestResponse struct {
 	ServiceRequestSystemNumber int    `json:"service_request_system_number"`
 }
 
+type WorkOrderRequestResponse struct {
+	WorkOrderDocumentNumber string `json:"work_order_document_number"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
+}
+
 type ServiceDetailSaveRequest struct {
-	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
-	ServiceRequestId           int     `json:"service_request_id"`
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
 	LineTypeId                 int     `json:"line_type_id"`
 	OperationItemId            int     `json:"operation_item_id"`
-	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
-	ReferenceDocId             int     `json:"reference_doc_id"`
+	FrtQuantity                float64 `json:"frt_quantity"`
+}
+
+type ServiceDetailUpdateRequest struct {
+	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 }
 
@@ -124,6 +140,14 @@ type ServiceRequestDetail struct {
 	FrtQuantity                float64 `json:"frt_quantity" parent_entity:"trx_service_request_detail" `
 }
 
+type ServiceRequestDetailsResponse struct {
+	Page       int                            `json:"page"`
+	Limit      int                            `json:"limit"`
+	TotalPages int                            `json:"total_pages"`
+	TotalRows  int                            `json:"total_rows"`
+	Data       []ServiceRequestDetailResponse `json:"data"`
+}
+
 type ServiceRequestDetailResponse struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
 	ServiceRequestId           int     `json:"service_request_id"`
@@ -134,6 +158,7 @@ type ServiceRequestDetailResponse struct {
 	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
 	ReferenceDocId             int     `json:"reference_doc_id"`
 }
+
 type ItemServiceRequestDetail struct {
 	ItemId   int    `json:"item_id"`
 	ItemName string `json:"item_name"`
@@ -150,4 +175,10 @@ type CompanyResponse struct {
 	CompanyId   int    `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	BizCategory string `json:"biz_category"`
+}
+
+type ServiceRequestStatusResponse struct {
+	ServiceRequestStatusId   int    `json:"service_request_status_id"`
+	ServiceRequestStatusCode string `json:"service_request_status_code"`
+	ServiceRequestStatusName string `json:"service_request_status_description"`
 }

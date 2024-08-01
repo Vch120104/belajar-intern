@@ -197,15 +197,15 @@ func StartRouting(db *gorm.DB) {
 	WarehouseLocationDefinitionService := masterwarehouseserviceimpl.OpenWarehouseLocationDefinitionService(WarehouseLocationDefinitionRepository, db, rdb)
 	WarehouseLocationDefinitionController := masterwarehousecontroller.NewWarehouseLocationDefinitionController(WarehouseLocationDefinitionService)
 
-	// Warehouse Location
-	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
-	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, db, rdb)
-	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
-
 	// Warehouse Master
 	warehouseMasterRepository := masterwarehouserepositoryimpl.OpenWarehouseMasterImpl()
 	warehouseMasterService := masterwarehouseserviceimpl.OpenWarehouseMasterService(warehouseMasterRepository, db, rdb)
 	warehouseMasterController := masterwarehousecontroller.NewWarehouseMasterController(warehouseMasterService)
+
+	// Warehouse Location
+	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
+	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, warehouseMasterService, db, rdb)
+	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
 
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
@@ -269,10 +269,20 @@ func StartRouting(db *gorm.DB) {
 	ServiceRequestService := transactionworkshopserviceimpl.OpenServiceRequestServiceImpl(ServiceRequestRepository, db, rdb)
 	ServiceRequestController := transactionworksopcontroller.NewServiceRequestController(ServiceRequestService)
 
+	//vehicle history
+	VehicleHistoryRepository := transactionworkshoprepositoryimpl.NewVehicleHistoryImpl()
+	VehicleHistoryServices := transactionworkshopserviceimpl.NewVehicleHistoryServiceImpl(VehicleHistoryRepository, db, rdb)
+	VehicleHistoryController := transactionworksopcontroller.NewVehicleHistoryController(VehicleHistoryServices)
+
 	//Service Receipt
 	ServiceReceiptRepository := transactionworkshoprepositoryimpl.OpenServiceReceiptRepositoryImpl()
 	ServiceReceiptService := transactionworkshopserviceimpl.OpenServiceReceiptServiceImpl(ServiceReceiptRepository, db, rdb)
 	ServiceReceiptController := transactionworksopcontroller.NewServiceReceiptController(ServiceReceiptService)
+
+	//Work order bypass
+	WorkOrderBypassRepository := transactionworkshoprepositoryimpl.OpenWorkOrderBypassRepositoryImpl()
+	WorkOrderBypassService := transactionworkshopserviceimpl.OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepository, db, rdb)
+	WorkOrderBypassController := transactionworksopcontroller.NewWorkOrderBypassController(WorkOrderBypassService)
 
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
@@ -324,6 +334,8 @@ func StartRouting(db *gorm.DB) {
 	SalesOrderRouter := SalesOrderRouter(SalesOrderController)
 	ServiceRequestRouter := ServiceRequestRouter(ServiceRequestController)
 	ServiceReceiptRouter := ServiceReceiptRouter(ServiceReceiptController)
+	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
+	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -391,6 +403,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/work-order", WorkOrderRouter)
 		r.Mount("/service-request", ServiceRequestRouter)
 		r.Mount("/service-receipt", ServiceReceiptRouter)
+		r.Mount("/vehicle-history", VehicleHistoryRouter)
+		r.Mount("/work-order-bypass", WorkOrderBypassRouter)
 
 		/* Transaction Bodyshop */
 

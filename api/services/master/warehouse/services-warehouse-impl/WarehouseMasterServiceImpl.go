@@ -1,6 +1,7 @@
 package masterwarehouseserviceimpl
 
 import (
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -31,6 +32,32 @@ func OpenWarehouseMasterService(warehouseMaster masterwarehouserepository.Wareho
 	}
 }
 
+// GetWarehouseGroupbyCodeandCompanyId implements masterwarehouseservice.WarehouseMasterService.
+func (s *WarehouseMasterServiceImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(companyId int, warehouseCode string) (int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	groupId, warehouseId, err := s.warehouseMasterRepo.GetWarehouseGroupAndMasterbyCodeandCompanyId(tx, companyId, warehouseCode)
+
+	defer helper.CommitOrRollback(tx, err)
+
+	return groupId, warehouseId, nil
+}
+
+// IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouseservice.WarehouseMasterService.
+func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(companyId int, warehouseCode string) bool {
+	tx := s.DB.Begin()
+
+	var err *exceptions.BaseErrorResponse
+	defer helper.CommitOrRollback(tx, err)
+
+	isExist, err := s.warehouseMasterRepo.IsWarehouseMasterByCodeAndCompanyIdExist(tx, companyId, warehouseCode)
+
+	if err != nil {
+		return isExist
+	}
+
+	return isExist
+}
+
 // DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
 func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
@@ -43,14 +70,14 @@ func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) (bool, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWarehouseMasterResponse) (masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	save, err := s.warehouseMasterRepo.Save(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return masterwarehouseentities.WarehouseMaster{}, err
 	}
 	return save, nil
 }
@@ -110,7 +137,7 @@ func (s *WarehouseMasterServiceImpl) GetAll(filter []utils.FilterCondition, page
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
 	defer helper.CommitOrRollback(tx, err)
@@ -131,4 +158,34 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwareho
 		return change_status, err
 	}
 	return change_status, nil
+}
+
+func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.warehouseMasterRepo.GetAuthorizeUser(tx, pages, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return pages, err
+	}
+	return result, nil
+}
+
+func (s *WarehouseMasterServiceImpl) PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.warehouseMasterRepo.PostAuthorizeUser(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masterwarehousepayloads.WarehouseAuthorize{}, err
+	}
+	return result, err
+}
+
+func (s *WarehouseMasterServiceImpl) DeleteMultiIdAuthorizeUser(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.warehouseMasterRepo.DeleteMultiIdAuthorizeUser(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return result, nil
 }

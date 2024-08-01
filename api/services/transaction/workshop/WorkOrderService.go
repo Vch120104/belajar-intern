@@ -37,9 +37,9 @@ type WorkOrderService interface {
 	GenerateDocumentNumber(workOrderId int) (string, *exceptions.BaseErrorResponse)
 
 	// normal function
-	New(request transactionworkshoppayloads.WorkOrderNormalRequest) (bool, *exceptions.BaseErrorResponse)
+	New(request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetById(id int) (transactionworkshoppayloads.WorkOrderRequest, *exceptions.BaseErrorResponse)
+	GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderResponseDetail, *exceptions.BaseErrorResponse)
 	Save(request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse)
 	Submit(Id int) (bool, string, *exceptions.BaseErrorResponse)
 	Void(workOrderId int) (bool, *exceptions.BaseErrorResponse)
@@ -48,24 +48,24 @@ type WorkOrderService interface {
 	// Service Request
 	GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse)
-	UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse
-	AddRequest(int, transactionworkshoppayloads.WorkOrderServiceRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse)
+	AddRequest(int, transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse)
 	DeleteRequest(int, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteRequestMultiId(idwosn int, idwos []int) (bool, *exceptions.BaseErrorResponse)
 
 	// Service Vehicle
 	GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse)
-	UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse
-	AddVehicleService(int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse)
+	AddVehicleService(int, transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse)
 	DeleteVehicleService(int, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteVehicleServiceMultiId(idwosn int, idwos []int) (bool, *exceptions.BaseErrorResponse)
 
 	// detail work order
 	GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse)
-	UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse)
-	AddDetailWorkOrder(int, transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
+	AddDetailWorkOrder(int, transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrder(int, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrderMultiId(idwosn int, idwos []int) (bool, *exceptions.BaseErrorResponse)
 

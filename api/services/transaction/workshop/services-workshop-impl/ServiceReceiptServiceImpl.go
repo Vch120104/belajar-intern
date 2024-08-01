@@ -75,7 +75,7 @@ func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterConditi
 	return results, totalPages, totalRows, nil
 }
 
-func (s *ServiceReceiptServiceImpl) GetById(id int) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse) {
+func (s *ServiceReceiptServiceImpl) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.ServiceReceiptResponse, *exceptions.BaseErrorResponse) {
 
 	cacheKey := utils.GenerateCacheKeyIds("service_receipt_id", id)
 
@@ -100,7 +100,7 @@ func (s *ServiceReceiptServiceImpl) GetById(id int) (transactionworkshoppayloads
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	result, repoErr := s.ServiceReceiptRepository.GetById(tx, id)
+	result, repoErr := s.ServiceReceiptRepository.GetById(tx, id, pages)
 	if repoErr != nil {
 		return result, repoErr
 	}

@@ -19,7 +19,6 @@ type PackageMasterController interface {
 	GetByIdPackageMaster(writer http.ResponseWriter, request *http.Request)
 	GetByIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
 	SavepackageMaster(writer http.ResponseWriter, request *http.Request)
-	SavePackageMasterDetailBodyshop(writer http.ResponseWriter, request *http.Request)
 	SavePackageMasterDetailWorkshop(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPackageMaster(writer http.ResponseWriter, request *http.Request)
 	ActivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
@@ -118,27 +117,6 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 	}
 
 	if formRequest.PackageId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
-}
-
-func (r *PackageMasterControllerImpl) SavePackageMasterDetailBodyshop(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masterpayloads.PackageMasterDetailOperationBodyshop
-	helper.ReadFromRequestBody(request, &formRequest)
-	var message string
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
-
-	create, err := r.PackageMasterService.PostPackageMasterDetailBodyshop(formRequest, PackageMasterId)
-	if err != nil {
-		helper.ReturnError(writer, request, err)
-		return
-	}
-
-	if formRequest.PackageDetailOperationId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"

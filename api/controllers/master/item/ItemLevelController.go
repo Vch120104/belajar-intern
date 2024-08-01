@@ -27,6 +27,7 @@ type ItemLevelController interface {
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request)
 	GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request)
+	GetItemLevelLookUpbyId(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLevelControllerImpl struct {
@@ -37,6 +38,20 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 	return &ItemLevelControllerImpl{
 		itemLevelService: ItemLevelService,
 	}
+}
+
+// GetItemLevelLookUpbyId implements ItemLevelController.
+func (r *ItemLevelControllerImpl) GetItemLevelLookUpbyId(writer http.ResponseWriter, request *http.Request) {
+	itemLevel, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+
+	get, err := r.itemLevelService.GetItemLevelLookUpbyId(itemLevel)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // GetItemLevelLookUp implements ItemLevelController.

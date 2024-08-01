@@ -15,6 +15,7 @@ type WarrantyFreeServiceResponse struct {
 	ExpireMileageExtendedWarranty float64 `json:"expire_mileage_extended_warranty"`
 	ExpireMonthExtendedWarranty   float64 `json:"expire_month_extended_warranty"`
 	Remark                        string  `json:"remark"`
+	ExtendedWarranty              bool    `json:"extended_warranty"`
 }
 
 type WarrantyFreeServiceListResponse struct {
@@ -38,6 +39,12 @@ type WarrantyFreeServiceRequest struct {
 	ExpireMileageExtendedWarranty float64   `json:"expire_mileage_extended_warranty"` //default value 0
 	ExpireMonthExtendedWarranty   float64   `json:"expire_month_extended_warranty"`   //default value 0
 	Remark                        string    `json:"remark"`                           // default value ""
+	ExtendedWarranty              bool      `json:"extended_warranty"`
+}
+
+type WarrantyFreeServicePatchResponse struct {
+	IsActive                      bool    `json:"is_active"`
+	WarrantyFreeServicesId        int     `json:"warranty_free_services_id"`
 }
 
 type BrandResponse struct {

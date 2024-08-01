@@ -62,7 +62,7 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int
 	entity := masteritementities.ItemSubstitute{}
 	response := masteritempayloads.ItemSubstitutePayloads{}
 
-	err := tx.Model(entity).Select("mtr_item_substitute.*, Item.item_code, Item.item_name, Item.item_class_id, mi").
+	err := tx.Model(entity).Select("mtr_item_substitute.*, Item.item_code, Item.item_name, Item.item_class_id").
 		Where(masteritementities.ItemSubstitute{ItemSubstituteId: id}).
 		Joins("Item", tx.Select("")).
 		Joins("JOIN mtr_item_class ON Item.item_class_id = mtr_item_class.item_class_id", tx.Select("")).
