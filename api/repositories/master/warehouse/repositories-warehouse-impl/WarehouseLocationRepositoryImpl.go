@@ -15,6 +15,7 @@ import (
 	// utils "after-sales/api/utils"
 
 	// masterwarehousegroupservice "after-sales/api/services/master/warehouse"
+
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	// "after-sales/api/payloads/pagination"
 
@@ -91,7 +92,9 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 		mtr_warehouse_master.warehouse_code,
 		mtr_warehouse_master.warehouse_name`).
 		Joins("LEFT OUTER JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
-		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").First(&warehouseLocationResponse).Error
+		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
+		Where(masterwarehouseentities.WarehouseLocation{WarehouseLocationId: warehouseLocationId}).
+		First(&warehouseLocationResponse).Error
 
 	if err != nil {
 		return warehouseLocationResponse, &exceptions.BaseErrorResponse{
