@@ -136,7 +136,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 
 	// Fetch brand data
 	var brandResponses []masteroperationpayloads.BrandResponse
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand?page=0&limit=10"
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=10"
 	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
 	if errUrlBrand != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -147,7 +147,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 
 	// Fetch model data
 	var modelResponses []masteroperationpayloads.ModelResponse
-	modelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model?page=0&limit=10"
+	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10"
 	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
 	if errUrlModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
