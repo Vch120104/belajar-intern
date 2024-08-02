@@ -183,6 +183,8 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 
 	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
+	// fmt.Println("join ", joinedData)
+
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
 
 	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
@@ -194,9 +196,13 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
+	fmt.Println(getLineTypeResponse)
+
 	joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSecond, &pages)
+
+	// fmt.Print(joinedDataSecond)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
