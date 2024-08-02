@@ -5,8 +5,8 @@ import "time"
 const TableNamePurchaseRequestDetail = "trx_purchase_request_detail"
 
 type PurchaseRequestDetail struct {
-	PurchaseRequestDetailSystemNumber int        `gorm:"column:purchase_request_detail_system_number;size:50;not null;primaryKey;" json:"purchase_request_system_number_detail"`
-	PurchaseRequestSystemNumber       int        `gorm:"column:purchase_request_system_number;size:50" json:"purchase_request_system_number"`
+	PurchaseRequestDetailSystemNumber int        `gorm:"column:purchase_request_detail_system_number;size:30;not null;primaryKey;" json:"purchase_request_system_number_detail"`
+	PurchaseRequestSystemNumber       int        `gorm:"column:purchase_request_system_number;size:30" json:"purchase_request_system_number"`
 	PurchaseRequestLineNumber         int        `gorm:"column:purchase_request_line_number;size:30" json:"purchase_request_line_number"`
 	PurchaseRequestLineStatus         string     `gorm:"column:purchase_request_line_status;size:2;" json:"purchase_request_line_status"`
 	ItemCode                          string     `gorm:"column:item_code;size:30;" json:"item_id"`
@@ -25,6 +25,7 @@ type PurchaseRequestDetail struct {
 	CreatedDate                       *time.Time `gorm:"column:created_date" json:"created_date"`
 	UpdatedByUserId                   int        `gorm:"column:updated_by_user_id;size:30;" json:"updated_by_user_id"`
 	UpdatedDate                       *time.Time `gorm:"column:updated_date" json:"updated_date"`
+	ChangeNo                          int        `gorm:"column:change_no;size:30;" json:"change_no"`
 }
 
 func (*PurchaseRequestDetail) TableName() string {

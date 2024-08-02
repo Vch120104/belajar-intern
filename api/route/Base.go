@@ -8,6 +8,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -428,8 +429,12 @@ func PurchaseRequestRouter(
 	router.Get("/by-id/{purchase_request_system_number}", PurchaseRequest.GetByIdPurchaseRequest)
 	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
 	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
-	router.Post("/", PurchaseRequest.SavePurchaseRequestHeader)
-	router.Post("/detail", PurchaseRequest.SavePurchaseRequestDetail)
+	router.Post("/", PurchaseRequest.NewPurchaseRequestHeader)
+	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
+	router.Put("/purchase_request_system_number", PurchaseRequest.UpdatePurchaseRequestHeader)
+	router.Put("/detail/purchase_request_detail_system_number", PurchaseRequest.UpdatePurchaseRequestDetail)
+
+	// @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [put]
 
 	//router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
 	//router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)

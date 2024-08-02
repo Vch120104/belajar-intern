@@ -8,6 +8,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -430,7 +431,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	return result, nil
 }
 
-func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveHeader(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestHeader(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse) {
 	purchaserequestentities := transactionsparepartentities.PurchaseRequestEntities{
 		CompanyId: request.CompanyId,
 		//PurchaseRequestSystemNumber:     request.PurchaseRequestSystemNumber,
@@ -459,7 +460,7 @@ func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveHeader(db *gorm.DB, r
 		CurrencyId:                      request.CurrencyId,
 		ItemClassId:                     request.ItemClassId,
 		//PurchaseRequestDetail:           request.purchaserequestde,
-		//ChangeNo:        request.ChangeNo,
+		ChangeNo:        1,
 		CreatedByUserId: request.CreatedByUserId,
 		CreatedDate:     &request.CreatedDate,
 		UpdatedByUserId: request.UpdatedByUserId,
@@ -476,7 +477,7 @@ func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveHeader(db *gorm.DB, r
 	}
 	return purchaserequestentities, nil
 }
-func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
 	//get header data
 	var Response = transactionsparepartentities.PurchaseRequestDetail{}
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
@@ -518,6 +519,7 @@ func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveDetail(db *gorm.DB, p
 		CreatedDate:                 &payloads.CreatedDate,
 		UpdatedByUserId:             payloads.CreatedByUserId,
 		UpdatedDate:                 &payloads.UpdatedDate,
+		ChangeNo:                    1,
 	}
 	errCreate := db.Create(&PRDetailEntities).Scan(&PRDetailEntities).Error
 	if errCreate != nil {
@@ -529,4 +531,92 @@ func (p *PurchaseRequestRepositoryImpl) PurchaseRequestSaveDetail(db *gorm.DB, p
 		}
 	}
 	return PRDetailEntities, nil
+}
+func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestHeader(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, *exceptions.BaseErrorResponse) {
+	//TODO implement me
+	res := transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest{}
+	entities := transactionsparepartentities.PurchaseRequestEntities{}
+	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: id}).First(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, &exceptions.BaseErrorResponse{
+				//StatusCode: 0,
+				Message: "Data to Updated Is Not Found",
+				Data:    res,
+				Err:     err,
+			}
+		}
+		return res, &exceptions.BaseErrorResponse{
+			//StatusCode: 0,
+			Message: "Update Data Failed",
+			Data:    res,
+			Err:     err,
+		}
+	}
+	//updating data
+	entities.BudgetCode = request.BudgetCode
+	entities.ProjectNo = request.ProjectNo
+	entities.PurchaseRequestRemark = request.PurchaseRequestRemark
+	entities.ExpectedArrivalTime = &request.ExpectedArrivalTime
+	entities.ExpectedArrivalDate = &request.ExpectedArrivalDate
+	entities.CostCenterId = request.CostCenterId
+	entities.ProfitCenterId = request.ProfitCenterId
+	entities.BackOrder = request.BackOrder
+	entities.CurrencyId = request.CurrencyId
+	entities.SetOrder = request.SetOrder
+	entities.OrderTypeId = request.OrderTypeId
+	entities.ChangeNo = entities.ChangeNo + 1
+	entities.UpdatedByUserId = request.UpdatedByUserId
+	entities.UpdatedDate = &request.UpdatedDate
+	err = db.Save(&entities).Error
+	if err != nil {
+
+		return res, &exceptions.BaseErrorResponse{
+			//StatusCode: 0,
+			Message: "Failed To Update Data",
+			Data:    res,
+			Err:     err,
+		}
+		return request, nil
+	}
+	panic("implement me")
+}
+
+func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
+	//TODO implement me
+	response := transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads{}
+	entities := transactionsparepartentities.PurchaseRequestDetail{}
+
+	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id}).First(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				//StatusCode: 0,
+				Message: "Data To Updated Is Not Found Try Insert Instead",
+				Data:    nil,
+				Err:     err,
+			}
+		}
+		return response, &exceptions.BaseErrorResponse{
+			//StatusCode: 0,
+			Message: "Data Updated Failed",
+			Data:    nil,
+			Err:     err,
+		}
+	}
+	entities.ItemQuantity = payloads.ItemQuantity
+	entities.ItemRemark = payloads.ItemRemark
+	entities.ChangeNo = entities.ChangeNo + 1
+	entities.UpdatedDate = &payloads.UpdatedDate
+	entities.UpdatedByUserId = payloads.UpdatedByUserId
+	err = db.Save(&entities).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			//StatusCode: 0,
+			Message: "Update Data Failed",
+			Data:    nil,
+			Err:     err,
+		}
+	}
+	return payloads, nil
 }

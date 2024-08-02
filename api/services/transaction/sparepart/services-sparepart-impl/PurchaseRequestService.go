@@ -65,9 +65,9 @@ func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequestDetail(id int) (trans
 	}
 	return result, nil
 }
-func (p *PurchaseRequestServiceImpl) PurchaseRequestSaveNewHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestServiceImpl) NewPurchaseRequestHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
-	result, err := p.PurchaseRequestRepo.PurchaseRequestSaveHeader(tx, request)
+	result, err := p.PurchaseRequestRepo.NewPurchaseRequestHeader(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
@@ -75,12 +75,31 @@ func (p *PurchaseRequestServiceImpl) PurchaseRequestSaveNewHeader(request transa
 	return result, nil
 }
 
-func (p *PurchaseRequestServiceImpl) PurchaseRequestSaveNewDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestServiceImpl) NewPurchaseRequestDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads) (transactionsparepartentities.PurchaseRequestDetail, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
-	result, err := p.PurchaseRequestRepo.PurchaseRequestSaveDetail(tx, payloads)
+	result, err := p.PurchaseRequestRepo.NewPurchaseRequestDetail(tx, payloads)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
+}
+
+func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, *exceptions.BaseErrorResponse) {
+	//TODO implement me
+	tx := p.DB.Begin()
+	res, err := p.PurchaseRequestRepo.SavePurchaseRequestHeader(tx, request, id)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
 }
