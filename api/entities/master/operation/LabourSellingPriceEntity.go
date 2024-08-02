@@ -11,7 +11,7 @@ type LabourSellingPrice struct {
 	BrandId              int       `gorm:"column:brand_id;size:30;not null" json:"brand_id"`            //Fk with mtr_brand on sales service
 	JobTypeId            int       `gorm:"column:job_type_id;size:30;not null" json:"job_type_id"`      // Fk with mtr_job_type on general service
 	EffectiveDate        time.Time `gorm:"column:effective_date;not null" json:"effective_date"`
-	BillableTo           string    `gorm:"column:billable_to;size:10;not null;" json:"billable_to"`
+	BillToId             int       `gorm:"column:bill_to_id;size:30;" json:"bill_to_id"`
 	Description          string    `gorm:"column:description;size:128;null;" json:"description"`
 }
 

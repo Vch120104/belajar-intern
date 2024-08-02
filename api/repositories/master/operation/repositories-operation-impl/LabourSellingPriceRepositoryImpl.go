@@ -21,13 +21,22 @@ func StartLabourSellingPriceRepositoryImpl() masteroperationrepository.LabourSel
 	return &LabourSellingPriceRepositoryImpl{}
 }
 
+// GetAllLabourSellingPrice implements masteroperationrepository.LabourSellingPriceRepository.
+func (r *LabourSellingPriceRepositoryImpl) GetAllLabourSellingPrice(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (map[string]interface{},int,int *exceptionsss_test.BaseErrorResponse) {
+
+	entities := masteroperationentities.LabourSellingPrice{}
+
+	query := tx.Model(entities)
+
+}
+
 func isNotInList(list []int, value int) bool {
-    for _, v := range list {
-        if v == value {
-            return false
-        }
-    }
-    return true
+	for _, v := range list {
+		if v == value {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
@@ -131,7 +140,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 			VariantIds += str + ","
 			variant_ids = append(variant_ids, response.VariantId)
 		}
-		
+
 	}
 
 	// join with mtr_unit_model
@@ -161,7 +170,7 @@ func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, r
 		BrandId:       request.BrandId,
 		JobTypeId:     request.JobTypeId,
 		EffectiveDate: request.EffectiveDate,
-		BillableTo:    request.BillableTo,
+		BillToId:      request.BillToId,
 		Description:   request.Description,
 	}
 

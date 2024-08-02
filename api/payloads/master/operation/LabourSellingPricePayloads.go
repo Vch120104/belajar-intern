@@ -18,7 +18,7 @@ type LabourSellingPriceRequest struct {
 	BrandId       int       `json:"brand_id"`
 	JobTypeId     int       `json:"job_type_id"`
 	EffectiveDate time.Time `json:"effective_date"`
-	BillableTo    string    `json:"billable_to"`
+	BillToId      int       `json:"bill_to_id"`
 	Description   string    `json:"description"`
 }
 
@@ -49,7 +49,7 @@ type JobTypeLabourSellingPriceResponse struct {
 }
 
 type ModelSellingPriceDetailResponse struct {
-	ModelId   int    `json:"model_id"`
-	ModelCode string `json:"model_code"`
+	ModelId          int    `json:"model_id"`
+	ModelCode        string `json:"model_code"`
 	ModelDescription string `json:"model_description"`
 }
