@@ -1,8 +1,9 @@
 package masteritemrepositoryimpl
 
 import (
+	config "after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -22,7 +23,7 @@ func StartMarkupRateRepositoryImpl() masteritemrepository.MarkupRateRepository {
 	return &MarkupRateRepositoryImpl{}
 }
 
-func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.MarkupRateListResponse
 	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
 	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
@@ -54,44 +55,59 @@ func (r *MarkupRateRepositoryImpl) GetAllMarkupRate(tx *gorm.DB, filterCondition
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-	//apply pagination and execute
-	rows, err := whereQuery.Scan(&responses).Rows()
 
+	// Execute the query
+	rows, err := whereQuery.Rows()
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+	defer rows.Close()
+
+	// Initialize responses slice with 0 length
+	responses = make([]masteritempayloads.MarkupRateListResponse, 0)
+
+	// Scan the results into the responses slice
+	for rows.Next() {
+		var response masteritempayloads.MarkupRateListResponse
+		if err := rows.Scan(&response.IsActive, &response.MarkupRateId, &response.MarkupMasterId, &response.MarkupMasterCode, &response.MarkupMasterDescription, &response.OrderTypeId, &response.MarkupRate); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		responses = append(responses, response)
+	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
 	}
 
-	defer rows.Close()
-
-	orderTypeUrl := "http://10.1.32.26:8000/general-service/api/general/order-type-filter?order_type_name=" + orderTypeName
-
+	// Fetch order type data
+	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "order-type-filter?order_type_name=" + orderTypeName
 	errUrlMarkupRate := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
-
 	if errUrlMarkupRate != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errUrlMarkupRate,
 		}
 	}
 
+	// Perform inner join with order type data
 	joinedData := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
 
+	// Paginate the joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *MarkupRateRepositoryImpl) GetMarkupRateById(tx *gorm.DB, Id int) (masteritempayloads.MarkupRateResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupRateRepositoryImpl) GetMarkupRateById(tx *gorm.DB, Id int) (masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.MarkupRate{}
 	response := masteritempayloads.MarkupRateResponse{}
 
@@ -103,7 +119,7 @@ func (r *MarkupRateRepositoryImpl) GetMarkupRateById(tx *gorm.DB, Id int) (maste
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -114,7 +130,7 @@ func (r *MarkupRateRepositoryImpl) GetMarkupRateById(tx *gorm.DB, Id int) (maste
 	return response, nil
 }
 
-func (r *MarkupRateRepositoryImpl) SaveMarkupRate(tx *gorm.DB, request masteritempayloads.MarkupRateRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupRateRepositoryImpl) SaveMarkupRate(tx *gorm.DB, request masteritempayloads.MarkupRateRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.MarkupRate{
 		IsActive:       true,
 		MarkupRateId:   request.MarkupRateId,
@@ -127,13 +143,13 @@ func (r *MarkupRateRepositoryImpl) SaveMarkupRate(tx *gorm.DB, request masterite
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -143,7 +159,7 @@ func (r *MarkupRateRepositoryImpl) SaveMarkupRate(tx *gorm.DB, request masterite
 	return true, nil
 }
 
-func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.MarkupRate
 
 	result := tx.Model(&entities).
@@ -151,7 +167,7 @@ func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(tx *gorm.DB, Id int) (
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -166,11 +182,35 @@ func (r *MarkupRateRepositoryImpl) ChangeStatusMarkupRate(tx *gorm.DB, Id int) (
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
 	return true, nil
+}
+
+func (r *MarkupRateRepositoryImpl) GetMarkupRateByMarkupMasterAndOrderType(tx *gorm.DB, MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.MarkupRate{}
+	response := []masteritempayloads.MarkupRateResponse{}
+
+	rows, err := tx.Model(&entities).
+		Where(masteritementities.MarkupRate{
+			MarkupMasterId: MarkupMasterId,
+			OrderTypeId:    OrderTypeId,
+		}).
+		Find(&response).
+		Rows()
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	return response, nil
 }

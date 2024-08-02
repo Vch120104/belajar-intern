@@ -1,7 +1,7 @@
 package masteritemrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,9 +10,10 @@ import (
 )
 
 type MarkupMasterRepository interface {
-	GetMarkupMasterList(tx *gorm.DB,filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetMarkupMasterById(tx *gorm.DB,Id int) (masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveMarkupMaster(tx *gorm.DB,req masteritempayloads.MarkupMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusMasterMarkupMaster(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetMarkupMasterByCode(*gorm.DB, string) (masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse)
+	GetMarkupMasterList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetMarkupMasterById(tx *gorm.DB, Id int) (masteritempayloads.MarkupMasterResponse, *exceptions.BaseErrorResponse)
+	GetAllMarkupMasterIsActive(tx *gorm.DB) ([]masteritempayloads.MarkupMasterDropDownResponse, *exceptions.BaseErrorResponse)
+	SaveMarkupMaster(tx *gorm.DB, req masteritempayloads.MarkupMasterResponse) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatusMasterMarkupMaster(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
+	GetMarkupMasterByCode(*gorm.DB, string) (masteritempayloads.MarkupMasterResponse, *exceptions.BaseErrorResponse)
 }

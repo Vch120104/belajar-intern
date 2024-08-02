@@ -1,13 +1,14 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -18,10 +19,15 @@ type BomController interface {
 	GetBomMasterById(writer http.ResponseWriter, request *http.Request)
 	GetBomMasterList(writer http.ResponseWriter, request *http.Request)
 	SaveBomMaster(writer http.ResponseWriter, request *http.Request)
+	UpdateBomMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request)
+
 	GetBomDetailList(writer http.ResponseWriter, request *http.Request)
 	GetBomDetailById(writer http.ResponseWriter, request *http.Request)
 	SaveBomDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateBomDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteBomDetail(writer http.ResponseWriter, request *http.Request)
+
 	GetBomItemList(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -44,23 +50,23 @@ func NewBomController(bomService masteritemservice.BomService) BomController {
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param bom_master_id query string false "bom_master_id"
-// @Param bom_master_uom query string false "bom_master_uom"
-// @Param bom_master_qty query int false "bom_master_qty"
-// @Param item_name query int false "item_name"
+// @Param item_name query string false "item_name"
 // @Param bom_master_effective_date query string false "bom_master_effective_date"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /bom [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/ [get]
 func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	// Define query parameters
 	queryParams := map[string]string{
-		"mtr_bom.item_id":       queryValues.Get("item_id"), // Ambil nilai item_id tanpa mtr_bom.
-		"mtr_bom.bom_master_id": queryValues.Get("bom_master_id"),
-		"mtr_item.item_name":    queryValues.Get("item_name"),
+		"bom_master_id":             queryValues.Get("bom_master_id"), // Ambil nilai bom_master_id tanpa mtr_bom_master.
+		"item_id":                   queryValues.Get("item_id"),
+		"bom_master_effective_date": queryValues.Get("bom_master_effective_date"),
+		"is_active":                 queryValues.Get("is_active"),
+		"bom_master_qty":            queryValues.Get("bom_master_qty"),
 	}
 
 	// Extract pagination parameters
@@ -75,14 +81,17 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows,err := r.BomService.GetBomMasterList(criteria, paginate)
-
+	paginatedData, totalPages, totalRows, err := r.BomService.GetBomMasterList(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 	// Construct the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 	}
 }
 
@@ -93,15 +102,15 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 // @Tags Master : Bom Master
 // @Param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /{bom_master_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/{bom_master_id} [get]
 func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request) {
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	result,err := r.BomService.GetBomMasterById(bomMasterId)
-	if err != nil{
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+	result, err := r.BomService.GetBomMasterById(bomMasterId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
@@ -112,28 +121,63 @@ func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Master
-// @param reqBody body masteritempayloads.BomMasterResponse true "Form Request"
+// @param reqBody body masteritempayloads.BomMasterRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router / [put]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/ [post]
 func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.BomMasterRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create,err := r.BomService.SaveBomMaster(formRequest)
-	if err != nil{
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+	create, err := r.BomService.SaveBomMaster(formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.BomMasterId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+// @Summary Update Bom Master
+// @Description REST API Bom Master
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Master
+// @Param bom_master_id path int true "bom_master_id"
+// @Param reqBody body masteritempayloads.BomMasterRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/{bom_master_id} [put]
+func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest masteritempayloads.BomMasterRequest
+	var message = ""
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+
+	update, err := r.BomService.UpdateBomMaster(bomMasterId, formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if formRequest.BomMasterId == 0 {
+		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, update, message, http.StatusCreated)
+	} else {
+		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, update, message, http.StatusOK)
+	}
+
 }
 
 // @Summary Change Status Bom Master
@@ -143,18 +187,24 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 // @Tags Master : Bom Master
 // @param bom_master_id path int true "bom_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /{bom_master_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/{bom_master_id} [patch]
 func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
 
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	response,err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
-	if err != nil{
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+	entity, err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+
+	responseData := map[string]interface{}{
+		"is_active":     entity.IsActive,
+		"bom_master_id": entity.BomMasterId,
+	}
+
+	payloads.NewHandleSuccess(writer, responseData, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Bom Detail
@@ -166,18 +216,22 @@ func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, re
 // @Param limit query string true "limit"
 // @Param is_active query string false "is_active" Enums(true, false)
 // @Param bom_detail_id query string false "bom_detail_id"
+// @Param bom_master_id query string false "bom_master_id"
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /bom/all/detail [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/detail [get]
 func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	// Define query parameters
 	queryParams := map[string]string{
-		"mtr_bom_detail.bom_detail_id": queryValues.Get("bom_detail_id"), // Ambil nilai bom_detail_id tanpa mtr_bom_detail.
-		"mtr_bom_detail.bom_master_id": queryValues.Get("bom_master_id"),
+		"mtr_bom_detail.bom_detail_id":              queryValues.Get("bom_detail_id"), // Ambil nilai bom_detail_id tanpa mtr_bom_detail.
+		"mtr_bom_detail.bom_master_id":              queryValues.Get("bom_master_id"),
+		"mtr_bom_detail.bom_detail_qty":             queryValues.Get("bom_detail_qty"),
+		"mtr_bom_detail.bom_detail_remark":          queryValues.Get("bom_detail_remark"),
+		"mtr_bom_detail.bom_detail_costing_percent": queryValues.Get("bom_detail_costing_percent"),
 	}
 
 	// Extract pagination parameters
@@ -192,14 +246,17 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows,err := r.BomService.GetBomDetailList(criteria, paginate)
-
+	paginatedData, totalPages, totalRows, err := r.BomService.GetBomDetailList(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 	// Construct the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 }
@@ -209,20 +266,40 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Detail
-// @Param bom_master_id path int true "bom_master_id"
+// @Param bom_detail_id path int true "bom_detail_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /{bom_master_id}/detail [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/detail/{bom_detail_id} [get]
 func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request) {
 
-	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
 
-	result,err := r.BomService.GetBomDetailById(bomDetailId)
-	if err != nil{
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+	queryParams := map[string]string{
+		"bom_detail_id": chi.URLParam(request, "bom_detail_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(request.URL.Query(), "limit"),
+		Page:   utils.NewGetQueryInt(request.URL.Query(), "page"),
+		SortOf: request.URL.Query().Get("sort_of"),
+		SortBy: request.URL.Query().Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.BomService.GetBomDetailById(bomMasterId, criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+
+		exceptions.NewNotFoundException(writer, request, err)
+	}
+
 }
 
 // @Summary Save Bom Detail
@@ -230,35 +307,71 @@ func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request
 // @Accept json
 // @Produce json
 // @Tags Master : Bom Detail
-// @param reqBody body masteritempayloads.BomDetailResponse true "Form Request"
+// @Param reqBody body masteritempayloads.BomDetailRequest true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /{bom_detail_id}/detail [put]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/detail [post]
 func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.BomDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	create,err := r.BomService.SaveBomDetail(formRequest)
-	if err != nil{
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+	create, err := r.BomService.SaveBomDetail(formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 	if formRequest.BomDetailId == 0 {
 		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
 	} else {
 		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+// @Summary Update Bom Detail
+// @Description REST API Bom Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Detail
+// @Param bom_master_id path int true "bom_master_id"
+// @Param bom_detail_id path int true "bom_detail_id"
+// @Param reqBody body masteritempayloads.BomDetailRequest true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [put]
+func (r *BomControllerImpl) UpdateBomDetail(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest masteritempayloads.BomDetailRequest
+	var message = ""
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
+
+	update, err := r.BomService.UpdateBomDetail(bomDetailId, formRequest)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if formRequest.BomDetailId == 0 {
+		message = "Create Data Successfully!"
+		payloads.NewHandleSuccess(writer, update, message, http.StatusCreated)
+	} else {
+		message = "Update Data Successfully!"
+		payloads.NewHandleSuccess(writer, update, message, http.StatusOK)
+	}
+
 }
 
 // @Summary Get All Bom Item Lookup
-// @Description REST API Item
+// @Description REST API Bom Detail
 // @Accept json
 // @Produce json
-// @Tags Master : Item
+// @Tags Master : Bom Detail
 // @Param page query string true "page"
 // @Param limit query string true "limit"
 // @Param item_code query string false "item_code"
@@ -271,8 +384,8 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /{bom_master_id}/popup-item [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/popup-item [get]
 func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -299,13 +412,49 @@ func (r *BomControllerImpl) GetBomItemList(writer http.ResponseWriter, request *
 
 	// Call service to get paginated data
 	paginatedData, totalPages, totalRows, err := r.BomService.GetBomItemList(criteria, paginate)
-
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
 	// Construct the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		// If paginatedData is empty, return error response
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
+	}
+}
+
+// @Summary Delete Bom Detail
+// @Description REST API Bom Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Detail
+// @Param bom_master_id path int true "bom_master_id"
+// @Param bom_detail_id path int true "bom_detail_id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/detail/{bom_master_id}/{bom_detail_id} [delete]
+func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request *http.Request) {
+
+	bomDetailID := chi.URLParam(request, "bom_detail_id")
+
+	// Ubah bomDetailID menjadi integer
+	bomDetailIDInt, err := strconv.Atoi(bomDetailID)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			Err: errors.New("invalid bom_detail_id"),
+		})
+		return
+	}
+
+	// Call the method to delete bom details by their IDs
+	if deleted, err := r.BomService.DeleteByIds([]int{bomDetailIDInt}); err != nil {
+		exceptions.NewAppException(writer, request, err)
+	} else if deleted {
+		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
 	}
 }

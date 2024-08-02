@@ -1,7 +1,8 @@
 package masterrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,11 +11,12 @@ import (
 )
 
 type DeductionRepository interface {
-	GetAllDeduction(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetAllDeductionDetail(*gorm.DB, pagination.Pagination, int) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	GetDeductionById(*gorm.DB, int) (masterpayloads.DeductionListResponse, *exceptionsss_test.BaseErrorResponse)
-	GetByIdDeductionDetail(*gorm.DB, int) (masterpayloads.DeductionDetailResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusDeduction(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse)
+	GetAllDeduction(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllDeductionDetail(*gorm.DB, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetDeductionById(*gorm.DB, int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse)
+	GetByIdDeductionDetail(*gorm.DB, int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse)
+	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (masterentities.DeductionList, *exceptions.BaseErrorResponse)
+	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse)
+	ChangeStatusDeduction(*gorm.DB,  int) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	UpdateDeductionDetail( *gorm.DB, int, masterpayloads.DeductionDetailUpdate)(masterentities.DeductionDetail,*exceptions.BaseErrorResponse)
 }

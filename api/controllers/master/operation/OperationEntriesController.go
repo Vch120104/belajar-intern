@@ -1,7 +1,7 @@
 package masteroperationcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -51,8 +51,8 @@ func NewOperationEntriesController(operationEntriesService masteroperationservic
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-entries [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-entries/ [get]
 func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.ResponseWriter, request *http.Request) {
 
 	query := request.URL.Query()
@@ -76,7 +76,8 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 
 	result, err := r.operationEntriesService.GetAllOperationEntries(criteria, pagination)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
@@ -88,14 +89,15 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 // @Tags Master : Operation Entries
 // @Param operation_entries_id path int true "operation_entries_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-entries/{operation_entries_id} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-entries/{operation_entries_id} [get]
 func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.ResponseWriter, request *http.Request) {
 
 	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
 	result, err := r.operationEntriesService.GetOperationEntriesById(int(operationEntriesId))
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -110,8 +112,8 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.Res
 // @Param operation_key_id query int true "operation_key_id"
 // @Param operation_entries_code query string true "operation_entries_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-entries-by-name [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-entries/by-name [get]
 func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.ResponseWriter, request *http.Request) {
 
 	query := request.URL.Query()
@@ -129,7 +131,8 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.Res
 	})
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
+		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
@@ -141,8 +144,8 @@ func (r *OperationEntriesControllerImpl) GetOperationEntriesName(writer http.Res
 // @Tags Master : Operation Entries
 // @param reqBody body masteroperationpayloads.OperationEntriesResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-entries [post]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-entries/ [post]
 func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.ResponseWriter, request *http.Request) {
 
 	var requestForm masteroperationpayloads.OperationEntriesResponse
@@ -152,7 +155,7 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 	create, err := r.operationEntriesService.SaveOperationEntries(requestForm)
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
@@ -172,15 +175,15 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 // @Tags Master : Operation Entries
 // @param operation_entries_id path int true "operation_entries_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/operation-entries/{operation_entries_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/operation-entries/{operation_entries_id} [patch]
 func (r *OperationEntriesControllerImpl) ChangeStatusOperationEntries(writer http.ResponseWriter, request *http.Request) {
 	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
 
 	response, err := r.operationEntriesService.ChangeStatusOperationEntries(int(operationEntriesId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

@@ -13,3 +13,14 @@ type IncentiveGroupResponse struct {
 type ChangeStatusIncentiveGroupRequest struct {
 	IsActive bool `json:"is_active"`
 }
+
+type UpdateIncentiveGroupRequest struct {
+	IncentiveGroupCode string    `json:"incentive_group_code"`
+	IncentiveGroupName string    `json:"incentive_group_name"`
+	EffectiveDate      time.Time `json:"effective_date"`
+}
+
+type IncentiveGroupDropDown struct {
+	IncentiveGroupId       int    `json:"incentive_group_id"`
+	IncentiveGroupCodeName string `json:"incentive_group_code_name"`
+}

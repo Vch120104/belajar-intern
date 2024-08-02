@@ -1,9 +1,9 @@
 package masteritemcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/validation"
 	"net/http"
@@ -24,7 +24,9 @@ import (
 
 type MarkupMasterController interface {
 	GetMarkupMasterList(writer http.ResponseWriter, request *http.Request)
+	GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request)
 	GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request)
+	GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request)
 	SaveMarkupMaster(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request)
 }
@@ -52,8 +54,8 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/ [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -74,11 +76,25 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 	result, err := r.markupMasterService.GetMarkupMasterList(filterCondition, pagination)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request) {
+
+	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	result, err := r.markupMasterService.GetMarkupMasterById(markupMasterId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Markup Master Description by code
@@ -88,8 +104,8 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 // @Tags Master : Markup Master
 // @Param markup_master_code path string true "markup_master_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master-by-code/{markup_master_code} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/by-code/{markup_master_code} [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request) {
 
 	markupMasterCode := chi.URLParam(request, "markup_master_code")
@@ -97,7 +113,19 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 	result, err := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
 
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *MarkupMasterControllerImpl) GetAllMarkupMasterIsActive(writer http.ResponseWriter, request *http.Request) {
+
+	result, err := r.markupMasterService.GetAllMarkupMasterIsActive()
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -111,8 +139,8 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseW
 // @Tags Master : Markup Master
 // @param reqBody body masteritempayloads.MarkupMasterResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master [post]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/ [post]
 func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.MarkupMasterResponse
@@ -120,19 +148,19 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 	var message = ""
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.markupMasterService.SaveMarkupMaster(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -152,8 +180,8 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Tags Master : Markup Master
 // @param markup_master_id path int true "markup_master_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/markup-master/{markup_master_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/markup-master/{markup_master_id} [patch]
 func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
 	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
@@ -161,7 +189,7 @@ func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.Respon
 	response, err := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

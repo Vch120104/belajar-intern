@@ -12,3 +12,8 @@ type SkillLevelRequest struct {
 	SkillLevelCode        string `json:"skill_level_code"`
 	SkillLevelDescription string `json:"skill_level_description"`
 }
+
+type SkillLevelPatchResponse struct {
+	IsActive              bool   `json:"is_active"`
+	SkillLevelId          int    `json:"skill_level_id"`
+}

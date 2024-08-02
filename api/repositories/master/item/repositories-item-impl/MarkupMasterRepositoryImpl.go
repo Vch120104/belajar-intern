@@ -2,7 +2,7 @@ package masteritemrepositoryimpl
 
 import (
 	masteritementities "after-sales/api/entities/master/item"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
@@ -21,7 +21,7 @@ func StartMarkupMasterRepositoryImpl() masteritemrepository.MarkupMasterReposito
 	return &MarkupMasterRepositoryImpl{}
 }
 
-func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB,filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masteritementities.MarkupMaster
 
 	baseModelQuery := tx.Model(&responses)
@@ -31,14 +31,14 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB,filterCondi
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&responses, &pages, whereQuery)).Scan(&responses).Rows()
 
 	if err != nil {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return pages, &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New(""),
 		}
@@ -51,7 +51,7 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterList(tx *gorm.DB,filterCondi
 	return pages, nil
 }
 
-func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(tx *gorm.DB,Id int) (masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(tx *gorm.DB, Id int) (masteritempayloads.MarkupMasterResponse, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.MarkupMaster{}
 	response := masteritempayloads.MarkupMasterResponse{}
 
@@ -63,7 +63,7 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(tx *gorm.DB,Id int) (ma
 		Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -74,7 +74,21 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterById(tx *gorm.DB,Id int) (ma
 	return response, nil
 }
 
-func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB,req masteritempayloads.MarkupMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupMasterRepositoryImpl) GetAllMarkupMasterIsActive(tx *gorm.DB) ([]masteritempayloads.MarkupMasterDropDownResponse, *exceptions.BaseErrorResponse) {
+	MarkupMasters := masteritementities.MarkupMaster{}
+	response := []masteritempayloads.MarkupMasterDropDownResponse{}
+
+	err := tx.Model(&MarkupMasters).Select("mtr_markup_master.*, CONCAT(markup_master_code, ' - ', markup_master_description) AS markup_master_code_description").Where("is_active = 'true'").Find(&response).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	return response, nil
+}
+
+func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB, req masteritempayloads.MarkupMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.MarkupMaster{
 		IsActive:                req.IsActive,
 		MarkupMasterId:          req.MarkupMasterId,
@@ -86,13 +100,13 @@ func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB,req masteritem
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptionsss_test.BaseErrorResponse{
+			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
@@ -101,7 +115,7 @@ func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB,req masteritem
 
 	return true, nil
 }
-func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(tx *gorm.DB,Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.MarkupMaster
 
 	result := tx.Model(&entities).
@@ -109,7 +123,7 @@ func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(tx *gorm.DB,
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -124,7 +138,7 @@ func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(tx *gorm.DB,
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -132,7 +146,7 @@ func (r *MarkupMasterRepositoryImpl) ChangeStatusMasterMarkupMaster(tx *gorm.DB,
 
 	return true, nil
 }
-func (r *MarkupMasterRepositoryImpl) GetMarkupMasterByCode(tx *gorm.DB,markupCode string) (masteritempayloads.MarkupMasterResponse, *exceptionsss_test.BaseErrorResponse) {
+func (r *MarkupMasterRepositoryImpl) GetMarkupMasterByCode(tx *gorm.DB, markupCode string) (masteritempayloads.MarkupMasterResponse, *exceptions.BaseErrorResponse) {
 	response := masteritempayloads.MarkupMasterResponse{}
 	var entities masteritementities.MarkupMaster
 	rows, err := tx.Model(&entities).
@@ -140,7 +154,7 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterByCode(tx *gorm.DB,markupCod
 		First(&response).Rows()
 
 	if err != nil {
-		return response, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}

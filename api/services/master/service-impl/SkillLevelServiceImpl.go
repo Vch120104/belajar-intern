@@ -1,80 +1,101 @@
 package masterserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type SkillLevelServiceImpl struct {
-	skillLevelRepo masterrepository.SkillLevelRepository
+	SkillLevelRepo masterrepository.SkillLevelRepository
 	DB             *gorm.DB
+	RedisClient    *redis.Client // Redis client
 }
 
-func StartSkillLevelService(skillLevelRepo masterrepository.SkillLevelRepository, db *gorm.DB) masterservice.SkillLevelService {
+func StartSkillLevelService(SkillLevelRepo masterrepository.SkillLevelRepository, db *gorm.DB, redisClient *redis.Client) masterservice.SkillLevelService {
 	return &SkillLevelServiceImpl{
-		skillLevelRepo: skillLevelRepo,
+		SkillLevelRepo: SkillLevelRepo,
 		DB:             db,
+		RedisClient:    redisClient,
 	}
 }
 
-func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (s *SkillLevelServiceImpl) GetSkillLevelById(id int) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, err := s.skillLevelRepo.GetAllSkilllevel(tx, filterCondition, pages)
+	results, err := s.SkillLevelRepo.GetSkillLevelById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
 	return results, nil
 }
 
-func (s *SkillLevelServiceImpl) GetSkillLevelById(Id int) (masterpayloads.SkillLevelResponse, *exceptionsss_test.BaseErrorResponse) {
+func (s *SkillLevelServiceImpl) GetSkillLevelByCode(code string) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, err := s.skillLevelRepo.GetSkillLevelById(tx, Id)
+	results, err := s.SkillLevelRepo.GetSkillLevelByCode(tx, code)
+	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
 	return results, nil
 }
 
-func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-
-	if req.SkillLevelId != 0 {
-		_, err := s.skillLevelRepo.GetSkillLevelById(tx, req.SkillLevelId)
-		if err != nil {
-			return false, err
-		}
-	}
-
-	results, err := s.skillLevelRepo.SaveSkillLevel(tx, req)
+	results, err := s.SkillLevelRepo.GetAllSkillLevel(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return results, err
 	}
 	return results, nil
 }
 
-func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (masterpayloads.SkillLevelPatchResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
-	_, err := s.skillLevelRepo.GetSkillLevelById(tx, Id)
+	_, err := s.SkillLevelRepo.GetSkillLevelById(tx, Id)
 
 	if err != nil {
-		return false, err
+		return masterpayloads.SkillLevelPatchResponse{}, err
 	}
 
-	results, err := s.skillLevelRepo.ChangeStatusSkillLevel(tx, Id)
+	results, err := s.SkillLevelRepo.ChangeStatusSkillLevel(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
-	return true, nil
+	return results, nil
+}
+
+func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (masterentities.SkillLevel, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masterentities.SkillLevel{}, err
+	}
+	return results, nil
+}
+
+func (s *SkillLevelServiceImpl) UpdateSkillLevel(req masterpayloads.SkillLevelResponse, id int)(masterentities.SkillLevel,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	result,err := s.SkillLevelRepo.UpdateSkillLevel(tx,req,id)
+	defer helper.CommitOrRollback(tx,err)
+	if err != nil{
+		return masterentities.SkillLevel{},err
+	}
+
+	return result, nil
 }

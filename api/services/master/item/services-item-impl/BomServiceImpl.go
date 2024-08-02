@@ -1,7 +1,8 @@
 package masteritemserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masteritementities "after-sales/api/entities/master/item"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -9,109 +10,144 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type BomServiceImpl struct {
 	BomRepository masteritemrepository.BomRepository
 	DB            *gorm.DB
+	RedisClient   *redis.Client // Redis client
 }
 
-func StartBomService(BomRepository masteritemrepository.BomRepository, db *gorm.DB) masteritemservice.BomService {
+func StartBomService(BomRepository masteritemrepository.BomRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.BomService {
 	return &BomServiceImpl{
 		BomRepository: BomRepository,
 		DB:            db,
+		RedisClient:   redisClient,
 	}
 }
 
-func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
+
 	results, totalPages, totalRows, err := s.BomRepository.GetBomMasterList(tx, filterCondition, pages)
+	defer func() { helper.CommitOrRollback(tx, err) }()
 	if err != nil {
 		return results, 0, 0, err
 	}
 	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) GetBomMasterById(id int) (masteritempayloads.BomMasterRequest, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomMasterById(id int) (masteritempayloads.BomMasterRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.GetBomMasterById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
 	}
+
 	return results, nil
 }
 
-func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) SaveBomMaster(req masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.SaveBomMaster(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.Bom{}, err
 	}
 	return results, nil
 }
 
-func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) UpdateBomMaster(id int, req masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
-	_, err := s.BomRepository.GetBomMasterById(tx, Id)
-
+	results, err := s.BomRepository.UpdateBomMaster(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masteritementities.Bom{}, err
 	}
 
-	results, err := s.BomRepository.ChangeStatusBomMaster(tx, Id)
-	if err != nil {
-		return false, err
-	}
 	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) ChangeStatusBomMaster(Id int) (masteritementities.Bom, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+
+	// Ubah status
+	entity, err := s.BomRepository.ChangeStatusBomMaster(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masteritementities.Bom{}, err
+	}
+
+	return entity, nil
+}
+
+func (s *BomServiceImpl) GetBomDetailList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
 	results, totalPages, totalRows, err := s.BomRepository.GetBomDetailList(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results,0,0,err
+		return results, 0, 0, err
 	}
-	return results, totalPages, totalRows,nil
+
+	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) GetBomDetailById(id int) ([]masteritempayloads.BomDetailListResponse,*exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) GetBomDetailById(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-	results, err := s.BomRepository.GetBomDetailById(tx, id)
-
+	results, totalPages, totalRows, err := s.BomRepository.GetBomDetailById(tx, id, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results,err
+		return results, 0, 0, err
 	}
-	return results,nil
+	return results, totalPages, totalRows, nil
 }
 
-func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (bool,*exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) SaveBomDetail(req masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.BomRepository.SaveBomDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false,err
+		return masteritementities.BomDetail{}, err
 	}
-	return results,nil
+	return results, nil
 }
 
-func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int,*exceptionsss_test.BaseErrorResponse) {
+func (s *BomServiceImpl) UpdateBomDetail(id int, req masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
+
+	results, err := s.BomRepository.UpdateBomDetail(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masteritementities.BomDetail{}, err
+	}
+	return results, nil
+}
+
+func (s *BomServiceImpl) GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	//log.Printf("Menerima kondisi filter: %+v", filterCondition) // Tambahkan log untuk menerima kondisi filter
 	results, totalPages, totalRows, err := s.BomRepository.GetBomItemList(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results,0,0,err
+		return results, 0, 0, err
 	}
-	return results, totalPages, totalRows,nil
+	return results, totalPages, totalRows, nil
+}
+
+func (s *BomServiceImpl) DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	delete, err := s.BomRepository.DeleteByIds(tx, ids)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
 }

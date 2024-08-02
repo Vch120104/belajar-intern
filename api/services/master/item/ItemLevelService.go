@@ -1,14 +1,18 @@
 package masteritemservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masteritemlevelpayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
+	"after-sales/api/utils"
 )
 
 type ItemLevelService interface {
-	Save(masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetById(int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptionsss_test.BaseErrorResponse)
-	GetAll(request masteritemlevelpayloads.GetAllItemLevelResponse, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatus(int) (bool, *exceptionsss_test.BaseErrorResponse)
+	Save(masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse)
+	GetById(int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse)
+	GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse)
+	GetItemLevelLookUp(filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetItemLevelLookUpbyId(itemLevelId int) (masteritemlevelpayloads.GetItemLevelLookUp, *exceptions.BaseErrorResponse)
+	GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	ChangeStatus(int) (bool, *exceptions.BaseErrorResponse)
 }

@@ -1,12 +1,12 @@
 package mastercontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	"fmt"
 
 	// "after-sales/api/helper"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	helper "after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -52,8 +52,8 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 // @Param sort_by query string false "sort_by"
 // @Param sort_of query string false "sort_of"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/discount [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount [get]
 func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryParams := map[string]string{
@@ -73,7 +73,7 @@ func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, requ
 
 	result, err := r.discountservice.GetAllDiscount(filterCondition, pagination)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -86,19 +86,28 @@ func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, requ
 // @Produce json
 // @Tags Master : Discount
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/discount-drop-down/ [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount/drop-down/ [get]
 func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.discountservice.GetAllDiscountIsActive()
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+// @Summary Get Discount By ID
+// @Description REST API Discount
+// @Accept json
+// @Produce json
+// @Tags Master : Discount
+// @Param id path string true "id"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount/by-id/{id} [get]
 func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, request *http.Request) {
 	discountId, errr := strconv.Atoi(chi.URLParam(request, "id"))
 	if errr != nil {
@@ -108,7 +117,7 @@ func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, req
 	discountResponse, errors := r.discountservice.GetDiscountById(int(discountId))
 
 	if errors != nil {
-		helper_test.ReturnError(writer, request, errors)
+		helper.ReturnError(writer, request, errors)
 		return
 	}
 	payloads.NewHandleSuccess(writer, discountResponse, utils.GetDataSuccess, http.StatusOK)
@@ -121,8 +130,8 @@ func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, req
 // @Tags Master : Discount
 // @Param discount_code path string true "discount_code"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/discount-by-code/{discount_code} [get]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount/by-code/{discount_code} [get]
 func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	// discountCode, _ := strconv.Atoi(chi.URLParam(request, "discount_code"))
@@ -130,7 +139,7 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 	discountCode := query.Get("discount_code_value")
 	result, err := r.discountservice.GetDiscountByCode(discountCode)
 	if err != nil {
-		exceptionsss_test.NewNotFoundException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
@@ -144,8 +153,8 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 // @Tags Master : Discount
 // @param reqBody body masterpayloads.DiscountResponse true "Form Request"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/discount [post]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount [post]
 func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, request *http.Request) {
 
 	var requestForm masterpayloads.DiscountResponse
@@ -153,18 +162,18 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 
 	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, requestForm)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.discountservice.SaveDiscount(requestForm)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -184,15 +193,15 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 // @Tags Master : Discount
 // @param discount_code_id path int true "discount_code_id"
 // @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.Error
-// @Router /aftersales-service/api/aftersales/discount/{discount_code_id} [patch]
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/discount/{discount_code_id} [patch]
 func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request) {
 	discountId, _ := strconv.Atoi(chi.URLParam(request, "id"))
 
 	response, err := r.discountservice.ChangeStatusDiscount(int(discountId))
 
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 

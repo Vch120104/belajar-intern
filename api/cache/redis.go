@@ -1,45 +1,29 @@
+// Package cache provides utility functions for interacting with Redis.
 package cache
 
 import (
 	"context"
 	"encoding/json"
-	"os"
 	"time"
+
 	"github.com/redis/go-redis/v9"
 )
 
-func InitRedis() Redis {
-	opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
-	if err != nil {
-		panic(err)
-	}
-	rdb := redis.NewClient(opt)
-	return &redisClient{
-		rdb: rdb,
-	}
-}
-
-type redisClient struct {
-	rdb *redis.Client
-}
-
-type Redis interface {
-	Set(ctx context.Context, key string, value interface{}) error
-	Get(tx context.Context, key string) (string, error)
-}
-
-func (c *redisClient) Set(ctx context.Context, key string, value interface{}) error {
+// SetRedisValue sets the value for a specific key in the Redis cache.
+func SetRedisValue(ctx context.Context, rdb *redis.Client, key string, value interface{}) error {
 	jsonData, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
 
-	err = c.rdb.Set(ctx, key, jsonData, 10*time.Minute).Err()
+	// Set the key's value in Redis with JSON data and a 10-minute expiration.
+	err = rdb.Set(ctx, key, jsonData, 10*time.Minute).Err()
 	return err
 }
 
-func (c *redisClient) Get(ctx context.Context, key string) (string, error) {
-	val, err := c.rdb.Get(ctx, key).Result()
+// GetRedisValue retrieves the value from the Redis cache based on the key.
+func GetRedisValue(ctx context.Context, rdb *redis.Client, key string) (string, error) {
+	val, err := rdb.Get(ctx, key).Result()
 	if err != nil {
 		return "", err
 	}

@@ -1,7 +1,8 @@
 package masterserviceimpl
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -9,35 +10,38 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type WarrantyFreeServiceServiceImpl struct {
 	warrantyFreeServiceRepo masterrepository.WarrantyFreeServiceRepository
 	DB                      *gorm.DB
+	RedisClient             *redis.Client // Redis client
 }
 
-func StartWarrantyFreeServiceService(warrantyFreeServiceRepo masterrepository.WarrantyFreeServiceRepository, db *gorm.DB) masterservice.WarrantyFreeServiceService {
+func StartWarrantyFreeServiceService(warrantyFreeServiceRepo masterrepository.WarrantyFreeServiceRepository, db *gorm.DB, redisClient *redis.Client) masterservice.WarrantyFreeServiceService {
 	return &WarrantyFreeServiceServiceImpl{
 		warrantyFreeServiceRepo: warrantyFreeServiceRepo,
 		DB:                      db,
+		RedisClient:             redisClient,
 	}
 }
 
-func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, totalPages, totalRows, err := s.warrantyFreeServiceRepo.GetAllWarrantyFreeService(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 	results, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -45,37 +49,41 @@ func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map
 	return results, nil
 }
 
-func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpayloads.WarrantyFreeServiceRequest) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
-
-	if req.WarrantyFreeServicesId != 0 {
-		_, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, req.WarrantyFreeServicesId)
-		if err != nil {
-			return false, err
-		}
-	}
 
 	results, err := s.warrantyFreeServiceRepo.SaveWarrantyFreeService(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masterentities.WarrantyFreeService{}, err
 	}
 	return results, nil
 }
 
-func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int) (masterpayloads.WarrantyFreeServicePatchResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	defer helper.CommitOrRollback(tx)
 
 	_, err := s.warrantyFreeServiceRepo.GetWarrantyFreeServiceById(tx, Id)
 
 	if err != nil {
-		return false, err
+		return masterpayloads.WarrantyFreeServicePatchResponse{}, err
 	}
 
 	results, err := s.warrantyFreeServiceRepo.ChangeStatusWarrantyFreeService(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return masterpayloads.WarrantyFreeServicePatchResponse{}, err
 	}
 	return results, nil
+}
+
+func (s *WarrantyFreeServiceServiceImpl) UpdateWarrantyFreeService(req masterentities.WarrantyFreeService, id int)(masterentities.WarrantyFreeService,*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	result,err := s.warrantyFreeServiceRepo.UpdateWarrantyFreeService(tx,req,id)
+	defer helper.CommitOrRollback(tx,err)
+	if err != nil{
+		return masterentities.WarrantyFreeService{},err
+	}
+
+	return result, nil
 }

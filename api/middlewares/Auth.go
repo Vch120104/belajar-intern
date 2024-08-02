@@ -1,9 +1,10 @@
 package middlewares
 
 import (
-	"after-sales/api/exceptions"
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/securities"
-	"encoding/json"
+
+	// "encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,7 +25,9 @@ func SetupAuthenticationMiddleware() func(http.Handler) http.Handler {
 			err := securities.GetAuthentication(r)
 
 			if err != nil {
-				exceptions.AuthorizeException(w, r, err.Error())
+				exceptions.NewAuthorizationException(w, r, &exceptions.BaseErrorResponse{
+					Err: err,
+				})
 				return
 			}
 
@@ -54,39 +57,41 @@ func (middleware *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reque
 
 	err := securities.GetAuthentication(r)
 	if err != nil {
-		exceptions.AuthorizeException(w, r, err.Error())
+		exceptions.NewAuthorizationException(w, r, &exceptions.BaseErrorResponse{
+			Err: err,
+		})
 		return
 	}
 
 	middleware.Handler.ServeHTTP(w, r)
 }
 
-func NotFoundHandler(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			if r := recover(); r != nil {
-				notFoundErr, ok := r.(exceptions.NotFoundError)
-				if !ok {
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-					return
-				}
+// func NotFoundHandler(next http.Handler) http.Handler {
+// 	fn := func(w http.ResponseWriter, r *http.Request) {
+// 		defer func() {
+// 			if r := recover(); r != nil {
+// 				notFoundErr, ok := r.(exceptions.NotFoundError)
+// 				if !ok {
+// 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+// 					return
+// 				}
 
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusNotFound)
-				errResponse := exceptions.CustomError{
-					StatusCode: http.StatusNotFound,
-					Message:    "Not Found",
-					Error:      notFoundErr.Error(), // Panggil metode Error() untuk mendapatkan pesan kesalahan
-				}
-				json.NewEncoder(w).Encode(errResponse)
-			}
-		}()
+// 				w.Header().Set("Content-Type", "application/json")
+// 				w.WriteHeader(http.StatusNotFound)
+// 				errResponse := exceptions.CustomError{
+// 					StatusCode: http.StatusNotFound,
+// 					Message:    "Not Found",
+// 					Error:      notFoundErr.Error(), // Panggil metode Error() untuk mendapatkan pesan kesalahan
+// 				}
+// 				json.NewEncoder(w).Encode(errResponse)
+// 			}
+// 		}()
 
-		next.ServeHTTP(w, r)
-	}
+// 		next.ServeHTTP(w, r)
+// 	}
 
-	return http.HandlerFunc(fn)
-}
+// 	return http.HandlerFunc(fn)
+// }
 
 // Logger adalah middleware untuk logging setiap request yang masuk
 func Logger(next http.Handler) http.Handler {

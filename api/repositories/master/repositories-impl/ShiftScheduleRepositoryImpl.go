@@ -2,7 +2,7 @@ package masterrepositoryimpl
 
 import (
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -19,7 +19,7 @@ func StartShiftScheduleRepositoryImpl() masterrepository.ShiftScheduleRepository
 	return &ShiftScheduleRepositoryImpl{}
 }
 
-func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptionsss_test.BaseErrorResponse) {
+func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masterentities.ShiftSchedule{}
 	//define base model
 	baseModelQuery := tx.Model(&entities)
@@ -29,14 +29,14 @@ func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondi
 	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
 	if len(entities) == 0 {
-		return pages,  &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return pages,  &exceptionsss_test.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
@@ -62,7 +62,7 @@ func (*ShiftScheduleRepositoryImpl) GetAllShiftSchedule(tx *gorm.DB, filterCondi
 // 	return response, nil
 // }
 
-func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (masterpayloads.ShiftScheduleResponse, *exceptionsss_test.BaseErrorResponse) {
+func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (masterpayloads.ShiftScheduleResponse, *exceptions.BaseErrorResponse) {
 	entities := masterentities.ShiftSchedule{}
 	response := masterpayloads.ShiftScheduleResponse{}
 
@@ -74,7 +74,7 @@ func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (m
 		Rows()
 
 	if err != nil {
-		return response,  &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -105,7 +105,7 @@ func (*ShiftScheduleRepositoryImpl) GetShiftScheduleById(tx *gorm.DB, Id int) (m
 // 	return response, nil
 // }
 
-func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpayloads.ShiftScheduleResponse) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpayloads.ShiftScheduleResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterentities.ShiftSchedule{
 		IsActive:        req.IsActive,
 		ShiftScheduleId: req.ShiftScheduleId,
@@ -131,7 +131,7 @@ func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpay
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err,
 		}
@@ -140,7 +140,7 @@ func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpay
 	return true, nil
 }
 
-func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.ShiftSchedule
 
 	result := tx.Model(&entities).
@@ -148,7 +148,7 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 		First(&entities)
 
 	if result.Error != nil {
-		return false,  &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -163,7 +163,7 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false,  &exceptionsss_test.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}

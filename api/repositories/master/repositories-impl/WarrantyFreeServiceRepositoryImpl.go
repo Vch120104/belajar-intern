@@ -1,12 +1,14 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	exceptionsss_test "after-sales/api/expectionsss"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -22,7 +24,7 @@ func StartWarrantyFreeServiceRepositoryImpl() masterrepository.WarrantyFreeServi
 	return &WarrantyFreeServiceRepositoryImpl{}
 }
 
-func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.WarrantyFreeServiceListResponse
 	var getBrandResponse []masterpayloads.BrandResponse
 	var getModelResponse []masterpayloads.UnitModelResponse
@@ -70,7 +72,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	rows, err := whereQuery.Scan(&responses).Rows()
 
 	if err != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -79,20 +81,20 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	defer rows.Close()
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
 		}
 	}
 
 	// join with mtr_brand
 
-	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand?page=0&limit=1000000&brand_code=" + brandCode
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_code=" + brandCode
 
 	errUrlUnitBrand := utils.Get(unitBrandUrl, &getBrandResponse, nil)
 
 	if errUrlUnitBrand != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -102,12 +104,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	// join with mtr_unit_model
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model?page=0&limit=100000&model_code=" + modelCode
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=100000&model_code=" + modelCode
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
 	if errUrlUnitModel != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -117,12 +119,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 
 	// join with mtr_warranty_free_service_type
 
-	warrantyFreeServiceTypeUrl := "http://10.1.32.26:8000/general-service/api/general/warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
+	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-free-service-type?warranty_free_service_type_code=" + warrantyFreeServiceTypeCode
 
 	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
 
 	if errUrlWarrantyFreeServiceType != nil {
-		return nil, 0, 0, &exceptionsss_test.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -135,7 +137,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	entities := masterentities.WarrantyFreeService{}
 	response := masterpayloads.WarrantyFreeServiceResponse{}
 	var getUnitBrandResponse masterpayloads.BrandResponse
@@ -151,7 +153,7 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 		Rows()
 
 	if err != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -161,12 +163,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	// join with mtr_brand on sales service
 
-	unitBrandUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(response.BrandId)
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(response.BrandId)
 
 	errUrlUnitBrand := utils.Get(unitBrandUrl, &getUnitBrandResponse, nil)
 
 	if errUrlUnitBrand != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -176,12 +178,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	//join with mtr_unit_model on sales service
 
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(response.ModelId)
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(response.ModelId)
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getUnitModelResponse, nil)
 
 	if errUrlUnitModel != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -191,12 +193,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	// join with mtr_unit_variant on sales service
 
-	unitVariantUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-variant/" + strconv.Itoa(response.VariantId)
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(response.VariantId)
 
 	errUrlUnitVariant := utils.Get(unitVariantUrl, &getUnitVariantResponse, nil)
 
 	if errUrlUnitVariant != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -206,12 +208,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 
 	// join with mtr_warranty_free_service_type on general service
 
-	warrantyFreeServiceTypeUrl := "http://10.1.32.26:8000/general-service/api/general/warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
+	warrantyFreeServiceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-free-service-type/" + strconv.Itoa(response.WarrantyFreeServiceTypeId)
 
 	errUrlWarrantyFreeServiceType := utils.Get(warrantyFreeServiceTypeUrl, &getWarrantyFreeServiceTypeResponse, nil)
 
 	if errUrlWarrantyFreeServiceType != nil {
-		return nil, &exceptionsss_test.BaseErrorResponse{
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -224,42 +226,43 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 	return result, nil
 }
 
-func (r *WarrantyFreeServiceRepositoryImpl) SaveWarrantyFreeService(tx *gorm.DB, request masterpayloads.WarrantyFreeServiceRequest) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarrantyFreeServiceRepositoryImpl) SaveWarrantyFreeService(tx *gorm.DB, request masterpayloads.WarrantyFreeServiceRequest) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse) {
 	entities := masterentities.WarrantyFreeService{
-		WarrantyFreeServicesId:        request.WarrantyFreeServicesId,
 		BrandId:                       request.BrandId,
 		ModelId:                       request.ModelId,
 		WarrantyFreeServiceTypeId:     request.WarrantyFreeServiceTypeId,
 		EffectiveDate:                 request.EffectiveDate,
-		ExpireMileage:                 request.ExpireMileage,
-		ExpireMonth:                   request.ExpireMonth,
+		ExpireMileage:                 &request.ExpireMileage,
+		ExpireMonth:                   &request.ExpireMonth,
 		VariantId:                     request.VariantId,
-		ExpireMileageExtendedWarranty: request.ExpireMileageExtendedWarranty,
-		ExpireMonthExtendedWarranty:   request.ExpireMonthExtendedWarranty,
-		Remark:                        request.Remark,
+		ExpireMileageExtendedWarranty: &request.ExpireMileageExtendedWarranty,
+		ExpireMonthExtendedWarranty:   &request.ExpireMonthExtendedWarranty,
+		Remark:                        &request.Remark,
+		ExtendedWarranty:              &request.ExtendedWarranty,
 	}
 
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return masterentities.WarrantyFreeService{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
-func (r *WarrantyFreeServiceRepositoryImpl) ChangeStatusWarrantyFreeService(tx *gorm.DB, Id int) (bool, *exceptionsss_test.BaseErrorResponse) {
+func (r *WarrantyFreeServiceRepositoryImpl) ChangeStatusWarrantyFreeService(tx *gorm.DB, Id int) (masterpayloads.WarrantyFreeServicePatchResponse, *exceptions.BaseErrorResponse) {
 	var entities masterentities.WarrantyFreeService
+	var response masterpayloads.WarrantyFreeServicePatchResponse
 
 	result := tx.Model(&entities).
-		Where("warranty_free_services_id = ?", Id).
+		Where(masterentities.WarrantyFreeService{WarrantyFreeServicesId: Id}).
 		First(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
@@ -274,11 +277,35 @@ func (r *WarrantyFreeServiceRepositoryImpl) ChangeStatusWarrantyFreeService(tx *
 	result = tx.Save(&entities)
 
 	if result.Error != nil {
-		return false, &exceptionsss_test.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	return true, nil
+	data := tx.Model(&entities).
+		Where(masterentities.WarrantyFreeService{WarrantyFreeServicesId: Id}).
+		First(&response)
+
+	if data.Error != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	return response, nil
+}
+
+func (r *WarrantyFreeServiceRepositoryImpl) UpdateWarrantyFreeService(tx *gorm.DB, req masterentities.WarrantyFreeService, id int) (masterentities.WarrantyFreeService, *exceptions.BaseErrorResponse) {
+	var entity masterentities.WarrantyFreeService
+
+	err := tx.Model(entity).Where(masterentities.WarrantyFreeService{WarrantyFreeServicesId: id}).Updates(req).First(&entity).Error
+	if err != nil {
+		return masterentities.WarrantyFreeService{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		}
+	}
+	return entity, nil
 }

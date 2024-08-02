@@ -1,7 +1,8 @@
 package masterrepository
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterentities "after-sales/api/entities/master"
+	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
@@ -10,8 +11,10 @@ import (
 )
 
 type ForecastMasterRepository interface {
-	GetForecastMasterById(*gorm.DB, int) (masterpayloads.ForecastMasterResponse, *exceptionsss_test.BaseErrorResponse)
-	SaveForecastMaster(*gorm.DB, masterpayloads.ForecastMasterResponse) (bool, *exceptionsss_test.BaseErrorResponse)
-	ChangeStatusForecastMaster(*gorm.DB, int) (bool, *exceptionsss_test.BaseErrorResponse)
-	GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse)
+	GetForecastMasterById(*gorm.DB, int) (masterpayloads.ForecastMasterResponse, *exceptions.BaseErrorResponse)
+	SaveForecastMaster(*gorm.DB, masterpayloads.ForecastMasterResponse) (masterentities.ForecastMaster, *exceptions.BaseErrorResponse)
+	ChangeStatusForecastMaster(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
+	GetAllForecastMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	UpdateForecastMaster(tx *gorm.DB, req masterpayloads.ForecastMasterResponse, id int)(masterentities.ForecastMaster,*exceptions.BaseErrorResponse)
 }
+

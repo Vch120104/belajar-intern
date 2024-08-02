@@ -1,14 +1,21 @@
 package masterwarehouseservice
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
+	exceptions "after-sales/api/exceptions"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	pagination "after-sales/api/payloads/pagination"
+	"after-sales/api/utils"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type WarehouseLocationService interface {
-	Save(masterwarehousepayloads.GetWarehouseLocationResponse) (bool,*exceptionsss_test.BaseErrorResponse)
-	GetById(int) (masterwarehousepayloads.GetWarehouseLocationResponse,*exceptionsss_test.BaseErrorResponse)
-	GetAll(request masterwarehousepayloads.GetAllWarehouseLocationRequest, pages pagination.Pagination) (pagination.Pagination,*exceptionsss_test.BaseErrorResponse)
-	ChangeStatus(int) (bool,*exceptionsss_test.BaseErrorResponse)
+	Save(masterwarehouseentities.WarehouseLocation) (bool, *exceptions.BaseErrorResponse)
+	GetById(int) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse)
+	GetAll([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	ChangeStatus(int) (bool, *exceptions.BaseErrorResponse)
+	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
+	UploadPreviewFile(rows [][]string, companyId int) ([]masterwarehousepayloads.GetWarehouseLocationPreviewResponse, *exceptions.BaseErrorResponse)
+	ProcessWarehouseLocationTemplate(masterwarehousepayloads.ProcessWarehouseLocationTemplate, int) (bool, *exceptions.BaseErrorResponse)
 }
