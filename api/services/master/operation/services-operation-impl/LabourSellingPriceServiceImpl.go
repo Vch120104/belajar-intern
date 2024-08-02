@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	masteroperationservice "after-sales/api/services/master/operation"
+	"after-sales/api/utils"
 
 	"gorm.io/gorm"
 )
@@ -19,8 +20,21 @@ type LabourSellingPriceServiceImpl struct {
 func StartLabourSellingPriceService(labourSellingPriceRepo masteroperationrepository.LabourSellingPriceRepository, db *gorm.DB) masteroperationservice.LabourSellingPriceService {
 	return &LabourSellingPriceServiceImpl{
 		labourSellingPriceRepo: labourSellingPriceRepo,
-		DB:             db,
+		DB:                     db,
 	}
+}
+
+// GetAllSellingPrice implements masteroperationservice.LabourSellingPriceService.
+func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(internalCondition []utils.FilterCondition, externalCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+	// tx := s.DB.Begin()
+	// defer helper.CommitOrRollback(tx)
+	// results, totalPages, totalRows, err := s.labourSellingPriceRepo.GetAllSellingPrice(tx, internalCondition, externalCondition, pages)
+
+	// if err != nil {
+	// 	return results, totalPages, totalRows, err
+	// }
+	// return results, totalPages, totalRows, nil
+	panic("unimplemented")
 }
 
 func (s *LabourSellingPriceServiceImpl) GetLabourSellingPriceById(Id int) (map[string]interface{}, *exceptionsss_test.BaseErrorResponse) {

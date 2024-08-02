@@ -75,7 +75,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
 		//execute
-		rows, err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses).Rows()
+		err := joinTable.Offset(page * limit).Limit(limit).Scan(&responses)
 
 		groupServiceUrl := "http://10.1.32.26:8000/general-service/api/general/filter-item-group?item_group_code=" + queryParams["item_group_code"]
 		errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
@@ -83,7 +83,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		if errUrlItemGroup != nil {
 			return nil, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        errUrlItemGroup,
 			}
 		}
 
@@ -108,7 +108,7 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		if errUrlSupplierMaster != nil {
 			return nil, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        errUrlSupplierMaster,
 			}
 		}
 
@@ -117,11 +117,9 @@ func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, queryParams map[strin
 		if err != nil {
 			return nil, &exceptionsss_test.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Err:        err.Error,
 			}
 		}
-
-		defer rows.Close()
 
 		return joinedDataSecond, nil
 	}

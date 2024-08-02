@@ -6,6 +6,8 @@ import (
 	jsonchecker "after-sales/api/helper_testt/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
+
+	// "after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
@@ -17,6 +19,7 @@ import (
 
 type LabourSellingPriceController interface {
 	GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request)
+	// GetAllSellingPrice(writer http.ResponseWriter, request *http.Request)
 	SaveLabourSellingPrice(writer http.ResponseWriter, request *http.Request)
 }
 type LabourSellingPriceControllerImpl struct {
@@ -27,6 +30,27 @@ func NewLabourSellingPriceController(LabourSellingPriceService masteroperationse
 	return &LabourSellingPriceControllerImpl{
 		LabourSellingPriceService: LabourSellingPriceService,
 	}
+}
+
+func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.ResponseWriter, request *http.Request) {
+	// queryValues := request.URL.Query()
+
+	// internalFilterCondition := map[string]string{
+	// 	"mtr_labour_selling_price.company_id":     queryValues.Get("company_id"),
+	// 	"mtr_labour_selling_price.effective_date": queryValues.Get("effective_date"),
+	// 	"mtr_labour_selling_price.billable_to":    queryValues.Get("billable_to"),
+	// }
+	// externalFilterCondition := map[string]string{
+
+	// 	"mtr_brand.brand_id": queryValues.Get("brand_idw"),
+	// }
+
+	// paginate := pagination.Pagination{
+	// 	Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+	// 	Page:   utils.NewGetQueryInt(queryValues, "page"),
+	// 	SortOf: queryValues.Get("sort_of"),
+	// 	SortBy: queryValues.Get("sort_by"),
+	// }
 }
 
 func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request) {

@@ -17,17 +17,18 @@ import (
 type LabourSellingPriceRepositoryImpl struct {
 }
 
+// GetAllLabourSellingPrice implements masteroperationrepository.LabourSellingPriceRepository.
+func (r *LabourSellingPriceRepositoryImpl) GetAllLabourSellingPrice(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (map[string]interface{}, int, int, *exceptionsss_test.BaseErrorResponse) {
+	panic("unimplemented")
+}
+
 func StartLabourSellingPriceRepositoryImpl() masteroperationrepository.LabourSellingPriceRepository {
 	return &LabourSellingPriceRepositoryImpl{}
 }
 
-// GetAllLabourSellingPrice implements masteroperationrepository.LabourSellingPriceRepository.
-func (r *LabourSellingPriceRepositoryImpl) GetAllLabourSellingPrice(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (map[string]interface{},int,int *exceptionsss_test.BaseErrorResponse) {
-
-	entities := masteroperationentities.LabourSellingPrice{}
-
-	query := tx.Model(entities)
-
+// GetAllSellingPrice implements masteroperationrepository.LabourSellingPriceRepository.
+func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, internalCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptionsss_test.BaseErrorResponse) {
+	panic("unimplemented")
 }
 
 func isNotInList(list []int, value int) bool {
