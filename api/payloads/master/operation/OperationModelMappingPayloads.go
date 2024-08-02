@@ -17,7 +17,7 @@ type OperationModelMappingFrtRequest struct {
 	OperationFrtId          int     `json:"operation_frt_id"`
 	VariantId               int     `json:"variant_id"`
 	FrtHour                 float64 `json:"frt_hour"`
-	FrtHourExpress          float64 `json:"frt_hour_2express"`
+	FrtHourExpress          float64 `json:"frt_hour_express"`
 }
 
 type OperationModelMappingRequest struct {
