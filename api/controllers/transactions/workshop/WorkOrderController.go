@@ -169,16 +169,14 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 
 	success, err := r.WorkOrderService.New(workOrderRequest)
 	if err != nil {
-
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	// Kirim respons ke klien sesuai hasil penyimpanan
-	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusCreated)
+	if success.WorkOrderSystemNumber > 0 {
+		payloads.NewHandleSuccess(writer, nil, "Work order created successfully", http.StatusCreated)
 	} else {
-		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
 
 }
@@ -315,9 +313,7 @@ func (r *WorkOrderControllerImpl) DeleteStatus(writer http.ResponseWriter, reque
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-bill [get]
 func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
 
-	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewBill()
 	if err != nil {
 
@@ -440,10 +436,8 @@ func (r *WorkOrderControllerImpl) NewType(writer http.ResponseWriter, request *h
 		}
 	}
 
-	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewType(filters)
 	if err != nil {
-		// Menangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
@@ -576,9 +570,7 @@ func (r *WorkOrderControllerImpl) NewDropPoint(writer http.ResponseWriter, reque
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-vehicle-brand [get]
 func (r *WorkOrderControllerImpl) NewVehicleBrand(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
 
-	// Panggil fungsi GetAll dari layanan untuk mendapatkan semua status work order
 	statuses, err := r.WorkOrderService.NewVehicleBrand()
 	if err != nil {
 
@@ -613,7 +605,6 @@ func (r *WorkOrderControllerImpl) NewVehicleModel(writer http.ResponseWriter, re
 
 	create, baseErr := r.WorkOrderService.NewVehicleModel(brandId)
 
-	// Periksa apakah ada error yang dikembalikan
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
@@ -641,7 +632,6 @@ func (r *WorkOrderControllerImpl) NewVehicleModel(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/lookup-vehicle [get]
 func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
@@ -685,7 +675,6 @@ func (r *WorkOrderControllerImpl) VehicleLookup(writer http.ResponseWriter, requ
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/lookup-campaign [get]
 func (r *WorkOrderControllerImpl) CampaignLookup(writer http.ResponseWriter, request *http.Request) {
-	// Menginisialisasi koneksi database
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
@@ -803,13 +792,13 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
 
-	err := r.WorkOrderService.UpdateRequest(int(workorderID), int(requestID), groupRequest)
+	update, err := r.WorkOrderService.UpdateRequest(int(workorderID), int(requestID), groupRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Request updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Request updated successfully", http.StatusOK)
 
 }
 
@@ -837,7 +826,7 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 		return
 	}
 
-	if success {
+	if success.WorkOrderRequestId > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Request added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
@@ -1020,14 +1009,14 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 	var vehicleRequest transactionworkshoppayloads.WorkOrderServiceVehicleRequest
 	helper.ReadFromRequestBody(request, &vehicleRequest)
 
-	err := r.WorkOrderService.UpdateVehicleService(int(workorderID), int(vehicleServiceID), vehicleRequest)
+	update, err := r.WorkOrderService.UpdateVehicleService(int(workorderID), int(vehicleServiceID), vehicleRequest)
 
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Vehicle service updated successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Vehicle service updated successfully", http.StatusOK)
 }
 
 // AddVehicleService adds a new vehicle service to a work order
@@ -1054,7 +1043,7 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 		return
 	}
 
-	if success {
+	if success.WorkOrderServiceVehicleId > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Vehicle service added successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to add vehicle service", http.StatusInternalServerError)
@@ -1208,20 +1197,15 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 		return
 	}
 
-	// Read the request body and convert to WorkOrderRequest struct
 	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalSaveRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	// Initialize the database connection
-
-	// Save the work order
 	success, baseErr := r.WorkOrderService.Save(workOrderRequest, workOrderId)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	// Send response to client based on the save result
 	if success {
 		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
 	} else {
@@ -1249,9 +1233,6 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	// Initialize database connection
-
-	// Submit work order
 	success, newDocumentNumber, baseErr := r.WorkOrderService.Submit(workOrderIdInt)
 	if baseErr != nil {
 		if baseErr.Message == "Document number has already been generated" {
@@ -1264,7 +1245,6 @@ func (r *WorkOrderControllerImpl) Submit(writer http.ResponseWriter, request *ht
 		return
 	}
 
-	// Handle success and failure responses
 	if success {
 		responseData := transactionworkshoppayloads.SubmitWorkOrderResponse{
 			DocumentNumber:        newDocumentNumber,
@@ -1477,7 +1457,7 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 		return
 	}
 
-	if update {
+	if update.WorkOrderSystemNumber > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Detail updated successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
@@ -1508,7 +1488,7 @@ func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter,
 		return
 	}
 
-	if success {
+	if success.WorkOrderSystemNumber > 0 {
 		payloads.NewHandleSuccess(writer, nil, "Detail added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
@@ -1706,7 +1686,6 @@ func (r *WorkOrderControllerImpl) SaveBooking(writer http.ResponseWriter, reques
 		return
 	}
 
-	// Send response to client based on the save result
 	if result {
 		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
 	} else {
@@ -1736,7 +1715,6 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 		return
 	}
 
-	// Kirim respons ke klien sesuai hasil penyimpanan
 	if result {
 		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusCreated)
 	} else {
@@ -1762,8 +1740,6 @@ func (r *WorkOrderControllerImpl) SubmitBooking(writer http.ResponseWriter, requ
 		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
 		return
 	}
-
-	// Initialize database connection
 
 	// Submit work order
 	success, newDocumentNumber, baseErr := r.WorkOrderService.SubmitBooking(workOrderIdInt)

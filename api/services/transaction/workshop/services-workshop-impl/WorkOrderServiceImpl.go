@@ -338,14 +338,14 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) New(request transactionworkshoppayloads.WorkOrderNormalRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) New(request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.New(tx, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrder{}, err
 	}
 
 	s.RedisClient.Del(ctx, s.RedisClient.Keys(ctx, "work_orders_*").Val()...)
@@ -518,13 +518,14 @@ func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactio
 	return request, nil
 }
 
-func (s *WorkOrderServiceImpl) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) *exceptions.BaseErrorResponse {
+func (s *WorkOrderServiceImpl) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	err := s.structWorkOrderRepo.UpdateRequest(tx, idwosn, idwos, request)
-	defer helper.CommitOrRollback(tx, err)
+
+	update, err := s.structWorkOrderRepo.UpdateRequest(tx, idwosn, idwos, request)
 	if err != nil {
-		return err
+		helper.CommitOrRollback(tx, err)
+		return transactionworkshopentities.WorkOrderRequestDescription{}, err
 	}
 
 	cacheKey := utils.GenerateCacheKeyIds("request_by_id", idwosn, idwos)
@@ -533,16 +534,16 @@ func (s *WorkOrderServiceImpl) UpdateRequest(idwosn int, idwos int, request tran
 		fmt.Println("Failed to delete cache for key", cacheKey, ":", err)
 	}
 
-	return nil
+	return update, nil
 }
 
-func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.AddRequest(tx, id, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrderRequestDescription{}, err
 	}
 
 	cacheKeyPattern := "all_request_*"
@@ -643,13 +644,14 @@ func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (tra
 	return result, nil
 }
 
-func (s *WorkOrderServiceImpl) UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) *exceptions.BaseErrorResponse {
+func (s *WorkOrderServiceImpl) UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	err := s.structWorkOrderRepo.UpdateVehicleService(tx, idwosn, idwos, request)
+
+	update, err := s.structWorkOrderRepo.UpdateVehicleService(tx, idwosn, idwos, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return transactionworkshopentities.WorkOrderServiceVehicle{}, err
 	}
 
 	cacheKey := utils.GenerateCacheKeyIds("vehicle_service", idwosn, idwos)
@@ -658,16 +660,16 @@ func (s *WorkOrderServiceImpl) UpdateVehicleService(idwosn int, idwos int, reque
 		fmt.Println("Failed to delete cache for key", cacheKey, ":", err)
 	}
 
-	return nil
+	return update, nil
 }
 
-func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.AddVehicleService(tx, id, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrderServiceVehicle{}, err
 	}
 
 	cacheKeyPattern := "vehicle_service_*"
@@ -792,13 +794,13 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (tr
 	return result, nil
 }
 
-func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	update, err := s.structWorkOrderRepo.UpdateDetailWorkOrder(tx, idwosn, idwos, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
 
 	cacheKey := utils.GenerateCacheKeyIds("detail_work_orders_id", idwosn, idwos)
@@ -810,13 +812,13 @@ func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(idwosn int, idwos int, requ
 	return update, nil
 }
 
-func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	submit, err := s.structWorkOrderRepo.AddDetailWorkOrder(tx, id, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
 
 	cacheKeyPattern := "detail_work_orders_*"
