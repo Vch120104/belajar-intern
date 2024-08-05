@@ -8,7 +8,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-	_ "after-sales/docs"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -146,14 +146,14 @@ func ItemRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", itemController.GetAllItem)
+	router.Get("/", itemController.GetAllItemSearch)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
-	router.Get("/search", itemController.GetAllItemSearch)
+	router.Get("/search", itemController.GetAllItem)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem)
@@ -469,7 +469,9 @@ func PurchasePriceRouter(
 	router.Get("/detail/{purchase_price_detail_id}", PurchasePriceController.GetPurchasePriceDetailById)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Put("/detail/{purchase_price_detail_id}", PurchasePriceController.UpdatePurchasePriceDetail)
-	router.Delete("/detail/{multi_id}", PurchasePriceController.DeletePurchasePrice)
+	router.Delete("/detail/{purchase_price_id}/{multi_id}", PurchasePriceController.DeletePurchasePrice)
+	router.Patch("/detail/activate/{purchase_price_id}/{multi_id}", PurchasePriceController.ActivatePurchasePriceDetail)
+	router.Patch("/detail/deactivate/{purchase_price_id}/{multi_id}", PurchasePriceController.DeactivatePurchasePriceDetail)
 
 	//upload
 	router.Get("/download-template", PurchasePriceController.DownloadTemplate)
