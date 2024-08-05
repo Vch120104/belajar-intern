@@ -479,6 +479,80 @@ func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int, i
 	return true, nil
 }
 
+func (r *PurchasePriceRepositoryImpl) ActivatePurchasePriceDetail(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PurchasePriceDetail{}
+
+	result := tx.Model(&entities).
+		Where("purchase_price_id = ? AND purchase_price_detail_id IN (?)", Id, iddet).
+		First(&entities)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        result.Error,
+		}
+	}
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error",
+			Err:        result.Error,
+		}
+	}
+
+	entities.IsActive = true
+
+	result = tx.Save(&entities)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *PurchasePriceRepositoryImpl) DeactivatePurchasePriceDetail(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PurchasePriceDetail{}
+
+	result := tx.Model(&entities).
+		Where("purchase_price_id = ? AND purchase_price_detail_id IN (?)", Id, iddet).
+		First(&entities)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Data not found",
+			Err:        result.Error,
+		}
+	}
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error",
+			Err:        result.Error,
+		}
+	}
+
+	entities.IsActive = false
+
+	result = tx.Save(&entities)
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error",
+			Err:        result.Error,
+		}
+	}
+
+	return true, nil
+}
+
 func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id int) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
 	var entity masteritementities.PurchasePrice
 
