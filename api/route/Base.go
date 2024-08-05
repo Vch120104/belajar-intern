@@ -8,6 +8,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -583,9 +584,12 @@ func OperationModelMappingRouter(
 	router.Get("/by-id/{operation_model_mapping_id}", operationModelMappingController.GetOperationModelMappingById)
 	router.Get("/operation-frt/by-id/{operation_frt_id}", operationModelMappingController.GetOperationFrtById)
 	router.Get("/operation-document-requirement/by-id/{operation_document_requirement_id}", operationModelMappingController.GetOperationDocumentRequirementById)
+	router.Get("/operation-level/by-id/{operation_level_id}", operationModelMappingController.GetOperationLevelById)
+	router.Get("/operation-level/{operation_model_mapping_id}", operationModelMappingController.GetAllOperationLevel)
 	router.Post("/", operationModelMappingController.SaveOperationModelMapping)
 	router.Post("/operation-frt", operationModelMappingController.SaveOperationModelMappingFrt)
 	router.Post("/operation-document-requirement", operationModelMappingController.SaveOperationModelMappingDocumentRequirement)
+	router.Post("/operation-level", operationModelMappingController.SaveOperationLevel)
 	router.Patch("/{operation_model_mapping_id}", operationModelMappingController.ChangeStatusOperationModelMapping)
 	router.Patch("/operation-frt/activate/{operation_frt_id}", operationModelMappingController.ActivateOperationFrt)
 	router.Patch("/operation-frt/deactivate/{operation_frt_id}", operationModelMappingController.DeactivateOperationFrt)
@@ -992,20 +996,20 @@ func BookingEstimationRouter(
 	router.Delete("/{id}", BookingEstimationController.Void)
 	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
 	router.Post("/request", BookingEstimationController.SaveBookEstimReq)
-	router.Put("/request/{booking_estimation_request_id}",BookingEstimationController.UpdateBookEstimReq)
-	router.Get("/request/{booking_estimation_request_id}",BookingEstimationController.GetByIdBookEstimReq)
-	router.Get("/request/all",BookingEstimationController.GetAllBookEstimReq)
-	router.Post("/reminder-service",BookingEstimationController.SaveBookEstimReminderServ)
-	router.Post("/booking-estimation",BookingEstimationController.SaveDetailBookEstim)
-	router.Post("/package/{booking_estimation_id}/{package_id}",BookingEstimationController.AddPackage)
-	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}",BookingEstimationController.AddContractService)
-	router.Put("/input-discount/{booking_estimation_id}",BookingEstimationController.InputDiscount)
-	router.Post("/field-action/{booking_stimation_id}/{field_action_id}",BookingEstimationController.AddFieldAction)
-	router.Get("/detail/{booking_estimation_id}/{line_type_id}",BookingEstimationController.GetByIdBookEstimDetail)
-	router.Post("/calculation/{booking_estimation_id}",BookingEstimationController.PostBookingEstimationCalculation)
-	router.Put("/calculation/{booking_estimation_id/{line_type_id}}",BookingEstimationController.PutBookingEstimationCalculation)
-	router.Post("/book-estim-pdi/{pdi_system_number}",BookingEstimationController.SaveBookingEstimationFromPDI)
-	router.Post("/book-estim-service-request/{service_request_system_number}",BookingEstimationController.SaveBookingEstimationFromServiceRequest)
+	router.Put("/request/{booking_estimation_request_id}", BookingEstimationController.UpdateBookEstimReq)
+	router.Get("/request/{booking_estimation_request_id}", BookingEstimationController.GetByIdBookEstimReq)
+	router.Get("/request/all", BookingEstimationController.GetAllBookEstimReq)
+	router.Post("/reminder-service", BookingEstimationController.SaveBookEstimReminderServ)
+	router.Post("/booking-estimation", BookingEstimationController.SaveDetailBookEstim)
+	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)
+	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}", BookingEstimationController.AddContractService)
+	router.Put("/input-discount/{booking_estimation_id}", BookingEstimationController.InputDiscount)
+	router.Post("/field-action/{booking_stimation_id}/{field_action_id}", BookingEstimationController.AddFieldAction)
+	router.Get("/detail/{booking_estimation_id}/{line_type_id}", BookingEstimationController.GetByIdBookEstimDetail)
+	router.Post("/calculation/{booking_estimation_id}", BookingEstimationController.PostBookingEstimationCalculation)
+	router.Put("/calculation/{booking_estimation_id/{line_type_id}}", BookingEstimationController.PutBookingEstimationCalculation)
+	router.Post("/book-estim-pdi/{pdi_system_number}", BookingEstimationController.SaveBookingEstimationFromPDI)
+	router.Post("/book-estim-service-request/{service_request_system_number}", BookingEstimationController.SaveBookingEstimationFromServiceRequest)
 	return router
 }
 
