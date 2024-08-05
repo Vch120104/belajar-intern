@@ -206,7 +206,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 		return
 	}
 
-	if formRequest.OperationModelMappingId == 0 {
+	if formRequest.OperationFrtId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -387,7 +387,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 		return
 	}
 
-	if formRequest.OperationModelMappingId == 0 {
+	if formRequest.OperationDocumentRequirementId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"

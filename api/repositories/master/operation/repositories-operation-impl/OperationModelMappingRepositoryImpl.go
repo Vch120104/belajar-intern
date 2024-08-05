@@ -101,7 +101,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 	rows, err := whereQuery.Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -120,7 +120,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 			&response.ModelId,
 		); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
 		}
@@ -136,22 +136,22 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx 
 
 	// Fetch brand data
 	var brandResponses []masteroperationpayloads.BrandResponse
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-brand?page=0&limit=10"
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand?page=0&limit=10"
 	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
 	if errUrlBrand != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlBrand,
 		}
 	}
 
 	// Fetch model data
 	var modelResponses []masteroperationpayloads.ModelResponse
-	modelUrl := config.EnvConfigs.SalesServiceUrl + "/api/sales/unit-model?page=0&limit=10"
+	modelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model?page=0&limit=10"
 	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
 	if errUrlModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlModel,
 		}
 	}
@@ -306,7 +306,7 @@ func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id 
 	if err != nil {
 
 		return OperationFrtResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -437,7 +437,7 @@ func (*OperationModelMappingRepositoryImpl) GetOperationDocumentRequirementById(
 	if err != nil {
 
 		return OperationDocumentRequirementResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}

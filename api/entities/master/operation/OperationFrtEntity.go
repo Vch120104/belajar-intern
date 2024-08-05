@@ -8,7 +8,7 @@ type OperationFrt struct {
 	OperationModelMappingId int     `gorm:"column:operation_model_mapping_id;not null;size:30" json:"operation_model_mapping_id"`
 	VariantId               int     `gorm:"column:variant_id;size:30;not null" json:"variant_id"`
 	FrtHour                 float64 `gorm:"column:frt_hour;null" json:"frt_hour"`
-	FrtHourExpress          float64 `gorm:"column:frt_hour_2express;null" json:"frt_hour_2express"`
+	FrtHourExpress          float64 `gorm:"column:frt_hour_express;null" json:"frt_hour_express"`
 }
 
 func (*OperationFrt) TableName() string {
