@@ -79,7 +79,9 @@ type ServiceRequestResponse struct {
 	CompanyId                    int                           `json:"company_id"`
 	CompanyName                  string                        `json:"company_name"`
 	DealerRepresentativeId       int                           `json:"dealer_representative_id"`
+	DealerRepresentativeName     string                        `json:"dealer_representative_name"`
 	ProfitCenterId               int                           `json:"profit_center_id"`
+	ProfitCenterName             string                        `json:"profit_center_name"`
 	WorkOrderSystemNumber        int                           `json:"work_order_system_number"`
 	WorkOrderDocumentNumber      string                        `json:"work_order_document_number"`
 	BookingSystemNumber          int                           `json:"booking_system_number"`
@@ -181,4 +183,15 @@ type ServiceRequestStatusResponse struct {
 	ServiceRequestStatusId   int    `json:"service_request_status_id"`
 	ServiceRequestStatusCode string `json:"service_request_status_code"`
 	ServiceRequestStatusName string `json:"service_request_status_description"`
+}
+
+type ProfitCenter struct {
+	ProfitCenterId   int    `json:"profit_center_id"`
+	ProfitCenterCode string `json:"profit_center_code"`
+	ProfitCenterName string `json:"profit_center_name"`
+}
+
+type DealerRepresentative struct {
+	DealerRepresentativeId   int    `json:"dealer_representative_id"`
+	DealerRepresentativeName string `json:"dealer_representative_name"`
 }

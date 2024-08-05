@@ -22,6 +22,8 @@ type PurchasePriceService interface {
 	AddPurchasePrice(masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse)
 	UpdatePurchasePriceDetail(Id int, req masteritempayloads.PurchasePriceDetailRequest) (masteritementities.PurchasePriceDetail, *exceptions.BaseErrorResponse)
 	DeletePurchasePrice(id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
+	ActivatePurchasePriceDetail(id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
+	DeactivatePurchasePriceDetail(id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
 
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
 	PreviewUploadData(rows [][]string, id int) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse)
