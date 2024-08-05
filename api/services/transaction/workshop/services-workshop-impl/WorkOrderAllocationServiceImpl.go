@@ -34,47 +34,17 @@ func OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepo transactionworks
 	}
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("work_order_allocation", filterCondition, pages)
-
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		var mapResponses []map[string]interface{}
-		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-		return paginatedData, totalPages, totalRows, nil
-	} else if err != redis.Nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
+func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	results, totalPages, totalRows, repoErr := s.WorkOrderAllocationRepository.GetAll(tx, companyCode, foremanId, date, filterCondition, pages)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAll(tx, companyCode, foremanId, date, filterCondition)
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
 
-	cacheData, marshalErr := json.Marshal(results)
-	if marshalErr == nil {
-		if err := s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration).Err(); err != nil {
-			fmt.Println("Failed to cache data:", err)
-		}
-	} else {
-		fmt.Println("Failed to marshal results for caching:", marshalErr)
-	}
-
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyCode int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {

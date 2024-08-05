@@ -61,13 +61,6 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 		"company_id":   queryValues.Get("company_id"),
 	}
 
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	serviceDateStr := chi.URLParam(request, "service_date")
@@ -97,12 +90,11 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 		return
 	}
 
-	paginatedData, totalPages, totalRows, apiErr := r.WorkOrderAllocationService.GetAll(
+	paginatedData, apiErr := r.WorkOrderAllocationService.GetAll(
 		companyId,
 		technicianId,
 		serviceRequestDate,
 		criteria,
-		paginate,
 	)
 	if apiErr != nil {
 		exceptions.NewNotFoundException(writer, request, apiErr)
@@ -110,7 +102,7 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 	}
 
 	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, paginatedData, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+		payloads.NewHandleSuccess(writer, paginatedData, "Get Data Successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
