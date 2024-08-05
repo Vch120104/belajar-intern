@@ -40,6 +40,7 @@ type UpdateWarehouseMasterRequest struct {
 }
 
 type GetWarehouseMasterResponse struct {
+	CompanyId                     int    `json:"company_id"`
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`
 	WarehouseCostingType          string `json:"warehouse_costing_type"`
@@ -57,6 +58,9 @@ type GetWarehouseMasterResponse struct {
 	WarehouseName                 string `json:"warehouse_name"`
 	WarehouseDetailName           string `json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `json:"warehouse_transit_default"`
+	WarehouseGroupId              int    `json:"warehouse_group_id"`
+	WarehouseFaxNumber            string `json:"warehouse_fax_number"`
+	WarehousePhoneNumber          string `json:"waehouse_phone_number"`
 }
 
 type GetAllWarehouseMasterRequest struct {
@@ -97,6 +101,9 @@ type GetAllWarehouseMasterResponse struct {
 	WarehouseName                 string `json:"warehouse_name"`
 	WarehouseDetailName           string `json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `json:"warehouse_transit_default"`
+	WarehouseGroupId              int    `json:"warehouse_group_id"`
+	WarehousePhoneNumber          string `json:"warehouse_phone_number"`
+	WarehouseFaxNumber            string `json:"warehouse_fax_number"`
 
 	AddressDetails     AddressResponse     `json:"address_details"  gorm:"-"`
 	BrandDetails       BrandResponse       `json:"brand_details"  gorm:"-"`
@@ -180,4 +187,15 @@ type VillageResponse struct {
 	CountryName    string `json:"country_name"`
 	VillageZipCode string `json:"village_zip_code"`
 	CityPhoneArea  string `json:"city_phone_area"`
+}
+
+type AuthorizedUser struct {
+	EmployeeId   int    `json:"user_employee_id"`
+	EmployeeName string `json:"employee_name"`
+}
+
+type WarehouseAuthorize struct {
+	EmployeeId  int `json:"employee_id"`
+	CompanyId   int `json:"company_id"`
+	WarehouseId int `json:"warehouse_id"`
 }

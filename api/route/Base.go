@@ -146,14 +146,14 @@ func ItemRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", itemController.GetAllItem)
+	router.Get("/", itemController.GetAllItemSearch)
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
 	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
-	router.Get("/search", itemController.GetAllItemSearch)
+	router.Get("/search", itemController.GetAllItem)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem)
@@ -429,15 +429,25 @@ func PurchasePriceRouter(
 
 	//master
 	router.Get("/", PurchasePriceController.GetAllPurchasePrice)
-	router.Get("/by-id/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
+	router.Get("/{purchase_price_id}", PurchasePriceController.GetPurchasePriceById)
 	router.Post("/", PurchasePriceController.SavePurchasePrice)
+	router.Put("/{purchase_price_id}", PurchasePriceController.UpdatePurchasePrice)
 	router.Patch("/{purchase_price_id}", PurchasePriceController.ChangeStatusPurchasePrice)
 
 	//detail
 	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
-	router.Get("/{purchase_price_id}/detail", PurchasePriceController.GetPurchasePriceDetailById)
+	router.Get("/detail/{purchase_price_detail_id}", PurchasePriceController.GetPurchasePriceDetailById)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
-	router.Delete("/detail/{purchase_price_detail_id}", PurchasePriceController.DeletePurchasePrice)
+	router.Put("/detail/{purchase_price_detail_id}", PurchasePriceController.UpdatePurchasePriceDetail)
+	router.Delete("/detail/{purchase_price_id}/{multi_id}", PurchasePriceController.DeletePurchasePrice)
+	router.Patch("/detail/activate/{purchase_price_id}/{multi_id}", PurchasePriceController.ActivatePurchasePriceDetail)
+	router.Patch("/detail/deactivate/{purchase_price_id}/{multi_id}", PurchasePriceController.DeactivatePurchasePriceDetail)
+
+	//upload
+	router.Get("/download-template", PurchasePriceController.DownloadTemplate)
+	router.Post("/upload", PurchasePriceController.Upload)
+	router.Post("/process", PurchasePriceController.ProcessDataUpload)
+	router.Get("/download", PurchasePriceController.Download)
 
 	return router
 }
@@ -639,7 +649,7 @@ func WarehouseMasterRouter(
 	// Apply the CORS middleware to all routes
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
-																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																												router.Use(middlewares.MetricsMiddleware)
+	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
@@ -651,6 +661,9 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
+	router.Get("/authorize-user/{warehouse_id}", warehouseMasterController.GetAuthorizeUser)
+	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
+	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	return router
 }
 
@@ -665,9 +678,12 @@ func WarehouseLocationRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", warehouseLocationController.GetAll)
-	router.Get("/by-id/{warehouse_location_id}", warehouseLocationController.GetById)
+	router.Get("/{warehouse_location_id}", warehouseLocationController.GetById)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
+	router.Get("/download-template", warehouseLocationController.DownloadTemplate)
+	router.Post("/upload-template/{company_id}", warehouseLocationController.UploadPreviewFile)
+	router.Post("/process-template", warehouseLocationController.ProcessWarehouseLocationTemplate)
 
 	return router
 }
@@ -974,12 +990,26 @@ func BookingEstimationRouter(
 
 	router.Get("/", BookingEstimationController.GetAll)
 	router.Get("/normal", BookingEstimationController.New)
-	router.Get("/find/{work_order_system_number}", BookingEstimationController.GetById)
+	router.Get("/find/{batch_system_number}", BookingEstimationController.GetById)
 	router.Put("/{id}", BookingEstimationController.Save)
 	router.Post("/submit", BookingEstimationController.Submit)
 	router.Delete("/{id}", BookingEstimationController.Void)
 	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
-
+	router.Post("/request", BookingEstimationController.SaveBookEstimReq)
+	router.Put("/request/{booking_estimation_request_id}", BookingEstimationController.UpdateBookEstimReq)
+	router.Get("/request/{booking_estimation_request_id}", BookingEstimationController.GetByIdBookEstimReq)
+	router.Get("/request/all", BookingEstimationController.GetAllBookEstimReq)
+	router.Post("/reminder-service", BookingEstimationController.SaveBookEstimReminderServ)
+	router.Post("/booking-estimation", BookingEstimationController.SaveDetailBookEstim)
+	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)
+	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}", BookingEstimationController.AddContractService)
+	router.Put("/input-discount/{booking_estimation_id}", BookingEstimationController.InputDiscount)
+	router.Post("/field-action/{booking_stimation_id}/{field_action_id}", BookingEstimationController.AddFieldAction)
+	router.Get("/detail/{booking_estimation_id}/{line_type_id}", BookingEstimationController.GetByIdBookEstimDetail)
+	router.Post("/calculation/{booking_estimation_id}", BookingEstimationController.PostBookingEstimationCalculation)
+	router.Put("/calculation/{booking_estimation_id/{line_type_id}}", BookingEstimationController.PutBookingEstimationCalculation)
+	router.Post("/book-estim-pdi/{pdi_system_number}", BookingEstimationController.SaveBookingEstimationFromPDI)
+	router.Post("/book-estim-service-request/{service_request_system_number}", BookingEstimationController.SaveBookingEstimationFromServiceRequest)
 	return router
 }
 
@@ -1116,6 +1146,24 @@ func ServiceReceiptRouter(
 	router.Put("/{service_request_system_number}", ServiceReceiptController.Save)
 
 	return router
+}
+
+func WorkOrderBypassRouter(
+	WorkOrderBypassController transactionworkshopcontroller.WorkOrderBypassController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", WorkOrderBypassController.GetAll)
+	router.Get("/{work_order_system_number}", WorkOrderBypassController.GetById)
+	router.Post("/bypass", WorkOrderBypassController.Bypass)
+
+	return router
+
 }
 
 func SupplySlipRouter(

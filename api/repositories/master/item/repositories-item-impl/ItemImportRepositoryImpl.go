@@ -20,6 +20,47 @@ import (
 type ItemImportRepositoryImpl struct {
 }
 
+// SaveItemImport implements masteritemrepository.ItemImportRepository.
+func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
+
+	supplierResponse := masteritempayloads.SupplierResponse{}
+	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(req.SupplierId)
+
+	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
+
+	if supplierResponse == (masteritempayloads.SupplierResponse{}) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("supplier not found"),
+		}
+	}
+
+	if errGetSupplier != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errGetSupplier,
+		}
+	}
+
+	err := tx.Save(&req).Error
+
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+	return true, nil
+}
+
 // GetItemImportbyItemIdandSupplierId implements masteritemrepository.ItemImportRepository.
 func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.DB, itemId int, supplierId int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemImport{}
@@ -184,57 +225,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 
 }
 
-// SaveItemImport implements masteritemrepository.ItemImportRepository.
-func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritempayloads.ItemImportUploadRequest) (bool, *exceptions.BaseErrorResponse) {
-
-	entities := []masteritementities.ItemImport{}
-
-	for _, value := range req.Data {
-		entities = append(entities, masteritementities.ItemImport{
-			SupplierId:         value.SupplierId,
-			ItemId:             value.ItemId,
-			OrderQtyMultiplier: value.OrderQtyMultiplier,
-			ItemAliasCode:      value.ItemAliasCode,
-			RoyaltyFlag:        value.RoyaltyFlag,
-			ItemAliasName:      value.ItemAliasName,
-			OrderConversion:    value.OrderConversion,
-		})
-
-		supplierResponse := masteritempayloads.SupplierResponse{}
-		getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/supplier-master/" + strconv.Itoa(value.SupplierId)
-
-		errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
-
-		if errGetSupplier != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        errGetSupplier,
-			}
-		}
-	}
-
-	fmt.Print(entities)
-
-	err := tx.Create(&entities).Error
-
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        err,
-			}
-		} else {
-
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-	}
-
-	return true, nil
-}
-
 // UpdateItemImport implements masteritemrepository.ItemImportRepository.
 func (i *ItemImportRepositoryImpl) UpdateItemImport(tx *gorm.DB, req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemImport{
@@ -249,9 +239,11 @@ func (i *ItemImportRepositoryImpl) UpdateItemImport(tx *gorm.DB, req masteriteme
 	}
 
 	supplierResponse := masteritempayloads.SupplierResponse{}
-	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "api/general/supplier-master/" + strconv.Itoa(req.SupplierId)
+	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(req.SupplierId)
 
 	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
+
+	fmt.Print(supplierResponse)
 
 	if errGetSupplier != nil {
 		return false, &exceptions.BaseErrorResponse{
