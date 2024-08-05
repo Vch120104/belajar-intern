@@ -34,6 +34,8 @@ type PurchasePriceController interface {
 	AddPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	UpdatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 	DeletePurchasePrice(writer http.ResponseWriter, request *http.Request)
+	ActivatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
+	DeactivatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 	Upload(writer http.ResponseWriter, request *http.Request)
@@ -349,10 +351,10 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/detail/{purchase_price_id}/{multi_id} [get]
 func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWriter, request *http.Request) {
-	// Mendapatkan ID item lokasi dari URL
+
 	PurchasePriceID, err := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
 	if err != nil {
-		// Jika gagal mendapatkan ID dari URL, kirim respons error
+
 		payloads.NewHandleError(writer, "Invalid Purchase Price ID", http.StatusBadRequest)
 		return
 	}
@@ -392,6 +394,112 @@ func (r *PurchasePriceControllerImpl) DeletePurchasePrice(writer http.ResponseWr
 		payloads.NewHandleError(writer, "Failed to delete Purchase detail", http.StatusInternalServerError)
 	}
 
+}
+
+// @Summary Activate Purchase Price Detail
+// @Description REST API  Purchase Price
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param purchase_price_id path int true "purchase_price_id"
+// @Param multi_id path string true "Purchase Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/detail/activate/{purchase_price_id}/{multi_id} [patch]
+func (r *PurchasePriceControllerImpl) ActivatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
+	PurchasePriceID, err := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Purchase Price ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if strings.TrimSpace(multiId) == "[]" || multiId == "" {
+		payloads.NewHandleError(writer, "Invalid service request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.PurchasePriceService.ActivatePurchasePriceDetail(PurchasePriceID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Purchase detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Purchase Detail activated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to activate Purchase detail", http.StatusInternalServerError)
+	}
+}
+
+// @Summary Deactivate Purchase Price Detail
+// @Description REST API  Purchase Price
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param purchase_price_id path int true "purchase_price_id"
+// @Param multi_id path string true "Purchase Detail ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/detail/deactivate/{purchase_price_id}/{multi_id} [patch]
+func (r *PurchasePriceControllerImpl) DeactivatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request) {
+
+	PurchasePriceID, err := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+	if err != nil {
+
+		payloads.NewHandleError(writer, "Invalid Purchase Price ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid service request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.PurchasePriceService.DeactivatePurchasePriceDetail(PurchasePriceID, intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Purchase detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Purchase Detail deactivated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to deactivate Purchase detail", http.StatusInternalServerError)
+	}
 }
 
 // DownloadTemplate godoc
