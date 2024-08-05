@@ -1166,7 +1166,7 @@ func WorkOrderAllocationRouter(
 	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
 	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
 	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
-	router.Put("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.SaveAssignTechnician)
+	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
 
 	return router
 }

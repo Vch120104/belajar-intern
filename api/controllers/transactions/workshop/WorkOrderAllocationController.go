@@ -481,7 +481,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 // @Produce json
 // @Param service_date query string true "Service Request Date"
 // @Param technician_id query int true "Foreman ID"
-// @Param request body transactionworkshoppayloads.WorkOrderAllocationAllocateDetailRequest true "Request body"
+// @Param request body transactionworkshoppayloads.WorkOrderAllocationDetailRequest true "Request body"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order-allocation/allocate-detail/{service_date}/{technician_id} [post]
