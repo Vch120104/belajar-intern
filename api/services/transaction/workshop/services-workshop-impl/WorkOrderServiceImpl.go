@@ -421,6 +421,7 @@ func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrde
 func (s *WorkOrderServiceImpl) Void(workOrderId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
+
 	delete, err := s.structWorkOrderRepo.Void(tx, workOrderId)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {

@@ -540,22 +540,24 @@ func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestHeader(db *gorm.DB, r
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return res, &exceptions.BaseErrorResponse{
-				//StatusCode: 0,
-				Message: "Data to Updated Is Not Found",
-				Data:    res,
-				Err:     err,
+				StatusCode: http.StatusBadRequest,
+				Message:    "Data to Updated Is Not Found",
+				Data:       res,
+				Err:        err,
 			}
 		}
 		return res, &exceptions.BaseErrorResponse{
-			//StatusCode: 0,
-			Message: "Update Data Failed",
-			Data:    res,
-			Err:     err,
+			StatusCode: http.StatusBadRequest,
+			Message:    "Update Data Failed",
+			Data:       res,
+			Err:        err,
 		}
 	}
 	//updating data
+	entities.CompanyId = request.CompanyId
 	entities.BudgetCode = request.BudgetCode
 	entities.ProjectNo = request.ProjectNo
+	entities.DivisionId = request.DivisionId
 	entities.PurchaseRequestRemark = request.PurchaseRequestRemark
 	entities.ExpectedArrivalTime = &request.ExpectedArrivalTime
 	entities.ExpectedArrivalDate = &request.ExpectedArrivalDate
@@ -569,17 +571,18 @@ func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestHeader(db *gorm.DB, r
 	entities.UpdatedByUserId = request.UpdatedByUserId
 	entities.UpdatedDate = &request.UpdatedDate
 	err = db.Save(&entities).Error
+	//db.Commit()
 	if err != nil {
 
 		return res, &exceptions.BaseErrorResponse{
-			//StatusCode: 0,
-			Message: "Failed To Update Data",
-			Data:    res,
-			Err:     err,
+			StatusCode: http.StatusBadRequest,
+			Message:    "Failed To Update Data",
+			Data:       res,
+			Err:        err,
 		}
-		return request, nil
 	}
-	panic("implement me")
+	return request, nil
+
 }
 
 func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
@@ -591,17 +594,17 @@ func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestDetail(db *gorm.DB, p
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
-				//StatusCode: 0,
-				Message: "Data To Updated Is Not Found Try Insert Instead",
-				Data:    nil,
-				Err:     err,
+				StatusCode: http.StatusNotFound,
+				Message:    "Data To Updated Is Not Found Try Insert Instead",
+				Data:       nil,
+				Err:        err,
 			}
 		}
 		return response, &exceptions.BaseErrorResponse{
-			//StatusCode: 0,
-			Message: "Data Updated Failed",
-			Data:    nil,
-			Err:     err,
+			StatusCode: http.StatusBadRequest,
+			Message:    "Data Updated Failed",
+			Data:       nil,
+			Err:        err,
 		}
 	}
 	entities.ItemQuantity = payloads.ItemQuantity
@@ -610,13 +613,134 @@ func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestDetail(db *gorm.DB, p
 	entities.UpdatedDate = &payloads.UpdatedDate
 	entities.UpdatedByUserId = payloads.UpdatedByUserId
 	err = db.Save(&entities).Error
+	fmt.Println()
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
-			//StatusCode: 0,
-			Message: "Update Data Failed",
-			Data:    nil,
-			Err:     err,
+			StatusCode: http.StatusBadRequest,
+			Message:    "Update Data Failed",
+			Data:       nil,
+			Err:        err,
 		}
 	}
 	return payloads, nil
+}
+
+func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequest(db *gorm.DB, i int) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionsparepartentities.PurchaseRequestEntities{}
+	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: i}).First(&entities).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "data not found in table",
+				Data:       i,
+				Err:        err,
+			}
+		} else {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Delete Data Failed",
+				Data:       i,
+				Err:        err,
+			}
+		}
+	}
+	err = db.Delete(&entities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: i}).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Delete Data Failed",
+			Data:       i,
+			Err:        err,
+		}
+	}
+	return true, nil
+}
+
+func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestHeader(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
+	var count int64
+	var res transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses
+	entities := transactionsparepartentities.PurchaseRequestEntities{}
+	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: id}).First(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return res, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Data to Updated Is Not Found",
+				Data:       res,
+				Err:        err,
+			}
+		}
+		return res, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Update Data Failed",
+			Data:       res,
+			Err:        err,
+		}
+	}
+	entities.BudgetCode = request.BudgetCode
+	entities.ProjectNo = request.ProjectNo
+	entities.DivisionId = request.DivisionId
+	entities.PurchaseRequestRemark = request.PurchaseRequestRemark
+	entities.ExpectedArrivalTime = &request.ExpectedArrivalTime
+	entities.ExpectedArrivalDate = &request.ExpectedArrivalDate
+	entities.CostCenterId = request.CostCenterId
+	entities.ProfitCenterId = request.ProfitCenterId
+	entities.BackOrder = request.BackOrder
+	entities.SetOrder = request.BackOrder
+	entities.CurrencyId = request.CurrencyId
+	entities.OrderTypeId = request.OrderTypeId
+	entities.ChangeNo = entities.ChangeNo + 1
+	entities.UpdatedDate = &request.UpdatedDate
+	entities.UpdatedByUserId = request.UpdatedByUserId
+	err = db.Save(&entities).Error
+	if err != nil {
+		return res, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Failed To Insert Data",
+			Data:       res,
+			Err:        err,
+		}
+	}
+	//this is logic for getting doc no
+	entities.PurchaseRequestDocumentStatusId = 20 //status ready
+	entities.PurchaseRequestDocumentNumber = "SPPR/N/10/19/11111"
+	entities.ChangeNo = entities.ChangeNo + 1
+	entities.UpdatedDate = &request.UpdatedDate
+	entities.UpdatedByUserId = request.UpdatedByUserId
+	err = db.Save(&entities).Error
+	if err != nil {
+		return res, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Failed Update Data",
+			Data:       res,
+			Err:        err,
+		}
+	}
+	err = db.Table("trx_purchase_request_detail pr").
+		Joins("inner join trx_work_order_detail w on pr.reference_system_number = w.work_order_status_id and pr.reference_line = w.work_order_operation_item_line").
+		Where("pr.purchase_request_system_number = ? and pr.item_quantity <> w.frt_quantity", id).Count(&count).Error
+	if err != nil {
+		return res, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Data:       nil,
+			Err:        err,
+		}
+	}
+	if count == 0 {
+		return res, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "PR Qty does not match with WO Qty",
+			Data:       nil,
+			Err:        err,
+		}
+	}
+	//return res, nil
+	result, errs := p.GetByIdPurchaseRequest(db, id)
+	return result, errs
+}
+func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, i int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
+	res, err := p.SavePurchaseRequestDetail(db, payloads, i)
+	return res, err
 }

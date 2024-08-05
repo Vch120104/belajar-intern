@@ -431,8 +431,13 @@ func PurchaseRequestRouter(
 	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
 	router.Post("/", PurchaseRequest.NewPurchaseRequestHeader)
 	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
-	router.Put("/purchase_request_system_number", PurchaseRequest.UpdatePurchaseRequestHeader)
-	router.Put("/detail/purchase_request_detail_system_number", PurchaseRequest.UpdatePurchaseRequestDetail)
+	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
+	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
+	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
+	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
+
+	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
+	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
 
 	// @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [put]
 

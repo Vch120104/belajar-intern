@@ -89,6 +89,8 @@ func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateHeader(request tra
 	//TODO implement me
 	tx := p.DB.Begin()
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestHeader(tx, request, id)
+	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return res, err
 	}
@@ -98,6 +100,38 @@ func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateHeader(request tra
 func (p *PurchaseRequestServiceImpl) SavePurchaseRequestUpdateDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func (p *PurchaseRequestServiceImpl) VoidPurchaseRequest(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	res, err := p.PurchaseRequestRepo.VoidPurchaseRequest(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	res, err := p.PurchaseRequestRepo.InsertPurchaseRequestHeader(tx, request, id)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return res, err
 	}
