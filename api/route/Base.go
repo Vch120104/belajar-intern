@@ -8,6 +8,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -219,8 +220,8 @@ func ItemSubstituteRouter(
 	return router
 }
 
-func ItemModelMappingRouter(
-	ItemModelMappingController masteritemcontroller.ItemModelMappingController,
+func ItemPackageRouter(
+	ItemPackageController masteritemcontroller.ItemPackageController,
 ) chi.Router {
 	router := chi.NewRouter()
 
@@ -238,8 +239,8 @@ func ItemModelMappingRouter(
 	return router
 }
 
-func MovingCodeRouter(
-	MovingCodeController mastercontroller.MovingCodeController,
+func ItemPackageDetailRouter(
+	ItemPackageDetailController masteritemcontroller.ItemPackageDetailController,
 ) chi.Router {
 	router := chi.NewRouter()
 
@@ -776,6 +777,39 @@ func ShiftScheduleRouter(
 	router.Post("/", ShiftScheduleController.SaveShiftSchedule)
 	router.Get("/by-id/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
 	router.Patch("/{shift_schedule_id}", ShiftScheduleController.ChangeStatusShiftSchedule)
+
+	return router
+}
+
+func LabourSellingPriceRouter(
+	LabourSellingPriceController masteroperationcontroller.LabourSellingPriceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", LabourSellingPriceController.GetAllSellingPrice)
+	router.Post("/", LabourSellingPriceController.SaveLabourSellingPrice)
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceController.GetLabourSellingPriceById)
+
+	return router
+}
+
+func LabourSellingPriceDetailRouter(
+	LabourSellingPriceDetailController masteroperationcontroller.LabourSellingPriceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
+	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
 
 	return router
 }

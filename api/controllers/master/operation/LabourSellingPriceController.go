@@ -1,11 +1,12 @@
 package masteroperationcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
+	"after-sales/api/payloads/pagination"
 
 	// "after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
@@ -19,7 +20,7 @@ import (
 
 type LabourSellingPriceController interface {
 	GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request)
-	// GetAllSellingPrice(writer http.ResponseWriter, request *http.Request)
+	GetAllSellingPrice(writer http.ResponseWriter, request *http.Request)
 	SaveLabourSellingPrice(writer http.ResponseWriter, request *http.Request)
 }
 type LabourSellingPriceControllerImpl struct {
@@ -33,24 +34,34 @@ func NewLabourSellingPriceController(LabourSellingPriceService masteroperationse
 }
 
 func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.ResponseWriter, request *http.Request) {
-	// queryValues := request.URL.Query()
+	queryValues := request.URL.Query()
 
-	// internalFilterCondition := map[string]string{
-	// 	"mtr_labour_selling_price.company_id":     queryValues.Get("company_id"),
-	// 	"mtr_labour_selling_price.effective_date": queryValues.Get("effective_date"),
-	// 	"mtr_labour_selling_price.billable_to":    queryValues.Get("billable_to"),
-	// }
-	// externalFilterCondition := map[string]string{
+	queryParams := map[string]string{
+		"mtr_labour_selling_price.company_id":     queryValues.Get("company_id"),
+		"mtr_labour_selling_price.effective_date": queryValues.Get("effective_date"),
+		"mtr_labour_selling_price.bill_to_id":     queryValues.Get("bill_to_id"),
+		"mtr_labour_selling_price.job_type_id":    queryValues.Get("job_type_id"),
+		"mtr_labour_selling_price.description":    queryValues.Get("description"),
+		"mtr_labour_selling_price.brand_id":       queryValues.Get("brand_id"),
+	}
 
-	// 	"mtr_brand.brand_id": queryValues.Get("brand_idw"),
-	// }
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
 
-	// paginate := pagination.Pagination{
-	// 	Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-	// 	Page:   utils.NewGetQueryInt(queryValues, "page"),
-	// 	SortOf: queryValues.Get("sort_of"),
-	// 	SortBy: queryValues.Get("sort_by"),
-	// }
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	result, err := r.LabourSellingPriceService.GetAllSellingPrice(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+
 }
 
 func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request) {
@@ -59,7 +70,7 @@ func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http
 
 	result, err := r.LabourSellingPriceService.GetLabourSellingPriceById(labourSellingPriceId)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -73,19 +84,19 @@ func (r *LabourSellingPriceControllerImpl) SaveLabourSellingPrice(writer http.Re
 	var message string
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.LabourSellingPriceService.SaveLabourSellingPrice(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

@@ -1,9 +1,9 @@
 package masteroperationcontroller
 
 import (
-	exceptionsss_test "after-sales/api/expectionsss"
-	helper_test "after-sales/api/helper_testt"
-	jsonchecker "after-sales/api/helper_testt/json/json-checker"
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -32,7 +32,7 @@ func NewLabourSellingPriceDetailController(LabourSellingPriceService masteropera
 
 func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	sellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "header_id"))
+	sellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
 
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -43,7 +43,7 @@ func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeade
 
 	paginatedData, totalPages, totalRows, err := r.LabourSellingPriceService.GetAllSellingPriceDetailByHeaderId(sellingPriceId, pagination)
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -57,19 +57,19 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveLabourSellingPriceDetail(wr
 	var message string
 
 	if err != nil {
-		exceptionsss_test.NewEntityException(writer, request, err)
+		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
-		exceptionsss_test.NewBadRequestException(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
 	create, err := r.LabourSellingPriceService.SaveLabourSellingPriceDetail(formRequest)
 
 	if err != nil {
-		helper_test.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
