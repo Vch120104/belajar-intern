@@ -17,10 +17,13 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
+	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
+	transactionjpcbrepositoryimpl "after-sales/api/repositories/transaction/JPCB/repositories-jpcb-impl"
 	transactionsparepartrepositoryimpl "after-sales/api/repositories/transaction/sparepart/repositories-sparepart-impl"
 	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
+	transactionjpcbserviceimpl "after-sales/api/services/transaction/JPCB/services-jpcb-impl"
 	transactionsparepartserviceimpl "after-sales/api/services/transaction/sparepart/services-sparepart-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
@@ -284,6 +287,11 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderBypassService := transactionworkshopserviceimpl.OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepository, db, rdb)
 	WorkOrderBypassController := transactionworksopcontroller.NewWorkOrderBypassController(WorkOrderBypassService)
 
+	//Bay
+	BayRepository := transactionjpcbrepositoryimpl.OpenBayMasterRepositoryImpl()
+	BayService := transactionjpcbserviceimpl.StartBayService(BayRepository, db, rdb)
+	BayController := transactionjpcbcontroller.BayController(BayService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -336,6 +344,8 @@ func StartRouting(db *gorm.DB) {
 	ServiceReceiptRouter := ServiceReceiptRouter(ServiceReceiptController)
 	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
 	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
+
+	BayRouter := BayMasterRouter(BayController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -397,6 +407,7 @@ func StartRouting(db *gorm.DB) {
 		/* Transaction */
 
 		/* Transaction JPCB */
+		r.Mount("/bay", BayRouter)
 
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
