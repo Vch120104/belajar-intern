@@ -12,9 +12,6 @@ import (
 
 	"after-sales/api/utils"
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -72,27 +69,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(date time.Time, brandId int
 }
 
 func (s *WorkOrderAllocationServiceImpl) GetAllocateDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("work_order_allocation_detail", filterCondition, pages)
-
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		var mapResponses []map[string]interface{}
-		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-		return paginatedData, totalPages, totalRows, nil
-	} else if err != redis.Nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
@@ -102,40 +78,10 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocateDetail(filterCondition []uti
 		return results, totalPages, totalRows, repoErr
 	}
 
-	cacheData, marshalErr := json.Marshal(results)
-	if marshalErr == nil {
-		if err := s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration).Err(); err != nil {
-			fmt.Println("Failed to cache data:", err)
-		}
-	} else {
-		fmt.Println("Failed to marshal results for caching:", marshalErr)
-	}
-
 	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("assign_technician", filterCondition, pages)
-
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		var mapResponses []map[string]interface{}
-		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-		return paginatedData, totalPages, totalRows, nil
-	} else if err != redis.Nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
@@ -143,15 +89,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []u
 	results, totalPages, totalRows, repoErr := s.WorkOrderAllocationRepository.GetAssignTechnician(tx, filterCondition, pages)
 	if repoErr != nil {
 		return results, totalPages, totalRows, repoErr
-	}
-
-	cacheData, marshalErr := json.Marshal(results)
-	if marshalErr == nil {
-		if err := s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration).Err(); err != nil {
-			fmt.Println("Failed to cache data:", err)
-		}
-	} else {
-		fmt.Println("Failed to marshal results for caching:", marshalErr)
 	}
 
 	return results, totalPages, totalRows, nil
