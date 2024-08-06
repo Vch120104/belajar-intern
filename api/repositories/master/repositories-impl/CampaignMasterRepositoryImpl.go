@@ -10,6 +10,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -172,14 +173,14 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromHistory(tx *g
 func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
 	var entityitem masteritementities.Item
 	var entity mastercampaignmasterentities.CampaignMaster
-	var lastprice float64
+	var lastprice sql.NullFloat64
 	if req.SharePercent > req.DiscountPercent {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Share percent must not be higher that discountpercent",
+			Message:    "Share percent must not be higher that discount percent",
 		}
 	}
-
+	
 	if req.LineTypeId != 5 {
 		err := tx.Model(&entityitem).
 			Where("item_id=?", req.OperationItemId).
@@ -190,6 +191,12 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 				Err:        err,
 			}
 		}
+		var price float64
+        if lastprice.Valid {
+            price = lastprice.Float64
+        } else {
+            price = 0.0 // Handle NULL case
+        }
 		entities := &mastercampaignmasterentities.CampaignMasterDetailItem{
 			CampaignId:           req.CampaignId,
 			LineTypeId:           req.LineTypeId,
@@ -198,9 +205,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			ShareBillTo:          req.ShareBillTo,
 			DiscountPercent:      req.DiscountPercent,
 			SharePercent:         req.SharePercent,
-			Price:                lastprice,
+			Price:                price,
 		}
-		err2 := tx.Create(&entities).Error
+		err2 := tx.Save(&entities).Error
 
 		if err2 != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -230,6 +237,12 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 				Err:        err,
 			}
 		}
+		var price float64
+        if lastprice.Valid {
+            price = lastprice.Float64
+        } else {
+            price = 0.0 // Handle NULL case
+        }
 		entities2 := &mastercampaignmasterentities.CampaignMasterOperationDetail{
 			CampaignId:                req.CampaignId,
 			LineTypeId:                req.LineTypeId,
@@ -238,9 +251,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			ShareBillTo:               req.ShareBillTo,
 			DiscountPercent:           req.DiscountPercent,
 			SharePercent:              req.SharePercent,
-			Price:                     lastprice,
+			Price:                     price,
 		}
-		err2 := tx.Create(&entities2).Error
+		err2 := tx.Save(&entities2).Error
 		if err2 != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
