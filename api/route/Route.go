@@ -162,6 +162,14 @@ func StartRouting(db *gorm.DB) {
 	operationModelMappingService := masteroperationserviceimpl.StartOperationModelMappingService(operationModelMappingRepository, db, rdb)
 	operationModelMappingController := masteroperationcontroller.NewOperationModelMappingController(operationModelMappingService)
 
+	//labour selling price
+	labourSellingPriceRepository := masteroperationrepositoryimpl.StartLabourSellingPriceRepositoryImpl()
+	laboruSellingPriceService := masteroperationserviceimpl.StartLabourSellingPriceService(labourSellingPriceRepository, db)
+	LabourSellingPriceController := masteroperationcontroller.NewLabourSellingPriceController(laboruSellingPriceService)
+
+	//labour selling price detail
+	LabourSellingPriceDetailController := masteroperationcontroller.NewLabourSellingPriceDetailController(laboruSellingPriceService)
+
 	// Skill Level
 	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
 	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db, rdb)
@@ -301,6 +309,8 @@ func StartRouting(db *gorm.DB) {
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
 	OperationModelMappingRouter := OperationModelMappingRouter(operationModelMappingController)
+	LabourSellingPriceRouter := LabourSellingPriceRouter(LabourSellingPriceController)
+	LabourSellingPriceDetailRouter := LabourSellingPriceDetailRouter(LabourSellingPriceDetailController)
 	MovingCodeRouter := MovingCodeRouter(MovingCodeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
 	AgreementRouter := AgreementRouter(AgreementController)
@@ -369,7 +379,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/operation-key", OperationKeyRouter)
 		r.Mount("/operation-entries", OperationEntriesRouter)
 		r.Mount("/operation-model-mapping", OperationModelMappingRouter)
-		//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+		r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+		r.Mount("/labour-selling-price-detail", LabourSellingPriceDetailRouter)
 
 		/* Master Warehouse */
 		r.Mount("/warehouse-group", WarehouseGroupRouter)
