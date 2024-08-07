@@ -128,6 +128,26 @@ func (s *PurchasePriceServiceImpl) DeletePurchasePrice(id int, iddet []int) (boo
 	return deletemultiid, nil
 }
 
+func (s *PurchasePriceServiceImpl) ActivatePurchasePriceDetail(id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	activatemultiid, err := s.PurchasePriceRepo.ActivatePurchasePriceDetail(tx, id, iddet)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return activatemultiid, nil
+}
+
+func (s *PurchasePriceServiceImpl) DeactivatePurchasePriceDetail(id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	deactivatemultiid, err := s.PurchasePriceRepo.DeactivatePurchasePriceDetail(tx, id, iddet)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return deactivatemultiid, nil
+}
+
 func (s *PurchasePriceServiceImpl) ChangeStatusPurchasePrice(Id int) (masteritementities.PurchasePrice, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
@@ -149,7 +169,7 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 	sheetName := "Sheet1"
 	defer func() {
 		if err := f.Close(); err != nil {
-			log.Error(err) // Ensure the error is logged if closing fails
+			log.Error(err)
 		}
 	}()
 
@@ -205,19 +225,17 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 	}
 
 	// Fetch data for the template
-	internalFilterCondition := []utils.FilterCondition{} // Adjust as needed
+	internalFilterCondition := []utils.FilterCondition{}
 	paginate := pagination.Pagination{
 		Limit: 10,
 		Page:  0,
 	}
 
-	// Ensure GetAllPurchasePrice returns *exceptions.BaseErrorResponse
 	results, _, _, errResp := s.PurchasePriceRepo.GetAllPurchasePriceDetail(tx, internalFilterCondition, paginate)
 	if errResp != nil {
 		return nil, errResp
 	}
 
-	// Check if results are nil or empty before proceeding
 	if results == nil {
 		results = []map[string]interface{}{}
 	}
@@ -293,7 +311,6 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 		}
 	}
 
-	// Check if we have valid data
 	if len(result.Data) == 0 {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -301,7 +318,6 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 		}
 	}
 
-	// Return the item ID from the data array
 	return result.Data[0].ItemId, nil
 }
 
@@ -343,20 +359,17 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 	tx := s.DB.Begin()
 
 	for _, value := range req.Data {
-		// Access ItemCode from PurchasePriceDetailResponses
+
 		itemCode := value.ItemCode
 
-		// Fetch item_id based on item_code
 		itemId, errResp := s.FetchItemId(itemCode)
 		if errResp != nil {
 			tx.Rollback()
 			return false, errResp
 		}
 
-		// Convert to appropriate request data including the fetched item ID
 		requestData := convertToPurchasePriceRequest(value, itemId)
 
-		// Fetch or create PurchasePrice
 		_, err := s.PurchasePriceRepo.GetPurchasePriceById(tx, requestData.PurchasePriceId, pagination.Pagination{})
 		if err != nil && err.StatusCode != http.StatusNotFound {
 			tx.Rollback()
@@ -368,7 +381,7 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 		}
 
 		if err != nil && err.StatusCode == http.StatusNotFound {
-			// Create new PurchasePrice if it does not exist
+
 			purchasePriceRequest := masteritempayloads.PurchasePriceRequest{
 				PurchasePriceId: requestData.PurchasePriceId,
 				IsActive:        requestData.IsActive,
@@ -384,7 +397,6 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 			}
 		}
 
-		// Add purchase price detail
 		_, err = s.PurchasePriceRepo.AddPurchasePrice(tx, requestData)
 		if err != nil {
 			tx.Rollback()
@@ -415,7 +427,7 @@ func (s *PurchasePriceServiceImpl) DownloadData(id int) (string, *exceptions.Bas
 	defer func() {
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
-			log.Error(err) // Ensure the error is logged if commit fails
+			log.Error(err)
 		}
 	}()
 
@@ -482,7 +494,7 @@ func (s *PurchasePriceServiceImpl) DownloadData(id int) (string, *exceptions.Bas
 	// Populate the data
 	rowNum := 3
 	for _, detail := range purchasePriceData.PurchasePriceDetails.Data {
-		// Log each detail being added
+
 		log.Infof("Populating row %d with detail: %+v", rowNum, detail)
 		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowNum), purchasePriceData.SupplierCode)
 		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowNum), purchasePriceData.SupplierName)
@@ -495,10 +507,8 @@ func (s *PurchasePriceServiceImpl) DownloadData(id int) (string, *exceptions.Bas
 		rowNum++
 	}
 
-	// Set active sheet of the workbook
 	f.SetActiveSheet(index)
 
-	// Save the file to a temporary location
 	tempFilePath := filepath.Join(os.TempDir(), fmt.Sprintf("PurchasePrice_%d.xlsx", id))
 	if err := f.SaveAs(tempFilePath); err != nil {
 		return "", &exceptions.BaseErrorResponse{Err: err, StatusCode: http.StatusInternalServerError}
@@ -512,7 +522,6 @@ func (s *PurchasePriceServiceImpl) DownloadData(id int) (string, *exceptions.Bas
 func ConvertPurchasePriceDetailMapToStruct(maps []map[string]interface{}) ([]masteritempayloads.PurchasePriceDetailResponses, error) {
 	var result []masteritempayloads.PurchasePriceDetailResponses
 
-	// Handle nil or empty maps
 	if maps == nil {
 		return nil, errors.New("maps is nil")
 	}

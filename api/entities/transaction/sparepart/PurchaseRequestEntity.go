@@ -6,7 +6,7 @@ const TableNamePurchaseRequest = "trx_purchase_request"
 
 type PurchaseRequestEntities struct {
 	CompanyId                   int `gorm:"column:company_id;size:30;" json:"company_id"`
-	PurchaseRequestSystemNumber int `gorm:"column:purchase_request_system_number;size:50;not null;primaryKey;" json:"purchase_request_system_number"`
+	PurchaseRequestSystemNumber int `gorm:"column:purchase_request_system_number;size:30;not null;primaryKey;" json:"purchase_request_system_number"`
 
 	//PurchaseRequestSystemNumber     int        `gorm:"column:purchase_request_system_number;size:50;not null;primaryKey;" json:"purchase_request_system_number"`
 	PurchaseRequestDocumentNumber   string     `gorm:"column:purchase_request_document_number;size:50;" json:"purchase_request_document_number"`

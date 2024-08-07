@@ -222,16 +222,16 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data company from external API
-		// CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(ServiceRequestReq.CompanyId)
-		// var companyResponses []transactionworkshoppayloads.CompanyResponse
-		// errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
-		// if errCompany != nil || len(companyResponses) == 0 {
-		// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to retrieve company data from the external API",
-		// 		Err:        errCompany,
-		// 	}
-		// }
+		CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "companies-redis?company_id=" + strconv.Itoa(ServiceRequestReq.CompanyId)
+		var companyResponses []transactionworkshoppayloads.CompanyResponse
+		errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
+		if errCompany != nil || len(companyResponses) == 0 {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve company data from the external API",
+				Err:        errCompany,
+			}
+		}
 
 		// Fetch data vehicle from external API
 		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(ServiceRequestReq.VehicleId)
@@ -277,7 +277,7 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			VehicleCode:                  vehicleResponses.Master.VehicleCode,
 			VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
 			CompanyId:                    ServiceRequestReq.CompanyId,
-			CompanyName:                  "", //companyResponses[0].CompanyName,
+			CompanyName:                  companyResponses[0].CompanyName,
 			DealerRepresentativeId:       ServiceRequestReq.DealerRepresentativeId,
 			ProfitCenterId:               ServiceRequestReq.ProfitCenterId,
 			WorkOrderSystemNumber:        ServiceRequestReq.WorkOrderSystemNumber,
@@ -414,6 +414,18 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 	}
 
+	// Fetch data company from external API
+	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "companies-redis?company_id=" + strconv.Itoa(entity.CompanyId)
+	var companyResponses []transactionworkshoppayloads.CompanyResponse
+	errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
+	if errCompany != nil || len(companyResponses) == 0 {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve company data from the external API",
+			Err:        errCompany,
+		}
+	}
+
 	// Fetch work order from external API
 	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order?work_order_system_number=" + strconv.Itoa(entity.WorkOrderSystemNumber)
 	var WorkOrderResponses []transactionworkshoppayloads.WorkOrderRequestResponse
@@ -450,6 +462,30 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 	}
 
+	// fetch profit center from external API
+	ProfitCenterUrl := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(entity.ProfitCenterId)
+	var profitCenterResponses transactionworkshoppayloads.ProfitCenter
+	errProfitCenter := utils.Get(ProfitCenterUrl, &profitCenterResponses, nil)
+	if errProfitCenter != nil {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve profit center data from the external API",
+			Err:        errProfitCenter,
+		}
+	}
+
+	// fetch dealer representative from external API
+	DealerRepresentativeUrl := config.EnvConfigs.GeneralServiceUrl + "dealer-representative/" + strconv.Itoa(entity.DealerRepresentativeId)
+	var dealerRepresentativeResponses transactionworkshoppayloads.DealerRepresentative
+	errDealerRepresentative := utils.Get(DealerRepresentativeUrl, &dealerRepresentativeResponses, nil)
+	if errDealerRepresentative != nil {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve dealer representative data from the external API",
+			Err:        errDealerRepresentative,
+		}
+	}
+
 	// Construct the payload with pagination information
 	payload := transactionworkshoppayloads.ServiceRequestResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
@@ -468,9 +504,11 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		VehicleCode:                  vehicleResponses.Master.VehicleCode,
 		VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
 		CompanyId:                    entity.CompanyId,
-		CompanyName:                  "", //companyResponses[0].CompanyName,
+		CompanyName:                  companyResponses[0].CompanyName,
 		DealerRepresentativeId:       entity.DealerRepresentativeId,
+		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,
 		ProfitCenterId:               entity.ProfitCenterId,
+		ProfitCenterName:             profitCenterResponses.ProfitCenterName,
 		WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
 		WorkOrderDocumentNumber:      workOrderDocumentNumber,
 		BookingSystemNumber:          entity.BookingSystemNumber,
@@ -483,7 +521,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ReplyDate:                    ReplyDate,
 		ReplyRemark:                  entity.ReplyRemark,
 		ServiceCompanyId:             entity.ServiceCompanyId,
-		ServiceCompanyName:           "", //servicecompanyResponses[0].CompanyName,
+		ServiceCompanyName:           companyResponses[0].CompanyName,
 		ServiceDate:                  serviceDate,
 		ServiceRequestBy:             entity.ServiceRequestBy,
 		ServiceDetails: transactionworkshoppayloads.ServiceRequestDetailsResponse{
