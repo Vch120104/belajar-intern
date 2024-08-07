@@ -1,6 +1,7 @@
 package transactionjpcbrepositoryimpl
 
 import (
+	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
@@ -237,4 +238,74 @@ func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.Filter
 	}
 
 	return responses, nil
+}
+
+func (r *BayMasterImpl) Update(tx *gorm.DB, request transactionjpcbpayloads.BayMasterUpdateRequest) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	carWashEntities := []transactionjpcbentities.CarWash{}
+	bayEntities := transactionjpcbentities.BayMaster{}
+
+	// get wo sys no with company_id = req.company_id AND car_wash_bay_id = req.car_wash_bay_id AND car_wash_status_id = 1
+	result := tx.Select("work_order_system_number").Where("company_id = 151 AND car_wash_bay_id = 1 AND car_wash_status_id = 2").
+		Find(&carWashEntities)
+	if result.Error != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+	// if wo sys no with company_id = req.company_id AND car_wash_bay_id = req.car_wash_bay_id AND car_wash_status_id = 1 doesnt exist
+	if len(carWashEntities) == 0 {
+		//check if bay exist
+		resultBay := tx.Model(&carWashEntities).Where("company_id = 151 AND car_wash_bay_id = 1", request.CompanyId, request.CarWashBayId).
+			Find(&carWashEntities)
+
+		if resultBay.Error != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        resultBay.Error,
+			}
+		}
+
+		// change record status
+		if len(carWashEntities) != 0 {
+			updateQuery := tx.Model(&bayEntities).Where("car_wash_bay_id = 1", request.CarWashBayId).Update("is_active", 1)
+
+			if updateQuery.Error != nil {
+				return nil, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        updateQuery.Error,
+				}
+			}
+
+			return nil, nil
+		} else {
+			// POST NEW BAY
+
+			// entities := masterentities.AgreementDiscountGroupDetail{
+			// 	AgreementId:               AgreementId,
+			// 	AgreementSelection:        req.AgreementSelection,
+			// 	AgreementOrderType:        req.AgreementLineTypeId,
+			// 	AgreementDiscountMarkupId: req.AgreementDiscountMarkup,
+			// 	AgreementDiscount:         req.AgreementDiscount,
+			// 	AgreementDetailRemarks:    req.AgreementDetailRemaks,
+			// }
+			// insertEntities := transactionjpcbentities.BayMaster{
+			// 	IsActive:              true,
+			// 	CarWashBayId:          0,
+			// 	CarWashBayCode:        "",
+			// 	CarWashBayDescription: "",
+			// }
+
+			// // err := tx.Save(&entities).Error
+			// err := tx.Save(&insertEntities).Error
+		}
+
+		//if bay doesnt exist
+		//TODO
+
+		// reorder order_no (column isnt yet present in current entity)
+		//TODO
+	}
+
+	return nil, nil
 }

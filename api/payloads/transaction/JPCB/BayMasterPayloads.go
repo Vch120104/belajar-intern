@@ -10,3 +10,9 @@ type BayMasterResponse struct {
 	WorkOrderSystemNumber int    `json:"work_order_system_number"`
 	IsActive              bool   `json:"is_active"`
 }
+
+type BayMasterUpdateRequest struct {
+	CompanyId    int
+	CarWashBayId int
+	RecordStatus bool
+}

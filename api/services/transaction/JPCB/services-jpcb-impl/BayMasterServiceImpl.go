@@ -4,6 +4,7 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
+	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
@@ -58,6 +59,16 @@ func (s *BayMasterServiceImpl) GetAllDeactiveBayCarWashScreen(filterCondition []
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
+	}
+	return results, nil
+}
+
+func (s *BayMasterServiceImpl) UpdateBayMaster(request transactionjpcbpayloads.BayMasterUpdateRequest) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.BayMasterRepository.Update(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
 	}
 	return results, nil
 }

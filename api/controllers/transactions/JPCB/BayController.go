@@ -2,8 +2,10 @@ package transactionjpcbcontroller
 
 import (
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
 	"net/http"
@@ -15,6 +17,7 @@ type BayMasterController interface {
 	GetAllBayMaster(writer http.ResponseWriter, request *http.Request)
 	GetAllActiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request)
 	GetAllDeactiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request)
+	UpdateBayMaster(writer http.ResponseWriter, request *http.Request)
 }
 
 type BayMasterControllerImpl struct {
@@ -107,3 +110,33 @@ func (r *BayMasterControllerImpl) GetAllDeactiveBayCarWashScreen(writer http.Res
 
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(responseData), "Get Data Successfully", http.StatusOK)
 }
+
+// UpdateBayMaster implements BayMasterController.
+func (r *BayMasterControllerImpl) UpdateBayMaster(writer http.ResponseWriter, request *http.Request) {
+	// companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	// car_wash_bay_id, _ := strconv.Atoi(chi.URLParam(request, "car_wash_bay_id"))
+
+	var valueRequest transactionjpcbpayloads.BayMasterUpdateRequest
+	helper.ReadFromRequestBody(request, &valueRequest)
+
+	update, err := r.bayMasterService.UpdateBayMaster(valueRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Bay updated successfully", http.StatusOK)
+}
+
+//  agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+// 	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+
+// 	var valueRequest masterpayloads.DiscountValueRequest
+// 	helper.ReadFromRequestBody(request, &valueRequest)
+
+// 	update, err := r.AgreementService.UpdateDiscountValue(int(agreementID), int(valueID), valueRequest)
+// 	if err != nil {
+// 		exceptions.NewAppException(writer, request, err)
+// 		return
+// 	}
+
+// 	payloads.NewHandleSuccess(writer, update, "Discount value updated successfully", http.StatusOK)
