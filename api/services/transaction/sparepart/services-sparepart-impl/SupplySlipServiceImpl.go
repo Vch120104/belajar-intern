@@ -1,11 +1,14 @@
 package transactionsparepartserviceimpl
 
 import (
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
+	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -41,4 +44,36 @@ func (s *SupplySlipServiceImpl) GetSupplySlipDetailById(tx *gorm.DB, id int) (tr
 		return transactionsparepartpayloads.SupplySlipDetailResponse{}, err
 	}
 	return value, nil
+}
+
+func (s *SupplySlipServiceImpl) SaveSupplySlip(req transactionsparepartentities.SupplySlip) (transactionsparepartentities.SupplySlip, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	results, err := s.supplySlipRepo.SaveSupplySlip(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionsparepartentities.SupplySlip{}, err
+	}
+	return results, nil
+}
+
+func (s *SupplySlipServiceImpl) SaveSupplySlipDetail(req transactionsparepartentities.SupplySlipDetail) (transactionsparepartentities.SupplySlipDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	results, err := s.supplySlipRepo.SaveSupplySlipDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionsparepartentities.SupplySlipDetail{}, err
+	}
+	return results, nil
+}
+
+func (s *SupplySlipServiceImpl) GetAllSupplySlip(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, totalPages, totalRows, err := s.supplySlipRepo.GetAllSupplySlip(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, totalPages, totalRows, err
+	}
+	return results, totalPages, totalRows, nil
 }

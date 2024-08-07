@@ -1168,6 +1168,9 @@ func SupplySlipRouter(
 	router := chi.NewRouter()
 
 	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
+	router.Get("/", SupplySlipController.GetAllSupplySlip)
+	router.Post("/", SupplySlipController.SaveSupplySlip)
+	router.Post("/detail", SupplySlipController.SaveSupplySlipDetail)
 
 	return router
 }

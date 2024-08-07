@@ -1,7 +1,13 @@
 package transactionsparepartcontroller
 
 import (
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	"after-sales/api/exceptions"
+	"after-sales/api/helper"
+	"after-sales/api/payloads"
+	"after-sales/api/payloads/pagination"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
+	"after-sales/api/utils"
 	"net/http"
 )
 
@@ -11,6 +17,9 @@ type SupplySlipControllerImpl struct {
 
 type SupplySlipController interface {
 	GetSupplySlipByID(writer http.ResponseWriter, request *http.Request)
+	GetAllSupplySlip(writer http.ResponseWriter, request *http.Request)
+	SaveSupplySlip(writer http.ResponseWriter, request *http.Request)
+	SaveSupplySlipDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewSupplySlipController(supplyslipservice transactionsparepartservice.SupplySlipService) SupplySlipController {
@@ -43,4 +52,66 @@ func (r *SupplySlipControllerImpl) GetSupplySlipByID(writer http.ResponseWriter,
 
 	// Return success
 	// payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
+}
+
+func (r *SupplySlipControllerImpl) GetAllSupplySlip(writer http.ResponseWriter, request *http.Request) {
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_supply_slip.supply_system_number": queryValues.Get("supply_system_number"),
+		"supply_type_id":                       queryValues.Get("supply_type_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.supplyslipservice.GetAllSupplySlip(criteria, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *SupplySlipControllerImpl) SaveSupplySlip(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest transactionsparepartentities.SupplySlip
+	helper.ReadFromRequestBody(request, &formRequest)
+	var message string
+
+	create, err := r.supplyslipservice.SaveSupplySlip(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	message = "Create Data Successfully!"
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *SupplySlipControllerImpl) SaveSupplySlipDetail(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest transactionsparepartentities.SupplySlipDetail
+	helper.ReadFromRequestBody(request, &formRequest)
+	var message string
+
+	create, err := r.supplyslipservice.SaveSupplySlipDetail(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	message = "Create Data Successfully!"
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
