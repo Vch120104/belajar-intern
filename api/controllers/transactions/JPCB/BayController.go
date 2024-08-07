@@ -14,6 +14,7 @@ import (
 type BayMasterController interface {
 	GetAllBayMaster(writer http.ResponseWriter, request *http.Request)
 	GetAllActiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request)
+	GetAllDeactiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request)
 }
 
 type BayMasterControllerImpl struct {
@@ -74,7 +75,7 @@ func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.Respo
 	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.bayMasterService.GetAllBayMaster(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.bayMasterService.GetAllActiveBayCarWashScreen(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -86,4 +87,23 @@ func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.Respo
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// GetAllDeactiveBayCarWashScreen implements BayMasterController.
+func (r *BayMasterControllerImpl) GetAllDeactiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query() // Retrieve query parameters
+
+	queryParams := map[string]string{
+		"company_id": queryValues.Get("company_id"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	responseData, err := r.bayMasterService.GetAllDeactiveBayCarWashScreen(criteria)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(responseData), "Get Data Successfully", http.StatusOK)
 }

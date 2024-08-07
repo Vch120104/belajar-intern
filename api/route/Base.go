@@ -29,6 +29,7 @@ func BayMasterRouter(
 
 	router.Get("/", bayController.GetAllBayMaster)
 	router.Get("/active", bayController.GetAllActiveBayCarWashScreen)
+	router.Get("/deactive", bayController.GetAllDeactiveBayCarWashScreen)
 
 	return router
 }

@@ -49,3 +49,15 @@ func (s *BayMasterServiceImpl) GetAllActiveBayCarWashScreen(filterCondition []ut
 	}
 	return results, totalPages, totalRows, nil
 }
+
+// GetAllDeactiveBayCarWashScreen implements transactionjpcbservice.BayMasterService.
+func (s *BayMasterServiceImpl) GetAllDeactiveBayCarWashScreen(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	results, err := s.BayMasterRepository.GetAllDeactive(tx, filterCondition)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
