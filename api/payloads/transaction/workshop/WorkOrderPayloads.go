@@ -697,13 +697,11 @@ type WorkOrderDetailRequest struct {
 type WorkOrderDetailResponse struct {
 	WorkOrderDetailId                  int     `json:"work_order_detail_id"`
 	WorkOrderSystemNumber              int     `json:"work_order_system_number"`
-	WorkOrderDocumentNumber            string  `json:"work_order_document_number"`
 	LineTypeId                         int     `json:"line_type_id"`
 	TransactionTypeId                  int     `json:"transaction_type_id"`
 	JobTypeId                          int     `json:"job_type_id"`
 	WarehouseId                        int     `json:"warehouse_id"`
 	ItemId                             int     `json:"item_id"`
-	ItemName                           string  `json:"item_name"`
 	FrtQuantity                        float64 `json:"frt_quantity"`
 	SupplyQuantity                     float64 `json:"supply_quantity"`
 	OperationItemPrice                 float64 `json:"operation_item_price"`
@@ -800,4 +798,10 @@ type VehicleMaster struct {
 type VehicleStnk struct {
 	VehicleTnkb             string `json:"vehicle_registration_certificate_tnkb"`
 	VehicleCertificateOwner int    `json:"vehicle_registration_certificate_owner_name"`
+}
+
+type Linetype struct {
+	LineTypeId   int    `json:"line_type_id"`
+	LineTypeCode string `json:"line_type_code"`
+	LineTypeName string `json:"line_type_name"`
 }

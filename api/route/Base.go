@@ -163,6 +163,7 @@ func ItemRouter(
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
+	router.Put("/{item_detail_id}",itemController.UpdateItemDetail)
 
 	return router
 }
@@ -415,7 +416,38 @@ func BomRouter(
 
 	return router
 }
+func PurchaseRequestRouter(
+	PurchaseRequest transactionsparepartcontroller.PurchaseRequestController,
+) chi.Router {
+	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", PurchaseRequest.GetAllPurchaseRequest)
+	router.Get("/by-id/{purchase_request_system_number}", PurchaseRequest.GetByIdPurchaseRequest)
+	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
+	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
+	router.Post("/", PurchaseRequest.NewPurchaseRequestHeader)
+	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
+	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
+	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
+	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
+	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
+
+	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
+	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
+
+	// @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [put]
+
+	//router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
+	//router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
+	//router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
+
+	return router
+}
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {
@@ -783,6 +815,39 @@ func ShiftScheduleRouter(
 	return router
 }
 
+func LabourSellingPriceRouter(
+	LabourSellingPriceController masteroperationcontroller.LabourSellingPriceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", LabourSellingPriceController.GetAllSellingPrice)
+	router.Post("/", LabourSellingPriceController.SaveLabourSellingPrice)
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceController.GetLabourSellingPriceById)
+
+	return router
+}
+
+func LabourSellingPriceDetailRouter(
+	LabourSellingPriceDetailController masteroperationcontroller.LabourSellingPriceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
+	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
+
+	return router
+}
+
 func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
 ) chi.Router {
@@ -1143,6 +1208,32 @@ func ServiceReceiptRouter(
 	router.Get("/", ServiceReceiptController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceReceiptController.GetById)
 	router.Put("/{service_request_system_number}", ServiceReceiptController.Save)
+
+	return router
+}
+
+func WorkOrderAllocationRouter(
+	WorkOrderAllocationController transactionworkshopcontroller.WorkOrderAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
+	router.Get("/header-data", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+
+	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
+	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
+
+	// assign technician to work order
+	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
+	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
+	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
+	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
 
 	return router
 }

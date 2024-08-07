@@ -90,16 +90,16 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	}
 
 	// Fetch data company from external API
-	// CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(ServiceRequestReq.CompanyId)
-	// var companyResponses []transactionworkshoppayloads.CompanyResponse
-	// errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
-	// if errCompany != nil || len(companyResponses) == 0 {
-	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to retrieve company data from the external API",
-	// 		Err:        errCompany,
-	// 	}
-	// }
+	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "companies-redis?company_id=" + strconv.Itoa(entities[0].CompanyId)
+	var companyResponses []transactionworkshoppayloads.CompanyResponse
+	errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
+	if errCompany != nil || len(companyResponses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve company data from the external API",
+			Err:        errCompany,
+		}
+	}
 
 	// Fetch data vehicle from external API
 	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entities[0].VehicleId)
@@ -139,7 +139,7 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ServiceRequestDate:           entity.ServiceRequestDate.Format("2006-01-02 15:04:05"),
 			ServiceRequestBy:             entity.ServiceRequestBy,
 			CompanyId:                    entity.CompanyId,
-			CompanyName:                  "", //entity.CompanyName,
+			CompanyName:                  companyResponses[0].CompanyName,
 			ServiceCompanyId:             entity.ServiceCompanyId,
 			BrandId:                      entity.BrandId,
 			BrandName:                    brandResponses.BrandName,

@@ -2,6 +2,40 @@ package transactionworkshoppayloads
 
 import "time"
 
+type WorkOrderDetailBypassRequest struct {
+	WorkOrderDetailId     int     `json:"work_order_detail_id" parent_entity:"trx_work_order_detail" main_table:"trx_work_order_detail"`
+	WorkOrderSystemNumber int     `json:"work_order_system_number" parent_entity:"trx_work_order_detail"`
+	LineTypeId            int     `json:"line_type_id" parent_entity:"trx_work_order_detail"`
+	TransactionTypeId     int     `json:"transaction_type_id" parent_entity:"trx_work_order_detail" `
+	JobTypeId             int     `json:"job_type_id" parent_entity:"trx_work_order_detail"`
+	FrtQuantity           float64 `json:"frt_quantity" parent_entity:"trx_work_order_detail"`
+	SupplyQuantity        float64 `json:"supply_quantity" parent_entity:"trx_work_order_detail"`
+	PriceListId           int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
+	WarehouseId           int     `json:"warehouse_id" parent_entity:"trx_work_order_detail"`
+	ItemId                int     `json:"item_id" parent_entity:"trx_work_order_detail"`
+	ProposedPrice         float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
+	OperationItemPrice    float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
+}
+
+type WorkOrderDetailBypassResponse struct {
+	WorkOrderDetailId                  int     `json:"work_order_detail_id"`
+	WorkOrderSystemNumber              int     `json:"work_order_system_number"`
+	WorkOrderDocumentNumber            string  `json:"work_order_document_number"`
+	LineTypeId                         int     `json:"line_type_id"`
+	LineTypeName                       string  `json:"line_type_name"`
+	TransactionTypeId                  int     `json:"transaction_type_id"`
+	JobTypeId                          int     `json:"job_type_id"`
+	WarehouseId                        int     `json:"warehouse_id"`
+	ItemId                             int     `json:"item_id"`
+	ItemCode                           string  `json:"item_code"`
+	ItemName                           string  `json:"item_name"`
+	FrtQuantity                        float64 `json:"frt_quantity"`
+	SupplyQuantity                     float64 `json:"supply_quantity"`
+	OperationItemPrice                 float64 `json:"operation_item_price"`
+	OperationItemDiscountAmount        float64 `json:"operation_item_discount_amount"`
+	OperationItemDiscountRequestAmount float64 `json:"operation_item_discount_request_amount"`
+}
+
 type WorkOrderBypassRequest struct {
 	WorkOrderDetailId     int `json:"work_order_detail_id"`
 	WorkOrderSystemNumber int `json:"work_order_system_number"`
