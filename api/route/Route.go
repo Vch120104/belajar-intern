@@ -2,6 +2,10 @@ package route
 
 import (
 	"after-sales/api/config"
+	mastercontroller "after-sales/api/controllers/master"
+	masteritemcontroller "after-sales/api/controllers/master/item"
+	masteroperationcontroller "after-sales/api/controllers/master/operation"
+	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	"after-sales/api/helper"
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
@@ -11,11 +15,6 @@ import (
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
-
-	mastercontroller "after-sales/api/controllers/master"
-	masteritemcontroller "after-sales/api/controllers/master/item"
-	masteroperationcontroller "after-sales/api/controllers/master/operation"
-	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
@@ -286,6 +285,10 @@ func StartRouting(db *gorm.DB) {
 	ServiceReceiptRepository := transactionworkshoprepositoryimpl.OpenServiceReceiptRepositoryImpl()
 	ServiceReceiptService := transactionworkshopserviceimpl.OpenServiceReceiptServiceImpl(ServiceReceiptRepository, db, rdb)
 	ServiceReceiptController := transactionworksopcontroller.NewServiceReceiptController(ServiceReceiptService)
+	//Purchase Request
+	PurchaseRequestRepository := transactionsparepartrepositoryimpl.NewPurchaseRequestRepositoryImpl()
+	PurchaseRequestService := transactionsparepartserviceimpl.NewPurchaseRequestImpl(PurchaseRequestRepository, db, rdb)
+	PurchaseRequestController := transactionsparepartcontroller.NewPurchaseRequestController(PurchaseRequestService)
 
 	//Work order bypass
 	WorkOrderBypassRepository := transactionworkshoprepositoryimpl.OpenWorkOrderBypassRepositoryImpl()
@@ -347,6 +350,7 @@ func StartRouting(db *gorm.DB) {
 	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
 	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
 
+	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -422,7 +426,7 @@ func StartRouting(db *gorm.DB) {
 		/* Transaction Sparepart */
 		r.Mount("/supply-slip", SupplySlipRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
-
+		r.Mount("/purchase-request", PurchaseRequestRouter)
 	})
 
 	// Route untuk Swagger

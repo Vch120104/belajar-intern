@@ -415,7 +415,38 @@ func BomRouter(
 
 	return router
 }
+func PurchaseRequestRouter(
+	PurchaseRequest transactionsparepartcontroller.PurchaseRequestController,
+) chi.Router {
+	router := chi.NewRouter()
 
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", PurchaseRequest.GetAllPurchaseRequest)
+	router.Get("/by-id/{purchase_request_system_number}", PurchaseRequest.GetByIdPurchaseRequest)
+	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
+	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
+	router.Post("/", PurchaseRequest.NewPurchaseRequestHeader)
+	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
+	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
+	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
+	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
+	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
+
+	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
+	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
+
+	// @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [put]
+
+	//router.Get("/{warranty_free_services_id}", warrantyFreeServiceController.GetWarrantyFreeServiceByID)
+	//router.Post("/", warrantyFreeServiceController.SaveWarrantyFreeService)
+	//router.Patch("/{warranty_free_services_id}", warrantyFreeServiceController.ChangeStatusWarrantyFreeService)
+
+	return router
+}
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {
