@@ -1540,13 +1540,13 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 				Where("work_order_system_number = ?", id).
 				First(&woOprItemLine)
 
-			var bookingEstim21 []transactionworkshopentities.BookingEstimation
-			tx.Model(&bookingEstim21).
-				Select("BE.ESTIM_LINE, BE.LINE_TYPE, BE.OPR_ITEM_CODE, BE.DESCRIPTION, I.SELLING_UOM, BE.FRT_QTY, BE.OPR_ITEM_PRICE, BE.OPR_ITEM_DISC_AMOUNT, BE.OPR_ITEM_DISC_REQ_AMOUNT, BE.OPR_ITEM_DISC_PERCENT, BE.OPR_ITEM_DISC_REQ_PERCENT, BE.PPH_AMOUNT, BE.PPH_TAX_CODE, BE.PPH_TAX_RATE").
-				Joins("LEFT OUTER JOIN wtBookEstim0 BE0 ON BE0.ESTIM_SYSTEM_NO = BE.ESTIM_SYSTEM_NO").
-				Joins("LEFT OUTER JOIN gmItem0 I ON I.ITEM_CODE = BE.OPR_ITEM_CODE").
-				Where("BE.ESTIM_SYSTEM_NO = ?", estimSystemNo).
-				Find(&bookingEstim21)
+			// var bookingEstim21 []transactionworkshopentities.BookingEstimation
+			// tx.Model(&bookingEstim21).
+			// 	Select("BE.ESTIM_LINE, BE.LINE_TYPE, BE.OPR_ITEM_CODE, BE.DESCRIPTION, I.SELLING_UOM, BE.FRT_QTY, BE.OPR_ITEM_PRICE, BE.OPR_ITEM_DISC_AMOUNT, BE.OPR_ITEM_DISC_REQ_AMOUNT, BE.OPR_ITEM_DISC_PERCENT, BE.OPR_ITEM_DISC_REQ_PERCENT, BE.PPH_AMOUNT, BE.PPH_TAX_CODE, BE.PPH_TAX_RATE").
+			// 	Joins("LEFT OUTER JOIN wtBookEstim0 BE0 ON BE0.ESTIM_SYSTEM_NO = BE.ESTIM_SYSTEM_NO").
+			// 	Joins("LEFT OUTER JOIN gmItem0 I ON I.ITEM_CODE = BE.OPR_ITEM_CODE").
+			// 	Where("BE.ESTIM_SYSTEM_NO = ?", estimSystemNo).
+			// 	Find(&bookingEstim21)
 
 			workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 				WorkOrderSystemNumber:              id,
@@ -1603,12 +1603,12 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 					Where("work_order_system_number = ?", request.WorkOrderSystemNumber).
 					First(&woOprItemLine)
 
-				var campaignItems []mastercampaignmasterentities.CampaignMaster
-				tx.Model(&campaignItems).Select("C1.LINE_TYPE, C1.OPR_ITEM_CODE, C1.DESCRIPTION, I.SELLING_UOM, C1.FRT_QTY, C1.OPR_ITEM_PRICE, C1.OPR_ITEM_DISC_PERCENT").
-					Joins("INNER JOIN amCampaign0 C ON C1.CAMPAIGN_CODE = C.CAMPAIGN_CODE").
-					Joins("LEFT JOIN gmItem0 I ON I.ITEM_CODE = C1.OPR_ITEM_CODE").
-					Where("C1.campaign_id = ?", campaignId).
-					Find(&campaignItems)
+				// var campaignItems []mastercampaignmasterentities.CampaignMaster
+				// tx.Model(&campaignItems).Select("C1.LINE_TYPE, C1.OPR_ITEM_CODE, C1.DESCRIPTION, I.SELLING_UOM, C1.FRT_QTY, C1.OPR_ITEM_PRICE, C1.OPR_ITEM_DISC_PERCENT").
+				// 	Joins("INNER JOIN amCampaign0 C ON C1.CAMPAIGN_CODE = C.CAMPAIGN_CODE").
+				// 	Joins("LEFT JOIN gmItem0 I ON I.ITEM_CODE = C1.OPR_ITEM_CODE").
+				// 	Where("C1.campaign_id = ?", campaignId).
+				// 	Find(&campaignItems)
 
 				workOrderDetail := transactionworkshopentities.WorkOrderDetail{
 					WorkOrderSystemNumber:              id,

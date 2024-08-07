@@ -170,7 +170,7 @@ type ItemDetailResponse struct {
 	BrandId      int     `json:"brand_id"`
 	ModelId      int     `json:"model_id"`
 	VariantId    int     `json:"variant_id"`
-	MillageEvery float64 `json:"millage_every"`
+	MileageEvery float64 `json:"mileage_every"`
 	ReturnEvery  float64 `json:"return_every"`
 }
 
@@ -180,7 +180,7 @@ type ItemDetailRequest struct {
 	BrandId      int     `json:"brand_id" parent_entity:"mtr_item_detail"`
 	ModelId      int     `json:"model_id" parent_entity:"mtr_item_detail"`
 	VariantId    int     `json:"variant_id" parent_entity:"mtr_item_detail"`
-	MillageEvery float64 `json:"millage_every" parent_entity:"mtr_item_detail"`
+	MileageEvery float64 `json:"mileage_every" parent_entity:"mtr_item_detail"`
 	ReturnEvery  float64 `json:"return_every" parent_entity:"mtr_item_detail"`
 	IsActive     bool    `json:"is_active" parent_entity:"mtr_item_detail"`
 }
@@ -260,7 +260,7 @@ type ItemUpdateRequest struct {
 }
 
 type ItemDetailUpdateRequest struct {
-	MillageEvery float64 `json:"millage_every"`
+	MileageEvery float64 `json:"mileage_every"`
 	ReturnEvery  float64 `json:"return_every"`
 }
 

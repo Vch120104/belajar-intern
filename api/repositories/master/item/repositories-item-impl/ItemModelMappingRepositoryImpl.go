@@ -114,7 +114,7 @@ func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req
 
 	entities := masteritementities.ItemDetail{
 		ItemDetailId: req.ItemDetailId,
-		MillageEvery: req.MillageEvery,
+		MileageEvery: req.MileageEvery,
 		ReturnEvery:  req.ReturnEvery,
 	}
 
@@ -139,7 +139,7 @@ func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req
 		BrandId:      req.BrandId,
 		ModelId:      req.ModelId,
 		VariantId:    req.VariantId,
-		MillageEvery: req.MillageEvery,
+		MileageEvery: req.MileageEvery,
 		ReturnEvery:  req.ReturnEvery,
 	}
 
