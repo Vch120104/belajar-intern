@@ -1212,6 +1212,32 @@ func ServiceReceiptRouter(
 	return router
 }
 
+func WorkOrderAllocationRouter(
+	WorkOrderAllocationController transactionworkshopcontroller.WorkOrderAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
+	router.Get("/header-data", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+
+	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
+	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
+
+	// assign technician to work order
+	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
+	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
+	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
+	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
+
+	return router
+}
+
 func WorkOrderBypassRouter(
 	WorkOrderBypassController transactionworkshopcontroller.WorkOrderBypassController,
 ) chi.Router {

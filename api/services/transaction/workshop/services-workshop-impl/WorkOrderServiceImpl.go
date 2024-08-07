@@ -294,45 +294,13 @@ func (s *WorkOrderServiceImpl) NewVehicleModel(brandId int) ([]transactionworksh
 }
 
 func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("work_orders", filterCondition, pages)
 
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		fmt.Println("Cache hit, returning cached data...")
-		var mapResponses []map[string]interface{}
-		if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-		return paginatedData, totalPages, totalRows, nil
-	} else if err != redis.Nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	fmt.Println("Cache miss, querying database...")
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAll(tx, filterCondition, pages)
 	if repoErr != nil {
 		return results, totalPages, totalRows, repoErr
-	}
-
-	cacheData, marshalErr := json.Marshal(results)
-	if marshalErr == nil {
-		if err := s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration).Err(); err != nil {
-			fmt.Println("Failed to cache data:", err)
-		}
-	} else {
-		fmt.Println("Failed to marshal results for caching:", marshalErr)
 	}
 
 	return results, totalPages, totalRows, nil
@@ -442,21 +410,6 @@ func (s *WorkOrderServiceImpl) CloseOrder(id int) (bool, *exceptions.BaseErrorRe
 }
 
 func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	cacheKey := utils.GenerateCacheKeys("all_request", filterCondition, pages)
-
-	cachedData, err := s.RedisClient.Get(context.Background(), cacheKey).Result()
-	if err == nil {
-		var result []map[string]interface{}
-		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Error unmarshalling cached data"}
-		}
-		return result, 0, 0, nil
-	} else if err != redis.Nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			Message: "Error retrieving data from cache",
-			Err:     err,
-		}
-	}
 
 	// Data not found in cache, proceed to database
 	tx := s.DB.Begin()
@@ -464,19 +417,7 @@ func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondi
 
 	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllRequest(tx, filterCondition, pages)
 	defer helper.CommitOrRollback(tx, repoErr)
-	if repoErr != nil {
-		errorResponse := &exceptions.BaseErrorResponse{Message: repoErr.Message}
-		return nil, 0, 0, errorResponse
-	}
 
-	jsonData, err := json.Marshal(results)
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Error marshalling data"}
-	}
-
-	if err := s.RedisClient.Set(context.Background(), cacheKey, jsonData, utils.CacheExpiration).Err(); err != nil {
-		fmt.Println("Error caching data:", err)
-	}
 	return results, totalPages, totalRows, nil
 }
 
@@ -568,25 +509,6 @@ func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) (bool, *ex
 }
 
 func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	cacheKey := utils.GenerateCacheKeys("vehicle_service", filterCondition, pages)
-
-	ctx := context.Background()
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		var results []map[string]interface{}
-		if err := json.Unmarshal([]byte(cachedData), &results); err != nil {
-			return results, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		return results, 0, 0, nil
-	} else if err != redis.Nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
@@ -597,12 +519,6 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 		return results, totalPages, totalRows, repoErr
 	}
 
-	cacheData, marshalErr := json.Marshal(results)
-	if marshalErr != nil {
-		fmt.Println("Failed to marshal results for caching:", marshalErr)
-	} else {
-		s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration)
-	}
 	return results, totalPages, totalRows, nil
 }
 
@@ -708,47 +624,15 @@ func (s *WorkOrderServiceImpl) Submit(id int) (bool, string, *exceptions.BaseErr
 
 func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("detail_work_orders", filterCondition, pages)
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
 
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		fmt.Println("Cache miss, querying database...")
-
-		tx := s.DB.Begin()
-		defer helper.CommitOrRollbackTrx(tx)
-
-		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
-		if repoErr != nil {
-			return results, totalPages, totalRows, repoErr
-		}
-
-		cacheData, marshalErr := json.Marshal(results)
-		if marshalErr == nil {
-			s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration)
-		} else {
-			fmt.Println("Failed to marshal results for caching:", marshalErr)
-		}
-
-		return results, totalPages, totalRows, nil
-	} else if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllDetailWorkOrder(tx, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
 	}
 
-	fmt.Println("Cache hit, returning cached data...")
-	var mapResponses []map[string]interface{}
-	if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	return results, totalPages, totalRows, nil
 
 }
 
@@ -844,48 +728,17 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) (b
 }
 
 func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("work_orders_booking", filterCondition, pages)
 
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		fmt.Println("Cache miss, querying database...")
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
 
-		tx := s.DB.Begin()
-		defer helper.CommitOrRollbackTrx(tx)
-
-		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
-		defer helper.CommitOrRollback(tx, repoErr)
-		if repoErr != nil {
-			return results, totalPages, totalRows, repoErr
-		}
-
-		cacheData, marshalErr := json.Marshal(results)
-		if marshalErr == nil {
-			s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration)
-		} else {
-			fmt.Println("Failed to marshal results for caching:", marshalErr)
-		}
-
-		return results, totalPages, totalRows, nil
-	} else if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllBooking(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, repoErr)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
 	}
 
-	fmt.Println("Cache hit, returning cached data...")
-	var mapResponses []map[string]interface{}
-	if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse) {
@@ -1000,48 +853,16 @@ func (s *WorkOrderServiceImpl) CloseBooking(workOrderId int, id int) (bool, *exc
 
 func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
-	ctx := context.Background()
-	cacheKey := utils.GenerateCacheKeys("work_orders_affiliated", filterCondition, pages)
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
 
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == redis.Nil {
-		fmt.Println("Cache miss, querying database...")
-
-		tx := s.DB.Begin()
-		defer helper.CommitOrRollbackTrx(tx)
-
-		results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllAffiliated(tx, filterCondition, pages)
-		defer helper.CommitOrRollback(tx, repoErr)
-		if repoErr != nil {
-			return results, totalPages, totalRows, repoErr
-		}
-
-		cacheData, marshalErr := json.Marshal(results)
-		if marshalErr == nil {
-			s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration)
-		} else {
-			fmt.Println("Failed to marshal results for caching:", marshalErr)
-		}
-
-		return results, totalPages, totalRows, nil
-	} else if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetAllAffiliated(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, repoErr)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
 	}
 
-	fmt.Println("Cache hit, returning cached data...")
-	var mapResponses []map[string]interface{}
-	if err := json.Unmarshal([]byte(cachedData), &mapResponses); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	return paginatedData, totalPages, totalRows, nil
+	return results, totalPages, totalRows, nil
 
 }
 
