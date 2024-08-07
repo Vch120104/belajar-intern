@@ -10,7 +10,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -173,7 +172,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromHistory(tx *g
 func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
 	var entityitem masteritementities.Item
 	var entity mastercampaignmasterentities.CampaignMaster
-	var lastprice sql.NullFloat64
+	var lastprice *float64
 	if req.SharePercent > req.DiscountPercent {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -191,12 +190,10 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 				Err:        err,
 			}
 		}
-		var price float64
-        if lastprice.Valid {
-            price = lastprice.Float64
-        } else {
-            price = 0.0 // Handle NULL case
-        }
+		if lastprice==nil{
+			lastprice = new(float64)
+			*lastprice =0.0
+		}
 		entities := &mastercampaignmasterentities.CampaignMasterDetailItem{
 			CampaignId:           req.CampaignId,
 			LineTypeId:           req.LineTypeId,
@@ -205,7 +202,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			ShareBillTo:          req.ShareBillTo,
 			DiscountPercent:      req.DiscountPercent,
 			SharePercent:         req.SharePercent,
-			Price:                price,
+			Price:                *lastprice,
 		}
 		err2 := tx.Save(&entities).Error
 
@@ -237,12 +234,10 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 				Err:        err,
 			}
 		}
-		var price float64
-        if lastprice.Valid {
-            price = lastprice.Float64
-        } else {
-            price = 0.0 // Handle NULL case
-        }
+		if lastprice==nil{
+			lastprice = new(float64)
+			*lastprice =0.0
+		}
 		entities2 := &mastercampaignmasterentities.CampaignMasterOperationDetail{
 			CampaignId:                req.CampaignId,
 			LineTypeId:                req.LineTypeId,
@@ -251,7 +246,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			ShareBillTo:               req.ShareBillTo,
 			DiscountPercent:           req.DiscountPercent,
 			SharePercent:              req.SharePercent,
-			Price:                     price,
+			Price:                     *lastprice,
 		}
 		err2 := tx.Save(&entities2).Error
 		if err2 != nil {
