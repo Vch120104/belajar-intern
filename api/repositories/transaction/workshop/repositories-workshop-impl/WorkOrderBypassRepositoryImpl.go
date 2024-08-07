@@ -4,11 +4,11 @@ import (
 	"after-sales/api/config"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
-	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -22,9 +22,13 @@ func OpenWorkOrderBypassRepositoryImpl() transactionworkshoprepository.WorkOrder
 	return &WorkOrderBypassRepositoryImpl{}
 }
 
+// uspg_wtWorkOrder2_Select
+// IF @Option = 13
+//
+//	--USE FOR : * SELECT DATA BY EMPLOYEE FOR BYPASS TO QC
+//	--USE IN MODUL :
 func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
-	tableStruct := transactionworkshoppayloads.WorkOrderDetailRequest{}
+	tableStruct := transactionworkshoppayloads.WorkOrderDetailBypassRequest{}
 
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
@@ -43,13 +47,13 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 
 	defer rows.Close()
 
-	var convertedResponses []transactionworkshoppayloads.WorkOrderDetailResponse
+	var convertedResponses []transactionworkshoppayloads.WorkOrderDetailBypassResponse
 
 	for rows.Next() {
 
 		var (
-			workOrderReq transactionworkshoppayloads.WorkOrderDetailRequest
-			workOrderRes transactionworkshoppayloads.WorkOrderDetailResponse
+			workOrderReq transactionworkshoppayloads.WorkOrderDetailBypassRequest
+			workOrderRes transactionworkshoppayloads.WorkOrderDetailBypassResponse
 		)
 
 		if err := rows.Scan(
@@ -87,7 +91,7 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 		// fetch data item from internal services
 		ItemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(workOrderReq.ItemId)
 		//fmt.Println("Fetching  item data from:", ItemURL)
-		var getItemResponse masteritempayloads.BomItemNameResponse
+		var getItemResponse transactionworkshoppayloads.ItemServiceRequestDetail
 		if err := utils.Get(ItemURL, &getItemResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -96,12 +100,15 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			}
 		}
 
-		workOrderRes = transactionworkshoppayloads.WorkOrderDetailResponse{
-			WorkOrderDocumentNumber: getModelResponse.WorkOrderDocumentNumber,
+		workOrderRes = transactionworkshoppayloads.WorkOrderDetailBypassResponse{
+
 			WorkOrderSystemNumber:   workOrderReq.WorkOrderSystemNumber,
+			WorkOrderDocumentNumber: getModelResponse.WorkOrderDocumentNumber,
 			LineTypeId:              workOrderReq.LineTypeId,
 			ItemId:                  workOrderReq.ItemId,
+			ItemCode:                getItemResponse.ItemCode,
 			ItemName:                getItemResponse.ItemName,
+			FrtQuantity:             workOrderReq.FrtQuantity,
 		}
 
 		convertedResponses = append(convertedResponses, workOrderRes)
@@ -111,11 +118,13 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"work_order_document_number": response.WorkOrderDocumentNumber,
 			"work_order_system_number":   response.WorkOrderSystemNumber,
+			"work_order_document_number": response.WorkOrderDocumentNumber,
 			"line_type_id":               response.LineTypeId,
 			"item_id":                    response.ItemId,
+			"item_code":                  response.ItemCode,
 			"item_name":                  response.ItemName,
+			"frt_quantity":               response.FrtQuantity,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -126,20 +135,75 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 }
 
 func (r *WorkOrderBypassRepositoryImpl) GetById(tx *gorm.DB, id int) (transactionworkshoppayloads.WorkOrderBypassResponse, *exceptions.BaseErrorResponse) {
-	tableStruct := transactionworkshoppayloads.WorkOrderBypassResponse{}
+	var workOrderResponse transactionworkshoppayloads.WorkOrderBypassResponse
+	var tableStruct transactionworkshoppayloads.WorkOrderDetailBypassRequest
 
+	// Create join query
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
 	whereQuery := joinTable.Where("work_order_system_number = ?", id)
 
-	if err := whereQuery.Find(&tableStruct).Error; err != nil {
-		return tableStruct, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+	// Execute the query and populate tableStruct
+	if err := whereQuery.First(&tableStruct).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Record not found",
+				Err:        err,
+			}
+		}
+		return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return tableStruct, nil
+	// Fetch data work order from internal services
+	ModelURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(tableStruct.WorkOrderSystemNumber)
+	//fmt.Println("Fetching  work order data from:", ModelURL)
+	var getModelResponse transactionworkshoppayloads.WorkOrderLookupResponse
+	if err := utils.Get(ModelURL, &getModelResponse, nil); err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch model data from external service",
+			Err:        err,
+		}
+	}
+
+	// fetch data item from internal services
+	ItemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(tableStruct.ItemId)
+	//fmt.Println("Fetching  item data from:", ItemURL)
+	var getItemResponse transactionworkshoppayloads.ItemServiceRequestDetail
+	if err := utils.Get(ItemURL, &getItemResponse, nil); err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch item data from external service",
+			Err:        err,
+		}
+	}
+
+	// fetch data operation from internal services
+	OperationURL := config.EnvConfigs.GeneralServiceUrl + "line-type-by-code/" + strconv.Itoa(tableStruct.LineTypeId)
+	//fmt.Println("Fetching  operation data from:", OperationURL)
+	var getOperationResponse transactionworkshoppayloads.Linetype
+	if err := utils.Get(OperationURL, &getOperationResponse, nil); err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch operation data from external service",
+			Err:        err,
+		}
+	}
+
+	// Map the data to the response struct
+	workOrderResponse = transactionworkshoppayloads.WorkOrderBypassResponse{
+		WorkOrderSystemNumber:   tableStruct.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber: getModelResponse.WorkOrderDocumentNumber,
+		LineTypeId:              tableStruct.LineTypeId,
+		LineTypeName:            getOperationResponse.LineTypeName,
+		ItemId:                  tableStruct.ItemId,
+		ItemName:                getItemResponse.ItemName,
+	}
+
+	return workOrderResponse, nil
 }
 
 func (r *WorkOrderBypassRepositoryImpl) Bypass(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBypassRequestDetail) (transactionworkshopentities.WorkOrderQualityControl, *exceptions.BaseErrorResponse) {

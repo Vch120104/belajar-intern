@@ -118,16 +118,6 @@ var (
 		[]string{"handler", "method", "status"},
 	)
 
-	// Histogram for request duration SLA
-	httpRequestDurationSecondsBucket = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds_bucket",
-			Help:    "Request duration SLA in seconds.",
-			Buckets: prometheus.DefBuckets,
-		},
-		[]string{"handler", "method", "status"},
-	)
-
 	// Counter for request counts with intervals
 	httpResponseIntervalCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -184,7 +174,6 @@ func init() {
 	prometheus.MustRegister(errorCounter)
 	prometheus.MustRegister(httpResponseCount)
 	prometheus.MustRegister(httpResponseBucket)
-	prometheus.MustRegister(httpRequestDurationSecondsBucket)
 	prometheus.MustRegister(httpResponseIntervalCount)
 	prometheus.MustRegister(appSQLStatsBucket)
 	prometheus.MustRegister(appSQLStatsCount)
@@ -239,9 +228,6 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 
 		// Record the httpResponseBucket
 		httpResponseBucket.WithLabelValues(r.URL.Path, r.Method, status).Observe(duration)
-
-		// Record the httpRequestDurationSecondsBucket
-		httpRequestDurationSecondsBucket.WithLabelValues(r.URL.Path, r.Method, status).Observe(duration)
 
 		// Record the httpResponseIntervalCount with an example interval label
 		interval := "default_interval" // Replace with actual interval logic if needed
