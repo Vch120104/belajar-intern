@@ -450,6 +450,30 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 	}
 
+	// fetch profit center from external API
+	ProfitCenterUrl := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(entity.ProfitCenterId)
+	var profitCenterResponses transactionworkshoppayloads.ProfitCenter
+	errProfitCenter := utils.Get(ProfitCenterUrl, &profitCenterResponses, nil)
+	if errProfitCenter != nil {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve profit center data from the external API",
+			Err:        errProfitCenter,
+		}
+	}
+
+	// fetch dealer representative from external API
+	DealerRepresentativeUrl := config.EnvConfigs.GeneralServiceUrl + "dealer-representative/" + strconv.Itoa(entity.DealerRepresentativeId)
+	var dealerRepresentativeResponses transactionworkshoppayloads.DealerRepresentative
+	errDealerRepresentative := utils.Get(DealerRepresentativeUrl, &dealerRepresentativeResponses, nil)
+	if errDealerRepresentative != nil {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve dealer representative data from the external API",
+			Err:        errDealerRepresentative,
+		}
+	}
+
 	// Construct the payload with pagination information
 	payload := transactionworkshoppayloads.ServiceRequestResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
@@ -470,7 +494,9 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		CompanyId:                    entity.CompanyId,
 		CompanyName:                  "", //companyResponses[0].CompanyName,
 		DealerRepresentativeId:       entity.DealerRepresentativeId,
+		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,
 		ProfitCenterId:               entity.ProfitCenterId,
+		ProfitCenterName:             profitCenterResponses.ProfitCenterName,
 		WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
 		WorkOrderDocumentNumber:      workOrderDocumentNumber,
 		BookingSystemNumber:          entity.BookingSystemNumber,
