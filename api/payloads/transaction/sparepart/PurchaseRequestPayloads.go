@@ -16,6 +16,7 @@ type PurchaseRequestResponses struct {
 }
 
 type PurchaseRequestGetAllListResponses struct {
+	PurchaseRequestSystemNumber   int       `json:"purchase_request_system_number" parent_entity:"trx_purchase_request" main_table:"trx_purchase_request"`
 	PurchaseRequestDocumentNumber string    `json:"purchase_request_no" parent_entity:"trx_purchase_request" main_table:"trx_work_order"`
 	PurchaseRequestDocumentDate   time.Time `json:"purchase_request_date" parent_entity:"trx_purchase_request" `
 	ItemGroup                     string    `json:"item_group" parent_entity:"mtr_work_order_status"`
@@ -242,6 +243,7 @@ type PurchaseRequestDetailResponsesPayloads struct {
 	PurchaseRequestSystemNumber       int      `json:"purchase_request_system_number"`
 	PurchaseRequestLineNumber         int      `json:"purchase_request_line_number"`
 	ReferenceSystemNumber             int      `json:"reference_system_number"`
+	ItemId                            int      `json:"item_id"`
 	ReferenceLine                     int      `json:"reference_line"`
 	ItemCode                          string   `json:"item_code"`
 	ItemName                          string   `json:"item_name"`

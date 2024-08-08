@@ -32,6 +32,7 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequest(filterCondition []uti
 	//TODO implement me
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetAllPurchaseRequest(tx, filterCondition, pages, Dateparams)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
@@ -41,6 +42,7 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequest(filterCondition []uti
 func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequest(id int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetByIdPurchaseRequest(tx, id)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
@@ -51,6 +53,8 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequestDetail(filterCondition
 	//TODO implement me
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetAllPurchaseRequestDetail(tx, filterCondition, pages)
+	defer helper.CommitOrRollbackTrx(tx)
+
 	if err != nil {
 		return result, err
 	}
@@ -60,6 +64,7 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequestDetail(filterCondition
 func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequestDetail(id int) (transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetByIdPurchaseRequestDetail(tx, id)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
