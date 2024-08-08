@@ -14,4 +14,5 @@ type UnitOfMeasurementService interface {
 	GetUnitOfMeasurementByCode(Code string) (masteritempayloads.UomIdCodeResponse, *exceptions.BaseErrorResponse)
 	SaveUnitOfMeasurement(req masteritempayloads.UomResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusUnitOfMeasurement(Id int) (bool, *exceptions.BaseErrorResponse)
+	GetUnitOfMeasurementItem(payload masteritempayloads.UomItemRequest) (masteritempayloads.UomItemResponses, *exceptions.BaseErrorResponse)
 }
