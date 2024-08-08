@@ -143,7 +143,7 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, filterCondition
 		}
 	}
 
-	//apply external services filter
+	// apply external services filter
 	for i := 0; i < len(externalServiceFilter); i++ {
 		supplyTypeId = externalServiceFilter[i].ColumnValue
 	}
@@ -163,6 +163,7 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, filterCondition
 			Err:        err,
 		}
 	}
+
 	defer rows.Close()
 
 	// Scan the results into the responses slice
@@ -176,6 +177,8 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, filterCondition
 		}
 		responses = append(responses, response)
 	}
+
+	fmt.Println(responses)
 
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -196,7 +199,9 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, filterCondition
 	}
 
 	// Perform inner join with order type data
-	joinedData := utils.DataFrameInnerJoin(responses, getSupplyTypeResponse, "SupplyTypeId")
+	joinedData := utils.DataFrameLeftJoin(responses, []transactionsparepartpayloads.SupplyTypeResponse{getSupplyTypeResponse}, "SupplyTypeId")
+	fmt.Println(responses[0], getSupplyTypeResponse)
+	fmt.Println("joinded ", joinedData)
 
 	// Paginate the joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
