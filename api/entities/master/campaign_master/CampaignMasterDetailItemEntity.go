@@ -1,6 +1,6 @@
 package mastercampaignmasterentities
 
-var CreateCampaignMasterDetailItemTable = "mtr_campaign_detail_item"
+var CreateCampaignMasterDetailItemTable = "mtr_campaign_master_detail_items"
 
 type CampaignMasterDetailItem struct {
 	IsActive             bool    `gorm:"column:is_active;not null;default:true" json:"is_active"`
