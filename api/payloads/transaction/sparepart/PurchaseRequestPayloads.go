@@ -147,7 +147,7 @@ type PurchaseRequestGetByIdResponses struct {
 	BackOrder                  bool      `parent_entity:"trx_purchase_request" json:"back_order"`
 	SetOrder                   bool      `json:"set_order" parent_entity:"trx_purchase_request"`
 	CurrencyId                 int       `json:"currency_id" parent_entity:"trx_purchase_request"`
-	ItemClassId                int       `json:"column:item_class_id;size:30;" parent_entity:"trx_purchase_request"`
+	ItemClassId                int       `json:"item_class_id" parent_entity:"trx_purchase_request"`
 	ChangeNo                   int       `json:"change_no" parent_entity:"trx_purchase_request"`
 	CreatedByUserId            int       `json:"created_by_user_id" parent_entity:"trx_purchase_request"`
 	CreatedDate                time.Time `json:"created_date" parent_entity:"trx_purchase_request"`

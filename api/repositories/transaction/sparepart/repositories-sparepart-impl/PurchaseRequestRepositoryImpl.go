@@ -114,7 +114,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 	return paginationResponses, nil
 }
 
-func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	//TODO implement me
 	result := transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{}
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
@@ -124,7 +124,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		First(&response).
 		Rows()
 	if err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -134,7 +134,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var CompanyReponse []transactionsparepartpayloads.PurchaseRequestCompanyResponse
 	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(response.CompanyId)
 	if err := utils.Get(CompanyURL, &CompanyReponse, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Company data from external service",
 			Err:        err,
@@ -150,7 +150,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
 	ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
 	if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Item Group data from external service",
 			Err:        err,
@@ -160,7 +160,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var OrderType transactionsparepartpayloads.PurchaseRequestOrderTypeResponse
 	OrderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
 	if err := utils.Get(OrderTypeURL, &OrderType, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch customer data from external service",
 			Err:        err,
@@ -169,7 +169,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var purchaseRequestStatusDesc transactionsparepartpayloads.PurchaseRequestStatusResponse
 	StatusURL := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(response.PurchaseRequestDocumentStatusId)
 	if err := utils.Get(StatusURL, &purchaseRequestStatusDesc, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Status data from external service",
 			Err:        err,
@@ -179,7 +179,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var GetBrandName transactionsparepartpayloads.PurchaseRequestStatusResponse
 	BrandURL := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(response.PurchaseRequestDocumentStatusId)
 	if err := utils.Get(BrandURL, &GetBrandName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Brand data from external service",
 			Err:        err,
@@ -189,7 +189,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var GetDivisionName transactionsparepartpayloads.DivisionResponse
 	DivisionURL := config.EnvConfigs.GeneralServiceUrl + "division/" + strconv.Itoa(response.DivisionId)
 	if err := utils.Get(DivisionURL, &GetDivisionName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Division data from external service",
 			Err:        err,
@@ -199,7 +199,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var GetCostCenterName transactionsparepartpayloads.CostCenterResponses
 	CostCenterURL := config.EnvConfigs.GeneralServiceUrl + "cost-center/" + strconv.Itoa(response.CostCenterId)
 	if err := utils.Get(CostCenterURL, &GetCostCenterName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Cost Center data from external service",
 			Err:        err,
@@ -208,7 +208,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var GetCcyName transactionsparepartpayloads.CurrencyCodeResponse
 	CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(response.CurrencyId)
 	if err := utils.Get(CurrencyURL, &GetCcyName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Currency data from external service",
 			Err:        err,
@@ -218,7 +218,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var ProfitCenterName transactionsparepartpayloads.ProfitCenterResponses
 	ProfitCenterURL := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(response.ProfitCenterId)
 	if err := utils.Get(ProfitCenterURL, &ProfitCenterName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Profit Center data from external service",
 			Err:        err,
@@ -228,7 +228,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var WarehouseGroupName transactionsparepartpayloads.WarehouseGroupResponses
 	WarehouseGroupURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-group/" + strconv.Itoa(response.WarehouseGroupId)
 	if err := utils.Get(WarehouseGroupURL, &WarehouseGroupName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Warehouse data from external service",
 			Err:        err,
@@ -238,7 +238,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var GetWarehouseResponsesName transactionsparepartpayloads.WarehouseResponses
 	WarehouseURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-master/" + strconv.Itoa(response.WarehouseId)
 	if err := utils.Get(WarehouseURL, &GetWarehouseResponsesName, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Warehouse data from external service",
 			Err:        err,
@@ -247,7 +247,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var RequestBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
 	RequestByURL := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(response.CreatedByUserId)
 	if err := utils.Get(RequestByURL, &RequestBy, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Requested By data from external service",
 			Err:        err,
@@ -257,7 +257,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
 	UpdatedByURL := config.EnvConfigs.GeneralServiceUrl + "user-details/" + strconv.Itoa(response.UpdatedByUserId)
 	if err := utils.Get(UpdatedByURL, &UpdatedBy, nil); err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Requested By data from external service",
 			Err:        err,
@@ -275,7 +275,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	}
 
 	if errs != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errs,
 		}
@@ -330,8 +330,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		UpdatedByUser:              UpdatedBy.UserEmployeeName,
 		UpdatedDate:                response.UpdatedDate,
 	}
+	fmt.Println(result)
 	//panic(tempResult)
-	return result, nil
+	return response, nil
 }
 func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB, conditions []utils.FilterCondition, paginationResponses pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
@@ -731,10 +732,9 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequest(db *gorm.DB, i int) 
 	}
 	return true, nil
 }
-
-func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestHeader(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestHeader(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	var count int64
-	var res transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses
+	var res transactionsparepartpayloads.PurchaseRequestGetByIdResponses
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
 	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: id}).First(&entities).Error
 	if err != nil {
