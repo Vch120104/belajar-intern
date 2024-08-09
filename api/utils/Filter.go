@@ -57,7 +57,7 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 		if strings.Contains(columnName[i], "id") {
 			condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
 		} else if strings.Contains(columnName[i], "date") {
-			condition = "CAST(" + columnName[i] + " AS DATETIME)" + " LIKE " + "'%" + columnValue[i] + "%'"
+			condition = "CAST(" + columnName[i] + " AS DATE)" + " LIKE " + "'%" + columnValue[i] + "%'"
 		} else {
 			condition = columnName[i] + " LIKE " + "'%" + columnValue[i] + "%'"
 		}
