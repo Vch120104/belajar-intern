@@ -8,6 +8,7 @@ import (
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -30,7 +31,6 @@ func BayController(bayMasterService transactionjpcbservice.BayMasterService) Bay
 	}
 }
 
-// getAllBayMaster implements BayMasterController.
 func (r *BayMasterControllerImpl) GetAllBayMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
@@ -61,7 +61,6 @@ func (r *BayMasterControllerImpl) GetAllBayMaster(writer http.ResponseWriter, re
 	}
 }
 
-// GetAllActiveBayCarWashScreen implements BayMasterController.
 func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
@@ -92,7 +91,6 @@ func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.Respo
 	}
 }
 
-// GetAllDeactiveBayCarWashScreen implements BayMasterController.
 func (r *BayMasterControllerImpl) GetAllDeactiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query() // Retrieve query parameters
 
@@ -111,32 +109,33 @@ func (r *BayMasterControllerImpl) GetAllDeactiveBayCarWashScreen(writer http.Res
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(responseData), "Get Data Successfully", http.StatusOK)
 }
 
-// UpdateBayMaster implements BayMasterController.
 func (r *BayMasterControllerImpl) UpdateBayMaster(writer http.ResponseWriter, request *http.Request) {
-	// companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
-	// car_wash_bay_id, _ := strconv.Atoi(chi.URLParam(request, "car_wash_bay_id"))
-
-	var valueRequest transactionjpcbpayloads.BayMasterUpdateRequest
+	valueRequest := transactionjpcbpayloads.BayMasterUpdateRequest{}
 	helper.ReadFromRequestBody(request, &valueRequest)
 
 	update, err := r.bayMasterService.UpdateBayMaster(valueRequest)
 	if err != nil {
+		if err.Err.Error() == "already start" {
+			exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusOK,
+				Message:    "Already Start",
+				Data:       nil,
+				Err:        errors.New("already start"),
+			})
+			return
+		}
+		if err.Err.Error() == "bay not found" {
+			exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusOK,
+				Message:    "Bay Not Found",
+				Data:       nil,
+				Err:        errors.New("bay not found"),
+			})
+			return
+		}
 		exceptions.NewAppException(writer, request, err)
+		return
 	}
 
 	payloads.NewHandleSuccess(writer, update, "Bay updated successfully", http.StatusOK)
 }
-
-//  agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-// 	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
-
-// 	var valueRequest masterpayloads.DiscountValueRequest
-// 	helper.ReadFromRequestBody(request, &valueRequest)
-
-// 	update, err := r.AgreementService.UpdateDiscountValue(int(agreementID), int(valueID), valueRequest)
-// 	if err != nil {
-// 		exceptions.NewAppException(writer, request, err)
-// 		return
-// 	}
-
-// 	payloads.NewHandleSuccess(writer, update, "Discount value updated successfully", http.StatusOK)
