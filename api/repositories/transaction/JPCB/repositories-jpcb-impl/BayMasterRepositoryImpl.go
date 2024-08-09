@@ -112,7 +112,7 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 	mainAlias := "carwash"
 
 	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: "bay.car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: "carwash.car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
 	}
 
 	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
@@ -138,7 +138,7 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 		}
 	}
 
-	rows, err := joinQuery.Where("company_id = ? AND car_wash_status_id = 1", companyIdFilter).Rows()
+	rows, err := joinQuery.Where("company_id = ? AND bay.is_active = 1", companyIdFilter).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -185,7 +185,7 @@ func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.Filter
 	mainAlias := "carwash"
 
 	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: "bay.car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: "carwash.car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
 	}
 
 	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
@@ -279,7 +279,7 @@ func (r *BayMasterImpl) Update(tx *gorm.DB, request transactionjpcbpayloads.BayM
 			// reorder order_no (column isnt yet present in current entity)
 
 			//reset all bay in a company
-			resetErr := reset(tx, request.CompanyId)
+			resetErr := resetAllOrderNumber(tx, request.CompanyId)
 
 			if resetErr != nil {
 				errorReset := errors.New("reset order fail")
@@ -289,7 +289,7 @@ func (r *BayMasterImpl) Update(tx *gorm.DB, request transactionjpcbpayloads.BayM
 				}
 			}
 
-			reorderErr := reorder(tx, request.CompanyId)
+			reorderErr := reorderOrderNumber(tx, request.CompanyId)
 
 			if reorderErr != nil {
 				errorReorder := errors.New("reorder fail")
@@ -317,26 +317,20 @@ func (r *BayMasterImpl) Update(tx *gorm.DB, request transactionjpcbpayloads.BayM
 
 }
 
-func reorder(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
+func reorderOrderNumber(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
 	mainTable := "trx_car_wash"
 	mainAlias := "carwash"
 	mainAliasBay := "bay"
 
 	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: mainAliasBay + ".car_wash_bay_id"},
 	}
 
 	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
 
 	keyAttributes := []string{
 		mainAlias + ".company_id",
-		mainAlias + ".car_wash_id",
-		mainAlias + ".car_wash_status_id",
-		mainAlias + ".work_order_system_number",
 		mainAliasBay + ".car_wash_bay_id",
-		mainAliasBay + ".car_wash_bay_code",
-		mainAliasBay + ".is_active",
-		mainAliasBay + ".car_wash_bay_description",
 	}
 
 	//find the active only bay
@@ -353,25 +347,9 @@ func reorder(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
 	defer rows.Close()
 
 	for rows.Next() {
-		var companyId int
-		var carWashId int
-		var carWashStatusId int
-		var workOrderSystemNumber int
-		var carWashBayId int
-		var carWashBayCode string
-		var isActive bool
-		var carWashBayDescription string
+		var companyId, carWashBayId int
 
-		err := rows.Scan(
-			&companyId,
-			&carWashId,
-			&carWashStatusId,
-			&workOrderSystemNumber,
-			&carWashBayId,
-			&carWashBayCode,
-			&isActive,
-			&carWashBayDescription,
-		)
+		err := rows.Scan(&companyId, &carWashBayId)
 
 		if err != nil {
 			return &exceptions.BaseErrorResponse{
@@ -403,7 +381,6 @@ func reorder(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
 
 func getHighestOrderNumber(tx *gorm.DB, companyId int) (int, *exceptions.BaseErrorResponse) {
 	highestOrder := 0
-	//TODO get max order_number bay in one company
 
 	mainTable := "trx_car_wash"
 	mainAlias := "carwash"
@@ -412,9 +389,7 @@ func getHighestOrderNumber(tx *gorm.DB, companyId int) (int, *exceptions.BaseErr
 		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
 	}
 
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
-
-	joinQuery = joinQuery.Select("MAX(bay.order_number)").Where("company_id = ?", companyId).Find(&highestOrder)
+	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...).Select("MAX(bay.order_number)").Where("company_id = ?", companyId).Find(&highestOrder)
 
 	if joinQuery.Error != nil {
 		return 0, &exceptions.BaseErrorResponse{
@@ -426,7 +401,7 @@ func getHighestOrderNumber(tx *gorm.DB, companyId int) (int, *exceptions.BaseErr
 	return highestOrder, nil
 }
 
-func reset(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
+func resetAllOrderNumber(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
 	var bayEntities transactionjpcbentities.BayMaster
 
 	mainTable := "trx_car_wash"
