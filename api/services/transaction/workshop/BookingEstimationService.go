@@ -32,4 +32,5 @@ type BookingEstimationService interface {
 	PostBookingEstimationCalculation(id int)(int,*exceptions.BaseErrorResponse)
 	PutBookingEstimationCalculation (id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads)(int,*exceptions.BaseErrorResponse)
 	SaveBookingEstimationFromPDI( id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
+	SaveBookingEstimationFromServiceRequest(id int)(transactionworkshopentities.BookingEstimation,*exceptions.BaseErrorResponse)
 }

@@ -9,7 +9,7 @@ type ItemDetail struct {
 	BrandId      int     `gorm:"column:brand_id;size:30;not null;uniqueindex:idx_item_detail" json:"brand_id"`
 	ModelId      int     `gorm:"column:model_id;size:30;not null;uniqueindex:idx_item_detail" json:"model_id"`
 	VariantId    int     `gorm:"column:variant_id;size:30;not null;uniqueindex:idx_item_detail" json:"variant_id"`
-	MillageEvery float64 `gorm:"column:millage_every" json:"millage_every"`
+	MileageEvery float64 `gorm:"column:mileage_every" json:"mileage_every"`
 	ReturnEvery  float64 `gorm:"column:return_every" json:"return_every"`
 }
 

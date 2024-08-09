@@ -799,3 +799,9 @@ type VehicleStnk struct {
 	VehicleTnkb             string `json:"vehicle_registration_certificate_tnkb"`
 	VehicleCertificateOwner int    `json:"vehicle_registration_certificate_owner_name"`
 }
+
+type Linetype struct {
+	LineTypeId   int    `json:"line_type_id"`
+	LineTypeCode string `json:"line_type_code"`
+	LineTypeName string `json:"line_type_name"`
+}

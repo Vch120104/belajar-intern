@@ -22,6 +22,7 @@ type VehicleHistoryByIdResponses struct {
 	ModelId               int `json:"model_id" parent_entity:"trx_work_order"`
 }
 type VehicleHistoryGetAllResponses struct {
+	LineIndex               int       `json:"line_index"`
 	WorkOrderSystemNumber   int       `json:"work_order_system_number" parent_entity:"trx_work_order"`
 	WorkOrderDocumentNumber string    `json:"work_order_document_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
 	WorkOrderStatusDesc     string    `json:"work_order_status_desc" parent_entity:"trx_work_order"`

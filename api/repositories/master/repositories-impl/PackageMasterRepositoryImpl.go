@@ -1,6 +1,7 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masterpackagemasterentity "after-sales/api/entities/master/package-master"
 
@@ -82,34 +83,27 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	profitCenterUrl := "http://10.1.32.26:8000/general-service/v1/profit-center?page=0&limit=10&profit_center_code=" + profitCenter
+	profitCenterUrl := config.EnvConfigs.GeneralServiceUrl + "profit-center?page=0&limit=10&profit_center_code=" + profitCenter
 
 	errProfitcenterUrl := utils.Get(profitCenterUrl, &getProfitResponse, nil)
 
 	if errProfitcenterUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errProfitcenterUrl,
 		}
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+	joinedData1 := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
 
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
 	if errUrlUnitModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errUrlUnitModel,
 		}
 	}
 
@@ -121,14 +115,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant?page=0&limit=10&variant_code=" + variantCode
+	VariantModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant?page=0&limit=10&variant_code=" + variantCode
 
 	errUrlVariantModel := utils.Get(VariantModelUrl, &getVariantResponse, nil)
 
 	if errUrlVariantModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        errUrlVariantModel,
 		}
 	}
 	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getVariantResponse, "VariantId")
@@ -157,7 +151,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 		}
 	}
 	defer rows.Close()
-	LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type?line_type_id=" + strconv.Itoa(entityOperation.LineTypeId)
+	LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_id=" + strconv.Itoa(entityOperation.LineTypeId)
 	errLineTypeUrl := utils.Get(LineTypeUrl, &getlinetype, nil)
 	if errLineTypeUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -298,7 +292,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	defer rows.Close()
 
-	profitCenterUrl := "http://10.1.32.26:8000/general-service/v1/profit-center/" + strconv.Itoa(payloads.ProfitCenterId)
+	profitCenterUrl := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(payloads.ProfitCenterId)
 
 	errProfitcenterUrl := utils.Get(profitCenterUrl, &getProfitResponse, nil)
 
@@ -309,16 +303,9 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
 
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model/" + strconv.Itoa(payloads.ModelId)
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payloads.ModelId)
 
 	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
 
@@ -338,7 +325,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant/" + strconv.Itoa(payloads.VariantId)
+	VariantModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(payloads.VariantId)
 
 	errUrlVariantModel := utils.Get(VariantModelUrl, &getUnitVariantResponse, nil)
 
@@ -349,15 +336,9 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
+	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
 
-	BrandUrl := "http://10.1.32.26:8000/sales-service/v1/unit-brand/" + strconv.Itoa(payloads.BrandId)
+	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payloads.BrandId)
 
 	errUrlBrandModel := utils.Get(BrandUrl, &getBrandResponse, nil)
 
@@ -368,16 +349,9 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData4, errdf := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
 
-	if errdf != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	CurrencyUrl := "http://10.1.32.26:8000/finance-service/v1/currency-code/" + strconv.Itoa(payloads.CurrencyId)
+	CurrencyUrl := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(payloads.CurrencyId)
 
 	errUrlCurrencyModel := utils.Get(CurrencyUrl, &getCurrencyResponse, nil)
 
@@ -410,6 +384,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		"model_id":            joinedData5[0]["ModelId"],
 		"package_code":        joinedData5[0]["PackageCode"],
 		"package_name":        joinedData5[0]["PackageName"],
+		"package_id":          joinedData5[0]["PackageId"],
 		"package_price":       joinedData5[0]["PackagePrice"],
 		"package_remark":      joinedData5[0]["PackageRemark"],
 		"package_set":         joinedData5[0]["PackageSet"],

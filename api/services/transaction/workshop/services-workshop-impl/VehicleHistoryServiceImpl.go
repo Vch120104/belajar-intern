@@ -2,6 +2,7 @@ package transactionworkshopserviceimpl
 
 import (
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
@@ -28,6 +29,7 @@ func (v *VehicleHistoryServiceImpl) GetAllVehicleHistory(filterCondition []utils
 	//TODO implement me
 	tx := v.DB.Begin()
 	result, err := v.VehicleHistoryRepo.GetAllVehicleHistory(tx, filterCondition, pages)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
@@ -38,6 +40,8 @@ func (v *VehicleHistoryServiceImpl) GetVehicleHistoryById(id int) (transactionwo
 	//TODO implement me
 	tx := v.DB.Begin()
 	result, err := v.VehicleHistoryRepo.GetVehicleHistoryById(tx, id)
+	defer helper.CommitOrRollbackTrx(tx)
+
 	if err != nil {
 		return result, err
 	}

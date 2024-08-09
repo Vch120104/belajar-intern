@@ -173,11 +173,11 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromHistory(tx *g
 func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
 	var entityitem masteritementities.Item
 	var entity mastercampaignmasterentities.CampaignMaster
-	var lastprice float64
+	var lastprice *float64
 	if req.SharePercent > req.DiscountPercent {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Share percent must not be higher that discountpercent",
+			Message:    "Share percent must not be higher that discount percent",
 		}
 	}
 
@@ -191,6 +191,10 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 				Err:        err,
 			}
 		}
+		if lastprice == nil {
+			lastprice = new(float64)
+			*lastprice = 0.0
+		}
 		entities := &mastercampaignmasterentities.CampaignMasterDetailItem{
 			CampaignId:      req.CampaignId,
 			LineTypeId:      req.LineTypeId,
@@ -199,9 +203,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			ShareBillTo:     req.ShareBillTo,
 			DiscountPercent: req.DiscountPercent,
 			SharePercent:    req.SharePercent,
-			Price:           lastprice,
+			Price:           *lastprice,
 		}
-		err2 := tx.Create(&entities).Error
+		err2 := tx.Save(&entities).Error
 
 		if err2 != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -231,6 +235,10 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 				Err:        err,
 			}
 		}
+		if lastprice == nil {
+			lastprice = new(float64)
+			*lastprice = 0.0
+		}
 		entities2 := &mastercampaignmasterentities.CampaignMasterOperationDetail{
 			CampaignId:              req.CampaignId,
 			LineTypeId:              req.LineTypeId,
@@ -239,9 +247,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			ShareBillTo:             req.ShareBillTo,
 			DiscountPercent:         req.DiscountPercent,
 			SharePercent:            req.SharePercent,
-			Price:                   lastprice,
+			Price:                   *lastprice,
 		}
-		err2 := tx.Create(&entities2).Error
+		err2 := tx.Save(&entities2).Error
 		if err2 != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
