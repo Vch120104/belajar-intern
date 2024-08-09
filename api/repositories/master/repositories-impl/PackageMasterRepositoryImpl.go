@@ -93,7 +93,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
 
@@ -106,7 +113,13 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant?page=0&limit=10&variant_code=" + variantCode
 
@@ -118,7 +131,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 			Err:        err,
 		}
 	}
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, getVariantResponse, "VariantId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getVariantResponse, "VariantId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData3, &pages)
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -145,7 +165,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 			Err:        err,
 		}
 	}
-	joinedData1 := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -282,7 +309,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	unitModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-model/" + strconv.Itoa(payloads.ModelId)
 
@@ -295,7 +329,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getModelResponse}, "ModelId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getModelResponse}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	VariantModelUrl := "http://10.1.32.26:8000/sales-service/v1/unit-variant/" + strconv.Itoa(payloads.VariantId)
 
@@ -308,7 +349,13 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	BrandUrl := "http://10.1.32.26:8000/sales-service/v1/unit-brand/" + strconv.Itoa(payloads.BrandId)
 
@@ -321,7 +368,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+	joinedData4, errdf := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	CurrencyUrl := "http://10.1.32.26:8000/finance-service/v1/currency-code/" + strconv.Itoa(payloads.CurrencyId)
 
@@ -334,29 +388,36 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData5 := utils.DataFrameInnerJoin(joinedData4, []masterpayloads.CurrencyResponse{getCurrencyResponse}, "CurrencyId")
+	joinedData5, errdf := utils.DataFrameInnerJoin(joinedData4, []masterpayloads.CurrencyResponse{getCurrencyResponse}, "CurrencyId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	result := map[string]interface{}{
-		"brand_code": joinedData5[0]["BrandCode"],
-		"brand_id": joinedData5[0]["BrandId"],
-		"brand_name": joinedData5[0]["BrandName"],
-		"currency_code": joinedData5[0]["CurrencyCode"],
-		"currency_id": joinedData5[0]["CurrencyId"],
-		"is_active": joinedData5[0]["IsActive"],
-		"item_group_id": joinedData5[0]["ItemGroupId"],
-		"model_code": joinedData5[0]["ModelCode"],
-		"model_description": joinedData5[0]["ModelDescription"],
-		"model_id": joinedData5[0]["ModelId"],
-		"package_code": joinedData5[0]["PackageCode"],
-		"package_name": joinedData5[0]["PackageName"],
-		"package_price": joinedData5[0]["PackagePrice"],
-		"package_remark": joinedData5[0]["PackageRemark"],
-		"package_set": joinedData5[0]["PackageSet"],
-		"profit_center_id": joinedData5[0]["ProfitCenterId"],
-		"profit_center_name": joinedData5[0]["ProfitCenterName"],
-		"tax_type_id": joinedData5[0]["TaxTypeId"],
+		"brand_code":          joinedData5[0]["BrandCode"],
+		"brand_id":            joinedData5[0]["BrandId"],
+		"brand_name":          joinedData5[0]["BrandName"],
+		"currency_code":       joinedData5[0]["CurrencyCode"],
+		"currency_id":         joinedData5[0]["CurrencyId"],
+		"is_active":           joinedData5[0]["IsActive"],
+		"item_group_id":       joinedData5[0]["ItemGroupId"],
+		"model_code":          joinedData5[0]["ModelCode"],
+		"model_description":   joinedData5[0]["ModelDescription"],
+		"model_id":            joinedData5[0]["ModelId"],
+		"package_code":        joinedData5[0]["PackageCode"],
+		"package_name":        joinedData5[0]["PackageName"],
+		"package_price":       joinedData5[0]["PackagePrice"],
+		"package_remark":      joinedData5[0]["PackageRemark"],
+		"package_set":         joinedData5[0]["PackageSet"],
+		"profit_center_id":    joinedData5[0]["ProfitCenterId"],
+		"profit_center_name":  joinedData5[0]["ProfitCenterName"],
+		"tax_type_id":         joinedData5[0]["TaxTypeId"],
 		"variant_description": joinedData5[0]["VariantDescription"],
-		"variant_id": joinedData5[0]["VariantId"],
+		"variant_id":          joinedData5[0]["VariantId"],
 	}
 	return result, nil
 }
@@ -406,7 +467,15 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				Err:        err,
 			}
 		}
-		joinedData1 := utils.DataFrameInnerJoin(result, getLineType, "LineTypeCode")
+		joinedData1, errdf := utils.DataFrameInnerJoin(result, getLineType, "LineTypeCode")
+
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
+
 		result1 := joinedData1[0]
 
 		return result1, nil
@@ -434,7 +503,15 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 					Err:        err,
 				}
 			}
-			joinedData1 := utils.DataFrameInnerJoin(result, getLineType, "LineTypeId")
+			joinedData1, errdf := utils.DataFrameInnerJoin(result, getLineType, "LineTypeId")
+
+			if errdf != nil {
+				return nil, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        errdf,
+				}
+			}
+
 			result1 := joinedData1[0]
 
 			return result1, nil
@@ -462,7 +539,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 					Err:        err,
 				}
 			}
-			joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetailItem{PayloadsItem}, []masterpayloads.LineTypeCode{getLineType}, "LineTypeId")
+			joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetailItem{PayloadsItem}, []masterpayloads.LineTypeCode{getLineType}, "LineTypeId")
+
+			if errdf != nil {
+				return nil, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        errdf,
+				}
+			}
 
 			result1 := joinedData1[0]
 			return result1, nil
@@ -500,30 +584,30 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.DB, req masterpayloads.PackageMasterDetailWorkshop) (int, *exceptions.BaseErrorResponse) {
 	if req.LineTypeId == 1 {
 		var rowsAffected int64
-	err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?", req.PackageId).Count(&rowsAffected).Error
-	if err != nil {
-		tx.Rollback()
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		err := tx.Model(&masterpackagemasterentity.PackageMasterDetailOperation{}).Where("package_id = ?", req.PackageId).Count(&rowsAffected).Error
+		if err != nil {
+			tx.Rollback()
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
-	}
-	entities := masterpackagemasterentity.PackageMasterDetailOperation{
-		IsActive:                 req.IsActive,
-		PackageDetailOperationId: req.PackageDetailItemId,
-		PackageId:                req.PackageId,
-		LineTypeId:               req.LineTypeId,
-		OperationId:              req.PackageDetailItemId,
-		Sequence:                 int(rowsAffected) + 1,
-	}
-	err2 := tx.Save(&entities).Error
-	if err2 != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err2,
+		entities := masterpackagemasterentity.PackageMasterDetailOperation{
+			IsActive:                 req.IsActive,
+			PackageDetailOperationId: req.PackageDetailItemId,
+			PackageId:                req.PackageId,
+			LineTypeId:               req.LineTypeId,
+			OperationId:              req.PackageDetailItemId,
+			Sequence:                 int(rowsAffected) + 1,
 		}
-	}
-	return entities.PackageId,nil
+		err2 := tx.Save(&entities).Error
+		if err2 != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err2,
+			}
+		}
+		return entities.PackageId, nil
 	} else {
 		entities := masterpackagemasterentity.PackageMasterDetailItem{
 			IsActive:                   req.IsActive,

@@ -1,6 +1,7 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	masteritementities "after-sales/api/entities/master/item"
@@ -191,14 +192,14 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			}
 		}
 		entities := &mastercampaignmasterentities.CampaignMasterDetailItem{
-			CampaignId:           req.CampaignId,
-			LineTypeId:           req.LineTypeId,
-			Quantity:             req.Quantity,
-			ItemId:               req.OperationItemId,
-			ShareBillTo:          req.ShareBillTo,
-			DiscountPercent:      req.DiscountPercent,
-			SharePercent:         req.SharePercent,
-			Price:                lastprice,
+			CampaignId:      req.CampaignId,
+			LineTypeId:      req.LineTypeId,
+			Quantity:        req.Quantity,
+			ItemId:          req.OperationItemId,
+			ShareBillTo:     req.ShareBillTo,
+			DiscountPercent: req.DiscountPercent,
+			SharePercent:    req.SharePercent,
+			Price:           lastprice,
 		}
 		err2 := tx.Create(&entities).Error
 
@@ -210,20 +211,20 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 		}
 		return entities.CampaignDetailItemId, nil
 	} else {
-		err1:= tx.Model(&entity).Where("campaign_id = ?",req.CampaignId).Scan(&entity).Error
-		if err1 != nil{
+		err1 := tx.Model(&entity).Where("campaign_id = ?", req.CampaignId).Scan(&entity).Error
+		if err1 != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err1,
 			}
 		}
 		err := tx.Select("mtr_labour_selling_price_detail.selling_price").
-		Table("mtr_labour_selling_price_detail").
-		Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
-		Where("mtr_labour_selling_price.brand_id =?", entity.BrandId).
-		Where("mtr_labour_selling_price.company_id = ?",entity.CompanyId).
-		Where("mtr_labour_selling_price.effective_date < ?", time.Now()).
-		Scan(&lastprice).Error
+			Table("mtr_labour_selling_price_detail").
+			Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
+			Where("mtr_labour_selling_price.brand_id =?", entity.BrandId).
+			Where("mtr_labour_selling_price.company_id = ?", entity.CompanyId).
+			Where("mtr_labour_selling_price.effective_date < ?", time.Now()).
+			Scan(&lastprice).Error
 		if err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -231,14 +232,14 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			}
 		}
 		entities2 := &mastercampaignmasterentities.CampaignMasterOperationDetail{
-			CampaignId:                req.CampaignId,
-			LineTypeId:                req.LineTypeId,
-			Quantity:                  req.Quantity,
-			OperationModelMappingId:   req.OperationItemId,
-			ShareBillTo:               req.ShareBillTo,
-			DiscountPercent:           req.DiscountPercent,
-			SharePercent:              req.SharePercent,
-			Price:                     lastprice,
+			CampaignId:              req.CampaignId,
+			LineTypeId:              req.LineTypeId,
+			Quantity:                req.Quantity,
+			OperationModelMappingId: req.OperationItemId,
+			ShareBillTo:             req.ShareBillTo,
+			DiscountPercent:         req.DiscountPercent,
+			SharePercent:            req.SharePercent,
+			Price:                   lastprice,
 		}
 		err2 := tx.Create(&entities2).Error
 		if err2 != nil {
@@ -403,7 +404,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 			Err:        err,
 		}
 	}
-	brandIdUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-brand/" + strconv.Itoa(payloads.BrandId)
+	brandIdUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payloads.BrandId)
 	errUrlBrandId := utils.Get(brandIdUrl, &brandresponse, nil)
 	if errUrlBrandId != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -411,9 +412,16 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 			Err:        errUrlBrandId,
 		}
 	}
-	BrandJoinData := utils.DataFrameInnerJoin([]masterpayloads.CampaignMasterResponse{payloads}, []masterpayloads.GetBrandResponse{brandresponse}, "BrandId")
+	BrandJoinData, errdf := utils.DataFrameInnerJoin([]masterpayloads.CampaignMasterResponse{payloads}, []masterpayloads.GetBrandResponse{brandresponse}, "BrandId")
 
-	modelIdUrl := "http://10.1.32.26:8000/sales-service/api/sales/unit-model/" + strconv.Itoa(payloads.ModelId)
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	modelIdUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payloads.ModelId)
 	errUrlModelId := utils.Get(modelIdUrl, &modelresponse, nil)
 	if errUrlModelId != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -421,7 +429,14 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMaster(tx *gorm.DB, id int
 			Err:        errUrlModelId,
 		}
 	}
-	ModelIdJoinData := utils.DataFrameInnerJoin(BrandJoinData, []masterpayloads.GetModelResponse{modelresponse}, "ModelId")
+	ModelIdJoinData, errdf := utils.DataFrameInnerJoin(BrandJoinData, []masterpayloads.GetModelResponse{modelresponse}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	fmt.Printf("BrandJoinData: %+v\n", BrandJoinData)
 	fmt.Printf("ModelIdJoinData: %+v\n", ModelIdJoinData)

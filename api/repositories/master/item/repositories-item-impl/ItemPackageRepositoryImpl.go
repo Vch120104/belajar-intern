@@ -108,7 +108,14 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponses, "ItemGroupId")
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, getItemGroupResponses, "ItemGroupId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	fmt.Print(joinedData)
 

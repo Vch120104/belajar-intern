@@ -105,12 +105,12 @@ func (r *BookingEstimationImpl) Post(tx *gorm.DB, request transactionworkshoppay
 		InsuranceExpiredDate:       request.InsuranceExpiredDate,
 		InsuranceClaimNo:           request.InsuranceClaimNo,
 		InsurancePic:               request.InsurancePic,
-	} 	
+	}
 	err := tx.Save(&entities).Error // Menggunakan method Save dari receiver saat ini, yaitu r
 	if err != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: err}
+			Err:        err}
 	}
 
 	return entities, nil
@@ -122,35 +122,56 @@ func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (map[string]interfa
 	var model masterpayloads.GetModelResponse
 	var vehicle transactionworkshoppayloads.VehicleDetailPayloads
 	err := tx.Model("trx_booking_estimation.*,mtr_contract_sevice.contract_service_number,mtr_contract_service.contract_service_date,mtr_contract_service.contract_service_dealer,mtr_agreement.agreement_code,mtr_agreement.agreement_date_to,mtr_agreement.agreement_dealer").
-	Joins("JOIN mtr_contract_service on mtr_contract_service.vehicle_id = trx_booking_estimation.vehicle_id").
-	Joins("Join mtr_agreement on mtr_agreement.customer_id = trx_booking_estimation.customer_id").Where("batch_system_number= ?", Id).First(&entity).Error
+		Joins("JOIN mtr_contract_service on mtr_contract_service.vehicle_id = trx_booking_estimation.vehicle_id").
+		Joins("Join mtr_agreement on mtr_agreement.customer_id = trx_booking_estimation.customer_id").Where("batch_system_number= ?", Id).First(&entity).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(entity.BrandId),brand,nil)
-	if errUrlBrand != nil{
-		return nil,&exceptions.BaseErrorResponse{
+	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(entity.BrandId), brand, nil)
+	if errUrlBrand != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: errors.New("brand undefined"),
+			Err:        errors.New("brand undefined"),
 		}
 	}
-	joinedData1:= utils.DataFrameInnerJoin([]transactionworkshopentities.BookingEstimation{entity},[]masterpayloads.BrandResponse{brand},"BrandId")
-	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(entity.ModelId),model,nil)
-	if errUrlModel != nil{
-		return nil,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err: errors.New("model undefined"),
+	joinedData1, errdf := utils.DataFrameInnerJoin([]transactionworkshopentities.BookingEstimation{entity}, []masterpayloads.BrandResponse{brand}, "BrandId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
 		}
 	}
-	joinedData2:= utils.DataFrameInnerJoin(joinedData1,[]masterpayloads.GetModelResponse{model},"ModelId")
-	errurlVehicle:= utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(entity.VehicleId),&vehicle,nil)
-	if errurlVehicle != nil{
-		return nil,&exceptions.BaseErrorResponse{
+
+	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(entity.ModelId), model, nil)
+	if errUrlModel != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: errors.New("vehicle undefined"),
+			Err:        errors.New("model undefined"),
 		}
 	}
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2,[]transactionworkshoppayloads.VehicleDetailPayloads{vehicle},"VehicleId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.GetModelResponse{model}, "ModelId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	errurlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(entity.VehicleId), &vehicle, nil)
+	if errurlVehicle != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("vehicle undefined"),
+		}
+	}
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []transactionworkshoppayloads.VehicleDetailPayloads{vehicle}, "VehicleId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	return joinedData3[0], nil
 }
@@ -174,12 +195,12 @@ func (r *BookingEstimationImpl) Save(tx *gorm.DB, request transactionworkshoppay
 	return true, nil
 }
 
-func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) (bool,*exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	// Retrieve the booking estimation by Id
 	var entity transactionworkshopentities.BookingEstimation
 	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return false,&exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
 
 	// Perform the necessary operations to submit the booking estimation
@@ -188,18 +209,18 @@ func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) (bool,*exceptions.Ba
 	// Save the updated booking estimation
 	err = tx.Save(&entity).Error
 	if err != nil {
-		return false,&exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
 	}
 
-	return true,nil
+	return true, nil
 }
 
-func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) (bool,*exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	// Retrieve the booking estimation by Id
 	var entity transactionworkshopentities.BookingEstimation
 	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
 	if err != nil {
-		return false,&exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
 
 	// Perform the necessary operations to void the booking estimation
@@ -208,10 +229,10 @@ func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) (bool,*exceptions.Base
 	// Save the updated booking estimation
 	err = tx.Delete(&entity).Error
 	if err != nil {
-		return false,&exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to save the updated booking estimation"}
 	}
 
-	return true,nil
+	return true, nil
 }
 
 func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse {
@@ -281,67 +302,67 @@ func (r *BookingEstimationImpl) UpdateBookEstimReq(tx *gorm.DB, req transactionw
 }
 
 func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, ids string) ([]string, *exceptions.BaseErrorResponse) {
-    // Split the ids string into a slice of individual IDs
-    idSlice := strings.Split(ids, ",")
+	// Split the ids string into a slice of individual IDs
+	idSlice := strings.Split(ids, ",")
 
-    // Prepare a slice to hold successfully deleted IDs
-    deletedIds := []string{}
+	// Prepare a slice to hold successfully deleted IDs
+	deletedIds := []string{}
 
-    // Iterate over each ID and delete the corresponding record
-    for _, id := range idSlice {
-        model := transactionworkshopentities.BookingEstimationRequest{}
-        
-        // Retrieve the record to ensure it exists
-        if err := tx.First(&model, id).Error; err != nil {
-            if err == gorm.ErrRecordNotFound {
-                continue // If the record is not found, skip to the next ID
-            }
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusInternalServerError,
-                Err:        err,
-            }
-        }
-        
-        // Delete the record
-        if err := tx.Delete(&model).Error; err != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusInternalServerError,
-                Err:        err,
-            }
-        }
+	// Iterate over each ID and delete the corresponding record
+	for _, id := range idSlice {
+		model := transactionworkshopentities.BookingEstimationRequest{}
 
-        // Append the deleted ID to the deletedIds slice
-        deletedIds = append(deletedIds, id)
-    }
+		// Retrieve the record to ensure it exists
+		if err := tx.First(&model, id).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				continue // If the record is not found, skip to the next ID
+			}
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 
-    // Update line numbers for the remaining records
-    if err := updateLineNumbers(tx); err != nil {
-        return nil, &exceptions.BaseErrorResponse{
-            StatusCode: http.StatusInternalServerError,
-            Err:        err,
-        }
-    }
+		// Delete the record
+		if err := tx.Delete(&model).Error; err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 
-    return deletedIds, nil
+		// Append the deleted ID to the deletedIds slice
+		deletedIds = append(deletedIds, id)
+	}
+
+	// Update line numbers for the remaining records
+	if err := updateLineNumbers(tx); err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return deletedIds, nil
 }
 
 func updateLineNumbers(tx *gorm.DB) error {
-    var records []transactionworkshopentities.BookingEstimationRequest
-    
-    // Retrieve all remaining records, ordered by their current line numbers
-    if err := tx.Order("booking_estimation_request_code asc").Find(&records).Error; err != nil {
-        return err
-    }
+	var records []transactionworkshopentities.BookingEstimationRequest
 
-    // Update line numbers sequentially
-    for i, record := range records {
-        record.BookingEstimationRequestCode = i + 1
-        if err := tx.Save(&record).Error; err != nil {
-            return err
-        }
-    }
+	// Retrieve all remaining records, ordered by their current line numbers
+	if err := tx.Order("booking_estimation_request_code asc").Find(&records).Error; err != nil {
+		return err
+	}
 
-    return nil
+	// Update line numbers sequentially
+	for i, record := range records {
+		record.BookingEstimationRequestCode = i + 1
+		if err := tx.Save(&record).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *BookingEstimationImpl) GetByIdBookEstimReq(tx *gorm.DB, id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse) {
@@ -401,7 +422,7 @@ func (r *BookingEstimationImpl) SaveBookEstimReminderServ(tx *gorm.DB, req trans
 
 func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailReq) (int, *exceptions.BaseErrorResponse) {
 	var bookestimcalc transactionworkshopentities.BookingEstimationServiceDiscount
-	var bookestimpayloads []transactionworkshoppayloads.BookingEstimationCalculationPayloads 
+	var bookestimpayloads []transactionworkshoppayloads.BookingEstimationCalculationPayloads
 	if req.LineTypeID == 5 {
 		entity := transactionworkshopentities.BookingEstimationOperationDetail{
 			EstimationLineID:               req.EstimationLineID,
@@ -459,12 +480,12 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transaction
 			}
 		}
 	}
-	
-	err:= tx.Select(&bookestimcalc).Where("batch_system_number = ?", req.EstimationSystemNumber).Scan(&bookestimpayloads).Error
-	if err != nil{
-		return 0,&exceptions.BaseErrorResponse{
+
+	err := tx.Select(&bookestimcalc).Where("batch_system_number = ?", req.EstimationSystemNumber).Scan(&bookestimpayloads).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: errors.New("Discount can'r be created"),
+			Err:        errors.New("Discount can'r be created"),
 		}
 	}
 	return bookestimpayloads[0].BatchSystemNumber, nil
@@ -829,207 +850,263 @@ func (r *BookingEstimationImpl) AddFieldAction(tx *gorm.DB, id int, idrecall int
 	return id, nil
 }
 
-func (r *BookingEstimationImpl) GetByIdBookEstimDetail (tx *gorm.DB ,id int ,LineTypeID int)(map[string]interface{},*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) GetByIdBookEstimDetail(tx *gorm.DB, id int, LineTypeID int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var payloadsoperation []transactionworkshoppayloads.BookEstimDetailPayloadsOperation
 	var payloadsitem []transactionworkshoppayloads.BookEstimDetailPayloadsItem
 	var payloadslinetype []masterpayloads.LineTypeCode
 	var payloadstransactiontype []transactionworkshoppayloads.TransactionTypePayloads
 
-	if LineTypeID == 5{
-		err := tx.Select("trx_booking_estimation_operation_detail.*,mtr_operation_code.operation_code").Where("estimation_line_id = ?",id).
-		Joins("join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id = trx_booking_estimation_operation_detail.operation_id").
-		Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Scan(&payloadsoperation).Error
-		if err != nil{
-			return nil,&exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err: err,
-			}
-		}
-		errurllinetype := utils.Get(config.EnvConfigs.GeneralServiceUrl + "/line-type",&payloadslinetype,nil)
-		if errurllinetype != nil{
-			return nil,&exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err: errurllinetype,
-			}
-		} 
-		joinedData1 := utils.DataFrameInnerJoin(payloadsoperation,payloadslinetype,"LineTypeId")
-		errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+ "transaction-type-list?page=0&limit=100000",&payloadstransactiontype,nil)
-		if errurltransactiontype != nil{
-			return nil,&exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err: errurltransactiontype,
-			}
-		}
-		joineddata2 := utils.DataFrameInnerJoin(joinedData1,payloadstransactiontype,"TransactionTypeId")
-		return joineddata2[0],nil
-
-	}else{
-		err:= tx.Model("tr_booking_estimation_item_detail.*,mtr_item.item_name").Where("estimation_line_id = ?",id).
-		Joins("Join mtr_item on mtr_item.item_id = trx_booking_estimation_item_detail.item_id").
-		Scan(&payloadsitem).Error
-		if err != nil{
+	if LineTypeID == 5 {
+		err := tx.Select("trx_booking_estimation_operation_detail.*,mtr_operation_code.operation_code").Where("estimation_line_id = ?", id).
+			Joins("join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id = trx_booking_estimation_operation_detail.operation_id").
+			Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Scan(&payloadsoperation).Error
+		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err: err,
+				Err:        err,
 			}
 		}
-		errurllinetype := utils.Get(config.EnvConfigs.GeneralServiceUrl + "/line-type",&payloadslinetype,nil)
-		if errurllinetype != nil{
-			return nil,&exceptions.BaseErrorResponse{
+		errurllinetype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/line-type", &payloadslinetype, nil)
+		if errurllinetype != nil {
+			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err: errurllinetype,
-			}
-		} 
-		joinedData1 := utils.DataFrameInnerJoin(payloadsitem,payloadslinetype,"LineTypeId")
-		errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+ "transaction-type-list?page=0&limit=100000",&payloadstransactiontype,nil)
-		if errurltransactiontype != nil{
-			return nil,&exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err: errurltransactiontype,
+				Err:        errurllinetype,
 			}
 		}
-		joineddata2 := utils.DataFrameInnerJoin(joinedData1,payloadstransactiontype,"TransactionTypeId")
-		return joineddata2[0],nil
+		joinedData1, errdf := utils.DataFrameInnerJoin(payloadsoperation, payloadslinetype, "LineTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
+
+		errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
+		if errurltransactiontype != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errurltransactiontype,
+			}
+		}
+		joineddata2, errdf := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
+
+		return joineddata2[0], nil
+
+	} else {
+		err := tx.Model("tr_booking_estimation_item_detail.*,mtr_item.item_name").Where("estimation_line_id = ?", id).
+			Joins("Join mtr_item on mtr_item.item_id = trx_booking_estimation_item_detail.item_id").
+			Scan(&payloadsitem).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+		errurllinetype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/line-type", &payloadslinetype, nil)
+		if errurllinetype != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errurllinetype,
+			}
+		}
+		joinedData1, errdf := utils.DataFrameInnerJoin(payloadsitem, payloadslinetype, "LineTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
+
+		errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
+		if errurltransactiontype != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errurltransactiontype,
+			}
+		}
+		joineddata2, errdf := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
+
+		return joineddata2[0], nil
 	}
 }
 
-func (r *BookingEstimationImpl) GetAllBookEstimDetail (tx *gorm.DB,id int, pages pagination.Pagination)([]map[string]interface{},*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) GetAllBookEstimDetail(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var operationpayloads []transactionworkshoppayloads.BookEstimDetailPayloadsOperation
 	var itempayloads []transactionworkshoppayloads.BookEstimDetailPayloadsItem
 	var payloadslinetype []masterpayloads.LineTypeCode
 	var payloadstransactiontype []transactionworkshoppayloads.TransactionTypePayloads
-	combinedpayloads := make([]map[string]interface{},0)
-	
-	err := tx.Select("trx_booking_estimation_operation_detail.*,mtr_operation_code.operation_code").Where("estimation_line_id = ?",id).
-	Joins("join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id = trx_booking_estimation_operation_detail.operation_id").
-	Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Scan(&operationpayloads).Error
-	if err != nil{
-		return nil,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err: err,
-		}
-	}
-	errurllinetype := utils.Get(config.EnvConfigs.GeneralServiceUrl + "/line-type",&payloadslinetype,nil)
-	if errurllinetype != nil{
-		return nil,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err: errurllinetype,
-		}
-	} 
-	joinedData1 := utils.DataFrameInnerJoin(operationpayloads,payloadslinetype,"LineTypeId")
-	errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+ "transaction-type-list?page=0&limit=100000",&payloadstransactiontype,nil)
-	if errurltransactiontype != nil{
-		return nil,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err: errurltransactiontype,
-		}
-	}
-	joineddata2 := utils.DataFrameInnerJoin(joinedData1,payloadstransactiontype,"TransactionTypeId")
-	for _,op := range joineddata2{
-		combinedpayloads = append(combinedpayloads,map[string]interface{}{
-			"line_type_id": op["LineTypeid"],
-			"transaction_type_id": op["TransactionTypeId"],
-			"operation_id": op["OperationId"],
-			"operation_name":op["OperationName"],
-			"quantity": op["Quantity"],
-			"price":op["Price"],
-			"subtotal": op["SubTotal"],
-			"original_discount":op["OriginalDiscount"],
-			"proposal_discount": op["ProposalDiscount"],
-			"total" :op["Total"],
-		})
-	}
+	combinedpayloads := make([]map[string]interface{}, 0)
 
-
-	err2:= tx.Model("tr_booking_estimation_item_detail.*,mtr_item.item_name").Where("estimation_line_id = ?",id).
-	Joins("Join mtr_item on mtr_item.item_id = trx_booking_estimation_item_detail.item_id").
-	Scan(&itempayloads).Error
-	if err2 != nil{
+	err := tx.Select("trx_booking_estimation_operation_detail.*,mtr_operation_code.operation_code").Where("estimation_line_id = ?", id).
+		Joins("join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id = trx_booking_estimation_operation_detail.operation_id").
+		Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Scan(&operationpayloads).Error
+	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: err,
+			Err:        err,
 		}
 	}
-	errurllinetype2 := utils.Get(config.EnvConfigs.GeneralServiceUrl + "/line-type",&payloadslinetype,nil)
-	if errurllinetype2 != nil{
-		return nil,&exceptions.BaseErrorResponse{
+	errurllinetype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/line-type", &payloadslinetype, nil)
+	if errurllinetype != nil {
+		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: errurllinetype2,
-		}
-	} 
-	joinedData1_2 := utils.DataFrameInnerJoin(itempayloads,payloadslinetype,"LineTypeId")
-	errurltransactiontype2 := utils.Get(config.EnvConfigs.GeneralServiceUrl+ "transaction-type-list?page=0&limit=100000",&payloadstransactiontype,nil)
-	if errurltransactiontype2 != nil{
-		return nil,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err: errurltransactiontype,
+			Err:        errurllinetype,
 		}
 	}
-	joineddata2_2 := utils.DataFrameInnerJoin(joinedData1_2,payloadstransactiontype,"TransactionTypeId")
-	for _,it := range joineddata2_2{
-		combinedpayloads = append(combinedpayloads,map[string]interface{}{
-			"line_type_id": it["LineTypeID"],
-			"transaction_type_id": it["TransactionTypeId"],
-			"item_id": it["ItemID"],
-			"item_name":it["ItemName"],
-			"quantity": it["Quantity"],
-			"price":it["Price"],
-			"subtotal": it["SubTotal"],
-			"original_discount":it["OriginalDiscount"],
-			"proposal_discount": it["ProposalDiscount"],
-			"total" :it["Total"],
+	joinedData1, errdf := utils.DataFrameInnerJoin(operationpayloads, payloadslinetype, "LineTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
+	if errurltransactiontype != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errurltransactiontype,
+		}
+	}
+	joineddata2, errdf := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	for _, op := range joineddata2 {
+		combinedpayloads = append(combinedpayloads, map[string]interface{}{
+			"line_type_id":        op["LineTypeid"],
+			"transaction_type_id": op["TransactionTypeId"],
+			"operation_id":        op["OperationId"],
+			"operation_name":      op["OperationName"],
+			"quantity":            op["Quantity"],
+			"price":               op["Price"],
+			"subtotal":            op["SubTotal"],
+			"original_discount":   op["OriginalDiscount"],
+			"proposal_discount":   op["ProposalDiscount"],
+			"total":               op["Total"],
 		})
 	}
-	return combinedpayloads,nil
-}
 
-func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx*gorm.DB,id int)(int,*exceptions.BaseErrorResponse){
-	now := time.Now()
-	entity := transactionworkshopentities.BookingEstimationServiceDiscount{
-		BatchSystemNumber:               id,
-		DocumentStatusID:                0, 
-		EstimationDiscountApprovalStatus: 10, 
-		CompanyID:                        0, 
-		ApprovalRequestNumber:            0,
-		EstimationDocumentNumber:         "", 
-		EstimationDate:                   &now, 			
-		TotalPricePackage:                0.0, 
-		TotalPriceOperation:              0.0, 
-		TotalPricePart:                   0.0, 
-		TotalPriceOil:                    0.0, 
-		TotalPriceMaterial:               0.0, 
-		TotalPriceConsumableMaterial:     0.0, 
-		TotalSublet:                      0.0, 
-		TotalPriceAccessories:            0.0, 
-		TotalDiscount:                    0.0, 
-		TotalVAT:                         0.0, 
-		TotalAfterVAT:                    0.0, 
-		AdditionalDiscountRequestPercent: 0.0, 
-		AdditionalDiscountRequestAmount:  0.0, 
-		VATTaxRate:                       0.0, 
-		DiscountApprovalBy:               "", 
-		DiscountApprovalDate:             &now, 			
-		TotalAfterDiscount:               0.0, 
-	}
-	err := tx.Save(entity).Error
-	if err != nil{
-		return 0,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err: err,
+	err2 := tx.Model("tr_booking_estimation_item_detail.*,mtr_item.item_name").Where("estimation_line_id = ?", id).
+		Joins("Join mtr_item on mtr_item.item_id = trx_booking_estimation_item_detail.item_id").
+		Scan(&itempayloads).Error
+	if err2 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
 		}
 	}
-	return id,nil
+	errurllinetype2 := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/line-type", &payloadslinetype, nil)
+	if errurllinetype2 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errurllinetype2,
+		}
+	}
+	joinedData1_2, errdf := utils.DataFrameInnerJoin(itempayloads, payloadslinetype, "LineTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	errurltransactiontype2 := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
+	if errurltransactiontype2 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errurltransactiontype,
+		}
+	}
+	joineddata2_2, errdf := utils.DataFrameInnerJoin(joinedData1_2, payloadstransactiontype, "TransactionTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	for _, it := range joineddata2_2 {
+		combinedpayloads = append(combinedpayloads, map[string]interface{}{
+			"line_type_id":        it["LineTypeID"],
+			"transaction_type_id": it["TransactionTypeId"],
+			"item_id":             it["ItemID"],
+			"item_name":           it["ItemName"],
+			"quantity":            it["Quantity"],
+			"price":               it["Price"],
+			"subtotal":            it["SubTotal"],
+			"original_discount":   it["OriginalDiscount"],
+			"proposal_discount":   it["ProposalDiscount"],
+			"total":               it["Total"],
+		})
+	}
+	return combinedpayloads, nil
 }
 
-func (r *BookingEstimationImpl) PutBookingEstimationCalculation (tx *gorm.DB, id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads)(int,*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id int) (int, *exceptions.BaseErrorResponse) {
+	now := time.Now()
+	entity := transactionworkshopentities.BookingEstimationServiceDiscount{
+		BatchSystemNumber:                id,
+		DocumentStatusID:                 0,
+		EstimationDiscountApprovalStatus: 10,
+		CompanyID:                        0,
+		ApprovalRequestNumber:            0,
+		EstimationDocumentNumber:         "",
+		EstimationDate:                   &now,
+		TotalPricePackage:                0.0,
+		TotalPriceOperation:              0.0,
+		TotalPricePart:                   0.0,
+		TotalPriceOil:                    0.0,
+		TotalPriceMaterial:               0.0,
+		TotalPriceConsumableMaterial:     0.0,
+		TotalSublet:                      0.0,
+		TotalPriceAccessories:            0.0,
+		TotalDiscount:                    0.0,
+		TotalVAT:                         0.0,
+		TotalAfterVAT:                    0.0,
+		AdditionalDiscountRequestPercent: 0.0,
+		AdditionalDiscountRequestAmount:  0.0,
+		VATTaxRate:                       0.0,
+		DiscountApprovalBy:               "",
+		DiscountApprovalDate:             &now,
+		TotalAfterDiscount:               0.0,
+	}
+	err := tx.Save(entity).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		}
+	}
+	return id, nil
+}
+
+func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads) (int, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.BookingEstimationServiceDiscount
 	var columnName string
 	var value int
-	err := tx.Model(&entity).Where("batch_system_number =?",id).Scan(&entity).Error
-	if err != nil{
-		return 0,&exceptions.BaseErrorResponse{
+	err := tx.Model(&entity).Where("batch_system_number =?", id).Scan(&entity).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
-			Err: err,
+			Err:        err,
 		}
 	}
 
@@ -1050,28 +1127,26 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation (tx *gorm.DB, id
 		columnName = "total_price_material"
 		value = int(req.TotalPriceMaterial)
 	case 4:
-		columnName = "total_price_oil"																																																										
+		columnName = "total_price_oil"
 		value = int(req.TotalPriceOil)
 	case 9:
 		columnName = "total_sublet"
 		value = int(req.TotalSublet)
 
-
-
-	err := tx.Model(&transactionworkshopentities.BookingEstimationOperationDetail{}).
-		Where("batch_system_number = ? ", id).
-		Update(columnName, value).
-		Update("total", gorm.Expr("total_price_operation + total_price_package + total_price_accessories + total_price_part + total_price_material + total_price_oil + total_sublet")).
-		Error
-	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        err,
+		err := tx.Model(&transactionworkshopentities.BookingEstimationOperationDetail{}).
+			Where("batch_system_number = ? ", id).
+			Update(columnName, value).
+			Update("total", gorm.Expr("total_price_operation + total_price_package + total_price_accessories + total_price_part + total_price_material + total_price_oil + total_sublet")).
+			Error
+		if err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
 		}
-	}
 
 	}
-	
+
 	return id, nil
 }
 
@@ -1087,12 +1162,19 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 		Where("pdi_system_number = ?", id).
 		Scan(&pdipayloads).Error
 
-	errVehicleUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(pdipayloads.VehicleID),vehiclepayload,nil)
-	joineddata1 := utils.DataFrameInnerJoin([]transactionunitpayloads.PdiRequest{pdipayloads},[]masterpayloads.VehicleChassisResponse{vehiclepayload},"VehicleId")
-	if errVehicleUrl != nil{
-		return transactionworkshopentities.BookingEstimation{},&exceptions.BaseErrorResponse{
+	errVehicleUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(pdipayloads.VehicleID), vehiclepayload, nil)
+	joineddata1, errdf := utils.DataFrameInnerJoin([]transactionunitpayloads.PdiRequest{pdipayloads}, []masterpayloads.VehicleChassisResponse{vehiclepayload}, "VehicleId")
+	if errdf != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	if errVehicleUrl != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err: errVehicleUrl,
+			Err:        errVehicleUrl,
 		}
 	}
 	if err != nil {
@@ -1103,25 +1185,25 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 	}
 
 	entities := transactionworkshopentities.BookingEstimation{
-		BrandId:               joineddata1[0]["BrandId"].(int),
-		ModelId:               joineddata1[0]["ModelId"].(int),
-		VariantId:             joineddata1[0]["VariantID"].(int),
-		VehicleId:             joineddata1[0]["VehicleID"].(int),
-		ContractSystemNumber:  joineddata1[0]["ContractSystemNumber"].(int),
-		CompanyId:             joineddata1[0]["CompanyID"].(int),
-		BookingSystemNumber: 0,
+		BrandId:                    joineddata1[0]["BrandId"].(int),
+		ModelId:                    joineddata1[0]["ModelId"].(int),
+		VariantId:                  joineddata1[0]["VariantID"].(int),
+		VehicleId:                  joineddata1[0]["VehicleID"].(int),
+		ContractSystemNumber:       joineddata1[0]["ContractSystemNumber"].(int),
+		CompanyId:                  joineddata1[0]["CompanyID"].(int),
+		BookingSystemNumber:        0,
 		ServiceRequestSystemNumber: 0,
-		EstimationSystemNumber: 0,
-		AgreementNumberBr: "",
-		AgreementId: 0,
-		ContactPersonName: "",
-		ContactPersonPhone: "",
-		ContactPersonVia: "",
-		ContactPersonMobile: "",
-		InsurancePolicyNo: "",
-		InsuranceExpiredDate: time.Time{},
-		InsuranceClaimNo: "",
-		InsurancePic: "",
+		EstimationSystemNumber:     0,
+		AgreementNumberBr:          "",
+		AgreementId:                0,
+		ContactPersonName:          "",
+		ContactPersonPhone:         "",
+		ContactPersonVia:           "",
+		ContactPersonMobile:        "",
+		InsurancePolicyNo:          "",
+		InsuranceExpiredDate:       time.Time{},
+		InsuranceClaimNo:           "",
+		InsurancePic:               "",
 	}
 
 	err2 := tx.Save(&entities).Error

@@ -235,7 +235,14 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePriceDetail(tx *gorm.DB, fil
 	}
 
 	// Melakukan inner join antara respons lokasi item, respons lokasi item eksternal, dan respons item
-	joinedData := utils.DataFrameInnerJoin(responses, getItemResponse, "ItemId")
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, getItemResponse, "ItemId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// Mem-paginate data yang telah di-join
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
