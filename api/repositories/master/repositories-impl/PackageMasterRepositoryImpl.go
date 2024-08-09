@@ -94,7 +94,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
 
@@ -303,7 +310,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payloads.ModelId)
 
@@ -336,7 +350,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payloads.BrandId)
 
@@ -349,7 +370,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+	joinedData4, errdf := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	CurrencyUrl := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(payloads.CurrencyId)
 
