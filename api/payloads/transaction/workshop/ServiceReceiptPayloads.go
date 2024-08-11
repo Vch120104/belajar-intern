@@ -83,9 +83,11 @@ type ServiceReceiptResponse struct {
 	WorkOrderDocumentNumber      string                        `json:"work_order_document_number"`
 	ReferenceDocSystemNumber     int                           `json:"reference_doc_system_number"`
 	ProfitCenterId               int                           `json:"profit_center_id"`
+	ProfitCenterName             string                        `json:"profit_center_name"`
 	CompanyId                    int                           `json:"company_id"`
 	CompanyName                  string                        `json:"company_name"`
 	DealerRepresentativeId       int                           `json:"dealer_representative_id"`
+	DealerRepresentativeName     string                        `json:"dealer_representative_name"`
 	ServiceTypeId                int                           `json:"service_type_id"`
 	ReferenceTypeId              int                           `json:"reference_type_id"`
 	ReferenceDocNumber           int                           `json:"reference_doc_number"`
@@ -115,6 +117,9 @@ type ServiceReceiptDetailResponse struct {
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
 	LineTypeId                 int     `json:"line_type_id"`
 	OperationItemId            int     `json:"operation_item_id"`
+	OperationItemCode          string  `json:"operation_item_code"`
+	OperationItemName          string  `json:"operation_item_name"`
+	UomName                    string  `json:"uom_name"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
 	ReferenceDocId             int     `json:"reference_doc_id"`

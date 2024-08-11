@@ -122,17 +122,6 @@ type ServiceDetailUpdateRequest struct {
 	FrtQuantity                float64 `json:"frt_quantity"`
 }
 
-type ServiceDetailResponse struct {
-	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
-	ServiceRequestId           int     `json:"service_request_id"`
-	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
-	LineTypeId                 int     `json:"line_type_id"`
-	OperationItemId            int     `json:"operation_item_id"`
-	FrtQuantity                float64 `json:"frt_quantity"`
-	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
-	ReferenceDocId             int     `json:"reference_doc_id"`
-}
-
 type ServiceRequestDetail struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id" parent_entity:"trx_service_request_detail" main_table:"trx_service_request_detail"`
 	ServiceRequestId           int     `json:"service_request_id" parent_entity:"trx_service_request_detail" `
@@ -143,19 +132,22 @@ type ServiceRequestDetail struct {
 }
 
 type ServiceRequestDetailsResponse struct {
-	Page       int                            `json:"page"`
-	Limit      int                            `json:"limit"`
-	TotalPages int                            `json:"total_pages"`
-	TotalRows  int                            `json:"total_rows"`
-	Data       []ServiceRequestDetailResponse `json:"data"`
+	Page       int                     `json:"page"`
+	Limit      int                     `json:"limit"`
+	TotalPages int                     `json:"total_pages"`
+	TotalRows  int                     `json:"total_rows"`
+	Data       []ServiceDetailResponse `json:"data"`
 }
 
-type ServiceRequestDetailResponse struct {
+type ServiceDetailResponse struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
 	ServiceRequestId           int     `json:"service_request_id"`
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
 	LineTypeId                 int     `json:"line_type_id"`
 	OperationItemId            int     `json:"operation_item_id"`
+	OperationItemCode          string  `json:"operation_item_code"`
+	OperationItemName          string  `json:"operation_item_name"`
+	UomName                    string  `json:"uom_name"`
 	FrtQuantity                float64 `json:"frt_quantity"`
 	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
 	ReferenceDocId             int     `json:"reference_doc_id"`
@@ -174,7 +166,7 @@ type UomItemServiceRequestDetail struct {
 }
 
 type CompanyResponse struct {
-	CompanyId   int    `json:"company_id"`
+	CompanyId   string `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	BizCategory string `json:"biz_category"`
 }

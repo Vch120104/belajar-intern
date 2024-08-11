@@ -6,11 +6,13 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type BomService interface {
 	GetBomMasterList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetBomMasterById(id int) (masteritempayloads.BomMasterRequest, *exceptions.BaseErrorResponse)
+	GetBomMasterById(id int, pages pagination.Pagination) (masteritempayloads.BomMasterResponseDetail, *exceptions.BaseErrorResponse)
 	SaveBomMaster(request masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	UpdateBomMaster(id int, request masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	ChangeStatusBomMaster(id int) (masteritementities.Bom, *exceptions.BaseErrorResponse)
@@ -20,4 +22,6 @@ type BomService interface {
 	UpdateBomDetail(id int, request masteritempayloads.BomDetailRequest) (masteritementities.BomDetail, *exceptions.BaseErrorResponse)
 	DeleteByIds(ids []int) (bool, *exceptions.BaseErrorResponse)
 	GetBomItemList(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+
+	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
 }

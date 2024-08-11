@@ -163,7 +163,7 @@ func ItemRouter(
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
-	router.Put("/{item_detail_id}",itemController.UpdateItemDetail)
+	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
 
 	return router
 }
@@ -177,11 +177,6 @@ func ItemLocationRouter(
 	router.Use(middlewares.SetupCorsMiddleware)
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
-
-	//master
-	// router.Get("/", ItemLocationController.GetAllItemLocation)
-	// router.Get("/{item_location_id}", ItemLocationController.GetItemLocationById)
-	// router.Post("/", ItemLocationController.SaveItemLocation)
 
 	//detail
 	router.Get("/detail", ItemLocationController.GetAllItemLocationDetail)
@@ -321,8 +316,6 @@ func MovingCodeRouter(
 	router.Patch("/activate/{moving_code_id}", MovingCodeController.ActivateMovingCode)
 	router.Patch("/deactive/{moving_code_id}", MovingCodeController.DeactiveMovingCode)
 
-	//router.PanicHandler = exceptions.ErrorHandler
-
 	return router
 }
 
@@ -342,6 +335,7 @@ func IncentiveGroupRouter(
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 	router.Put("/{incentive_group_id}", incentiveGroupController.UpdateIncentiveGroup)
+
 	return router
 }
 
@@ -367,25 +361,6 @@ func PriceListRouter(
 	return router
 }
 
-// func LandedCostMasterRouter(
-// 	landedCostMaster masteritemcontroller.LandedCostMasterController,
-// ) *httprouter.Router {
-// 	router := httprouter.New()
-// 	router.GET("/", landedCostMaster.GetAllLandedCostMaster)
-// 	router.GET("/by-id/:landed_cost_id", landedCostMaster.GetByIdLandedCost)
-// 	router.POST("/", landedCostMaster.SaveLandedCostMaster)
-// 	router.PATCH("/activate/", landedCostMaster.ActivateLandedCostMaster)
-// 	router.PATCH("/deactivate/", landedCostMaster.DeactivateLandedCostmaster)
-
-// 	router.PanicHandler = exceptions.ErrorHandler
-
-// 	return router
-// }
-
-// func SwaggerRouter() *httprouter.Router {
-// 	router := httprouter.New()
-// 	router.GET("/swagger/*any", adaptHandler(swaggerHandler()))
-
 func BomRouter(
 	BomController masteritemcontroller.BomController,
 ) chi.Router {
@@ -404,7 +379,6 @@ func BomRouter(
 	router.Patch("/{bom_master_id}", BomController.ChangeStatusBomMaster)
 
 	//bom detail
-	// Detail
 	router.Get("/detail", BomController.GetBomDetailList)
 	router.Get("/detail/{bom_detail_id}", BomController.GetBomDetailById)
 	router.Put("/detail/{bom_detail_id}", BomController.UpdateBomDetail)
@@ -413,6 +387,7 @@ func BomRouter(
 
 	//bom lookup
 	router.Get("/popup-item", BomController.GetBomItemList)
+	router.Get("/download-template", BomController.DownloadTemplate)
 
 	return router
 }
@@ -1223,7 +1198,7 @@ func WorkOrderAllocationRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
-	router.Get("/header-data", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
 
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)

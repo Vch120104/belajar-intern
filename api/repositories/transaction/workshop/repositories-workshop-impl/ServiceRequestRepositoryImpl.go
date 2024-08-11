@@ -448,8 +448,9 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	// Fetch service details with pagination
-	var serviceDetails []transactionworkshoppayloads.ServiceRequestDetailResponse
+	var serviceDetails []transactionworkshoppayloads.ServiceDetailResponse
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
+		Select("service_request_detail_id, service_request_id, service_request_system_number, line_type_id, operation_item_id, frt_quantity, reference_doc_system_number, reference_doc_id").
 		Where("service_request_system_number = ?", Id).
 		Offset(pagination.GetOffset()).
 		Limit(pagination.GetLimit())
@@ -460,6 +461,35 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 			Message:    "Failed to retrieve service details from the database",
 			Err:        errServiceDetails,
 		}
+	}
+
+	// Fetch item and UOM details for each service detail
+	for i, detail := range serviceDetails {
+		// Fetch data Item from external API
+		itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(detail.OperationItemId)
+		var itemResponse transactionworkshoppayloads.ItemServiceRequestDetail
+		errItem := utils.Get(itemUrl, &itemResponse, nil)
+		if errItem != nil {
+			return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errItem,
+			}
+		}
+
+		// Fetch data UOM from external API
+		uomUrl := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/?page=0&limit=10&uom_id=" + strconv.Itoa(itemResponse.UomId)
+		var uomItems []transactionworkshoppayloads.UomItemServiceRequestDetail
+		errUom := utils.Get(uomUrl, &uomItems, nil)
+		if errUom != nil || len(uomItems) == 0 {
+			uomItems = []transactionworkshoppayloads.UomItemServiceRequestDetail{
+				{UomName: "N/A"},
+			}
+		}
+
+		// Update service detail with item and UOM data
+		serviceDetails[i].OperationItemCode = itemResponse.ItemCode
+		serviceDetails[i].OperationItemName = itemResponse.ItemName
+		serviceDetails[i].UomName = uomItems[0].UomName
 	}
 
 	// fetch profit center from external API
@@ -878,7 +908,7 @@ func (s *ServiceRequestRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *e
 	}
 
 	// check company category is not "001" uspg_atServiceReq0_Update / IMG Bina Trada - Pusat / company_id 130
-	if companyResponse.CompanyId != 130 {
+	if companyResponse.CompanyId != "130" {
 
 		if entity.WorkOrderSystemNumber == 0 && entity.BookingSystemNumber == 0 {
 
@@ -999,33 +1029,30 @@ func (s *ServiceRequestRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *e
 
 func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.ServiceRequestDetail
-	var getItemResponse transactionworkshoppayloads.ItemServiceRequestDetail
-	var getUomItems []transactionworkshoppayloads.UomItemServiceRequestDetail
 
-	// Build the query with filters
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{})
-	if len(filterCondition) > 0 {
-		for _, condition := range filterCondition {
-			if condition.ColumnField == "service_request_system_number" {
-				query = query.Where("service_request_system_number = ?", condition.ColumnValue)
-			} else {
-				query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
-			}
+	for _, condition := range filterCondition {
+		if condition.ColumnField == "service_request_system_number" {
+			query = query.Where("service_request_system_number = ?", condition.ColumnValue)
+		} else {
+			query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
 		}
 	}
 
-	err := query.Find(&entities).Error
-	if err != nil {
+	if err := query.Find(&entities).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	// Fetch data Item from external API
-	if len(entities) > 0 {
-		itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entities[0].OperationItemId)
-		errItem := utils.Get(itemUrl, &getItemResponse, nil)
+	var serviceRequestDetailResponses []map[string]interface{}
+
+	for _, entity := range entities {
+		// Fetch data Item from external API
+		itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entity.OperationItemId)
+		var itemResponse transactionworkshoppayloads.ItemServiceRequestDetail
+		errItem := utils.Get(itemUrl, &itemResponse, nil)
 		if errItem != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1033,40 +1060,39 @@ func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCo
 			}
 		}
 
-		// Fetch data Uom from external API
-		uomUrl := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/?page=0&limit=10&uom_id=" + strconv.Itoa(getItemResponse.UomId)
-		errUom := utils.Get(uomUrl, &getUomItems, nil)
-		if errUom != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUom,
+		// Fetch data UOM from external API
+		uomUrl := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/?page=0&limit=10&uom_id=" + strconv.Itoa(itemResponse.UomId)
+		var uomItems []transactionworkshoppayloads.UomItemServiceRequestDetail
+		errUom := utils.Get(uomUrl, &uomItems, nil)
+		if errUom != nil || len(uomItems) == 0 {
+			uomItems = []transactionworkshoppayloads.UomItemServiceRequestDetail{
+				{UomName: "N/A"},
 			}
 		}
-	}
 
-	var ServiceRequestDetailResponses []map[string]interface{}
-
-	for _, entity := range entities {
-		ServiceRequestDetailResponse := map[string]interface{}{
+		serviceRequestDetailResponse := map[string]interface{}{
 			"service_request_system_number": entity.ServiceRequestSystemNumber,
-			"uom_name":                      getUomItems[0].UomName,
-			"item_code":                     getItemResponse.ItemCode,
-			"item_name":                     getItemResponse.ItemName,
+			"uom_name":                      uomItems[0].UomName,
+			"item_code":                     itemResponse.ItemCode,
+			"item_name":                     itemResponse.ItemName,
 			"line_type_id":                  entity.LineTypeId,
 			"operation_item_id":             entity.OperationItemId,
 			"frt_quantity":                  entity.FrtQuantity,
 		}
 
-		ServiceRequestDetailResponses = append(ServiceRequestDetailResponses, ServiceRequestDetailResponse)
+		serviceRequestDetailResponses = append(serviceRequestDetailResponses, serviceRequestDetailResponse)
 	}
 
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(ServiceRequestDetailResponses, &pages)
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(serviceRequestDetailResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
 
 func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int) (transactionworkshoppayloads.ServiceDetailResponse, *exceptions.BaseErrorResponse) {
 	var detail transactionworkshopentities.ServiceRequestDetail
+	var getItemResponse transactionworkshoppayloads.ItemServiceRequestDetail
+	var getUomItems []transactionworkshoppayloads.UomItemServiceRequestDetail
+
 	err := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
 		Where("service_request_detail_id = ?", Id).
 		First(&detail).Error
@@ -1083,12 +1109,35 @@ func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int)
 		}
 	}
 
+	// Fetch data Item from external API
+	itemUrl := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(detail.OperationItemId)
+	errItem := utils.Get(itemUrl, &getItemResponse, nil)
+	if errItem != nil {
+		return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errItem,
+		}
+	}
+
+	// Fetch data Uom from external API
+	uomUrl := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/?page=0&limit=10&uom_id=" + strconv.Itoa(getItemResponse.UomId)
+	errUom := utils.Get(uomUrl, &getUomItems, nil)
+	if errUom != nil {
+		return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUom,
+		}
+	}
+
 	serviceDetail := transactionworkshoppayloads.ServiceDetailResponse{
 		ServiceRequestDetailId:     detail.ServiceRequestDetailId,
 		ServiceRequestId:           detail.ServiceRequestId,
 		ServiceRequestSystemNumber: detail.ServiceRequestSystemNumber,
 		LineTypeId:                 detail.LineTypeId,
 		OperationItemId:            detail.OperationItemId,
+		OperationItemCode:          getItemResponse.ItemCode,
+		OperationItemName:          getItemResponse.ItemName,
+		UomName:                    getUomItems[0].UomName,
 		FrtQuantity:                detail.FrtQuantity,
 		ReferenceDocSystemNumber:   detail.ReferenceDocSystemNumber,
 		ReferenceDocId:             detail.ReferenceDocId,
