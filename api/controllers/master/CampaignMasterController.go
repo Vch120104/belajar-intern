@@ -169,13 +169,13 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
+	result,totalpages,totalrows, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 }
 
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {

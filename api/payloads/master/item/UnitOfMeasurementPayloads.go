@@ -16,3 +16,16 @@ type UomIdCodeResponse struct {
 	UomCode        string `json:"uom_code"`
 	UomDescription string `json:"uom_description"`
 }
+
+type UomItemRequest struct {
+	SourceType string `json:"source_type"`
+	ItemId     int    `json:"item_id"`
+	Quantity   int    `json:"quantity"`
+}
+
+type UomItemResponses struct {
+	SourceConvertion float64 `json:"source_convertion"`
+	TargetConvertion float64 `json:"target_convertion"`
+	SourceUomId      int     `json:"source_uom_id"`
+	TargetUomId      int     `json:"target_uom_id"`
+}
