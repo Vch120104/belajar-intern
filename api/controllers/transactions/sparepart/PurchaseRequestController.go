@@ -105,6 +105,8 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequest(writer h
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
 	result, err := controller.PurchaseRequestService.GetByIdPurchaseRequest(PurchaseRequestSystemNumber)
 	if err != nil {
+		err.Message = "Id Not Found"
+		err.Data = "Id Not Found"
 		helper.ReturnError(writer, request, err)
 		return
 	}
@@ -169,7 +171,8 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequestDetail(wr
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
-	panic("implement me")
+	//panic("implement me"
+	//}
 }
 
 // SavePurchaseRequestHeader
@@ -194,7 +197,6 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestHeader(writer
 		return
 	}
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
-	panic("implement me")
 
 }
 
@@ -221,7 +223,7 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestDetail(writer
 		return
 	}
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
-	panic("implement me")
+
 }
 
 // UpdatePurchaseRequestHeader
@@ -260,7 +262,7 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestHeader(wri
 // @Tags			Transaction : Purchase Request
 // @Param			purchase_request_detail_system_number	path		int	true	"purchase_request_detail_system_number"
 // @Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads	true	"Purchase Request Header Data"
-// @Success		201						{object}	payloads.Response
+// @Success		201						{object}	transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 // @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [put]
 func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request) {
@@ -287,7 +289,7 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestDetail(wri
 // @Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
 // @Success		201						{object}	payloads.Response
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
-// @Router			/v1/purchase-request [delete]
+// @Router			/v1/purchase-request/{purchase_request_system_number} [delete]
 func (controller *PurchaseRequestControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	// Void work order
 	PurchaseRequestId := chi.URLParam(request, "purchase_request_system_number")
