@@ -264,8 +264,13 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 
 	success, newDocumentNumber, baseErr := r.ServiceRequestService.Submit(ServiceRequestId)
 	if baseErr != nil {
-		switch baseErr.Message {
-		case "Service request has been submitted or the document number is already generated":
+		response := payloads.Response{
+			StatusCode: baseErr.StatusCode,
+			Message:    baseErr.Message,
+			Data:       nil,
+		}
+
+		if baseErr.StatusCode == http.StatusConflict {
 			responseDataError := struct {
 				ServiceRequestSystemNumber int    `json:"service_request_system_number"`
 				DocumentNumber             string `json:"service_request_document_number,omitempty"`
@@ -275,17 +280,10 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 			if newDocumentNumber != "" {
 				responseDataError.DocumentNumber = newDocumentNumber
 			}
-			response := payloads.Response{
-				StatusCode: http.StatusConflict,
-				Message:    baseErr.Message,
-				Data:       responseDataError,
-			}
-			helper.WriteToResponseBody(writer, response)
-		case "Data not found":
-			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
-		default:
-			exceptions.NewAppException(writer, request, baseErr)
+			response.Data = responseDataError
 		}
+
+		helper.WriteToResponseBody(writer, response)
 		return
 	}
 

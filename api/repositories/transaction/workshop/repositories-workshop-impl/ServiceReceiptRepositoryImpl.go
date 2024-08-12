@@ -457,7 +457,7 @@ func (s *ServiceReceiptRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 		}
 	}
 
-	// Check if ServiceRequestStatusId is 2 (can save data)
+	// Check if ServiceRequestStatusId is in ready (2) status
 	if entity.ServiceRequestStatusId == 2 {
 		// Check if ServiceDate is before the current date
 		if entity.ServiceDate.Before(currentDate) {
@@ -468,9 +468,18 @@ func (s *ServiceReceiptRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 			}
 		}
 
+		// Check if status is transitioning to 3 (Accept) or 6 (Reject) from a state other than 2 (Ready)
+		if (request.ServiceRequestStatusId == 3 || request.ServiceRequestStatusId == 6) && entity.ServiceRequestStatusId != 2 {
+			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Message:    "Cannot change status to Accept or Reject; request is no longer in Ready state",
+				Err:        errors.New("status transition conflict"),
+			}
+		}
+
 		// Update entity fields
 		entity.ReplyRemark = request.ReplyRemark
-		entity.ReplyBy = "Admin" // Hardcoded value; this should be passed from the session user
+		entity.ReplyBy = "Admin"
 		entity.ReplyDate = currentDate
 
 		// Set ServiceRequestStatusId based on request.ServiceRequestStatusId
@@ -487,7 +496,6 @@ func (s *ServiceReceiptRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 			}
 		}
 
-		// Save the updated entity
 		err = tx.Save(&entity).Error
 		if err != nil {
 			return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
@@ -505,5 +513,4 @@ func (s *ServiceReceiptRepositoryImpl) Save(tx *gorm.DB, Id int, request transac
 		Message:    "Service request status is not in a valid state for saving data",
 		Err:        errors.New("service request status is not valid for saving data"),
 	}
-
 }
