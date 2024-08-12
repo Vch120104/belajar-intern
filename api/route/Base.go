@@ -8,7 +8,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -53,6 +52,7 @@ func UnitOfMeasurementRouter(
 	router.Get("/code/{uom_code}", unitOfMeasurementController.GetUnitOfMeasurementByCode)
 	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
 	router.Patch("/{uom_id}", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
+	router.Get("/{item_id}/{source_type}", unitOfMeasurementController.GetUnitOfMeasurementItem)
 
 	return router
 }
@@ -437,6 +437,7 @@ func PurchaseRequestRouter(
 	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
 	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
 	router.Post("/", PurchaseRequest.NewPurchaseRequestHeader)
+	router.Delete("/{purchase_request_system_number}", PurchaseRequest.Void)
 	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
 	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
@@ -994,7 +995,7 @@ func CampaignMasterRouter(
 
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
-	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}/{line_type_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
 	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
 	router.Patch("/detail/deactivate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)

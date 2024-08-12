@@ -103,3 +103,12 @@ func (s *UnitOfMeasurementServiceImpl) SaveUnitOfMeasurement(req masteritempaylo
 	}
 	return results, nil
 }
+func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementItem(payload masteritempayloads.UomItemRequest) (masteritempayloads.UomItemResponses, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.unitOfMeasurementRepo.GetUnitOfMeasurementItem(tx, payload)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
