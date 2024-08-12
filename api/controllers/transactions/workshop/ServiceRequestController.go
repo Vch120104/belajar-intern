@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -190,7 +191,6 @@ func (r *ServiceRequestControllerImp) GetById(writer http.ResponseWriter, reques
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-request [post]
 func (r *ServiceRequestControllerImp) New(writer http.ResponseWriter, request *http.Request) {
-
 	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveRequest
 	helper.ReadFromRequestBody(request, &ServiceRequestSaveRequest)
 
@@ -210,6 +210,7 @@ func (r *ServiceRequestControllerImp) New(writer http.ResponseWriter, request *h
 		return
 	}
 
+	log.Printf("Status Code: %d", http.StatusCreated) // Debug log
 	payloads.NewHandleSuccess(writer, success, "Create Data Successfully", http.StatusCreated)
 }
 
@@ -283,7 +284,7 @@ func (r *ServiceRequestControllerImp) Submit(writer http.ResponseWriter, request
 			response.Data = responseDataError
 		}
 
-		helper.WriteToResponseBody(writer, response)
+		helper.WriteToResponseBody(writer, response, baseErr.StatusCode)
 		return
 	}
 

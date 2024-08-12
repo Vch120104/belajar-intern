@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -319,6 +320,18 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 
 	// Fetch service details with pagination
 	var serviceDetails []transactionworkshoppayloads.ServiceReceiptDetailResponse
+	totalRowsQuery := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
+		Where("service_request_system_number = ?", Id).
+		Count(new(int64)).Error
+
+	if totalRowsQuery != nil {
+		return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count service details",
+			Err:        totalRowsQuery,
+		}
+	}
+
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
 		Select("service_request_detail_id, service_request_id, service_request_system_number, line_type_id, operation_item_id, frt_quantity, reference_doc_system_number, reference_doc_id").
 		Where("service_request_system_number = ?", Id).
@@ -385,7 +398,7 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 			Err:        errDealerRepresentative,
 		}
 	}
-
+	totalRows := 0
 	payload := transactionworkshoppayloads.ServiceReceiptResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
 		ServiceRequestStatusId:       entity.ServiceRequestStatusId,
@@ -426,8 +439,8 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ServiceDetails: transactionworkshoppayloads.ServiceReceiptDetailsResponse{
 			Page:       pagination.GetPage(),
 			Limit:      pagination.GetLimit(),
-			TotalPages: pagination.TotalPages,
-			TotalRows:  int(pagination.TotalRows), // Convert int64 to int
+			TotalPages: int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit()))),
+			TotalRows:  totalRows,
 			Data:       serviceDetails,
 		},
 	}

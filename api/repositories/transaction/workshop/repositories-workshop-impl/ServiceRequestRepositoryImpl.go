@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -464,6 +465,18 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 
 	// Fetch service details with pagination
 	var serviceDetails []transactionworkshoppayloads.ServiceDetailResponse
+	totalRowsQuery := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
+		Where("service_request_system_number = ?", Id).
+		Count(new(int64)).Error
+
+	if totalRowsQuery != nil {
+		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count service details",
+			Err:        totalRowsQuery,
+		}
+	}
+
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
 		Select("service_request_detail_id, service_request_id, service_request_system_number, line_type_id, operation_item_id, frt_quantity, reference_doc_system_number, reference_doc_id").
 		Where("service_request_system_number = ?", Id).
@@ -554,7 +567,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 			Err:        errReferenceDoc,
 		}
 	}
-
+	totalRows := 0
 	// Construct the payload with pagination information
 	payload := transactionworkshoppayloads.ServiceRequestResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
@@ -588,8 +601,8 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ServiceDetails: transactionworkshoppayloads.ServiceRequestDetailsResponse{
 			Page:       pagination.GetPage(),
 			Limit:      pagination.GetLimit(),
-			TotalPages: pagination.TotalPages,
-			TotalRows:  int(pagination.TotalRows),
+			TotalPages: int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit()))),
+			TotalRows:  totalRows,
 			Data:       serviceDetails,
 		},
 	}
@@ -601,8 +614,8 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 // IF @Option = 0
 // --USE IN MODUL :
 func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.ServiceRequestSaveRequest) (transactionworkshopentities.ServiceRequest, *exceptions.BaseErrorResponse) {
-	defaultWorkOrderStatusId := 1 // 1:Draft, 2:Ready, 3:Accept, 4:Work Order, 5:Booking, 6:Reject, 7:Cancel, 8:Closed
-	currentDate := time.Now()
+	defaultWorkOrderStatusId := 1   // Default status ID
+	currentDate := time.Now().UTC() // Ensure to use UTC
 	defaultReplyId := 0
 
 	var refType string
@@ -618,13 +631,13 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 	}
 
 	if request.ReferenceDocSystemNumber == 0 && request.EstimationSystemNumber == 0 {
-		refType = "SR" // Use "SR" for New Service Request
+		refType = "SR" // New Service Request
 		ReferenceTypeId = 1
 	} else if request.ReferenceDocSystemNumber != 0 {
-		refType = "WO" // Use "WO" for Work Order reference type
+		refType = "WO" // Work Order
 		ReferenceTypeId = 2
 	} else if request.EstimationSystemNumber != 0 {
-		refType = "SO" // Use "SO" for Sales Order reference type
+		refType = "SO" // Sales Order
 		ReferenceTypeId = 3
 	} else {
 		return transactionworkshopentities.ServiceRequest{}, &exceptions.BaseErrorResponse{
@@ -672,7 +685,6 @@ func (s *ServiceRequestRepositoryImpl) New(tx *gorm.DB, request transactionworks
 		}
 
 		entities = transactionworkshopentities.ServiceRequest{
-
 			ServiceRequestStatusId:   defaultWorkOrderStatusId,
 			ServiceRequestDate:       currentDate,
 			BrandId:                  request.BrandId,
