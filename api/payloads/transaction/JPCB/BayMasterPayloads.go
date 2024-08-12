@@ -14,5 +14,5 @@ type BayMasterResponse struct {
 type BayMasterUpdateRequest struct {
 	CompanyId    int  `json:"company_id"`
 	CarWashBayId int  `json:"car_wash_bay_id"`
-	RecordStatus bool `json:"record_status"`
+	IsActive     bool `json:"is_active"`
 }

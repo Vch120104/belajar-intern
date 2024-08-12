@@ -17,7 +17,7 @@ import (
 
 /* Master */
 
-func BayMasterRouter(
+func CarWashBayRouter(
 	bayController transactionjpcbcontroller.BayMasterController,
 ) chi.Router {
 	router := chi.NewRouter()
@@ -27,10 +27,10 @@ func BayMasterRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", bayController.GetAllBayMaster)
-	router.Get("/active", bayController.GetAllActiveBayCarWashScreen)
-	router.Get("/deactive", bayController.GetAllDeactiveBayCarWashScreen)
-	router.Put("/update", bayController.UpdateBayMaster)
+	router.Get("/", bayController.GetAllCarWashBay)
+	router.Get("/active", bayController.GetAllActiveCarWashBay)
+	router.Get("/deactive", bayController.GetAllDeactiveCarWashBay)
+	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
 
 	return router
 }
@@ -182,7 +182,7 @@ func ItemRouter(
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
-	router.Put("/{item_detail_id}",itemController.UpdateItemDetail)
+	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
 
 	return router
 }

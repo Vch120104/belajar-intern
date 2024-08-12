@@ -15,24 +15,24 @@ import (
 )
 
 type BayMasterController interface {
-	GetAllBayMaster(writer http.ResponseWriter, request *http.Request)
-	GetAllActiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request)
-	GetAllDeactiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request)
-	UpdateBayMaster(writer http.ResponseWriter, request *http.Request)
+	GetAllCarWashBay(writer http.ResponseWriter, request *http.Request)
+	GetAllActiveCarWashBay(writer http.ResponseWriter, request *http.Request)
+	GetAllDeactiveCarWashBay(writer http.ResponseWriter, request *http.Request)
+	ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request)
 }
 
 type BayMasterControllerImpl struct {
 	bayMasterService transactionjpcbservice.BayMasterService
 }
 
-func BayController(bayMasterService transactionjpcbservice.BayMasterService) BayMasterController {
+func NewCarWashBayController(bayMasterService transactionjpcbservice.BayMasterService) BayMasterController {
 	return &BayMasterControllerImpl{
 		bayMasterService: bayMasterService,
 	}
 }
 
-func (r *BayMasterControllerImpl) GetAllBayMaster(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query() // Retrieve query parameters
+func (r *BayMasterControllerImpl) GetAllCarWashBay(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
 		"company_id": queryValues.Get("company_id"),
@@ -47,7 +47,7 @@ func (r *BayMasterControllerImpl) GetAllBayMaster(writer http.ResponseWriter, re
 	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.bayMasterService.GetAllBayMaster(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.bayMasterService.GetAllCarWashBay(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -61,8 +61,8 @@ func (r *BayMasterControllerImpl) GetAllBayMaster(writer http.ResponseWriter, re
 	}
 }
 
-func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query() // Retrieve query parameters
+func (r *BayMasterControllerImpl) GetAllActiveCarWashBay(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
 		"company_id": queryValues.Get("company_id"),
@@ -77,7 +77,7 @@ func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.Respo
 	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.bayMasterService.GetAllActiveBayCarWashScreen(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.bayMasterService.GetAllActiveCarWashBay(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -91,15 +91,15 @@ func (r *BayMasterControllerImpl) GetAllActiveBayCarWashScreen(writer http.Respo
 	}
 }
 
-func (r *BayMasterControllerImpl) GetAllDeactiveBayCarWashScreen(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query() // Retrieve query parameters
+func (r *BayMasterControllerImpl) GetAllDeactiveCarWashBay(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
 		"company_id": queryValues.Get("company_id"),
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	responseData, err := r.bayMasterService.GetAllDeactiveBayCarWashScreen(criteria)
+	responseData, err := r.bayMasterService.GetAllDeactiveCarWashBay(criteria)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -109,16 +109,16 @@ func (r *BayMasterControllerImpl) GetAllDeactiveBayCarWashScreen(writer http.Res
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(responseData), "Get Data Successfully", http.StatusOK)
 }
 
-func (r *BayMasterControllerImpl) UpdateBayMaster(writer http.ResponseWriter, request *http.Request) {
+func (r *BayMasterControllerImpl) ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request) {
 	valueRequest := transactionjpcbpayloads.BayMasterUpdateRequest{}
 	helper.ReadFromRequestBody(request, &valueRequest)
 
-	update, err := r.bayMasterService.UpdateBayMaster(valueRequest)
+	update, err := r.bayMasterService.ChangeStatusCarWashBay(valueRequest)
 	if err != nil {
 		if err.Err.Error() == "already start" {
 			exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusOK,
-				Message:    "Already Start",
+				Message:    "Can't remove Bay, Car Wash status for this bay is already Started",
 				Data:       nil,
 				Err:        errors.New("already start"),
 			})

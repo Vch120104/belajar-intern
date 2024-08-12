@@ -1,7 +1,6 @@
 package transactionjpcbserviceimpl
 
 import (
-	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -17,10 +16,10 @@ import (
 type BayMasterServiceImpl struct {
 	BayMasterRepository transactionjpcbrepository.BayMasterRepository
 	DB                  *gorm.DB
-	RedisClient         *redis.Client // Redis client
+	RedisClient         *redis.Client
 }
 
-func StartBayService(BayRepository transactionjpcbrepository.BayMasterRepository, db *gorm.DB, redisClient *redis.Client) transactionjpcbservice.BayMasterService {
+func NewCarWashBayServiceImpl(BayRepository transactionjpcbrepository.BayMasterRepository, db *gorm.DB, redisClient *redis.Client) transactionjpcbservice.BayMasterService {
 	return &BayMasterServiceImpl{
 		BayMasterRepository: BayRepository,
 		DB:                  db,
@@ -28,8 +27,7 @@ func StartBayService(BayRepository transactionjpcbrepository.BayMasterRepository
 	}
 }
 
-// GetAllBayMaster implements transactionjpcbservice.BayMasterService.
-func (s *BayMasterServiceImpl) GetAllBayMaster(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) GetAllCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, totalPages, totalRows, err := s.BayMasterRepository.GetAll(tx, filterCondition, pages)
@@ -40,8 +38,7 @@ func (s *BayMasterServiceImpl) GetAllBayMaster(filterCondition []utils.FilterCon
 	return results, totalPages, totalRows, nil
 }
 
-// GetAllActiveBayCarWashScreen implements transactionjpcbservice.BayMasterService.
-func (s *BayMasterServiceImpl) GetAllActiveBayCarWashScreen(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) GetAllActiveCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, totalPages, totalRows, err := s.BayMasterRepository.GetAllActive(tx, filterCondition, pages)
@@ -52,8 +49,7 @@ func (s *BayMasterServiceImpl) GetAllActiveBayCarWashScreen(filterCondition []ut
 	return results, totalPages, totalRows, nil
 }
 
-// GetAllDeactiveBayCarWashScreen implements transactionjpcbservice.BayMasterService.
-func (s *BayMasterServiceImpl) GetAllDeactiveBayCarWashScreen(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) GetAllDeactiveCarWashBay(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, err := s.BayMasterRepository.GetAllDeactive(tx, filterCondition)
@@ -64,13 +60,13 @@ func (s *BayMasterServiceImpl) GetAllDeactiveBayCarWashScreen(filterCondition []
 	return results, nil
 }
 
-func (s *BayMasterServiceImpl) UpdateBayMaster(request transactionjpcbpayloads.BayMasterUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpayloads.BayMasterUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.BayMasterRepository.Update(tx, request)
+	results, err := s.BayMasterRepository.ChangeStatus(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return transactionjpcbentities.BayMaster{}, err
+		return false, err
 	}
 	return results, nil
 }
