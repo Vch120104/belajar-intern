@@ -32,15 +32,17 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequest(filterCondition []uti
 	//TODO implement me
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetAllPurchaseRequest(tx, filterCondition, pages, Dateparams)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequest(id int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequest(id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetByIdPurchaseRequest(tx, id)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
@@ -51,6 +53,8 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequestDetail(filterCondition
 	//TODO implement me
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetAllPurchaseRequestDetail(tx, filterCondition, pages)
+	defer helper.CommitOrRollbackTrx(tx)
+
 	if err != nil {
 		return result, err
 	}
@@ -60,6 +64,7 @@ func (p *PurchaseRequestServiceImpl) GetAllPurchaseRequestDetail(filterCondition
 func (p *PurchaseRequestServiceImpl) GetByIdPurchaseRequestDetail(id int) (transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	result, err := p.PurchaseRequestRepo.GetByIdPurchaseRequestDetail(tx, id)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}
@@ -117,11 +122,11 @@ func (p *PurchaseRequestServiceImpl) VoidPurchaseRequest(id int) (bool, *excepti
 	}
 	return res, nil
 }
-func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.InsertPurchaseRequestHeader(tx, request, id)
 	defer helper.CommitOrRollback(tx, err)
-
 	if err != nil {
 		return res, err
 	}
@@ -130,6 +135,7 @@ func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateHeader(request t
 
 func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateDetail(payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, id int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
