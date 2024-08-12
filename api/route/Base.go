@@ -163,6 +163,7 @@ func ItemRouter(
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
+	router.Put("/{item_detail_id}",itemController.UpdateItemDetail)
 
 	return router
 }
@@ -815,6 +816,39 @@ func ShiftScheduleRouter(
 	return router
 }
 
+func LabourSellingPriceRouter(
+	LabourSellingPriceController masteroperationcontroller.LabourSellingPriceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", LabourSellingPriceController.GetAllSellingPrice)
+	router.Post("/", LabourSellingPriceController.SaveLabourSellingPrice)
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceController.GetLabourSellingPriceById)
+
+	return router
+}
+
+func LabourSellingPriceDetailRouter(
+	LabourSellingPriceDetailController masteroperationcontroller.LabourSellingPriceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
+	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
+
+	return router
+}
+
 func IncentiveMasterRouter(
 	IncentiveMasterController mastercontroller.IncentiveMasterController,
 ) chi.Router {
@@ -955,7 +989,7 @@ func CampaignMasterRouter(
 
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
-	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}/{line_type_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
 	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
 	router.Patch("/detail/deactivate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
@@ -1175,6 +1209,32 @@ func ServiceReceiptRouter(
 	router.Get("/", ServiceReceiptController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceReceiptController.GetById)
 	router.Put("/{service_request_system_number}", ServiceReceiptController.Save)
+
+	return router
+}
+
+func WorkOrderAllocationRouter(
+	WorkOrderAllocationController transactionworkshopcontroller.WorkOrderAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
+	router.Get("/header-data", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
+	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+
+	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
+	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
+
+	// assign technician to work order
+	router.Get("/assign-technician", WorkOrderAllocationController.GetAssignTechnician)
+	router.Get("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.GetAssignTechnicianById)
+	router.Post("/assign-technician/{service_date}/{foreman_id}", WorkOrderAllocationController.NewAssignTechnician)
+	router.Put("/assign-technician/{service_date}/{foreman_id}/{assign_technician_id}", WorkOrderAllocationController.SaveAssignTechnician)
 
 	return router
 }

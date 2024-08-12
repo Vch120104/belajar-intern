@@ -7,7 +7,7 @@ type CreateItemModelMapping struct {
 	BrandId      int     `json:"brand_id"`
 	ModelId      int     `json:"model_id"`
 	VariantId    int     `json:"variant_id"`
-	MillageEvery float64 `json:"millage_every"`
+	MileageEvery float64 `json:"mileage_every"`
 	ReturnEvery  float64 `json:"return_every"`
 }
 
@@ -18,7 +18,7 @@ type ItemModelMappingReponses struct {
 	BrandId      int     `json:"brand_id"`
 	ModelId      int     `json:"model_id"`
 	VariantId    int     `json:"variant_id"`
-	MillageEvery float64 `json:"millage_every"`
+	MileageEvery float64 `json:"mileage_every"`
 	ReturnEvery  float64 `json:"return_every"`
 }
 

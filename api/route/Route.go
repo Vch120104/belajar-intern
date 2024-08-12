@@ -161,6 +161,14 @@ func StartRouting(db *gorm.DB) {
 	operationModelMappingService := masteroperationserviceimpl.StartOperationModelMappingService(operationModelMappingRepository, db, rdb)
 	operationModelMappingController := masteroperationcontroller.NewOperationModelMappingController(operationModelMappingService)
 
+	//labour selling price
+	labourSellingPriceRepository := masteroperationrepositoryimpl.StartLabourSellingPriceRepositoryImpl()
+	laboruSellingPriceService := masteroperationserviceimpl.StartLabourSellingPriceService(labourSellingPriceRepository, db)
+	LabourSellingPriceController := masteroperationcontroller.NewLabourSellingPriceController(laboruSellingPriceService)
+
+	//labour selling price detail
+	LabourSellingPriceDetailController := masteroperationcontroller.NewLabourSellingPriceDetailController(laboruSellingPriceService)
+
 	// Skill Level
 	SkillLevelRepository := masterrepositoryimpl.StartSkillLevelRepositoryImpl()
 	SkillLevelService := masterserviceimpl.StartSkillLevelService(SkillLevelRepository, db, rdb)
@@ -282,6 +290,11 @@ func StartRouting(db *gorm.DB) {
 	PurchaseRequestService := transactionsparepartserviceimpl.NewPurchaseRequestImpl(PurchaseRequestRepository, db, rdb)
 	PurchaseRequestController := transactionsparepartcontroller.NewPurchaseRequestController(PurchaseRequestService)
 
+	//Work Order Allocation
+	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
+	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
+	WorkOrderAllocationController := transactionworksopcontroller.NewWorkOrderAllocationController(WorkOrderAllocationService)
+
 	//Work order bypass
 	WorkOrderBypassRepository := transactionworkshoprepositoryimpl.OpenWorkOrderBypassRepositoryImpl()
 	WorkOrderBypassService := transactionworkshopserviceimpl.OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepository, db, rdb)
@@ -304,6 +317,8 @@ func StartRouting(db *gorm.DB) {
 	OperationEntriesRouter := OperationEntriesRouter(operationEntriesController)
 	OperationKeyRouter := OperationKeyRouter(operationKeyController)
 	OperationModelMappingRouter := OperationModelMappingRouter(operationModelMappingController)
+	LabourSellingPriceRouter := LabourSellingPriceRouter(LabourSellingPriceController)
+	LabourSellingPriceDetailRouter := LabourSellingPriceDetailRouter(LabourSellingPriceDetailController)
 	MovingCodeRouter := MovingCodeRouter(MovingCodeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
 	AgreementRouter := AgreementRouter(AgreementController)
@@ -339,6 +354,7 @@ func StartRouting(db *gorm.DB) {
 	ServiceReceiptRouter := ServiceReceiptRouter(ServiceReceiptController)
 	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
 	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
+	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
 
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	r := chi.NewRouter()
@@ -373,7 +389,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/operation-key", OperationKeyRouter)
 		r.Mount("/operation-entries", OperationEntriesRouter)
 		r.Mount("/operation-model-mapping", OperationModelMappingRouter)
-		//r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+		r.Mount("/labour-selling-price", LabourSellingPriceRouter)
+		r.Mount("/labour-selling-price-detail", LabourSellingPriceDetailRouter)
 
 		/* Master Warehouse */
 		r.Mount("/warehouse-group", WarehouseGroupRouter)
@@ -408,6 +425,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/service-request", ServiceRequestRouter)
 		r.Mount("/service-receipt", ServiceReceiptRouter)
 		r.Mount("/vehicle-history", VehicleHistoryRouter)
+		r.Mount("/work-order-allocation", WorkOrderAllocationRouter)
 		r.Mount("/work-order-bypass", WorkOrderBypassRouter)
 
 		/* Transaction Bodyshop */

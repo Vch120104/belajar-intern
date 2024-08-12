@@ -39,13 +39,13 @@ func NewPackageMasterController(packageMasterService masterservice.PackageMaster
 func (r *PackageMasterControllerImpl) GetAllPackageMaster(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"package_name":     queryValues.Get("is_active"),
-		"package_code":     queryValues.Get("deduction_name"),
-		"profit_center_id": queryValues.Get("effective_date"),
-		"model_id":         queryValues.Get("model_id"),
-		"variant_id":       queryValues.Get("variant_id"),
-		"package_price":    queryValues.Get("package_price"),
-		"is_active":        queryValues.Get("is_active"),
+		"mtr_package.package_name":     queryValues.Get("package_name"),
+		"mtr_package.package_code":     queryValues.Get("package_code"),
+		"mtr_package.profit_center_id": queryValues.Get("profit_center_id"),
+		"mtr_package.model_id":         queryValues.Get("model_id"),
+		"mtr_package.variant_id":       queryValues.Get("variant_id"),
+		"mtr_package.package_price":    queryValues.Get("package_price"),
+		"mtr_package.is_active":        queryValues.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
