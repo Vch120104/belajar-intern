@@ -20,6 +20,7 @@ type CampaignMasterResponse struct {
 	IsActive           bool    `json:"is_active"`
 	CampaignCode       string  `json:"campaign_code"`
 	CampaignName       string  `json:"campaign_name"`
+	CampaignId         int     `json:"campaign_id"`
 	BrandId            int     `json:"brand_id"`
 	ModelId            int     `json:"model_id"`
 	CampaignPeriodFrom string  `json:"campaign_period_from"`
@@ -41,9 +42,9 @@ type CampaignMasterListReponse struct {
 }
 
 type GetModelResponse struct {
-	ModelId   int    `json:"model_id"`
-	ModelCode string `json:"model_code"`
-	ModelName string `json:"model_name"`
+	ModelId          int    `json:"model_id"`
+	ModelCode        string `json:"model_code"`
+	ModelDescription string `json:"model_description"`
 }
 type GetBrandResponse struct {
 	BrandId   int    `json:"brand_id"`
