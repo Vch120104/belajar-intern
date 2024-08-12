@@ -1,6 +1,7 @@
 package masteritemserviceimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -58,22 +59,14 @@ func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) (masteritempayloads.
 	return results, nil
 }
 
-func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItemPackageRequest) (masteritementities.ItemPackage, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-
-	if req.ItemPackageId != 0 {
-		_, err := s.ItemPackageRepo.GetItemPackageById(tx, req.ItemPackageId)
-
-		if err != nil {
-			return false, err
-		}
-	}
 
 	results, err := s.ItemPackageRepo.SaveItemPackage(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return results, err
 	}
 	return results, nil
 }

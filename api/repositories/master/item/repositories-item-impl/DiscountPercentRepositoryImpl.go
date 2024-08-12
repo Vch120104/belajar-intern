@@ -81,7 +81,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusNoContent,
 			Err:        errors.New(""),
 		}
 	}

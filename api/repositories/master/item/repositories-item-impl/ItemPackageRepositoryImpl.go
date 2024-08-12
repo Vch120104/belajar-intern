@@ -92,7 +92,7 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusNoContent,
 			Err:        errors.New(""),
 		}
 	}
@@ -103,7 +103,14 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 
 	if errUrlItemPackage != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New(""),
+		}
+	}
+
+	if len(getItemGroupResponses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
 			Err:        errors.New(""),
 		}
 	}
@@ -116,8 +123,6 @@ func (r *ItemPackageRepositoryImpl) GetAllItemPackage(tx *gorm.DB, internalFilte
 			Err:        errdf,
 		}
 	}
-
-	fmt.Print(joinedData)
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 
@@ -162,7 +167,7 @@ func (*ItemPackageRepositoryImpl) GetItemPackageById(tx *gorm.DB, Id int) (maste
 	return response, nil
 }
 
-func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteritempayloads.SaveItemPackageRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteritempayloads.SaveItemPackageRequest) (masteritementities.ItemPackage, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemPackage{
 		IsActive:        request.IsActive,
 		ItemGroupId:     request.ItemGroupId,
@@ -173,23 +178,25 @@ func (r *ItemPackageRepositoryImpl) SaveItemPackage(tx *gorm.DB, request masteri
 		Description:     request.Description,
 	}
 
-	err := tx.Save(&entities).Error
+	result := masteritementities.ItemPackage{}
+
+	err := tx.Save(&entities).Where(masteritementities.ItemPackage{ItemPackageCode: request.ItemPackageCode}).First(&result).Error
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return result, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
-			return false, &exceptions.BaseErrorResponse{
+			return result, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return result, nil
 }
 
 func (r *ItemPackageRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
