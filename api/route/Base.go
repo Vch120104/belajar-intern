@@ -163,7 +163,7 @@ func ItemRouter(
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
-	router.Put("/{item_detail_id}",itemController.UpdateItemDetail)
+	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
 
 	return router
 }
@@ -1263,8 +1263,11 @@ func SupplySlipRouter(
 
 	router.Get("/{supply_system_number}", SupplySlipController.GetSupplySlipByID)
 	router.Get("/", SupplySlipController.GetAllSupplySlip)
+	router.Get("/detail/{supply_detail_system_number}", SupplySlipController.GetSupplySlipDetailByID)
 	router.Post("/", SupplySlipController.SaveSupplySlip)
 	router.Post("/detail", SupplySlipController.SaveSupplySlipDetail)
+	router.Put("/{supply_system_number}", SupplySlipController.UpdateSupplySlip)
+	router.Put("/detail/{supply_detail_system_number}", SupplySlipController.UpdateSupplySlipDetail)
 
 	return router
 }

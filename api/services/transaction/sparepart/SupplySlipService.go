@@ -6,14 +6,14 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	"after-sales/api/utils"
-
-	"gorm.io/gorm"
 )
 
 type SupplySlipService interface {
-	GetSupplySlipById(tx *gorm.DB, Id int) (transactionsparepartpayloads.SupplySlipResponse, *exceptions.BaseErrorResponse)
-	GetSupplySlipDetailById(tx *gorm.DB, Id int) (transactionsparepartpayloads.SupplySlipDetailResponse, *exceptions.BaseErrorResponse)
+	GetSupplySliptById(Id int, pagination pagination.Pagination) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetSupplySlipDetailById(Id int) (transactionsparepartpayloads.SupplySlipDetailResponse, *exceptions.BaseErrorResponse)
 	SaveSupplySlip(req transactionsparepartentities.SupplySlip) (transactionsparepartentities.SupplySlip, *exceptions.BaseErrorResponse)
 	SaveSupplySlipDetail(req transactionsparepartentities.SupplySlipDetail) (transactionsparepartentities.SupplySlipDetail, *exceptions.BaseErrorResponse)
-	GetAllSupplySlip(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllSupplySlip(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	UpdateSupplySlip(req transactionsparepartentities.SupplySlip, id int) (transactionsparepartentities.SupplySlip, *exceptions.BaseErrorResponse)
+	UpdateSupplySlipDetail(req transactionsparepartentities.SupplySlipDetail, id int)(transactionsparepartentities.SupplySlipDetail,*exceptions.BaseErrorResponse)
 }

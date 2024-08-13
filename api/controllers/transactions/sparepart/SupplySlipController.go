@@ -9,6 +9,9 @@ import (
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type SupplySlipControllerImpl struct {
@@ -20,6 +23,9 @@ type SupplySlipController interface {
 	GetAllSupplySlip(writer http.ResponseWriter, request *http.Request)
 	SaveSupplySlip(writer http.ResponseWriter, request *http.Request)
 	SaveSupplySlipDetail(writer http.ResponseWriter, request *http.Request)
+	GetSupplySlipDetailByID(writer http.ResponseWriter, request *http.Request)
+	UpdateSupplySlip(writer http.ResponseWriter, request *http.Request)
+	UpdateSupplySlipDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewSupplySlipController(supplyslipservice transactionsparepartservice.SupplySlipService) SupplySlipController {
@@ -39,28 +45,42 @@ func NewSupplySlipController(supplyslipservice transactionsparepartservice.Suppl
 // @Failure 500,404 {object} exceptions.BaseErrorResponse
 // @Router /v1/supply-slip/{supply_slip_id} [get]
 func (r *SupplySlipControllerImpl) GetSupplySlipByID(writer http.ResponseWriter, request *http.Request) {
-	// Get ID from URL
-	// id := mux.Vars(request)["id"]
 
-	// Get data from service
-	// data, err := r.supplyslipservice.GetSupplySlipByID(id)
-	// if err != nil {
-	// 	// Return error
-	// 	exceptions.NewNotFoundException(writer, request, err)
-	// 	return
-	// }
+	supplyId, _ := strconv.Atoi(chi.URLParam(request, "supply_system_number"))
 
-	// Return success
-	// payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, err := r.supplyslipservice.GetSupplySliptById(supplyId, paginate)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 func (r *SupplySlipControllerImpl) GetAllSupplySlip(writer http.ResponseWriter, request *http.Request) {
 
 	queryValues := request.URL.Query()
 
-	queryParams := map[string]string{
-		"trx_supply_slip.supply_system_number": queryValues.Get("supply_system_number"),
-		"supply_type_id":                       queryValues.Get("supply_type_id"),
+	internalFilterCondition := map[string]string{
+		"trx_supply_slip.supply_document_number":    queryValues.Get("supply_document_number"),
+		"trx_supply_slip.supply_date_from":          queryValues.Get("supply_date_from"),
+		"trx_supply_slip.supply_date_to":            queryValues.Get("supply_date_to"),
+		"trx_work_order.work_order_document_number": queryValues.Get("work_order_document_number"),
+	}
+
+	externalFilterCondition := map[string]string{
+		"supply_type_id":     queryValues.Get("supply_type_id"),
+		"approval_status_id": queryValues.Get("approval_status_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -70,9 +90,10 @@ func (r *SupplySlipControllerImpl) GetAllSupplySlip(writer http.ResponseWriter, 
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	criteria := utils.BuildFilterCondition(queryParams)
+	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
+	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	paginatedData, totalPages, totalRows, err := r.supplyslipservice.GetAllSupplySlip(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.supplyslipservice.GetAllSupplySlip(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -114,4 +135,45 @@ func (r *SupplySlipControllerImpl) SaveSupplySlipDetail(writer http.ResponseWrit
 	message = "Create Data Successfully!"
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+
+func (r *SupplySlipControllerImpl) GetSupplySlipDetailByID(writer http.ResponseWriter, request *http.Request) {
+
+	supplyDetailId, _ := strconv.Atoi(chi.URLParam(request, "supply_detail_system_number"))
+
+	result, err := r.supplyslipservice.GetSupplySlipDetailById(supplyDetailId)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *SupplySlipControllerImpl) UpdateSupplySlip(writer http.ResponseWriter, request *http.Request){
+	supplyId,_ := strconv.Atoi(chi.URLParam(request,"supply_system_number"))
+	var formRequest transactionsparepartentities.SupplySlip
+	helper.ReadFromRequestBody(request, &formRequest)
+	result, err := r.supplyslipservice.UpdateSupplySlip(formRequest, supplyId)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *SupplySlipControllerImpl) UpdateSupplySlipDetail(writer http.ResponseWriter, request *http.Request){
+	supplyDetailId,_ := strconv.Atoi(chi.URLParam(request,"supply_detail_system_number"))
+	var formRequest transactionsparepartentities.SupplySlipDetail
+	helper.ReadFromRequestBody(request, &formRequest)
+	result, err := r.supplyslipservice.UpdateSupplySlipDetail(formRequest, supplyDetailId)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	
+	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
