@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	"database/sql"
 	"errors"
 	"net/http"
 	"strings"
@@ -15,6 +16,32 @@ import (
 )
 
 type UnitOfMeasurementRepositoryImpl struct {
+}
+
+func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementItem(tx *gorm.DB, Payload masteritempayloads.UomItemRequest) (masteritempayloads.UomItemResponses, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.UomItem{}
+	response := masteritempayloads.UomItemResponses{}
+
+	rows, err := tx.Model(&entities).
+		Where(masteritementities.UomItem{ItemId: Payload.ItemId, UomSourceTypeCode: Payload.SourceType}).
+		First(&response).
+		Rows()
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	} else {
+		defer func(rows *sql.Rows) {
+			err := rows.Close()
+			if err != nil {
+
+			}
+		}(rows)
+	}
+
+	return response, nil
 }
 
 func StartUnitOfMeasurementRepositoryImpl() masteritemrepository.UnitOfMeasurementRepository {
