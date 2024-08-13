@@ -5,6 +5,7 @@ import (
 	masteritemcontroller "after-sales/api/controllers/master/item"
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
+	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
@@ -14,6 +15,24 @@ import (
 )
 
 /* Master */
+
+func CarWashBayRouter(
+	bayController transactionjpcbcontroller.BayMasterController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", bayController.GetAllCarWashBay)
+	router.Get("/active", bayController.GetAllActiveCarWashBay)
+	router.Get("/deactive", bayController.GetAllDeactiveCarWashBay)
+	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
+
+	return router
+}
 
 func ItemClassRouter(
 	itemClassController masteritemcontroller.ItemClassController,
