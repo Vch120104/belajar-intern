@@ -41,6 +41,7 @@ func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.Wa
 func (s *WarehouseLocationServiceImpl) ProcessWarehouseLocationTemplate(req masterwarehousepayloads.ProcessWarehouseLocationTemplate, companyId int) (bool, *exceptions.BaseErrorResponse) {
 
 	for _, value := range req.Data {
+		fmt.Println(value.Validation)
 		if value.Validation != "Ok" {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: 400,

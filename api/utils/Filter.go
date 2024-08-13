@@ -109,6 +109,8 @@ func ApplyFilterExact(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 		if strings.Contains(columnValue[i], "true") || strings.Contains(columnValue[i], "false") || strings.Contains(columnValue[i], "Active") {
 			n := map[string]string{"true": "1", "false": "0", "Active": "1"}
 			columnValue[i] = n[columnValue[i]]
+		} else if strings.Contains(columnName[i], "date") {
+			columnName[i] = "CAST(" + columnName[i] + " AS DATE)"
 		}
 
 		condition := columnName[i] + " LIKE '" + columnValue[i] + "'"

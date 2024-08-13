@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"math"
 	"reflect"
 
@@ -105,19 +106,28 @@ func DataFrameLeftJoin(data1 interface{}, data2 interface{}, key string) []map[s
 // Note:
 //   - data1 are able to accept []map[string]interface{} and []struct{}, BUT data2 are only able to accept []struct{}
 //   - if the returned data are not found after running this function, make sure your data type are correct
-func DataFrameInnerJoin(data1 interface{}, data2 interface{}, key string) []map[string]interface{} {
+func DataFrameInnerJoin(data1 interface{}, data2 interface{}, key string) ([]map[string]interface{}, error) {
+
+	var result []map[string]interface{}
+
 	tpy, _ := reflect.TypeOf(data1), reflect.ValueOf(data1)
 	if tpy.Kind() == reflect.Slice && tpy.Elem().Kind() != reflect.Struct {
 		df1 := dataframe.LoadMaps(data1.([]map[string]interface{}))
 		df2 := dataframe.LoadStructs(data2)
 		dfJoin := df1.InnerJoin(df2, key)
-		return ConvertNullValueToEmptyString(dfJoin.Maps())
+		result = ConvertNullValueToEmptyString(dfJoin.Maps())
+
 	} else {
 		df1 := dataframe.LoadStructs(data1)
 		df2 := dataframe.LoadStructs(data2)
 		dfJoin := df1.InnerJoin(df2, key)
-		return ConvertNullValueToEmptyString(dfJoin.Maps())
+		result = ConvertNullValueToEmptyString(dfJoin.Maps())
+
 	}
+	if len(result) == 0 {
+		return result, fmt.Errorf("failed to perform InnerJoin Dataframe with key %s", key)
+	}
+	return result, nil
 }
 
 // ConvertNullValueToEmptyString converts null values in a slice of maps to empty strings.

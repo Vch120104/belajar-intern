@@ -352,11 +352,17 @@ func PriceListRouter(
 	router.Get("/", priceListController.GetPriceList)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
 	router.Get("/new/", priceListController.GetAllPriceListNew)
+	router.Get("/{price_list_id}", priceListController.GetPriceListById)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
 	router.Put("/activate/{price_list_id}", priceListController.ActivatePriceList)
 	router.Put("/deactivate/{price_list_id}", priceListController.DeactivatePriceList)
 	router.Delete("/{price_list_id}", priceListController.DeletePriceList)
+	router.Get("/download-template", priceListController.GenerateDownloadTemplateFile)
+	router.Post("/upload-template", priceListController.UploadFile)
+	router.Get("/check-price-list-item", priceListController.CheckPriceListItem)
+	router.Post("/download", priceListController.Download)
+	router.Get("/duplicate", priceListController.Duplicate)
 
 	return router
 }
@@ -690,7 +696,7 @@ func WarehouseLocationRouter(
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
 	router.Get("/download-template", warehouseLocationController.DownloadTemplate)
 	router.Post("/upload-template/{company_id}", warehouseLocationController.UploadPreviewFile)
-	router.Post("/process-template", warehouseLocationController.ProcessWarehouseLocationTemplate)
+	router.Post("/process-template/{company_id}", warehouseLocationController.ProcessWarehouseLocationTemplate)
 
 	return router
 }
