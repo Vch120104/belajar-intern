@@ -16,6 +16,7 @@ type PurchaseRequestResponses struct {
 }
 
 type PurchaseRequestGetAllListResponses struct {
+	PurchaseRequestSystemNumber   int       `json:"purchase_request_system_number" parent_entity:"trx_purchase_request" main_table:"trx_purchase_request"`
 	PurchaseRequestDocumentNumber string    `json:"purchase_request_no" parent_entity:"trx_purchase_request" main_table:"trx_work_order"`
 	PurchaseRequestDocumentDate   time.Time `json:"purchase_request_date" parent_entity:"trx_purchase_request" `
 	ItemGroup                     string    `json:"item_group" parent_entity:"mtr_work_order_status"`
@@ -146,7 +147,7 @@ type PurchaseRequestGetByIdResponses struct {
 	BackOrder                  bool      `parent_entity:"trx_purchase_request" json:"back_order"`
 	SetOrder                   bool      `json:"set_order" parent_entity:"trx_purchase_request"`
 	CurrencyId                 int       `json:"currency_id" parent_entity:"trx_purchase_request"`
-	ItemClassId                int       `json:"column:item_class_id;size:30;" parent_entity:"trx_purchase_request"`
+	ItemClassId                int       `json:"item_class_id" parent_entity:"trx_purchase_request"`
 	ChangeNo                   int       `json:"change_no" parent_entity:"trx_purchase_request"`
 	CreatedByUserId            int       `json:"created_by_user_id" parent_entity:"trx_purchase_request"`
 	CreatedDate                time.Time `json:"created_date" parent_entity:"trx_purchase_request"`
@@ -242,6 +243,7 @@ type PurchaseRequestDetailResponsesPayloads struct {
 	PurchaseRequestSystemNumber       int      `json:"purchase_request_system_number"`
 	PurchaseRequestLineNumber         int      `json:"purchase_request_line_number"`
 	ReferenceSystemNumber             int      `json:"reference_system_number"`
+	ItemId                            int      `json:"item_id"`
 	ReferenceLine                     int      `json:"reference_line"`
 	ItemCode                          string   `json:"item_code"`
 	ItemName                          string   `json:"item_name"`
