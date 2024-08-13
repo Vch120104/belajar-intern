@@ -23,6 +23,7 @@ type UnitOfMeasurementController interface {
 	GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request)
 	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
+	GetUnitOfMeasurementItem(writer http.ResponseWriter, request *http.Request)
 }
 
 type UnitOfMeasurementControllerImpl struct {
@@ -49,22 +50,22 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.R
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", http.StatusOK)
 }
 
-// @Summary Get All Unit Of Measurement
-// @Description REST API Unit Of Measurement
-// @Accept json
-// @Produce json
-// @Tags Master : Unit Of Measurement
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param is_active query string false "is_active" Enums(true, false)
-// @Param uom_code query string false "uom_code"
-// @Param uom_description query string false "uom_description"
-// @Param uom_type_desc query string false "uom_type_desc"
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/unit-of-measurement/ [get]
+// @Summary		Get All Unit Of Measurement
+// @Description	REST API Unit Of Measurement
+// @Accept			json
+// @Produce		json
+// @Tags			Master : Unit Of Measurement
+// @Param			page					query		string	true	"page"
+// @Param			limit					query		string	true	"limit"
+// @Param			is_active				query		string	false	"is_active"	Enums(true, false)
+// @Param			uom_code				query		string	false	"uom_code"
+// @Param			uom_description			query		string	false	"uom_description"
+// @Param			uom_type_desc			query		string	false	"uom_type_desc"
+// @Param			sort_by					query		string	false	"sort_by"
+// @Param			sort_of					query		string	false	"sort_of"
+// @Success		200						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/ [get]
 func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
@@ -93,14 +94,14 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
-// @Summary Get All Unit Of Measurement drop down
-// @Description REST API Unit Of Measurement
-// @Accept json
-// @Produce json
-// @Tags Master : Unit Of Measurement
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/unit-of-measurement/drop-down [get]
+// @Summary		Get All Unit Of Measurement drop down
+// @Description	REST API Unit Of Measurement
+// @Accept			json
+// @Produce		json
+// @Tags			Master : Unit Of Measurement
+// @Success		200						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/drop-down [get]
 func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer http.ResponseWriter, request *http.Request) {
 
 	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurementIsActive()
@@ -113,15 +114,15 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurementIsActive(writer
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// @Summary Get Unit Of Measurement By Code
-// @Description REST API Unit Of Measurement
-// @Accept json
-// @Produce json
-// @Tags Master : Unit Of Measurement
-// @Param uom_code path string true "uom_code"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/unit-of-measurement/by-code/{uom_code} [get]
+// @Summary		Get Unit Of Measurement By Code
+// @Description	REST API Unit Of Measurement
+// @Accept			json
+// @Produce		json
+// @Tags			Master : Unit Of Measurement
+// @Param			uom_code				path		string	true	"uom_code"
+// @Success		200						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/by-code/{uom_code} [get]
 func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http.ResponseWriter, request *http.Request) {
 
 	uomCode := chi.URLParam(request, "uom_code")
@@ -135,15 +136,15 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementByCode(writer http
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// @Summary Save Unit Of Measurement
-// @Description REST API Unit Of Measurement
-// @Accept json
-// @Produce json
-// @Tags Master : Unit Of Measurement
-// @param reqBody body masteritempayloads.UomResponse true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/unit-of-measurement/ [post]
+// @Summary		Save Unit Of Measurement
+// @Description	REST API Unit Of Measurement
+// @Accept			json
+// @Produce		json
+// @Tags			Master : Unit Of Measurement
+// @param			reqBody					body		masteritempayloads.UomResponse	true	"Form Request"
+// @Success		200						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/ [post]
 func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
 	var formRequest masteritempayloads.UomResponse
@@ -177,15 +178,15 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-// @Summary Change Status Unit Of Measurement
-// @Description REST API Unit Of Measurement
-// @Accept json
-// @Produce json
-// @Tags Master : Unit Of Measurement
-// @param uom_id path int true "uom_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/unit-of-measurement/{uom_id} [patch]
+// @Summary		Change Status Unit Of Measurement
+// @Description	REST API Unit Of Measurement
+// @Accept			json
+// @Produce		json
+// @Tags			Master : Unit Of Measurement
+// @param			uom_id					path		int	true	"uom_id"
+// @Success		200						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/{uom_id} [patch]
 func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
 	uomId, _ := strconv.Atoi(chi.URLParam(request, "uom_id"))
@@ -198,4 +199,29 @@ func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer h
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+// @Summary		Get Unit Of Measurement Item By Item Id
+// @Description	REST API Unit Of Measurement Item
+// @Accept			json
+// @Produce		json
+// @Tags			Master : Unit Of Measurement
+// @Param			item_id					path		string	true	"item_id"
+// @Param			source_type				path		string	true	"source_type"
+// @Success		200						{object}	masteritempayloads.UomItemResponses
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/unit-of-measurement/{item_id}/{source_type} [get]
+func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementItem(writer http.ResponseWriter, request *http.Request) {
+	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	SourceUomType := chi.URLParam(request, "source_type")
+	payload := masteritempayloads.UomItemRequest{
+		SourceType: SourceUomType,
+		ItemId:     ItemId,
+	}
+	response, err := r.unitofmeasurementservice.GetUnitOfMeasurementItem(payload)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+	}
+	payloads.NewHandleSuccess(writer, response, "Get Data Success!", http.StatusOK)
+
 }
