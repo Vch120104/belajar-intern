@@ -115,3 +115,15 @@ type VariantResponse struct {
 	VariantDescription string `json:"variant_description"`
 	ProductionYear     string `json:"production_year"`
 }
+
+type BrandDocResponse struct {
+	BrandId           int    `json:"brand_id"`
+	BrandCode         string `json:"brand_code"`
+	BrandName         string `json:"brand_name"`
+	BrandAbbreviation string `json:"brand_abbreveation"`
+}
+
+type SubmitSupplySlipResponse struct {
+	DocumentNumber     string `json:"document_number"`
+	SupplySystemNumber int    `json:"supply_system_number"`
+}

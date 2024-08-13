@@ -6,6 +6,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"net/http"
@@ -26,6 +27,7 @@ type SupplySlipController interface {
 	GetSupplySlipDetailByID(writer http.ResponseWriter, request *http.Request)
 	UpdateSupplySlip(writer http.ResponseWriter, request *http.Request)
 	UpdateSupplySlipDetail(writer http.ResponseWriter, request *http.Request)
+	SubmitSupplySlip(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewSupplySlipController(supplyslipservice transactionsparepartservice.SupplySlipService) SupplySlipController {
@@ -137,7 +139,6 @@ func (r *SupplySlipControllerImpl) SaveSupplySlipDetail(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-
 func (r *SupplySlipControllerImpl) GetSupplySlipDetailByID(writer http.ResponseWriter, request *http.Request) {
 
 	supplyDetailId, _ := strconv.Atoi(chi.URLParam(request, "supply_detail_system_number"))
@@ -152,8 +153,8 @@ func (r *SupplySlipControllerImpl) GetSupplySlipDetailByID(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *SupplySlipControllerImpl) UpdateSupplySlip(writer http.ResponseWriter, request *http.Request){
-	supplyId,_ := strconv.Atoi(chi.URLParam(request,"supply_system_number"))
+func (r *SupplySlipControllerImpl) UpdateSupplySlip(writer http.ResponseWriter, request *http.Request) {
+	supplyId, _ := strconv.Atoi(chi.URLParam(request, "supply_system_number"))
 	var formRequest transactionsparepartentities.SupplySlip
 	helper.ReadFromRequestBody(request, &formRequest)
 	result, err := r.supplyslipservice.UpdateSupplySlip(formRequest, supplyId)
@@ -161,12 +162,12 @@ func (r *SupplySlipControllerImpl) UpdateSupplySlip(writer http.ResponseWriter, 
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	
+
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *SupplySlipControllerImpl) UpdateSupplySlipDetail(writer http.ResponseWriter, request *http.Request){
-	supplyDetailId,_ := strconv.Atoi(chi.URLParam(request,"supply_detail_system_number"))
+func (r *SupplySlipControllerImpl) UpdateSupplySlipDetail(writer http.ResponseWriter, request *http.Request) {
+	supplyDetailId, _ := strconv.Atoi(chi.URLParam(request, "supply_detail_system_number"))
 	var formRequest transactionsparepartentities.SupplySlipDetail
 	helper.ReadFromRequestBody(request, &formRequest)
 	result, err := r.supplyslipservice.UpdateSupplySlipDetail(formRequest, supplyDetailId)
@@ -174,6 +175,37 @@ func (r *SupplySlipControllerImpl) UpdateSupplySlipDetail(writer http.ResponseWr
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	
+
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *SupplySlipControllerImpl) SubmitSupplySlip(writer http.ResponseWriter, request *http.Request) {
+	supplySlipId := chi.URLParam(request, "supply_system_number")
+	supplySlipInt, err := strconv.Atoi(supplySlipId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid supply slip ID", http.StatusBadRequest)
+		return
+	}
+
+	success, newDocumentNumber, baseErr := r.supplyslipservice.SubmitSupplySlip(supplySlipInt)
+	if baseErr != nil {
+		if baseErr.Message == "Document number has already been generated" {
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
+		} else if baseErr.Message == "No supply slip data found" {
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		responseData := transactionsparepartpayloads.SubmitSupplySlipResponse{
+			DocumentNumber:     newDocumentNumber,
+			SupplySystemNumber: supplySlipInt,
+		}
+		payloads.NewHandleSuccess(writer, responseData, "supply slip submitted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to submit supply slip", http.StatusInternalServerError)
+	}
 }

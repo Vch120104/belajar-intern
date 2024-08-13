@@ -1269,6 +1269,8 @@ func SupplySlipRouter(
 	router.Post("/detail", SupplySlipController.SaveSupplySlipDetail)
 	router.Put("/{supply_system_number}", SupplySlipController.UpdateSupplySlip)
 	router.Put("/detail/{supply_detail_system_number}", SupplySlipController.UpdateSupplySlipDetail)
+	router.Put("/submit/{supply_system_number}", SupplySlipController.SubmitSupplySlip)
+
 
 	return router
 }

@@ -16,4 +16,5 @@ type SupplySlipService interface {
 	GetAllSupplySlip(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	UpdateSupplySlip(req transactionsparepartentities.SupplySlip, id int) (transactionsparepartentities.SupplySlip, *exceptions.BaseErrorResponse)
 	UpdateSupplySlipDetail(req transactionsparepartentities.SupplySlipDetail, id int)(transactionsparepartentities.SupplySlipDetail,*exceptions.BaseErrorResponse)
+	SubmitSupplySlip(id int) (bool, string, *exceptions.BaseErrorResponse)
 }

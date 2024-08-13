@@ -101,3 +101,15 @@ func (s *SupplySlipServiceImpl) UpdateSupplySlipDetail(req transactionspareparte
 
 	return result, nil
 }
+
+func (s *SupplySlipServiceImpl) SubmitSupplySlip(id int) (bool, string, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	submit, newDocumentNumber, err := s.supplySlipRepo.SubmitSupplySlip(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, "", err
+	}
+
+	return submit, newDocumentNumber, nil
+}
