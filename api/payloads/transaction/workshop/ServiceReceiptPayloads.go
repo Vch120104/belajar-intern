@@ -90,7 +90,7 @@ type ServiceReceiptResponse struct {
 	DealerRepresentativeName     string                        `json:"dealer_representative_name"`
 	ServiceTypeId                int                           `json:"service_type_id"`
 	ReferenceTypeId              int                           `json:"reference_type_id"`
-	ReferenceDocNumber           int                           `json:"reference_doc_number"`
+	ReferenceDocNumber           string                        `json:"reference_doc_number"`
 	ReferenceDocDate             string                        `json:"reference_doc_date"`
 	ServiceRemark                string                        `json:"service_remark"`
 	ServiceCompanyId             int                           `json:"service_company_id"`
