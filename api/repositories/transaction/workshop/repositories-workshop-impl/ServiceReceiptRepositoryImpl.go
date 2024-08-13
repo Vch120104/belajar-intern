@@ -175,21 +175,21 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	var mapResponses []map[string]interface{}
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"service_request_system_number":         response.ServiceRequestSystemNumber,
-			"service_request_document_number":       response.ServiceRequestDocumentNumber,
-			"service_request_date":                  response.ServiceRequestDate,
-			"service_request_by":                    response.ServiceRequestBy,
-			"company_name":                          response.CompanyName,
-			"brand_name":                            response.BrandName,
-			"model_description":                     response.ModelName,
-			"variant_description":                   response.VariantName,
-			"colour_name":                           response.VariantColourName,
-			"vehicle_chassis_number":                response.VehicleCode,
-			"vehicle_registration_certificate_tnkb": response.VehicleTnkb,
-			"service_request_status_name":           response.ServiceRequestStatusName,
-			"work_order_system_number":              response.WorkOrderSystemNumber,
-			"booking_system_number":                 response.BookingSystemNumber,
-			"reference_doc_system_number":           response.ReferenceDocSystemNumber,
+			"service_request_system_number":   response.ServiceRequestSystemNumber,
+			"service_request_document_number": response.ServiceRequestDocumentNumber,
+			"service_request_date":            response.ServiceRequestDate,
+			"service_request_by":              response.ServiceRequestBy,
+			"service_company_name":            response.CompanyName,
+			"brand_name":                      response.BrandName,
+			"model_code_description":          response.ModelName,
+			"variant_code_description":        response.VariantName,
+			"colour_name":                     response.VariantColourName,
+			"chassis_no":                      response.VehicleCode,
+			"no_polisi":                       response.VehicleTnkb,
+			"status":                          response.ServiceRequestStatusName,
+			"work_order_no":                   response.WorkOrderSystemNumber,
+			"booking_no":                      response.BookingSystemNumber,
+			"ref_doc_no":                      response.ReferenceDocSystemNumber,
 		}
 
 		mapResponses = append(mapResponses, responseMap)

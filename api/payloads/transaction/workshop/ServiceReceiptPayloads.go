@@ -113,14 +113,14 @@ type ServiceReceiptDetailsResponse struct {
 
 type ServiceReceiptDetailResponse struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
-	ServiceRequestId           int     `json:"service_request_id"`
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
-	LineTypeId                 int     `json:"line_type_id"`
+	LineTypeId                 int     `json:"type"`
 	OperationItemId            int     `json:"operation_item_id"`
-	OperationItemCode          string  `json:"operation_item_code"`
-	OperationItemName          string  `json:"operation_item_name"`
-	UomName                    string  `json:"uom_name"`
-	FrtQuantity                float64 `json:"frt_quantity"`
+	OperationItemCode          string  `json:"code"`
+	OperationItemName          string  `json:"description"`
+	UomName                    string  `json:"uom"`
+	FrtQuantity                float64 `json:"qty"`
 	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
-	ReferenceDocId             int     `json:"reference_doc_id"`
+	ReferenceDocCode           string  `json:"reference_doc_code"`
+	ReferenceDocNumber         string  `json:"reference_doc_name"`
 }

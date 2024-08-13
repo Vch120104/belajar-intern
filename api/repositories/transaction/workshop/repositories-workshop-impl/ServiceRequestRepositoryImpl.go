@@ -272,25 +272,19 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ServiceRequestDocumentNumber: ServiceRequestReq.ServiceRequestDocumentNumber,
 			ServiceRequestDate:           ServiceRequestReq.ServiceRequestDate.Format("2006-01-02 15:04:05"),
 			ServiceRequestBy:             ServiceRequestReq.ServiceRequestBy,
-			//ServiceRequestStatusId:       ServiceRequestReq.ServiceRequestStatusId,
-			ServiceRequestStatusName: StatusResponses[0].ServiceRequestStatusName,
-			BrandName:                brandResponses.BrandName,
-			ModelName:                modelResponses.ModelName,
-			VariantName:              variantResponses.VariantName,
-			VariantColourName:        colourResponses[0].VariantColourName,
-			VehicleCode:              vehicleResponses.Master.VehicleCode,
-			VehicleTnkb:              vehicleResponses.Stnk.VehicleTnkb,
-			//CompanyId:                    ServiceRequestReq.CompanyId,
-			CompanyName: companyResponses[0].CompanyName,
-			//DealerRepresentativeId:       ServiceRequestReq.DealerRepresentativeId,
-			//ProfitCenterId:               ServiceRequestReq.ProfitCenterId,
-			WorkOrderSystemNumber:    ServiceRequestReq.WorkOrderSystemNumber,
-			BookingSystemNumber:      ServiceRequestReq.BookingSystemNumber,
-			EstimationSystemNumber:   ServiceRequestReq.EstimationSystemNumber,
-			ReferenceDocSystemNumber: ServiceRequestReq.ReferenceDocSystemNumber,
-			//ReplyId:                      ServiceRequestReq.ReplyId,
-			//ServiceCompanyId:             ServiceRequestReq.ServiceCompanyId,
-			ServiceDate: ServiceRequestReq.ServiceDate.Format("2006-01-02 15:04:05"),
+			ServiceRequestStatusName:     StatusResponses[0].ServiceRequestStatusName,
+			BrandName:                    brandResponses.BrandName,
+			ModelName:                    modelResponses.ModelName,
+			VariantName:                  variantResponses.VariantName,
+			VariantColourName:            colourResponses[0].VariantColourName,
+			VehicleCode:                  vehicleResponses.Master.VehicleCode,
+			VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
+			CompanyName:                  companyResponses[0].CompanyName,
+			WorkOrderSystemNumber:        ServiceRequestReq.WorkOrderSystemNumber,
+			BookingSystemNumber:          ServiceRequestReq.BookingSystemNumber,
+			EstimationSystemNumber:       ServiceRequestReq.EstimationSystemNumber,
+			ReferenceDocSystemNumber:     ServiceRequestReq.ReferenceDocSystemNumber,
+			ServiceDate:                  ServiceRequestReq.ServiceDate.Format("2006-01-02 15:04:05"),
 		}
 
 		convertedResponses = append(convertedResponses, ServiceRequestRes)
@@ -299,21 +293,21 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	var mapResponses []map[string]interface{}
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"service_request_system_number":         response.ServiceRequestSystemNumber,
-			"service_request_document_number":       response.ServiceRequestDocumentNumber,
-			"service_request_date":                  response.ServiceRequestDate,
-			"service_request_by":                    response.ServiceRequestBy,
-			"company_name":                          response.CompanyName,
-			"brand_name":                            response.BrandName,
-			"model_description":                     response.ModelName,
-			"variant_description":                   response.VariantName,
-			"colour_name":                           response.VariantColourName,
-			"vehicle_chassis_number":                response.VehicleCode,
-			"vehicle_registration_certificate_tnkb": response.VehicleTnkb,
-			"service_request_status_name":           response.ServiceRequestStatusName,
-			"work_order_system_number":              response.WorkOrderSystemNumber,
-			"booking_system_number":                 response.BookingSystemNumber,
-			"reference_doc_system_number":           response.ReferenceDocSystemNumber,
+			"service_request_system_number":   response.ServiceRequestSystemNumber,
+			"service_request_document_number": response.ServiceRequestDocumentNumber,
+			"service_request_date":            response.ServiceRequestDate,
+			"service_request_by":              response.ServiceRequestBy,
+			"service_company_name":            response.CompanyName,
+			"brand_name":                      response.BrandName,
+			"model_code_description":          response.ModelName,
+			"variant_code_description":        response.VariantName,
+			"colour_name":                     response.VariantColourName,
+			"chassis_no":                      response.VehicleCode,
+			"no_polisi":                       response.VehicleTnkb,
+			"status":                          response.ServiceRequestStatusName,
+			"work_order_no":                   response.WorkOrderSystemNumber,
+			"booking_no":                      response.BookingSystemNumber,
+			"ref_doc_no":                      response.ReferenceDocSystemNumber,
 		}
 
 		mapResponses = append(mapResponses, responseMap)
@@ -581,6 +575,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		VehicleId:                    entity.VehicleId,
 		VehicleCode:                  vehicleResponses.Master.VehicleCode,
 		VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
+		CompanyId:                    entity.CompanyId,
 		CompanyName:                  companyResponses[0].CompanyName,
 		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,
 		ProfitCenterName:             profitCenterResponses.ProfitCenterName,
@@ -588,13 +583,15 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		WorkOrderDocumentNumber:      workOrderDocumentNumber,
 		BookingSystemNumber:          entity.BookingSystemNumber,
 		EstimationSystemNumber:       entity.EstimationSystemNumber,
+		ReferenceTypeId:              entity.ReferenceTypeId,
 		ReferenceTypeName:            referenceTypeResponses.ReferenceTypeName,
-		ReferenceDocSystemNumber:     entity.ReferenceDocSystemNumber,
+		ReferenceDocId:               referenceDocResponses.ReferenceDocSystemNumber,
 		ReferenceDocNumber:           referenceDocResponses.ReferenceDocNumber,
 		ReferenceDocDate:             referenceDocResponses.ReferenceDocDate,
 		ReplyBy:                      entity.ReplyBy,
 		ReplyDate:                    ReplyDate,
 		ReplyRemark:                  entity.ReplyRemark,
+		ServiceCompanyId:             entity.ServiceCompanyId,
 		ServiceCompanyName:           servicecompanyResponses[0].CompanyName,
 		ServiceDate:                  serviceDate,
 		ServiceRequestBy:             entity.ServiceRequestBy,
@@ -1187,6 +1184,7 @@ func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCo
 func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int) (transactionworkshoppayloads.ServiceDetailResponse, *exceptions.BaseErrorResponse) {
 	var detail transactionworkshopentities.ServiceRequestDetail
 	var getItemResponse transactionworkshoppayloads.ItemServiceRequestDetail
+	var getReferenceDocResponse transactionworkshoppayloads.ReferenceDoc
 	var getUomItems []transactionworkshoppayloads.UomItemServiceRequestDetail
 
 	err := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
@@ -1227,7 +1225,6 @@ func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int)
 
 	serviceDetail := transactionworkshoppayloads.ServiceDetailResponse{
 		ServiceRequestDetailId:     detail.ServiceRequestDetailId,
-		ServiceRequestId:           detail.ServiceRequestId,
 		ServiceRequestSystemNumber: detail.ServiceRequestSystemNumber,
 		LineTypeId:                 detail.LineTypeId,
 		OperationItemId:            detail.OperationItemId,
@@ -1236,7 +1233,8 @@ func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int)
 		UomName:                    getUomItems[0].UomName,
 		FrtQuantity:                detail.FrtQuantity,
 		ReferenceDocSystemNumber:   detail.ReferenceDocSystemNumber,
-		ReferenceDocId:             detail.ReferenceDocId,
+		ReferenceDocNumber:         getReferenceDocResponse.ReferenceDocNumber,
+		ReferenceDocCode:           getReferenceDocResponse.ReferenceDocCode,
 	}
 
 	return serviceDetail, nil
