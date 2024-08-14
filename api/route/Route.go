@@ -10,6 +10,7 @@ import (
 	masteritemrepositoryimpl "after-sales/api/repositories/master/item/repositories-item-impl"
 	masteroperationrepositoryimpl "after-sales/api/repositories/master/operation/repositories-operation-impl"
 	masterrepositoryimpl "after-sales/api/repositories/master/repositories-impl"
+	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masterwarehouserepositoryimpl "after-sales/api/repositories/master/warehouse/repositories-warehouse-impl"
 	masteritemserviceimpl "after-sales/api/services/master/item/services-item-impl"
 	masteroperationserviceimpl "after-sales/api/services/master/operation/services-operation-impl"
@@ -214,6 +215,10 @@ func StartRouting(db *gorm.DB) {
 	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, warehouseMasterService, db, rdb)
 	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
 
+	//location stock master
+	LocationStockRepository := masterwarehouserepository.NewLocationStockRepositoryImpl()
+	LocationStockService := masterserviceimpl.NewLocationStockServiceImpl(LocationStockRepository, db, rdb)
+	LocationStockController := mastercontroller.NewLocationStockController(LocationStockService)
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
 	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
@@ -344,7 +349,7 @@ func StartRouting(db *gorm.DB) {
 	DeductionRouter := DeductionRouter(DeductionController)
 	CampaignMasterRouter := CampaignMasterRouter(CampaignMasterController)
 	PackageMasterRouter := PackageMasterRouter(PackageMasterController)
-
+	LocationStockRouter := LocationStockRouter(LocationStockController)
 	/* Transaction */
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
 	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
@@ -414,6 +419,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group", IncentiveGroupRouter)
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
+		r.Mount("/location-stock", LocationStockRouter)
 
 		/* Transaction */
 
