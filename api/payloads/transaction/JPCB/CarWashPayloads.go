@@ -35,3 +35,9 @@ type CarWashColourResponse struct {
 	VariantColourCode string `json:"colour_commercial_name"`
 	VariantColourName string `json:"colour_police_name"`
 }
+
+type CarWashUpdatePriorityRequest struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	CarWashStatusId       int `json:"car_wash_status_id"`
+	CarWashPriorityId     int `json:"car_wash_priority_id"`
+}

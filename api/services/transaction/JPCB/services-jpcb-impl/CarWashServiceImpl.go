@@ -1,6 +1,7 @@
 package transactionjpcbserviceimpl
 
 import (
+	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -36,4 +37,16 @@ func (s *CarWashServiceImpl) GetAll(filterCondition []utils.FilterCondition, pag
 		return results, 0, 0, err
 	}
 	return results, totalPages, totalRows, nil
+}
+
+// UpdatePriority implements transactionjpcbservice.CarWashService.
+func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.UpdatePriority(tx, workOrderSystemNumber, carWashPriorityId)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbentities.CarWash{}, err
+	}
+	return result, nil
 }

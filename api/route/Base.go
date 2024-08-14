@@ -26,6 +26,7 @@ func CarWashRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", carWashController.GetAllCarWash)
+	router.Put("/update-priority", carWashController.UpdatePriority)
 	return router
 }
 

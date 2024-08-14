@@ -2,8 +2,10 @@ package transactionjpcbcontroller
 
 import (
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
 	"net/http"
@@ -13,15 +15,16 @@ import (
 
 type CarWashController interface {
 	GetAllCarWash(writer http.ResponseWriter, request *http.Request)
+	UpdatePriority(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
-	carWashService transactionjpcbservice.CarWashService
+	CarWashService transactionjpcbservice.CarWashService
 }
 
 func NewCarWashController(carWashService transactionjpcbservice.CarWashService) CarWashController {
 	return &CarWashControllerImpl{
-		carWashService: carWashService,
+		CarWashService: carWashService,
 	}
 }
 
@@ -48,7 +51,7 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.carWashService.GetAll(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.CarWashService.GetAll(criteria, paginate)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -60,4 +63,17 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// UpdatePriority implements CarWashController.
+func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.CarWashUpdatePriorityRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	response, err := r.CarWashService.UpdatePriority(formRequest.WorkOrderSystemNumber, formRequest.CarWashPriorityId)
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }

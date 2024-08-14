@@ -2,6 +2,7 @@ package transactionjpcbrepositoryimpl
 
 import (
 	"after-sales/api/config"
+	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
@@ -16,6 +17,11 @@ import (
 
 type CarWashImpl struct{}
 
+// GetById implements transactionjpcbrepository.CarWashRepository.
+func (*CarWashImpl) GetById(tx *gorm.DB, id int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {
+	panic("unimplemented")
+}
+
 func NewCarWashRepositoryImpl() transactionjpcbrepository.CarWashRepository {
 	return &CarWashImpl{}
 }
@@ -25,9 +31,9 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 	joinQuery := tx.Table("trx_car_wash").
 		Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
 				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, trx_car_wash.car_wash_status_id, mtr_car_wash_status.car_wash_status_description,
-				trx_car_wash.start_time, trx_car_wash.end_time, trx_car_wash.priority_status_id, mtr_car_wash_priority.car_wash_priority_description`).
+				trx_car_wash.start_time, trx_car_wash.end_time, trx_car_wash.car_wash_priority_id, mtr_car_wash_priority.car_wash_priority_description`).
 		Joins("LEFT JOIN trx_work_order ON trx_car_wash.work_order_system_number = trx_work_order.work_order_system_number AND trx_car_wash.company_id = trx_work_order.company_id").
-		Joins("LEFT JOIN mtr_car_wash_priority ON trx_car_wash.priority_status_id = mtr_car_wash_priority.car_wash_priority_id").
+		Joins("LEFT JOIN mtr_car_wash_priority ON trx_car_wash.car_wash_priority_id = mtr_car_wash_priority.car_wash_priority_id").
 		Joins("LEFT JOIN mtr_car_wash_status ON trx_car_wash.car_wash_status_id = mtr_car_wash_status.car_wash_status_id")
 
 	joinQuery = utils.ApplyFilter(joinQuery, filterCondition)
@@ -144,4 +150,50 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
+}
+
+func (*CarWashImpl) UpdatePriority(tx *gorm.DB, workOrderSystemNumber, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {
+	var carWashEntities []transactionjpcbentities.CarWash
+
+	checkBayStatusQuery := tx.Model(&carWashEntities).Select("car_wash_bay_id").
+		Where("work_order_system_number = ? AND car_wash_status_id = 3", workOrderSystemNumber).Find(&carWashEntities)
+	if checkBayStatusQuery.Error != nil {
+		return transactionjpcbentities.CarWash{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        checkBayStatusQuery.Error,
+		}
+	}
+	if len(carWashEntities) == 0 {
+		checkBayAllocationQuery := tx.Model(&carWashEntities).Select("car_wash_bay_id").Where("work_order_system_number = ?", workOrderSystemNumber).Find(&carWashEntities)
+		if checkBayAllocationQuery.Error != nil {
+			return transactionjpcbentities.CarWash{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        checkBayAllocationQuery.Error,
+			}
+		}
+		if len(carWashEntities) == 0 {
+			return transactionjpcbentities.CarWash{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("bay already allocated"),
+			}
+		}
+
+		var resultEntities transactionjpcbentities.CarWash
+		updateQuery := tx.Model(&resultEntities).Where("work_order_system_number = ?", workOrderSystemNumber).
+			Updates(map[string]interface{}{"car_wash_priority_id": carWashPriorityId}).Preload("WorkOrder").Preload("CarWashBay").Preload("CarWashStatus").Preload("CarWashPriority").
+			First(&resultEntities)
+		if updateQuery.Error != nil {
+			return transactionjpcbentities.CarWash{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        updateQuery.Error,
+			}
+		}
+
+		return resultEntities, nil
+	}
+
+	return transactionjpcbentities.CarWash{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusInternalServerError,
+		Err:        fmt.Errorf("bay already started"),
+	}
 }
