@@ -8,6 +8,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -163,7 +164,7 @@ func ItemRouter(
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
-	router.Put("/{item_detail_id}",itemController.UpdateItemDetail)
+	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
 
 	return router
 }
@@ -628,8 +629,10 @@ func OperationModelMappingRouter(
 	router.Patch("/{operation_model_mapping_id}", operationModelMappingController.ChangeStatusOperationModelMapping)
 	router.Patch("/operation-frt/activate/{operation_frt_id}", operationModelMappingController.ActivateOperationFrt)
 	router.Patch("/operation-frt/deactivate/{operation_frt_id}", operationModelMappingController.DeactivateOperationFrt)
-	router.Patch("/operation-document-requirement/deactivate/{operation_model_mapping_id}", operationModelMappingController.DeactivateOperationDocumentRequirement)
-	router.Patch("/operation-document-requirement/activate/{operation_model_mapping_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
+	router.Patch("/operation-document-requirement/deactivate/{operation_document_requirement_id}", operationModelMappingController.DeactivateOperationDocumentRequirement)
+	router.Patch("/operation-document-requirement/activate/{operation_document_requirement_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
+	router.Patch("/operation-level/deactivate/{operation_level_id}", operationModelMappingController.DeactivateOperationLevel)
+	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
 
 	return router
 }

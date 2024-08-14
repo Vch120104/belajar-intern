@@ -93,7 +93,7 @@ type OperationLevelByIdResponse struct {
 	OperationModelMappingId     int    `json:"operation_model_mapping_id"`
 	OperationEntriesId          int    `json:"operation_entries_id"`
 	OperationEntriesCode        string `json:"operation_entries_code"`
-	OperationEntriesDesc        string `json:"operation_entries_desc"`
+	OperationEntriesDescription string `json:"operation_entries_description"`
 	OperationGroupCode          int    `json:"operation_group_code"`
 	OperationGroupDescription   string `json:"operation_group_description"`
 	OperationKeyCode            string `json:"operation_key_code"`

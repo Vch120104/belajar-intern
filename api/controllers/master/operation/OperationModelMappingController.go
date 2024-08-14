@@ -33,6 +33,8 @@ type OperationModelMappingController interface {
 	SaveOperationLevel(writer http.ResponseWriter, request *http.Request)
 	GetAllOperationLevel(writer http.ResponseWriter, request *http.Request)
 	GetOperationLevelById(writer http.ResponseWriter, request *http.Request)
+	ActivateOperationLevel(writer http.ResponseWriter, request *http.Request)
+	DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -400,8 +402,8 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 }
 func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
-	OperationFrtIds := chi.URLParam(request, "operation_model_mapping_id")
-	response, err := r.operationmodelmappingservice.DeactivateOperationDocumentRequirement(OperationFrtIds)
+	OperationDocReqIds := chi.URLParam(request, "operation_document_requirement_id")
+	response, err := r.operationmodelmappingservice.DeactivateOperationDocumentRequirement(OperationDocReqIds)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -412,8 +414,8 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequire
 }
 func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
-	OperationFrtIds := chi.URLParam(request, "operation_model_mapping_id")
-	response, err := r.operationmodelmappingservice.ActivateOperationDocumentRequirement(OperationFrtIds)
+	OperationDocReqIds := chi.URLParam(request, "operation_document_requirement_id")
+	response, err := r.operationmodelmappingservice.ActivateOperationDocumentRequirement(OperationDocReqIds)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -477,8 +479,8 @@ func (r *OperationModelMappingControllerImpl) GetOperationLevelById(writer http.
 
 func (r *OperationModelMappingControllerImpl) DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request) {
 
-	OperationFrtIds := chi.URLParam(request, "operation_model_mapping_id")
-	response, err := r.operationmodelmappingservice.DeactivateOperationLevel(OperationFrtIds)
+	OperationLevelIds := chi.URLParam(request, "operation_level_id")
+	response, err := r.operationmodelmappingservice.DeactivateOperationLevel(OperationLevelIds)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -489,8 +491,8 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationLevel(writer ht
 }
 func (r *OperationModelMappingControllerImpl) ActivateOperationLevel(writer http.ResponseWriter, request *http.Request) {
 
-	OperationFrtIds := chi.URLParam(request, "operation_model_mapping_id")
-	response, err := r.operationmodelmappingservice.ActivateOperationLevel(OperationFrtIds)
+	OperationLevelIds := chi.URLParam(request, "operation_level_id")
+	response, err := r.operationmodelmappingservice.ActivateOperationLevel(OperationLevelIds)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)

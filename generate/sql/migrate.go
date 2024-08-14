@@ -57,6 +57,7 @@ func Migrate() {
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
 		//&masteroperationentities.OperationModelMapping{},
+		// &masteroperationentities.OperationLevel{},
 		//&masteroperationentities.OperationFrt{},
 		//&masteroperationentities.OperationGroup{},
 		//&masteroperationentities.OperationSection{},
