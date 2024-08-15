@@ -11,9 +11,12 @@ func ReadFromRequestBody(request *http.Request, result interface{}) {
 	PanicIfError(err)
 }
 
-func WriteToResponseBody(writer http.ResponseWriter, response interface{}) {
-	writer.Header().Add("Content-Type", "application/json")
+func WriteToResponseBody(writer http.ResponseWriter, response interface{}, statusCode int) {
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(statusCode) // Set the status code here
 	encoder := json.NewEncoder(writer)
 	err := encoder.Encode(response)
-	PanicIfError(err)
+	if err != nil {
+		http.Error(writer, "Failed to encode response", http.StatusInternalServerError)
+	}
 }

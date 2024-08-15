@@ -83,12 +83,14 @@ type ServiceReceiptResponse struct {
 	WorkOrderDocumentNumber      string                        `json:"work_order_document_number"`
 	ReferenceDocSystemNumber     int                           `json:"reference_doc_system_number"`
 	ProfitCenterId               int                           `json:"profit_center_id"`
+	ProfitCenterName             string                        `json:"profit_center_name"`
 	CompanyId                    int                           `json:"company_id"`
 	CompanyName                  string                        `json:"company_name"`
 	DealerRepresentativeId       int                           `json:"dealer_representative_id"`
+	DealerRepresentativeName     string                        `json:"dealer_representative_name"`
 	ServiceTypeId                int                           `json:"service_type_id"`
 	ReferenceTypeId              int                           `json:"reference_type_id"`
-	ReferenceDocNumber           int                           `json:"reference_doc_number"`
+	ReferenceDocNumber           string                        `json:"reference_doc_number"`
 	ReferenceDocDate             string                        `json:"reference_doc_date"`
 	ServiceRemark                string                        `json:"service_remark"`
 	ServiceCompanyId             int                           `json:"service_company_id"`
@@ -111,11 +113,14 @@ type ServiceReceiptDetailsResponse struct {
 
 type ServiceReceiptDetailResponse struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
-	ServiceRequestId           int     `json:"service_request_id"`
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
-	LineTypeId                 int     `json:"line_type_id"`
+	LineTypeId                 int     `json:"type"`
 	OperationItemId            int     `json:"operation_item_id"`
-	FrtQuantity                float64 `json:"frt_quantity"`
+	OperationItemCode          string  `json:"code"`
+	OperationItemName          string  `json:"description"`
+	UomName                    string  `json:"uom"`
+	FrtQuantity                float64 `json:"qty"`
 	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
-	ReferenceDocId             int     `json:"reference_doc_id"`
+	ReferenceDocCode           string  `json:"reference_doc_code"`
+	ReferenceDocNumber         string  `json:"reference_doc_name"`
 }

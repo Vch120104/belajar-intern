@@ -164,7 +164,14 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 			}
 		}
 
-		joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
+		joinedData, errdf := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
+
+		if errdf != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
 
 		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type-filter?order_type_name=" + orderTypeName
 		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
@@ -174,7 +181,14 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 			}
 		}
 
-		joinedData = utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
+		joinedData, errdf = utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
+
+		if errdf != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
 
 		// Paginate data
 		dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
@@ -189,7 +203,14 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, getSupplierResponse, "SupplierId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "/order-type"
 	if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
@@ -199,7 +220,14 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(joinedData, getOrderTypeResponse, "OrderTypeId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 	// Paginate data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
 	return dataPaginate, totalPages, totalRows, nil
