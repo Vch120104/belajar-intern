@@ -8,9 +8,11 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"bytes"
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -29,6 +31,7 @@ type BomController interface {
 	DeleteBomDetail(writer http.ResponseWriter, request *http.Request)
 
 	GetBomItemList(writer http.ResponseWriter, request *http.Request)
+	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 }
 
 type BomControllerImpl struct {
@@ -105,10 +108,18 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/bom/{bom_master_id} [get]
 func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request) {
-
+	queryValues := request.URL.Query()
 	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	result, err := r.BomService.GetBomMasterById(bomMasterId)
+	// Extract pagination parameters
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, err := r.BomService.GetBomMasterById(bomMasterId, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -456,5 +467,57 @@ func (r *BomControllerImpl) DeleteBomDetail(writer http.ResponseWriter, request 
 		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
+	}
+}
+
+// DownloadTemplate godoc
+// @Summary Download Template
+// @Description REST API Download Template
+// @Accept json
+// @Produce json
+// @Tags Master : Bom Master
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/bom/download-template [get]
+func (r *BomControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
+	// Generate the template file
+	f, err := r.BomService.GenerateTemplateFile()
+	if err != nil {
+		// Return error response if template generation fails
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	var b bytes.Buffer
+	if err := f.Write(&b); err != nil {
+		// Create BaseErrorResponse for file write error
+		baseErr := &exceptions.BaseErrorResponse{
+			Err:        err,
+			StatusCode: http.StatusInternalServerError,
+		}
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("2006-01-02_15-04-05") + "_BOMMaster.xlsx"
+	writer.Header().Set("Content-Description", "File Transfer")
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+	writer.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	writer.Header().Set("Content-Transfer-Encoding", "binary")
+	writer.Header().Set("Expires", "0")
+	writer.Header().Set("Cache-Control", "must-revalidate")
+	writer.Header().Set("Pragma", "public")
+
+	// Write the buffer to the HTTP response
+	_, writeErr := writer.Write(b.Bytes())
+	if writeErr != nil {
+		// Create BaseErrorResponse for writer.Write error
+		baseErr := &exceptions.BaseErrorResponse{
+			Err:        writeErr,
+			StatusCode: http.StatusInternalServerError,
+		}
+		// Use a generic error handling function to respond with the error
+		exceptions.NewAppException(writer, request, baseErr)
+		return
 	}
 }

@@ -94,7 +94,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(payloads, getProfitResponse, "ProfitCenterId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10&model_code=" + modelCode + "&model_description=" + modelDescription
 
@@ -107,7 +114,13 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	VariantModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant?page=0&limit=10&variant_code=" + variantCode
 
@@ -119,7 +132,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 			Err:        errUrlVariantModel,
 		}
 	}
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, getVariantResponse, "VariantId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getVariantResponse, "VariantId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData3, &pages)
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -146,7 +166,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 			Err:        err,
 		}
 	}
-	joinedData1 := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -283,7 +310,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterResponse{payloads}, []masterpayloads.GetProfitMaster{getProfitResponse}, "ProfitCenterId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payloads.ModelId)
 
@@ -296,7 +330,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getModelResponse}, "ModelId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getModelResponse}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	VariantModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(payloads.VariantId)
 
@@ -309,7 +350,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payloads.BrandId)
 
@@ -322,7 +370,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+	joinedData4, errdf := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.BrandResponse{getBrandResponse}, "BrandId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	CurrencyUrl := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(payloads.CurrencyId)
 
@@ -335,7 +390,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 		}
 	}
 
-	joinedData5 := utils.DataFrameInnerJoin(joinedData4, []masterpayloads.CurrencyResponse{getCurrencyResponse}, "CurrencyId")
+	joinedData5, errdf := utils.DataFrameInnerJoin(joinedData4, []masterpayloads.CurrencyResponse{getCurrencyResponse}, "CurrencyId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	result := map[string]interface{}{
 		"brand_code":          joinedData5[0]["BrandCode"],
@@ -408,7 +470,15 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				Err:        err,
 			}
 		}
-		joinedData1 := utils.DataFrameInnerJoin(result, getLineType, "LineTypeCode")
+		joinedData1, errdf := utils.DataFrameInnerJoin(result, getLineType, "LineTypeCode")
+
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
+		}
+
 		result1 := joinedData1[0]
 
 		return result1, nil
@@ -436,7 +506,15 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 					Err:        err,
 				}
 			}
-			joinedData1 := utils.DataFrameInnerJoin(result, getLineType, "LineTypeId")
+			joinedData1, errdf := utils.DataFrameInnerJoin(result, getLineType, "LineTypeId")
+
+			if errdf != nil {
+				return nil, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        errdf,
+				}
+			}
+
 			result1 := joinedData1[0]
 
 			return result1, nil
@@ -464,7 +542,14 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 					Err:        err,
 				}
 			}
-			joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetailItem{PayloadsItem}, []masterpayloads.LineTypeCode{getLineType}, "LineTypeId")
+			joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetailItem{PayloadsItem}, []masterpayloads.LineTypeCode{getLineType}, "LineTypeId")
+
+			if errdf != nil {
+				return nil, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        errdf,
+				}
+			}
 
 			result1 := joinedData1[0]
 			return result1, nil

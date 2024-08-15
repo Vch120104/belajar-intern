@@ -502,7 +502,14 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, pages pagination.Pag
 			Err:        ErrUrlEmployee,
 		}
 	}
-	joineddata1 := utils.DataFrameInnerJoin(entities, employee, "EmployeeId")
+	joineddata1, errdf := utils.DataFrameInnerJoin(entities, employee, "EmployeeId")
+	if errdf != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	pages.Rows = joineddata1
 	return pages, nil
 }

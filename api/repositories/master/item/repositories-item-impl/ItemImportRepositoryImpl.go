@@ -146,7 +146,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	if supplierCode != "" || supplierName != "" {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master?page=" + strconv.Itoa(pages.Page) + "&limit=" + strconv.Itoa(pages.Limit) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master?page=" + strconv.Itoa(0) + "&limit=" + strconv.Itoa(10000000) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
 
 		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -158,7 +158,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		if len(supplierResponses) == 0 {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+				Err:        errors.New("supplier not found"),
 			}
 		}
 		for _, value := range supplierResponses {
@@ -189,7 +189,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			Err:        errors.New("query item import not found"),
 		}
 	}
 
@@ -203,23 +203,29 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errSupplier,
+		}
+	}
+	fmt.Println(supplierUrl)
+
+	if len(supplierResponses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			Err:        errors.New("supplier not found"),
 		}
 	}
 
-	joinedDataSupplier := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
+	joinedDataSupplier, errdf := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
 
-	if len(joinedDataSupplier) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+	if errdf != nil {
+		return joinedDataSupplier, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
 		}
 	}
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
-
-	fmt.Print("awawd ", len(dataPaginate), " awdwa")
 
 	return dataPaginate, totalPages, totalRows, nil
 

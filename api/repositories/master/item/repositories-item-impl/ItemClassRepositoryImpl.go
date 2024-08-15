@@ -74,12 +74,12 @@ func (r *ItemClassRepositoryImpl) GetItemClassByCode(tx *gorm.DB, itemClassCode 
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+	joinedData, errdf := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
 
-	if len(joinedData) == 0 {
+	if errdf != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        errors.New("data not found"),
+			Err:        errdf,
 		}
 	}
 
@@ -190,7 +190,16 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	// fmt.Println("join ", joinedData)
 
 	fmt.Println("Joined Data ", joinedData)
 
@@ -207,11 +216,22 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition [
 		}
 	}
 
-	joinedDataSecond := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
+	fmt.Println(getLineTypeResponse)
+
+	joinedDataSecond, errdf := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	fmt.Println("join data sec ", joinedDataSecond)
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSecond, &pages)
+
+	// fmt.Print(joinedDataSecond)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -243,9 +263,14 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
-	fmt.Println(lineTypeResponse)
-	fmt.Println(response)
-	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+	joinedData, errdf := utils.DataFrameInnerJoin([]masteritempayloads.ItemClassResponse{response}, []masteritempayloads.LineTypeResponse{lineTypeResponse}, "LineTypeId")
+
+	if errdf != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	value, ok := joinedData[0]["LineTypeName_1"]
 

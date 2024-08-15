@@ -135,7 +135,7 @@ func (r *WarehouseGroupImpl) GetAllWarehouseGroup(tx *gorm.DB, filterCondition [
 	entities := []masterwarehouseentities.WarehouseGroup{}
 
 	//ON PROGRESS JOIN WAREHOUSMASTER AND WAREHOUSELOCATION
-	baseModelQuery := tx.Model(&entities).Joins("WarehouseMaster")
+	baseModelQuery := tx.Model(&entities)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
@@ -150,8 +150,8 @@ func (r *WarehouseGroupImpl) GetAllWarehouseGroup(tx *gorm.DB, filterCondition [
 
 	if len(entities) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
 		}
 	}
 
