@@ -30,11 +30,6 @@ type SupplySlipResponse struct {
 	CampaignCode            string `json:"campaign_code" parent_entity:"mtr_campaign"`
 }
 
-type SupplyTypeResponse struct {
-	SupplyTypeId          int    `json:"supply_type_id"`
-	SupplyTypeDescription string `json:"supply_type_description"`
-}
-
 type ApprovalStatusResponse struct {
 	SupplyStatusId          int    `json:"approval_status_id"`
 	SupplyStatusDescription string `json:"approval_status_description"`

@@ -66,7 +66,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with approval status data
-	joinedData1 := utils.DataFrameInnerJoin([]transactionsparepartpayloads.SupplySlipResponse{response}, []transactionsparepartpayloads.ApprovalStatusResponse{getApprovalStatusResponse}, "SupplyStatusId")
+	joinedData1, errdf := utils.DataFrameInnerJoin([]transactionsparepartpayloads.SupplySlipResponse{response}, []transactionsparepartpayloads.ApprovalStatusResponse{getApprovalStatusResponse}, "SupplyStatusId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// Fetch supply type data
 	supplyTypeUrl := config.EnvConfigs.GeneralServiceUrl + "supply-type/" + strconv.Itoa(response.SupplyTypeId)
@@ -78,7 +85,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with supply type data
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []transactionsparepartpayloads.SupplyTypeResponse{getSupplyTypeResponse}, "SupplyTypeId")
+	joinedData2, errdf2 := utils.DataFrameInnerJoin(joinedData1, []transactionsparepartpayloads.SupplyTypeResponse{getSupplyTypeResponse}, "SupplyTypeId")
+
+	if errdf2 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf2,
+		}
+	}
 
 	// Fetch customer data
 	customerUrl := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(response.CustomerId)
@@ -90,7 +104,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with customer data
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []transactionsparepartpayloads.CustomerResponse{getCustomerResponse}, "CustomerId")
+	joinedData3, errdf3 := utils.DataFrameInnerJoin(joinedData2, []transactionsparepartpayloads.CustomerResponse{getCustomerResponse}, "CustomerId")
+
+	if errdf3 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf3,
+		}
+	}
 
 	// Fetch technician data
 	technicianUrl := config.EnvConfigs.GeneralServiceUrl + "user-details-name-and-nickname/" + strconv.Itoa(response.TechnicianId)
@@ -102,7 +123,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with technician data
-	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []transactionsparepartpayloads.TechnicianResponse{getTechnicianResponse}, "TechnicianId")
+	joinedData4, errdf4 := utils.DataFrameInnerJoin(joinedData3, []transactionsparepartpayloads.TechnicianResponse{getTechnicianResponse}, "TechnicianId")
+
+	if errdf4 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf4,
+		}
+	}
 
 	// Fetch brand data
 	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(response.BrandId)
@@ -114,7 +142,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with brand data
-	joinedData5 := utils.DataFrameInnerJoin(joinedData4, []transactionsparepartpayloads.BrandResponse{getBrandResponse}, "BrandId")
+	joinedData5, errdf5 := utils.DataFrameInnerJoin(joinedData4, []transactionsparepartpayloads.BrandResponse{getBrandResponse}, "BrandId")
+
+	if errdf5 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf5,
+		}
+	}
 
 	// Fetch model data
 	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(response.ModelId)
@@ -126,7 +161,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with model data
-	joinedData6 := utils.DataFrameInnerJoin(joinedData5, []transactionsparepartpayloads.ModelResponse{getModelResponse}, "ModelId")
+	joinedData6, errdf6 := utils.DataFrameInnerJoin(joinedData5, []transactionsparepartpayloads.ModelResponse{getModelResponse}, "ModelId")
+
+	if errdf6 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf6,
+		}
+	}
 
 	// Fetch variant data
 	variantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(response.VariantId)
@@ -138,7 +180,14 @@ func (r *SupplySlipRepositoryImpl) GetSupplySlipById(tx *gorm.DB, Id int, pagina
 		}
 	}
 	// Perform inner join with variant data
-	joinedData7 := utils.DataFrameInnerJoin(joinedData6, []transactionsparepartpayloads.VariantResponse{getVariantResponse}, "VariantId")
+	joinedData7, errdf7 := utils.DataFrameInnerJoin(joinedData6, []transactionsparepartpayloads.VariantResponse{getVariantResponse}, "VariantId")
+
+	if errdf7 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf7,
+		}
+	}
 
 	result := joinedData7[0]
 
@@ -362,7 +411,14 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter 
 			}
 		}
 		// Perform inner join with supply type data
-		joinedData1 = utils.DataFrameInnerJoin(responses, []transactionsparepartpayloads.SupplyTypeResponse{getSupplyTypeResponse}, "SupplyTypeId")
+		joinedData1, err = utils.DataFrameInnerJoin(responses, []transactionsparepartpayloads.SupplyTypeResponse{getSupplyTypeResponse}, "SupplyTypeId")
+
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	} else {
 		supplyTypeUrl := config.EnvConfigs.GeneralServiceUrl + "supply-type"
 		errUrlSupplyType := utils.Get(supplyTypeUrl, &getSupplyTypeAllResponse, nil)
@@ -373,7 +429,14 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter 
 			}
 		}
 		// Perform inner join with supply type data
-		joinedData1 = utils.DataFrameInnerJoin(responses, getSupplyTypeAllResponse, "SupplyTypeId")
+		joinedData1, err = utils.DataFrameInnerJoin(responses, getSupplyTypeAllResponse, "SupplyTypeId")
+
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	}
 
 	var joinedData2 []map[string]interface{}
@@ -389,7 +452,14 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter 
 			}
 		}
 		// Perform inner join with supply type data
-		joinedData2 = utils.DataFrameInnerJoin(joinedData1, []transactionsparepartpayloads.ApprovalStatusResponse{getApprovalStatusResponse}, "SupplyStatusId")
+		joinedData2, err = utils.DataFrameInnerJoin(joinedData1, []transactionsparepartpayloads.ApprovalStatusResponse{getApprovalStatusResponse}, "SupplyStatusId")
+
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	} else {
 		approvalStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status"
 		errUrlapprovalStatus := utils.Get(approvalStatusUrl, &getApprovalStatusAllResponse, nil)
@@ -400,7 +470,14 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter 
 			}
 		}
 		// Perform inner join with supply type data
-		joinedData2 = utils.DataFrameInnerJoin(joinedData1, getApprovalStatusAllResponse, "SupplyStatusId")
+		joinedData2, err = utils.DataFrameInnerJoin(joinedData1, getApprovalStatusAllResponse, "SupplyStatusId")
+
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 	}
 
 	// Paginate the joined data
