@@ -27,6 +27,7 @@ func CarWashRouter(
 
 	router.Get("/", carWashController.GetAllCarWash)
 	router.Put("/update-priority", carWashController.UpdatePriority)
+	router.Get("/priority/dropdown", carWashController.GetAllCarWashPriorityDropDown)
 	return router
 }
 
@@ -46,6 +47,7 @@ func CarWashBayRouter(
 	router.Get("/active", bayController.GetAllActiveCarWashBay)
 	router.Get("/deactive", bayController.GetAllDeactiveCarWashBay)
 	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
+	router.Get("/dropdown", bayController.GetAllCarWashBayDropDown)
 
 	return router
 }

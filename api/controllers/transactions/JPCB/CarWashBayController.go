@@ -19,6 +19,7 @@ type BayMasterController interface {
 	GetAllActiveCarWashBay(writer http.ResponseWriter, request *http.Request)
 	GetAllDeactiveCarWashBay(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request)
+	GetAllCarWashBayDropDown(writer http.ResponseWriter, request *http.Request)
 }
 
 type BayMasterControllerImpl struct {
@@ -138,4 +139,22 @@ func (r *BayMasterControllerImpl) ChangeStatusCarWashBay(writer http.ResponseWri
 	}
 
 	payloads.NewHandleSuccess(writer, update, "Bay updated successfully", http.StatusOK)
+}
+
+func (r *BayMasterControllerImpl) GetAllCarWashBayDropDown(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"company_id": queryValues.Get("company_id"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	responseData, err := r.bayMasterService.GetAllCarWashBayDropDown(criteria)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(responseData), "Get Data Successfully", http.StatusOK)
 }

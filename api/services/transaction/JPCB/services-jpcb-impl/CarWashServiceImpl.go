@@ -5,6 +5,7 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
+	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
@@ -27,7 +28,6 @@ func NewCarWashServiceImpl(CarWashRepository transactionjpcbrepository.CarWashRe
 	}
 }
 
-// GetAll implements transactionjpcbservice.CarWashService.
 func (s *CarWashServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
@@ -39,7 +39,6 @@ func (s *CarWashServiceImpl) GetAll(filterCondition []utils.FilterCondition, pag
 	return results, totalPages, totalRows, nil
 }
 
-// UpdatePriority implements transactionjpcbservice.CarWashService.
 func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
@@ -49,4 +48,15 @@ func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPr
 		return transactionjpcbentities.CarWash{}, err
 	}
 	return result, nil
+}
+
+func (s *CarWashServiceImpl) GetAllCarWashPriorityDropDown() ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	results, err := s.CarWashRepository.GetAllCarWashPriority(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
 }

@@ -12,4 +12,5 @@ type BayMasterService interface {
 	GetAllActiveCarWashBay(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetAllDeactiveCarWashBay(filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
 	ChangeStatusCarWashBay(request transactionjpcbpayloads.BayMasterUpdateRequest) (bool, *exceptions.BaseErrorResponse)
+	GetAllCarWashBayDropDown(filterCondition []utils.FilterCondition) ([]transactionjpcbpayloads.CarWashBayDropDownResponse, *exceptions.BaseErrorResponse)
 }

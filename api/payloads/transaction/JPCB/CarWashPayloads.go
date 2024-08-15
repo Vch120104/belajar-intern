@@ -11,6 +11,7 @@ type CarWashGetAllResponse struct {
 	PromiseTime                *time.Time `json:"promise_time"`
 	PromiseDate                *time.Time `json:"promise_date"`
 	CarWashBayId               int        `json:"car_wash_bay_id"`
+	CarWashBayDescription      string     `json:"car_wash_bay_description"`
 	CarWashStatusId            int        `json:"car_wash_status_id"`
 	CarWashStatusDescription   string     `json:"car_wash_status_description"`
 	StartTime                  *time.Time `json:"start_time"`
@@ -40,4 +41,11 @@ type CarWashUpdatePriorityRequest struct {
 	WorkOrderSystemNumber int `json:"work_order_system_number"`
 	CarWashStatusId       int `json:"car_wash_status_id"`
 	CarWashPriorityId     int `json:"car_wash_priority_id"`
+}
+
+type CarWashPriorityDropDownResponse struct {
+	CarWashPriorityId          int    `json:"car_wash_priority_id"`
+	CarWashPriorityCode        string `json:"car_wash_priority_code"`
+	CarWashPriorityDescription string `json:"car_wash_priority_description"`
+	IsActive                   bool   `jsons:"is_active"`
 }

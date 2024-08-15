@@ -17,24 +17,21 @@ import (
 
 type CarWashImpl struct{}
 
-// GetById implements transactionjpcbrepository.CarWashRepository.
-func (*CarWashImpl) GetById(tx *gorm.DB, id int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse) {
-	panic("unimplemented")
-}
-
 func NewCarWashRepositoryImpl() transactionjpcbrepository.CarWashRepository {
 	return &CarWashImpl{}
 }
 
 func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// select field that is missing rn : model_color, model, color, tnkb, creation_time
-	joinQuery := tx.Table("trx_car_wash").
-		Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
-				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, trx_car_wash.car_wash_status_id, mtr_car_wash_status.car_wash_status_description,
-				trx_car_wash.start_time, trx_car_wash.end_time, trx_car_wash.car_wash_priority_id, mtr_car_wash_priority.car_wash_priority_description`).
+	joinQuery := tx.Table("trx_car_wash"). //TODO change to Model()
+						Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
+				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, mtr_car_wash_bay.car_wash_bay_description,trx_car_wash.car_wash_status_id, 
+				mtr_car_wash_status.car_wash_status_description, trx_car_wash.start_time, trx_car_wash.end_time, trx_car_wash.car_wash_priority_id, 
+				mtr_car_wash_priority.car_wash_priority_description`).
 		Joins("LEFT JOIN trx_work_order ON trx_car_wash.work_order_system_number = trx_work_order.work_order_system_number AND trx_car_wash.company_id = trx_work_order.company_id").
 		Joins("LEFT JOIN mtr_car_wash_priority ON trx_car_wash.car_wash_priority_id = mtr_car_wash_priority.car_wash_priority_id").
-		Joins("LEFT JOIN mtr_car_wash_status ON trx_car_wash.car_wash_status_id = mtr_car_wash_status.car_wash_status_id")
+		Joins("LEFT JOIN mtr_car_wash_status ON trx_car_wash.car_wash_status_id = mtr_car_wash_status.car_wash_status_id").
+		Joins("LEFT JOIN mtr_car_wash_bay ON trx_car_wash.car_wash_bay_id = mtr_car_wash_bay.car_wash_bay_id")
 
 	joinQuery = utils.ApplyFilter(joinQuery, filterCondition)
 	whereQuery := joinQuery.Where("trx_work_order.car_wash = 1 AND trx_car_wash.car_wash_status_id != 4")
@@ -56,8 +53,8 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 
 		err := rows.Scan(
 			&carWashPayload.WorkOrderSystemNumber, &carWashPayload.WorkOrderDocumentNumber, &modelId, &vehicleId, &carWashPayload.PromiseTime, &carWashPayload.PromiseDate,
-			&carWashPayload.CarWashBayId, &carWashPayload.CarWashStatusId, &carWashPayload.CarWashStatusDescription, &carWashPayload.StartTime, &carWashPayload.EndTime,
-			&carWashPayload.CarWashPriorityId, &carWashPayload.CarWashPriorityDescription,
+			&carWashPayload.CarWashBayId, &carWashPayload.CarWashBayDescription, &carWashPayload.CarWashStatusId, &carWashPayload.CarWashStatusDescription, &carWashPayload.StartTime,
+			&carWashPayload.EndTime, &carWashPayload.CarWashPriorityId, &carWashPayload.CarWashPriorityDescription,
 		)
 		if err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -115,6 +112,7 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 			PromiseTime:                carWashPayload.PromiseTime,
 			PromiseDate:                carWashPayload.PromiseDate,
 			CarWashBayId:               carWashPayload.CarWashBayId,
+			CarWashBayDescription:      carWashPayload.CarWashBayDescription,
 			CarWashStatusId:            carWashPayload.CarWashStatusId,
 			CarWashStatusDescription:   carWashPayload.CarWashStatusDescription,
 			StartTime:                  carWashPayload.StartTime,
@@ -136,6 +134,7 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 			"PromiseTime":                response.PromiseTime,
 			"PromiseDate":                response.PromiseDate,
 			"CarWashBayId":               response.CarWashBayId,
+			"CarWashBayDescription":      response.CarWashBayDescription,
 			"CarWashStatusId":            response.CarWashStatusId,
 			"CarWashStatusDescription":   response.CarWashStatusDescription,
 			"StartTime":                  response.StartTime,
@@ -196,4 +195,41 @@ func (*CarWashImpl) UpdatePriority(tx *gorm.DB, workOrderSystemNumber, carWashPr
 		StatusCode: http.StatusInternalServerError,
 		Err:        fmt.Errorf("bay already started"),
 	}
+}
+
+func (r *CarWashImpl) GetAllCarWashPriority(tx *gorm.DB) ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse) {
+	var entities transactionjpcbentities.CarWashPriority
+	var responses []transactionjpcbpayloads.CarWashPriorityDropDownResponse
+	rows, err := tx.Model(&entities).Rows()
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var carWashPriorityId int
+		var carWashPriorityCode, carWashPriorityDescription string
+		var isActive bool
+
+		err := rows.Scan(&isActive, &carWashPriorityId, &carWashPriorityCode, &carWashPriorityDescription)
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		response := transactionjpcbpayloads.CarWashPriorityDropDownResponse{
+			CarWashPriorityId:          carWashPriorityId,
+			CarWashPriorityDescription: carWashPriorityDescription,
+			CarWashPriorityCode:        carWashPriorityCode,
+			IsActive:                   isActive,
+		}
+		responses = append(responses, response)
+	}
+
+	return responses, nil
 }

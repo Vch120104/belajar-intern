@@ -16,6 +16,7 @@ import (
 type CarWashController interface {
 	GetAllCarWash(writer http.ResponseWriter, request *http.Request)
 	UpdatePriority(writer http.ResponseWriter, request *http.Request)
+	GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -28,7 +29,6 @@ func NewCarWashController(carWashService transactionjpcbservice.CarWashService) 
 	}
 }
 
-// GetAllCarWash implements CarWashController.
 func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -36,10 +36,12 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 		//TODO
 		"trx_car_wash.company_id":                   queryValues.Get("company_id"),
 		"trx_work_order.work_order_document_number": queryValues.Get("work_order_document_number"),
-		"trx_work_order.promise_time":               queryValues.Get("promise_time"),
+		"trx_work_order.promise_time":               queryValues.Get("promise_time"), //TODO delete this
+		"trx_work_order.promise_date":               queryValues.Get("promise_date"),
 		//filter by tnkb, tnkb is from another service
-		"trx_car_wash.car_wash_bay_id":    queryValues.Get("car_wash_bay_id"),
-		"trx_car_wash.car_wash_status_id": queryValues.Get("car_wash_status_id"),
+		"trx_car_wash.car_wash_bay_id":      queryValues.Get("car_wash_bay_id"),
+		"trx_car_wash.car_wash_status_id":   queryValues.Get("car_wash_status_id"), //TODO delete this
+		"trx_car_wash.car_wash_priority_id": queryValues.Get("car_wash_priority_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -65,7 +67,6 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 	}
 }
 
-// UpdatePriority implements CarWashController.
 func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.CarWashUpdatePriorityRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -76,4 +77,13 @@ func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, reque
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *CarWashControllerImpl) GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request) {
+	response, err := r.CarWashService.GetAllCarWashPriorityDropDown()
+	if err != nil {
+		exceptions.NewConflictException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
 }

@@ -456,3 +456,62 @@ func resetAllOrderNumber(tx *gorm.DB, companyId int) *exceptions.BaseErrorRespon
 
 	return nil
 }
+
+func (*BayMasterImpl) CarWashBayDropDown(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]transactionjpcbpayloads.CarWashBayDropDownResponse, *exceptions.BaseErrorResponse) {
+	var responses []transactionjpcbpayloads.CarWashBayDropDownResponse
+
+	mainTable := "trx_car_wash"
+	mainAlias := "carwash"
+	mainAliasBay := "bay"
+
+	joinTables := []utils.JoinTable{
+		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+	}
+
+	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+
+	keyAttributes := []string{
+		mainAliasBay + ".car_wash_bay_id",
+		mainAliasBay + ".car_wash_bay_code",
+		mainAliasBay + ".car_wash_bay_description",
+		mainAliasBay + ".is_active",
+	}
+
+	joinQuery = joinQuery.Select(keyAttributes)
+	whereQuery := utils.ApplyFilter(joinQuery, filterCondition)
+
+	rows, err := whereQuery.Rows()
+	if err != nil {
+		return []transactionjpcbpayloads.CarWashBayDropDownResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var carWashBayId int
+		var carWashBayCode, carWashBayDescription string
+		var isActive bool
+
+		err := rows.Scan(&carWashBayId, &carWashBayCode, &carWashBayDescription, &isActive)
+
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		responseMap := transactionjpcbpayloads.CarWashBayDropDownResponse{
+			CarWashBayId:          carWashBayId,
+			CarWashBayCode:        carWashBayCode,
+			CarWashBayDescription: carWashBayDescription,
+			IsActive:              isActive,
+		}
+		responses = append(responses, responseMap)
+	}
+
+	return responses, nil
+}
