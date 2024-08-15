@@ -138,6 +138,8 @@ func Migrate() {
 
 		&transactionsparepartentities.SupplySlip{},
 		&transactionsparepartentities.SupplySlipDetail{},
+		&transactionsparepartentities.SupplySlipReturn{},
+		&transactionsparepartentities.SupplySlipReturnDetail{},
 		&transactionworkshopentities.WorkOrderMaster{},
 		&transactionworkshopentities.WorkOrderMasterStatus{},
 		&transactionworkshopentities.WorkOrderMasterType{},
