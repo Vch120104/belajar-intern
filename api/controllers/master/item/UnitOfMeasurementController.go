@@ -87,7 +87,7 @@ func (r *UnitOfMeasurementControllerImpl) GetAllUnitOfMeasurement(writer http.Re
 	result, err := r.unitofmeasurementservice.GetAllUnitOfMeasurement(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

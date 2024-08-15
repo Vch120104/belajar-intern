@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"log"
 
 	"net/http"
 	"strconv"
@@ -114,6 +115,9 @@ func (r *ServiceReceiptControllerImp) GetById(writer http.ResponseWriter, reques
 
 	serviceRequest, baseErr := r.ServiceReceiptService.GetById(ServiceRequestId, paginate)
 	if baseErr != nil {
+		// Log the error for debugging
+		log.Printf("Error retrieving service receipt: %v", baseErr)
+
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Service request not found", http.StatusNotFound)
 		} else {

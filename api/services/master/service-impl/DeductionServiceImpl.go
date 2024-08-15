@@ -4,12 +4,6 @@ import (
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"time"
 
 	// "after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
@@ -37,24 +31,6 @@ func StartDeductionService(deductionRepo masterrepository.DeductionRepository, d
 }
 
 func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	ctx := context.Background()
-
-	// Generate key for caching
-	cacheKey := "deduction:all"
-
-	// Check if data is available in cache
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		// If data found in cache, return it
-		var result pagination.Pagination
-		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return result, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		return result, nil
-	}
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
@@ -64,37 +40,11 @@ func (s *DeductionServiceImpl) GetAllDeduction(filterCondition []utils.FilterCon
 		return pagination.Pagination{}, dbErr
 	}
 
-	// Store data in cache for future use
-	jsonData, _ := json.Marshal(result)
-	if err := s.RedisClient.Set(ctx, cacheKey, jsonData, 10*time.Minute).Err(); err != nil {
-		// Log the error or handle it appropriately
-		log.Println("Error storing data in cache:", err)
-		// Atau lakukan penanganan kesalahan yang sesuai
-	}
-
 	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
 
 func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse) {
-	ctx := context.Background() // Initialize context
-
-	// Generate key for caching
-	cacheKey := fmt.Sprintf("deduction:detail:%d", Id)
-
-	// Check if data is available in cache
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		// If data found in cache, return it
-		var result masterpayloads.DeductionDetailResponse
-		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return result, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		return result, nil
-	}
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
@@ -104,12 +54,6 @@ func (s *DeductionServiceImpl) GetByIdDeductionDetail(Id int) (masterpayloads.De
 		return result, dbErr // Return the existing BaseErrorResponse
 	}
 
-	// Store data in cache for future use
-	jsonData, _ := json.Marshal(result)
-	if err := s.RedisClient.Set(ctx, cacheKey, jsonData, 10*time.Minute).Err(); err != nil {
-		// Log or handle error
-		log.Println("Error storing data in cache:", err)
-	}
 	defer helper.CommitOrRollback(tx, dbErr)
 	return result, nil
 }
@@ -135,24 +79,6 @@ func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionD
 }
 
 func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
-	ctx := context.Background() // Inisialisasi context
-
-	// Generate key for caching
-	cacheKey := fmt.Sprintf("deduction:id:%d", Id)
-
-	// Check if data is available in cache
-	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
-	if err == nil {
-		// If data found in cache, return it
-		var result masterpayloads.DeductionListResponse
-		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return result, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		return result, nil
-	}
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
@@ -161,13 +87,6 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.Deductio
 	if dbErr != nil {
 		// Handle error
 		return masterpayloads.DeductionListResponse{}, dbErr
-	}
-
-	// Store data in cache for future use
-	jsonData, _ := json.Marshal(result)
-	if err := s.RedisClient.Set(ctx, cacheKey, jsonData, 10*time.Minute).Err(); err != nil {
-		// Log or handle error
-		log.Println("Error storing data in cache:", err)
 	}
 	return result, nil
 }
@@ -200,11 +119,11 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interfa
 	return results, nil
 }
 
-func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.DeductionDetailUpdate)(masterentities.DeductionDetail,*exceptions.BaseErrorResponse){
-	tx:=s.DB.Begin()
-	result,err := s.deductionrepo.UpdateDeductionDetail(tx,id,req)
-	if err !=nil{
-		return masterentities.DeductionDetail{},err
+func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.DeductionDetailUpdate) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.deductionrepo.UpdateDeductionDetail(tx, id, req)
+	if err != nil {
+		return masterentities.DeductionDetail{}, err
 	}
-	return result,nil
+	return result, nil
 }
