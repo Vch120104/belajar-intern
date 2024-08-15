@@ -28,6 +28,18 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB,
 	}
 }
 
+// CheckItemCodeExist implements masteritemservice.ItemService.
+func (s *ItemServiceImpl) CheckItemCodeExist(itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, itemId, itemClassId, repoErr := s.itemRepo.CheckItemCodeExist(tx, itemCode, itemGroupId, commonPriceList, brandId)
+	defer helper.CommitOrRollback(tx, repoErr)
+
+	if repoErr != nil {
+		return results, itemId, itemClassId, repoErr
+	}
+	return results, itemId, itemClassId, nil
+}
+
 func (s *ItemServiceImpl) GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItemSearch(tx, filterCondition, itemIDs, supplierIDs, pages)
@@ -237,7 +249,7 @@ func (s *ItemServiceImpl) GetPrincipleBrandDropdown() ([]masteritempayloads.Prin
 func (s *ItemServiceImpl) AddItemDetailByBrand(id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.itemRepo.AddItemDetailByBrand(tx, id, itemId)
-	defer helper.CommitOrRollback(tx,err)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}

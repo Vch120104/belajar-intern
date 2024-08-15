@@ -2,6 +2,11 @@ package transactionsparepartpayloads
 
 import "time"
 
+type SupplyTypeResponse struct {
+	SupplyTypeId          int    `json:"supply_type_id"`
+	SupplyTypeDescription string `json:"supply_type_description"`
+}
+
 type SalesOrderResponse struct {
 	CompanyID                         int       `json:"company_id"`
 	SalesOrderSystemNumber            int       `json:"sales_order_system_number"`

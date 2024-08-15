@@ -93,7 +93,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 
 	query_params := map[string]string{
 		"is_active":            queryValues.Get("is_active"),
-		"warehouse_group_code": queryValues.Get("warehuuse_group_code"),
+		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
 		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
 	}
 	pagination := pagination.Pagination{
@@ -107,7 +107,7 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 
 	get, err := r.WarehouseGroupService.GetAllWarehouseGroup(filterCondition, pagination)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, get.Rows, "Get Data Successfully!", 200, get.Limit, get.Page, get.TotalRows, get.TotalPages)

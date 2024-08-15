@@ -10,6 +10,7 @@ import (
 	"after-sales/api/validation"
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -67,6 +68,8 @@ func (r *WarehouseLocationControllerImpl) ProcessWarehouseLocationTemplate(write
 		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
+
+	fmt.Print(formRequest)
 
 	create, err := r.WarehouseLocationService.ProcessWarehouseLocationTemplate(formRequest, companyId)
 
