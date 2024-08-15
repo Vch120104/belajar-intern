@@ -16,10 +16,13 @@ import (
 	masterserviceimpl "after-sales/api/services/master/service-impl"
 	masterwarehouseserviceimpl "after-sales/api/services/master/warehouse/services-warehouse-impl"
 
+	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworksopcontroller "after-sales/api/controllers/transactions/workshop"
+	transactionjpcbrepositoryimpl "after-sales/api/repositories/transaction/JPCB/repositories-jpcb-impl"
 	transactionsparepartrepositoryimpl "after-sales/api/repositories/transaction/sparepart/repositories-sparepart-impl"
 	transactionworkshoprepositoryimpl "after-sales/api/repositories/transaction/workshop/repositories-workshop-impl"
+	transactionjpcbserviceimpl "after-sales/api/services/transaction/JPCB/services-jpcb-impl"
 	transactionsparepartserviceimpl "after-sales/api/services/transaction/sparepart/services-sparepart-impl"
 	transactionworkshopserviceimpl "after-sales/api/services/transaction/workshop/services-workshop-impl"
 	"net/http"
@@ -63,7 +66,7 @@ func StartRouting(db *gorm.DB) {
 
 	// PriceList
 	priceListRepository := masteritemrepositoryimpl.StartPriceListRepositoryImpl()
-	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, db, rdb)
+	priceListService := masteritemserviceimpl.StartPriceListService(priceListRepository, itemService, db, rdb)
 	priceListController := masteritemcontroller.NewPriceListController(priceListService)
 
 	// Item Class
@@ -300,6 +303,11 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderBypassService := transactionworkshopserviceimpl.OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepository, db, rdb)
 	WorkOrderBypassController := transactionworksopcontroller.NewWorkOrderBypassController(WorkOrderBypassService)
 
+	//Car Wash Bay
+	CarWashBayRepository := transactionjpcbrepositoryimpl.NewCarWashBayRepositoryImpl()
+	CarWashBayService := transactionjpcbserviceimpl.NewCarWashBayServiceImpl(CarWashBayRepository, db, rdb)
+	CarWashBayController := transactionjpcbcontroller.NewCarWashBayController(CarWashBayService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -355,6 +363,7 @@ func StartRouting(db *gorm.DB) {
 	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
 	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
 	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
+	CarWashBayRouter := CarWashBayRouter(CarWashBayController)
 
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	r := chi.NewRouter()
@@ -418,6 +427,7 @@ func StartRouting(db *gorm.DB) {
 		/* Transaction */
 
 		/* Transaction JPCB */
+		r.Mount("/bay", CarWashBayRouter)
 
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
