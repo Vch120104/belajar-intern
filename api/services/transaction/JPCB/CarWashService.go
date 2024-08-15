@@ -12,4 +12,5 @@ type CarWashService interface {
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	UpdatePriority(workOrderSystemNumber, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse)
 	GetAllCarWashPriorityDropDown() ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse)
+	DeleteCarWash(workOrderSystemNumber int) (bool, *exceptions.BaseErrorResponse)
 }

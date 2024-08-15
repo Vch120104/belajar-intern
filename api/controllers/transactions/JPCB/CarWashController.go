@@ -9,6 +9,7 @@ import (
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -17,6 +18,7 @@ type CarWashController interface {
 	GetAllCarWash(writer http.ResponseWriter, request *http.Request)
 	UpdatePriority(writer http.ResponseWriter, request *http.Request)
 	GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request)
+	DeleteCarWash(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -86,4 +88,22 @@ func (r *CarWashControllerImpl) GetAllCarWashPriorityDropDown(writer http.Respon
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
+}
+
+// DeleteCarWash implements CarWashController.
+func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, request *http.Request) {
+	workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	delete, err := r.CarWashService.DeleteCarWash(workOrderSystemNumber)
+	if err != nil {
+
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if delete {
+		payloads.NewHandleSuccess(writer, true, "Status deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }

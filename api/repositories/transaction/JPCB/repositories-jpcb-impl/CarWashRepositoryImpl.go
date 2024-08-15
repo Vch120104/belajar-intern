@@ -3,6 +3,7 @@ package transactionjpcbrepositoryimpl
 import (
 	"after-sales/api/config"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
@@ -197,7 +198,7 @@ func (*CarWashImpl) UpdatePriority(tx *gorm.DB, workOrderSystemNumber, carWashPr
 	}
 }
 
-func (r *CarWashImpl) GetAllCarWashPriority(tx *gorm.DB) ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse) {
+func (r *CarWashImpl) GetAllCarWashPriorityDropDown(tx *gorm.DB) ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse) {
 	var entities transactionjpcbentities.CarWashPriority
 	var responses []transactionjpcbpayloads.CarWashPriorityDropDownResponse
 	rows, err := tx.Model(&entities).Rows()
@@ -232,4 +233,76 @@ func (r *CarWashImpl) GetAllCarWashPriority(tx *gorm.DB) ([]transactionjpcbpaylo
 	}
 
 	return responses, nil
+}
+
+func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (bool, *exceptions.BaseErrorResponse) {
+	mainTable := "trx_car_wash"
+	mainAlias := "carwash"
+
+	joinTables := []utils.JoinTable{
+		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+		{Table: "mtr_car_wash_status", Alias: "status", ForeignKey: mainAlias + ".car_wash_status_id", ReferenceKey: "status.car_wash_status_id"},
+		{Table: "trx_work_order", Alias: "wo", ForeignKey: mainAlias + ".work_order_system_number", ReferenceKey: "wo.work_order_system_number"},
+	}
+
+	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+
+	keyAttributes := []string{
+		"wo.work_order_document_number",
+		"bay.car_wash_bay_description",
+		"carwash.car_wash_status_id",
+		"status.car_wash_status_description",
+	}
+
+	var result transactionjpcbpayloads.CarWashErrorDetail
+	joinQuery = joinQuery.Select(keyAttributes).Where("wo.work_order_system_number = ?", 1).
+		Scan(&result)
+	if joinQuery.Error != nil {
+		panic(joinQuery.Error)
+	}
+
+	DRAFT := 2
+	if result.CarWashStatusId != DRAFT {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusOK,
+			Err: fmt.Errorf(
+				"Can't delete Car Wash Allocation, Car Wash status for " + result.WorkOrderDocumentNumber + " : " +
+					result.CarWashBayDescription + " is already " + result.CarWashStatusDescription,
+			),
+		}
+	}
+
+	var carWashEntity transactionjpcbentities.CarWash
+
+	err := tx.Model(&carWashEntity).Where("work_order_system_number = ?", workOrderSystemNumber).First(&carWashEntity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	err = tx.Delete(&carWashEntity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			Message: "Failed to delete car wash",
+			Err:     err,
+		}
+	}
+
+	var workOrderEntity transactionworkshopentities.WorkOrder
+	whereQuery := tx.Model(&workOrderEntity).Where("work_order_system_number = ?", workOrderSystemNumber).First(&workOrderEntity)
+	if whereQuery.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	whereQuery = whereQuery.Update("car_wash", 0)
+	if whereQuery.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	return true, nil
 }

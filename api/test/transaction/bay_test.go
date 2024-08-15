@@ -2,28 +2,38 @@ package test
 
 import (
 	"after-sales/api/config"
-	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
+	"after-sales/api/utils"
 	"fmt"
 	"testing"
 )
 
 func TestGetByIdSupplySlipDetail(t *testing.T) {
-	config.InitEnvConfigs(true, "")
-	db := config.InitDB()
+	tx := config.InitDB()
 
-	// repo := transactionjpcbrepositoryimpl.OpenBayMasterRepositoryImpl()
-	// service := transactionjpcbserviceimpl.StartBayService(repo, db, &redis.Client{})
+	mainTable := "trx_car_wash"
+	mainAlias := "carwash"
 
-	// filter := []utils.FilterCondition{}
-
-	// filter = append(filter, utils.FilterCondition{ColumnValue: "1", ColumnField: "company_id"})
-
-	// get, _, _, err := service.GetAllActiveBayCarWashScreen(filter, pagination.Pagination{})
-	var bayEntities transactionjpcbentities.BayMaster
-	var highestOrder int
-	result := db.Model(&bayEntities).Select("MAX(order_number)").Scan(&highestOrder)
-	if result.Error != nil {
-		panic(result.Error)
+	joinTables := []utils.JoinTable{
+		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+		{Table: "mtr_car_wash_status", Alias: "status", ForeignKey: mainAlias + ".car_wash_status_id", ReferenceKey: "status.car_wash_status_id"},
+		{Table: "trx_work_order", Alias: "wo", ForeignKey: mainAlias + ".work_order_system_number", ReferenceKey: "wo.work_order_system_number"},
 	}
-	fmt.Print(highestOrder)
+
+	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+
+	keyAttributes := []string{
+		"wo.work_order_document_number",
+		"bay.car_wash_bay_description",
+		"carwash.car_wash_status_id",
+		"status.car_wash_status_description",
+	}
+
+	var result transactionjpcbpayloads.CarWashErrorDetail
+	_ = joinQuery.Select(keyAttributes).Where("wo.work_order_system_number = ?", 1).
+		Scan(&result)
+	// if joinQuery.Error != nil {
+	// 	panic(joinQuery.Error)
+	// }
+	fmt.Print(result)
 }

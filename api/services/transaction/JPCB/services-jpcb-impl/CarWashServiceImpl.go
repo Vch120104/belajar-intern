@@ -53,10 +53,21 @@ func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPr
 func (s *CarWashServiceImpl) GetAllCarWashPriorityDropDown() ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	results, err := s.CarWashRepository.GetAllCarWashPriority(tx)
+	results, err := s.CarWashRepository.GetAllCarWashPriorityDropDown(tx)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return nil, err
 	}
 	return results, nil
+}
+
+func (s *CarWashServiceImpl) DeleteCarWash(workOrderSystemNumber int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.DeleteCarWash(tx, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return result, nil
 }

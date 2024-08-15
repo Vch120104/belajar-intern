@@ -47,5 +47,12 @@ type CarWashPriorityDropDownResponse struct {
 	CarWashPriorityId          int    `json:"car_wash_priority_id"`
 	CarWashPriorityCode        string `json:"car_wash_priority_code"`
 	CarWashPriorityDescription string `json:"car_wash_priority_description"`
-	IsActive                   bool   `jsons:"is_active"`
+	IsActive                   bool   `json:"is_active"`
+}
+
+type CarWashErrorDetail struct {
+	WorkOrderDocumentNumber  string `json:"work_order_document_number"`
+	CarWashBayDescription    string `json:"car_wash_bay_description"`
+	CarWashStatusId          int    `json:"car_wash_status_id"`
+	CarWashStatusDescription string `json:"car_wash_status_description"`
 }
