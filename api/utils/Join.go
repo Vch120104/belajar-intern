@@ -136,6 +136,58 @@ func CreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB {
 	return query
 }
 
+func CreateJoinSelectStatementTransaction(db *gorm.DB, tableStruct interface{}) *gorm.DB {
+	keyAttribute := []string{}
+	responseType := reflect.TypeOf(tableStruct)
+	joinTable := []string{}
+	joinTableMap := make(map[string]string)
+	var mainTable string
+	referenceTable := map[string]bool{} // Use map to store unique referenced tables
+
+	// Define primary table
+	for i := 0; i < responseType.NumField(); i++ {
+		mainTable = responseType.Field(i).Tag.Get("main_table")
+		if mainTable != "" {
+			break
+		}
+	}
+
+	if mainTable == "" {
+		fmt.Println("Please specify main_table in the struct tags")
+		return nil
+	}
+
+	// Define join reference tables
+	for i := 0; i < responseType.NumField(); i++ {
+		ref := responseType.Field(i).Tag.Get("references")
+		if ref != "" {
+			referenceTable[ref] = true // Store unique referenced tables in the map
+		}
+	}
+
+	// Define select from table and join table id
+	for i := 0; i < responseType.NumField(); i++ {
+		for ref := range referenceTable {
+			if ref == responseType.Field(i).Tag.Get("parent_entity") && strings.Contains(responseType.Field(i).Tag.Get("json"), "system_number") {
+				joinTableMap[responseType.Field(i).Tag.Get("parent_entity")] = responseType.Field(i).Tag.Get("json")
+			}
+		}
+		keyAttribute = append(keyAttribute, responseType.Field(i).Tag.Get("parent_entity")+"."+responseType.Field(i).Tag.Get("json"))
+	}
+
+	// Query Table with select
+	query := db.Table(mainTable).Select(keyAttribute)
+
+	// Join Tables
+	for ref := range referenceTable {
+		joinCondition := "join " + ref + " as " + ref + " on " + mainTable + "." + joinTableMap[ref] + " = " + ref + "." + joinTableMap[ref]
+		joinTable = append(joinTable, joinCondition)
+	}
+	query = query.Joins(strings.Join(joinTable, " "))
+
+	return query
+}
+
 // CreateJoinManyTable generates a GORM database query for joining multiple tables based on their relationships defined in their structures.
 //
 // Parameters:
