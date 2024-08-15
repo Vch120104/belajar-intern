@@ -540,6 +540,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	entities := mastercampaignmasterentities.CampaignMaster{}
 	payloads := []masterpayloads.CampaignMasterResponse{}
 	baseModelQuery := tx.Model(&entities).Scan(&payloads)
+	var mapResponses []map[string]interface{}
 
 	Wherequery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
@@ -573,7 +574,28 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			Err:        errdf,
 		}
 	}
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joineddata1, &pages)
+	for _, response := range joineddata1 {
+		responseMap := map[string]interface{}{
+			"appointment_only":     response["AppointmentOnly"],
+			"brand_id":             response["BrandID"],
+			"campaign_code":        response["CampaignCode"],
+			"campaign_id":          response["CampaignId"],
+			"campaign_name":        response["CampaignName"],
+			"campaign_period_from": response["CampaignPeriodFrom"],
+			"camapign_period_to":   response["CampaignPeriodTo"],
+			"is_active":            response["IsActive"],
+			"model_code":           response["ModelCode"],
+			"model_description":    response["ModelDescription"],
+			"model_id":             response["ModelId"],
+			"remark":               response["Remark"],
+			"total":                response["Total"],
+			"total_after_vat":      response["TotalAfterVAT"],
+			"total_vat":            response["TotalVAT"],
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 	return dataPaginate, totalPages, totalRows, nil
 }
 
