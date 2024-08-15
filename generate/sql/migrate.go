@@ -165,6 +165,7 @@ func Migrate() {
 		&transactionsparepartentities.PurchaseRequestEntities{},
 		&transactionsparepartentities.PurchaseRequestDetail{},
 		&transactionsparepartentities.PurchaseRequestReferenceType{},
+		&masterentities.LocationStock{},
 	)
 
 	if err != nil {
