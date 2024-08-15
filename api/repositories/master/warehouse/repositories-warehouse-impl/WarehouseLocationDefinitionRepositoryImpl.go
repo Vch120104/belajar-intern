@@ -173,7 +173,13 @@ func (r *WarehouseLocationDefinitionRepositoryImpl) GetAll(tx *gorm.DB, filterCo
 	}
 
 	// Perform inner join between warehouse location definition responses and warehouse location definition level response
-	joinedData := utils.DataFrameInnerJoin(responses, getWhLevelResponse, "WarehouseLocationDefinitionLevelId")
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, getWhLevelResponse, "WarehouseLocationDefinitionLevelId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// Paginate the joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)

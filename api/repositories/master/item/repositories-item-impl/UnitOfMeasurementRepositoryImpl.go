@@ -69,7 +69,7 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(tx *gorm.DB, f
 
 	if len(responses) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusNoContent,
 			Err:        errors.New(""),
 		}
 	}

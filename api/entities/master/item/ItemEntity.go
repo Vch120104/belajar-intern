@@ -41,7 +41,7 @@ type Item struct {
 	AtpmWarrantyClaimTypeId      int               `gorm:"column:atpm_warranty_claim_type_id;type:int;size:30;null"        json:"atpm_warranty_claim_type_id"`
 	LastPrice                    float64           `gorm:"column:last_price;null"        json:"last_price"`
 	UseDiscDecentralize          string            `gorm:"column:use_disc_decentralize;type:char(1);null"        json:"use_disc_decentralize"`
-	CommonPricelist              bool              `gorm:"column:common_pricelist;null"        json:"common_pricelist"`
+	CommonPricelist              bool              `gorm:"column:common_pricelist;default:false"        json:"common_pricelist"`
 	IsRemovable                  bool              `gorm:"column:is_removable;null"        json:"is_removable"`
 	IsMaterialPlus               bool              `gorm:"column:is_material_plus;null"        json:"is_material_plus"`
 	SpecialMovementId            int               `gorm:"column:special_movement_id;type:int;size:30;not null"        json:"special_movement_id"`
@@ -72,6 +72,7 @@ type Item struct {
 	ItemSubstitute               ItemSubstitute                                `gorm:"foreignKey:ItemId;references:ItemId"`
 	FieldActionItem              masterentities.FieldActionEligibleVehicleItem `gorm:"foreignKey:ItemId;references:ItemId"`
 	ItemImport                   ItemImport                                    `gorm:"foreignKey:ItemId;references:ItemId"`
+	ItemDetail                   ItemDetail                                    `gorm:"foreignKey:ItemId;references:ItemId" `
 }
 
 func (*Item) TableName() string {
