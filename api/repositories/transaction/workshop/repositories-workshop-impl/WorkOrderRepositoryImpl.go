@@ -205,8 +205,8 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			WorkOrderTypeName:       workOrderTypeName,
 			BrandId:                 workOrderReq.BrandId,
 			BrandName:               getBrandResponse.BrandName,
-			VehicleCode:             getVehicleResponse.Master.VehicleCode,
-			VehicleTnkb:             getVehicleResponse.Stnk.VehicleTnkb,
+			VehicleCode:             getVehicleResponse.VehicleCode,
+			VehicleTnkb:             getVehicleResponse.VehicleTnkb,
 			ModelId:                 workOrderReq.ModelId,
 			ModelName:               getModelResponse.ModelName,
 			VehicleId:               workOrderReq.VehicleId,
@@ -246,41 +246,27 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 }
 
 func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
-
 	// uspg_wtWorkOrder0_Insert
 	// IF @Option = 0
 	// --USE FOR : * INSERT NEW DATA
 
 	// Default values
 	defaultWorkOrderDocumentNumber := ""
-	defaultWorkOrderStatusId := 1          // 1:Draft, 2:New, 3:Ready, 4:On Going, 5:Stop, 6:QC Pass, 7:Cancel, 8:Closed
-	defaultWorkOrderTypeId := 1            // 1:Normal, 2:Campaign, 3:Affiliated, 4:Repeat Job
-	defaultServiceAdvisorId := 1           // set default 1 nanti pass from session FE
+	defaultWorkOrderStatusId := 1 // 1:Draft, 2:New, 3:Ready, 4:On Going, 5:Stop, 6:QC Pass, 7:Cancel, 8:Closed
+	//defaultWorkOrderTypeId := 1   // 1:Normal, 2:Campaign, 3:Affiliated, 4:Repeat Job
+	defaultServiceAdvisorId := 1           // Default advisor ID
 	defaultBookingSystemNumber := 0        // set default 0 kalau type normal akan ada isi id jika type booking
 	defaultEstimationSystemNumber := 0     // set default 0 kalau type normal akan ada isi id jika type booking
 	defaultServiceRequestSystemNumber := 0 // set default 0 kalau type normal akan ada isi id jika type affiliated
 
-	// SET @Price_Code = dbo.getVariableValue('DEFAULT_PRICECODE')
-
-	// Menentukan tipe dokumen (SRC_DOC_TYPE) berdasarkan (PROFIT_CENTER): IF @PROFIT_CENTER = @Profit_Center_GR
-	// IF @PROFIT_CENTER = @Profit_Center_GR BEGIN SET @SRC_DOC_TYPE = @SrcDocWs END ELSE IF @PROFIT_CENTER = @Profit_Center_BR BEGIN SET @SRC_DOC_TYPE = @SrcDocBs END
-
-	// Get Kode Mata Uang (CCY_CODE) dan Status Bebas Pajak (TAX_FREE)
-	// SELECT @CCY_CODE = CCY_CODE FROM gmRef WHERE COMPANY_CODE = @COMPANY_CODE (ccycode)
-	// SELECT @Tax_Free = ISNULL(CT.TAX_FREE, 0) FROM dbo.gmCust0 C LEFT JOIN dbo.gmCustType CT ON C.CUSTOMER_TYPE = CT.CUSTOMER_TYPE WHERE CUSTOMER_CODE = @Bill_Cust_Code
-
-	// Menentukan tarif pajak (VAT_TAX_RATE) berdasarkan apakah perusahaan termasuk dalam Free Trade Zone (FTZ) atau tidak
-
-	// Validate current date
-	currentDate := time.Now()
+	// Validate request date
+	currentDate := request.WorkOrderDate
 	requestDate := request.WorkOrderArrivalTime.Truncate(24 * time.Hour)
-
-	// Check if the WorkOrderDate is backdate or future date
 	if requestDate.Before(currentDate) || requestDate.After(currentDate) {
 		request.WorkOrderArrivalTime = currentDate
 	}
 
-	// check company session
+	// Check if the CompanyId is provided
 	if request.CompanyId == 0 {
 		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -288,85 +274,71 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		}
 	}
 
-	// Pengecekan apakah Work Order sudah ada, jika belum maka insert data ke tabel work order
+	// Create WorkOrder entity
 	entitieswo := transactionworkshopentities.WorkOrder{
-		// Basic information
-
 		// Default values
 		WorkOrderDocumentNumber:    defaultWorkOrderDocumentNumber,
 		WorkOrderStatusId:          defaultWorkOrderStatusId,
-		WorkOrderDate:              &currentDate,
-		WorkOrderTypeId:            defaultWorkOrderTypeId,
+		WorkOrderDate:              currentDate,
+		WorkOrderTypeId:            request.WorkOrderTypeId,
 		ServiceAdvisor:             defaultServiceAdvisorId,
 		BookingSystemNumber:        defaultBookingSystemNumber,
 		EstimationSystemNumber:     defaultEstimationSystemNumber,
 		ServiceRequestSystemNumber: defaultServiceRequestSystemNumber,
 
-		BrandId:        request.BrandId,
-		ModelId:        request.ModelId,
-		VariantId:      request.VariantId,
-		VehicleId:      request.VehicleId,
-		CustomerId:     request.CustomerId,
-		BillableToId:   request.BilltoCustomerId,
-		FromEra:        request.FromEra,
-		QueueNumber:    request.QueueSystemNumber,
-		ArrivalTime:    &request.WorkOrderArrivalTime,
-		ServiceMileage: request.WorkOrderCurrentMileage,
-		Storing:        request.Storing,
-		Remark:         request.WorkOrderRemark,
-		ProfitCenterId: request.WorkOrderProfitCenter,
-		CostCenterId:   request.DealerRepresentativeId,
-
-		//general information
-		CampaignId: request.CampaignId,
-		CompanyId:  request.CompanyId,
-
-		// Customer contact information
-		CPTitlePrefix:           request.Titleprefix,
-		ContactPersonName:       request.NameCust,
-		ContactPersonPhone:      request.PhoneCust,
-		ContactPersonMobile:     request.MobileCust,
-		ContactPersonContactVia: request.ContactVia,
-
-		// Work order status and details
-		EraNumber:      request.WorkOrderEraNo,
-		EraExpiredDate: &request.WorkOrderEraExpiredDate,
-
-		// Insurance details
+		// Provided values
+		BrandId:                  request.BrandId,
+		ModelId:                  request.ModelId,
+		VariantId:                request.VariantId,
+		VehicleId:                request.VehicleId,
+		CustomerId:               request.CustomerId,
+		BillableToId:             request.BilltoCustomerId,
+		FromEra:                  request.FromEra,
+		QueueNumber:              request.QueueSystemNumber,
+		ArrivalTime:              request.WorkOrderArrivalTime,
+		ServiceMileage:           request.WorkOrderCurrentMileage,
+		Storing:                  request.Storing,
+		Remark:                   request.WorkOrderRemark,
+		ProfitCenterId:           request.WorkOrderProfitCenter,
+		CostCenterId:             request.DealerRepresentativeId,
+		CampaignId:               request.CampaignId,
+		CompanyId:                request.CompanyId,
+		CPTitlePrefix:            request.Titleprefix,
+		ContactPersonName:        request.NameCust,
+		ContactPersonPhone:       request.PhoneCust,
+		ContactPersonMobile:      request.MobileCust,
+		ContactPersonContactVia:  request.ContactVia,
+		EraNumber:                request.WorkOrderEraNo,
+		EraExpiredDate:           request.WorkOrderEraExpiredDate,
 		InsurancePolicyNumber:    request.WorkOrderInsurancePolicyNo,
-		InsuranceExpiredDate:     &request.WorkOrderInsuranceExpiredDate,
+		InsuranceExpiredDate:     request.WorkOrderInsuranceExpiredDate,
 		InsuranceClaimNumber:     request.WorkOrderInsuranceClaimNo,
 		InsurancePersonInCharge:  request.WorkOrderInsurancePic,
-		InsuranceOwnRisk:         &request.WorkOrderInsuranceOwnRisk,
+		InsuranceOwnRisk:         request.WorkOrderInsuranceOwnRisk,
 		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
+		EstTime:                  request.EstimationDuration,
+		CustomerExpress:          request.CustomerExpress,
+		LeaveCar:                 request.LeaveCar,
+		CarWash:                  request.CarWash,
+		PromiseDate:              request.PromiseDate,
+		PromiseTime:              request.PromiseTime,
+		FSCouponNo:               request.FSCouponNo,
+		Notes:                    request.Notes,
+		Suggestion:               request.Suggestion,
+		DPAmount:                 request.DownpaymentAmount,
+	}
 
-		// Estimation and service details
-		EstTime:         &request.EstimationDuration,
-		CustomerExpress: request.CustomerExpress,
-		LeaveCar:        request.LeaveCar,
-		CarWash:         request.CarWash,
-		PromiseDate:     &request.PromiseDate,
-		PromiseTime:     &request.PromiseTime,
-
-		// Additional information
-		FSCouponNo: request.FSCouponNo,
-		Notes:      request.Notes,
-		Suggestion: request.Suggestion,
-		DPAmount:   &request.DownpaymentAmount,
+	if err := tx.Create(&entitieswo).Error; err != nil {
+		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to create work order",
+			Err:        err,
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Memperbarui status pemesanan dan estimasi jika Booking_System_No atau Estim_System_No tidak nol
-
-	err := tx.Create(&entitieswo).Error
-	if err != nil {
-		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-
-	}
 
 	var (
 		batchSystemNo       int
@@ -374,11 +346,9 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		bookingSystemNo     = request.BookingSystemNumber
 		estimationSystemNo  = request.EstimationSystemNumber
 	)
-
-	batchSystemNo = 0
 	bookingStatusClosed = 8
 
-	// Update wtBookEstim1_0 if Booking_System_No is not 0
+	// Update related records if necessary
 	if bookingSystemNo != 0 {
 		if batchSystemNo == 0 {
 			var batchSystemNoResult struct {
@@ -395,7 +365,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 			batchSystemNo = batchSystemNoResult.BatchSystemNo
 		}
 
-		// Update BOOKING_STATUS in wtBookEstim1_0
+		// Update BOOKING_STATUS
 		if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
 			Where("booking_system_number = ?", bookingSystemNo).
 			Update("booking_status_id", bookingStatusClosed).Error; err != nil {
@@ -406,10 +376,8 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		}
 	}
 
-	// Update wtBookEstim2_0 if Estimation_System_No is not 0
 	if estimationSystemNo != 0 {
 		if batchSystemNo == 0 {
-			// Fetch BATCH_SYSTEM_NO from wtBookEstim2_0
 			var batchSystemNoResult struct {
 				BatchSystemNo int
 			}
@@ -424,7 +392,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 			batchSystemNo = batchSystemNoResult.BatchSystemNo
 		}
 
-		// Update ESTIM_STATUS in wtBookEstim2_0
+		// Update ESTIM_STATUS
 		if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
 			Where("estimation_system_number = ?", estimationSystemNo).
 			Update("estimation_status_id", bookingStatusClosed).Error; err != nil {
@@ -435,7 +403,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		}
 	}
 
-	// Update BATCH_STATUS in wtBookEstim0 if BATCH_SYSTEM_NO is not 0
+	// Update BATCH_STATUS
 	if batchSystemNo != 0 {
 		if err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
 			Where("batch_system_number = ?", batchSystemNo).
@@ -444,14 +412,6 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
-		}
-	}
-
-	// Handle error after create
-	if tx.Error != nil {
-		return transactionworkshopentities.WorkOrder{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        tx.Error,
 		}
 	}
 
@@ -512,9 +472,9 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	}
 
 	// Fetch data colour from external API
-	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
+	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
 	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(ColourUrl, &colourResponses, nil)
+	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
 	if errColour != nil || len(colourResponses) == 0 {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -524,9 +484,9 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	}
 
 	// Fetch data vehicle from external API
-	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
+	vehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
 	var vehicleResponses transactionworkshoppayloads.VehicleResponse
-	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
+	errVehicle := utils.Get(vehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -578,50 +538,72 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		}
 	}
 
+	// fetch data status work order
+	WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(entity.WorkOrderStatusId)
+	var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
+	if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch work order status data from external service",
+			Err:        err,
+		}
+	}
+
 	payload := transactionworkshoppayloads.WorkOrderResponseDetail{
-		WorkOrderSystemNumber:      entity.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber:    entity.WorkOrderDocumentNumber,
-		WorkOrderTypeId:            entity.WorkOrderTypeId,
-		WorkOrderStatusId:          entity.WorkOrderStatusId,
-		ServiceAdvisorId:           entity.ServiceAdvisor,
-		BrandId:                    entity.BrandId,
-		BrandName:                  brandResponse.BrandName,
-		ModelId:                    entity.ModelId,
-		ModelName:                  modelResponse.ModelName,
-		VariantId:                  entity.VariantId,
-		VariantName:                variantResponse.VariantName,
-		ServiceSite:                entity.ServiceSite,
-		VehicleId:                  entity.VehicleId,
-		VehicleCode:                vehicleResponses.Master.VehicleCode,
-		VehicleTnkb:                vehicleResponses.Stnk.VehicleTnkb,
-		CustomerId:                 entity.CustomerId,
-		BilltoCustomerId:           entity.BillableToId,
-		CampaignId:                 entity.CampaignId,
-		AgreementId:                entity.AgreementBodyRepairId,
-		BoookingId:                 entity.BookingSystemNumber,
-		EstimationId:               entity.EstimationSystemNumber,
-		ContractSystemNumber:       entity.ContractServiceSystemNumber,
-		QueueSystemNumber:          entity.QueueNumber,
-		WorkOrderRemark:            entity.Remark,
-		DealerRepresentativeId:     entity.CostCenterId,
-		CompanyId:                  entity.CompanyId,
-		Titleprefix:                entity.CPTitlePrefix,
-		NameCust:                   entity.ContactPersonName,
-		PhoneCust:                  entity.ContactPersonPhone,
-		MobileCust:                 entity.ContactPersonMobile,
-		MobileCustAlternative:      entity.ContactPersonMobileAlternative,
-		MobileCustDriver:           entity.ContactPersonMobileDriver,
-		ContactVia:                 entity.ContactPersonContactVia,
-		WorkOrderInsurancePolicyNo: entity.InsurancePolicyNumber,
-		WorkOrderInsuranceClaimNo:  entity.InsuranceClaimNumber,
-		WorkOrderInsurancePic:      entity.InsurancePersonInCharge,
-		WorkOrderInsuranceWONumber: entity.InsuranceWorkOrderNumber,
-		CustomerExpress:            entity.CustomerExpress,
-		LeaveCar:                   entity.LeaveCar,
-		CarWash:                    entity.CarWash,
-		FSCouponNo:                 entity.FSCouponNo,
-		Notes:                      entity.Notes,
-		Suggestion:                 entity.Suggestion,
+		WorkOrderSystemNumber:         entity.WorkOrderSystemNumber,
+		WorkOrderDate:                 entity.WorkOrderDate,
+		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
+		WorkOrderTypeId:               entity.WorkOrderTypeId,
+		WorkOrderStatusId:             entity.WorkOrderStatusId,
+		WorkOrderStatusName:           getWorkOrderStatusResponses[0].WorkOrderStatusName,
+		ServiceAdvisorId:              entity.ServiceAdvisor,
+		BrandId:                       entity.BrandId,
+		BrandName:                     brandResponse.BrandName,
+		ModelId:                       entity.ModelId,
+		ModelName:                     modelResponse.ModelName,
+		VariantId:                     entity.VariantId,
+		VariantName:                   variantResponse.VariantName,
+		VehicleId:                     entity.VehicleId,
+		VehicleCode:                   vehicleResponses.VehicleCode,
+		VehicleTnkb:                   vehicleResponses.VehicleTnkb,
+		CustomerId:                    entity.CustomerId,
+		BilltoCustomerId:              entity.BillableToId,
+		CampaignId:                    entity.CampaignId,
+		FromEra:                       entity.FromEra,
+		WorkOrderProfitCenterId:       entity.ProfitCenterId,
+		AgreementId:                   entity.AgreementBodyRepairId,
+		BoookingId:                    entity.BookingSystemNumber,
+		EstimationId:                  entity.EstimationSystemNumber,
+		ContractSystemNumber:          entity.ContractServiceSystemNumber,
+		QueueSystemNumber:             entity.QueueNumber,
+		WorkOrderArrivalTime:          entity.ArrivalTime,
+		WorkOrderRemark:               entity.Remark,
+		DealerRepresentativeId:        entity.CostCenterId,
+		CompanyId:                     entity.CompanyId,
+		Titleprefix:                   entity.CPTitlePrefix,
+		NameCust:                      entity.ContactPersonName,
+		PhoneCust:                     entity.ContactPersonPhone,
+		MobileCust:                    entity.ContactPersonMobile,
+		MobileCustAlternative:         entity.ContactPersonMobileAlternative,
+		MobileCustDriver:              entity.ContactPersonMobileDriver,
+		ContactVia:                    entity.ContactPersonContactVia,
+		WorkOrderInsurancePolicyNo:    entity.InsurancePolicyNumber,
+		WorkOrderInsuranceClaimNo:     entity.InsuranceClaimNumber,
+		WorkOrderInsuranceExpiredDate: entity.InsuranceExpiredDate,
+		WorkOrderEraExpiredDate:       entity.EraExpiredDate,
+		PromiseDate:                   entity.PromiseDate,
+		PromiseTime:                   entity.PromiseTime,
+		EstimationDuration:            entity.EstTime,
+		WorkOrderInsuranceOwnRisk:     entity.InsuranceOwnRisk,
+		WorkOrderInsurancePic:         entity.InsurancePersonInCharge,
+		WorkOrderInsuranceWONumber:    entity.InsuranceWorkOrderNumber,
+		CustomerExpress:               entity.CustomerExpress,
+		LeaveCar:                      entity.LeaveCar,
+		CarWash:                       entity.CarWash,
+		FSCouponNo:                    entity.FSCouponNo,
+		Notes:                         entity.Notes,
+		Suggestion:                    entity.Suggestion,
+		DownpaymentAmount:             entity.DPAmount,
 		WorkOrderDetailService: transactionworkshoppayloads.WorkOrderDetailsResponseRequest{
 			DataRequest: workorderServices,
 		},
@@ -637,36 +619,6 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		},
 	}
 
-	// Assign time values if they are not nil and format as needed
-	if !entity.WorkOrderDate.IsZero() {
-		payload.WorkOrderDate = entity.WorkOrderDate.Format("2006-01-02 15:04:05")
-	}
-
-	if !entity.ArrivalTime.IsZero() {
-		payload.WorkOrderArrivalTime = entity.ArrivalTime.Format("2006-01-02 15:04:05")
-	}
-
-	if !entity.EraExpiredDate.IsZero() {
-		payload.WorkOrderEraExpiredDate = entity.EraExpiredDate.Format("2006-01-02 15:04:05")
-	}
-
-	if !entity.InsuranceExpiredDate.IsZero() {
-		payload.WorkOrderInsuranceExpiredDate = entity.InsuranceExpiredDate.Format("2006-01-02 15:04:05")
-	}
-
-	if !entity.PromiseDate.IsZero() {
-		payload.PromiseDate = entity.PromiseDate.Format("2006-01-02 15:04:05")
-	}
-
-	if !entity.PromiseTime.IsZero() {
-		payload.PromiseTime = entity.PromiseTime.Format("15:04:05")
-	}
-
-	// Directly assign mileage if not zero
-	if entity.ServiceMileage != 0 {
-		payload.WorkOrderCurrentMileage = entity.ServiceMileage
-	}
-
 	return payload, nil
 }
 
@@ -680,7 +632,7 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 	entity.BillableToId = request.BilltoCustomerId
 	entity.FromEra = request.FromEra
 	entity.QueueNumber = request.QueueSystemNumber
-	entity.ArrivalTime = &request.WorkOrderArrivalTime
+	entity.ArrivalTime = request.WorkOrderArrivalTime
 	entity.ServiceMileage = request.WorkOrderCurrentMileage
 	entity.Storing = request.Storing
 	entity.Remark = request.WorkOrderRemark
@@ -699,23 +651,23 @@ func (r *WorkOrderRepositoryImpl) Save(tx *gorm.DB, request transactionworkshopp
 
 	entity.InsuranceCheck = request.WorkOrderInsuranceCheck
 	entity.InsurancePolicyNumber = request.WorkOrderInsurancePolicyNo
-	entity.InsuranceExpiredDate = &request.WorkOrderInsuranceExpiredDate
+	entity.InsuranceExpiredDate = request.WorkOrderInsuranceExpiredDate
 	entity.InsuranceClaimNumber = request.WorkOrderInsuranceClaimNo
 	entity.InsurancePersonInCharge = request.WorkOrderInsurancePic
-	entity.InsuranceOwnRisk = &request.WorkOrderInsuranceOwnRisk
+	entity.InsuranceOwnRisk = request.WorkOrderInsuranceOwnRisk
 	entity.InsuranceWorkOrderNumber = request.WorkOrderInsuranceWONumber
 
 	//page2
-	entity.EstTime = &request.EstimationDuration
+	entity.EstTime = request.EstimationDuration
 	entity.CustomerExpress = request.CustomerExpress
 	entity.LeaveCar = request.LeaveCar
 	entity.CarWash = request.CarWash
-	entity.PromiseDate = &request.PromiseDate
-	entity.PromiseTime = &request.PromiseTime
+	entity.PromiseDate = request.PromiseDate
+	entity.PromiseTime = request.PromiseTime
 	entity.FSCouponNo = request.FSCouponNo
 	entity.Notes = request.Notes
 	entity.Suggestion = request.Suggestion
-	entity.DPAmount = &request.DownpaymentAmount
+	entity.DPAmount = request.DownpaymentAmount
 
 	err = tx.Save(&entity).Error
 	if err != nil {
@@ -2057,7 +2009,7 @@ func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, request transactionwor
 		// Default values
 		WorkOrderDocumentNumber:    defaultWorkOrderDocumentNumber,
 		WorkOrderStatusId:          defaultWorkOrderStatusId,
-		WorkOrderDate:              &currentDate,
+		WorkOrderDate:              currentDate,
 		WorkOrderTypeId:            defaultWorkOrderTypeId,
 		ServiceAdvisor:             defaultServiceAdvisorId,
 		BookingSystemNumber:        defaultBookingSystemNumber,
@@ -2072,7 +2024,7 @@ func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, request transactionwor
 		BillableToId:   request.BilltoCustomerId,
 		FromEra:        request.FromEra,
 		QueueNumber:    request.QueueSystemNumber,
-		ArrivalTime:    &request.WorkOrderArrivalTime,
+		ArrivalTime:    request.WorkOrderArrivalTime,
 		ServiceMileage: request.WorkOrderCurrentMileage,
 		Storing:        request.Storing,
 		Remark:         request.WorkOrderRemark,
@@ -2092,29 +2044,29 @@ func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, request transactionwor
 
 		// Work order status and details
 		EraNumber:      request.WorkOrderEraNo,
-		EraExpiredDate: &request.WorkOrderEraExpiredDate,
+		EraExpiredDate: request.WorkOrderEraExpiredDate,
 
 		// Insurance details
 		InsurancePolicyNumber:    request.WorkOrderInsurancePolicyNo,
-		InsuranceExpiredDate:     &request.WorkOrderInsuranceExpiredDate,
+		InsuranceExpiredDate:     request.WorkOrderInsuranceExpiredDate,
 		InsuranceClaimNumber:     request.WorkOrderInsuranceClaimNo,
 		InsurancePersonInCharge:  request.WorkOrderInsurancePic,
-		InsuranceOwnRisk:         &request.WorkOrderInsuranceOwnRisk,
+		InsuranceOwnRisk:         request.WorkOrderInsuranceOwnRisk,
 		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
 
 		// Estimation and service details
-		EstTime:         &request.EstimationDuration,
+		EstTime:         request.EstimationDuration,
 		CustomerExpress: request.CustomerExpress,
 		LeaveCar:        request.LeaveCar,
 		CarWash:         request.CarWash,
-		PromiseDate:     &request.PromiseDate,
-		PromiseTime:     &request.PromiseTime,
+		PromiseDate:     request.PromiseDate,
+		PromiseTime:     request.PromiseTime,
 
 		// Additional information
 		FSCouponNo: request.FSCouponNo,
 		Notes:      request.Notes,
 		Suggestion: request.Suggestion,
-		DPAmount:   &request.DownpaymentAmount,
+		DPAmount:   request.DownpaymentAmount,
 	}
 
 	err := tx.Create(&entities).Error
@@ -2303,32 +2255,8 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 		WorkOrderInsuranceWONumber: entity.InsuranceWorkOrderNumber,
 	}
 
-	if entity.WorkOrderDate != nil {
-		payload.WorkOrderDate = *entity.WorkOrderDate
-	}
-
-	if entity.ArrivalTime != nil {
-		payload.WorkOrderArrivalTime = *entity.ArrivalTime
-	}
-
 	if entity.ServiceMileage != 0 {
 		payload.WorkOrderCurrentMileage = entity.ServiceMileage
-	}
-
-	if entity.EraExpiredDate != nil {
-		payload.WorkOrderEraExpiredDate = *entity.EraExpiredDate
-	}
-
-	if entity.InsuranceExpiredDate != nil {
-		payload.WorkOrderInsuranceExpiredDate = *entity.InsuranceExpiredDate
-	}
-
-	if entity.PromiseDate != nil {
-		payload.PromiseDate = *entity.PromiseDate
-	}
-
-	if entity.PromiseTime != nil {
-		payload.PromiseTime = *entity.PromiseTime
 	}
 
 	return payload, nil
@@ -2348,7 +2276,7 @@ func (r *WorkOrderRepositoryImpl) SaveBooking(tx *gorm.DB, IdWorkorder int, id i
 	entity.BillableToId = request.BilltoCustomerId
 	entity.FromEra = request.FromEra
 	entity.QueueNumber = request.QueueSystemNumber
-	entity.ArrivalTime = &request.WorkOrderArrivalTime
+	entity.ArrivalTime = request.WorkOrderArrivalTime
 	entity.ServiceMileage = request.WorkOrderCurrentMileage
 	entity.Storing = request.Storing
 	entity.Remark = request.WorkOrderRemark
@@ -2367,23 +2295,23 @@ func (r *WorkOrderRepositoryImpl) SaveBooking(tx *gorm.DB, IdWorkorder int, id i
 
 	entity.InsuranceCheck = request.WorkOrderInsuranceCheck
 	entity.InsurancePolicyNumber = request.WorkOrderInsurancePolicyNo
-	entity.InsuranceExpiredDate = &request.WorkOrderInsuranceExpiredDate
+	entity.InsuranceExpiredDate = request.WorkOrderInsuranceExpiredDate
 	entity.InsuranceClaimNumber = request.WorkOrderInsuranceClaimNo
 	entity.InsurancePersonInCharge = request.WorkOrderInsurancePic
-	entity.InsuranceOwnRisk = &request.WorkOrderInsuranceOwnRisk
+	entity.InsuranceOwnRisk = request.WorkOrderInsuranceOwnRisk
 	entity.InsuranceWorkOrderNumber = request.WorkOrderInsuranceWONumber
 
 	//page2
-	entity.EstTime = &request.EstimationDuration
+	entity.EstTime = request.EstimationDuration
 	entity.CustomerExpress = request.CustomerExpress
 	entity.LeaveCar = request.LeaveCar
 	entity.CarWash = request.CarWash
-	entity.PromiseDate = &request.PromiseDate
-	entity.PromiseTime = &request.PromiseTime
+	entity.PromiseDate = request.PromiseDate
+	entity.PromiseTime = request.PromiseTime
 	entity.FSCouponNo = request.FSCouponNo
 	entity.Notes = request.Notes
 	entity.Suggestion = request.Suggestion
-	entity.DPAmount = &request.DownpaymentAmount
+	entity.DPAmount = request.DownpaymentAmount
 
 	err = tx.Save(&entity).Error
 	if err != nil {
@@ -2834,11 +2762,18 @@ func (r *WorkOrderRepositoryImpl) CampaignLookup(tx *gorm.DB, filterCondition []
 func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
 	var statuses []transactionworkshopentities.WorkOrderMasterStatus
 
+	// Apply filters
 	query := utils.ApplyFilter(tx, filter)
 
+	// Execute the query
 	if err := query.Find(&statuses).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order statuses from the database"}
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order statuses from the database",
+			Err:        err,
+		}
 	}
+
 	return statuses, nil
 }
 
