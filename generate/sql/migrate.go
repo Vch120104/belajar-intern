@@ -2,7 +2,8 @@ package migration
 
 import (
 	"after-sales/api/config"
-	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	masterentities "after-sales/api/entities/master"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
 	"time"
 
@@ -57,6 +58,7 @@ func Migrate() {
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
 		//&masteroperationentities.OperationModelMapping{},
+		// &masteroperationentities.OperationLevel{},
 		//&masteroperationentities.OperationFrt{},
 		//&masteroperationentities.OperationGroup{},
 		//&masteroperationentities.OperationSection{},
@@ -130,6 +132,12 @@ func Migrate() {
 		//&mastercampaignmasterentities.CampaignMasterDetailItem{},
 		//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 		//
+
+		// &transactionjpcbentities.CarWash{},
+		// &transactionjpcbentities.BayMaster{},
+		// &transactionjpcbentities.CarWashPriority{},
+		// &transactionjpcbentities.CarWashStatus{},
+
 		//&transactionsparepartpentities.SupplySlip{},
 		//&transactionsparepartpentities.SupplySlipDetail{},
 		//&transactionworkshopentities.WorkOrderMaster{},
@@ -163,11 +171,10 @@ func Migrate() {
 		// &transactionworkshopentities.BookingEstimationServiceDiscount{},
 		// &transactionworkshopentities.BookingEstimationDetail{},
 
-		// &transactionsparepartentities.PurchaseRequestEntities{},
-		// &transactionsparepartentities.PurchaseRequestDetail{},
-		//&transactionsparepartentities.PurchaseRequestReferenceType{},
-
-		&transactionjpcbentities.CarWash{},
+		&transactionsparepartentities.PurchaseRequestEntities{},
+		&transactionsparepartentities.PurchaseRequestDetail{},
+		&transactionsparepartentities.PurchaseRequestReferenceType{},
+		&masterentities.LocationStock{},
 	)
 
 	if err != nil {

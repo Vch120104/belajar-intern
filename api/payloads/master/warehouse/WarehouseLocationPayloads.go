@@ -19,7 +19,7 @@ type WarehouseLocationTemplate struct {
 	WarehouseCode         string `json:"warehouse_code"`
 	WarehouseLocationCode string `json:"warehouse_location_code"`
 	WarehouseLocationName string `json:"warehouse_location_name"`
-	Validation            string `json:"vaidation"`
+	Validation            string `json:"validation"`
 }
 
 type ProcessWarehouseLocationTemplate struct {

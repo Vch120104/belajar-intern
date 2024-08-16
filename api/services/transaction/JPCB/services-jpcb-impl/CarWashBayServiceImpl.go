@@ -1,6 +1,7 @@
 package transactionjpcbserviceimpl
 
 import (
+	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -60,13 +61,13 @@ func (s *BayMasterServiceImpl) GetAllDeactiveCarWashBay(filterCondition []utils.
 	return results, nil
 }
 
-func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpayloads.BayMasterUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpayloads.BayMasterUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.BayMasterRepository.ChangeStatus(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return transactionjpcbentities.BayMaster{}, err
 	}
 	return results, nil
 }

@@ -58,7 +58,14 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 			Err:        err,
 		}
 	}
-	JoinedData1 := utils.DataFrameInnerJoin(payloads, shippingmethodpayloads, "ShippingMethodId")
+	JoinedData1, errdf := utils.DataFrameInnerJoin(payloads, shippingmethodpayloads, "ShippingMethodId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	landedcosturl := config.EnvConfigs.GeneralServiceUrl + "landed-cost-type"
 
@@ -70,7 +77,14 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 			Err:        err,
 		}
 	}
-	JoinedData2 := utils.DataFrameInnerJoin(JoinedData1, landedcostpayloads, "LandedCostTypeId")
+	JoinedData2, errdf := utils.DataFrameInnerJoin(JoinedData1, landedcostpayloads, "LandedCostTypeId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	paginatedata, totalPages, totalrows := pagination.NewDataFramePaginate(JoinedData2, &pages)
 	return paginatedata, totalPages, totalrows, nil
@@ -99,7 +113,15 @@ func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) 
 			Err:        err,
 		}
 	}
-	joinedData1 := utils.DataFrameInnerJoin([]masteritempayloads.LandedCostMasterPayloads{response}, []masteritempayloads.LandedCostTypeResponse{GetLandedCostType}, "LandedCostTypeId")
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masteritempayloads.LandedCostMasterPayloads{response}, []masteritempayloads.LandedCostTypeResponse{GetLandedCostType}, "LandedCostTypeId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	ShippingMethodUrl := config.EnvConfigs.GeneralServiceUrl + "shipping-method/" + strconv.Itoa(response.ShippingMethodId)
 
 	errshippingmethod := utils.Get(ShippingMethodUrl, &GetShippinMethodType, nil)
@@ -110,7 +132,15 @@ func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) 
 			Err:        err,
 		}
 	}
-	JoinedData2 := utils.DataFrameInnerJoin(joinedData1, []masteritempayloads.ShippingMethodResponse{GetShippinMethodType}, "ShippingMethodId")
+	JoinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masteritempayloads.ShippingMethodResponse{GetShippinMethodType}, "ShippingMethodId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
 	result := map[string]interface{}{
 		"company_id":                   JoinedData2[0]["CompanyId"],
 		"is_active":                    JoinedData2[0]["IsActive"],
@@ -172,101 +202,100 @@ func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteri
 				Err:        err,
 			}
 		}
-		
+
 	}
 	return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        errors.New("LandedCost already exists"),
-		}
+		StatusCode: http.StatusConflict,
+		Err:        errors.New("LandedCost already exists"),
+	}
 }
 
 func (r *LandedCostMasterRepositoryImpl) DeactivateLandedCostmaster(tx *gorm.DB, id string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-    idSlice := strings.Split(id, ",")
-    var results []map[string]interface{}
+	idSlice := strings.Split(id, ",")
+	var results []map[string]interface{}
 
-    for _, idStr := range idSlice {
-        var entityToUpdate masteritementities.LandedCost // Create a new instance for each loop iteration
-        err := tx.Model(&entityToUpdate).Where("landed_cost_id = ?", idStr).First(&entityToUpdate).Error
-        if err != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusInternalServerError,
-                Err:        err,
-            }
-        }
+	for _, idStr := range idSlice {
+		var entityToUpdate masteritementities.LandedCost // Create a new instance for each loop iteration
+		err := tx.Model(&entityToUpdate).Where("landed_cost_id = ?", idStr).First(&entityToUpdate).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 
-        entityToUpdate.IsActive = false
-        result := tx.Save(&entityToUpdate)
-        if result.Error != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusInternalServerError,
-                Err:        result.Error,
-            }
-        }
+		entityToUpdate.IsActive = false
+		result := tx.Save(&entityToUpdate)
+		if result.Error != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        result.Error,
+			}
+		}
 
-        // Append the updated entity details to the results slice
-        results = append(results, map[string]interface{}{
-            "is_active":      entityToUpdate.IsActive,
-            "landed_cost_id": entityToUpdate.LandedCostId,
-        })
-    }
+		// Append the updated entity details to the results slice
+		results = append(results, map[string]interface{}{
+			"is_active":      entityToUpdate.IsActive,
+			"landed_cost_id": entityToUpdate.LandedCostId,
+		})
+	}
 
-    return results, nil
+	return results, nil
 }
 
 func (r *LandedCostMasterRepositoryImpl) ActivateLandedCostMaster(tx *gorm.DB, id string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-    idSlice := strings.Split(id, ",")
-    var results []map[string]interface{}
+	idSlice := strings.Split(id, ",")
+	var results []map[string]interface{}
 
-    for _, idStr := range idSlice {
-        var entityToUpdate masteritementities.LandedCost // Create a new instance for each loop iteration
-        err := tx.Model(&entityToUpdate).Where("landed_cost_id = ?", idStr).First(&entityToUpdate).Error
-        if err != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusInternalServerError,
-                Err:        err,
-            }
-        }
+	for _, idStr := range idSlice {
+		var entityToUpdate masteritementities.LandedCost // Create a new instance for each loop iteration
+		err := tx.Model(&entityToUpdate).Where("landed_cost_id = ?", idStr).First(&entityToUpdate).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
 
-        entityToUpdate.IsActive = true
-        result := tx.Save(&entityToUpdate)
-        if result.Error != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusInternalServerError,
-                Err:        result.Error,
-            }
-        }
+		entityToUpdate.IsActive = true
+		result := tx.Save(&entityToUpdate)
+		if result.Error != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        result.Error,
+			}
+		}
 
-        // Append the updated entity details to the results slice
-        results = append(results, map[string]interface{}{
-            "is_active":      entityToUpdate.IsActive,
-            "landed_cost_id": entityToUpdate.LandedCostId,
-        })
-    }
+		// Append the updated entity details to the results slice
+		results = append(results, map[string]interface{}{
+			"is_active":      entityToUpdate.IsActive,
+			"landed_cost_id": entityToUpdate.LandedCostId,
+		})
+	}
 
-    return results, nil
+	return results, nil
 }
 
-
 func (r *LandedCostMasterRepositoryImpl) UpdateLandedCostMaster(tx *gorm.DB, id int, req masteritempayloads.LandedCostMasterUpdateRequest) (masteritementities.LandedCost, *exceptions.BaseErrorResponse) {
-    var entities masteritementities.LandedCost
+	var entities masteritementities.LandedCost
 
-    // Update the landed_cost_factor
-    result := tx.Model(&entities).Where("landed_cost_id = ?", id).Update("landed_cost_factor", req.LandedCostfactor)
-    if result.Error != nil {
-        return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
-            StatusCode: http.StatusBadRequest,
-            Err:        result.Error,
-        }
-    }
+	// Update the landed_cost_factor
+	result := tx.Model(&entities).Where("landed_cost_id = ?", id).Update("landed_cost_factor", req.LandedCostfactor)
+	if result.Error != nil {
+		return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        result.Error,
+		}
+	}
 
-    // Fetch the updated entity
-    err := tx.Model(&entities).Where("landed_cost_id = ?", id).First(&entities).Error
-    if err != nil {
-        return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
-            StatusCode: http.StatusNotFound,
-            Err:        err,
-        }
-    }
+	// Fetch the updated entity
+	err := tx.Model(&entities).Where("landed_cost_id = ?", id).First(&entities).Error
+	if err != nil {
+		return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
 
-    return entities, nil
+	return entities, nil
 }

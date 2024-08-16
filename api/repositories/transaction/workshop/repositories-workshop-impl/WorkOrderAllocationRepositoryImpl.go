@@ -31,13 +31,7 @@ func OpenWorkOrderAllocationRepositoryImpl() transactionworkshoprepository.WorkO
 // uspg_atWoAllocateGrid_Select
 // IF @Option = 0
 // --USE FOR : * SELECT DATA FOR WO ALLOCATION GRID
-func (r *WorkOrderAllocationRepositoryImpl) GetAll(
-	tx *gorm.DB,
-	companyCode int,
-	foremanId int,
-	date time.Time,
-	filterCondition []utils.FilterCondition,
-) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int, foremanId int, date time.Time, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	const (
 		srvStatPending  = "pending"
 		srvStatStop     = "stop"
@@ -445,15 +439,16 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAllocateDetail(tx *gorm.DB, filte
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyCode int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
 	var result transactionworkshoppayloads.WorkOrderAllocationHeaderResult
 
 	// Get shift start time and end time
 	shiftTimes, err := r.getShiftTimes(tx, companyCode, foremanId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
-			Message: "Failed to get shift times",
-			Err:     err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get shift times",
+			Err:        err,
 		}
 	}
 
@@ -461,8 +456,9 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	totalTime, err := r.getTotalTime(tx, companyCode, shiftTimes.ShiftCode, techallocStartDate, shiftTimes.StartTime, shiftTimes.EndTime)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
-			Message: "Failed to get total time",
-			Err:     err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get total time",
+			Err:        err,
 		}
 	}
 
@@ -470,8 +466,9 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	usedTime, err := r.getUsedTime(tx, companyCode, foremanId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
-			Message: "Failed to get used time",
-			Err:     err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get used time",
+			Err:        err,
 		}
 	}
 
@@ -482,8 +479,9 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	unallocatedOpr, err := r.getUnallocatedOpr(tx, companyCode, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
-			Message: "Failed to get unallocated operations",
-			Err:     err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get unallocated operations",
+			Err:        err,
 		}
 	}
 
@@ -491,8 +489,9 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	autoReleased, err := r.getAutoReleased(tx, companyCode, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
-			Message: "Failed to get auto-released operations",
-			Err:     err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get auto-released operations",
+			Err:        err,
 		}
 	}
 
@@ -500,8 +499,9 @@ func (r *WorkOrderAllocationRepositoryImpl) GetWorkOrderAllocationHeaderData(tx 
 	bookAllocTime, err := r.getBookAllocTime(tx, companyCode, vehicleBrandId, techallocStartDate)
 	if err != nil {
 		return result, &exceptions.BaseErrorResponse{
-			Message: "Failed to get book allocated time",
-			Err:     err,
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get book allocated time",
+			Err:        err,
 		}
 	}
 
@@ -602,7 +602,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAssignTechnician(tx *gorm.DB, fil
 	var mapResponses []map[string]interface{}
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"service_date":    response.ServiceDate.Format("2006-01-02 15:04:05"),
+			"service_date":    response.ServiceDate.Format("2006-01-02"),
 			"company_id":      response.CompanyId,
 			"foreman_id":      response.ForemanId,
 			"foreman_name":    foremanNames[response.ForemanId],
@@ -1062,7 +1062,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getShiftEndTime(tx *gorm.DB, company
 	return endTime, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyCode int, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.ShiftTimes, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getShiftTimes(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time) (transactionworkshoppayloads.ShiftTimes, error) {
 	var shiftTimes transactionworkshoppayloads.ShiftTimes
 
 	// Define day-specific conditions with SQL Server's boolean representation
@@ -1132,7 +1132,7 @@ func timeToDecimalHours(t time.Time) float64 {
 	return hours + (minutes / 60)
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyCode int, shiftCode string, techallocStartDate time.Time, shiftStartTime float64, shiftEndTime float64) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyCode string, shiftCode string, techallocStartDate time.Time, shiftStartTime float64, shiftEndTime float64) (float64, error) {
 	var totalTime float64
 
 	// Determine the day of the week and corresponding condition
@@ -1202,7 +1202,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getTotalTime(tx *gorm.DB, companyCod
 	return totalTime, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyCode int, foremanId int, techallocStartDate time.Time) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyCode string, foremanId int, techallocStartDate time.Time) (float64, error) {
 	var usedTime float64
 
 	startDateStr := techallocStartDate.Format("2006-01-02")
@@ -1220,7 +1220,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getUsedTime(tx *gorm.DB, companyCode
 	return usedTime, nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, companyCode int, techallocStartDate time.Time) (int, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, companyCode string, techallocStartDate time.Time) (int, error) {
 	var unallocatedOpr int64
 
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -1240,7 +1240,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getUnallocatedOpr(tx *gorm.DB, compa
 	return int(unallocatedOpr), nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, companyCode int, techallocStartDate time.Time) (int, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, companyCode string, techallocStartDate time.Time) (int, error) {
 	var autoReleased int64
 
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -1261,7 +1261,7 @@ func (r *WorkOrderAllocationRepositoryImpl) getAutoReleased(tx *gorm.DB, company
 	return int(autoReleased), nil
 }
 
-func (r *WorkOrderAllocationRepositoryImpl) getBookAllocTime(tx *gorm.DB, companyCode int, vehicleBrandId int, techallocStartDate time.Time) (float64, error) {
+func (r *WorkOrderAllocationRepositoryImpl) getBookAllocTime(tx *gorm.DB, companyCode string, vehicleBrandId int, techallocStartDate time.Time) (float64, error) {
 	var bookAllocTime float64
 
 	err := tx.Model(&transactionworkshopentities.BookingEstimationAllocation{}).
