@@ -117,7 +117,7 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 		}
 	}
 
-	rows, err := joinQuery.Where("company_id = ? AND bay.is_active = 1", companyIdFilter).Rows()
+	rows, err := joinQuery.Where("carwash.company_id = ? AND bay.is_active = 1", companyIdFilter).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -187,7 +187,7 @@ func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.Filter
 		}
 	}
 
-	rows, err := joinQuery.Where("company_id = ? AND work_order_system_number = 0", companyIdFilter).Rows()
+	rows, err := joinQuery.Where("carwash.company_id = ? AND work_order_system_number = 0", companyIdFilter).Rows()
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
