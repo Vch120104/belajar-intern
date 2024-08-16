@@ -1278,6 +1278,24 @@ func WorkOrderBypassRouter(
 
 }
 
+func QualityControlRouter(
+	QualityControlController transactionworkshopcontroller.QualityControlController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", QualityControlController.GetAll)
+	router.Get("/{work_order_system_number}", QualityControlController.GetById)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/qcpass", QualityControlController.Qcpass)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/reorder", QualityControlController.Reorder)
+
+	return router
+}
+
 func SupplySlipRouter(
 	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {
@@ -1291,7 +1309,6 @@ func SupplySlipRouter(
 	router.Put("/{supply_system_number}", SupplySlipController.UpdateSupplySlip)
 	router.Put("/detail/{supply_detail_system_number}", SupplySlipController.UpdateSupplySlipDetail)
 	router.Put("/submit/{supply_system_number}", SupplySlipController.SubmitSupplySlip)
-
 
 	return router
 }
