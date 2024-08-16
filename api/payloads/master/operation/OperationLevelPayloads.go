@@ -12,3 +12,10 @@ type OperationLevelGetAll struct {
 	OperationEntriesName string `json:"operation_entries_name"`
 	OperationEntriesId   int    `json:"operation_entries_id"`
 }
+
+type OperationLevelRequest struct {
+	IsActive                bool `json:"is_active"`
+	OperationLevelId        int  `json:"operation_level_id"`
+	OperationModelMappingId int  `json:"operation_model_mapping_id"`
+	OperationEntriesId      int  `json:"operation_entries_id"`
+}

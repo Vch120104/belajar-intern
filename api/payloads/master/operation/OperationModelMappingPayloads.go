@@ -86,3 +86,18 @@ type ModelResponse struct {
 	ModelId          int    `json:"model_id"`
 	ModelDescription string `json:"model_description"`
 }
+
+type OperationLevelByIdResponse struct {
+	IsActive                    bool   `json:"is_active"`
+	OperationLevelId            int    `json:"operation_level_id"`
+	OperationModelMappingId     int    `json:"operation_model_mapping_id"`
+	OperationEntriesId          int    `json:"operation_entries_id"`
+	OperationEntriesCode        string `json:"operation_entries_code"`
+	OperationEntriesDescription string `json:"operation_entries_description"`
+	OperationGroupCode          int    `json:"operation_group_code"`
+	OperationGroupDescription   string `json:"operation_group_description"`
+	OperationKeyCode            string `json:"operation_key_code"`
+	OperationKeyDescription     string `json:"operation_key_description"`
+	OperationSectionCode        string `json:"operation_section_code"`
+	OperationSectionDescription string `json:"operation_section_description"`
+}
