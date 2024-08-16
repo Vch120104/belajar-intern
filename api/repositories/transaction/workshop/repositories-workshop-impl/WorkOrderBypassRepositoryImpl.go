@@ -11,6 +11,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -35,7 +36,7 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Add the additional where condition
-	whereQuery = whereQuery.Where("work_order_system_number > 0 and line_type_id = 1")
+	whereQuery = whereQuery.Where("work_order_system_number > 0 and line_type_id = 1 and service_status_id IN (?,?,?,?,?)", utils.SrvStatDraft, utils.SrvStatStart, utils.SrvStatPending, utils.SrvStatStop, utils.SrvStatReOrder)
 
 	rows, err := whereQuery.Find(&tableStruct).Rows()
 	if err != nil {
@@ -69,6 +70,7 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			&workOrderReq.ItemId,
 			&workOrderReq.ProposedPrice,
 			&workOrderReq.OperationItemPrice,
+			&workOrderReq.ServiceStatusId,
 		); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -100,15 +102,41 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			}
 		}
 
+		// fetch line type from internal services
+		OperationURL := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(workOrderReq.LineTypeId)
+		//fmt.Println("Fetching  operation data from:", OperationURL)
+		var getOperationResponse transactionworkshoppayloads.Linetype
+		if err := utils.Get(OperationURL, &getOperationResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch operation data from external service",
+				Err:        err,
+			}
+		}
+
+		// fetch service status from internal services
+		ServiceStatusURL := config.EnvConfigs.GeneralServiceUrl + "service-status/" + strconv.Itoa(workOrderReq.ServiceStatusId)
+		//fmt.Println("Fetching  service status data from:", ServiceStatusURL)
+		var getServiceStatusResponse transactionworkshoppayloads.ServiceStatusResponse
+		if err := utils.Get(ServiceStatusURL, &getServiceStatusResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch service status data from external service",
+				Err:        err,
+			}
+		}
+
 		workOrderRes = transactionworkshoppayloads.WorkOrderDetailBypassResponse{
 
 			WorkOrderSystemNumber:   workOrderReq.WorkOrderSystemNumber,
 			WorkOrderDocumentNumber: getModelResponse.WorkOrderDocumentNumber,
 			LineTypeId:              workOrderReq.LineTypeId,
+			LineTypeName:            getOperationResponse.LineTypeName,
 			ItemId:                  workOrderReq.ItemId,
 			ItemCode:                getItemResponse.ItemCode,
 			ItemName:                getItemResponse.ItemName,
 			FrtQuantity:             workOrderReq.FrtQuantity,
+			ServiceStatusName:       getServiceStatusResponse.ServiceStatusName,
 		}
 
 		convertedResponses = append(convertedResponses, workOrderRes)
@@ -206,21 +234,133 @@ func (r *WorkOrderBypassRepositoryImpl) GetById(tx *gorm.DB, id int) (transactio
 	return workOrderResponse, nil
 }
 
-func (r *WorkOrderBypassRepositoryImpl) Bypass(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBypassRequestDetail) (transactionworkshopentities.WorkOrderQualityControl, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderQualityControl
+// uspg_wtWorkOrder2_Update
+// IF @Option = 8
+// --USE IN MODUL : * UPDATE DATA BY KEY -- BYPASS OPERATION TO QC PASS
+func (r *WorkOrderBypassRepositoryImpl) Bypass(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBypassRequestDetail) (transactionworkshoppayloads.WorkOrderBypassResponseDetail, *exceptions.BaseErrorResponse) {
+	var wo transactionworkshopentities.WorkOrder
+	var count int64
+	var lineTypeOperation = 1
 
-	entity.WorkOrderSystemNumber = request.WorkOrderSystemNumber
-	entity.WorkOrderQualityControlStatusID = request.WorkOrderQualityControlStatusID
-	entity.WorkOrderStartDateTime = request.WorkOrderStartDateTime
-	entity.WorkOrderEndDateTime = request.WorkOrderEndDateTime
-	entity.WorkOrderActualTime = request.WorkOrderActualTime
-
-	if err := tx.Save(&entity).Error; err != nil {
-		return transactionworkshopentities.WorkOrderQualityControl{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+	// Retrieve WorkOrder and WorkOrderDetail
+	if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ?", id).
+		First(&wo).Error; err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Work Order not found",
 			Err:        err,
 		}
 	}
 
-	return entity, nil
+	if wo.WorkOrderDocumentNumber == "" {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Work Order Document Number must be filled before Bypass",
+			Err:        errors.New("work order document number must be filled before bypass"),
+		}
+	}
+
+	// Update WorkOrderDetail
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_operation_item_line = ?", id, lineTypeOperation).
+		Updates(map[string]interface{}{
+			"service_status_id":             utils.SrvStatQcPass,
+			"quality_control_pass_datetime": time.Now(),
+			"bypass":                        true,
+			"technician_id":                 request.TechnicianId,
+		}).Error; err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update Work Order Detail",
+			Err:        err,
+		}
+	}
+
+	// Delete from WorkOrderTechAlloc
+	if err := tx.Where("work_order_system_number = ? AND work_order_line = ?", id, lineTypeOperation).
+		Delete(&transactionworkshopentities.WorkOrderAllocation{}).Error; err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete Work Order Allocation",
+			Err:        err,
+		}
+	}
+
+	// Delete from ServiceLog
+	if err := tx.Where("work_order_system_number = ? AND work_order_line = ?", id, lineTypeOperation).
+		Delete(&transactionworkshopentities.ServiceLog{}).Error; err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete Service Log",
+			Err:        err,
+		}
+	}
+
+	// Update WorkOrder status based on conditions
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND line_type_id = ? AND service_status_id <> ?", id, lineTypeOperation, utils.SrvStatQcPass).
+		Count(&count).Error; err != nil {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count Work Order Detail",
+			Err:        err,
+		}
+	}
+
+	if count == 0 {
+		if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+			Where("work_order_system_number = ?", id).
+			Updates(map[string]interface{}{
+				"work_order_status_id": utils.WoStatQC,
+			}).Error; err != nil {
+			return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update Work Order status",
+				Err:        err,
+			}
+		}
+	}
+
+	// Insert into CarWash if not exists
+	// if err := tx.Model(&transactionworkshopentities.CarWash{}).
+	// 	Where("work_order_system_number = ?", request.WorkOrderSystemNumber).
+	// 	First(&carWash).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	// 	return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to fetch Car Wash",
+	// 		Err:        err,
+	// 	}
+	// }
+
+	// if carWash.WoSysNo == "" {
+	// 	carWash = transactionworkshopentities.CarWash{
+	// 		RecordStatus:   "A",
+	// 		CompanyCode:    wo.CompanyCode,
+	// 		WosysNo:        request.WorkOrderSystemNumber,
+	// 		BayNo:          "",
+	// 		CarWashStatus:  "00",
+	// 		CarWashDate:    nil,
+	// 		StartTime:      nil,
+	// 		EndTime:        nil,
+	// 		ActualTime:     0,
+	// 		PriorityStatus: "01",
+	// 	}
+
+	// 	if err := tx.Create(&carWash).Error; err != nil {
+	// 		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+	// 			StatusCode: http.StatusInternalServerError,
+	// 			Err:        err,
+	// 		}
+	// 	}
+	// }
+
+	// Prepare the response
+	response := transactionworkshoppayloads.WorkOrderBypassResponseDetail{
+		WorkOrderSystemNumber: wo.WorkOrderSystemNumber,
+		ServiceStatusId:       utils.SrvStatQcPass,
+		TechnicianId:          request.TechnicianId,
+	}
+
+	return response, nil
 }

@@ -72,3 +72,9 @@ type ServiceWorkshopWoResponse struct {
 	VehicleCode             string `json:"vehicle_chassis_number"`
 	VehicleTnkb             string `json:"vehicle_tnkb"`
 }
+
+type ServiceStatusResponse struct {
+	ServiceStatusId   int    `json:"service_status_id"`
+	ServiceStatusCode string `json:"service_status_code"`
+	ServiceStatusName string `json:"service_status_description"`
+}
