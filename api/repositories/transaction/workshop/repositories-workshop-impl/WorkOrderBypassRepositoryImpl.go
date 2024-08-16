@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
@@ -239,6 +240,7 @@ func (r *WorkOrderBypassRepositoryImpl) GetById(tx *gorm.DB, id int) (transactio
 // --USE IN MODUL : * UPDATE DATA BY KEY -- BYPASS OPERATION TO QC PASS
 func (r *WorkOrderBypassRepositoryImpl) Bypass(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBypassRequestDetail) (transactionworkshoppayloads.WorkOrderBypassResponseDetail, *exceptions.BaseErrorResponse) {
 	var wo transactionworkshopentities.WorkOrder
+	var carWash transactionjpcbentities.CarWash
 	var count int64
 	var lineTypeOperation = 1
 
@@ -323,37 +325,37 @@ func (r *WorkOrderBypassRepositoryImpl) Bypass(tx *gorm.DB, id int, request tran
 	}
 
 	// Insert into CarWash if not exists
-	// if err := tx.Model(&transactionworkshopentities.CarWash{}).
-	// 	Where("work_order_system_number = ?", request.WorkOrderSystemNumber).
-	// 	First(&carWash).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-	// 	return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to fetch Car Wash",
-	// 		Err:        err,
-	// 	}
-	// }
+	if err := tx.Model(&transactionjpcbentities.CarWash{}).
+		Where("work_order_system_number = ?", id).
+		First(&carWash).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Car Wash",
+			Err:        err,
+		}
+	}
 
-	// if carWash.WoSysNo == "" {
-	// 	carWash = transactionworkshopentities.CarWash{
-	// 		RecordStatus:   "A",
-	// 		CompanyCode:    wo.CompanyCode,
-	// 		WosysNo:        request.WorkOrderSystemNumber,
-	// 		BayNo:          "",
-	// 		CarWashStatus:  "00",
-	// 		CarWashDate:    nil,
-	// 		StartTime:      nil,
-	// 		EndTime:        nil,
-	// 		ActualTime:     0,
-	// 		PriorityStatus: "01",
-	// 	}
+	if carWash.WorkOrderSystemNumber == 0 {
+		carWash = transactionjpcbentities.CarWash{
+			CompanyId:             1,
+			WorkOrderSystemNumber: id,
+			CarWashBayId:          1,
+			CarWashStatusId:       1,
+			CarWashDate:           time.Now(),
+			StartTime:             0,
+			EndTime:               0,
+			ActualTime:            0,
+			CarWashPriorityId:     1,
+		}
 
-	// 	if err := tx.Create(&carWash).Error; err != nil {
-	// 		return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
-	// 			StatusCode: http.StatusInternalServerError,
-	// 			Err:        err,
-	// 		}
-	// 	}
-	// }
+		if err := tx.Create(&carWash).Error; err != nil {
+			return transactionworkshoppayloads.WorkOrderBypassResponseDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to create Car Wash",
+				Err:        err,
+			}
+		}
+	}
 
 	// Prepare the response
 	response := transactionworkshoppayloads.WorkOrderBypassResponseDetail{
