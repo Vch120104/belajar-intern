@@ -117,7 +117,7 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 		}
 	}
 
-	rows, err := joinQuery.Where("company_id = ? AND bay.is_active = 1", companyIdFilter).Rows()
+	rows, err := joinQuery.Where("carwash.company_id = ? AND bay.is_active = 1", companyIdFilter).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -187,7 +187,7 @@ func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.Filter
 		}
 	}
 
-	rows, err := joinQuery.Where("company_id = ? AND work_order_system_number = 0", companyIdFilter).Rows()
+	rows, err := joinQuery.Where("carwash.company_id = ? AND work_order_system_number = 0", companyIdFilter).Rows()
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -223,7 +223,7 @@ func (r *BayMasterImpl) ChangeStatus(tx *gorm.DB, request transactionjpcbpayload
 	carWashEntities := []transactionjpcbentities.CarWash{}
 	var bayEntity transactionjpcbentities.BayMaster
 
-	result := tx.Select("work_order_system_number").Where("company_id = ? AND car_wash_bay_id = ? AND car_wash_status_id = 3", request.CompanyId, request.CarWashBayId).
+	result := tx.Select("work_order_system_number").Where("company_id = ? AND car_wash_bay_id = ? AND car_wash_status_id = 2", request.CompanyId, request.CarWashBayId).
 		Find(&carWashEntities)
 
 	if result.Error != nil {
