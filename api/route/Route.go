@@ -264,6 +264,11 @@ func StartRouting(db *gorm.DB) {
 	SupplySlipService := transactionsparepartserviceimpl.StartSupplySlipService(SupplySlipRepository, db, rdb)
 	SupplySlipController := transactionsparepartcontroller.NewSupplySlipController(SupplySlipService)
 
+	//Supply Slip Return
+	SupplySlipReturnRepository := transactionsparepartrepositoryimpl.StartSupplySlipReturnRepositoryImpl()
+	SupplySlipReturnService := transactionsparepartserviceimpl.StartSupplySlipReturnService(SupplySlipReturnRepository, SupplySlipRepository, db, rdb)
+	SupplySlipReturnController := transactionsparepartcontroller.NewSupplySlipReturnController(SupplySlipReturnService)
+
 	//Booking Estimation
 	BookingEstimationRepository := transactionworkshoprepositoryimpl.OpenBookingEstimationRepositoryImpl()
 	BookingEstimationService := transactionworkshopserviceimpl.OpenBookingEstimationServiceImpl(BookingEstimationRepository, db, rdb)
@@ -360,6 +365,7 @@ func StartRouting(db *gorm.DB) {
 	LocationStockRouter := LocationStockRouter(LocationStockController)
 	/* Transaction */
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
+	SupplySlipReturnRouter := SupplySlipReturnRouter(SupplySlipReturnController)
 	BookingEstimationRouter := BookingEstimationRouter(BookingEstimationController)
 	WorkOrderRouter := WorkOrderRouter(WorkOrderController)
 	SalesOrderRouter := SalesOrderRouter(SalesOrderController)
@@ -448,6 +454,7 @@ func StartRouting(db *gorm.DB) {
 
 		/* Transaction Sparepart */
 		r.Mount("/supply-slip", SupplySlipRouter)
+		r.Mount("/supply-slip-return", SupplySlipReturnRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 	})
