@@ -21,4 +21,5 @@ type PurchaseRequestService interface {
 	VoidPurchaseRequest(int) (bool, *exceptions.BaseErrorResponse)
 	InsertPurchaseRequestUpdateHeader(transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse)
 	InsertPurchaseRequestUpdateDetail(transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse)
+	VoidPurchaseRequestDetail(string2 string) (bool, *exceptions.BaseErrorResponse)
 }

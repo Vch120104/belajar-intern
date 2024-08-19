@@ -143,3 +143,13 @@ func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateDetail(payloads 
 	}
 	return res, nil
 }
+func (p *PurchaseRequestServiceImpl) VoidPurchaseRequestDetail(stringId string) (bool, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	res, err := p.PurchaseRequestRepo.VoidPurchaseRequestDetailMultiId(tx, stringId)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}

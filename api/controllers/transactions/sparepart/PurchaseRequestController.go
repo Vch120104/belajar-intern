@@ -23,6 +23,8 @@ type PurchaseRequestController interface {
 	NewPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
 	NewPurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 	Void(writer http.ResponseWriter, request *http.Request)
+	VoidDetail(writer http.ResponseWriter, request *http.Request)
+
 	UpdatePurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
 	UpdatePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 	SubmitPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
@@ -145,7 +147,8 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequestDetail(wri
 	filterCondition := utils.BuildFilterCondition(queryParams)
 	result, err := controller.PurchaseRequestService.GetAllPurchaseRequestDetail(filterCondition, pagination)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		//helper.ReturnError(writer, request, err)
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -323,15 +326,12 @@ func (controller *PurchaseRequestControllerImpl) Void(writer http.ResponseWriter
 //	@Produce		json
 //	@Tags			Transaction : Purchase Request
 //	@Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
-//	@Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request) {
 	var puchaseRequestHeader transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
-
-	helper.ReadFromRequestBody(request, &puchaseRequestHeader)
 	success, err := controller.PurchaseRequestService.InsertPurchaseRequestUpdateHeader(puchaseRequestHeader, PurchaseRequestSystemNumber)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -364,4 +364,36 @@ func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestDetail(wri
 		return
 	}
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
+}
+
+// VoidDetail
+//
+// @Summary		Void Request Purchase Detail Multi Id
+// @Description	Void Request Purchase Detail Multi Id
+// @Accept			json
+// @Produce		json
+// @Tags			Transaction : Purchase Request
+// @Param			purchase_request_detail_system_number	path		string true	"purchase_request_detail_system_number"
+// @Success		201						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [delete]
+func (controller *PurchaseRequestControllerImpl) VoidDetail(writer http.ResponseWriter, request *http.Request) {
+	// Void work order
+	PurchaseRequesDetailId := chi.URLParam(request, "purchase_request_detail_system_number")
+
+	success, baseErr := controller.PurchaseRequestService.VoidPurchaseRequestDetail(PurchaseRequesDetailId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			helper.ReturnError(writer, request, baseErr)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Purchase Request Detail voided successfully", http.StatusOK)
+	} else {
+		helper.ReturnError(writer, request, baseErr)
+	}
 }

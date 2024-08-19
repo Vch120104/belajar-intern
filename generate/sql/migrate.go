@@ -3,8 +3,7 @@ package migration
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
-
+	masterentities "after-sales/api/entities/master"
 	"time"
 
 	"fmt"
@@ -158,15 +157,18 @@ func Migrate() {
 		//&transactionworkshopentities.BookingEstimationOperationDetail{},
 		//&transactionworkshopentities.BookingEstimationRequest{},
 
-		// &transactionworkshopentities.BookingEstimation{},
-		// &transactionworkshopentities.BookingEstimationAllocation{},
-		// &transactionworkshopentities.BookingEstimationRequest{},
-		// &transactionworkshopentities.BookingEstimationServiceReminder{},
-		// &transactionworkshopentities.BookingEstimationServiceDiscount{},
-		// &transactionworkshopentities.BookingEstimationDetail{},
+	// &transactionworkshopentities.BookingEstimation{},
+	// &transactionworkshopentities.BookingEstimationAllocation{},
+	// &transactionworkshopentities.BookingEstimationRequest{},
+	// &transactionworkshopentities.BookingEstimationServiceReminder{},
+	// &transactionworkshopentities.BookingEstimationServiceDiscount{},
+	// &transactionworkshopentities.BookingEstimationDetail{},
 
-		&transactionsparepartentities.PurchaseRequestEntities{},
-		&transactionsparepartentities.PurchaseRequestDetail{},
+		//&transactionsparepartentities.PurchaseRequestEntities{},
+		//&transactionsparepartentities.PurchaseRequestDetail{},
+
+		&masterentities.ItemCycle{},
+		//&masterentities.MovingItemCode{},
 		&transactionsparepartentities.PurchaseRequestReferenceType{},
 		&masterentities.LocationStock{},
 	)

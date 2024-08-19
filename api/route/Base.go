@@ -10,6 +10,7 @@ import (
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
 
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -438,7 +439,9 @@ func PurchaseRequestRouter(
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
 	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
+	router.Delete("/detail/{purchase_request_detail_system_number}", PurchaseRequest.VoidDetail)
 
+	//purchase-request/detail/{purchase_request_detail_system_number}
 	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
 

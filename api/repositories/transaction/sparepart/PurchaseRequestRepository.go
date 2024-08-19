@@ -21,6 +21,7 @@ type PurchaseRequestRepository interface {
 	VoidPurchaseRequest(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	InsertPurchaseRequestHeader(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse)
 	InsertPurchaseRequestDetail(*gorm.DB, transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse)
+	VoidPurchaseRequestDetailMultiId(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 }
 
 //NewPurchaseRequestHeader(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse)

@@ -201,10 +201,14 @@ type PurchaseRequestDetailRequestPayloads struct {
 	ReferenceSystemNumber             int `json:"reference_system_number" parent_entity:"trx_purchase_request_detail"`
 	ReferenceLine                     int `json:"reference_line" parent_entity:"trx_purchase_request_detail"
 `
-	ItemCode          string   `json:"item_code" parent_entity:"trx_purchase_request_detail"`
-	ItemQuantity      *float64 `json:"item_quantity" parent_entity:"trx_purchase_request_detail"`
-	ItemUnitOfMeasure string   `json:"item_unit_of_measures" parent_entity:"trx_purchase_request_detail"`
-	ItemRemark        string   `json:"item_remark" parent_entity:"trx_purchase_request_detail"`
+	ItemCode          string    `json:"item_code" parent_entity:"trx_purchase_request_detail"`
+	ItemQuantity      *float64  `json:"item_quantity" parent_entity:"trx_purchase_request_detail"`
+	ItemUnitOfMeasure string    `json:"item_unit_of_measures" parent_entity:"trx_purchase_request_detail"`
+	ItemRemark        string    `json:"item_remark" parent_entity:"trx_purchase_request_detail"`
+	CreatedByUserId   int       `json:"created_by_user_id" parent_entity:"trx_purchase_request"`
+	CreatedDate       time.Time `json:"created_date" parent_entity:"trx_purchase_request"`
+	UpdatedByUserId   int       `json:"updated_by_user_id" parent_entity:"trx_purchase_request"`
+	UpdatedDate       time.Time `json:"updated_date" parent_entity:"trx_purchase_request"`
 }
 type PurchaseRequestDetailResponsesPayloads struct {
 
@@ -239,18 +243,23 @@ type PurchaseRequestDetailResponsesPayloads struct {
 	//CreatedDate                       *time.Time `gorm:"column:created_date" json:"created_date"`
 	//UpdatedByUserId                   int        `gorm:"column:updated_by_user_id;size:30;" json:"updated_by_user_id"`
 	//UpdatedDate                       *time.Time `gorm:"column:updated_date" json:"updated_date"`
-	PurchaseRequestDetailSystemNumber int      `json:"purchase_request_detail_system_number"`
-	PurchaseRequestSystemNumber       int      `json:"purchase_request_system_number"`
-	PurchaseRequestLineNumber         int      `json:"purchase_request_line_number"`
-	ReferenceSystemNumber             int      `json:"reference_system_number"`
-	ItemId                            int      `json:"item_id"`
-	ReferenceLine                     int      `json:"reference_line"`
-	ItemCode                          string   `json:"item_code"`
-	ItemName                          string   `json:"item_name"`
-	ItemQuantity                      *float64 `json:"item_quantity"`
-	ItemUnitOfMeasure                 string   `json:"item_unit_of_measures"`
-	ItemUnitOfMeasureRate             float64  `json:"item_unit_of_measure_rate"`
-	ItemRemark                        string   `json:"item_remark"`
+	PurchaseRequestDetailSystemNumber int       `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int       `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber         int       `json:"purchase_request_line_number"`
+	ReferenceSystemNumber             int       `json:"reference_system_number"`
+	ItemId                            int       `json:"item_id"`
+	ReferenceLine                     int       `json:"reference_line"`
+	ItemCode                          string    `json:"item_code"`
+	ItemName                          string    `json:"item_name"`
+	ItemQuantity                      *float64  `json:"item_quantity"`
+	ItemUnitOfMeasure                 string    `json:"item_unit_of_measures"`
+	ItemUnitOfMeasureRate             float64   `json:"item_unit_of_measure_rate"`
+	ItemRemark                        string    `json:"item_remark"`
+	ChangeNo                          int       `json:"change_no" parent_entity:"trx_purchase_request"`
+	CreatedByUserId                   int       `json:"created_by_user_id" parent_entity:"trx_purchase_request"`
+	CreatedDate                       time.Time `json:"created_date" parent_entity:"trx_purchase_request"`
+	UpdatedByUserId                   int       `json:"updated_by_user_id" parent_entity:"trx_purchase_request"`
+	UpdatedDate                       time.Time `json:"updated_date" parent_entity:"trx_purchase_request"`
 }
 
 type PurchaseRequestHeaderSaveRequest struct {
