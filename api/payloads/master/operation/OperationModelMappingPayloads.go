@@ -69,6 +69,7 @@ type BrandResponse struct {
 
 type VariantResponse struct {
 	VariantId          int    `json:"variant_id"`
+	VariantCode        string `json:"variant_code"`
 	VariantDescription string `json:"variant_description"`
 }
 

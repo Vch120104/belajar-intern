@@ -29,6 +29,13 @@ type LabourSellingPriceDetailRequest struct {
 	SellingPrice         float64 `json:"selling_price"`
 }
 
+type LabourSellingPriceDetailbyIdResponse struct {
+	RecordStatus       string  `json:"record_status"`
+	Model              string  `json:"model"`
+	Variant            string  `json:"variant"`
+	LabourSellingPrice float64 `json:"labour_selling_price"`
+}
+
 type LabourSellingPriceDetailResponse struct {
 	IsActive                   bool    `json:"is_active"`
 	LabourSellingPriceDetailId int     `json:"labour_selling_price_detail_id"`
@@ -36,6 +43,11 @@ type LabourSellingPriceDetailResponse struct {
 	ModelId                    int     `json:"model_id"`
 	VariantId                  int     `json:"variant_id"`
 	SellingPrice               float64 `json:"selling_price"`
+}
+
+type SaveDuplicateLabourSellingPrice struct {
+	Header LabourSellingPriceRequest         `json:"header" validate:"required"`
+	Detail []LabourSellingPriceDetailRequest `json:"detail" validate:"required"`
 }
 
 type BrandLabourSellingPriceResponse struct {
