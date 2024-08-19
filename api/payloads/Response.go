@@ -50,7 +50,7 @@ func NewHandleSuccess(writer http.ResponseWriter, data interface{}, message stri
 		Data:       data,
 	}
 
-	helper.WriteToResponseBody(writer, res)
+	helper.WriteToResponseBody(writer, res, status)
 }
 
 func NewHandleSuccessPagination(writer http.ResponseWriter, data interface{}, message string, status int, limit int, page int, totalRows int64, totalPages int) {
@@ -64,5 +64,5 @@ func NewHandleSuccessPagination(writer http.ResponseWriter, data interface{}, me
 		Data:       data,
 	}
 
-	helper.WriteToResponseBody(writer, res)
+	helper.WriteToResponseBody(writer, res, status)
 }

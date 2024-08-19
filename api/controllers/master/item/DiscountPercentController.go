@@ -73,7 +73,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 

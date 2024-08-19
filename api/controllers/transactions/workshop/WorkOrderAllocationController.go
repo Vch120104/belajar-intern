@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"log"
 	"strconv"
 	"time"
 
@@ -416,17 +417,14 @@ func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.Resp
 func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writer http.ResponseWriter, request *http.Request) {
 	queryParams := request.URL.Query()
 
-	companyCode, err := strconv.Atoi(queryParams.Get("company_id"))
-	if err != nil {
-		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
-			Message:    "Invalid company code",
-			Err:        err,
-			StatusCode: http.StatusBadRequest,
-		})
-		return
-	}
+	companyCode := queryParams.Get("company_id")
+	foremanID := queryParams.Get("foreman_id")
+	serviceDate := queryParams.Get("service_date")
+	brandID := queryParams.Get("brand_id")
 
-	foremanId, err := strconv.Atoi(queryParams.Get("foreman_id"))
+	log.Printf("Received Query Params - company_id: %s, foreman_id: %s, service_date: %s, brand_id: %s", companyCode, foremanID, serviceDate, brandID)
+
+	foremanId, err := strconv.Atoi(foremanID)
 	if err != nil {
 		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
 			Message:    "Invalid foreman ID",
@@ -436,7 +434,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 		return
 	}
 
-	techallocStartDate, err := time.Parse("2006-01-02", queryParams.Get("service_date"))
+	techallocStartDate, err := time.Parse("2006-01-02", serviceDate)
 	if err != nil {
 		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
 			Message:    "Invalid start date",
@@ -446,7 +444,7 @@ func (r *WorkOrderAllocationControllerImp) GetWorkOrderAllocationHeaderData(writ
 		return
 	}
 
-	vehicleBrandId, err := strconv.Atoi(queryParams.Get("brand_id"))
+	vehicleBrandId, err := strconv.Atoi(brandID)
 	if err != nil {
 		exceptions.NewAppException(writer, request, &exceptions.BaseErrorResponse{
 			Message:    "Invalid vehicle brand ID",

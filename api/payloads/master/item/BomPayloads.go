@@ -39,6 +39,26 @@ type BomMasterRequest struct {
 	ItemId                 int       `json:"item_id"`
 }
 
+type BomDetailsResponse struct {
+	Page       int                     `json:"page"`
+	Limit      int                     `json:"limit"`
+	TotalPages int                     `json:"total_pages"`
+	TotalRows  int                     `json:"total_rows"`
+	Data       []BomDetailListResponse `json:"data"`
+}
+
+type BomMasterResponseDetail struct {
+	BomMasterId            int                `json:"bom_master_id"`
+	IsActive               bool               `json:"is_active"`
+	BomMasterQty           int                `json:"bom_master_qty"`
+	BomMasterEffectiveDate time.Time          `json:"bom_master_effective_date"`
+	BomMasterChangeNumber  int                `json:"bom_master_change_number"`
+	ItemId                 int                `json:"item_id"`
+	ItemCode               string             `json:"item_code"`
+	ItemName               string             `json:"item_name"`
+	BomDetails             BomDetailsResponse `json:"bom_details"`
+}
+
 type BomItemNameResponse struct {
 	ItemId   int    `json:"item_id"`
 	ItemCode string `json:"item_code"`
@@ -74,20 +94,17 @@ type BomDetailRequest struct {
 }
 
 type BomDetailListResponse struct {
-	BomMasterId             int       `json:"bom_master_id" parent_entity:"bom_master_id"`
-	IsActive                bool      `json:"is_active"`
-	BomMasterEffectiveDate  time.Time `json:"bom_master_effective_date"`
-	BomMasterQty            int       `json:"bom_master_qty"`
-	ItemCode                string    `json:"item_code"`
-	ItemName                string    `json:"item_name"`
-	ItemClassCode           string    `json:"item_class_code"`
-	LineTypeName            string    `json:"line_type_name"`
-	BomDetailId             int       `json:"bom_detail_id" parent_entity:"mtr_bom_detail" main_table:"mtr_bom_detail"`
-	BomDetailSeq            int       `json:"bom_detail_seq" parent_entity:"mtr_bom_detail"`
-	BomDetailQty            int       `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
-	BomDetailRemark         string    `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
-	BomDetailCostingPercent int       `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
-	UomDescription          string    `json:"uom_description" parent_entity:"mtr_uom"`
+	BomMasterId             int    `json:"bom_master_id" parent_entity:"mtr_bom_detail"`
+	ItemCode                string `json:"item_code"`
+	ItemName                string `json:"item_name"`
+	LineTypeName            string `json:"line_type_name"`
+	BomDetailTypeId         int    `json:"bom_detail_type_id" parent_entity:"mtr_bom_detail"`
+	BomDetailId             int    `json:"bom_detail_id" parent_entity:"mtr_bom_detail"`
+	BomDetailSeq            int    `json:"bom_detail_seq" parent_entity:"mtr_bom_detail"`
+	BomDetailQty            int    `json:"bom_detail_qty" parent_entity:"mtr_bom_detail"`
+	BomDetailRemark         string `json:"bom_detail_remark" parent_entity:"mtr_bom_detail"`
+	BomDetailCostingPercent int    `json:"bom_detail_costing_percent" parent_entity:"mtr_bom_detail"`
+	UomDescription          string `json:"uom_description" parent_entity:"mtr_uom"`
 }
 
 type BomItemLookup struct {
