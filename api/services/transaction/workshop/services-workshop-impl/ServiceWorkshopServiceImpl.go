@@ -40,12 +40,12 @@ func (s *ServiceWorkshopServiceImpl) GetAllByTechnicianWO(idTech int, idSysWo in
 	return results, nil
 }
 
-func (s *ServiceWorkshopServiceImpl) StartService(idAlloc int, idSysWo int, idServLog int, companyId int) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceWorkshopServiceImpl) StartService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	// Start the service
-	start, err := s.ServiceWorkshopRepository.StartService(tx, idAlloc, idSysWo, idServLog, companyId)
+	start, err := s.ServiceWorkshopRepository.StartService(tx, idAlloc, idSysWo, companyId)
 	if err != nil {
 		return false, err
 	}
@@ -53,12 +53,12 @@ func (s *ServiceWorkshopServiceImpl) StartService(idAlloc int, idSysWo int, idSe
 	return start, nil
 }
 
-func (s *ServiceWorkshopServiceImpl) PendingService(idAlloc int, idSysWo int, idServLog int, companyId int) (bool, *exceptions.BaseErrorResponse) {
+func (s *ServiceWorkshopServiceImpl) PendingService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	// Pending the service
-	pending, err := s.ServiceWorkshopRepository.PendingService(tx, idAlloc, idSysWo, idServLog, companyId)
+	pending, err := s.ServiceWorkshopRepository.PendingService(tx, idAlloc, idSysWo, companyId)
 	if err != nil {
 		return false, err
 	}

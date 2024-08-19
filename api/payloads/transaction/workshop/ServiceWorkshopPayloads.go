@@ -26,6 +26,7 @@ type ServiceWorkshopResponse struct {
 	OperationItemCode                string    `json:"operation_code"`
 	Frt                              float64   `json:"frt"`
 	ServiceStatusId                  int       `json:"service_status_id"`
+	ServiceStatusDescription         string    `json:"service_status_description"`
 	ServActualTime                   float64   `json:"serv_actual_time"`
 	ServPendingTime                  float64   `json:"serv_pending_time"`
 	ServProgressTime                 float64   `json:"serv_progress_time"`
@@ -37,7 +38,7 @@ type ServiceWorkshopResponse struct {
 
 // TimeReference represents the structure of the data returned by the API
 type TimeReference struct {
-	TimeDiff int `json:"time_diff"`
+	TimeDiff int `json:"currency_id"` // `json:"time_different"`
 }
 
 type ServiceWorkshopDetailResponse struct {

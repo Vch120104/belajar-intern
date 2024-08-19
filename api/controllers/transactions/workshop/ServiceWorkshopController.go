@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"fmt"
 	"strconv"
 
 	"net/http"
@@ -108,32 +109,39 @@ func (r *ServiceWorkshopControllerImp) GetAllByTechnicianWO(writer http.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{service_log_system_number}/{company_id}/start [post]
 func (r *ServiceWorkshopControllerImp) StartService(writer http.ResponseWriter, request *http.Request) {
-
-	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
+	// Extract parameters from URL
+	allocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
 	if err != nil {
+
 		payloads.NewHandleError(writer, "Invalid Technician Allocate ID", http.StatusBadRequest)
 		return
 	}
 
 	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
-		return
-	}
 
-	serviceLogId, err := strconv.Atoi(chi.URLParam(request, "service_log_system_number"))
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid service log ID", http.StatusBadRequest)
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
 		return
 	}
 
 	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
 	if err != nil {
+
 		payloads.NewHandleError(writer, "Invalid company code", http.StatusBadRequest)
 		return
 	}
 
-	success, baseErr := r.ServiceWorkshopService.StartService(alllocId, workOrderId, serviceLogId, companyId)
+	fmt.Printf("Parameters: allocId=%d, workOrderId=%d, companyId=%d\n", allocId, workOrderId, companyId)
+
+	// Check if ServiceWorkshopService is initialized
+	if r.ServiceWorkshopService == nil {
+
+		payloads.NewHandleError(writer, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Call the service method
+	success, baseErr := r.ServiceWorkshopService.StartService(allocId, workOrderId, companyId)
 	if baseErr != nil {
 
 		payloads.NewHandleError(writer, baseErr.Err.Error(), baseErr.StatusCode)
@@ -142,8 +150,9 @@ func (r *ServiceWorkshopControllerImp) StartService(writer http.ResponseWriter, 
 
 	if success {
 
-		payloads.NewHandleSuccess(writer, nil, "Service Started Successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Service Started Successfully", http.StatusOK)
 	} else {
+
 		payloads.NewHandleError(writer, "Failed to start service", http.StatusInternalServerError)
 	}
 }
@@ -160,7 +169,7 @@ func (r *ServiceWorkshopControllerImp) StartService(writer http.ResponseWriter, 
 // @Param company_id query int false "Company ID"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{service_log_system_number}/{company_id}/pending [post]
+// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending [post]
 func (r *ServiceWorkshopControllerImp) PendingService(writer http.ResponseWriter, request *http.Request) {
 
 	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
@@ -175,28 +184,22 @@ func (r *ServiceWorkshopControllerImp) PendingService(writer http.ResponseWriter
 		return
 	}
 
-	serviceLogId, err := strconv.Atoi(chi.URLParam(request, "service_log_system_number"))
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid service log ID", http.StatusBadRequest)
-		return
-	}
-
 	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
 	if err != nil {
 		payloads.NewHandleError(writer, "Invalid company code", http.StatusBadRequest)
 		return
 	}
 
-	success, baseErr := r.ServiceWorkshopService.PendingService(alllocId, workOrderId, serviceLogId, companyId)
+	pending, baseErr := r.ServiceWorkshopService.PendingService(alllocId, workOrderId, companyId)
 	if baseErr != nil {
 
 		payloads.NewHandleError(writer, baseErr.Err.Error(), baseErr.StatusCode)
 		return
 	}
 
-	if success {
+	if pending {
 
-		payloads.NewHandleSuccess(writer, nil, "Service Pending Successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, pending, "Service Pending Successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to pending service", http.StatusInternalServerError)
 	}
