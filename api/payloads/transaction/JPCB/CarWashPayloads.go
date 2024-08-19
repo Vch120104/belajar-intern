@@ -20,6 +20,22 @@ type CarWashGetAllResponse struct {
 	CarWashPriorityDescription string     `json:"car_wash_priority_description"`
 }
 
+type CarWashPostResponse struct {
+	CarWashId             int       `json:"car_wash_id"`
+	CompanyId             int       `json:"company_id"`
+	WorkOrderSystemNumber int       `json:"work_order_system_number"`
+	BayId                 *int      `json:"car_wash_bay_id"`
+	StatusId              int       `json:"car_wash_status_id"`
+	PriorityId            int       `json:"car_wash_priority_id"`
+	CarWashDate           time.Time `json:"car_wash_date"`
+	StartTime             float32   `json:"start_time"`
+	EndTime               float32   `json:"end_time"`
+	ActualTime            float32   `json:"actual_time"`
+}
+
+type CarWashPostRequestProps struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+}
 type CarWashModelResponse struct {
 	ModelId   int    `json:"model_id"`
 	ModelCode string `json:"model_code"`
@@ -55,4 +71,10 @@ type CarWashErrorDetail struct {
 	CarWashBayDescription    string `json:"car_wash_bay_description"`
 	CarWashStatusId          int    `json:"car_wash_status_id"`
 	CarWashStatusDescription string `json:"car_wash_status_description"`
+}
+
+type CarWashWorkOrder struct {
+	CarWash           bool `json:"car_wash"`
+	CompanyId         int  `json:"company_id"`
+	WorkOrderStatusId int  `json:"work_order_status_id"`
 }

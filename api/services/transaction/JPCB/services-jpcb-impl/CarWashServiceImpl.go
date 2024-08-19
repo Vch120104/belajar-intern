@@ -71,3 +71,15 @@ func (s *CarWashServiceImpl) DeleteCarWash(workOrderSystemNumber int) (bool, *ex
 	}
 	return result, nil
 }
+
+// PostCarWash implements transactionjpcbservice.CarWashService.
+func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.PostCarWash(tx, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashPostResponse{}, err
+	}
+	return result, nil
+}

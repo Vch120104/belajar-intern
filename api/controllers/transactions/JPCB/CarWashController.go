@@ -19,6 +19,7 @@ type CarWashController interface {
 	UpdatePriority(writer http.ResponseWriter, request *http.Request)
 	GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request)
 	DeleteCarWash(writer http.ResponseWriter, request *http.Request)
+	PostCarWash(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -90,7 +91,6 @@ func (r *CarWashControllerImpl) GetAllCarWashPriorityDropDown(writer http.Respon
 	payloads.NewHandleSuccess(writer, response, "Get Data Successfully", http.StatusOK)
 }
 
-// DeleteCarWash implements CarWashController.
 func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, request *http.Request) {
 	workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 
@@ -102,8 +102,23 @@ func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, reques
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, true, "Status deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, true, "Data deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request *http.Request) {
+	// workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	var formRequest transactionjpcbpayloads.CarWashPostRequestProps
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	insert, err := r.CarWashService.PostCarWash(formRequest.WorkOrderSystemNumber)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, insert, "Data created successfully", http.StatusOK)
 }

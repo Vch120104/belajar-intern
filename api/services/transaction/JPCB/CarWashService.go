@@ -13,4 +13,5 @@ type CarWashService interface {
 	UpdatePriority(workOrderSystemNumber, carWashPriorityId int) (transactionjpcbentities.CarWash, *exceptions.BaseErrorResponse)
 	GetAllCarWashPriorityDropDown() ([]transactionjpcbpayloads.CarWashPriorityDropDownResponse, *exceptions.BaseErrorResponse)
 	DeleteCarWash(workOrderSystemNumber int) (bool, *exceptions.BaseErrorResponse)
+	PostCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse)
 }
