@@ -28,6 +28,23 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
+// CheckItemCodeExist implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) CheckItemCodeExist(tx *gorm.DB, itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse) {
+	model := masteritementities.Item{}
+
+	if err := tx.Model(model).Select("mtr_item.item_code,mtr_item.item_id,mtr_item.item_class_id").
+		Joins("ItemDetail", tx.Select("1")).
+		Where(masteritementities.Item{ItemCode: itemCode, ItemGroupId: itemGroupId, CommonPricelist: commonPriceList}).
+		Where("ItemDetail.brand_id = ?", brandId).
+		First(&model).Error; err != nil {
+		return false, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+	return true, model.ItemId, model.ItemClassId, nil
+}
+
 // GetUomItemDropDown implements masteritemrepository.ItemRepository.
 func (r *ItemRepositoryImpl) GetUomDropDown(tx *gorm.DB, uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.Uom{}
@@ -275,6 +292,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{
+		ItemId:                       req.ItemId,
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
 		ItemName:                     req.ItemName,
@@ -487,7 +505,14 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			Err:        errors.New("no brand found"),
 		}
 	}
-	Joineddata1 := utils.DataFrameInnerJoin(responses, brandpayload, "BrandId")
+	Joineddata1, errdf := utils.DataFrameInnerJoin(responses, brandpayload, "BrandId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	errurlmodel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model?page=0&limit=1000000", &modelpayloads, nil)
 	if errurlmodel != nil {
@@ -495,7 +520,14 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			StatusCode: http.StatusNotFound,
 		}
 	}
-	joineddata2 := utils.DataFrameInnerJoin(Joineddata1, modelpayloads, "ModelId")
+	joineddata2, errdf := utils.DataFrameInnerJoin(Joineddata1, modelpayloads, "ModelId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	errurlvariant := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant?page=0&limit=1000000", &variantpayloads, nil)
 	if errurlvariant != nil {
@@ -503,7 +535,14 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			StatusCode: http.StatusNotFound,
 		}
 	}
-	joineddata3 := utils.DataFrameInnerJoin(joineddata2, variantpayloads, "VariantId")
+	joineddata3, errdf := utils.DataFrameInnerJoin(joineddata2, variantpayloads, "VariantId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}

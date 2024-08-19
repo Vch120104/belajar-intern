@@ -86,7 +86,14 @@ func (r *IncentiveMasterRepositoryImpl) GetAllIncentiveMaster(tx *gorm.DB, filte
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin(responses, getJobPositionResponse, "JobPositionId")
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, getJobPositionResponse, "JobPositionId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
 

@@ -12,7 +12,7 @@ import (
 
 type BomRepository interface {
 	GetBomMasterList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetBomMasterById(*gorm.DB, int) (masteritempayloads.BomMasterRequest, *exceptions.BaseErrorResponse)
+	GetBomMasterById(tx *gorm.DB, id int, pages pagination.Pagination) (masteritempayloads.BomMasterResponseDetail, *exceptions.BaseErrorResponse)
 	SaveBomMaster(*gorm.DB, masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	UpdateBomMaster(*gorm.DB, int, masteritempayloads.BomMasterRequest) (masteritementities.Bom, *exceptions.BaseErrorResponse)
 	ChangeStatusBomMaster(tx *gorm.DB, Id int) (masteritementities.Bom, *exceptions.BaseErrorResponse)
