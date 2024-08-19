@@ -44,7 +44,7 @@ func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, 
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyCode int, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(companyCode string, foremanId int, techallocStartDate time.Time, vehicleBrandId int) (transactionworkshoppayloads.WorkOrderAllocationHeaderResult, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 

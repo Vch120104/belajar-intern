@@ -70,7 +70,6 @@ func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterConditi
 }
 
 func (s *ServiceRequestServiceImpl) GetById(id int, pages pagination.Pagination) (transactionworkshoppayloads.ServiceRequestResponse, *exceptions.BaseErrorResponse) {
-
 	cacheKey := utils.GenerateCacheKeyIds("service_request_id", id)
 
 	ctx := context.Background()
@@ -103,7 +102,9 @@ func (s *ServiceRequestServiceImpl) GetById(id int, pages pagination.Pagination)
 	if marshalErr != nil {
 		fmt.Println("Failed to marshal result for caching:", marshalErr)
 	} else {
-		s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration)
+		if err := s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration).Err(); err != nil {
+			fmt.Println("Failed to set cache:", err)
+		}
 	}
 
 	return result, nil
@@ -136,7 +137,19 @@ func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayl
 		return transactionworkshopentities.ServiceRequest{}, err
 	}
 
-	utils.RefreshCaches(ctx, "service_request")
+	cacheKey := utils.GenerateCacheKeyIds("service_request_id", id)
+	if err := s.RedisClient.Del(ctx, cacheKey).Err(); err != nil {
+		fmt.Println("Failed to delete cache:", err)
+	}
+
+	cacheData, marshalErr := json.Marshal(save)
+	if marshalErr != nil {
+		fmt.Println("Failed to marshal result for caching:", marshalErr)
+	} else {
+		if err := s.RedisClient.Set(ctx, cacheKey, cacheData, utils.CacheExpiration).Err(); err != nil {
+			fmt.Println("Failed to set cache:", err)
+		}
+	}
 
 	return save, nil
 }

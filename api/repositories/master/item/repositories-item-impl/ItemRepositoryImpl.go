@@ -292,6 +292,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{
+		ItemId:                       req.ItemId,
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
 		ItemName:                     req.ItemName,
