@@ -8,5 +8,6 @@ import (
 )
 
 type PurchaseOrderRepository interface {
-	GetAllPurchaseOrder(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllPurchaseOrder(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination, DateParams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	//GetPurchaseOrderById(db *gorm.DB, id int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

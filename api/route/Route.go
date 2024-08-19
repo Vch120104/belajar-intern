@@ -289,6 +289,10 @@ func StartRouting(db *gorm.DB) {
 	PurchaseRequestRepository := transactionsparepartrepositoryimpl.NewPurchaseRequestRepositoryImpl()
 	PurchaseRequestService := transactionsparepartserviceimpl.NewPurchaseRequestImpl(PurchaseRequestRepository, db, rdb)
 	PurchaseRequestController := transactionsparepartcontroller.NewPurchaseRequestController(PurchaseRequestService)
+	//Purchase Order
+	PurchaseOrderRepository := transactionsparepartrepositoryimpl.NewPurchaseOrderRepositoryImpl()
+	PurchaseOrderService := transactionsparepartserviceimpl.NewPurchaseOrderService(PurchaseOrderRepository, db, rdb)
+	PurchaseOrderController := transactionsparepartcontroller.NewPurchaseOrderControllerImpl(PurchaseOrderService)
 
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
@@ -357,6 +361,7 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
 
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
+	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -434,8 +439,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/supply-slip", SupplySlipRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
+		r.Mount("/purchase-order", PurchaseOrderRouter)
 	})
-
 	// Route untuk Swagger
 	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
 	// Route untuk Prometheus metrics

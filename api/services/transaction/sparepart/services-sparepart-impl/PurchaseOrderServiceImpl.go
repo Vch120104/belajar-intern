@@ -24,10 +24,10 @@ func NewPurchaseOrderService(PuchaseOrderRepo transactionsparepartrepository.Pur
 	}
 }
 
-func (service *PurchaseOrderServiceImpl) GetAllPurchaseOrder(filter []utils.FilterCondition, page pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (service *PurchaseOrderServiceImpl) GetAllPurchaseOrder(filter []utils.FilterCondition, page pagination.Pagination, DateParams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
 	tx := service.DB.Begin()
-	result, err := service.PurchaseOrderRepo.GetAllPurchaseOrder(tx, filter, page)
+	result, err := service.PurchaseOrderRepo.GetAllPurchaseOrder(tx, filter, page, DateParams)
 	if err != nil {
 		return result, err
 	}

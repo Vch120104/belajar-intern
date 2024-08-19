@@ -14,6 +14,18 @@ type GetAllDBResponses struct {
 	PurchaseRequestSystemNumber int        `json:"purchase_request_system_number" parent_entity:"trx_purchase_request"`
 }
 
+type GetAllResponses struct {
+	PurchaseOrderSystemNumber int `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order"`
+	//WarehouseId int `json:"warehouse_id" parent_entity:"trx_work_order_detail"`
+	PurchaseOrderDocumentNumber string     `json:"purchase_order_document_number" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderDocumentDate   *time.Time `json:"purchase_order_document_date" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderStatus         string     `json:"purchase_order_status" parent_entity:"trx_item_purchase_order"`
+	OrderType                   string     `json:"order_type" parent_entity:"trx_item_purchase_order"`
+	WarehouseName               string     `json:"warehouse_name" parent_entity:"trx_item_purchase_order"`
+	SupplierName                string     `json:"supplier_name" parent_entity:"trx_item_purchase_order"`
+	PurchaseRequestSystemNumber string     `json:"purchase_request_system_number" parent_entity:"trx_purchase_request"`
+}
+
 //
 //type PurchaseOrderEntities struct {
 //	CompanyId                           int        `gorm:"column:company_id;size:30;" json:"company_id"`

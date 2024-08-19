@@ -14,6 +14,7 @@ type PurchaseOrderEntities struct {
 	SupplierId                          int                           `gorm:"column:supplier_id;size:30;" json:"supplier_id"`
 	SupplierPicId                       int                           `gorm:"column:supplier_pic_id;size:30;" json:"supplier_pic_id"`
 	WarehouseId                         int                           `gorm:"column:warehouse_id;size:30;" json:"warehouse_id"`
+	WarehouseGroupId                    int                           `gorm:"column:warehouse_group_id;size:30;" json:"warehouse_group_id"`
 	CostCenterId                        int                           `gorm:"column:cost_center_id;size:2;" json:"cost_center_id"`
 	ProfitType                          string                        `gorm:"column:profit_type;size:30;" json:"profit_type"`
 	ProfitCenterId                      int                           `gorm:"column:profit_center_id;size:30;" json:"profit_center_id"`
@@ -66,6 +67,11 @@ type PurchaseOrderEntities struct {
 	PurchaseOrderTypeId                 int                           `gorm:"column:purchase_order_type_id;" json:"purchase_order_type_id"`
 	CurrencyExchangeRate                *float64                      `gorm:"column:currency_exchange_rate;" json:"currency_exchange_rate"`
 	PurchaseOrderDetail                 []PurchaseOrderDetailEntities `gorm:"foreignKey:PurchaseOrderSystemNumber;references:PurchaseOrderSystemNumber" json:"work_order_detail"`
+	CreatedByUserId                     int                           `gorm:"column:created_by_user_id;size:30;" json:"created_by_user_id"`
+	CreatedDate                         *time.Time                    `gorm:"column:created_date" json:"created_date"`
+	UpdatedByUserId                     int                           `gorm:"column:updated_by_user_id;size:30;" json:"updated_by_user_id"`
+	UpdatedDate                         *time.Time                    `gorm:"column:updated_date" json:"updated_date"`
+	ChangeNo                            int                           `gorm:"column:change_no;size:30;" json:"change_no"`
 }
 
 func (*PurchaseOrderEntities) TableName() string {
