@@ -6,6 +6,24 @@ import (
 	"time"
 )
 
+// WO and Service Status
+var SrvStatDraft int = 1    // 0 Draft
+var SrvStatStart int = 2    // 10 Start
+var SrvStatPending int = 3  // 15 Pending
+var SrvStatStop int = 4     // 20 Stop
+var SrvStatTransfer int = 5 // 25 Transfer
+var SrvStatQcPass int = 6   // 30 QC Pass
+var SrvStatReOrder int = 7  // 35 Re-Order
+
+var WoStatDraft int = 1   // 0 Draft
+var WoStatNew int = 2     // 10 New
+var WoStatReady int = 3   // 20 Ready
+var WoStatOngoing int = 4 // 30 On Going
+var WoStatStop int = 5    // 40 Stop
+var WoStatQC int = 6      // 50 QC
+var WoStatCancel int = 7  // 60 Cancel
+var WoStatClosed int = 8  // 70 Close
+
 // Status
 
 var Draft int = 1

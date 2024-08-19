@@ -12,6 +12,7 @@ type OperationEntries struct {
 	OperationSection            OperationSection
 	OperationKeyId              int `gorm:"column:operation_key_id;not null;size:30"  json:"operation_key_id"`
 	OperationKey                OperationKey
+	OperationLevel              OperationLevel
 	OperationEntriesDescription string `gorm:"column:operation_entries_description;not null"  json:"operation_entries_description"`
 }
 
