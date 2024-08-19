@@ -9,6 +9,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -427,6 +428,7 @@ func PurchaseRequestRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", PurchaseRequest.GetAllPurchaseRequest)
+	router.Get("/item", PurchaseRequest.GetAllItemTypePr)
 	router.Get("/by-id/{purchase_request_system_number}", PurchaseRequest.GetByIdPurchaseRequest)
 	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
 	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
@@ -437,6 +439,10 @@ func PurchaseRequestRouter(
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
 	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
+	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
+	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
+
+	//	@Router			/v1/purchase-request/by-code/{company_id}/{item_id} [get]
 
 	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
