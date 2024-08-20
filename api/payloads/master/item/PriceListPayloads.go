@@ -20,6 +20,7 @@ type PriceListResponse struct {
 }
 
 type PriceListItemResponses struct {
+	PriceListId     int     `json:"price_list_id"`
 	ItemCode        string  `json:"item_code"`
 	ItemName        string  `json:"item_name"`
 	PriceListAmount float64 `json:"price_list_amount"`
@@ -125,6 +126,7 @@ type PriceListGetbyId struct {
 	IsActive            string  `json:"is_active" parent_entity:"mtr_price_list"`
 	PriceListId         int     `json:"price_list_id" parent_entity:"mtr_price_list" main_table:"mtr_price_list"`
 	PriceListCode       string  `json:"price_list_code" parent_entity:"mtr_price_list"`
+	PriceListCodeId     int     `json:"price_list_code_id"`
 	CompanyId           int     `json:"company_id" parent_entity:"mtr_price_list"`
 	BrandId             int     `json:"brand_id" parent_entity:"mtr_price_list"`
 	BrandName           string  `json:"brand_name"`
