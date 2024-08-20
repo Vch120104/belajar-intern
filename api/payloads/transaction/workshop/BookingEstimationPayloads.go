@@ -355,3 +355,11 @@ type StnkDetail struct{
 	Province string `json:"province"`
 	ZipCode string `json:"zip_code"`
 }
+
+type VehicleTnkb struct{
+	VehicleId int `json:"vehicle_id"`
+	VehicleBrandId int `json:"vehicle_brand_id"`
+	VehicleModelId int `json:"vehicle_model_id"`
+	VehicleVariantId int `json:"vehicle_variant_id"`
+	Tnkb string `json:"vehicle_registration_certificate_tnkb"`
+}
