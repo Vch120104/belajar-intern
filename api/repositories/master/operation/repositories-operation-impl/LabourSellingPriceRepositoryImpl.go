@@ -24,6 +24,228 @@ func StartLabourSellingPriceRepositoryImpl() masteroperationrepository.LabourSel
 	return &LabourSellingPriceRepositoryImpl{}
 }
 
+// GetSellingPriceDetailById implements masteroperationrepository.LabourSellingPriceRepository.
+func (r *LabourSellingPriceRepositoryImpl) GetSellingPriceDetailById(tx *gorm.DB, detailId int) (masteroperationpayloads.LabourSellingPriceDetailbyIdResponse, *exceptions.BaseErrorResponse) {
+	entities := masteroperationentities.LabourSellingPriceDetail{}
+	response := masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}
+	var modelResponse masteroperationpayloads.ModelSellingPriceDetailResponse
+	var variantResponse masteroperationpayloads.VariantResponse
+
+	if err := tx.Model(entities).Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceDetailId: detailId}).
+		First(&entities).
+		Error; err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	response.LabourSellingPrice = entities.SellingPrice
+
+	// join with mtr_unit_model
+
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entities.ModelId)
+
+	errUrlUnitModel := utils.Get(unitModelUrl, &modelResponse, nil)
+
+	if errUrlUnitModel != nil {
+		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlUnitModel,
+		}
+	}
+
+	if modelResponse == (masteroperationpayloads.ModelSellingPriceDetailResponse{}) {
+		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New("model not found"),
+		}
+	}
+
+	response.Model = modelResponse.ModelCode + " - " + modelResponse.ModelDescription
+
+	//JOIN UNIT VARIANT
+
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(entities.VariantId)
+
+	errUrlunitVariant := utils.Get(unitVariantUrl, &variantResponse, nil)
+
+	if errUrlunitVariant != nil {
+		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlUnitModel,
+		}
+	}
+
+	if variantResponse == (masteroperationpayloads.VariantResponse{}) {
+		return masteroperationpayloads.LabourSellingPriceDetailbyIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New("varinat not found"),
+		}
+	}
+
+	response.Variant = variantResponse.VariantCode + " - " + variantResponse.VariantDescription
+	response.RecordStatus = variantResponse.VariantDescription
+
+	return response, nil
+}
+
+// SaveMultipleDetail implements masteroperationrepository.LabourSellingPriceRepository.
+func (r *LabourSellingPriceRepositoryImpl) SaveMultipleDetail(tx *gorm.DB, detail []masteroperationpayloads.LabourSellingPriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+
+	for _, request := range detail {
+		entities := masteroperationentities.LabourSellingPriceDetail{
+			LabourSellingPriceId: request.LabourSellingPriceId,
+			ModelId:              request.ModelId,
+			VariantId:            request.VariantId,
+			SellingPrice:         request.SellingPrice,
+		}
+
+		err := tx.Save(&entities).Error
+
+		if err != nil {
+			if strings.Contains(err.Error(), "duplicate") {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusConflict,
+					Err:        err,
+				}
+			} else {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+		}
+	}
+
+	return true, nil
+
+}
+
+// GetAllDetailbyHeaderId implements masteroperationrepository.LabourSellingPriceRepository.
+func (r *LabourSellingPriceRepositoryImpl) GetAllDetailbyHeaderId(tx *gorm.DB, headerId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	entities := []masteroperationentities.LabourSellingPriceDetail{}
+	responses := []masteroperationpayloads.LabourSellingPriceDetailResponse{}
+	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
+	var getVariantResponse []masteroperationpayloads.VariantResponse
+	var ModelIds string
+	var VariantIds string
+	//define base model
+	query := tx.
+		Model(&entities).
+		Where(masteroperationentities.LabourSellingPriceDetail{LabourSellingPriceId: headerId})
+
+	//apply pagination and execute
+	rows, err := query.Scan(&responses).Rows()
+
+	if len(responses) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	defer rows.Close()
+
+	models_ids := []int{}
+	variant_ids := []int{}
+
+	for _, response := range responses {
+		if isNotInList(models_ids, response.ModelId) {
+			str := strconv.Itoa(response.ModelId)
+			ModelIds += str + ","
+			models_ids = append(models_ids, response.ModelId)
+		}
+		if isNotInList(variant_ids, response.VariantId) {
+			str := strconv.Itoa(response.VariantId)
+			VariantIds += str + ","
+			variant_ids = append(variant_ids, response.VariantId)
+		}
+
+	}
+
+	// join with mtr_unit_model
+
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + ModelIds
+
+	errUrlUnitModel := utils.Get(unitModelUrl, &getModelResponse, nil)
+
+	if errUrlUnitModel != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlUnitModel,
+		}
+	}
+
+	if len(getModelResponse) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getModelResponse, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	if len(getModelResponse) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	//JOIN UNIT VARIANT
+
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + VariantIds
+
+	errUrlunitVariant := utils.Get(unitVariantUrl, &getVariantResponse, nil)
+
+	if errUrlunitVariant != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlUnitModel,
+		}
+	}
+
+	if len(getVariantResponse) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	if len(joinedData2) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	return joinedData2, nil
+}
+
 // GetAllSellingPrice implements masteroperationrepository.LabourSellingPriceRepository.
 func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.LabourSellingPrice{}
@@ -31,7 +253,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 
 	query := tx.Model(entities)
 
-	filterQuery := utils.ApplyFilter(query, filter)
+	filterQuery := utils.ApplyFilterExact(query, filter)
 
 	if err := filterQuery.Scopes(pagination.Paginate(entities, &pages, filterQuery)).Scan(&responses).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -92,8 +314,6 @@ func (r *LabourSellingPriceRepositoryImpl) GetLabourSellingPriceById(tx *gorm.DB
 		}
 	}
 
-	fmt.Println(unitBrandUrl)
-
 	joinedData1, errdf := utils.DataFrameInnerJoin([]masteroperationpayloads.LabourSellingPriceResponse{response}, []masteroperationpayloads.BrandLabourSellingPriceResponse{getUnitBrandResponse}, "BrandId")
 
 	if errdf != nil {
@@ -148,6 +368,8 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 	entities := []masteroperationentities.LabourSellingPriceDetail{}
 	responses := []masteroperationpayloads.LabourSellingPriceDetailResponse{}
 	var getModelResponse []masteroperationpayloads.ModelSellingPriceDetailResponse
+	var getVariantResponse []masteroperationpayloads.VariantResponse
+
 	var ModelIds string
 	var VariantIds string
 	//define base model
@@ -215,12 +437,48 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPriceDetailByHeaderId(tx
 		}
 	}
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
+	//JOIN UNIT VARIANT
+
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + VariantIds
+
+	errUrlunitVariant := utils.Get(unitVariantUrl, &getVariantResponse, nil)
+
+	if errUrlunitVariant != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlUnitModel,
+		}
+	}
+
+	if len(getVariantResponse) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getVariantResponse, "VariantId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	if len(joinedData2) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New(""),
+		}
+	}
+
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceRequest) (int, *exceptions.BaseErrorResponse) {
 
 	entities := masteroperationentities.LabourSellingPrice{
 		CompanyId:     request.CompanyId,
@@ -231,27 +489,27 @@ func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, r
 		Description:   request.Description,
 	}
 
-	err := tx.Save(&entities).Error
+	err := tx.Save(&entities).Where(entities).First(&entities).Error
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return -1, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return -1, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return entities.LabourSellingPriceId, nil
 }
 
-func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPriceDetail(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPriceDetail(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceDetailRequest) (int, *exceptions.BaseErrorResponse) {
 
 	entities := masteroperationentities.LabourSellingPriceDetail{
 		LabourSellingPriceId: request.LabourSellingPriceId,
@@ -260,22 +518,22 @@ func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPriceDetail(tx *gorm
 		SellingPrice:         request.SellingPrice,
 	}
 
-	err := tx.Save(&entities).Error
+	err := tx.Save(&entities).Where(entities).First(&entities).Error
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
+			return -1, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		} else {
 
-			return false, &exceptions.BaseErrorResponse{
+			return -1, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return entities.LabourSellingPriceDetailId, nil
 }

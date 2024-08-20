@@ -865,7 +865,10 @@ func LabourSellingPriceDetailRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
+	router.Get("/detail/{labour_selling_price_detail_id}", LabourSellingPriceDetailController.GetSellingPriceDetailById)
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
+	router.Get("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
+	router.Get("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
 
 	return router
 }
