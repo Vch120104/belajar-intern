@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -85,7 +86,12 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 
 // GetItembyId implements ItemController.
 func (r *ItemControllerImpl) GetItembyId(writer http.ResponseWriter, request *http.Request) {
-	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	itemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.itemservice.GetItemById(itemId)
 
@@ -99,7 +105,12 @@ func (r *ItemControllerImpl) GetItembyId(writer http.ResponseWriter, request *ht
 // GetUomDropDown implements ItemController.
 func (r *ItemControllerImpl) GetUomDropDown(writer http.ResponseWriter, request *http.Request) {
 
-	uomTypeId, _ := strconv.Atoi(chi.URLParam(request, "uom_type_id"))
+	uomTypeId, errA := strconv.Atoi(chi.URLParam(request, "uom_type_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.itemservice.GetUomDropDown(uomTypeId)
 
@@ -333,7 +344,12 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 // @Router /v1/item/{item_id} [patch]
 func (r *ItemControllerImpl) ChangeStatusItem(writer http.ResponseWriter, request *http.Request) {
 
-	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	ItemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.itemservice.ChangeStatusItem(int(ItemId))
 	if err != nil {
@@ -360,7 +376,7 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"item_id":        queryValues.Get("item_id"),
+		"item_id": queryValues.Get("item_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -392,8 +408,16 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/detail/{item_id}/{item_detail_id} [get]
 func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, request *http.Request) {
-	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
-	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	itemID, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemDetailID, errA := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.itemservice.GetItemDetailById(int(itemID), int(itemDetailID))
 	if err != nil {
@@ -415,7 +439,12 @@ func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, reque
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/{item_id}/detail [post]
 func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *http.Request) {
-	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	itemID, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var itemRequest masteritempayloads.ItemDetailRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
@@ -439,8 +468,16 @@ func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/{item_id}/detail/{item_detail_id} [delete]
 func (r *ItemControllerImpl) DeleteItemDetail(writer http.ResponseWriter, request *http.Request) {
-	itemID, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
-	itemDetailID, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	itemID, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemDetailID, errA := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	if err := r.itemservice.DeleteItemDetail(int(itemID), int(itemDetailID)); err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -454,7 +491,11 @@ func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *htt
 	var formRequest masteritempayloads.ItemUpdateRequest
 
 	helper.ReadFromRequestBody(request, &formRequest)
-	item_id, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	item_id, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	_, err := r.itemservice.UpdateItem(item_id, formRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -467,7 +508,11 @@ func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, reques
 	var formRequest masteritempayloads.ItemDetailUpdateRequest
 
 	helper.ReadFromRequestBody(request, &formRequest)
-	item_detail_id, _ := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	item_detail_id, errA := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	_, err := r.itemservice.UpdateItemDetail(item_detail_id, formRequest)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -496,7 +541,11 @@ func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter,
 }
 
 func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request) {
-	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	ItemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	Id := chi.URLParam(request, "brand_id")
 	result, err := r.itemservice.AddItemDetailByBrand(Id, ItemId)
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
+	"errors"
 
 	// "after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
@@ -66,7 +67,12 @@ func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.Respon
 
 func (r *LabourSellingPriceControllerImpl) GetLabourSellingPriceById(writer http.ResponseWriter, request *http.Request) {
 
-	labourSellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+	labourSellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.LabourSellingPriceService.GetLabourSellingPriceById(labourSellingPriceId)
 	if err != nil {

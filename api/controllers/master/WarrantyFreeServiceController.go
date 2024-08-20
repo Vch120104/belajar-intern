@@ -9,6 +9,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -90,7 +91,12 @@ func (r *WarrantyFreeServiceControllerImpl) GetAllWarrantyFreeService(writer htt
 // @Router /v1/warranty-free-service/{warranty_free_services_id} [get]
 func (r *WarrantyFreeServiceControllerImpl) GetWarrantyFreeServiceByID(writer http.ResponseWriter, request *http.Request) {
 
-	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
+	warrantyFreeServiceId, errA := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.WarrantyFreeServiceService.GetWarrantyFreeServiceById(warrantyFreeServiceId)
 	if err != nil {
@@ -142,7 +148,12 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 // @Router /v1/warranty-free-service/{warranty_free_services_id} [patch]
 func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
 
-	warrantyFreeServiceId, _ := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
+	warrantyFreeServiceId, errA := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.WarrantyFreeServiceService.ChangeStatusWarrantyFreeService(warrantyFreeServiceId)
 	if err != nil {
@@ -153,8 +164,12 @@ func (r *WarrantyFreeServiceControllerImpl) ChangeStatusWarrantyFreeService(writ
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *WarrantyFreeServiceControllerImpl) UpdateWarrantyFreeService(writer http.ResponseWriter, request *http.Request){
-	warranty_free_services_id,_ := strconv.Atoi(chi.URLParam(request,"warranty_free_services_id"))
+func (r *WarrantyFreeServiceControllerImpl) UpdateWarrantyFreeService(writer http.ResponseWriter, request *http.Request) {
+	warranty_free_services_id, errA := strconv.Atoi(chi.URLParam(request, "warranty_free_services_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	var formRequest masterentities.WarrantyFreeService
 	helper.ReadFromRequestBody(request, &formRequest)
 	result, err := r.WarrantyFreeServiceService.UpdateWarrantyFreeService(formRequest, warranty_free_services_id)
@@ -162,6 +177,6 @@ func (r *WarrantyFreeServiceControllerImpl) UpdateWarrantyFreeService(writer htt
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	
+
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }

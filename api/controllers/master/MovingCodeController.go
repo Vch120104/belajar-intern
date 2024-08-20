@@ -10,6 +10,7 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -62,7 +63,12 @@ func (r *MovingCodeControllerImpl) DeactiveMovingCode(writer http.ResponseWriter
 
 // GetDropdownMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWriter, request *http.Request) {
-	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.MovingCodeService.GetDropdownMovingCode(companyId)
 
@@ -76,7 +82,12 @@ func (r *MovingCodeControllerImpl) GetDropdownMovingCode(writer http.ResponseWri
 
 // ChangeStatusMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) ChangeStatusMovingCode(writer http.ResponseWriter, request *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+	id, errA := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.MovingCodeService.ChangeStatusMovingCode(id)
 
@@ -118,7 +129,12 @@ func (r *MovingCodeControllerImpl) CreateMovingCode(writer http.ResponseWriter, 
 // GetAllMovingCode implements MovingCodeController.
 func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, request *http.Request) {
 
-	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	queryValues := request.URL.Query()
 
@@ -142,7 +158,12 @@ func (r *MovingCodeControllerImpl) GetAllMovingCode(writer http.ResponseWriter, 
 
 // GetMovingCodebyId implements MovingCodeController.
 func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter, request *http.Request) {
-	movingCodeId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+	movingCodeId, errA := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.MovingCodeService.GetMovingCodebyId(movingCodeId)
 
@@ -156,8 +177,18 @@ func (r *MovingCodeControllerImpl) GetMovingCodebyId(writer http.ResponseWriter,
 
 // PushMovingCodePriority implements MovingCodeController.
 func (r *MovingCodeControllerImpl) PushMovingCodePriority(writer http.ResponseWriter, request *http.Request) {
-	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
-	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	itemPackageId, errA := strconv.Atoi(chi.URLParam(request, "moving_code_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.MovingCodeService.PushMovingCodePriority(companyId, itemPackageId)
 

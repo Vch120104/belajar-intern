@@ -13,6 +13,7 @@ import (
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -90,7 +91,12 @@ func (r *SkillLevelControllerImpl) GetAllSkillLevel(writer http.ResponseWriter, 
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/skill-level/{skill_level_id} [get]
 func (r *SkillLevelControllerImpl) GetSkillLevelById(writer http.ResponseWriter, request *http.Request) {
-	skillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
+	skillLevelId, errA := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.SkillLevelService.GetSkillLevelById(skillLevelId)
 	if err != nil {
@@ -152,7 +158,12 @@ func (r *SkillLevelControllerImpl) SaveSkillLevel(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/skill-level/{skill_level_id} [patch]
 func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWriter, request *http.Request) {
-	SkillLevelId, _ := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
+	SkillLevelId, errA := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.SkillLevelService.ChangeStatusSkillLevel(int(SkillLevelId))
 
@@ -164,8 +175,13 @@ func (r *SkillLevelControllerImpl) ChangeStatusSkillLevel(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, request *http.Request){
-	skill_level_id,_ := strconv.Atoi(chi.URLParam(request,"skill_level_id"))
+func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, request *http.Request) {
+	skill_level_id, errA := strconv.Atoi(chi.URLParam(request, "skill_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	var formRequest masterpayloads.SkillLevelResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 	result, err := r.SkillLevelService.UpdateSkillLevel(formRequest, skill_level_id)
@@ -173,12 +189,12 @@ func (r *SkillLevelControllerImpl) UpdateSkillLevel(writer http.ResponseWriter, 
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	
+
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
 
 func (r *SkillLevelControllerImpl) GetSkillLevelByCode(writer http.ResponseWriter, request *http.Request) {
-	skillLevelCode:= chi.URLParam(request, "skill_level_code")
+	skillLevelCode := chi.URLParam(request, "skill_level_code")
 
 	result, err := r.SkillLevelService.GetSkillLevelByCode(skillLevelCode)
 	if err != nil {
