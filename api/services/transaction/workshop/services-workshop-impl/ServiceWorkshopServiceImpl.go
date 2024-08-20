@@ -65,3 +65,29 @@ func (s *ServiceWorkshopServiceImpl) PendingService(idAlloc int, idSysWo int, co
 
 	return pending, nil
 }
+
+func (s *ServiceWorkshopServiceImpl) TransferService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	// Transfer the service
+	transfer, err := s.ServiceWorkshopRepository.TransferService(tx, idAlloc, idSysWo, companyId)
+	if err != nil {
+		return false, err
+	}
+
+	return transfer, nil
+}
+
+func (s *ServiceWorkshopServiceImpl) StopService(idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	// Stop the service
+	stop, err := s.ServiceWorkshopRepository.StopService(tx, idAlloc, idSysWo, companyId)
+	if err != nil {
+		return false, err
+	}
+
+	return stop, nil
+}

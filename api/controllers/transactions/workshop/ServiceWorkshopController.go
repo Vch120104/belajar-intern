@@ -22,6 +22,8 @@ type ServiceWorkshopController interface {
 	GetAllByTechnicianWO(writer http.ResponseWriter, request *http.Request)
 	StartService(writer http.ResponseWriter, request *http.Request)
 	PendingService(writer http.ResponseWriter, request *http.Request)
+	TransferService(writer http.ResponseWriter, request *http.Request)
+	StopService(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewServiceWorkshopController(service transactionworkshopservice.ServiceWorkshopService) ServiceWorkshopController {
@@ -202,5 +204,102 @@ func (r *ServiceWorkshopControllerImp) PendingService(writer http.ResponseWriter
 		payloads.NewHandleSuccess(writer, pending, "Service Pending Successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to pending service", http.StatusInternalServerError)
+	}
+}
+
+// TransferService transfer the service
+// @Summary Transfer the service
+// @Description Transfer the service
+// @Tags Transaction : Workshop Service Log
+// @Accept json
+// @Produce json
+// @Param service_log_system_number query int false "Service Log System Number"
+// @Param work_order_system_number query int false "Work Order System Number"
+// @Param technician_allocation_system_number query int false "Allocation ID"
+// @Param company_id query int false "Company ID"
+// @Success 200 {object}  payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer [post]
+
+func (r *ServiceWorkshopControllerImp) TransferService(writer http.ResponseWriter, request *http.Request) {
+
+	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Technician Allocate ID", http.StatusBadRequest)
+		return
+	}
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid company code", http.StatusBadRequest)
+		return
+	}
+
+	transfer, baseErr := r.ServiceWorkshopService.TransferService(alllocId, workOrderId, companyId)
+	if baseErr != nil {
+
+		payloads.NewHandleError(writer, baseErr.Err.Error(), baseErr.StatusCode)
+		return
+	}
+
+	if transfer {
+
+		payloads.NewHandleSuccess(writer, transfer, "Service Transfer Successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to transfer service", http.StatusInternalServerError)
+	}
+}
+
+// StopService stops the service
+// @Summary Stop the service
+// @Description Stop the service
+// @Tags Transaction : Workshop Service Log
+// @Accept json
+// @Produce json
+// @Param service_log_system_number query int false "Service Log System Number"
+// @Param work_order_system_number query int false "Work Order System Number"
+// @Param technician_allocation_system_number query int false "Allocation ID"
+// @Param company_id query int false "Company ID"
+// @Success 200 {object}  payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/service-log/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop [post]
+func (r *ServiceWorkshopControllerImp) StopService(writer http.ResponseWriter, request *http.Request) {
+
+	alllocId, err := strconv.Atoi(chi.URLParam(request, "technician_allocation_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Technician Allocate ID", http.StatusBadRequest)
+		return
+	}
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid company code", http.StatusBadRequest)
+		return
+	}
+
+	stop, baseErr := r.ServiceWorkshopService.StopService(alllocId, workOrderId, companyId)
+	if baseErr != nil {
+
+		payloads.NewHandleError(writer, baseErr.Err.Error(), baseErr.StatusCode)
+		return
+	}
+
+	if stop {
+
+		payloads.NewHandleSuccess(writer, stop, "Service Stop Successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to stop service", http.StatusInternalServerError)
 	}
 }

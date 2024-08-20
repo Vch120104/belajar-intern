@@ -1309,6 +1309,8 @@ func ServiceWorkshopRouter(
 	router.Get("/{technician_id}/{work_order_system_number}", ServiceWorkshopController.GetAllByTechnicianWO)
 	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/start", ServiceWorkshopController.StartService)
 	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending", ServiceWorkshopController.PendingService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer", ServiceWorkshopController.TransferService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop", ServiceWorkshopController.StopService)
 
 	return router
 }

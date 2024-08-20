@@ -132,45 +132,18 @@ func getTimeValue(timeStr string) float64 {
 	return float64(t.Hour()) + float64(t.Minute())/60 + float64(t.Second())/3600
 }
 
-// Convert time float64 to string
-// func getTime(time float64) string {
-// 	hours := int(time)
-// 	minutes := int((time - float64(hours)) * 60)
-// 	return fmt.Sprintf("%02d:%02d", hours, minutes)
-// }
-
 // Convert time to float64 hours
 func getFloatTimeValue(t time.Time) float64 {
 	return float64(t.Hour()) + float64(t.Minute())/60 + float64(t.Second())/3600
 }
 
-// Convert float64 hours to time.Time with a reference date
-// func getTimeFromFloatValue(hours float64, referenceDate time.Time) time.Time {
-// 	return time.Date(
-// 		referenceDate.Year(),
-// 		referenceDate.Month(),
-// 		referenceDate.Day(),
-// 		int(hours),
-// 		int((hours-float64(int(hours)))*60),
-// 		0,
-// 		0,
-// 		time.UTC, // Adjust to the required time zone
-// 	)
-// }
-
-// convert time format
-// func formatTime(t time.Time) string {
-// 	return t.Format("15:04:05") // Time format HH:MM:SS
-// }
-
-// func calculate actual time
 // Function to calculate actual time
-// func calculateActualTime(startTime, endTime time.Time) float64 {
-// 	diffMinutes := endTime.Sub(startTime).Minutes()
-// 	hours := diffMinutes / 60
-// 	minutes := diffMinutes - (hours * 60)
-// 	return hours + (minutes / 60)
-// }
+func calculateActualTime(startTime, endTime time.Time) float64 {
+	diffMinutes := endTime.Sub(startTime).Minutes()
+	hours := diffMinutes / 60
+	minutes := diffMinutes - (hours * 60)
+	return hours + (minutes / 60)
+}
 
 // GetTimeZone fetches the time difference from the external API and adjusts the time accordingly
 func GetTimeZone(currentDate time.Time, companyCode int) (time.Time, error) {
@@ -1258,9 +1231,8 @@ func (r *ServiceWorkshopRepositoryImpl) PendingService(tx *gorm.DB, idAlloc int,
 	var WoDate time.Time
 	var frt float64
 	var startDatetime time.Time
-	// var oprItemCode string
-	// var cpccode int
-	// var sumActualTime float64
+	var oprItemCode string
+	var cpccode int
 
 	// ============================ Sesuaikan waktu dengan zona waktu perusahaan
 	dateTimeComp, err := GetTimeZone(dateTimeComp, companyId)
@@ -1326,6 +1298,7 @@ func (r *ServiceWorkshopRepositoryImpl) PendingService(tx *gorm.DB, idAlloc int,
 	woLine = woAlloc.WorkOrderLine
 	//cpccode = woAlloc.ProfitCenterId
 	shiftcode = woAlloc.ShiftCode
+	technicianId := woAlloc.TechnicianId
 	WoDoc = workOrderResponses.WorkOrderDocumentNumber
 
 	// ============================ Ambil nilai maksimum dari TECHALLOC_LINE untuk sistem alokasi teknisi tertentu
@@ -1364,7 +1337,6 @@ func (r *ServiceWorkshopRepositoryImpl) PendingService(tx *gorm.DB, idAlloc int,
 	if serviceStatusId == utils.SrvStatStart {
 		//fmt.Println("Service status is already START")
 		EstPendingTime := 0.0
-
 		if EstPendingTime == 0 {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -1404,182 +1376,1439 @@ func (r *ServiceWorkshopRepositoryImpl) PendingService(tx *gorm.DB, idAlloc int,
 			}
 		}
 
-		//if cpccode != 00003 {
-		//--VALIDATE DAY
-		//--IF CONVERT(VARCHAR,@Getdate,106) <> CONVERT(VARCHAR,@Start_Datetime,106) --- :GH getdate diganti timecomp
-		// dateCompFormatted := dateTimeComp.Format("02 Jan 2006")   // 106 format in Go
-		// startDateFormatted := startDatetime.Format("02 Jan 2006") // 106 format in Go
+		if cpccode != 00003 {
+			//--VALIDATE DAY
+			//--IF CONVERT(VARCHAR,@Getdate,106) <> CONVERT(VARCHAR,@Start_Datetime,106) --- :GH getdate diganti timecomp
+			dateCompFormatted := dateTimeComp.Format("02 Jan 2006")   // 106 format in Go
+			startDateFormatted := startDatetime.Format("02 Jan 2006") // 106 format in Go
 
-		// if dateCompFormatted != startDateFormatted {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusBadRequest,
-		// 		Message:    "Operation must be pending on . Please contact your foreman for re-allocation.",
-		// 		Err:        errors.New("operation must be pending on . Please contact your foreman for re-allocation."),
-		// 	}
-		// }
+			if dateCompFormatted != startDateFormatted {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "Operation must be pending on . Please contact your foreman for re-allocation.",
+					Err:        errors.New("operation must be pending on . please contact your foreman for re-allocation"),
+				}
+			}
 
-		// --DEALLOCATE OLD ALLOCATION--
-		// Remark_Avail := "Release OLD TIME from PENDING (Start Time: " + startTime + "; End Time: " + endTime + ")"
-		// EXEC uspg_atWoTechAllocAvailable_Insert
-		// --@Option = 0,
-		// Insert record for the remark before moving
-		// newAllocationBefore := transactionworkshopentities.WorkOrderAllocationAvailable{
-		// 	StartTime:             startTimeValue,
-		// 	EndTime:               endTimeValue,
-		// 	TechnicianId:          idTech,
-		// 	CompanyId:             companyId,
-		// 	ServiceDateTime:       log.StartDatetime,
-		// 	ShiftCode:             techAlloc.ShiftCode,
-		// 	ForemanId:             techAlloc.ForemanId,
-		// 	ReferenceType:         "0",
-		// 	ReferenceSystemNumber: log.TechnicianAllocationSystemNumber,
-		// 	ReferenceLine:         0,
-		// 	Remark:                Remark_Avail,
-		// }
+			//--DEALLOCATE OLD ALLOCATION--
+			//Remark_Avail := "Release OLD TIME from PENDING (Start Time: " + startTime + "; End Time: " + endTime + ")"
+			//EXEC uspg_atWoTechAllocAvailable_Insert
+			//--@Option = 0,
+			//Insert record for the remark before moving
+			// newAllocationBefore := transactionworkshopentities.WorkOrderAllocationAvailable{
+			// 	StartTime:             startTimeValue,
+			// 	EndTime:               endTimeValue,
+			// 	TechnicianId:          idTech,
+			// 	CompanyId:             companyId,
+			// 	ServiceDateTime:       log.StartDatetime,
+			// 	ShiftCode:             techAlloc.ShiftCode,
+			// 	ForemanId:             techAlloc.ForemanId,
+			// 	ReferenceType:         "0",
+			// 	ReferenceSystemNumber: log.TechnicianAllocationSystemNumber,
+			// 	ReferenceLine:         0,
+			// 	Remark:                Remark_Avail,
+			// }
 
-		// insertBeforeErr := tx.Create(&newAllocationBefore).Error
-		// if insertBeforeErr != nil {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to insert new allocation before",
-		// 		Err:        insertBeforeErr,
-		// 	}
-		// }
+			// insertBeforeErr := tx.Create(&newAllocationBefore).Error
+			// if insertBeforeErr != nil {
+			// 	return false, &exceptions.BaseErrorResponse{
+			// 		StatusCode: http.StatusInternalServerError,
+			// 		Message:    "Failed to insert new allocation before",
+			// 		Err:        insertBeforeErr,
+			// 	}
+			// }
 
-		//}
+		}
 
 		// Calculate ACTUAL_TIME
-		// var actualTime float64
-		// var startTime time.Time
-		// var dateTimeComp time.Time // This should be set to the appropriate time value
-		// var estPendingTime float64 // This should be set to the estimated pending time in hours
-		// var endDatetime time.Time  // This should be set to the end time of the service
-		// var draftEndTime time.Time
-		// var startRestTime time.Time
-		// var endRestTime time.Time
+		var actualTime float64
+		var startTime time.Time
+		var dateTimeComp time.Time // This should be set to the appropriate time value
+		var estPendingTime float64 // This should be set to the estimated pending time in hours
+		var endDatetime time.Time  // This should be set to the end time of the service
+		var draftEndTime time.Time
+		var startRestTime time.Time
+		var endRestTime time.Time
 
-		// pendingDuration := time.Duration(estPendingTime) * time.Hour
-		// endTime := dateTimeComp.Add(pendingDuration)
-		// currentTime := time.Now()
+		pendingDuration := time.Duration(estPendingTime) * time.Hour
+		endTime := dateTimeComp.Add(pendingDuration)
+		currentTime := time.Now()
 
 		// --IF dbo.getTimeValue(CONVERT(VARCHAR,@Getdate,108)) + @Est_Pending_Time >= 24 --- :GH getdate diganti timecomp
 		// Check if the end time exceeds the current day
-		// if endTime.Sub(currentTime).Hours() >= 24 {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusBadRequest,
-		// 		Message:    "Service pending cannot exceed today. Please use transfer for service on a different date",
-		// 		Err:        errors.New("service pending cannot exceed today"),
-		// 	}
-		// }
-
-		//pendingDuration = time.Duration(estPendingTime) * time.Hour
-		//endTime = dateTimeComp.Add(pendingDuration)
-
-		// Format the dateTimeComp and endTime similarly to SQL conversion
-		//formattedDateTimeComp = dateTimeComp.Format("02 Jan 2006") // Format: 'dd MMM yyyy'
-		//formattedEndTime = formatTime(endTime)                     // Format: 'HH:MM:SS'
+		if endTime.Sub(currentTime).Hours() >= 24 {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Service pending cannot exceed today. Please use transfer for service on a different date",
+				Err:        errors.New("service pending cannot exceed today"),
+			}
+		}
 
 		// Fetch the START_DATETIME from the database
-		// err := tx.Model(&transactionworkshopentities.ServiceLog{}).
-		// 	Select("start_datetime").
-		// 	Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
-		// 	Take(&startTime).Error
+		err := tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("start_datetime").
+			Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+			Take(&startTime).Error
 
-		// if err != nil {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to retrieve start time",
-		// 		Err:        err,
-		// 	}
-		// }
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve start time",
+				Err:        err,
+			}
+		}
 
-		// // Calculate ACTUAL_TIME
-		// actualTime = calculateActualTime(startTime, dateTimeComp)
+		// Calculate ACTUAL_TIME
+		actualTime = calculateActualTime(startTime, dateTimeComp)
 
-		// // Update the record
-		// err = tx.Model(&transactionworkshopentities.ServiceLog{}).
-		// 	Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
-		// 	Updates(map[string]interface{}{
-		// 		"actual_time":  actualTime,
-		// 		"end_datetime": dateTimeComp,
-		// 	}).Error
+		// Update the record
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+			Updates(map[string]interface{}{
+				"actual_time":  actualTime,
+				"end_datetime": dateTimeComp,
+			}).Error
 
-		// if err != nil {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to update service log",
-		// 		Err:        err,
-		// 	}
-		// }
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update service log",
+				Err:        err,
+			}
+		}
 
-		// // Update wtSmrWOServiceTime
-		// err = tx.Model(&transactionworkshopentities.WorkOrderServiceTime{}).
-		// 	Where("work_order_system_number = ? AND operation_item_code = ?", idSysWo, oprItemCode).
-		// 	Updates(map[string]interface{}{
-		// 		"end_datetime": dateTimeComp,
-		// 	}).Error
+		// Update wtSmrWOServiceTime
+		err = tx.Model(&transactionworkshopentities.WorkOrderServiceTime{}).
+			Where("work_order_system_number = ? AND operation_item_code = ?", idSysWo, oprItemCode).
+			Updates(map[string]interface{}{
+				"end_datetime": dateTimeComp,
+			}).Error
 
-		// if err != nil {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to update wtSmrWOServiceTime",
-		// 		Err:        err,
-		// 	}
-		// }
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update wtSmrWOServiceTime",
+				Err:        err,
+			}
+		}
 
-		// // Calculate @SumActualTime
-		// err = tx.Model(&transactionworkshopentities.ServiceLog{}).
-		// 	Select("SUM(actual_time)").
-		// 	Where("technician_allocation_system_number = ?", idAlloc).
-		// 	Pluck("SUM(actual_time)", &sumActualTime).Error
+		// Calculate @SumActualTime and new End Time for this DRAFT LOG
+		var sumActualTime float64
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("SUM(actual_time)").
+			Where("technician_allocation_system_number = ?", idAlloc).
+			Pluck("SUM(actual_time)", &sumActualTime).Error
 
-		// if err != nil {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to calculate sum of actual time",
-		// 		Err:        err,
-		// 	}
-		// }
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to calculate sum of actual time",
+				Err:        err,
+			}
+		}
 
-		// if sumActualTime >= frt {
-		// 	sumActualTime = 0.5 * frt
-		// }
+		if sumActualTime >= frt {
+			sumActualTime = 0.5 * frt
+		}
 
-		// Determine @Draft_End_Time
-		// endTimeValue = getTimeValue(endDatetime) + (frt - sumActualTime)
+		// Convert endDatetime to a string formatted as "15:04:05"
+		endDatetimeStr := endDatetime.Format("15:04:05")
 
-		// if endTimeValue >= 24 {
-		// 	draftEndTime = endDatetime.Truncate(24 * time.Hour).Add(23*time.Hour + 45*time.Minute)
-		// } else {
-		// 	draftEndTime = endDatetime.Add(time.Duration((frt - sumActualTime) * float64(time.Hour)))
-		// }
+		// Calculate draftEndTime
+		endTimeValue := getTimeValue(endDatetimeStr) + (frt - sumActualTime)
+		if endTimeValue >= 24 {
+			draftEndTime = endDatetime.Truncate(24 * time.Hour).Add(23*time.Hour + 45*time.Minute)
+		} else {
+			draftEndTime = endDatetime.Add(time.Duration((frt - sumActualTime) * float64(time.Hour)))
+		}
 
-		// // Determine rest times
-		// startRestTime, err = getShiftStartTime(tx, companyId, shiftCode, dateTimeComp, true)
-		// if err != nil {
-		// 	return false, err
-		// }
+		// Determine rest times
+		startRestTimeFloat, _ := getShiftStartTime(tx, companyId, shiftcode, dateTimeComp, true)
+		endRestTimeFloat, _ := getShiftEndTime(tx, companyId, shiftcode, dateTimeComp, true)
 
-		// endRestTime, err = getShiftEndTime(tx, companyId, shiftCode, dateTimeComp, true)
-		// if err != nil {
-		// 	return false, err
-		// }
+		// Convert float64 times to time.Time
+		startRestTime = time.Date(dateTimeComp.Year(), dateTimeComp.Month(), dateTimeComp.Day(), int(startRestTimeFloat), int((startRestTimeFloat-float64(int(startRestTimeFloat)))*60), 0, 0, dateTimeComp.Location())
+		endRestTime = time.Date(dateTimeComp.Year(), dateTimeComp.Month(), dateTimeComp.Day(), int(endRestTimeFloat), int((endRestTimeFloat-float64(int(endRestTimeFloat)))*60), 0, 0, dateTimeComp.Location())
 
-		// startTime = getTimeValue(endDatetime)
-		// endTime = getTimeValue(draftEndTime)
+		// Recalculate draftEndTime if needed
+		if draftEndTime.Before(startRestTime) {
+			if draftEndTime.Before(endRestTime) {
+				draftEndTime = endDatetime.Add(time.Duration((frt - sumActualTime) * float64(time.Hour)))
+			}
+		}
 
-		// if getTimeValue(startDatetime)+(frt-sumActualTime) < 24 {
-		// 	if (startTime <= startRestTime && endRestTime <= endTime) ||
-		// 		(startTime <= startRestTime && startRestTime < endTime) ||
-		// 		(startTime < endRestTime && endRestTime <= endTime) {
-		// 		if endTime < endRestTime {
-		// 			draftEndTime = endDatetime.Add(time.Duration((frt - sumActualTime) * float64(time.Hour)))
-		// 		}
-		// 	}
-		// }
+		if cpccode != 00003 {
+			// DECLARE @CSR2 CURSOR
+			// Fetch the service logs from the database
+			var serviceLogs []transactionworkshopentities.ServiceLog
+			err := tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("technician_allocation_system_number, start_datetime, end_datetime").
+				Where("technician_allocation_system_number <> ? AND company_id = ? AND technician_id = ? AND shift_code = ?", idAlloc, companyId, technicianId, shiftcode).
+				Where("CONVERT(VARCHAR, start_datetime, 106) = CONVERT(VARCHAR, ?, 106)", dateTimeComp).
+				Where(`EXISTS (
+							SELECT 1 
+					FROM trx_service_log AS A 
+					WHERE A.technician_allocation_system_number = trx_service_log.technician_allocation_system_number 
+					AND A.service_status_id = 1 
+					AND A.technician_allocation_line = 1 
+					AND CONVERT(VARCHAR, A.start_datetime, 106) = CONVERT(VARCHAR, ?, 106)
+					AND CONVERT(VARCHAR, A.start_datetime, 108) < CONVERT(VARCHAR, ?, 108)
+				)`, dateTimeComp, draftEndTime).
+				Order("technician_allocation_line DESC").
+				Find(&serviceLogs).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve service logs",
+					Err:        err,
+				}
+			}
+
+			// Process the retrieved service logs
+			filteredLogs := []transactionworkshopentities.ServiceLog{}
+			for _, log := range serviceLogs {
+				startTimeValue := getTimeValue(log.StartDatetime.Format("15:04:05"))
+				endTimeValue := getTimeValue(log.EndDatetime.Format("15:04:05"))
+				queryTimeValue := getTimeValue(draftEndTime.Format("15:04:05"))
+
+				if startTimeValue <= queryTimeValue && endTimeValue >= queryTimeValue {
+					filteredLogs = append(filteredLogs, log)
+				}
+			}
+
+			// Delete the filtered logs and associated records
+			for _, log := range filteredLogs {
+				// Delete from WorkOrderAllocation
+				err := tx.Where("technician_allocation_system_number = ?", log.TechnicianAllocationSystemNumber).Delete(&transactionworkshopentities.WorkOrderAllocation{}).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to delete from WorkOrderAllocation",
+						Err:        err,
+					}
+				}
+
+				// Delete from ServiceLog
+				err = tx.Where("technician_allocation_system_number = ?", log.TechnicianAllocationSystemNumber).Delete(&transactionworkshopentities.ServiceLog{}).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to delete from ServiceLog",
+						Err:        err,
+					}
+				}
+			}
+
+			// DECLARE @CSR_2 CURSOR
+			// FETCH NEXT FROM @CSR_2 INTO @TechAllocSysNo, @StartDateTime, @EndDateTime
+			// WHILE @@FETCH_STATUS = 0
+			var serviceLogs_2 []transactionworkshopentities.ServiceLog
+
+			err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("technician_allocation_system_number, start_datetime, end_datetime").
+				Where("technician_allocation_system_number <> ? AND company_id = ? AND technician_id = ? AND shift_code = ?", idAlloc, companyId, technicianId, shiftcode).
+				Where("CONVERT(VARCHAR, start_datetime, 106) = CONVERT(VARCHAR, ?, 106)", dateTimeComp).
+				Where(`EXISTS (
+        SELECT 1
+        FROM trx_service_log AS A
+        WHERE A.technician_allocation_system_number = trx_service_log.technician_allocation_system_number
+        AND A.service_status_id = 1
+        AND A.technician_allocation_line = 1
+        AND CONVERT(VARCHAR, A.start_datetime, 106) = CONVERT(VARCHAR, ?, 106)
+        AND CONVERT(VARCHAR, A.start_datetime, 108) < CONVERT(VARCHAR, ?, 108)
+    )`, dateTimeComp, draftEndTime).
+				Order("technician_allocation_line DESC").
+				Find(&serviceLogs_2).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve service logs",
+					Err:        err,
+				}
+			}
+
+			// Process the retrieved service logs
+			for _, log := range serviceLogs_2 {
+				startTimeValue := getTimeValue(log.StartDatetime.Format("15:04:05"))
+				endTimeValue := getTimeValue(log.EndDatetime.Format("15:04:05"))
+				draftEndTimeValue := getTimeValue(draftEndTime.Format("15:04:05"))
+
+				// Calculate the difference in time
+				diffTime := (draftEndTimeValue - startTimeValue) // difference in hours
+
+				// Update ServiceLog --Move the Service LOG
+				err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+					Where("technician_allocation_system_number = ? AND service_status_id = ?", log.TechnicianAllocationSystemNumber, utils.SrvStatDraft).
+					Updates(map[string]interface{}{
+						"start_datetime": gorm.Expr("CONVERT(VARCHAR, start_datetime, 106) + ' ' + dbo.getTime(? + ?)", startTimeValue, diffTime),
+						"end_datetime":   gorm.Expr("CONVERT(VARCHAR, end_datetime, 106) + ' ' + dbo.getTime(? + ?)", endTimeValue, diffTime),
+					}).Error
+
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update ServiceLog",
+						Err:        err,
+					}
+				}
+
+				// Update WorkOrderAllocation --Move the Allocation
+				err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+					Where("technician_allocation_system_number = ?", log.TechnicianAllocationSystemNumber).
+					Updates(map[string]interface{}{
+						"techalloc_start_time": gorm.Expr("techalloc_start_time + ?", diffTime),
+						"techalloc_end_time":   gorm.Expr("techalloc_end_time + ?", diffTime),
+					}).Error
+
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update WorkOrderAllocation",
+						Err:        err,
+					}
+				}
+			}
+
+		}
+
+		// --ALLOCATE THE NEW TIME
+		if cpccode != 00003 {
+			var startTimeValue float64
+			err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("dbo.getTimeValue(CONVERT(VARCHAR, start_datetime, 108))").
+				Where("techalloc_sys_no = ? AND techalloc_line = ?", idAlloc, nextLine-1).
+				Pluck("dbo.getTimeValue(CONVERT(VARCHAR, start_datetime, 108))", &startTimeValue).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve start time",
+					Err:        err,
+				}
+			}
+
+			// endTimeValue := getTimeValue(dateTimeComp.Format("15:04:05"))
+			//remarkAvail := fmt.Sprintf("Allocate NEW TIME from PENDING (Start Time: %v; End Time: %v)", startTimeValue, endTimeValue)
+
+			// Insert into atWoTechAllocAvailable
+			// err = tx.Create(&transactionworkshopentities.WorkOrderAllocation{
+			// 	TechAllocStartDate:       startTimeValue,
+			// 	TechAllocEndTime:         endTimeValue,
+			// 	TechnicianId: technicianId,
+			// 	CompanyId:     companyCode,
+			// 	: startDateTime,
+			// 	ShiftCode:       shiftCode,
+			// 	ForemanEmpNo:    foremanEmpNo,
+			// 	RefType:         refTypeAvail,
+			// 	RefSysNo:        techallocSysNo,
+			// 	RefLine:         tempAllocLine,
+			// 	Remark:          remarkAvail,
+			// 	CreationUserId:  creationUserId,
+			// 	ChangeUserId:    changeUserId,
+			// }).Error
+
+			// if err != nil {
+			// 	return false, &exceptions.BaseErrorResponse{
+			// 		StatusCode: http.StatusInternalServerError,
+			// 		Message:    "Failed to insert into atWoTechAllocAvailable",
+			// 		Err:        err,
+			// 	}
+			// }
+
+			// Update wtWorkOrder2 status
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_operation_item_line = ?", idSysWo, woLine).
+				Updates(map[string]interface{}{
+					"work_order_status_id": utils.SrvStatPending,
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update wtWorkOrder2 status",
+					Err:        err,
+				}
+			}
+		}
+
+		// Update atWoTechAlloc Service Status
+		err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+			Where("technician_allocation_system_number = ?", idAlloc).
+			Updates(map[string]interface{}{
+				"serv_status":        utils.SrvStatPending,
+				"serv_actual_time":   gorm.Expr("serv_actual_time + ?", actualTime),
+				"serv_progress_time": gorm.Expr("serv_progress_time + ?", actualTime),
+			}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update atWoTechAlloc",
+				Err:        err,
+			}
+		}
+
+		// Insert New Log as Pending
+		serviceLogPending := transactionworkshopentities.ServiceLog{
+			CompanyId:                        companyId,
+			WorkOrderSystemNumber:            idSysWo,
+			WorkOrderDocumentNumber:          WoDoc,
+			WorkOrderLine:                    woLine,
+			OperationItemCode:                oprItemCode,
+			TechnicianId:                     technicianId,
+			Frt:                              frt,
+			WorkOrderDate:                    WoDate.Format("2006-01-02 15:04:05"),
+			ShiftCode:                        shiftcode,
+			ServiceStatusId:                  utils.SrvStatPending,
+			StartDatetime:                    dateTimeComp, // Replacing @Getdate with dateTimeComp
+			EndDatetime:                      endDatetime,
+			ActualTime:                       0,
+			PendingTime:                      0,
+			EstimatedPendingTime:             estPendingTime,
+			TechnicianAllocationSystemNumber: idAlloc,
+			TechnicianAllocationLine:         nextLine,
+		}
+		err = tx.Create(&serviceLogPending).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to insert new log as pending",
+				Err:        err,
+			}
+		}
+
+		// Insert New Log as Draft
+		var maxTechallocLine int
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("ISNULL(MAX(technician_allocation_line), 0) + 1").
+			Where("technician_allocation_system_number = ?", idAlloc).
+			Pluck("ISNULL(MAX(technician_allocation_line), 0) + 1", &maxTechallocLine).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to set TechallocLine",
+				Err:        err,
+			}
+		}
+
+		serviceLogDraft := transactionworkshopentities.ServiceLog{
+			CompanyId:                        companyId,
+			WorkOrderSystemNumber:            idSysWo,
+			WorkOrderDocumentNumber:          WoDoc,
+			WorkOrderLine:                    woLine,
+			OperationItemCode:                oprItemCode,
+			TechnicianId:                     technicianId,
+			Frt:                              frt,
+			WorkOrderDate:                    WoDate.Format("2006-01-02 15:04:05"),
+			ShiftCode:                        shiftcode,
+			ServiceStatusId:                  utils.SrvStatDraft,
+			StartDatetime:                    endDatetime,
+			EndDatetime:                      draftEndTime,
+			ActualTime:                       0,
+			PendingTime:                      0,
+			EstimatedPendingTime:             0,
+			TechnicianAllocationSystemNumber: idAlloc,
+			TechnicianAllocationLine:         maxTechallocLine,
+		}
+		err = tx.Create(&serviceLogDraft).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to insert new log as draft",
+				Err:        err,
+			}
+		}
+
+		// Update wtSmrWOServiceTime
+		err = tx.Model(&transactionworkshopentities.WorkOrderServiceTime{}).
+			Where("work_order_system_number = ? AND operation_item_code = ?", idSysWo, oprItemCode).
+			Updates(map[string]interface{}{
+				"end_datetime": dateTimeComp, // Replacing @Getdate with dateTimeComp
+			}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update wtSmrWOServiceTime",
+				Err:        err,
+			}
+		}
 
 	} else {
 		fmt.Println("Service status is already PENDING")
+	}
+
+	return true, nil
+}
+
+// uspg_wtServiceLog_Insert
+// --USE FOR : * INSERT NEW DATA OR UPDATE IF SERVICE STATUS IS START, PENDING OR STOP
+// --USE IN MODUL :
+func (r *ServiceWorkshopRepositoryImpl) TransferService(tx *gorm.DB, idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
+
+	// ============================ Deklarasi variabel yang dibutuhkan
+	var woAlloc transactionworkshopentities.WorkOrderAllocation
+	var dateTimeComp = time.Now()
+	var maxLine int
+	var serviceStatusId int
+	var oprItemCode string
+
+	// ============================ Sesuaikan waktu dengan zona waktu perusahaan
+	dateTimeComp, err := GetTimeZone(dateTimeComp, companyId)
+	if err != nil {
+		//fmt.Println("Error adjusting time zone:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to adjust time zone",
+			Err:        err,
+		}
+	}
+
+	// ============================ Periksa apakah alokasi teknisi valid
+	var counts int64
+	err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+		Where("technician_allocation_system_number = ?", idAlloc).
+		Count(&counts).Error
+	if err != nil {
+		//fmt.Println("Error counting technician allocation:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count technician allocation",
+			Err:        err,
+		}
+	}
+	if counts == 0 {
+		//fmt.Println("Technician Allocation is not valid. ID:", idAlloc)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Technician Allocation is not valid. Please refresh your page",
+			Err:        err,
+		}
+	}
+
+	// ============================ Ambil data teknisi dan alokasi
+	err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+		Select("technician_group_id, brand_id, profit_center_id, technician_id, shift_code, foreman_id, operation_code, work_order_line").
+		Where("technician_allocation_system_number = ?", idAlloc).
+		First(&woAlloc).Error
+	if err != nil {
+		// Handle error and return appropriate response
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve technician allocation",
+			Err:        err,
+		}
+	}
+
+	// Fetch work order from external service
+	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(idSysWo)
+	var workOrderResponses transactionworkshoppayloads.ServiceWorkshopDetailResponse
+	errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
+	if errWorkOrder != nil {
+		// Handle error and return appropriate response
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order data from the external API",
+			Err:        errWorkOrder,
+		}
+	}
+
+	// ============================ Set variabel yang diperlukan dari alokasi teknisi
+	oprItemCode = woAlloc.OperationCode
+	woLine := woAlloc.WorkOrderLine
+	cpccode := woAlloc.ProfitCenterId
+	shiftcode := woAlloc.ShiftCode
+	technicianId := woAlloc.TechnicianId
+	WoDoc := workOrderResponses.WorkOrderDocumentNumber
+	WoDate := workOrderResponses.WorkOrderDate
+
+	// ============================ Ambil nilai maksimum dari TECHALLOC_LINE untuk sistem alokasi teknisi tertentu
+	err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+		Select("COALESCE(MAX(technician_allocation_line), 0)").
+		Where("technician_allocation_system_number = ?", idAlloc).
+		Scan(&maxLine).Error
+
+	if err != nil {
+		//fmt.Println("Error getting max line:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get maximum technician allocation line",
+			Err:        err,
+		}
+	}
+
+	// ============================ Tentukan nilai berikutnya dengan menambahkan 1
+	nextLine := maxLine + 1
+	//fmt.Println("Next technician allocation line:", nextLine)
+
+	// ============================ Periksa status layanan untuk alokasi teknisi dan baris yang relevan
+	err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+		Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+		Pluck("service_status_id", &serviceStatusId).Error
+	//fmt.Println("Service status ID:", serviceStatusId)
+	if err != nil {
+		//fmt.Println("Error getting service status:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get service status",
+			Err:        err,
+		}
+	}
+
+	var count int64
+	// Query to check existence
+	resultcheck := tx.Model(&transactionworkshopentities.ServiceLog{}).
+		Where("work_order_system_number = ? AND technician_allocation_system_number = ? AND technician_allocation_line = ? AND service_status_id IN (?,?)",
+			idSysWo, idAlloc, nextLine-1, utils.SrvStatStart, utils.SrvStatDraft).
+		Count(&count).Error
+	if resultcheck != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check service log existence",
+			Err:        resultcheck,
+		}
+	}
+
+	if count > 0 {
+		var status int
+		// Query to get the service status
+		resultcheck := tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Where("work_order_system_number = ? AND technician_allocation_system_number = ? AND technician_allocation_line = ?",
+				idSysWo, idAlloc, nextLine-1).
+			Pluck("service_status_id", &status).Error
+		if resultcheck != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to check service status",
+				Err:        resultcheck,
+			}
+		}
+
+		if status == utils.SrvStatDraft {
+			type ServiceLogDetails struct {
+				WorkOrderSystemNumber string    `gorm:"column:work_order_system_order"`
+				WorkOrderLine         int       `gorm:"column:work_order_line"`
+				ShiftCode             string    `gorm:"column:shift_code"`
+				FRT                   string    `gorm:"column:frt"`
+				WorkOrderDate         time.Time `gorm:"column:work_order_date"`
+				WorkOrderDocNo        string    `gorm:"column:work_order_document_number"`
+				EndDatetime           time.Time `gorm:"column:start_datetime"`
+				StartTime             float64   // Assuming you will handle the conversion separately
+				EndTime               float64   // Assuming you will handle the conversion separately
+			}
+			var details ServiceLogDetails
+
+			// Query to get the service log details
+			resultcheck := tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("work_order_system_order, work_order_line, shift_code, frt, work_order_date, work_order_document_number, start_datetime").
+				Where("technician_allocation_system_number = ? AND technician_allocation_line = ? AND service_status_id = ?",
+					idAlloc, nextLine-1, utils.SrvStatDraft).
+				First(&details).Error
+
+			if resultcheck != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve service log details",
+					Err:        resultcheck,
+				}
+			}
+
+			// Convert time fields to float64 values
+			// details.StartTime = getTimeValue(details.EndDatetime)
+			// details.EndTime = getTimeValue(details.EndDatetime)
+
+			if cpccode != 00003 {
+				var techallocLine int
+				tempAllocLine := techallocLine - 1
+
+				// Perform the delete operation
+				result := tx.Model(&transactionworkshopentities.ServiceLog{}).
+					Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, tempAllocLine).
+					Delete(&transactionworkshopentities.ServiceLog{})
+
+				if result.Error != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to delete service log",
+						Err:        result.Error,
+					}
+				}
+			}
+
+		} else if status == utils.SrvStatPending {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "1.	Pada menu Service – untuk status jasa yang pending harusnya tidak bisa dialokasi ulang kepada teknisi lain (ganti teknisi (harus hanya bisa di start ulang pada teknisi yang sama)",
+				Err:        errors.New("service is already pending"),
+			}
+		} else {
+			endDateTime := dateTimeComp
+
+			err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("end_datetime").
+				Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+				Pluck("end_datetime", &endDateTime).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve end time",
+					Err:        err,
+				}
+			}
+
+			//--==UPDATE ACTUAL TIME IN THE LOG BEFORE (START)==--
+			var serviceLog transactionworkshopentities.ServiceLog
+
+			// Fetch the start datetime and other necessary data
+			err := tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+				Select("start_datetime"). // Add other fields if necessary
+				First(&serviceLog).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch service log",
+					Err:        err,
+				}
+			}
+
+			// Calculate ACTUAL_TIME
+			startDatetime := serviceLog.StartDatetime
+			currentDatetime := time.Now()
+
+			// Calculate ACTUAL_TIME
+			diffMinutes := currentDatetime.Sub(startDatetime).Minutes()
+			actualTime := diffMinutes / 60
+
+			// Update the ServiceLog record
+			err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+				Updates(map[string]interface{}{
+					"actual_time":  actualTime,
+					"end_datetime": dateTimeComp,
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update service log",
+					Err:        err,
+				}
+			}
+
+			// Update the WorkOrderServiceTime record
+			err = tx.Model(&transactionworkshopentities.WorkOrderServiceTime{}).
+				Where("work_order_system_number = ? AND operation_item_code = ?", idSysWo, oprItemCode).
+				Updates(map[string]interface{}{
+					"end_datetime": dateTimeComp,
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update work order service time",
+					Err:        err,
+				}
+			}
+
+			//--Update WorkOrder2 Status
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_operation_item_line = ?", idSysWo, woLine).
+				Updates(map[string]interface{}{
+					"service_status_id": utils.SrvStatTransfer,
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update work order status",
+					Err:        err,
+				}
+			}
+
+			//--==Update atWoTechAlloc Service Status==--
+			err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+				Where("technician_allocation_system_number = ?", idAlloc).
+				Updates(map[string]interface{}{
+					"service_status_id":  utils.SrvStatTransfer,
+					"serv_actual_time":   gorm.Expr("serv_actual_time + ?", actualTime),
+					"serv_progress_time": gorm.Expr("serv_progress_time + ?", actualTime),
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update work order allocation",
+					Err:        err,
+				}
+			}
+
+			var startDatetimequery time.Time
+
+			// Query to get the top 1 START_DATETIME based on TECHALLOC_SYS_NO and ordered by TECHALLOC_LINE
+			err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("start_datetime").
+				Where("technician_allocation_system_number = ?", idAlloc).
+				Order("technician_allocation_line ASC").
+				Limit(1).
+				Pluck("start_datetime", &startDatetimequery).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch start datetime",
+					Err:        err,
+				}
+			}
+
+			//--==Insert New Log as Transfer==--
+			serviceLogTransfer := transactionworkshopentities.ServiceLog{
+				CompanyId:                        companyId,
+				WorkOrderSystemNumber:            idSysWo,
+				WorkOrderDocumentNumber:          WoDoc,
+				WorkOrderLine:                    woLine,
+				OperationItemCode:                oprItemCode,
+				TechnicianId:                     technicianId,
+				Frt:                              woAlloc.Frt,
+				WorkOrderDate:                    WoDate,
+				ShiftCode:                        shiftcode,
+				ServiceStatusId:                  utils.SrvStatTransfer,
+				StartDatetime:                    startDatetimequery,
+				EndDatetime:                      dateTimeComp,
+				ActualTime:                       actualTime,
+				PendingTime:                      0,
+				EstimatedPendingTime:             0,
+				TechnicianAllocationSystemNumber: idAlloc,
+				TechnicianAllocationLine:         nextLine,
+			}
+
+			err = tx.Create(&serviceLogTransfer).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to insert new log as transfer",
+					Err:        err,
+				}
+			}
+
+			// Perform the update operation
+			result := tx.Model(&transactionworkshopentities.WorkOrderServiceTime{}).
+				Where("work_order_system_number = ? AND operation_item_code = ?", idSysWo, oprItemCode).
+				Updates(map[string]interface{}{
+					"end_datetime": dateTimeComp,
+				})
+
+			if result.Error != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update work order service time",
+					Err:        result.Error,
+				}
+			}
+
+		}
+
+	} else {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Service is already started or in draft status",
+			Err:        errors.New("service is already started or in draft status"),
+		}
+	}
+
+	return true, nil
+}
+
+// uspg_wtServiceLog_Insert
+// --USE FOR : * INSERT NEW DATA OR UPDATE IF SERVICE STATUS IS START, PENDING OR STOP
+// --USE IN MODUL :
+func (r *ServiceWorkshopRepositoryImpl) StopService(tx *gorm.DB, idAlloc int, idSysWo int, companyId int) (bool, *exceptions.BaseErrorResponse) {
+	// ============================ Deklarasi variabel yang dibutuhkan
+	var woAlloc transactionworkshopentities.WorkOrderAllocation
+	var dateTimeComp = time.Now()
+	var maxLine int
+	var serviceStatusId int
+	var oprItemCode string
+	var timeValue float64
+
+	// ============================ Sesuaikan waktu dengan zona waktu perusahaan
+	dateTimeComp, err := GetTimeZone(dateTimeComp, companyId)
+	if err != nil {
+		//fmt.Println("Error adjusting time zone:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to adjust time zone",
+			Err:        err,
+		}
+	}
+
+	// ============================ Periksa apakah alokasi teknisi valid
+	var count int64
+	err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+		Where("technician_allocation_system_number = ?", idAlloc).
+		Count(&count).Error
+	if err != nil {
+		//fmt.Println("Error counting technician allocation:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count technician allocation",
+			Err:        err,
+		}
+	}
+	if count == 0 {
+		//fmt.Println("Technician Allocation is not valid. ID:", idAlloc)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Technician Allocation is not valid. Please refresh your page",
+			Err:        err,
+		}
+	}
+
+	// ============================ Ambil data teknisi dan alokasi
+	err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+		Select("technician_group_id, brand_id, profit_center_id, technician_id, shift_code, foreman_id, operation_code, work_order_line").
+		Where("technician_allocation_system_number = ?", idAlloc).
+		First(&woAlloc).Error
+	if err != nil {
+		// Handle error and return appropriate response
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve technician allocation",
+			Err:        err,
+		}
+	}
+
+	// Fetch work order from external service
+	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(idSysWo)
+	var workOrderResponses transactionworkshoppayloads.ServiceWorkshopDetailResponse
+	errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
+	if errWorkOrder != nil {
+		// Handle error and return appropriate response
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order data from the external API",
+			Err:        errWorkOrder,
+		}
+	}
+
+	// ============================ Set variabel yang diperlukan dari alokasi teknisi
+	oprItemCode = woAlloc.OperationCode
+	// woLine := woAlloc.WorkOrderLine
+	cpccode := woAlloc.ProfitCenterId
+	// shiftcode := woAlloc.ShiftCode
+	// technicianId := woAlloc.TechnicianId
+	// WoDoc := workOrderResponses.WorkOrderDocumentNumber
+
+	// ============================ Ambil nilai maksimum dari TECHALLOC_LINE untuk sistem alokasi teknisi tertentu
+	err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+		Select("COALESCE(MAX(technician_allocation_line), 0)").
+		Where("technician_allocation_system_number = ?", idAlloc).
+		Scan(&maxLine).Error
+
+	if err != nil {
+		//fmt.Println("Error getting max line:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get maximum technician allocation line",
+			Err:        err,
+		}
+	}
+
+	// ============================ Tentukan nilai berikutnya dengan menambahkan 1
+	nextLine := maxLine + 1
+	//fmt.Println("Next technician allocation line:", nextLine)
+
+	// ============================ Periksa status layanan untuk alokasi teknisi dan baris yang relevan
+	err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+		Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+		Pluck("service_status_id", &serviceStatusId).Error
+	//fmt.Println("Service status ID:", serviceStatusId)
+	if err != nil {
+		//fmt.Println("Error getting service status:", err)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get service status",
+			Err:        err,
+		}
+	}
+
+	if serviceStatusId == utils.SrvStatStart {
+		//fmt.Println("Service status is already START")
+
+		type ServiceLogResult struct {
+			WoSysNo       int       `gorm:"column:wo_sys_no"`
+			WoLine        int       `gorm:"column:wo_line"`
+			ShiftCode     string    `gorm:"column:shift_code"`
+			Frt           float64   `gorm:"column:frt"`
+			WoDate        time.Time `gorm:"column:wo_date"`
+			WoDocNo       string    `gorm:"column:wo_doc_no"`
+			StartDatetime time.Time `gorm:"column:start_datetime"`
+			EndDatetime   time.Time `gorm:"column:end_datetime"`
+			StartTime     float64   `gorm:"column:start_time"`
+			EndTime       float64   `gorm:"column:end_time"`
+		}
+
+		// Initialize a variable to hold the query result
+		var result ServiceLogResult
+
+		// Execute the query and scan the result into the struct
+		err := tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("wo_sys_no, wo_line, shift_code, frt, wo_date, wo_doc_no, start_datetime, end_datetime, "+
+				"CAST(CONVERT(VARCHAR, start_datetime, 108) AS FLOAT) AS start_time, "+
+				"CAST(CONVERT(VARCHAR, end_datetime, 108) AS FLOAT) AS end_time").
+			Where("techalloc_sys_no = ? AND techalloc_line = ?", idAlloc, nextLine-1).
+			Scan(&result).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve service log data",
+				Err:        err,
+			}
+		}
+
+		// Convert time string to float values for start_time and end_time
+		result.StartTime = getTimeValue(result.StartDatetime.Format("15:04:05"))
+		result.EndTime = getTimeValue(result.EndDatetime.Format("15:04:05"))
+
+		// Validate CPC Code
+		// if cpccode != 00003 {
+		// 	// Validate Day
+		// 	if datetimeComp.Format("02 Jan 2006") != startDatetime.Format("02 Jan 2006") {
+		// 		errorMsg := fmt.Sprintf("Operation must be stopped on %s. Please contact your foreman for re-allocation.", startDatetime.Format("02 Jan 2006"))
+		// 		return false, &exceptions.BaseErrorResponse{
+		// 			StatusCode: http.StatusBadRequest,
+		// 			Message:    errorMsg,
+		// 		}
+		// 	}
+
+		// 	// Deallocate Old Allocation
+		// 	//tempAllocLine := nextLine - 1
+		// 	//remarkAvail := fmt.Sprintf("Release OLD TIME from STOP (Start Time: %.2f; End Time: %.2f)", startTime, endTime)
+
+		// 	// Perform Deallocation (GORM query or insert)
+		// 	// --EXEC uspg_atWoTechAllocAvailable_Insert
+		// 	// --@Option = 0,
+		// 	// err := tx.Model(&transactionworkshopentities.WorkOrderAllocationAvailable{}).
+		// 	// 	Create(&transactionworkshopentities.WorkOrderAllocationAvailable{
+		// 	// 		TechnicianId:          woAlloc.TechnicianId,
+		// 	// 		CompanyId:             companyId,
+		// 	// 		ServiceDateTime:       result.StartDatetime,
+		// 	// 		ShiftCode:             woAlloc.ShiftCode,
+		// 	// 		ForemanId:             woAlloc.ForemanId,
+		// 	// 		ReferenceType:         refTypeAvail,
+		// 	// 		ReferenceSystemNumber: techallocSysNo,
+		// 	// 		ReferenceLine:         tempAllocLine,
+		// 	// 		Remark:                remarkAvail,
+		// 	// 	}).Error
+
+		// 	// if err != nil {
+		// 	// 	return false, &exceptions.BaseErrorResponse{
+		// 	// 		StatusCode: http.StatusInternalServerError,
+		// 	// 		Message:    "Failed to deallocate old allocation",
+		// 	// 		Err:        err,
+		// 	// 	}
+		// 	// }
+		// }
+
+		// Calculate ACTUAL_TIME
+		var actualTime float64
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("CAST(DATEDIFF(mi, start_datetime, ?) / 60 AS DECIMAL(7,2)) + "+
+				"CAST(DATEDIFF(mi, start_datetime, ?) % 60 / 60 AS DECIMAL(7,2))",
+				dateTimeComp, dateTimeComp).
+			Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+			Pluck("CAST(DATEDIFF(mi, start_datetime, ?) / 60 AS DECIMAL(7,2)) + "+
+				"CAST(DATEDIFF(mi, start_datetime, ?) % 60 / 60 AS DECIMAL(7,2))", &actualTime).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to calculate actual time",
+				Err:        err,
+			}
+		}
+
+		// Update wtServiceLog
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+			Updates(map[string]interface{}{
+				"actual_time":  actualTime,
+				"end_datetime": dateTimeComp,
+			}).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update service log",
+				Err:        err,
+			}
+		}
+
+		// Update wtSmrWOServiceTime
+		err = tx.Model(&transactionworkshopentities.WorkOrderServiceTime{}).
+			Where("work_order_system_number = ? AND operation_item_code = ?", idSysWo, oprItemCode).
+			Updates(map[string]interface{}{
+				"end_datetime": dateTimeComp,
+			}).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to update SMR WO Service Time",
+				Err:        err,
+			}
+		}
+
+		if cpccode != 00003 {
+			// Update other Allocation Sys No that intersect
+			// Query to check if any intersecting allocation exists
+			timeValue = getTimeValue(dateTimeComp.Format("15:04:05"))
+			var exists bool
+			err := tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+				Where("company_code = ?", companyId).
+				Where("tech_alloc_start_date = CONVERT(VARCHAR, ? ,106)", dateTimeComp).
+				Where("foreman_id = ?", woAlloc.ForemanId).
+				Where("technician_id = ?", woAlloc.TechnicianId).
+				Where("technician_allocation_system_number <> ?", idAlloc).
+				Where("service_status_id = ?", utils.SrvStatDraft).
+				Where("tech_alloc_start_time < ?", timeValue). // Assuming `getTimeValue` logic is handled separately
+				Limit(1).                                      // Limit to 1 record to match EXISTS
+				Find(&exists).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check for intersecting allocation",
+					Err:        err,
+				}
+			}
+
+			if exists {
+				// Calculate the time difference after the expansion
+				endDateTime := time.Now()
+				startDateTime := time.Now().Add(-2 * time.Hour) // Contoh, sesuaikan dengan logika yang sebenarnya
+				diffMinutes := endDateTime.Sub(startDateTime).Minutes()
+				diffTime := diffMinutes / 60
+
+				var allocations []transactionworkshopentities.WorkOrderAllocation
+				err := tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+					Where("company_id = ?", companyId).
+					Where("tech_alloc_start_date = ?", dateTimeComp).
+					Where("foreman_id = ?", woAlloc.ForemanId).
+					Where("technician_id = ?", woAlloc.TechnicianId).
+					Where("technician_allocation_system_number <> ?", idAlloc).
+					Where("service_status_id = ?", utils.SrvStatDraft).
+					Where("tech_alloc_start_time < ?", timeValue).
+					Find(&allocations).Error
+
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to retrieve intersecting allocations",
+						Err:        err,
+					}
+				}
+
+				// Process each allocation record
+				for _, allocation := range allocations {
+					startTime := allocation.TechAllocStartTime + diffTime
+					endTime := allocation.TechAllocEndTime + diffTime
+
+					shiftEnd, _ := getShiftEndTime(tx, companyId, woAlloc.ShiftCode, dateTimeComp, true)
+
+					// Check if allocation is past shift end time and exceeds tolerance
+					if shiftEnd < endTime && (endTime-shiftEnd) > 0.25 { //getVariableValue("AUTORELEASE_TOLERANCE")
+						// Deallocate time by deleting the allocation record
+						err = tx.Delete(&transactionworkshopentities.WorkOrderAllocation{}).
+							Where("technician_allocation_system_number = ?", allocation.TechAllocSystemNumber).Error
+						if err != nil {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to deallocate time",
+								Err:        err,
+							}
+						}
+
+						// Delete the associated service log
+						err = tx.Delete(&transactionworkshopentities.ServiceLog{}).
+							Where("technician_allocation_system_number = ?", allocation.TechAllocSystemNumber).Error
+						if err != nil {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to delete service log",
+								Err:        err,
+							}
+						}
+
+						// Update work order status
+						err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Where("work_order_system_number = ? AND work_order_operation_item_line = ?", idSysWo, result.WoLine).
+							Updates(map[string]interface{}{
+								"work_order_status_id": utils.SrvStatPending,
+							}).Error
+						if err != nil {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to update work order status",
+								Err:        err,
+							}
+						}
+					} else {
+						// Move the service log
+						err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+							Where("technician_allocation_system_number = ? AND service_status_id = ?", allocation.TechAllocSystemNumber, utils.SrvStatDraft).
+							Updates(map[string]interface{}{
+								"start_datetime": startTime,
+								"end_datetime":   endTime,
+							}).Error
+						if err != nil {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to move service log",
+								Err:        err,
+							}
+						}
+
+						// Move the allocation
+						err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+							Where("technician_allocation_system_number = ?", allocation.TechAllocSystemNumber).
+							Updates(map[string]interface{}{
+								"tech_alloc_start_time": startTime,
+								"tech_alloc_end_time":   endTime,
+							}).Error
+						if err != nil {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to move allocation",
+								Err:        err,
+							}
+						}
+					}
+				}
+
+			}
+
+		}
+
+		if cpccode != 00003 {
+			var logData struct {
+				StartDatetime time.Time
+				EndDatetime   time.Time
+				StartTime     float64
+			}
+
+			err := tx.Model(&transactionworkshopentities.ServiceLog{}).
+				Select("start_datetime, end_datetime, dbo.getTimeValue(CONVERT(VARCHAR, start_datetime, 108)) AS start_time").
+				Where("technician_allocation_system_number = ? AND technician_allocation_line = ?", idAlloc, nextLine-1).
+				Scan(&logData).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve service log data",
+					Err:        err,
+				}
+			}
+
+			var woData struct {
+				WoSysNo int64
+				WoLine  int64
+			}
+
+			err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+				Select("work_order_system_number, work_order_line").
+				Where("technician_allocation_system_number = ?", idAlloc).
+				Scan(&woData).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to retrieve Work Order system number and line",
+					Err:        err,
+				}
+			}
+
+			err = tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+				Where("technician_allocation_system_number = ?", idAlloc).
+				Updates(map[string]interface{}{
+					"service_status_id":  utils.SrvStatPending,
+					"serv_actual_time":   gorm.Expr("serv_actual_time + ?", actualTime),
+					"serv_progress_time": gorm.Expr("serv_progress_time + ?", actualTime),
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update Work Order Allocation status",
+					Err:        err,
+				}
+			}
+
+			var count int64
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_operation_item_line = ? AND service_status_id <> ?", woData.WoSysNo, woData.WoLine, utils.SrvStatStop).
+				Count(&count).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check work order allocation existence",
+					Err:        err,
+				}
+			}
+
+			if count == 0 {
+				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Where("work_order_system_number = ? AND work_order_operation_item_line = ?", woData.WoSysNo, woData.WoLine).
+					Updates(map[string]interface{}{
+						"service_status_id": utils.SrvStatStop,
+					}).Error
+
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update Work Order status",
+						Err:        err,
+					}
+				}
+			}
+		} else {
+			// BR-specific logic
+			err := tx.Model(&transactionworkshopentities.WorkOrderAllocation{}).
+				Where("technician_allocation_system_number = ?", idAlloc).
+				Updates(map[string]interface{}{
+					"tech_alloc_end_date": dateTimeComp,
+					"tech_alloc_end_time": timeValue,
+					"service_status_id":   utils.SrvStatStop,
+					"serv_actual_time":    woAlloc.ServActualTime + actualTime,
+					"serv_progress_time":  woAlloc.ServProgressTime + actualTime,
+				}).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to update Work Order Allocation status",
+					Err:        err,
+				}
+			}
+
+			var count int64
+			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where("work_order_system_number = ? AND work_order_operation_item_line = ? AND service_status_id <> ?", idSysWo, woAlloc.WorkOrderLine, utils.SrvStatStop).
+				Count(&count).Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check work order status",
+					Err:        err,
+				}
+			}
+
+			if count == 0 {
+				err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Where("work_order_system_number = ? AND work_order_operation_item_line = ?", idSysWo, woAlloc.WorkOrderLine).
+					Updates(map[string]interface{}{
+						"service_status_id": utils.SrvStatStop,
+					}).Error
+
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update work order status",
+						Err:        err,
+					}
+				}
+
+				err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+					Where("work_order_system_number = ?", idSysWo).
+					Updates(map[string]interface{}{
+						"work_order_status_id": utils.WoStatStop,
+					}).Error
+
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update work order header status",
+						Err:        err,
+					}
+				}
+			}
+		}
+
+		//--Insert NEW LOG AS STOP
+		// Ambil START_DATETIME dengan urutan TECHALLOC_LINE
+		var startDateTime time.Time
+		var pendingTime float64
+
+		// Ambil START_DATETIME
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("start_datetime").
+			Where("technician_allocation_system_number = ?", idAlloc).
+			Order("technician_allocation_line ASC").
+			Limit(1).
+			Pluck("start_datetime", &startDateTime).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve START_DATETIME",
+				Err:        err,
+			}
+		}
+
+		// Hitung ACTUAL_TIME dan PENDING_TIME
+		var sumresult struct {
+			ActualTime  float64 `gorm:"column:ActualTime"`
+			PendingTime float64 `gorm:"column:PendingTime"`
+		}
+		err = tx.Model(&transactionworkshopentities.ServiceLog{}).
+			Select("SUM(ISNULL(actual_time, 0)) as ActualTime, SUM(ISNULL(pending_time, 0)) as PendingTime").
+			Where("technician_allocation_system_number = ?", idAlloc).
+			Scan(&sumresult).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to calculate actual and pending time",
+				Err:        err,
+			}
+		}
+		actualTime = sumresult.ActualTime
+		pendingTime = sumresult.PendingTime
+
+		// Menyisipkan data ke dalam wtServiceLog
+		serviceLog := transactionworkshopentities.ServiceLog{
+			CompanyId:                        companyId,
+			WorkOrderSystemNumber:            idSysWo,
+			WorkOrderDocumentNumber:          result.WoDocNo,
+			WorkOrderLine:                    result.WoLine,
+			OperationItemCode:                oprItemCode,
+			TechnicianId:                     woAlloc.TechnicianId,
+			Frt:                              result.Frt,
+			WorkOrderDate:                    result.WoDate.Format("2006-01-02 15:04:05"),
+			ShiftCode:                        result.ShiftCode,
+			ServiceStatusId:                  utils.SrvStatStop,
+			StartDatetime:                    result.EndDatetime,
+			EndDatetime:                      dateTimeComp,
+			ActualTime:                       actualTime,
+			PendingTime:                      pendingTime,
+			EstimatedPendingTime:             0,
+			TechnicianAllocationSystemNumber: idAlloc,
+			TechnicianAllocationLine:         nextLine,
+		}
+
+		err = tx.Create(&serviceLog).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to insert new log as stop",
+				Err:        err,
+			}
+		}
+
+	} else {
+		fmt.Println("Service status is already STOP")
 	}
 
 	return true, nil
