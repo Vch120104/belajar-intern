@@ -51,7 +51,7 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 
 	result := []masteritempayloads.PriceListItemResponses{}
 
-	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id").
+	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id,mtr_price_list.price_list_id").
 		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
 		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
 		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date)
@@ -288,10 +288,12 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	return response, nil
 }
 
-func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.SavePriceListMultiple) (bool, *exceptions.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.SavePriceListMultiple) (int, *exceptions.BaseErrorResponse) {
 	// dateParse, _ := time.Parse("2006-01-02", request.EffectiveDate)
 
 	//NOTE!! MUST CHECK PRICELISTCODEID IS EXIST, PRICE LIST CODE (COMMON) STILL ON DEVELOPMENT - 9/AUG/2024 last status
+
+	PriceListId := -1
 
 	for _, value := range request.Detail {
 
@@ -309,17 +311,17 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 			PriceListModifiable: true,
 		}
 
-		err := tx.Save(&entities).Error
+		err := tx.Save(&entities).Where(entities).Select("mtr_price_list.price_list_id").First(&PriceListId).Error
 
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
+			return PriceListId, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        err,
 			}
 		}
 	}
 
-	return true, nil
+	return PriceListId, nil
 }
 
 func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {

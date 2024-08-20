@@ -10,7 +10,10 @@ import (
 type LabourSellingPriceService interface {
 	GetLabourSellingPriceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetAllSellingPriceDetailByHeaderId(headerId int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetSellingPriceDetailById(detailId int) (masteroperationpayloads.LabourSellingPriceDetailbyIdResponse, *exceptions.BaseErrorResponse)
 	GetAllSellingPrice(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	SaveLabourSellingPrice(req masteroperationpayloads.LabourSellingPriceRequest) (bool, *exceptions.BaseErrorResponse)
-	SaveLabourSellingPriceDetail(req masteroperationpayloads.LabourSellingPriceDetailRequest) (bool, *exceptions.BaseErrorResponse)
+	SaveLabourSellingPrice(req masteroperationpayloads.LabourSellingPriceRequest) (int, *exceptions.BaseErrorResponse)
+	SaveLabourSellingPriceDetail(req masteroperationpayloads.LabourSellingPriceDetailRequest) (int, *exceptions.BaseErrorResponse)
+	Duplicate(headerId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	SaveDuplicate(req masteroperationpayloads.SaveDuplicateLabourSellingPrice) (bool, *exceptions.BaseErrorResponse)
 }
