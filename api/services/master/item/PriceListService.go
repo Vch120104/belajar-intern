@@ -12,7 +12,7 @@ import (
 type PriceListService interface {
 	GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse)
 	GetPriceListById(Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse)
-	SavePriceList(request masteritempayloads.SavePriceListMultiple) (bool, *exceptions.BaseErrorResponse)
+	SavePriceList(request masteritempayloads.SavePriceListMultiple) (int, *exceptions.BaseErrorResponse)
 	ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse)
 	GetAllPriceListNew(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	DeactivatePriceList(id string) (bool, *exceptions.BaseErrorResponse)

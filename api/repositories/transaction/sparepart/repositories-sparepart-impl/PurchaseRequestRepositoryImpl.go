@@ -2,8 +2,10 @@ package transactionsparepartrepositoryimpl
 
 import (
 	"after-sales/api/config"
+	masteritementities "after-sales/api/entities/master/item"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -818,4 +820,320 @@ func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestHeader(db *gorm.DB,
 func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestDetail(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, i int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
 	res, err := p.SavePurchaseRequestDetail(db, payloads, i)
 	return res, err
+}
+func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, conditions []utils.FilterCondition, page pagination.Pagination, companyid int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var response []transactionsparepartpayloads.PurchaseRequestItemGetAll
+	entities := masteritementities.Item{}
+	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(companyid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
+
+	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+		return page, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to Period Response data from external service",
+			Err:        err,
+		}
+	}
+
+	year := PeriodResponse.PeriodYear
+	month := PeriodResponse.PeriodMonth
+	JoinTable := db.Table("mtr_item A").Select("A.item_id,"+
+		"A.item_code,"+
+		"A.item_name,"+
+		"Z.item_class_name,"+
+		"A.item_type,"+
+		"A.item_level_1,"+
+		"A.item_level_2,"+
+		"A.item_level_3,"+
+		"A.item_level_4,A.unit_of_measurement_type_id,"+
+		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
+		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
+		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
+			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
+			" from mtr_warehouse_master whs "+
+			" where whs.company_id = x.company_id "+
+			" AND whs.warehouse_costing_type <> 'NON' "+
+			" AND whs.warehouse_id = x.warehouse_id) ", companyid, year, month).
+		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
+		Group("A.item_id,A.item_code," +
+			"A.item_name," +
+			"Z.item_class_name," +
+			"A.item_type," +
+			"A.item_level_1," +
+			"A.item_level_2," +
+			"A.item_level_3," +
+			"A.item_level_4," +
+			"A.unit_of_measurement_type_id") //.Order("A.item_id")
+	WhereQuery := utils.ApplyFilter(JoinTable, conditions)
+	err := WhereQuery.Scopes(pagination.Paginate(&entities, &page, WhereQuery)).Scan(&response).Error
+	if err != nil {
+		return page, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: err}
+	}
+	if len(response) == 0 {
+		return page, &exceptions.BaseErrorResponse{
+			Message:    "Data not found",
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+
+	}
+	i := 1
+	var result []transactionsparepartpayloads.PurchaseRequestItemGetAll
+
+	for _, res := range response {
+		var UomItemResponse transactionsparepartpayloads.UomItemResponses
+		UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(res.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
+		//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+		if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
+			return page, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Uom Item data from external service",
+				Err:        err,
+			}
+		}
+		var UomRate float64
+		var QtyRes float64
+		if UomItemResponse.SourceConvertion == nil {
+			QtyRes = 0
+		} else {
+			QtyRes = res.Quantity * *UomItemResponse.TargetConvertion
+
+		}
+		if UomItemResponse.SourceConvertion == nil {
+			return page, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Uom Source Convertion From External Data",
+				Err:        err,
+			}
+		}
+		UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+		//var uomCode string
+		//err = db.Table("mtr_uom A").Select("A.uom_code").Where("A.uom_id = ?", res.UnitOfMeasurement).First(&res.UnitOfMeasurementCode).Error
+		uomentities := masteritementities.UomItem{}
+		err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: res.ItemId}).Scan(&uomentities).Error
+		res.UnitOfMeasurementCode = uomentities.UomTypeCode
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				uomentities.UomTypeCode = ""
+			} else {
+				return page, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed Get Uom Code",
+					Err:        err,
+				}
+			}
+
+		}
+		res.UnitOfMeasurementRate = UomRate
+		res.Sequence = i
+		i++
+		result = append(result, res)
+	}
+	page.Rows = result
+	return page, nil
+}
+func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB, compid int, i int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
+	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
+	//entities := masteritementities.Item{}
+	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
+
+	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to Period Response data from external service",
+			Err:        err,
+		}
+	}
+
+	year := PeriodResponse.PeriodYear
+	month := PeriodResponse.PeriodMonth
+	fmt.Println("year = " + year)
+
+	fmt.Println(PeriodResponse)
+	err := db.Table("mtr_item A").Select("A.item_id,"+
+		"A.item_code,"+
+		"A.item_name,"+
+		"Z.item_class_name,"+
+		"A.item_type,"+
+		"A.item_level_1,"+
+		"A.item_level_2,"+
+		"A.item_level_3,"+
+		"A.item_level_4,A.unit_of_measurement_type_id,"+
+		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
+		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
+		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
+			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
+			" from mtr_warehouse_master whs "+
+			" where whs.company_id = x.company_id "+
+			" AND whs.warehouse_costing_type <> 'NON' "+
+			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
+		Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
+		Group("A.item_id,A.item_code,"+
+			"A.item_name,A.unit_of_measurement_type_id,"+
+			"Z.item_class_name,"+
+			"A.item_type,"+
+			"A.item_level_1,"+
+			"A.item_level_2,"+
+			"A.item_level_3,"+
+			"A.item_level_4").Where("A.item_id = ?", i).First(&response).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Record Not Found",
+			Data:       nil,
+			Err:        err,
+		}
+	}
+	var UomItemResponse transactionsparepartpayloads.UomItemResponses
+	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(response.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
+	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Uom Item data from external service",
+			Err:        err,
+		}
+	}
+	var UomRate float64
+	var QtyRes float64
+	if UomItemResponse.SourceConvertion == nil {
+		QtyRes = 0
+	} else {
+		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+
+	}
+	if UomItemResponse.SourceConvertion == nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Uom Source Convertion From External Data",
+			Err:        err,
+		}
+	}
+	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	//var uomCode string
+	//err = db.Table("mtr_uom A").Select("A.uom_code").Where("A.uom_id = ?", res.UnitOfMeasurement).First(&res.UnitOfMeasurementCode).Error
+	uomentities := masteritementities.UomItem{}
+	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
+	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			uomentities.UomTypeCode = ""
+		} else {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed Get Uom Code",
+				Err:        err,
+			}
+		}
+
+	}
+	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	return response, nil
+}
+
+func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.DB, compid int, s string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
+	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
+	//entities := masteritementities.Item{}
+
+	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
+
+	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to Period Response data from external service",
+			Err:        err,
+		}
+	}
+
+	year := PeriodResponse.PeriodYear
+	month := PeriodResponse.PeriodMonth
+	//year := "2012"
+	//month := "12"
+	err := db.Table("mtr_item A").Select("A.item_id,"+
+		"A.item_code,"+
+		"A.item_name,"+
+		"Z.item_class_name,"+
+		"A.item_type,"+
+		"A.item_level_1,"+
+		"A.item_level_2,"+
+		"A.item_level_3,"+
+		"A.item_level_4, A.unit_of_measurement_type_id,"+
+		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
+		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
+		Joins("LEFT JOIN mtr_location_stock x ON A.item_id = x.item_id and x.company_id = ? and period_year =?"+
+			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
+			" from mtr_warehouse_master whs "+
+			" where whs.company_id = x.company_id "+
+			" AND whs.warehouse_costing_type <> 'NON' "+
+			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
+		Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
+		Group("A.item_id,A.item_code,"+
+			"A.item_name,A.unit_of_measurement_type_id,"+
+			"Z.item_class_name,"+
+			"A.item_type,"+
+			"A.item_level_1,"+
+			"A.item_level_2,"+
+			"A.item_level_3,"+
+			"A.item_level_4").Where("A.item_code = ?", s).First(&response).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Record Not Found",
+			Data:       nil,
+			Err:        err,
+		}
+	}
+	var UomItemResponse transactionsparepartpayloads.UomItemResponses
+	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(response.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
+	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Uom Item data from external service",
+			Err:        err,
+		}
+	}
+	var UomRate float64
+	var QtyRes float64
+	if UomItemResponse.SourceConvertion == nil {
+		QtyRes = 0
+	} else {
+		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+
+	}
+	if UomItemResponse.SourceConvertion == nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Uom Source Convertion From External Data",
+			Err:        err,
+		}
+	}
+	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	//var uomCode string
+	//err = db.Table("mtr_uom A").Select("A.uom_code").Where("A.uom_id = ?", res.UnitOfMeasurement).First(&res.UnitOfMeasurementCode).Error
+	uomentities := masteritementities.UomItem{}
+	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
+	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			uomentities.UomTypeCode = ""
+		} else {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed Get Uom Code",
+				Err:        err,
+			}
+		}
+
+	}
+	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	return response, nil
 }

@@ -308,3 +308,20 @@ type PurchaseRequestSaveDetailRequestPayloads struct {
 	UpdatedByUserId             int       `json:"updated_by_user_id"`
 	UpdatedDate                 time.Time `json:"updated_date"`
 }
+
+type PurchaseRequestItemGetAll struct {
+	ItemId                int     `json:"item_id" gorm:"column:item_id"`
+	Sequence              int     `json:"sequence" gorm:"column:sequence"`
+	ItemCode              string  `json:"item_code" gorm:"column:item_code"`
+	ItemName              string  `json:"item_name" gorm:"column:item_name"`
+	ItemClassName         string  `json:"item_class_name" gorm:"column:item_class_name"`
+	ItemType              string  `json:"item_type" gorm:"column:item_type"`
+	ItemLevel1            string  `json:"item_level_1" gorm:"column:item_level_1"`
+	ItemLevel2            string  `json:"item_level_2" gorm:"column:item_level_2"`
+	ItemLevel3            string  `json:"item_level_3" gorm:"column:item_level_3"`
+	ItemLevel4            string  `json:"item_level_4" gorm:"column:item-level-4"`
+	Quantity              float64 `json:"quantity" gorm:"column:quantity"`
+	UnitOfMeasurement     int     `json:"unit_of_measurement" gorm:"column:unit_of_measurement_type_id"`
+	UnitOfMeasurementCode string  `json:"unit_of_measurement_code" gorm:"column:uom_code"`
+	UnitOfMeasurementRate float64 `json:"unit_of_measurement_rate"`
+}

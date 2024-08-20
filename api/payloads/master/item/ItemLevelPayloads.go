@@ -5,7 +5,7 @@ type SaveItemLevelRequest struct {
 	ItemLevelId     int    `json:"item_level_id"`
 	ItemLevel       string `json:"item_level"`
 	ItemClassId     int    `json:"item_class_id"`
-	ItemLevelParent string `json:"item_level_parent"`
+	ItemLevelParent int    `json:"item_level_parent"`
 	ItemLevelCode   string `json:"item_level_code"`
 	ItemLevelName   string `json:"item_level_name"`
 }
@@ -24,6 +24,7 @@ type GetItemLevelResponse struct {
 type GetItemLevelDropdownResponse struct {
 	ItemLevelId   int    `json:"item_level_id"`
 	ItemLevelName string `json:"item_level_name"`
+	ItemLevelCode string `json:"item_level_code"`
 }
 
 type GetItemLevelResponseById struct {
