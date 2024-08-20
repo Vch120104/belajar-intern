@@ -9,7 +9,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -428,6 +427,7 @@ func PurchaseRequestRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", PurchaseRequest.GetAllPurchaseRequest)
+	router.Get("/item", PurchaseRequest.GetAllItemTypePr)
 	router.Get("/by-id/{purchase_request_system_number}", PurchaseRequest.GetByIdPurchaseRequest)
 	router.Get("/detail", PurchaseRequest.GetAllPurchaseRequestDetail)
 	router.Get("/by-id/{purchase_request_system_number_detail}/detail", PurchaseRequest.GetByIdPurchaseRequestDetail)
@@ -438,6 +438,10 @@ func PurchaseRequestRouter(
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
 	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
+	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
+	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
+
+	//	@Router			/v1/purchase-request/by-code/{company_id}/{item_id} [get]
 
 	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
@@ -635,14 +639,19 @@ func OperationModelMappingRouter(
 	router.Get("/by-id/{operation_model_mapping_id}", operationModelMappingController.GetOperationModelMappingById)
 	router.Get("/operation-frt/by-id/{operation_frt_id}", operationModelMappingController.GetOperationFrtById)
 	router.Get("/operation-document-requirement/by-id/{operation_document_requirement_id}", operationModelMappingController.GetOperationDocumentRequirementById)
+	router.Get("/operation-level/by-id/{operation_level_id}", operationModelMappingController.GetOperationLevelById)
+	router.Get("/operation-level/{operation_model_mapping_id}", operationModelMappingController.GetAllOperationLevel)
 	router.Post("/", operationModelMappingController.SaveOperationModelMapping)
 	router.Post("/operation-frt", operationModelMappingController.SaveOperationModelMappingFrt)
 	router.Post("/operation-document-requirement", operationModelMappingController.SaveOperationModelMappingDocumentRequirement)
+	router.Post("/operation-level", operationModelMappingController.SaveOperationLevel)
 	router.Patch("/{operation_model_mapping_id}", operationModelMappingController.ChangeStatusOperationModelMapping)
 	router.Patch("/operation-frt/activate/{operation_frt_id}", operationModelMappingController.ActivateOperationFrt)
 	router.Patch("/operation-frt/deactivate/{operation_frt_id}", operationModelMappingController.DeactivateOperationFrt)
-	router.Patch("/operation-document-requirement/deactivate/{operation_model_mapping_id}", operationModelMappingController.DeactivateOperationDocumentRequirement)
-	router.Patch("/operation-document-requirement/activate/{operation_model_mapping_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
+	router.Patch("/operation-document-requirement/deactivate/{operation_document_requirement_id}", operationModelMappingController.DeactivateOperationDocumentRequirement)
+	router.Patch("/operation-document-requirement/activate/{operation_document_requirement_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
+	router.Patch("/operation-level/deactivate/{operation_level_id}", operationModelMappingController.DeactivateOperationLevel)
+	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
 
 	return router
 }
@@ -860,7 +869,10 @@ func LabourSellingPriceDetailRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
+	router.Get("/detail/{labour_selling_price_detail_id}", LabourSellingPriceDetailController.GetSellingPriceDetailById)
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
+	router.Get("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
+	router.Get("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
 
 	return router
 }
@@ -1273,6 +1285,24 @@ func WorkOrderBypassRouter(
 
 }
 
+func QualityControlRouter(
+	QualityControlController transactionworkshopcontroller.QualityControlController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", QualityControlController.GetAll)
+	router.Get("/{work_order_system_number}", QualityControlController.GetById)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/qcpass", QualityControlController.Qcpass)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/reorder", QualityControlController.Reorder)
+
+	return router
+}
+
 func SupplySlipRouter(
 	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {
@@ -1286,7 +1316,6 @@ func SupplySlipRouter(
 	router.Put("/{supply_system_number}", SupplySlipController.UpdateSupplySlip)
 	router.Put("/detail/{supply_detail_system_number}", SupplySlipController.UpdateSupplySlipDetail)
 	router.Put("/submit/{supply_system_number}", SupplySlipController.SubmitSupplySlip)
-
 
 	return router
 }
