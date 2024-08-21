@@ -9,6 +9,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -1299,6 +1300,27 @@ func QualityControlRouter(
 	router.Get("/{work_order_system_number}", QualityControlController.GetById)
 	router.Put("/{work_order_system_number}/{work_order_detail_id}/qcpass", QualityControlController.Qcpass)
 	router.Put("/{work_order_system_number}/{work_order_detail_id}/reorder", QualityControlController.Reorder)
+
+	return router
+}
+
+func SettingTechnicianRouter(
+	SettingTechnicianController transactionjpcbcontroller.SettingTechnicianController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
+	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+
+	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
+	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)
+	router.Post("/detail", SettingTechnicianController.SaveSettingTechnicianDetail)
+	router.Put("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.UpdateSettingTechnicianDetail)
 
 	return router
 }

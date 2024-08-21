@@ -2,8 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
-	masterentities "after-sales/api/entities/master"
-	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 
 	"time"
 
@@ -169,7 +168,10 @@ func Migrate() {
 		//&transactionsparepartentities.PurchaseRequestDetail{},
 		//&transactionsparepartentities.PurchaseRequestReferenceType{},
 		//&masterentities.LocationStock{},
-		&masterentities.WarehouseGroupMappingEntities{},
+		// &masterentities.WarehouseGroupMappingEntities{},
+
+		&transactionjpcbentities.SettingTechnician{},
+		&transactionjpcbentities.SettingTechnicianDetail{},
 	)
 
 	if err != nil {
