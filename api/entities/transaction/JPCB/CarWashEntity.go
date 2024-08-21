@@ -13,7 +13,7 @@ type CarWash struct {
 	WorkOrderSystemNumber int                                   `gorm:"column:work_order_system_number;unique;not null;size:30" json:"work_order_system_number"`
 	BayId                 *int                                  `gorm:"column:car_wash_bay_id;size:30" json:"car_wash_bay_id"`
 	StatusId              int                                   `gorm:"column:car_wash_status_id;size:30" json:"car_wash_status_id"`
-	PriorityId            int                                   `gorm:"column:car_wash_priority_id;not null;size:30" json:"car_wash_priority_id"`
+	PriorityId            int                                   `gorm:"column:car_wash_priority_id;size:30" json:"car_wash_priority_id"`
 	CarWashDate           time.Time                             `gorm:"column:car_wash_date" json:"car_wash_date"`
 	StartTime             float32                               `gorm:"column:start_time;type:decimal(4,2)" json:"start_time"`
 	EndTime               float32                               `gorm:"column:end_time;type:decimal(4,2)" json:"end_time"`

@@ -3,11 +3,13 @@ package transactionjpcbcontroller
 import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -96,7 +98,6 @@ func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, reques
 
 	delete, err := r.CarWashService.DeleteCarWash(workOrderSystemNumber)
 	if err != nil {
-
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
@@ -109,10 +110,17 @@ func (r *CarWashControllerImpl) DeleteCarWash(writer http.ResponseWriter, reques
 }
 
 func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request *http.Request) {
-	// workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
-
 	var formRequest transactionjpcbpayloads.CarWashPostRequestProps
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
 
 	insert, err := r.CarWashService.PostCarWash(formRequest.WorkOrderSystemNumber)
 	if err != nil {

@@ -25,8 +25,8 @@ func NewCarWashRepositoryImpl() transactionjpcbrepository.CarWashRepository {
 
 func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// select field that is missing rn : model_color, model, color, tnkb, creation_time
-	joinQuery := tx.Table("trx_car_wash"). //TODO change to Model()
-						Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
+	joinQuery := tx.Table("trx_car_wash").
+		Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
 				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, mtr_car_wash_bay.car_wash_bay_description,trx_car_wash.car_wash_status_id, 
 				mtr_car_wash_status.car_wash_status_description, trx_car_wash.start_time, trx_car_wash.end_time, trx_car_wash.car_wash_priority_id, 
 				mtr_car_wash_priority.car_wash_priority_description`).
@@ -67,8 +67,6 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 
 		//Fetch data Model from external services
 		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(modelId)
-		fmt.Println("Fetching Model data from:", ModelURL)
-
 		var getModelResponse transactionjpcbpayloads.CarWashModelResponse
 		errFetchModel := utils.Get(ModelURL, &getModelResponse, nil)
 		if errFetchModel != nil {
@@ -81,7 +79,6 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 
 		//Fetch data Color from vehicle master then unit color
 		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master-by-chassis-number/" + strconv.Itoa(vehicleId)
-
 		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
 		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
 		if errFetchVehicle != nil {
@@ -249,6 +246,7 @@ func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (boo
 	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
 
 	keyAttributes := []string{
+		"wo.work_order_system_number",
 		"wo.work_order_document_number",
 		"bay.car_wash_bay_description",
 		"carwash.car_wash_status_id",
@@ -256,19 +254,27 @@ func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (boo
 	}
 
 	var result transactionjpcbpayloads.CarWashErrorDetail
-	joinQuery = joinQuery.Select(keyAttributes).Where("wo.work_order_system_number = ?", 1).
+	joinQuery = joinQuery.Select(keyAttributes).Where("carwash.work_order_system_number = ?", workOrderSystemNumber).
 		Scan(&result)
 	if joinQuery.Error != nil {
-		panic(joinQuery.Error)
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        joinQuery.Error,
+		}
 	}
 
-	DRAFT := 2
+	if result.WorkOrderSystemNumber == 0 {
+		return false, nil
+	}
+
+	DRAFT := 1
 	if result.CarWashStatusId != DRAFT {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusOK,
+			Message: "Can't delete Car Wash Allocation, Car Wash status for " + result.WorkOrderDocumentNumber + " : " +
+				result.CarWashBayDescription + " is already " + result.CarWashStatusDescription,
 			Err: fmt.Errorf(
-				"Can't delete Car Wash Allocation, Car Wash status for " + result.WorkOrderDocumentNumber + " : " +
-					result.CarWashBayDescription + " is already " + result.CarWashStatusDescription,
+				"failed to delete car wash",
 			),
 		}
 	}
@@ -309,40 +315,33 @@ func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (boo
 }
 
 func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
-	// get work order
-	var workOrderEntity transactionworkshopentities.WorkOrder
+	const qcPass = 6
+	const statusDraft = 1
+	const priorityNormal = 2
 
+	var workOrderEntity transactionworkshopentities.WorkOrder
 	var workOrderResponse transactionjpcbpayloads.CarWashWorkOrder
+
 	err := tx.Model(&workOrderEntity).Select("car_wash, company_id, work_order_status_id").Where("work_order_system_number = ?", workOrderSystemNumber).Scan(&workOrderResponse).Error
 	if err != nil {
-		return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
+		errorHelperInternalServerError(err)
 	}
 
-	const (
-		QC_PASS = 6
-	)
-
 	if true { //TODO check if company use jpcb
-		if workOrderResponse.WorkOrderStatusId == QC_PASS {
+		if workOrderResponse.WorkOrderStatusId == qcPass {
 			if workOrderResponse.CarWash {
 				var workOrder int
 				result := tx.Model(&transactionjpcbentities.CarWash{}).Select("work_order_system_number").
 					Where("work_order_system_number = ?", workOrderSystemNumber).Scan(&workOrder)
 				if result.Error != nil {
-					return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Err:        err,
-					}
+					errorHelperInternalServerError(result.Error)
 				}
 				if result.RowsAffected == 0 {
 					newCarWash := transactionjpcbentities.CarWash{
 						CompanyId:             workOrderResponse.CompanyId,
 						WorkOrderSystemNumber: workOrderSystemNumber,
-						StatusId:              1, //Draft
-						PriorityId:            2, //Normal
+						StatusId:              statusDraft,
+						PriorityId:            priorityNormal,
 						CarWashDate:           time.Now(),
 						BayId:                 nil,
 					}
@@ -368,43 +367,41 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 						ActualTime:            newCarWash.ActualTime,
 					}, nil
 				}
+
+				return errorHelperDataAlreadyExist()
 			}
 		} else {
 			if workOrderResponse.CarWash {
 				lineTypeOperationId := 1
-				resultLineTypeOperation := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).Select("work_order_system_number").
-					Where("work_order_system_number = ? AND line_type_id = ?", workOrderSystemNumber, lineTypeOperationId)
+				workOrderDetail := transactionworkshopentities.WorkOrderDetail{}
+
+				resultLineTypeOperation := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Where("work_order_system_number = ? AND line_type_id = ?", workOrderSystemNumber, lineTypeOperationId).First(&workOrderDetail)
 				if resultLineTypeOperation.Error != nil {
-					return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Err:        err,
-					}
+					errorHelperInternalServerError(resultLineTypeOperation.Error)
 				}
 
-				if resultLineTypeOperation.RowsAffected == 0 {
-					result := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).Select("work_order_system_number").
-						Where("work_order_system_number = ? AND frt_quantity <> supply_quantity", workOrderSystemNumber)
+				if workOrderDetail.WorkOrderSystemNumber == 0 {
+					result := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+						Where("work_order_system_number = ? AND frt_quantity <> supply_quantity", workOrderSystemNumber).First(&workOrderDetail)
 					if result.Error != nil {
-						return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-							StatusCode: http.StatusInternalServerError,
-							Err:        err,
-						}
+						errorHelperInternalServerError(result.Error)
 					}
-					if result.RowsAffected == 0 {
-						result := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).Select("work_order_system_number").
-							Where("work_order_system_number = ?", workOrderSystemNumber)
+
+					if workOrderDetail.WorkOrderSystemNumber == 0 {
+						carWash := transactionjpcbentities.CarWash{}
+						result := tx.Model(&transactionjpcbentities.CarWash{}).
+							Where("work_order_system_number = ?", workOrderSystemNumber).First(&carWash)
 						if result.Error != nil {
-							return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-								StatusCode: http.StatusInternalServerError,
-								Err:        err,
-							}
+							errorHelperInternalServerError(result.Error)
 						}
-						if result.RowsAffected == 0 {
+
+						if carWash.CarWashId == 0 {
 							newCarWash := transactionjpcbentities.CarWash{
 								CompanyId:             workOrderResponse.CompanyId,
 								WorkOrderSystemNumber: workOrderSystemNumber,
-								StatusId:              1, //Draft
-								PriorityId:            2, //Normal
+								StatusId:              statusDraft,
+								PriorityId:            priorityNormal,
 								CarWashDate:           time.Now(),
 								BayId:                 nil,
 							}
@@ -430,33 +427,67 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 								ActualTime:            newCarWash.ActualTime,
 							}, nil
 						}
+
+						return errorHelperDataAlreadyExist()
 					}
 				} else {
 					var deleteCarWash transactionjpcbentities.CarWash
+
 					result := tx.Model(&deleteCarWash).Select("work_order_system_number").
 						Where("work_order_system_number = ?", workOrderSystemNumber).First(&deleteCarWash)
 					if result.Error != nil {
-						return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-							StatusCode: http.StatusInternalServerError,
-							Err:        err,
+						errorHelperInternalServerError(result.Error)
+					}
+
+					if deleteCarWash.CarWashId != 0 {
+						err = tx.Delete(&deleteCarWash).Error
+						if err != nil {
+							return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
+								Message: "Failed to delete car wash",
+								Err:     err,
+							}
 						}
 					}
 
-					err = tx.Delete(&deleteCarWash).Error
-					if err != nil {
-						return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-							Message: "Failed to delete car wash",
-							Err:     err,
-						}
+					return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Message:    "Can't add work order with line type operation",
+						Err:        fmt.Errorf("cant add work order with line type operation"),
 					}
 				}
 			}
 		}
 	}
 
+	return errorHelperBadRequest()
+}
+
+func errorHelperDataAlreadyExist() (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
 	return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-		StatusCode: http.StatusOK,
+		StatusCode: http.StatusBadRequest,
+		Message:    "data already exist",
+		Err:        fmt.Errorf("data already exist"),
+	}
+}
+
+func errorHelperBadRequest() (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
+	return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusBadRequest,
 		Message:    "Failed to create car wash",
 		Err:        fmt.Errorf("fail to create car wash"),
+	}
+}
+
+func errorHelperInternalServerError(err error) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
+	return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusInternalServerError,
+		Err:        err,
+	}
+}
+
+func errorHelperNotFound(err error) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
+	return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusNotFound,
+		Err:        err,
 	}
 }

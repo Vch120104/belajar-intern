@@ -10,12 +10,12 @@ type CarWashGetAllResponse struct {
 	Tnkb                       string     `json:"tnkb"`
 	PromiseTime                *time.Time `json:"promise_time"`
 	PromiseDate                *time.Time `json:"promise_date"`
-	CarWashBayId               int        `json:"car_wash_bay_id"`
-	CarWashBayDescription      string     `json:"car_wash_bay_description"`
+	CarWashBayId               *int       `json:"car_wash_bay_id"`
+	CarWashBayDescription      *string    `json:"car_wash_bay_description"`
 	CarWashStatusId            int        `json:"car_wash_status_id"`
 	CarWashStatusDescription   string     `json:"car_wash_status_description"`
-	StartTime                  *time.Time `json:"start_time"`
-	EndTime                    *time.Time `json:"end_time"`
+	StartTime                  float32    `json:"start_time"`
+	EndTime                    float32    `json:"end_time"`
 	CarWashPriorityId          int        `json:"car_wash_priority_id"`
 	CarWashPriorityDescription string     `json:"car_wash_priority_description"`
 }
@@ -34,7 +34,7 @@ type CarWashPostResponse struct {
 }
 
 type CarWashPostRequestProps struct {
-	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	WorkOrderSystemNumber int `json:"work_order_system_number" validate:"required"`
 }
 type CarWashModelResponse struct {
 	ModelId   int    `json:"model_id"`
@@ -67,6 +67,7 @@ type CarWashPriorityDropDownResponse struct {
 }
 
 type CarWashErrorDetail struct {
+	WorkOrderSystemNumber    int    `json:"work_order_system_number"`
 	WorkOrderDocumentNumber  string `json:"work_order_document_number"`
 	CarWashBayDescription    string `json:"car_wash_bay_description"`
 	CarWashStatusId          int    `json:"car_wash_status_id"`
