@@ -33,7 +33,6 @@ func NewTechnicianAttendanceController(technicianAttendanceService transactionjp
 	}
 }
 
-// GetAllTechnicianAttendance implements TechnicianAttendanceController.
 func (r *TechnicianAttendanceControllerImpl) GetAllTechnicianAttendance(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{

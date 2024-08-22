@@ -16,7 +16,3 @@ type TechnicianAttendanceSaveRequest struct {
 	UserId      int       `json:"user_id"`
 	Attendance  bool      `json:"attendance"`
 }
-
-// type TechnicianAttendanceUpdateRequest struct {
-// 	Attendance bool `json:"attendance"`
-// }
