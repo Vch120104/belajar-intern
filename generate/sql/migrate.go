@@ -186,7 +186,9 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseRequestReferenceType{},
 	//&masterentities.LocationStock{},
 	//&masterentities.WarehouseGroupMappingEntities{},
-
+	//
+	//&transactionjpcbentities.SettingTechnician{},
+	//&transactionjpcbentities.SettingTechnicianDetail{},
 	//&transactionjpcbentities.TechnicianAttendance{},
 	)
 
