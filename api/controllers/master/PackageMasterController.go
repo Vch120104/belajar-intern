@@ -1,12 +1,14 @@
 package mastercontroller
 
 import (
+	"after-sales/api/exceptions"
 	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -66,7 +68,11 @@ func (r *PackageMasterControllerImpl) GetAllPackageMaster(writer http.ResponseWr
 }
 
 func (r *PackageMasterControllerImpl) GetAllPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	queryValues := request.URL.Query()
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -84,7 +90,11 @@ func (r *PackageMasterControllerImpl) GetAllPackageMasterDetail(writer http.Resp
 }
 
 func (r *PackageMasterControllerImpl) GetByIdPackageMaster(writer http.ResponseWriter, request *http.Request) {
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	result, err := r.PackageMasterService.GetByIdPackageMaster(PackageMasterId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -94,9 +104,21 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMaster(writer http.ResponseW
 }
 
 func (r *PackageMasterControllerImpl) GetByIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
-	PackageMasterDetailId, _ := strconv.Atoi(chi.URLParam(request, "package_detail_id"))
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
-	LineTypeId, _ := strconv.Atoi(chi.URLParam(request, "line_type_id"))
+	PackageMasterDetailId, errA := strconv.Atoi(chi.URLParam(request, "package_detail_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	result, err := r.PackageMasterService.GetByIdPackageMasterDetail(PackageMasterDetailId, PackageMasterId, LineTypeId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -146,7 +168,11 @@ func (r *PackageMasterControllerImpl) SavePackageMasterDetailWorkshop(writer htt
 }
 
 func (r *PackageMasterControllerImpl) ChangeStatusPackageMaster(writer http.ResponseWriter, request *http.Request) {
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	result, err := r.PackageMasterService.ChangeStatusItemPackage(PackageMasterId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -157,7 +183,11 @@ func (r *PackageMasterControllerImpl) ChangeStatusPackageMaster(writer http.Resp
 
 func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	PackageDetailId := chi.URLParam(request, "package_detail_id")
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	response, err := r.PackageMasterService.ActivateMultiIdPackageMasterDetail(PackageDetailId, PackageMasterId)
 
 	if err != nil {
@@ -170,7 +200,12 @@ func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer 
 
 func (r *PackageMasterControllerImpl) DeactivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	PackageDetailId := chi.URLParam(request, "package_detail_id")
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	response, err := r.PackageMasterService.DeactivateMultiIdPackageMasterDetail(PackageDetailId, PackageMasterId)
 
 	if err != nil {
@@ -183,8 +218,17 @@ func (r *PackageMasterControllerImpl) DeactivateMultiIdPackageMasterDetail(write
 
 func (r *PackageMasterControllerImpl) CopyToOtherModel(writer http.ResponseWriter, request *http.Request) {
 	PackageDetailId := chi.URLParam(request, "package_name")
-	PackageMasterId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
-	ModelId, _ := strconv.Atoi(chi.URLParam(request, "model_id"))
+	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	ModelId, errA := strconv.Atoi(chi.URLParam(request, "model_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	ressult, err := r.PackageMasterService.CopyToOtherModel(PackageMasterId, PackageDetailId, ModelId)
 	if err != nil {

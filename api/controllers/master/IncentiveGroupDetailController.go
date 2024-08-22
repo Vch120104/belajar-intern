@@ -2,6 +2,7 @@ package mastercontroller
 
 import (
 	masterpayloads "after-sales/api/payloads/master"
+	"errors"
 	// masterrepository "after-sales/api/repositories/master"
 	exceptions "after-sales/api/exceptions"
 	helper "after-sales/api/helper"
@@ -38,7 +39,11 @@ func NewIncentiveGroupDetailController(IncentiveGroupDetailService masterservice
 
 func (r *IncentiveGroupDetailControllerImpl) GetAllIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	IncentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	IncentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -104,7 +109,12 @@ func (r *IncentiveGroupDetailControllerImpl) GetIncentiveGroupDetailById(writer 
 }
 
 func (r *IncentiveGroupDetailControllerImpl) UpdateIncentiveGroupDetail(writer http.ResponseWriter, request *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
+	id, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var incentiveGroupDetailRequest masterpayloads.UpdateIncentiveGroupDetailRequest
 	var message string

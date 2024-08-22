@@ -2,6 +2,7 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"errors"
 	// "after-sales/api/helper"
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -79,7 +80,11 @@ func (r *IncentiveGroupControllerImpl) GetAllIncentiveGroupIsActive(writer http.
 }
 
 func (r *IncentiveGroupControllerImpl) GetIncentiveGroupById(writer http.ResponseWriter, request *http.Request) {
-	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
+	incentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	incentiveGroupResponse, errors := r.IncentiveGroupService.GetIncentiveGroupById(incentiveGroupId)
 
 	if errors != nil {
@@ -120,7 +125,11 @@ func (r *IncentiveGroupControllerImpl) SaveIncentiveGroup(writer http.ResponseWr
 
 func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
+	IncentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.IncentiveGroupService.ChangeStatusIncentiveGroup(int(IncentiveGroupId))
 	if err != nil {
@@ -133,7 +142,11 @@ func (r *IncentiveGroupControllerImpl) ChangeStatusIncentiveGroup(writer http.Re
 
 func (r *IncentiveGroupControllerImpl) UpdateIncentiveGroup(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.UpdateIncentiveGroupRequest
-	incentiveGroupId, _ := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
+	incentiveGroupId, errA := strconv.Atoi(chi.URLParam(request, "incentive_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
 	if err != nil {

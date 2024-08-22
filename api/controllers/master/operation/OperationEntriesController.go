@@ -7,6 +7,7 @@ import (
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
+	"errors"
 	"strconv"
 
 	// "after-sales/api/middlewares"
@@ -93,7 +94,12 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 // @Router /v1/operation-entries/{operation_entries_id} [get]
 func (r *OperationEntriesControllerImpl) GetOperationEntriesByID(writer http.ResponseWriter, request *http.Request) {
 
-	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
+	operationEntriesId, errA := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	result, err := r.operationEntriesService.GetOperationEntriesById(int(operationEntriesId))
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -178,7 +184,12 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-entries/{operation_entries_id} [patch]
 func (r *OperationEntriesControllerImpl) ChangeStatusOperationEntries(writer http.ResponseWriter, request *http.Request) {
-	operationEntriesId, _ := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
+	operationEntriesId, errA := strconv.Atoi(chi.URLParam(request, "operation_entries_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.operationEntriesService.ChangeStatusOperationEntries(int(operationEntriesId))
 
