@@ -315,9 +315,11 @@ func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (boo
 }
 
 func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
-	const qcPass = 6
-	const statusDraft = 1
-	const priorityNormal = 2
+	const (
+		qcPass         = 6
+		statusDraft    = 1
+		priorityNormal = 2
+	)
 
 	var workOrderEntity transactionworkshopentities.WorkOrder
 	var workOrderResponse transactionjpcbpayloads.CarWashWorkOrder
@@ -327,7 +329,20 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		errorHelperInternalServerError(err)
 	}
 
-	if true { //TODO check if company use jpcb
+	//Fetch data Model from external services
+	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(workOrderResponse.CompanyId)
+	var getCompanyResponse transactionjpcbpayloads.CarWashCompanyResponse
+	errFetchCompany := utils.Get(CompanyURL, &getCompanyResponse, nil)
+	getCompanyResponse.IsUseJPCB = true //TODO remove later
+	if errFetchCompany != nil {
+		return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Company Data from external service",
+			Err:        err,
+		}
+	}
+
+	if getCompanyResponse.IsUseJPCB { //TODO check if company use jpcb
 		if workOrderResponse.WorkOrderStatusId == qcPass {
 			if workOrderResponse.CarWash {
 				var workOrder int

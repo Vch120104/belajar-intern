@@ -79,3 +79,11 @@ type CarWashWorkOrder struct {
 	CompanyId         int  `json:"company_id"`
 	WorkOrderStatusId int  `json:"work_order_status_id"`
 }
+
+type CarWashCompanyResponse struct {
+	CompanyId   int    `json:"company_id"`
+	CompanyCode string `json:"company_code"`
+	CompanyName string `json:"company_name"`
+	CompanyType string `json:"company_type"`
+	IsUseJPCB   bool   `json:"is_use_jpcb"`
+}
