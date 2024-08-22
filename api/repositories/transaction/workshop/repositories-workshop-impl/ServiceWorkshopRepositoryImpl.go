@@ -149,7 +149,7 @@ func calculateActualTime(startTime, endTime time.Time) float64 {
 func GetTimeZone(currentDate time.Time, companyCode int) (time.Time, error) {
 
 	apiURL := fmt.Sprintf("%scompany-reference?page=0&limit=1000&company_id=%d", config.EnvConfigs.GeneralServiceUrl, companyCode)
-
+	fmt.Println("API URL:", apiURL)
 	var timeReferences []transactionworkshoppayloads.TimeReference
 
 	err := utils.Get(apiURL, &timeReferences, nil)
@@ -162,13 +162,13 @@ func GetTimeZone(currentDate time.Time, companyCode int) (time.Time, error) {
 	}
 
 	timeVariance := timeReferences[0].TimeDiff
-
+	fmt.Println("Time variance:", timeVariance)
 	if timeVariance < -24*60 || timeVariance > 24*60 {
 		return time.Time{}, fmt.Errorf("invalid time variance %d: must be within -1440 to 1440 minutes", timeVariance)
 	}
 
 	adjustedTime := currentDate.Add(time.Minute * time.Duration(timeVariance))
-
+	fmt.Println("Adjusted time:", adjustedTime)
 	return adjustedTime, nil
 }
 
@@ -301,9 +301,11 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 	var pcBr string
 
 	// ============================ Sesuaikan waktu dengan zona waktu perusahaan
+	fmt.Println("Current time:", dateTimeComp)
+	fmt.Println("Company ID:", companyId)
 	dateTimeComp, err := GetTimeZone(dateTimeComp, companyId)
 	if err != nil {
-		//fmt.Println("Error adjusting time zone:", err)
+		fmt.Println("Error adjusting time zone:", err)
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to adjust time zone",
@@ -317,7 +319,7 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 		Where("technician_allocation_system_number = ?", idAlloc).
 		Count(&count).Error
 	if err != nil {
-		//fmt.Println("Error counting technician allocation:", err)
+		fmt.Println("Error counting technician allocation:", err)
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count technician allocation",
@@ -325,7 +327,7 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 		}
 	}
 	if count == 0 {
-		//fmt.Println("Technician Allocation is not valid. ID:", idAlloc)
+		fmt.Println("Technician Allocation is not valid. ID:", idAlloc)
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Technician Allocation is not valid. Please refresh your page",
@@ -339,7 +341,7 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 		Where("technician_allocation_system_number = ?", idAlloc).
 		First(&woAlloc).Error
 	if err != nil {
-		//fmt.Println("Error retrieving technician allocation:", err)
+		fmt.Println("Error retrieving technician allocation:", err)
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve technician allocation",
@@ -374,7 +376,7 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 		Scan(&maxLine).Error
 
 	if err != nil {
-		//fmt.Println("Error getting max line:", err)
+		fmt.Println("Error getting max line:", err)
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get maximum technician allocation line",
@@ -384,7 +386,7 @@ func (r *ServiceWorkshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 
 	// ============================ Tentukan nilai berikutnya dengan menambahkan 1
 	nextLine := maxLine + 1
-	//fmt.Println("Next technician allocation line:", nextLine)
+	fmt.Println("Next technician allocation line:", nextLine)
 
 	// ============================ Periksa status layanan untuk alokasi teknisi dan baris yang relevan
 	err = tx.Model(&transactionworkshopentities.ServiceLog{}).

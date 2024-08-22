@@ -38,7 +38,7 @@ type ServiceWorkshopResponse struct {
 
 // TimeReference represents the structure of the data returned by the API
 type TimeReference struct {
-	TimeDiff int `json:"currency_id"` // `json:"time_different"`
+	TimeDiff int `json:"time_different"` // `json:"time_different"`
 }
 
 type ServiceWorkshopDetailResponse struct {
