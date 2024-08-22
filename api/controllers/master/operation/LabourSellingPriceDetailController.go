@@ -10,6 +10,7 @@ import (
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -35,7 +36,12 @@ func NewLabourSellingPriceDetailController(LabourSellingPriceService masteropera
 
 // GetSellingPriceDetailById implements LabourSellingPriceDetailController.
 func (r *LabourSellingPriceDetailControllerImpl) GetSellingPriceDetailById(writer http.ResponseWriter, request *http.Request) {
-	detailId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_detail_id"))
+	detailId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.LabourSellingPriceService.GetSellingPriceDetailById(detailId)
 	if err != nil {
@@ -75,7 +81,12 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.Respo
 
 // Duplicate implements LabourSellingPriceDetailController.
 func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseWriter, request *http.Request) {
-	sellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.LabourSellingPriceService.Duplicate(sellingPriceId)
 	if err != nil {
@@ -88,7 +99,11 @@ func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseW
 
 func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	sellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
