@@ -259,6 +259,12 @@ func StartRouting(db *gorm.DB) {
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
 
 	/* Transaction */
+
+	//Car Wash
+	CarWashRepository := transactionjpcbrepositoryimpl.NewCarWashRepositoryImpl()
+	CarWashService := transactionjpcbserviceimpl.NewCarWashServiceImpl(CarWashRepository, db, rdb)
+	CarWashController := transactionjpcbcontroller.NewCarWashController(CarWashService)
+
 	//Supply Slip
 	SupplySlipRepository := transactionsparepartrepositoryimpl.StartSupplySlipRepositoryImpl()
 	SupplySlipService := transactionsparepartserviceimpl.StartSupplySlipService(SupplySlipRepository, db, rdb)
@@ -375,7 +381,7 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
 	CarWashBayRouter := CarWashBayRouter(CarWashBayController)
 	QualityControlRouter := QualityControlRouter(QualityControlController)
-
+	CarWashRouter := CarWashRouter(CarWashController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -440,7 +446,7 @@ func StartRouting(db *gorm.DB) {
 
 		/* Transaction JPCB */
 		r.Mount("/bay", CarWashBayRouter)
-
+		r.Mount("/car-wash", CarWashRouter)
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
 		r.Mount("/work-order", WorkOrderRouter)
