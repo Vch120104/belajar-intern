@@ -1306,6 +1306,27 @@ func QualityControlRouter(
 	return router
 }
 
+func SettingTechnicianRouter(
+	SettingTechnicianController transactionjpcbcontroller.SettingTechnicianController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
+	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+
+	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
+	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)
+	router.Post("/detail", SettingTechnicianController.SaveSettingTechnicianDetail)
+	router.Put("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.UpdateSettingTechnicianDetail)
+
+	return router
+}
+
 func SupplySlipRouter(
 	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {
