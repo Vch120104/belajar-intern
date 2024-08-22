@@ -4,6 +4,7 @@ import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/validation"
+	"errors"
 
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
@@ -170,7 +171,12 @@ func (r *OperationGroupControllerImpl) SaveOperationGroup(writer http.ResponseWr
 // @Router /v1/operation-group/{operation_group_id} [patch]
 func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.ResponseWriter, request *http.Request) {
 
-	operationGroupId, _ := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+	operationGroupId, errA := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.OperationGroupService.ChangeStatusOperationGroup(int(operationGroupId))
 

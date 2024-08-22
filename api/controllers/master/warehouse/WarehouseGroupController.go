@@ -5,6 +5,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"errors"
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
@@ -52,7 +53,12 @@ func (r *WarehouseGroupControllerImpl) GetbyGroupCode(writer http.ResponseWriter
 
 // GetWarehouseGroupDropdownbyId implements WarehouseGroupController.
 func (r *WarehouseGroupControllerImpl) GetWarehouseGroupDropdownbyId(writer http.ResponseWriter, request *http.Request) {
-	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	warehouseGroupId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.WarehouseGroupService.GetWarehouseGroupDropdownbyId(warehouseGroupId)
 	if err != nil {
@@ -124,7 +130,12 @@ func (r *WarehouseGroupControllerImpl) GetAllWarehouseGroup(writer http.Response
 // @Router /v1/warehouse-group/{warehouse_group_id} [get]
 func (r *WarehouseGroupControllerImpl) GetByIdWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	warehouseGroupId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.WarehouseGroupService.GetByIdWarehouseGroup(int(warehouseGroupId))
 	if err != nil {
@@ -176,7 +187,11 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 // @Router /v1/warehouse-group/{warehouse_group_id} [patch]
 func (r *WarehouseGroupControllerImpl) ChangeStatusWarehouseGroup(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	warehouseGroupId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	change_status, err := r.WarehouseGroupService.ChangeStatusWarehouseGroup(int(warehouseGroupId))
 	if err != nil {

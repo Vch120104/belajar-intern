@@ -163,7 +163,12 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 // @Router /v1/item-location/{item_location_id} [get]
 func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWriter, request *http.Request) {
 
-	ItemLocationIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+	ItemLocationIds, errA := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemLocationService.GetItemLocationById(ItemLocationIds)
 	if err != nil {
@@ -235,7 +240,12 @@ func (r *ItemLocationControllerImpl) GetAllItemLocationDetail(writer http.Respon
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-location/detail [post]
 func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter, request *http.Request) {
-	itemLocID, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+	itemLocID, errA := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var formRequest masteritempayloads.ItemLocationDetailRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -306,7 +316,12 @@ func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, r
 }
 
 func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
-	ItemLocationIds, _ := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+	ItemLocationIds, errA := strconv.Atoi(chi.URLParam(request, "item_location_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemLocationService.GetByIdItemLoc(ItemLocationIds)
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -45,7 +46,11 @@ func NewForecastMasterController(forecastMasterService masterservice.ForecastMas
 // @Router /v1/forecast-master/{forecast_master_id} [get]
 func (r *ForecastMasterControllerImpl) GetForecastMasterById(writer http.ResponseWriter, request *http.Request) {
 
-	ForecastMasterId, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
+	ForecastMasterId, errA := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ForecastMasterService.GetForecastMasterById(int(ForecastMasterId))
 	if err != nil {
@@ -88,7 +93,11 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 // @Router /v1/forecast-master/{forecast_master_id} [patch]
 func (r *ForecastMasterControllerImpl) ChangeStatusForecastMaster(writer http.ResponseWriter, request *http.Request) {
 
-	forecast_master_id, _ := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
+	forecast_master_id, errA := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ForecastMasterService.ChangeStatusForecastMaster(int(forecast_master_id))
 	if err != nil {
@@ -150,8 +159,12 @@ func (r *ForecastMasterControllerImpl) GetAllForecastMaster(writer http.Response
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
-func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.ResponseWriter, request *http.Request){
-	forecast_master_id,_ := strconv.Atoi(chi.URLParam(request,"forecast_master_id"))
+func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.ResponseWriter, request *http.Request) {
+	forecast_master_id, errA := strconv.Atoi(chi.URLParam(request, "forecast_master_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
 	result, err := r.ForecastMasterService.UpdateForecastMaster(formRequest, forecast_master_id)
@@ -159,6 +172,6 @@ func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.Response
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	
+
 	payloads.NewHandleSuccess(writer, result, "Update Data Successfully!", http.StatusOK)
 }
