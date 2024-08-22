@@ -443,7 +443,9 @@ func PurchaseRequestRouter(
 	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
 
 	//	@Router			/v1/purchase-request/by-code/{company_id}/{item_id} [get]
+	router.Delete("/detail/{purchase_request_detail_system_number}", PurchaseRequest.VoidDetail)
 
+	//purchase-request/detail/{purchase_request_detail_system_number}
 	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
 
