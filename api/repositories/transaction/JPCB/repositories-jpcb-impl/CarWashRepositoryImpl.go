@@ -234,27 +234,21 @@ func (r *CarWashImpl) GetAllCarWashPriorityDropDown(tx *gorm.DB) ([]transactionj
 }
 
 func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (bool, *exceptions.BaseErrorResponse) {
-	mainTable := "trx_car_wash"
-	mainAlias := "carwash"
-
-	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
-		{Table: "mtr_car_wash_status", Alias: "status", ForeignKey: mainAlias + ".car_wash_status_id", ReferenceKey: "status.car_wash_status_id"},
-		{Table: "trx_work_order", Alias: "wo", ForeignKey: mainAlias + ".work_order_system_number", ReferenceKey: "wo.work_order_system_number"},
-	}
-
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+	joinQuery := tx.Table("trx_car_wash").
+		Joins("LEFT JOIN trx_work_order ON trx_car_wash.work_order_system_number = trx_work_order.work_order_system_number AND trx_car_wash.company_id = trx_work_order.company_id").
+		Joins("LEFT JOIN mtr_car_wash_status ON trx_car_wash.car_wash_status_id = mtr_car_wash_status.car_wash_status_id").
+		Joins("LEFT JOIN mtr_car_wash_bay ON trx_car_wash.car_wash_bay_id = mtr_car_wash_bay.car_wash_bay_id")
 
 	keyAttributes := []string{
-		"wo.work_order_system_number",
-		"wo.work_order_document_number",
-		"bay.car_wash_bay_description",
-		"carwash.car_wash_status_id",
-		"status.car_wash_status_description",
+		"trx_work_order.work_order_system_number",
+		"trx_work_order.work_order_document_number",
+		"mtr_car_wash_bay.car_wash_bay_description",
+		"trx_car_wash.car_wash_status_id",
+		"mtr_car_wash_status.car_wash_status_description",
 	}
 
 	var result transactionjpcbpayloads.CarWashErrorDetail
-	joinQuery = joinQuery.Select(keyAttributes).Where("carwash.work_order_system_number = ?", workOrderSystemNumber).
+	joinQuery = joinQuery.Select(keyAttributes).Where("trx_car_wash.work_order_system_number = ?", workOrderSystemNumber).
 		Scan(&result)
 	if joinQuery.Error != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -496,13 +490,6 @@ func errorHelperBadRequest() (transactionjpcbpayloads.CarWashPostResponse, *exce
 func errorHelperInternalServerError(err error) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
 	return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
 		StatusCode: http.StatusInternalServerError,
-		Err:        err,
-	}
-}
-
-func errorHelperNotFound(err error) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
-	return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
-		StatusCode: http.StatusNotFound,
 		Err:        err,
 	}
 }
