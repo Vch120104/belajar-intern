@@ -10,6 +10,7 @@ import (
 	"after-sales/api/utils"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -118,7 +119,12 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePrice(writer http.ResponseWr
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	PurchasePriceId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id")) // Get Purchase Price ID from URL
+	PurchasePriceId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_id")) // Get Purchase Price ID from URL
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	update, err := r.PurchasePriceService.UpdatePurchasePrice(PurchasePriceId, formRequest)
 	if err != nil {
@@ -171,7 +177,12 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 // @Router /v1/purchase-price/by-id/{purchase_price_id} [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseWriter, request *http.Request) {
 
-	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+	PurchasePriceIds, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	queryValues := request.URL.Query()
 
@@ -202,7 +213,12 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceById(writer http.ResponseW
 // @Router /v1/purchase-price/{purchase_price_id} [patch]
 func (r *PurchasePriceControllerImpl) ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request) {
 
-	PurchasePricesId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+	PurchasePricesId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	entity, err := r.PurchasePriceService.ChangeStatusPurchasePrice(int(PurchasePricesId))
 	if err != nil {
@@ -272,7 +288,12 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePriceDetail(writer http.Resp
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/purchase-price/detail/{purchase_price_detail_id} [get]
 func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request) {
-	PurchasePriceIds, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id"))
+	PurchasePriceIds, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.PurchasePriceService.GetPurchasePriceDetailById(PurchasePriceIds)
 	if err != nil {
@@ -299,7 +320,11 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePriceDetail(writer http.Resp
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	PurchasePriceDetailId, _ := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id")) // Get Purchase Price ID from URL
+	PurchasePriceDetailId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id")) // Get Purchase Price ID from URL
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	update, err := r.PurchasePriceService.UpdatePurchasePriceDetail(PurchasePriceDetailId, formRequest)
 	if err != nil {

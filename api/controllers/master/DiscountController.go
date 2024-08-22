@@ -2,7 +2,7 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"fmt"
+	"errors"
 
 	// "after-sales/api/helper"
 	helper "after-sales/api/helper"
@@ -109,9 +109,9 @@ func (r *DiscountControllerImpl) GetAllDiscountIsActive(writer http.ResponseWrit
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount/by-id/{id} [get]
 func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, request *http.Request) {
-	discountId, errr := strconv.Atoi(chi.URLParam(request, "id"))
-	if errr != nil {
-		fmt.Print(errr)
+	discountId, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 	discountResponse, errors := r.discountservice.GetDiscountById(int(discountId))
@@ -196,7 +196,12 @@ func (r *DiscountControllerImpl) SaveDiscount(writer http.ResponseWriter, reques
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount/{discount_code_id} [patch]
 func (r *DiscountControllerImpl) ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request) {
-	discountId, _ := strconv.Atoi(chi.URLParam(request, "id"))
+	discountId, errA := strconv.Atoi(chi.URLParam(request, "id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.discountservice.ChangeStatusDiscount(int(discountId))
 
