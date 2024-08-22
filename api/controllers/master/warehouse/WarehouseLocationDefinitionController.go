@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"strconv"
@@ -97,7 +98,11 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetAll(writer http.ResponseW
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-location-definition/by-level/{warehouse_location_definition_level_id}/{warehouse_location_definition_level_code} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.ResponseWriter, request *http.Request) {
-	warehouseLocationDefinitionLevelID, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_level_id"))
+	warehouseLocationDefinitionLevelID, errA := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_level_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	warehouseLocationDefinitionID := chi.URLParam(request, "warehouse_location_definition_level_code") // Menggunakan nilai string langsung
 
 	get, err := r.WarehouseLocationDefinitionService.GetByLevel(warehouseLocationDefinitionLevelID, warehouseLocationDefinitionID)
@@ -120,7 +125,12 @@ func (r *WarehouseLocationDefinitionControllerImpl) GetByLevel(writer http.Respo
 // @Router /v1/warehouse-location-definition/by-id/{warehouse_location_definition_id} [get]
 func (r *WarehouseLocationDefinitionControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
+	WarehouseLocationDefinitionId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.WarehouseLocationDefinitionService.GetById(WarehouseLocationDefinitionId)
 
@@ -222,7 +232,11 @@ func (r *WarehouseLocationDefinitionControllerImpl) SaveData(writer http.Respons
 // @Router /v1/warehouse-location-definition/{warehouse_location_definition_id} [patch]
 func (r *WarehouseLocationDefinitionControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	WarehouseLocationDefinitionId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
+	WarehouseLocationDefinitionId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_location_definition_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	entity, err := r.WarehouseLocationDefinitionService.ChangeStatus(WarehouseLocationDefinitionId)
 	if err != nil {
