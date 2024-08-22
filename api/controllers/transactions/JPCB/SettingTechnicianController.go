@@ -143,5 +143,5 @@ func (r *SettingTechnicianControllerImpl) UpdateSettingTechnicianDetail(writer h
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, update, "Create Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully", http.StatusOK)
 }
