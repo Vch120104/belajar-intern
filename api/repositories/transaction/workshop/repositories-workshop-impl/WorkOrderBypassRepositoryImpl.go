@@ -339,13 +339,10 @@ func (r *WorkOrderBypassRepositoryImpl) Bypass(tx *gorm.DB, id int, request tran
 		carWash = transactionjpcbentities.CarWash{
 			CompanyId:             1,
 			WorkOrderSystemNumber: id,
-			CarWashBayId:          1,
-			CarWashStatusId:       1,
 			CarWashDate:           time.Now(),
 			StartTime:             0,
 			EndTime:               0,
 			ActualTime:            0,
-			CarWashPriorityId:     1,
 		}
 
 		if err := tx.Create(&carWash).Error; err != nil {
