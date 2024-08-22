@@ -1060,7 +1060,7 @@ func DeductionRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", DeductionController.GetAllDeductionList)
-	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
+	router.Get("/{deduction_id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
 	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
