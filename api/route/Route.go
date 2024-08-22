@@ -308,6 +308,11 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderBypassService := transactionworkshopserviceimpl.OpenWorkOrderBypassServiceImpl(WorkOrderBypassRepository, db, rdb)
 	WorkOrderBypassController := transactionworksopcontroller.NewWorkOrderBypassController(WorkOrderBypassService)
 
+	//Setting Technician
+	SettingTechnicianRepository := transactionjpcbrepositoryimpl.StartSettingTechnicianRepositoryImpl()
+	SettingTechnicianService := transactionjpcbserviceimpl.StartServiceTechnicianService(SettingTechnicianRepository, db, rdb)
+	SettingTechnicianController := transactionjpcbcontroller.NewSettingTechnicianController(SettingTechnicianService)
+
 	//Car Wash Bay
 	CarWashBayRepository := transactionjpcbrepositoryimpl.NewCarWashBayRepositoryImpl()
 	CarWashBayService := transactionjpcbserviceimpl.NewCarWashBayServiceImpl(CarWashBayRepository, db, rdb)
@@ -378,6 +383,7 @@ func StartRouting(db *gorm.DB) {
 	VehicleHistoryRouter := VehicleHistoryRouter(VehicleHistoryController)
 	WorkOrderBypassRouter := WorkOrderBypassRouter(WorkOrderBypassController)
 	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
+	SettingTechnicianRouter := SettingTechnicianRouter(SettingTechnicianController)
 	CarWashBayRouter := CarWashBayRouter(CarWashBayController)
 	QualityControlRouter := QualityControlRouter(QualityControlController)
 	ServiceWorkshopRouter := ServiceWorkshopRouter(ServiceWorkshopController)
@@ -445,6 +451,7 @@ func StartRouting(db *gorm.DB) {
 
 		/* Transaction JPCB */
 		r.Mount("/bay", CarWashBayRouter)
+		r.Mount("/setting-technician", SettingTechnicianRouter)
 
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
