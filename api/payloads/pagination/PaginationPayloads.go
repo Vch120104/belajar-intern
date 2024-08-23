@@ -81,7 +81,7 @@ func NewDataFramePaginate(rows any, pagination *Pagination) (result []map[string
 		df = dataframe.LoadStructs(rows)
 	}
 
-	totalRows = df.Nrow()
+	totalRows = int(pagination.TotalRows)
 	if pagination.GetSortBy() != "" {
 		if pagination.GetSortBy() == "desc" {
 			sortOf := pagination.GetSortOf()
@@ -102,20 +102,23 @@ func NewDataFramePaginate(rows any, pagination *Pagination) (result []map[string
 		}
 	}
 
-	start := pagination.GetPage() * pagination.GetLimit()
-	end := start + pagination.GetLimit()
+	//#dont know what this section actually do, but it does gives some error while pagination page > 0, limit ?. this function created by Enrico - Ex Intern (comment by Kenth)
 
-	if end > df.Nrow() {
-		end = df.Nrow()
-	}
+	// start := pagination.GetPage() * pagination.GetLimit()
+	// end := start + pagination.GetLimit()
 
-	indices := make([]int, end-start)
-	for i := start; i < end; i++ {
-		indices[i-start] = i
-	}
+	// if end > df.Nrow() {
+	// 	end = df.Nrow()
+	// }
+
+	// indices := []int{}
+	// for i := start; i < end; i++ {
+	// 	indices = append(indices, i)
+	// }
+
+	// df = df.Subset(indices)
 
 	totalPages = int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
 
-	df = df.Subset(indices)
 	return df.Maps(), totalPages, totalRows
 }
