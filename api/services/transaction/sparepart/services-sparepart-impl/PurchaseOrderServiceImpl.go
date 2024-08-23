@@ -1,8 +1,11 @@
 package transactionsparepartserviceimpl
 
 import (
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
@@ -28,6 +31,35 @@ func (service *PurchaseOrderServiceImpl) GetAllPurchaseOrder(filter []utils.Filt
 	//TODO implement me
 	tx := service.DB.Begin()
 	result, err := service.PurchaseOrderRepo.GetAllPurchaseOrder(tx, filter, page, DateParams)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *PurchaseOrderServiceImpl) GetByIdPurchaseOrder(i int) (transactionsparepartpayloads.PurchaseOrderGetByIdResponses, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.GetByIdPurchaseOrder(tx, i)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (service *PurchaseOrderServiceImpl) GetByIdPurchaseOrderDetail(id int, page pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.GetByIdPurchaseOrderDetail(tx, id, page)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *PurchaseOrderServiceImpl) NewPurchaseOrderHeader(responses transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.NewPurchaseOrderHeader(tx, responses)
+	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
 	}

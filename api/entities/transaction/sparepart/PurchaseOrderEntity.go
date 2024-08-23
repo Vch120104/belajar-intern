@@ -24,6 +24,7 @@ type PurchaseOrderEntities struct {
 	SetOrder                            bool                          `gorm:"set_order;" json:"set_order"`
 	ViaBinning                          bool                          `gorm:"via_binning;" json:"via_binning"`
 	VatCode                             string                        `gorm:"column:vat_code;size:30;" json:"vat_code"`
+	PphCode                             string                        `gorm:"column:pph_code;size:30;" json:"pph_code"`
 	TotalDiscount                       *float64                      `gorm:"column:total_discount;" json:"total_discount"`
 	TotalAmount                         *float64                      `gorm:"column:total_amount;" json:"total_amount"`
 	TotalVat                            *float64                      `gorm:"column:total_vat;" json:"total_vat"`
@@ -61,8 +62,8 @@ type PurchaseOrderEntities struct {
 	JournalSystemNumber                 int                           `gorm:"column:journal_system_number;" json:"journal_system_number"`
 	EventNumber                         string                        `gorm:"column:event_number;size:10;" json:"event_number"`
 	ItemClassId                         int                           `gorm:"column:item_class_id;" json:"item_class_id"`
-	IsDirectShipment                    string                        `gorm:"column:is_direct_shipment;size:1;" json:"is_direct_shipment"`
-	CustomerId                          int                           `gorm:"column:customer_id;" json:"customer_id"`
+	APMIsDirectShipment                 string                        `gorm:"column:apm_is_direct_shipment;size:1;" json:"apm_is j_direct_shipment"`
+	DirectShipmentCustomerId            int                           `gorm:"column:direct_shipment_customer_id;" json:"direct_shipment_customer_id"`
 	ExternalPurchaseOrderNumber         string                        `gorm:"column:external_purchase_order_number;size:10;" json:"external_purchase_order_number"`
 	PurchaseOrderTypeId                 int                           `gorm:"column:purchase_order_type_id;" json:"purchase_order_type_id"`
 	CurrencyExchangeRate                *float64                      `gorm:"column:currency_exchange_rate;" json:"currency_exchange_rate"`

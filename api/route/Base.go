@@ -9,6 +9,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -480,6 +481,9 @@ func PurchaseOrderRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", PurchaseOrder.GetAllPurchaserOrderWithPagination)
+	router.Get("/by-id/{purchase_order_system_number}", PurchaseOrder.GetByIdPurchaseOrder)
+	router.Get("/detail/{purchase_order_system_number}", PurchaseOrder.GetByIdPurchaseOrderDetail)
+	router.Post("/", PurchaseOrder.NewPurchaseOrderDetail)
 
 	return router
 }
