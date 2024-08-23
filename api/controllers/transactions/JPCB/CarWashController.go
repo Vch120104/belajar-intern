@@ -22,6 +22,7 @@ type CarWashController interface {
 	GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request)
 	DeleteCarWash(writer http.ResponseWriter, request *http.Request)
 	PostCarWash(writer http.ResponseWriter, request *http.Request)
+	CarWashScreen(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -55,7 +56,6 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 		SortOf: chi.URLParam(request, "sort_of"),
 		SortBy: chi.URLParam(request, "sort_by"),
 	}
-	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
 	paginatedData, totalPages, totalRows, err := r.CarWashService.GetAll(criteria, paginate)
@@ -129,4 +129,25 @@ func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request 
 	}
 
 	payloads.NewHandleSuccess(writer, insert, "Data created successfully", http.StatusOK)
+}
+
+func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	companyId, strConvError := strconv.Atoi(queryValues.Get("company_id"))
+	if strConvError != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        strConvError,
+		})
+	}
+
+	data, err := r.CarWashService.GetAllCarWashScreen(companyId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, data, "Successfully get data", http.StatusOK)
+
 }

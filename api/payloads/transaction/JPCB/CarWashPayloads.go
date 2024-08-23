@@ -87,3 +87,14 @@ type CarWashCompanyResponse struct {
 	CompanyType string `json:"company_type"`
 	IsUseJPCB   bool   `json:"is_use_jpcb"`
 }
+
+type CarWashScreenGetAllResponse struct {
+	WorkOrderSystemNumber    int    `json:"work_order_system_number"`
+	CarWashBayId             *int   `json:"car_wash_bay_id"`
+	OrderNumber              *int   `json:"order_number"`
+	CarWashStatusId          int    `json:"car_wash_status_id"`
+	CarWashStatusDescription string `json:"car_wash_status_description"`
+	ModelId                  int    `json:"model_id"`
+	ModelDescription         string `json:"model_description"`
+	ColourCommercialName     string `json:"colour_commercial_name"`
+}
