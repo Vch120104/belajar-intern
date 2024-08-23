@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	"after-sales/api/utils"
+
 	"gorm.io/gorm"
 )
 
@@ -24,6 +25,7 @@ type PurchaseRequestRepository interface {
 	GetAllItemTypePrRequest(*gorm.DB, []utils.FilterCondition, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPurchaseRequestItemPr(*gorm.DB, int, int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
 	GetByCodePurchaseRequestItemPr(*gorm.DB, int, string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)
+	VoidPurchaseRequestDetailMultiId(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 }
 
 //NewPurchaseRequestHeader(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest) (transactionsparepartentities.PurchaseRequestEntities, *exceptions.BaseErrorResponse)
