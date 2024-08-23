@@ -443,7 +443,9 @@ func PurchaseRequestRouter(
 	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
 
 	//	@Router			/v1/purchase-request/by-code/{company_id}/{item_id} [get]
+	router.Delete("/detail/{purchase_request_detail_system_number}", PurchaseRequest.VoidDetail)
 
+	//purchase-request/detail/{purchase_request_detail_system_number}
 	//	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 	// @Router			/v1/purchase-request/submit/detail/{purchase_request_detail_system_number} [post]
 
@@ -1317,6 +1319,27 @@ func QualityControlRouter(
 	router.Get("/{work_order_system_number}", QualityControlController.GetById)
 	router.Put("/{work_order_system_number}/{work_order_detail_id}/qcpass", QualityControlController.Qcpass)
 	router.Put("/{work_order_system_number}/{work_order_detail_id}/reorder", QualityControlController.Reorder)
+
+	return router
+}
+
+func SettingTechnicianRouter(
+	SettingTechnicianController transactionjpcbcontroller.SettingTechnicianController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
+	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+
+	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
+	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)
+	router.Post("/detail", SettingTechnicianController.SaveSettingTechnicianDetail)
+	router.Put("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.UpdateSettingTechnicianDetail)
 
 	return router
 }
