@@ -60,14 +60,14 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, 
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
 	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
-	_, err := s.structBookingEstimationRepo.Save(tx, request)
+	post, err := s.structBookingEstimationRepo.Post(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.BookingEstimation{}, err
 	}
-	return true, nil
+	return post, nil
 }
 
 func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool,*exceptions.BaseErrorResponse) {
@@ -80,7 +80,8 @@ func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool,*except
 	return result,nil
 }
 
-func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) (bool,*exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) Void(id int) (bool,*exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	result,err := s.structBookingEstimationRepo.Void(tx, id)
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil {
@@ -98,13 +99,13 @@ func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptio
 	return nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse){
+func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
 	
 	result,err := s.structBookingEstimationRepo.SaveBookEstimReq(tx,req,id)
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
-		return 0,err
+		return transactionworkshopentities.BookingEstimationRequest{},err
 	}
 	return result,nil
 }
@@ -311,6 +312,15 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromServiceRequest(i
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return transactionworkshopentities.BookingEstimation{},err
+	}
+	return result,nil
+}
+
+func (s *BookingEstimationServiceImpl) SaveBookingEstimationAllocation(id int,req transactionworkshoppayloads.BookEstimationAllocation)(transactionworkshopentities.BookingEstimationAllocation,*exceptions.BaseErrorResponse){
+	tx :=s.DB.Begin()
+	result,err := s.structBookingEstimationRepo.SaveBookingEstimationAllocation(tx,id,req)
+	if err != nil{
+		return transactionworkshopentities.BookingEstimationAllocation{},err
 	}
 	return result,nil
 }

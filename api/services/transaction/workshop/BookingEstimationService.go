@@ -14,11 +14,11 @@ type BookingEstimationService interface {
 	GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	New(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse)
 	GetById(id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
-	Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse)
+	Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
 	Submit(tx *gorm.DB, Id int) (bool,*exceptions.BaseErrorResponse)
-	Void(tx *gorm.DB, Id int) (bool,*exceptions.BaseErrorResponse)
+	Void(Id int) (bool,*exceptions.BaseErrorResponse)
 	CloseOrder(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse
-	SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse)
+	SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse)
 	UpdateBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse)
 	GetByIdBookEstimReq( id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse)
 	GetAllBookEstimReq(pages *pagination.Pagination, id int) ([]transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse)
@@ -33,4 +33,5 @@ type BookingEstimationService interface {
 	PostBookingEstimationCalculation(id int)(int,*exceptions.BaseErrorResponse)
 	SaveBookingEstimationFromPDI( id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
 	SaveBookingEstimationFromServiceRequest(id int)(transactionworkshopentities.BookingEstimation,*exceptions.BaseErrorResponse)
+	SaveBookingEstimationAllocation(id int,req transactionworkshoppayloads.BookEstimationAllocation)(transactionworkshopentities.BookingEstimationAllocation,*exceptions.BaseErrorResponse)
 }

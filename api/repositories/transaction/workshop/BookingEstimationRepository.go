@@ -18,7 +18,7 @@ type BookingEstimationRepository interface {
 	Submit(tx *gorm.DB, Id int) (bool,*exceptions.BaseErrorResponse)
 	Void(tx *gorm.DB, Id int) (bool,*exceptions.BaseErrorResponse)
 	CloseOrder(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse
-	SaveBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse)
+	SaveBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse)
 	UpdateBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse)
 	GetByIdBookEstimReq(tx *gorm.DB, id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse)
 	GetAllBookEstimReq(tx *gorm.DB, pages *pagination.Pagination, id int) ([]transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse)
@@ -34,4 +34,5 @@ type BookingEstimationRepository interface {
 	PutBookingEstimationCalculation (tx *gorm.DB, id int, linetypeid int)([]map[string]interface{},*exceptions.BaseErrorResponse)
 	SaveBookingEstimationFromPDI(tx *gorm.DB, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
 	SaveBookingEstimationFromServiceRequest(tx *gorm.DB, id int)(transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
+	SaveBookingEstimationAllocation(tx *gorm.DB, id int, req transactionworkshoppayloads.BookEstimationAllocation) (transactionworkshopentities.BookingEstimationAllocation, *exceptions.BaseErrorResponse)
 }

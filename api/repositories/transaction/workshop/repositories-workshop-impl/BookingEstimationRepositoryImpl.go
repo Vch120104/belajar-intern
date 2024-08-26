@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	masterentities "after-sales/api/entities/master"
 	masterpackagemasterentity "after-sales/api/entities/master/package-master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
@@ -69,7 +70,7 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 		bookingEstimationData["contact_person_name"] = entity.ContactPersonName
 		bookingEstimationData["contact_person_phone"] = entity.ContactPersonPhone
 		bookingEstimationData["contact_person_mobile"] = entity.ContactPersonMobile
-		bookingEstimationData["contact_person_via"] = entity.ContactPersonVia
+		bookingEstimationData["contact_person_via_id"] = entity.ContactPersonViaId
 		bookingEstimationData["insurance_policy_no"] = entity.InsurancePolicyNo
 		bookingEstimationData["insurance_expired_date"] = entity.InsuranceExpiredDate
 		bookingEstimationData["insurance_claim_no"] = entity.InsuranceClaimNo
@@ -86,56 +87,82 @@ func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.Filt
 }
 
 func (r *BookingEstimationImpl) Post(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+	var agreement masterentities.Agreement
+	var contractService transactionworkshopentities.ContractService
+	var id int
+	var id2 int
+	err := tx.Select("mtr_agreement.agreement_id").Model(agreement).Where("customer_id = ?", strconv.Itoa(request.CustomerId)).Scan(&id).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	err2 := tx.Select("trx_contract_service.contract_service_system_number").Model(contractService).Where("vehicle_id = ?", strconv.Itoa(request.VehicleId)).Scan(&id2).Error
+	if err2 != nil && !errors.Is(err2, gorm.ErrRecordNotFound) {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err2,
+		}
+	}
+
 	entities := transactionworkshopentities.BookingEstimation{
 		BrandId:                    request.BrandId,
 		ModelId:                    request.ModelId,
 		VariantId:                  request.VariantId,
 		VehicleId:                  request.VehicleId,
-		ContractSystemNumber:       request.ContractSystemNumber,
-		AgreementId:                request.AgreementId,
+		ContractSystemNumber:       id2,
+		AgreementId:                id,
 		CampaignId:                 request.CampaignId,
 		CompanyId:                  request.CompanyId,
 		ProfitCenterId:             request.ProfitCenterId,
 		DealerRepresentativeId:     request.DealerRepresentativeId,
 		CustomerId:                 request.CustomerId,
 		DocumentStatusId:           request.DocumentStatusId,
-		BookingEstimationBatchDate: request.BookingEstimationBatchDate,
+		BookingEstimationBatchDate: time.Now(),
 		IsUnregistered:             request.IsUnregistered,
 		InsurancePolicyNo:          request.InsurancePolicyNo,
 		InsuranceExpiredDate:       request.InsuranceExpiredDate,
 		InsuranceClaimNo:           request.InsuranceClaimNo,
 		InsurancePic:               request.InsurancePic,
+		ContactPersonName:          request.ContactPersonName,
+		ContactPersonPhone:         request.ContactPersonPhone,
+		ContactPersonMobile:        request.ContactPersonMobile,
+		ContactPersonViaId:         request.ContactPersonViaId,
 	}
-	err := tx.Save(&entities).Error // Menggunakan method Save dari receiver saat ini, yaitu r
+	err3 := tx.Save(&entities).Error // Menggunakan method Save dari receiver saat ini, yaitu r
 	if err != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err}
+			Err:        err3}
 	}
 
 	return entities, nil
 }
 
 func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.BookingEstimation
+	var payloads transactionworkshoppayloads.GetBookingById
 	var brand masterpayloads.BrandResponse
 	var model masterpayloads.GetModelResponse
 	var vehicle transactionworkshoppayloads.VehicleDetailPayloads
-	err := tx.Model("trx_booking_estimation.*,mtr_contract_sevice.contract_service_number,mtr_contract_service.contract_service_date,mtr_contract_service.contract_service_dealer,mtr_agreement.agreement_code,mtr_agreement.agreement_date_to,mtr_agreement.agreement_dealer").
-		Joins("JOIN mtr_contract_service on mtr_contract_service.vehicle_id = trx_booking_estimation.vehicle_id").
-		Joins("Join mtr_agreement on mtr_agreement.customer_id = trx_booking_estimation.customer_id").Where("batch_system_number= ?", Id).First(&entity).Error
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
+    Select("trx_booking_estimation.batch_system_number, trx_booking_estimation.brand_id, trx_contract_service.contract_service_system_number, trx_contract_service.contract_service_date, mtr_agreement.agreement_code, mtr_agreement.agreement_date_to, mtr_agreement.company_id").
+    Joins("JOIN trx_contract_service on trx_contract_service.vehicle_id = trx_booking_estimation.vehicle_id").
+    Joins("JOIN mtr_agreement on mtr_agreement.customer_id = trx_booking_estimation.customer_id").
+    Where("batch_system_number = ?", Id).
+    First(&payloads).Error
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
+		return nil, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err}
 	}
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(entity.BrandId), brand, nil)
+	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(payloads.BrandId), brand, nil)
 	if errUrlBrand != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("brand undefined"),
 		}
 	}
-	joinedData1 := utils.DataFrameInnerJoin([]transactionworkshopentities.BookingEstimation{entity}, []masterpayloads.BrandResponse{brand}, "BrandId")
-	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(entity.ModelId), model, nil)
+	joinedData1 := utils.DataFrameInnerJoin([]transactionworkshoppayloads.GetBookingById{payloads}, []masterpayloads.BrandResponse{brand}, "BrandId")
+	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(payloads.ModelId), model, nil)
 	if errUrlModel != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -143,7 +170,7 @@ func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (map[string]interfa
 		}
 	}
 	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.GetModelResponse{model}, "ModelId")
-	errurlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(entity.VehicleId), &vehicle, nil)
+	errurlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(payloads.VehicleId), &vehicle, nil)
 	if errurlVehicle != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -197,7 +224,7 @@ func (r *BookingEstimationImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.B
 func (r *BookingEstimationImpl) Void(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	// Retrieve the booking estimation by Id
 	var entity transactionworkshopentities.BookingEstimation
-	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("id = ?", Id).First(&entity).Error
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).Where("batch_system_number = ?", Id).First(&entity).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve booking estimation from the database"}
 	}
@@ -234,17 +261,16 @@ func (r *BookingEstimationImpl) CloseOrder(tx *gorm.DB, Id int) *exceptions.Base
 	return nil
 }
 
-func (r *BookingEstimationImpl) SaveBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) SaveBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse) {
 	var count int64
-	err := tx.Select("trx_booking_estim.*").Where("booking_system_number =?", id).Count(&count).Error
+	err := tx.Table("trx_booking_estimation_request").Where("booking_system_number =?", id).Count(&count).Error
 	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
-	count32 := int32(count)
-	total := count32 + 1
+	total := count + 1
 	entities := transactionworkshopentities.BookingEstimationRequest{
 		BookingEstimationRequestCode: int(total),
 		BookingSystemNumber:          id,
@@ -252,12 +278,12 @@ func (r *BookingEstimationImpl) SaveBookEstimReq(tx *gorm.DB, req transactionwor
 	}
 	err2 := tx.Save(&entities).Error
 	if err2 != nil {
-		return 0, &exceptions.BaseErrorResponse{
+		return transactionworkshopentities.BookingEstimationRequest{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
-	return id, nil
+	return entities, nil
 }
 
 func (r *BookingEstimationImpl) UpdateBookEstimReq(tx *gorm.DB, req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse) {
@@ -347,13 +373,26 @@ func (r *BookingEstimationImpl) updateLineNumbers(tx *gorm.DB) error {
 func (r *BookingEstimationImpl) GetByIdBookEstimReq(tx *gorm.DB, id int) (transactionworkshoppayloads.BookEstimRemarkRequest, *exceptions.BaseErrorResponse) {
 	var model transactionworkshopentities.BookingEstimationRequest
 	var payloads transactionworkshoppayloads.BookEstimRemarkRequest
+
+	// Query the database
 	err := tx.Model(&model).Where("booking_estimation_request_id = ?", id).Scan(&payloads).Error
+	
+	// Check if there was an error during the query
 	if err != nil {
 		return payloads, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+
+	// Check if the payload is empty
+	if (payloads == transactionworkshoppayloads.BookEstimRemarkRequest{}) {
+		return payloads, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("data not found"),
+		}
+	}
+
 	return payloads, nil
 }
 
@@ -523,127 +562,126 @@ func (r *BookingEstimationImpl) DeleteBookEstimDetail(tx *gorm.DB, id int, linet
 }
 
 func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-    var modeloperation transactionworkshopentities.BookingEstimationOperationDetail
-    var modelitem transactionworkshopentities.BookingEstimationItemDetail
-    var operationpayloads []transactionworkshoppayloads.BookEstimOperationPayloads
-    var itempayloads []transactionworkshoppayloads.BookEstimItemPayloads
+	var modeloperation transactionworkshopentities.BookingEstimationOperationDetail
+	var modelitem transactionworkshopentities.BookingEstimationItemDetail
+	var operationpayloads []transactionworkshoppayloads.BookEstimOperationPayloads
+	var itempayloads []transactionworkshoppayloads.BookEstimItemPayloads
 
-    // Slice to hold the payloads
-    var payloads []map[string]interface{}
+	// Slice to hold the payloads
+	var payloads []map[string]interface{}
 
-    // Query item details
-    err := tx.Model(&modelitem).Where("estimation_system_number = ?", id).Scan(&itempayloads).Error
-    if err != nil {
-        return nil, &exceptions.BaseErrorResponse{
-            StatusCode: http.StatusConflict,
-            Err:        err,
-        }
-    }
+	// Query item details
+	err := tx.Model(&modelitem).Where("estimation_system_number = ?", id).Scan(&itempayloads).Error
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
+	}
 
-    // Process item details
-    for _, item := range itempayloads {
-        entity := transactionworkshopentities.BookingEstimationItemDetail{
-            EstimationLineID:               item.EstimationLineID,
-            EstimationLineCode:             item.EstimationLineCode,
-            EstimationSystemNumber:         id,
-            BillID:                         item.BillID,
-            EstimationLineDiscountApproval: item.EstimationLineDiscountApproval,
-            ItemID:                         item.ItemID,
-            LineTypeID:                     item.LineTypeID,
-            PackageID:                      item.PackageID,
-            JobTypeID:                      item.JobTypeID,
-            FieldActionSystemNumber:        item.FieldActionSystemNumber,
-            ApprovalRequestNumber:          item.ApprovalRequestNumber,
-            UOMID:                          item.UOMID,
-            RequestDescription:             item.RequestDescription,
-            FRTQuantity:                    item.FRTQuantity,
-            ItemPrice:                      item.OperationItemPrice,
-            DiscountItemAmount:             item.DiscountItemAmount,
-            DiscountItemPercent:            item.DiscountItemPercent,
-            DiscountRequestPercent:         item.DiscountRequestPercent,
-            DiscountRequestAmount:          item.DiscountRequestAmount,
-        }
+	// Process item details
+	for _, item := range itempayloads {
+		entity := transactionworkshopentities.BookingEstimationItemDetail{
+			EstimationLineID:               item.EstimationLineID,
+			EstimationLineCode:             item.EstimationLineCode,
+			EstimationSystemNumber:         id,
+			BillID:                         item.BillID,
+			EstimationLineDiscountApproval: item.EstimationLineDiscountApproval,
+			ItemID:                         item.ItemID,
+			LineTypeID:                     item.LineTypeID,
+			PackageID:                      item.PackageID,
+			JobTypeID:                      item.JobTypeID,
+			FieldActionSystemNumber:        item.FieldActionSystemNumber,
+			ApprovalRequestNumber:          item.ApprovalRequestNumber,
+			UOMID:                          item.UOMID,
+			RequestDescription:             item.RequestDescription,
+			FRTQuantity:                    item.FRTQuantity,
+			ItemPrice:                      item.OperationItemPrice,
+			DiscountItemAmount:             item.DiscountItemAmount,
+			DiscountItemPercent:            item.DiscountItemPercent,
+			DiscountRequestPercent:         item.DiscountRequestPercent,
+			DiscountRequestAmount:          item.DiscountRequestAmount,
+		}
 
-        if err := tx.Save(&entity).Error; err != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusNotFound,
-                Err:        err,
-            }
-        }
+		if err := tx.Save(&entity).Error; err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
 
-        // Add item payload to the payloads slice
-        payload := map[string]interface{}{
-            "estimation_line_id":     item.EstimationLineID,
-            "estimation_line_code":   item.EstimationLineCode,
-            "item_id":                item.ItemID,
-            "line_type_id":           item.LineTypeID,
-            "package_id":             item.PackageID,
-            "job_type_id":            item.JobTypeID,
-            "request_description":    item.RequestDescription,
-            "frt_quantity":           item.FRTQuantity,
-            "item_price":             item.OperationItemPrice,
-            "item_name":              item.RequestDescription,
-            "operation_name":         "", // Empty operation_name
-        }
-        payloads = append(payloads, payload)
-    }
+		// Add item payload to the payloads slice
+		payload := map[string]interface{}{
+			"estimation_line_id":   item.EstimationLineID,
+			"estimation_line_code": item.EstimationLineCode,
+			"item_id":              item.ItemID,
+			"line_type_id":         item.LineTypeID,
+			"package_id":           item.PackageID,
+			"job_type_id":          item.JobTypeID,
+			"request_description":  item.RequestDescription,
+			"frt_quantity":         item.FRTQuantity,
+			"item_price":           item.OperationItemPrice,
+			"item_name":            item.RequestDescription,
+			"operation_name":       "", // Empty operation_name
+		}
+		payloads = append(payloads, payload)
+	}
 
-    // Query operation details
-    err2 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
-    if err2 != nil {
-        return nil, &exceptions.BaseErrorResponse{
-            StatusCode: http.StatusConflict,
-            Err:        err2,
-        }
-    }
+	// Query operation details
+	err2 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
+	if err2 != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err2,
+		}
+	}
 
-    // Process operation details
-    for _, operation := range operationpayloads {
-        entity := transactionworkshopentities.BookingEstimationOperationDetail{
-            EstimationLineID:               operation.EstimationLineID,
-            EstimationLineCode:             operation.EstimationLineCode,
-            EstimationSystemNumber:         id,
-            BillID:                         operation.BillID,
-            EstimationLineDiscountApproval: operation.EstimationLineDiscountApproval,
-            OperationId:                    operation.OperationId,
-            LineTypeID:                     operation.LineTypeID,
-            FieldActionSystemNumber:        operation.FieldActionSystemNumber,
-            ApprovalRequestNumber:          operation.ApprovalRequestNumber,
-            UOMID:                          operation.UOMID,
-            RequestDescription:             operation.RequestDescription,
-            FRTQuantity:                    operation.FRTQuantity,
-            OperationPrice:                 operation.OperationItemPrice,
-            DiscountOperationAmount:        operation.DiscountItemAmount,
-            DiscountOperationPercent:       operation.DiscountItemPercent,
-            DiscountRequestPercent:         operation.DiscountRequestPercent,
-            DiscountRequestAmount:          operation.DiscountRequestAmount,
-        }
+	// Process operation details
+	for _, operation := range operationpayloads {
+		entity := transactionworkshopentities.BookingEstimationOperationDetail{
+			EstimationLineID:               operation.EstimationLineID,
+			EstimationLineCode:             operation.EstimationLineCode,
+			EstimationSystemNumber:         id,
+			BillID:                         operation.BillID,
+			EstimationLineDiscountApproval: operation.EstimationLineDiscountApproval,
+			OperationId:                    operation.OperationId,
+			LineTypeID:                     operation.LineTypeID,
+			FieldActionSystemNumber:        operation.FieldActionSystemNumber,
+			ApprovalRequestNumber:          operation.ApprovalRequestNumber,
+			UOMID:                          operation.UOMID,
+			RequestDescription:             operation.RequestDescription,
+			FRTQuantity:                    operation.FRTQuantity,
+			OperationPrice:                 operation.OperationItemPrice,
+			DiscountOperationAmount:        operation.DiscountItemAmount,
+			DiscountOperationPercent:       operation.DiscountItemPercent,
+			DiscountRequestPercent:         operation.DiscountRequestPercent,
+			DiscountRequestAmount:          operation.DiscountRequestAmount,
+		}
 
-        if err := tx.Save(&entity).Error; err != nil {
-            return nil, &exceptions.BaseErrorResponse{
-                StatusCode: http.StatusNotFound,
-                Err:        err,
-            }
-        }
+		if err := tx.Save(&entity).Error; err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
 
-        // Add operation payload to the payloads slice
-        payload := map[string]interface{}{
-            "estimation_line_id":     operation.EstimationLineID,
-            "estimation_line_code":   operation.EstimationLineCode,
-            "operation_id":           operation.OperationId,
-            "line_type_id":           operation.LineTypeID,
-            "request_description":    operation.RequestDescription,
-            "frt_quantity":           operation.FRTQuantity,
-            "operation_price":        operation.OperationItemPrice,
-            "item_name":              "", // Empty item_name
-            "operation_name":         operation.RequestDescription,
-        }
-        payloads = append(payloads, payload)
-    }
+		// Add operation payload to the payloads slice
+		payload := map[string]interface{}{
+			"estimation_line_id":   operation.EstimationLineID,
+			"estimation_line_code": operation.EstimationLineCode,
+			"operation_id":         operation.OperationId,
+			"line_type_id":         operation.LineTypeID,
+			"request_description":  operation.RequestDescription,
+			"frt_quantity":         operation.FRTQuantity,
+			"operation_price":      operation.OperationItemPrice,
+			"item_name":            "", // Empty item_name
+			"operation_name":       operation.RequestDescription,
+		}
+		payloads = append(payloads, payload)
+	}
 
-    return payloads, nil
+	return payloads, nil
 }
-
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var modeloperation masterpackagemasterentity.PackageMasterDetailOperation
@@ -675,12 +713,12 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 			}
 		}
 		payload := map[string]interface{}{
-			"item_id":          item.ItemId,
-			"line_type_id":     item.LineTypeId,
-			"package_id":       item.PackageId,
-			"item_name":        item.ItemName,
-			"frt_quantity":     item.FrtQuantity,
-			"item_price":       float64(item.PackageId),
+			"item_id":      item.ItemId,
+			"line_type_id": item.LineTypeId,
+			"package_id":   item.PackageId,
+			"item_name":    item.ItemName,
+			"frt_quantity": item.FrtQuantity,
+			"item_price":   float64(item.PackageId),
 		}
 		payloads = append(payloads, payload)
 	}
@@ -708,19 +746,18 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 			}
 		}
 		payload := map[string]interface{}{
-			"operation_id":      operation.OperationId,
-			"line_type_id":      operation.LineTypeId,
-			"package_id":        operation.PackageId,
-			"operation_name":    operation.OperationName,
-			"frt_quantity":      operation.Quantity,
-			"operation_price":   operation.Price,
+			"operation_id":    operation.OperationId,
+			"line_type_id":    operation.LineTypeId,
+			"package_id":      operation.PackageId,
+			"operation_name":  operation.OperationName,
+			"frt_quantity":    operation.Quantity,
+			"operation_price": operation.Price,
 		}
 		payloads = append(payloads, payload)
 	}
 
 	return payloads, nil
 }
-
 
 func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, id int, contractserviceid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var model transactionworkshopentities.ContractService
@@ -769,12 +806,12 @@ func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, id int, contract
 
 		// Add item payload to the payloads slice
 		payload := map[string]interface{}{
-			"item_id":          item.ItemId,
-			"line_type_id":     item.LineTypeId,
-			"package_id":       item.PackageId,
-			"item_name":        item.Description,
-			"frt_quantity":     item.FrtQuantity,
-			"item_price":       item.ItemPrice,
+			"item_id":      item.ItemId,
+			"line_type_id": item.LineTypeId,
+			"package_id":   item.PackageId,
+			"item_name":    item.Description,
+			"frt_quantity": item.FrtQuantity,
+			"item_price":   item.ItemPrice,
 		}
 		payloads = append(payloads, payload)
 	}
@@ -808,18 +845,17 @@ func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, id int, contract
 
 		// Add operation payload to the payloads slice
 		payload := map[string]interface{}{
-			"operation_id":      operation.OperationId,
-			"line_type_id":      operation.LineTypeId,
-			"operation_name":    operation.Description,
-			"frt_quantity":      operation.FrtQuantity,
-			"operation_price":   operation.OperationPrice,
+			"operation_id":    operation.OperationId,
+			"line_type_id":    operation.LineTypeId,
+			"operation_name":  operation.Description,
+			"frt_quantity":    operation.FrtQuantity,
+			"operation_price": operation.OperationPrice,
 		}
 		payloads = append(payloads, payload)
 	}
 
-	return payloads,nil
+	return payloads, nil
 }
-
 
 func (r *BookingEstimationImpl) InputDiscount(tx *gorm.DB, id int, req transactionworkshoppayloads.BookEstimationPayloadsDiscount) (int, *exceptions.BaseErrorResponse) {
 	itemDetails := []struct {
@@ -1117,36 +1153,36 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 }
 
 func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-		const (
-			LineTypePackage            = 0 // Package Bodyshop
-			LineTypeOperation          = 1 // Operation
-			LineTypeSparePart          = 2 // Spare Part
-			LineTypeOil                = 3 // Oil
-			LineTypeMaterial           = 4 // Material
-			LineTypeFee                = 5 // Fee
-			LineTypeAccessories        = 6 // Accessories
-			LineTypeConsumableMaterial = 7 // Consumable Material
-			LineTypeSublet             = 8 // Sublet
-			LineTypeSouvenir           = 9 // Souvenir
-		)
-	
-		type Result struct {
-			TotalPackage            float64
-			TotalOperation          float64
-			TotalSparePart          float64
-			TotalOil                float64
-			TotalMaterial           float64
-			TotalFee                float64
-			TotalAccessories        float64
-			TotalConsumableMaterial float64
-			TotalSublet             float64
-			TotalSouvenir           float64
-		}
-	
-		var result Result
-	
-		// Calculate totals for each line type
-		err := tx.Raw(`
+	const (
+		LineTypePackage            = 0 // Package Bodyshop
+		LineTypeOperation          = 1 // Operation
+		LineTypeSparePart          = 2 // Spare Part
+		LineTypeOil                = 3 // Oil
+		LineTypeMaterial           = 4 // Material
+		LineTypeFee                = 5 // Fee
+		LineTypeAccessories        = 6 // Accessories
+		LineTypeConsumableMaterial = 7 // Consumable Material
+		LineTypeSublet             = 8 // Sublet
+		LineTypeSouvenir           = 9 // Souvenir
+	)
+
+	type Result struct {
+		TotalPackage            float64
+		TotalOperation          float64
+		TotalSparePart          float64
+		TotalOil                float64
+		TotalMaterial           float64
+		TotalFee                float64
+		TotalAccessories        float64
+		TotalConsumableMaterial float64
+		TotalSublet             float64
+		TotalSouvenir           float64
+	}
+
+	var result Result
+
+	// Calculate totals for each line type
+	err := tx.Raw(`
 			SELECT
 				SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0), 0) ELSE 0 END) AS total_package,
 				SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_operation,
@@ -1160,67 +1196,67 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id 
 				SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_souvenir
 			FROM trx_work_order_detail
 			WHERE work_order_system_number = ?`,
-			LineTypePackage,
-			LineTypeOperation,
-			LineTypeSparePart,
-			LineTypeOil,
-			LineTypeMaterial,
-			LineTypeFee,
-			LineTypeAccessories,
-			LineTypeConsumableMaterial,
-			LineTypeSublet,
-			LineTypeSouvenir,
-			id).Scan(&result).Error
-	
-		if err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err: err,
-			}
+		LineTypePackage,
+		LineTypeOperation,
+		LineTypeSparePart,
+		LineTypeOil,
+		LineTypeMaterial,
+		LineTypeFee,
+		LineTypeAccessories,
+		LineTypeConsumableMaterial,
+		LineTypeSublet,
+		LineTypeSouvenir,
+		id).Scan(&result).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
 		}
-	
-		// Calculate grand total
-		grandTotal := result.TotalPackage + result.TotalOperation + result.TotalSparePart + result.TotalOil + result.TotalMaterial + result.TotalFee + result.TotalAccessories + result.TotalConsumableMaterial + result.TotalSublet + result.TotalSouvenir
-	
-		// Update Work Order with the calculated totals
-		err = tx.Model(&transactionworkshopentities.BookingEstimationServiceDiscount{}).
-			Where("estimation_system_number = ?", id).
-			Updates(map[string]interface{}{
-				"total_package":             result.TotalPackage,
-				"total_operation":           result.TotalOperation,
-				"total_part":                result.TotalSparePart,
-				"total_oil":                 result.TotalOil,
-				"total_material":            result.TotalMaterial,
-				"total_price_accessories":   result.TotalAccessories,
-				"total_consumable_material": result.TotalConsumableMaterial,
-				"total_sublet":              result.TotalSublet,
-				"total":                     grandTotal,
-				//"total_fee":                 result.TotalFee,
-				//"total_souvenir":            result.TotalSouvenir,
-			}).Error
-	
-		if err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err: err,
-			}
-		}
-	
-		// Prepare response
-		estimationcalculation := []map[string]interface{}{
-			{"total_package": result.TotalPackage},
-			{"total_operation": result.TotalOperation},
-			{"total_part": result.TotalSparePart},
-			{"total_oil": result.TotalOil},
-			{"total_material": result.TotalMaterial},
-			{"total_price_accessories": result.TotalAccessories},
-			{"total_consumable_material": result.TotalConsumableMaterial},
-			{"total_sublet": result.TotalSublet},
-			{"total": grandTotal},
-		}
-	
-		return estimationcalculation, nil
 	}
+
+	// Calculate grand total
+	grandTotal := result.TotalPackage + result.TotalOperation + result.TotalSparePart + result.TotalOil + result.TotalMaterial + result.TotalFee + result.TotalAccessories + result.TotalConsumableMaterial + result.TotalSublet + result.TotalSouvenir
+
+	// Update Work Order with the calculated totals
+	err = tx.Model(&transactionworkshopentities.BookingEstimationServiceDiscount{}).
+		Where("estimation_system_number = ?", id).
+		Updates(map[string]interface{}{
+			"total_package":             result.TotalPackage,
+			"total_operation":           result.TotalOperation,
+			"total_part":                result.TotalSparePart,
+			"total_oil":                 result.TotalOil,
+			"total_material":            result.TotalMaterial,
+			"total_price_accessories":   result.TotalAccessories,
+			"total_consumable_material": result.TotalConsumableMaterial,
+			"total_sublet":              result.TotalSublet,
+			"total":                     grandTotal,
+			//"total_fee":                 result.TotalFee,
+			//"total_souvenir":            result.TotalSouvenir,
+		}).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		}
+	}
+
+	// Prepare response
+	estimationcalculation := []map[string]interface{}{
+		{"total_package": result.TotalPackage},
+		{"total_operation": result.TotalOperation},
+		{"total_part": result.TotalSparePart},
+		{"total_oil": result.TotalOil},
+		{"total_material": result.TotalMaterial},
+		{"total_price_accessories": result.TotalAccessories},
+		{"total_consumable_material": result.TotalConsumableMaterial},
+		{"total_sublet": result.TotalSublet},
+		{"total": grandTotal},
+	}
+
+	return estimationcalculation, nil
+}
 
 func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
 	var pdipayload transactionunitpayloads.PdiRequest
@@ -1304,7 +1340,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 		AgreementId:                    0,
 		ContactPersonName:              "",
 		ContactPersonPhone:             "",
-		ContactPersonVia:               "",
+		ContactPersonViaId:             0,
 		ContactPersonMobile:            "",
 		InsurancePolicyNo:              "",
 		InsuranceExpiredDate:           time.Time{},
@@ -1322,6 +1358,27 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 			Err:        err,
 		}
 	}
+	entities8 := transactionworkshopentities.BookingEstimationAllocation{
+		DocumentStatusID:      15, //document status new
+		BatchSystemNumber:     entities.BatchSystemNumber,
+		CompanyID:             pdipayload.CompanyID,
+		PdiSystemNumber:       id,
+		BookingDocumentNumber: pdipayload.PdiDocumentNumber,
+		BookingDate:           nil,
+		BookingStall:          " ",
+		BookingReminderDate:   nil,
+		BookingServiceDate:    nil,
+		BookingServiceTime:    0,
+		BookingEstimationTime: 0,
+	}
+	err8:= tx.Save(&entities8).Error
+	if err8 != nil{
+		return transactionworkshopentities.BookingEstimation{},&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err: err8,
+		}
+	}
+
 	now := time.Now()
 	entities2 := transactionworkshopentities.BookingEstimationServiceDiscount{
 		BatchSystemNumber:                entities.BatchSystemNumber,
@@ -1434,7 +1491,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 		AgreementId:                    0,
 		ContactPersonName:              "",
 		ContactPersonPhone:             "",
-		ContactPersonVia:               "",
+		ContactPersonViaId:             0,
 		ContactPersonMobile:            "",
 		InsurancePolicyNo:              "",
 		InsuranceExpiredDate:           time.Time{},
@@ -1452,6 +1509,28 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 			Err:        err1,
 		}
 	}
+
+	entities8 := transactionworkshopentities.BookingEstimationAllocation{
+		DocumentStatusID:      15, //document status new
+		BatchSystemNumber:     entity.BatchSystemNumber,
+		CompanyID:             initialpayloads.CompanyId,
+		PdiSystemNumber:       id,
+		BookingDocumentNumber: initialpayloads.ServiceRequestDocumentNumber,
+		BookingDate:           nil,
+		BookingStall:          " ",
+		BookingReminderDate:   nil,
+		BookingServiceDate:    nil,
+		BookingServiceTime:    0,
+		BookingEstimationTime: 0,
+	}
+	err8:= tx.Save(&entities8).Error
+	if err8 != nil{
+		return transactionworkshopentities.BookingEstimation{},&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err: err8,
+		}
+	}
+
 	now := time.Now()
 	entities := transactionworkshopentities.BookingEstimationServiceDiscount{
 		BatchSystemNumber:                entity.BatchSystemNumber,
@@ -1562,3 +1641,28 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 	}
 	return entity, nil
 }
+
+func (r *BookingEstimationImpl) SaveBookingEstimationAllocation(tx *gorm.DB, id int, req transactionworkshoppayloads.BookEstimationAllocation) (transactionworkshopentities.BookingEstimationAllocation, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.BookingEstimationAllocation{
+		DocumentStatusID:      req.DocumentStatusID,
+		BatchSystemNumber:     id,
+		CompanyID:             req.CompanyID,
+		PdiSystemNumber:       req.PdiSystemNumber,
+		BookingDocumentNumber: req.BookingDocumentNumber,
+		BookingDate:           req.BookingDate,
+		BookingStall:          req.BookingStall,
+		BookingReminderDate:   req.BookingReminderDate,
+		BookingServiceDate:    req.BookingServiceDate,
+		BookingServiceTime:    req.BookingServiceTime,
+		BookingEstimationTime: req.BookingEstimationTime,
+	}
+	err:= tx.Save(&entities).Error
+	if err != nil{
+		return transactionworkshopentities.BookingEstimationAllocation{},&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err: err,
+		}
+	}
+	return entities,nil
+}	
+
