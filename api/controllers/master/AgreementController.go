@@ -11,6 +11,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -64,7 +65,12 @@ func NewAgreementController(AgreementService masterservice.AgreementService) Agr
 // @Router /v1/agreement/{agreement_id} [get]
 func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, request *http.Request) {
 
-	AgreementId, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	AgreementId, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.AgreementService.GetAgreementById(int(AgreementId))
 	if err != nil {
@@ -117,7 +123,12 @@ func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, requ
 // @Router /v1/agreement/{agreement_id} [put]
 func (r *AgreementControllerImpl) UpdateAgreement(writer http.ResponseWriter, request *http.Request) {
 
-	AgreementId, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	AgreementId, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var formRequest masterpayloads.AgreementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -142,7 +153,12 @@ func (r *AgreementControllerImpl) UpdateAgreement(writer http.ResponseWriter, re
 // @Router /v1/agreement/{agreement_id} [patch]
 func (r *AgreementControllerImpl) ChangeStatusAgreement(writer http.ResponseWriter, request *http.Request) {
 
-	agreement_id, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	agreement_id, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.AgreementService.ChangeStatusAgreement(int(agreement_id))
 	if err != nil {
@@ -216,7 +232,11 @@ func (r *AgreementControllerImpl) GetAllAgreement(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/group [post]
 func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
@@ -242,8 +262,16 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/group/{agreement_discount_group_id} [put]
 func (r *AgreementControllerImpl) UpdateDiscountGroup(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	groupID, errA := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
@@ -268,8 +296,16 @@ func (r *AgreementControllerImpl) UpdateDiscountGroup(writer http.ResponseWriter
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/group/{agreement_discount_group_id} [delete]
 func (r *AgreementControllerImpl) DeleteDiscountGroup(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	groupID, errA := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	if err := r.AgreementService.DeleteDiscountGroup(int(agreementID), int(groupID)); err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -290,7 +326,11 @@ func (r *AgreementControllerImpl) DeleteDiscountGroup(writer http.ResponseWriter
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/item [post]
 func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
@@ -316,8 +356,16 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/item/{agreement_item_id} [put]
 func (r *AgreementControllerImpl) UpdateItemDiscount(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemID, errA := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
@@ -342,8 +390,16 @@ func (r *AgreementControllerImpl) UpdateItemDiscount(writer http.ResponseWriter,
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/item/{agreement_item_id} [delete]
 func (r *AgreementControllerImpl) DeleteItemDiscount(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemID, errA := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	if err := r.AgreementService.DeleteItemDiscount(int(agreementID), int(itemID)); err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -364,7 +420,11 @@ func (r *AgreementControllerImpl) DeleteItemDiscount(writer http.ResponseWriter,
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/value [post]
 func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
@@ -390,8 +450,16 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/value/{agreement_discount_id} [put]
 func (r *AgreementControllerImpl) UpdateDiscountValue(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	valueID, errA := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
@@ -416,8 +484,16 @@ func (r *AgreementControllerImpl) UpdateDiscountValue(writer http.ResponseWriter
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/value/{agreement_discount_id} [delete]
 func (r *AgreementControllerImpl) DeleteDiscountValue(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	valueID, errA := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	if err := r.AgreementService.DeleteDiscountValue(int(agreementID), int(valueID)); err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -480,8 +556,16 @@ func (r *AgreementControllerImpl) GetAllDiscountGroup(writer http.ResponseWriter
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/group/{agreement_discount_group_id} [get]
 func (r *AgreementControllerImpl) GetDiscountGroupAgreementById(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	groupID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	groupID, errA := strconv.Atoi(chi.URLParam(request, "agreement_discount_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.AgreementService.GetDiscountGroupAgreementById(int(agreementID), int(groupID))
 	if err != nil {
@@ -545,8 +629,16 @@ func (r *AgreementControllerImpl) GetAllItemDiscount(writer http.ResponseWriter,
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/item/{agreement_item_id} [get]
 func (r *AgreementControllerImpl) GetDiscountItemAgreementById(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	itemID, _ := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemID, errA := strconv.Atoi(chi.URLParam(request, "agreement_item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.AgreementService.GetDiscountItemAgreementById(int(agreementID), int(itemID))
 	if err != nil {
@@ -610,8 +702,16 @@ func (r *AgreementControllerImpl) GetAllDiscountValue(writer http.ResponseWriter
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement/{agreement_id}/discount/value/{agreement_discount_id} [get]
 func (r *AgreementControllerImpl) GetDiscountValueAgreementById(writer http.ResponseWriter, request *http.Request) {
-	agreementID, _ := strconv.Atoi(chi.URLParam(request, "agreement_id"))
-	valueID, _ := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+	agreementID, errA := strconv.Atoi(chi.URLParam(request, "agreement_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	valueID, errA := strconv.Atoi(chi.URLParam(request, "agreement_discount_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.AgreementService.GetDiscountValueAgreementById(int(agreementID), int(valueID))
 	if err != nil {

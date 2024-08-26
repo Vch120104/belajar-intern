@@ -127,7 +127,7 @@ type ServiceDetailUpdateRequest struct {
 
 type ServiceRequestDetail struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id" parent_entity:"trx_service_request_detail" main_table:"trx_service_request_detail"`
-	ServiceRequestId           int     `json:"service_request_id" parent_entity:"trx_service_request_detail" `
+	ServiceRequestLineNumber   int     `json:"service_request_line_number" parent_entity:"trx_service_request_detail" `
 	ServiceRequestSystemNumber int     `json:"service_request_system_number" parent_entity:"trx_service_request_detail" `
 	LineTypeId                 int     `json:"line_type_id" parent_entity:"trx_service_request_detail" `
 	OperationItemId            int     `json:"operation_item_id" parent_entity:"trx_service_request_detail" `

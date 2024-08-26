@@ -10,6 +10,7 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -74,7 +75,12 @@ func (r *ItemPackageDetailControllerImpl) DeactivateItemPackageDetail(writer htt
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-package-detail/{item_package_detail_id} [patch]
 func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer http.ResponseWriter, request *http.Request) {
-	id, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+	id, errA := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ItemPackageDetailService.ChangeStatusItemPackageDetail(id)
 
@@ -101,7 +107,12 @@ func (r *ItemPackageDetailControllerImpl) ChangeStatusItemPackageDetail(writer h
 // @Router /v1/item-package-detail/package/{item_package_id} [get]
 func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+	itemPackageId, errA := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -131,7 +142,12 @@ func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailByItemPackageId(wr
 // @Router /v1/item-package-detail/{item_package_detail_id} [get]
 func (r *ItemPackageDetailControllerImpl) GetItemPackageDetailById(writer http.ResponseWriter, request *http.Request) {
 
-	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+	itemPackageId, errA := strconv.Atoi(chi.URLParam(request, "item_package_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemPackageDetailService.GetItemPackageDetailById(itemPackageId)
 

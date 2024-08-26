@@ -2,6 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"errors"
 
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -112,7 +113,11 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 // @Router /v1/item-package/{item_package_id} [get]
 func (r *ItemPackageControllerImpl) GetItemPackageById(writer http.ResponseWriter, request *http.Request) {
 
-	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+	itemPackageId, errA := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemPackageService.GetItemPackageById(itemPackageId)
 	if err != nil {
@@ -176,7 +181,12 @@ func (r *ItemPackageControllerImpl) SaveItemPackage(writer http.ResponseWriter, 
 // @Router /v1/item-package/{item_package_id} [patch]
 func (r *ItemPackageControllerImpl) ChangeStatusItemPackage(writer http.ResponseWriter, request *http.Request) {
 
-	PriceListId, _ := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+	PriceListId, errA := strconv.Atoi(chi.URLParam(request, "item_package_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ItemPackageService.ChangeStatusItemPackage(PriceListId)
 

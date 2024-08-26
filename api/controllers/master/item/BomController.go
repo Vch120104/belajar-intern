@@ -109,9 +109,14 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 // @Router /v1/bom/{bom_master_id} [get]
 func (r *BomControllerImpl) GetBomMasterById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
-	// Extract pagination parameters
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	// Extract pagination parametersF
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -173,7 +178,12 @@ func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request 
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	update, err := r.BomService.UpdateBomMaster(bomMasterId, formRequest)
 	if err != nil {
@@ -202,7 +212,12 @@ func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request 
 // @Router /v1/bom/{bom_master_id} [patch]
 func (r *BomControllerImpl) ChangeStatusBomMaster(writer http.ResponseWriter, request *http.Request) {
 
-	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	entity, err := r.BomService.ChangeStatusBomMaster(int(bomMasterId))
 	if err != nil {
@@ -283,7 +298,11 @@ func (r *BomControllerImpl) GetBomDetailList(writer http.ResponseWriter, request
 // @Router /v1/bom/detail/{bom_detail_id} [get]
 func (r *BomControllerImpl) GetBomDetailById(writer http.ResponseWriter, request *http.Request) {
 
-	bomMasterId, _ := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
+	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	queryParams := map[string]string{
 		"bom_detail_id": chi.URLParam(request, "bom_detail_id"),
@@ -360,7 +379,12 @@ func (r *BomControllerImpl) UpdateBomDetail(writer http.ResponseWriter, request 
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
 
-	bomDetailId, _ := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
+	bomDetailId, errA := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	update, err := r.BomService.UpdateBomDetail(bomDetailId, formRequest)
 	if err != nil {
