@@ -100,7 +100,13 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// join with mtr_unit_model
 
@@ -115,7 +121,13 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// join with mtr_warranty_free_service_type
 
@@ -130,7 +142,13 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetAllWarrantyFreeService(tx *gorm.D
 		}
 	}
 
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, getWarrantyFreeServiceTypeResponse, "WarrantyFreeServiceTypeId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getWarrantyFreeServiceTypeResponse, "WarrantyFreeServiceTypeId")
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData3, &pages)
 
@@ -174,7 +192,13 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin([]masterpayloads.WarrantyFreeServiceResponse{response}, []masterpayloads.BrandResponse{getUnitBrandResponse}, "BrandId")
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.WarrantyFreeServiceResponse{response}, []masterpayloads.BrandResponse{getUnitBrandResponse}, "BrandId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	//join with mtr_unit_model on sales service
 
@@ -189,7 +213,14 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getUnitModelResponse}, "ModelId")
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.UnitModelResponse{getUnitModelResponse}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// join with mtr_unit_variant on sales service
 
@@ -204,7 +235,14 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 		}
 	}
 
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []masterpayloads.UnitVariantResponse{getUnitVariantResponse}, "VariantId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// join with mtr_warranty_free_service_type on general service
 
@@ -219,7 +257,14 @@ func (r *WarrantyFreeServiceRepositoryImpl) GetWarrantyFreeServiceById(tx *gorm.
 		}
 	}
 
-	joinedData4 := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.WarrantyFreeServiceTypeResponse{getWarrantyFreeServiceTypeResponse}, "WarrantyFreeServiceTypeId")
+	joinedData4, errdf := utils.DataFrameInnerJoin(joinedData3, []masterpayloads.WarrantyFreeServiceTypeResponse{getWarrantyFreeServiceTypeResponse}, "WarrantyFreeServiceTypeId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	result := joinedData4[0]
 
@@ -232,12 +277,12 @@ func (r *WarrantyFreeServiceRepositoryImpl) SaveWarrantyFreeService(tx *gorm.DB,
 		ModelId:                       request.ModelId,
 		WarrantyFreeServiceTypeId:     request.WarrantyFreeServiceTypeId,
 		EffectiveDate:                 request.EffectiveDate,
-		ExpireMileage:                 request.ExpireMileage,
-		ExpireMonth:                   request.ExpireMonth,
+		ExpireMileage:                 &request.ExpireMileage,
+		ExpireMonth:                   &request.ExpireMonth,
 		VariantId:                     request.VariantId,
-		ExpireMileageExtendedWarranty: request.ExpireMileageExtendedWarranty,
-		ExpireMonthExtendedWarranty:   request.ExpireMonthExtendedWarranty,
-		Remark:                        request.Remark,
+		ExpireMileageExtendedWarranty: &request.ExpireMileageExtendedWarranty,
+		ExpireMonthExtendedWarranty:   &request.ExpireMonthExtendedWarranty,
+		Remark:                        &request.Remark,
 		ExtendedWarranty:              &request.ExtendedWarranty,
 	}
 

@@ -10,6 +10,7 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -24,6 +25,65 @@ func StartPriceListRepositoryImpl() masteritemrepository.PriceListRepository {
 	return &PriceListRepositoryImpl{}
 }
 
+// Duplicate implements masteritemrepository.PriceListRepository.
+func (r *PriceListRepositoryImpl) Duplicate(tx *gorm.DB, itemGroupId int, brandId int, currencyId int, date string) ([]masteritempayloads.PriceListItemResponses, *exceptions.BaseErrorResponse) {
+	model := masteritementities.PriceList{}
+
+	result := []masteritempayloads.PriceListItemResponses{}
+
+	if err := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id").
+		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
+		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
+		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date).
+		Scan(&result).Error; err != nil {
+		return result, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("price list item not found"),
+		}
+	}
+
+	return result, nil
+}
+
+// CheckPriceListItem implements masteritemrepository.PriceListRepository.
+func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId int, brandId int, currencyId int, date string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	model := masteritementities.PriceList{}
+
+	result := []masteritempayloads.PriceListItemResponses{}
+
+	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id,mtr_price_list.price_list_id").
+		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
+		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
+		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date)
+
+	if err := query.Scopes(pagination.Paginate(model, &pages, query)).Scan(&result).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("price list item not found"),
+		}
+	}
+
+	pages.Rows = result
+
+	return pages, nil
+}
+
+// CheckPriceListAlreadyExist implements masteritemrepository.PriceListRepository.
+func (r *PriceListRepositoryImpl) CheckPriceListExist(tx *gorm.DB, itemId int, brandId int, currencyId int, date string, companyId int) (bool, *exceptions.BaseErrorResponse) {
+	model := masteritementities.PriceList{}
+
+	if err := tx.Model(model).Where(masteritementities.PriceList{BrandId: brandId, ItemId: itemId}).
+		Where("mtr_price_list.company_id = ?", companyId).
+		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
 func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	var responses []masteritempayloads.PriceListResponse
 
@@ -35,7 +95,7 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request master
 	}
 
 	if request.PriceListCode != "" {
-		tempRows = tempRows.Where("price_list_code like ?", "%"+request.PriceListCode+"%")
+		tempRows = tempRows.Where("price_list_code_id like ?", request.PriceListCode)
 	}
 
 	if request.BrandId != 0 {
@@ -166,91 +226,102 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 	return responses, nil
 }
 
-func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PriceList{}
-	response := masteritempayloads.PriceListResponse{}
+	response := masteritempayloads.PriceListGetbyId{}
 	brandpayloads := masteritempayloads.UnitBrandResponses{}
 	itemgrouppayloads := masteritempayloads.ItemGroupResponse{}
 	currencypayloads := masteritempayloads.CurrencyResponse{}
 
-	err := tx.Model(&entities).
-		Where("price_list_id = ?", Id).
+	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_price_list.*").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id").
+		Where(masteritementities.PriceList{PriceListId: Id}).
 		First(&response).Error
 
 	if err != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	if response.PriceListId != 0 {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	ErrUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"/unit-brand/"+strconv.Itoa(response.BrandId), &brandpayloads, nil)
+	ErrUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(response.BrandId), &brandpayloads, nil)
 	if ErrUrlBrand != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        ErrUrlBrand,
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin([]masteritempayloads.PriceListResponse{response}, []masteritempayloads.UnitBrandResponses{brandpayloads}, "BrandId")
+	if brandpayloads != (masteritempayloads.UnitBrandResponses{}) {
+		response.BrandId = brandpayloads.BrandId
+		response.BrandName = brandpayloads.BrandName
+	}
 
-	ErrUrlItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/item-group/"+strconv.Itoa(response.ItemGroupId), &itemgrouppayloads, nil)
+	ErrUrlItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group/"+strconv.Itoa(response.ItemGroupId), &itemgrouppayloads, nil)
 	if ErrUrlItemGroup != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        ErrUrlItemGroup,
 		}
 	}
 
-	joineddata2 := utils.DataFrameInnerJoin(joinedData, []masteritempayloads.ItemGroupResponse{itemgrouppayloads}, "ItemGroupId")
+	if itemgrouppayloads != (masteritempayloads.ItemGroupResponse{}) {
+		response.ItemGroupId = itemgrouppayloads.ItemGroupId
+		response.ItemGroupName = itemgrouppayloads.ItemGroupName
+	}
 
-	ErrUrlCurrency := utils.Get(config.EnvConfigs.FinanceServiceUrl+"/currency/"+strconv.Itoa(response.CurrencyId), &currencypayloads, nil)
+	ErrUrlCurrency := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code/"+strconv.Itoa(response.CurrencyId), &currencypayloads, nil)
 	if ErrUrlCurrency != nil {
-		return nil, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        ErrUrlCurrency,
 		}
 	}
-	joineddata3 := utils.DataFrameInnerJoin(joineddata2, []masteritempayloads.CurrencyResponse{currencypayloads}, "CurrencyId")
 
-	return joineddata3[0], nil
-}
-
-func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.PriceListResponse) (bool, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PriceList{
-		IsActive:            request.IsActive,
-		PriceListId:         request.PriceListId,
-		PriceListCode:       request.PriceListCode,
-		CompanyId:           request.CompanyId,
-		BrandId:             request.BrandId,
-		CurrencyId:          request.CurrencyId,
-		EffectiveDate:       request.EffectiveDate,
-		ItemId:              request.ItemId,
-		ItemGroupId:         request.ItemGroupId,
-		ItemClassId:         request.ItemClassId,
-		PriceListAmount:     request.PriceListAmount,
-		PriceListModifiable: request.PriceListModifiable,
-		AtpmSyncronize:      request.AtpmSyncronize,
-		AtpmSyncronizeTime:  request.AtpmSyncronizeTime,
+	if currencypayloads != (masteritempayloads.CurrencyResponse{}) {
+		response.CurrencyId = currencypayloads.CurrencyId
+		response.CurrencyCode = currencypayloads.CurrencyCode
 	}
 
-	err := tx.Save(&entities).Error
+	return response, nil
+}
 
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        err,
+func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritempayloads.SavePriceListMultiple) (int, *exceptions.BaseErrorResponse) {
+	// dateParse, _ := time.Parse("2006-01-02", request.EffectiveDate)
+
+	//NOTE!! MUST CHECK PRICELISTCODEID IS EXIST, PRICE LIST CODE (COMMON) STILL ON DEVELOPMENT - 9/AUG/2024 last status
+
+	PriceListId := -1
+
+	for _, value := range request.Detail {
+
+		entities := masteritementities.PriceList{
+			IsActive:            value.IsActive,
+			PriceListCodeId:     request.PriceListCodeId,
+			CompanyId:           request.CompanyId,
+			BrandId:             request.BrandId,
+			CurrencyId:          request.CurrencyId,
+			EffectiveDate:       request.EffectiveDate,
+			ItemId:              value.ItemId,
+			ItemGroupId:         request.ItemGroupId,
+			ItemClassId:         value.ItemClassId,
+			PriceListAmount:     value.PriceListAmount,
+			PriceListModifiable: true,
+		}
+
+		err := tx.Save(&entities).Where(entities).Select("mtr_price_list.price_list_id").First(&PriceListId).Error
+
+		if err != nil {
+			return PriceListId, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
 		}
 	}
 
-	return true, nil
+	return PriceListId, nil
 }
 
 func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
@@ -305,11 +376,20 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 	var itemgrouppayloads []masteritempayloads.ItemGroupResponse
 	var currencypayloads []masteritempayloads.CurrencyResponse
 
-	err := tx.Table("mtr_price_list").
-		Select("mtr_price_list.*,mtr_item.*,mtr_item_class.*").
+	model := masteritementities.PriceList{}
+
+	query := tx.Model(model).
+		Select("mtr_item.*,mtr_item_class.*,mtr_price_list.*").
 		Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id").
-		Scan(&payloads).Error
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id")
+
+		//apply where query
+	whereQuery := utils.ApplyFilterExact(query, filtercondition)
+	//apply pagination and execute
+	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&payloads).Error
+
+	fmt.Println(payloads)
+
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -317,7 +397,14 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 		}
 	}
 
-	errBrandUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"/unit-brand?page=0&limit=10000", &brandpayloads, nil)
+	if len(payloads) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("price list not found"),
+		}
+	}
+
+	errBrandUrl := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand-dropdown", &brandpayloads, nil)
 	if errBrandUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -325,9 +412,9 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 		}
 	}
 
-	joinedData := utils.DataFrameInnerJoin(payloads,brandpayloads,"BrandId")
+	joinedData := utils.DataFrameLeftJoin(payloads, brandpayloads, "BrandId")
 
-	errItemGroupUrl := utils.Get(config.EnvConfigs.GeneralServiceUrl+"/item-group", &itemgrouppayloads, nil)
+	errItemGroupUrl := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group", &itemgrouppayloads, nil)
 	if errItemGroupUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -335,9 +422,9 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 		}
 	}
 
-	joinedData1 := utils.DataFrameInnerJoin(joinedData, itemgrouppayloads, "ItemGroupId")
+	joinedData1 := utils.DataFrameLeftJoin(joinedData, itemgrouppayloads, "ItemGroupId")
 
-	errCurrencyUrl := utils.Get(config.EnvConfigs.FinanceServiceUrl+"/currency-code/", &currencypayloads, nil)
+	errCurrencyUrl := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code/", &currencypayloads, nil)
 	if errCurrencyUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -345,9 +432,10 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 		}
 	}
 
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, currencypayloads, "CurrencyId")
+	joinedData2 := utils.DataFrameLeftJoin(joinedData1, currencypayloads, "CurrencyId")
 
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
+
 	return dataPaginate, totalPages, totalRows, nil
 }
 

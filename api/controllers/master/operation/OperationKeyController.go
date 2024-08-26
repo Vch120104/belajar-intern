@@ -10,6 +10,7 @@ import (
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -95,7 +96,12 @@ func (r *OperationKeyControllerImpl) GetAllOperationKeyList(writer http.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-key/{operation_key_id} [get]
 func (r *OperationKeyControllerImpl) GetOperationKeyByID(writer http.ResponseWriter, request *http.Request) {
-	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
+	operationKeyId, errA := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	result, err := r.operationkeyservice.GetOperationKeyById(operationKeyId)
 
 	if err != nil {
@@ -191,7 +197,12 @@ func (r *OperationKeyControllerImpl) SaveOperationKey(writer http.ResponseWriter
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-key/{operation_key_id} [patch]
 func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request) {
-	operationKeyId, _ := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
+	operationKeyId, errA := strconv.Atoi(chi.URLParam(request, "operation_key_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.operationkeyservice.ChangeStatusOperationKey(int(operationKeyId))
 

@@ -5,6 +5,7 @@ import (
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -165,11 +166,33 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpa
 
 func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 
+	//GET ITEM CLASS LEVEL PARENT, IF CREATE ITEM LEVEL > 1
+	itemleveltoInt, _ := strconv.Atoi(request.ItemLevel)
+	itemClassId := request.ItemClassId
+
+	model := masteritementities.ItemLevel{}
+
+	fmt.Println(itemleveltoInt, request.ItemLevelParent)
+
+	if itemleveltoInt > 1 {
+		if err := tx.Model(model).
+			Select("mtr_item_level.item_class_id").
+			Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemleveltoInt - 1), ItemLevelId: request.ItemLevelParent}).
+			First(&itemClassId).Error; err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	//
+
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
 		ItemLevelId:     request.ItemLevelId,
 		ItemLevel:       request.ItemLevel,
-		ItemClassId:     request.ItemClassId,
+		ItemClassId:     itemClassId,
 		ItemLevelParent: request.ItemLevelParent,
 		ItemLevelCode:   request.ItemLevelCode,
 		ItemLevelName:   request.ItemLevelName,

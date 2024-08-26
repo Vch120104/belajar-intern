@@ -1,9 +1,11 @@
 package masteroperationcontroller
 
 import (
+	"after-sales/api/exceptions"
 	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -30,6 +32,11 @@ type OperationModelMappingController interface {
 	GetOperationFrtById(writer http.ResponseWriter, request *http.Request)
 	GetAllOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request)
 	GetOperationDocumentRequirementById(writer http.ResponseWriter, request *http.Request)
+	SaveOperationLevel(writer http.ResponseWriter, request *http.Request)
+	GetAllOperationLevel(writer http.ResponseWriter, request *http.Request)
+	GetOperationLevelById(writer http.ResponseWriter, request *http.Request)
+	ActivateOperationLevel(writer http.ResponseWriter, request *http.Request)
+	DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -94,7 +101,12 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(wri
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingById(writer http.ResponseWriter, request *http.Request) {
-	operationModelMappingID, _ := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+	operationModelMappingID, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationmodelmappingservice.GetOperationModelMappingById(operationModelMappingID)
 	if err != nil {
@@ -118,9 +130,21 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingById(write
 // @Router /v1/operation-model-mapping/lookup [get]
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandModelOperationCode(writer http.ResponseWriter, request *http.Request) {
 
-	brandID, _ := strconv.Atoi(request.URL.Query().Get("brand_id"))
-	modelID, _ := strconv.Atoi(request.URL.Query().Get("model_id"))
-	operationID, _ := strconv.Atoi(request.URL.Query().Get("operation_id"))
+	brandID, errA := strconv.Atoi(request.URL.Query().Get("brand_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	modelID, errA := strconv.Atoi(request.URL.Query().Get("model_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	operationID, errA := strconv.Atoi(request.URL.Query().Get("operation_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationmodelmappingservice.GetOperationModelMappingByBrandModelOperationCode(masteroperationpayloads.OperationModelModelBrandOperationCodeRequest{
 		BrandId:     brandID,
@@ -175,7 +199,11 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer h
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id} [patch]
 func (r *OperationModelMappingControllerImpl) ChangeStatusOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
-	operationModelMappingID, _ := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+	operationModelMappingID, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.operationmodelmappingservice.ChangeStatusOperationModelMapping(operationModelMappingID)
 	if err != nil {
@@ -206,7 +234,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 		return
 	}
 
-	if formRequest.OperationModelMappingId == 0 {
+	if formRequest.OperationFrtId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -274,7 +302,12 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationFrt(writer http.R
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id}/document-requirements [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	headerId, _ := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+	headerId, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -307,7 +340,12 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationDocumentRequirement
 // @Router /v1/operation-model-mapping/{operation_model_mapping_id}/frt [get]
 func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	headerId, _ := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+	headerId, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -335,7 +373,12 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.Res
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/document-requirements/{operation_document_requirement_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationDocumentRequirementById(writer http.ResponseWriter, request *http.Request) {
-	operationDocumentRequirementId, _ := strconv.Atoi(chi.URLParam(request, "operation_document_requirement_id"))
+	operationDocumentRequirementId, errA := strconv.Atoi(chi.URLParam(request, "operation_document_requirement_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationmodelmappingservice.GetOperationDocumentRequirementById(operationDocumentRequirementId)
 	if err != nil {
@@ -356,7 +399,12 @@ func (r *OperationModelMappingControllerImpl) GetOperationDocumentRequirementByI
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-model-mapping/frt/{operation_frt_id} [get]
 func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.ResponseWriter, request *http.Request) {
-	OperationFrtId, _ := strconv.Atoi(chi.URLParam(request, "operation_frt_id"))
+	OperationFrtId, errA := strconv.Atoi(chi.URLParam(request, "operation_frt_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationmodelmappingservice.GetOperationFrtById(OperationFrtId)
 	if err != nil {
@@ -387,7 +435,7 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 		return
 	}
 
-	if formRequest.OperationModelMappingId == 0 {
+	if formRequest.OperationDocumentRequirementId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
@@ -395,20 +443,22 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentR
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
-
-// @Summary Deactivate Operation Document Requirement
-// @Description Deactivate one or more operation document requirements by their IDs
-// @Accept json
-// @Produce json
-// @Tags Master : Operation Model Mapping
-// @Param operation_model_mapping_id path string true "Operation Model Mapping ID(s) to deactivate, comma-separated"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/document-requirements/deactivate/{operation_model_mapping_id} [patch]
 func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 
-	OperationFrtIds := chi.URLParam(request, "operation_model_mapping_id")
-	response, err := r.operationmodelmappingservice.DeactivateOperationDocumentRequirement(OperationFrtIds)
+	OperationDocReqIds := chi.URLParam(request, "operation_document_requirement_id")
+	response, err := r.operationmodelmappingservice.DeactivateOperationDocumentRequirement(OperationDocReqIds)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
+
+	OperationDocReqIds := chi.URLParam(request, "operation_document_requirement_id")
+	response, err := r.operationmodelmappingservice.ActivateOperationDocumentRequirement(OperationDocReqIds)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -418,19 +468,84 @@ func (r *OperationModelMappingControllerImpl) DeactivateOperationDocumentRequire
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-// @Summary Activate Operation Document Requirement
-// @Description Activate one or more deactivated operation document requirements by their IDs
-// @Accept json
-// @Produce json
-// @Tags Master : Operation Model Mapping
-// @Param operation_model_mapping_id path string true "Operation Model Mapping ID(s) to activate, comma-separated"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/operation-model-mapping/document-requirements/activate/{operation_model_mapping_id} [patch]
-func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
+func (r *OperationModelMappingControllerImpl) SaveOperationLevel(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteroperationpayloads.OperationLevelRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+	var message string
 
-	OperationFrtIds := chi.URLParam(request, "operation_model_mapping_id")
-	response, err := r.operationmodelmappingservice.ActivateOperationDocumentRequirement(OperationFrtIds)
+	create, err := r.operationmodelmappingservice.SaveOperationLevel(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	if formRequest.OperationLevelId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) GetAllOperationLevel(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	headerId, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, err := r.operationmodelmappingservice.GetAllOperationLevel(headerId, paginate)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *OperationModelMappingControllerImpl) GetOperationLevelById(writer http.ResponseWriter, request *http.Request) {
+	operationlevelid, errA := strconv.Atoi(chi.URLParam(request, "operation_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.operationmodelmappingservice.GetOperationLevelById(operationlevelid)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request) {
+
+	OperationLevelIds := chi.URLParam(request, "operation_level_id")
+	response, err := r.operationmodelmappingservice.DeactivateOperationLevel(OperationLevelIds)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+func (r *OperationModelMappingControllerImpl) ActivateOperationLevel(writer http.ResponseWriter, request *http.Request) {
+
+	OperationLevelIds := chi.URLParam(request, "operation_level_id")
+	response, err := r.operationmodelmappingservice.ActivateOperationLevel(OperationLevelIds)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)

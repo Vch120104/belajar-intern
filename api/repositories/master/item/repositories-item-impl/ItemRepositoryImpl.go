@@ -28,6 +28,23 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
+// CheckItemCodeExist implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) CheckItemCodeExist(tx *gorm.DB, itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse) {
+	model := masteritementities.Item{}
+
+	if err := tx.Model(model).Select("mtr_item.item_code,mtr_item.item_id,mtr_item.item_class_id").
+		Joins("ItemDetail", tx.Select("1")).
+		Where(masteritementities.Item{ItemCode: itemCode, ItemGroupId: itemGroupId, CommonPricelist: commonPriceList}).
+		Where("ItemDetail.brand_id = ?", brandId).
+		First(&model).Error; err != nil {
+		return false, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New(""),
+		}
+	}
+	return true, model.ItemId, model.ItemClassId, nil
+}
+
 // GetUomItemDropDown implements masteritemrepository.ItemRepository.
 func (r *ItemRepositoryImpl) GetUomDropDown(tx *gorm.DB, uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse) {
 	model := masteritementities.Uom{}
@@ -275,6 +292,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{
+		ItemId:                       req.ItemId,
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
 		ItemName:                     req.ItemName,
@@ -437,7 +455,7 @@ func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempaylo
 		BrandId:      request.BrandId,
 		ModelId:      request.ModelId,
 		VariantId:    request.VariantId,
-		MillageEvery: request.MillageEvery,
+		MileageEvery: request.MileageEvery,
 		ReturnEvery:  request.ReturnEvery,
 	}
 
@@ -487,7 +505,14 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			Err:        errors.New("no brand found"),
 		}
 	}
-	Joineddata1 := utils.DataFrameInnerJoin(responses, brandpayload, "BrandId")
+	Joineddata1, errdf := utils.DataFrameInnerJoin(responses, brandpayload, "BrandId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	errurlmodel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model?page=0&limit=1000000", &modelpayloads, nil)
 	if errurlmodel != nil {
@@ -495,7 +520,14 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			StatusCode: http.StatusNotFound,
 		}
 	}
-	joineddata2 := utils.DataFrameInnerJoin(Joineddata1, modelpayloads, "ModelId")
+	joineddata2, errdf := utils.DataFrameInnerJoin(Joineddata1, modelpayloads, "ModelId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	errurlvariant := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant?page=0&limit=1000000", &variantpayloads, nil)
 	if errurlvariant != nil {
@@ -503,7 +535,14 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			StatusCode: http.StatusNotFound,
 		}
 	}
-	joineddata3 := utils.DataFrameInnerJoin(joineddata2, variantpayloads, "VariantId")
+	joineddata3, errdf := utils.DataFrameInnerJoin(joineddata2, variantpayloads, "VariantId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
 
 	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
@@ -516,7 +555,7 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			"item_id":             response["ItemId"],
 			"brand_id":            response["BrandId"],
 			"brand_name":          response["BrandName"],
-			"millage_every":       response["MillageEvery"],
+			"mileage_every":       response["MileageEvery"],
 			"model_id":            response["ModelId"],
 			"model_code":          response["ModelCode"],
 			"model_description":   response["ModelDescription"],
@@ -524,7 +563,6 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 			"variant_id":          response["VariantId"],
 			"variant_code":        response["VariantCode"],
 			"variant_description": response["VariantDescription"],
-			// Add other fields as needed
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -559,7 +597,7 @@ func (r *ItemRepositoryImpl) GetItemDetailById(tx *gorm.DB, ItemId, ItemDetailId
 	response.BrandId = entities.BrandId
 	response.ModelId = entities.ModelId
 	response.VariantId = entities.VariantId
-	response.MillageEvery = entities.MillageEvery
+	response.MileageEvery = entities.MileageEvery
 	response.ReturnEvery = entities.ReturnEvery
 	response.IsActive = entities.IsActive
 
@@ -572,7 +610,7 @@ func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masterit
 		BrandId:      req.BrandId,
 		ModelId:      req.ModelId,
 		VariantId:    req.VariantId,
-		MillageEvery: req.MillageEvery,
+		MileageEvery: req.MileageEvery,
 		ReturnEvery:  req.ReturnEvery,
 		IsActive:     req.IsActive,
 	}
@@ -680,42 +718,48 @@ func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) (
 }
 
 func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse) {
-	var getdatabybrand []masteritempayloads.BrandModelVariantResponse
 	var itemDetails []masteritempayloads.ItemDetailResponse
 	brandid := strings.Split(id, ",")
+
 	for _, id := range brandid {
+		var getdatabybrand []masteritempayloads.BrandModelVariantResponse
 		err := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant-by-brand/"+id, &getdatabybrand, nil)
 		if err != nil {
-			return []masteritempayloads.ItemDetailResponse{}, &exceptions.BaseErrorResponse{
+			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusConflict,
 				Err:        errors.New("brand has no variant and model"),
 			}
 		}
+
+		for _, detail := range getdatabybrand {
+			entities := masteritementities.ItemDetail{
+				IsActive:  true,
+				ItemId:    itemId,
+				BrandId:   detail.BrandId,
+				ModelId:   detail.ModelId,
+				VariantId: detail.VariantId,
+			}
+
+			err = tx.Save(&entities).Error
+			if err != nil {
+				return nil, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusConflict,
+					Err:        err,
+				}
+			}
+
+			itemDetails = append(itemDetails, masteritempayloads.ItemDetailResponse{
+				ItemDetailId: entities.ItemDetailId,
+				IsActive:     entities.IsActive,
+				ItemId:       itemId,
+				BrandId:      detail.BrandId,
+				ModelId:      detail.ModelId,
+				VariantId:    detail.VariantId,
+			})
+		}
 	}
 
-	for _, detail := range getdatabybrand {
-		entities := masteritementities.ItemDetail{
-			IsActive:  true,
-			ItemId:    itemId,
-			BrandId:   detail.BrandId,
-			ModelId:   detail.ModelId,
-			VariantId: detail.VariantId,
-		}
-		err := tx.Save(&entities).Error
-		if err != nil {
-			return []masteritempayloads.ItemDetailResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        err,
-			}
-		}
-		itemDetails = append(itemDetails, masteritempayloads.ItemDetailResponse{
-			ItemDetailId: entities.ItemDetailId,
-			IsActive:     entities.IsActive,
-			ItemId:       itemId,
-			BrandId:      detail.BrandId,
-			ModelId:      detail.ModelId,
-			VariantId:    detail.VariantId,
-		})
-	}
 	return itemDetails, nil
 }
+
+

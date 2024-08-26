@@ -154,30 +154,51 @@ func (r *BookingEstimationImpl) GetById(tx *gorm.DB, Id int) (map[string]interfa
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: err}
 	}
-	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(payloads.BrandId), brand, nil)
+	errUrlBrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-brand/"+strconv.Itoa(entity.BrandId), brand, nil)
 	if errUrlBrand != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("brand undefined"),
 		}
 	}
-	joinedData1 := utils.DataFrameInnerJoin([]transactionworkshoppayloads.GetBookingById{payloads}, []masterpayloads.BrandResponse{brand}, "BrandId")
-	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(payloads.ModelId), model, nil)
+	joinedData1, errdf := utils.DataFrameInnerJoin([]transactionworkshopentities.BookingEstimation{entity}, []masterpayloads.BrandResponse{brand}, "BrandId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
+	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model/"+strconv.Itoa(entity.ModelId), model, nil)
 	if errUrlModel != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("model undefined"),
 		}
 	}
-	joinedData2 := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.GetModelResponse{model}, "ModelId")
-	errurlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(payloads.VehicleId), &vehicle, nil)
+	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, []masterpayloads.GetModelResponse{model}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
+	errurlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(entity.VehicleId), &vehicle, nil)
 	if errurlVehicle != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("vehicle undefined"),
 		}
 	}
-	joinedData3 := utils.DataFrameInnerJoin(joinedData2, []transactionworkshoppayloads.VehicleDetailPayloads{vehicle}, "VehicleId")
+	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, []transactionworkshoppayloads.VehicleDetailPayloads{vehicle}, "VehicleId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
 
 	return joinedData3[0], nil
 }
@@ -341,7 +362,7 @@ func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, ids string) ([]s
 	}
 
 	// Update line numbers for the remaining records
-	if err := r.updateLineNumbers(tx); err != nil {
+	if err := updateLineNumbers(tx); err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -351,7 +372,7 @@ func (r *BookingEstimationImpl) DeleteBookEstimReq(tx *gorm.DB, ids string) ([]s
 	return deletedIds, nil
 }
 
-func (r *BookingEstimationImpl) updateLineNumbers(tx *gorm.DB) error {
+func updateLineNumbers(tx *gorm.DB) error {
 	var records []transactionworkshopentities.BookingEstimationRequest
 
 	// Retrieve all remaining records, ordered by their current line numbers
@@ -984,7 +1005,13 @@ func (r *BookingEstimationImpl) GetByIdBookEstimDetail(tx *gorm.DB, id int, Line
 				Err:        errurllinetype,
 			}
 		}
-		joinedData1 := utils.DataFrameInnerJoin(payloadsoperation, payloadslinetype, "LineTypeId")
+		joinedData1, errdf := utils.DataFrameInnerJoin(payloadsoperation, payloadslinetype, "LineTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errdf,
+			}
+		}
 		errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
 		if errurltransactiontype != nil {
 			return nil, &exceptions.BaseErrorResponse{
@@ -992,7 +1019,13 @@ func (r *BookingEstimationImpl) GetByIdBookEstimDetail(tx *gorm.DB, id int, Line
 				Err:        errurltransactiontype,
 			}
 		}
-		joineddata2 := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+		joineddata2, errdf := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errdf,
+			}
+		}
 		return joineddata2[0], nil
 
 	} else {
@@ -1012,7 +1045,13 @@ func (r *BookingEstimationImpl) GetByIdBookEstimDetail(tx *gorm.DB, id int, Line
 				Err:        errurllinetype,
 			}
 		}
-		joinedData1 := utils.DataFrameInnerJoin(payloadsitem, payloadslinetype, "LineTypeId")
+		joinedData1, errdf := utils.DataFrameInnerJoin(payloadsitem, payloadslinetype, "LineTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errdf,
+			}
+		}
 		errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
 		if errurltransactiontype != nil {
 			return nil, &exceptions.BaseErrorResponse{
@@ -1020,7 +1059,13 @@ func (r *BookingEstimationImpl) GetByIdBookEstimDetail(tx *gorm.DB, id int, Line
 				Err:        errurltransactiontype,
 			}
 		}
-		joineddata2 := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+		joineddata2, errdf := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+		if errdf != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errdf,
+			}
+		}
 		return joineddata2[0], nil
 	}
 }
@@ -1048,7 +1093,13 @@ func (r *BookingEstimationImpl) GetAllBookEstimDetail(tx *gorm.DB, id int, pages
 			Err:        errurllinetype,
 		}
 	}
-	joinedData1 := utils.DataFrameInnerJoin(operationpayloads, payloadslinetype, "LineTypeId")
+	joinedData1, errdf := utils.DataFrameInnerJoin(operationpayloads, payloadslinetype, "LineTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
 	errurltransactiontype := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
 	if errurltransactiontype != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -1056,7 +1107,13 @@ func (r *BookingEstimationImpl) GetAllBookEstimDetail(tx *gorm.DB, id int, pages
 			Err:        errurltransactiontype,
 		}
 	}
-	joineddata2 := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+	joineddata2, errdf := utils.DataFrameInnerJoin(joinedData1, payloadstransactiontype, "TransactionTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
 	for _, op := range joineddata2 {
 		combinedpayloads = append(combinedpayloads, map[string]interface{}{
 			"line_type_id":        op["LineTypeid"],
@@ -1088,7 +1145,13 @@ func (r *BookingEstimationImpl) GetAllBookEstimDetail(tx *gorm.DB, id int, pages
 			Err:        errurllinetype2,
 		}
 	}
-	joinedData1_2 := utils.DataFrameInnerJoin(itempayloads, payloadslinetype, "LineTypeId")
+	joinedData1_2, errdf := utils.DataFrameInnerJoin(itempayloads, payloadslinetype, "LineTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
 	errurltransactiontype2 := utils.Get(config.EnvConfigs.GeneralServiceUrl+"transaction-type-list?page=0&limit=100000", &payloadstransactiontype, nil)
 	if errurltransactiontype2 != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -1096,7 +1159,13 @@ func (r *BookingEstimationImpl) GetAllBookEstimDetail(tx *gorm.DB, id int, pages
 			Err:        errurltransactiontype,
 		}
 	}
-	joineddata2_2 := utils.DataFrameInnerJoin(joinedData1_2, payloadstransactiontype, "TransactionTypeId")
+	joineddata2_2, errdf := utils.DataFrameInnerJoin(joinedData1_2, payloadstransactiontype, "TransactionTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
 	for _, it := range joineddata2_2 {
 		combinedpayloads = append(combinedpayloads, map[string]interface{}{
 			"line_type_id":        it["LineTypeID"],
@@ -1143,6 +1212,62 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 		TotalAfterDiscount:               0.0,
 	}
 	err := tx.Save(entity).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		}
+	}
+	return id, nil
+}
+
+func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads) (int, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.BookingEstimationServiceDiscount
+	var columnName string
+	var value int
+
+	err := tx.Model(&entity).Where("batch_system_number = ?", id).Scan(&entity).Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
+	}
+
+	switch linetypeid {
+	case 5:
+		columnName = "total_price_operation"
+		value = int(req.TotalPriceOperation)
+	case 6:
+		columnName = "total_price_package"
+		value = int(req.TotalPricePackage)
+	case 1:
+		columnName = "total_price_accessories"
+		value = int(req.TotalPriceAccessories)
+	case 2:
+		columnName = "total_price_part"
+		value = int(req.TotalPricePart)
+	case 3:
+		columnName = "total_price_material"
+		value = int(req.TotalPriceMaterial)
+	case 4:
+		columnName = "total_price_oil"
+		value = int(req.TotalPriceOil)
+	case 9:
+		columnName = "total_sublet"
+		value = int(req.TotalSublet)
+	default:
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("invalid line type id"),
+		}
+	}
+
+	err = tx.Model(&transactionworkshopentities.BookingEstimationOperationDetail{}).
+		Where("batch_system_number = ? ", id).
+		Update(columnName, value).
+		Update("total", gorm.Expr("total_price_operation + total_price_package + total_price_accessories + total_price_part + total_price_material + total_price_oil + total_sublet")).
+		Error
 	if err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,

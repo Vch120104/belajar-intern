@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -71,8 +72,18 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.Resp
 }
 
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(writer http.ResponseWriter, request *http.Request) {
-	CampaignId1, _ := strconv.Atoi(chi.URLParam(request, "campaign_id_1"))
-	CampaignId2, _ := strconv.Atoi(chi.URLParam(request, "campaign_id_2"))
+	CampaignId1, errA := strconv.Atoi(chi.URLParam(request, "campaign_id_1"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	CampaignId2, errA := strconv.Atoi(chi.URLParam(request, "campaign_id_2"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	var message = ""
 	response, err := r.CampaignMasterService.PostCampaignMasterDetailFromHistory(CampaignId1, CampaignId2)
 	if err != nil {
@@ -85,7 +96,12 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 }
 
 func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.ResponseWriter, request *http.Request) {
-	CampaignId, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
+	CampaignId, errA := strconv.Atoi(chi.URLParam(request, "campaign_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	response, err := r.CampaignMasterService.ChangeStatusCampaignMaster(CampaignId)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
@@ -95,8 +111,12 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 
 func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
-	idhead, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
-	_,id, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId, idhead)
+	idhead, errA := strconv.Atoi(chi.URLParam(request, "campaign_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	_, id, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId, idhead)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -107,8 +127,12 @@ func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.
 
 func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
-	idhead, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
-	_,id, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId, idhead)
+	idhead, errA := strconv.Atoi(chi.URLParam(request, "campaign_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	_, id, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId, idhead)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -120,7 +144,12 @@ func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer htt
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	CampaignIdstr := chi.URLParam(request, "campaign_id")
 
-	CampaignId, _ := strconv.Atoi(CampaignIdstr)
+	CampaignId, errA := strconv.Atoi(CampaignIdstr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.CampaignMasterService.GetByIdCampaignMaster(CampaignId)
 
@@ -134,9 +163,19 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.Respons
 
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
-	LineTypeId, _ := strconv.Atoi(chi.URLParam(request, "line_type_id"))
+	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
 
-	CampaignDetailId, _ := strconv.Atoi(CampaignDetailIdstr)
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	CampaignDetailId, errA := strconv.Atoi(CampaignDetailIdstr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.CampaignMasterService.GetByIdCampaignMasterDetail(CampaignDetailId, LineTypeId)
 
@@ -169,20 +208,24 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
+	result, totalpages, totalrows, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 }
 
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	CampaignIdStr := chi.URLParam(request, "campaign_id")
 
-	CampaignId, _ := strconv.Atoi(CampaignIdStr)
+	CampaignId, errA := strconv.Atoi(CampaignIdStr)
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -221,12 +264,20 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
-	LineTypeId,_ := strconv.Atoi(chi.URLParam(request,"line_type_id"))
+	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
-	CampaignDetailId, _ := strconv.Atoi(CampaignDetailIdstr)
+	CampaignDetailId, errA := strconv.Atoi(CampaignDetailIdstr)
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
-	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId,LineTypeId, formRequest)
+	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, LineTypeId, formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -254,8 +305,16 @@ func (r *CampaignMasterControllerImpl) GetAllPackageMasterToCopy(writer http.Res
 
 func (r *CampaignMasterControllerImpl) SelectFromPackageMaster(writer http.ResponseWriter, request *http.Request) {
 	var message = ""
-	PackageMaster, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
-	CampaignMasterId, _ := strconv.Atoi(chi.URLParam(request, "campaign_detail_id"))
+	PackageMaster, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	CampaignMasterId, errA := strconv.Atoi(chi.URLParam(request, "campaign_detail_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.CampaignMasterService.SelectFromPackageMaster(PackageMaster, CampaignMasterId)
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -37,7 +38,12 @@ func NewItemClassController(itemClassService masteritemservice.ItemClassService)
 
 // GetItemClassDropDownbyGroupId implements ItemClassController.
 func (r *ItemClassControllerImpl) GetItemClassDropDownbyGroupId(writer http.ResponseWriter, request *http.Request) {
-	itemGroupId, _ := strconv.Atoi(chi.URLParam(request, "item_group_id"))
+	itemGroupId, errA := strconv.Atoi(chi.URLParam(request, "item_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ItemClassService.GetItemClassDropDownbyGroupId(itemGroupId)
 
@@ -65,7 +71,12 @@ func (r *ItemClassControllerImpl) GetItemClassByCode(writer http.ResponseWriter,
 
 // GetItemClassbyId implements ItemClassController.
 func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, request *http.Request) {
-	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+	itemClassId, errA := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ItemClassService.GetItemClassById(itemClassId)
 
@@ -202,7 +213,12 @@ func (r *ItemClassControllerImpl) SaveItemClass(writer http.ResponseWriter, requ
 // @Router /v1/item-class/{item_class_id} [patch]
 func (r *ItemClassControllerImpl) ChangeStatusItemClass(writer http.ResponseWriter, request *http.Request) {
 
-	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+	itemClassId, errA := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ItemClassService.ChangeStatusItemClass(int(itemClassId))
 

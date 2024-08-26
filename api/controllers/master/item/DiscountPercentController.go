@@ -10,6 +10,7 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -73,7 +74,7 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 	paginatedData, totalPages, totalRows, err := r.DiscountPercentService.GetAllDiscountPercent(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
@@ -91,7 +92,11 @@ func (r *DiscountPercentControllerImpl) GetAllDiscountPercent(writer http.Respon
 // @Router /v1/discount-percent/{discount_percent_id} [get]
 func (r *DiscountPercentControllerImpl) GetDiscountPercentByID(writer http.ResponseWriter, request *http.Request) {
 
-	discountPercentId, _ := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
+	discountPercentId, errA := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.DiscountPercentService.GetDiscountPercentById(discountPercentId)
 
@@ -155,7 +160,12 @@ func (r *DiscountPercentControllerImpl) SaveDiscountPercent(writer http.Response
 // @Router /v1/discount-percent/{discount_percent_id} [patch]
 func (r *DiscountPercentControllerImpl) ChangeStatusDiscountPercent(writer http.ResponseWriter, request *http.Request) {
 
-	discountPercentId, _ := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
+	discountPercentId, errA := strconv.Atoi(chi.URLParam(request, "discount_percent_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.DiscountPercentService.ChangeStatusDiscountPercent(int(discountPercentId))
 

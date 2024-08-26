@@ -41,6 +41,7 @@ func OpenWarehouseLocationService(warehouseLocation masterwarehouserepository.Wa
 func (s *WarehouseLocationServiceImpl) ProcessWarehouseLocationTemplate(req masterwarehousepayloads.ProcessWarehouseLocationTemplate, companyId int) (bool, *exceptions.BaseErrorResponse) {
 
 	for _, value := range req.Data {
+		fmt.Println(value.Validation)
 		if value.Validation != "Ok" {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: 400,
@@ -89,7 +90,12 @@ func (s *WarehouseLocationServiceImpl) UploadPreviewFile(rows [][]string, compan
 			if warehouseCodeExist := s.warehouseMasterService.IsWarehouseMasterByCodeAndCompanyIdExist(companyId, value[0]); warehouseCodeExist {
 				tx := s.DB.Begin()
 
-				if s.warehouseLocationRepo.CheckIfLocationExist(tx, value[0], value[1], value[2]) {
+				//Check warehouslocation exist
+				isExist, err := s.warehouseLocationRepo.CheckIfLocationExist(tx, value[0], value[1], value[2])
+
+				defer helper.CommitOrRollback(tx, err)
+
+				if isExist {
 					data.Validation = "Location is already exist"
 
 				} else {

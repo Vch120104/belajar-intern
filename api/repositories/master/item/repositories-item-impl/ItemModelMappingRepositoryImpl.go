@@ -56,12 +56,12 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 	}
 
-	joinedDataBrand := utils.DataFrameInnerJoin(responses, brandResponses, "BrandId")
+	joinedDataBrand, errdf := utils.DataFrameInnerJoin(responses, brandResponses, "BrandId")
 
-	if len(joinedDataBrand) == 0 {
+	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
 		}
 	}
 
@@ -75,17 +75,17 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 	}
 
-	joinedDataModel := utils.DataFrameInnerJoin(joinedDataBrand, modelResponses, "ModelId")
+	joinedDataModel, errdf := utils.DataFrameInnerJoin(joinedDataBrand, modelResponses, "ModelId")
 
-	if len(joinedDataModel) == 0 {
+	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
 		}
 	}
 
 	//// Unit Variant
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=1000"
+	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=10000"
 
 	if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -94,12 +94,12 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 	}
 
-	joinedDataVariant := utils.DataFrameInnerJoin(joinedDataModel, variantResponses, "VariantId")
+	joinedDataVariant, errdf := utils.DataFrameInnerJoin(joinedDataModel, variantResponses, "VariantId")
 
-	if len(joinedDataVariant) == 0 {
+	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
 		}
 	}
 
@@ -114,7 +114,7 @@ func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req
 
 	entities := masteritementities.ItemDetail{
 		ItemDetailId: req.ItemDetailId,
-		MillageEvery: req.MillageEvery,
+		MileageEvery: req.MileageEvery,
 		ReturnEvery:  req.ReturnEvery,
 	}
 
@@ -139,7 +139,7 @@ func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req
 		BrandId:      req.BrandId,
 		ModelId:      req.ModelId,
 		VariantId:    req.VariantId,
-		MillageEvery: req.MillageEvery,
+		MileageEvery: req.MileageEvery,
 		ReturnEvery:  req.ReturnEvery,
 	}
 

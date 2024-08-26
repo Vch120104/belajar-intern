@@ -43,6 +43,7 @@ func (r *VehicleHIstoryImpl) GetAllVehicleHistory(tx *gorm.DB, filterCondition [
 		}
 	}
 	var GetAllResponses []transactionworkshoppayloads.VehicleHistoryGetAllResponses
+	index := 0
 	for _, res := range responses {
 		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(res.CustomerId)
 
@@ -70,7 +71,9 @@ func (r *VehicleHIstoryImpl) GetAllVehicleHistory(tx *gorm.DB, filterCondition [
 		} else {
 			CompanyName = ""
 		}
+		index += 1
 		GetVehicleHistoryRespons := transactionworkshoppayloads.VehicleHistoryGetAllResponses{
+			LineIndex:               index,
 			WorkOrderSystemNumber:   res.WorkOrderSystemNumber,
 			WorkOrderDocumentNumber: res.WorkOrderDocumentNumber,
 			WorkOrderStatusDesc:     res.WorkOrderStatusDescription,

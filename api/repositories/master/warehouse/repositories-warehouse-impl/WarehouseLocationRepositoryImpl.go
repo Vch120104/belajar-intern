@@ -15,6 +15,7 @@ import (
 	// utils "after-sales/api/utils"
 
 	// masterwarehousegroupservice "after-sales/api/services/master/warehouse"
+
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	// "after-sales/api/payloads/pagination"
 
@@ -29,34 +30,8 @@ func OpenWarehouseLocationImpl() masterwarehouserepository.WarehouseLocationRepo
 }
 
 // ProcessWarehouseLocationTemplate implements masterwarehouserepository.WarehouseLocationRepository.
-func (r *WarehouseLocationImpl) ProcessWarehouseLocationTemplate(tx *gorm.DB, req masterwarehousepayloads.ProcessWarehouseLocationTemplate) (bool, *exceptions.BaseErrorResponse) {
-	// for _, value := range req.Data {
-
-	// 	fmt.Print("value ", value)
-	// 	_, err := r.Save(tx, value)
-	// 	if err != nil {
-	// 		errorMessage := err.Err.Error()
-	// 		if strings.Contains(errorMessage, "duplicate") {
-	// 			return false, &exceptions.BaseErrorResponse{
-	// 				StatusCode: http.StatusConflict,
-	// 				Err:        err.Err,
-	// 			}
-	// 		} else {
-
-	// 			return false, &exceptions.BaseErrorResponse{
-	// 				StatusCode: http.StatusInternalServerError,
-	// 				Err:        err.Err,
-	// 			}
-	// 		}
-	// 	}
-
-	// }
-
-	return true, nil
-}
-
 // CheckIfLocationExist implements masterwarehouserepository.WarehouseLocationRepository.
-func (r *WarehouseLocationImpl) CheckIfLocationExist(tx *gorm.DB, warehouseCode string, locationCode string, locationName string) bool {
+func (r *WarehouseLocationImpl) CheckIfLocationExist(tx *gorm.DB, warehouseCode string, locationCode string, locationName string) (bool, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
 	// warehouseGroup := masterwarehouseentities.WarehouseGroup{}
 	response := masterwarehouseentities.WarehouseLocation{}
@@ -65,10 +40,13 @@ func (r *WarehouseLocationImpl) CheckIfLocationExist(tx *gorm.DB, warehouseCode 
 		InnerJoins("WarehouseGroup", tx.Select("1")).
 		InnerJoins("WarehouseGroup.WarehouseLocation", tx.Where(masterwarehouseentities.WarehouseLocation{WarehouseLocationCode: locationCode, WarehouseLocationName: locationName})).
 		First(&response).Error; err != nil {
-		return false
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err,
+		}
 	}
 
-	return true
+	return true, nil
 }
 
 func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehouseentities.WarehouseLocation) (bool, *exceptions.BaseErrorResponse) {
@@ -114,7 +92,9 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 		mtr_warehouse_master.warehouse_code,
 		mtr_warehouse_master.warehouse_name`).
 		Joins("LEFT OUTER JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
-		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").First(&warehouseLocationResponse).Error
+		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
+		Where(masterwarehouseentities.WarehouseLocation{WarehouseLocationId: warehouseLocationId}).
+		First(&warehouseLocationResponse).Error
 
 	if err != nil {
 		return warehouseLocationResponse, &exceptions.BaseErrorResponse{

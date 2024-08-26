@@ -3,6 +3,10 @@ package masteritemcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/utils"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"strings"
 
 	helper "after-sales/api/helper"
 	jsonchecker "after-sales/api/helper/json/json-checker"
@@ -16,6 +20,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xuri/excelize/v2"
 )
 
 type PriceListController interface {
@@ -23,10 +28,16 @@ type PriceListController interface {
 	GetPriceList(writer http.ResponseWriter, request *http.Request)
 	SavePriceList(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request)
-	DeletePriceList (writer http.ResponseWriter, request *http.Request)
-	GetAllPriceListNew(writer http.ResponseWriter,request *http.Request)
+	DeletePriceList(writer http.ResponseWriter, request *http.Request)
+	GetAllPriceListNew(writer http.ResponseWriter, request *http.Request)
 	ActivatePriceList(writer http.ResponseWriter, request *http.Request)
 	DeactivatePriceList(writer http.ResponseWriter, request *http.Request)
+	GetPriceListById(writer http.ResponseWriter, request *http.Request)
+	GenerateDownloadTemplateFile(writer http.ResponseWriter, request *http.Request)
+	UploadFile(writer http.ResponseWriter, request *http.Request)
+	CheckPriceListItem(writer http.ResponseWriter, request *http.Request)
+	Download(writer http.ResponseWriter, request *http.Request)
+	Duplicate(writer http.ResponseWriter, request *http.Request)
 }
 
 type PriceListControllerImpl struct {
@@ -37,6 +48,237 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 	return &PriceListControllerImpl{
 		pricelistservice: PriceListService,
 	}
+}
+
+// Duplicate implements PriceListController.
+func (r *PriceListControllerImpl) Duplicate(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	brandId, errA := strconv.Atoi(queryValues.Get("brand_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	currencyId, errA := strconv.Atoi(queryValues.Get("currency_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	date := queryValues.Get("effective_date")
+	itemGroupId, errA := strconv.Atoi(queryValues.Get("item_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	if brandId == 0 || currencyId == 0 || date == "" || itemGroupId == 0 {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: 400, Err: errors.New("fill required params")})
+		return
+	}
+
+	response, err := r.pricelistservice.Duplicate(itemGroupId, brandId, currencyId, date)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Successfully!", 200)
+}
+
+// Download implements PriceListController.
+func (r *PriceListControllerImpl) Download(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.PriceListUploadDataRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	f, errorGenerate := r.pricelistservice.Download(formRequest)
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
+		return
+	}
+
+	// Write the Excel file to a buffer
+	var b bytes.Buffer
+	errWrite := f.Write(&b)
+	if errWrite != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("Download-PriceList.xlsx")
+
+	writer.Header().Set("Content-Description", "File Transfer")
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+
+	writer.Write(b.Bytes())
+}
+
+// CheckPriceListItem implements PriceListController.
+func (r *PriceListControllerImpl) CheckPriceListItem(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	brandId, errA := strconv.Atoi(queryValues.Get("brand_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	currencyId, errA := strconv.Atoi(queryValues.Get("currency_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	date := queryValues.Get("effective_date")
+	itemGroupId, errA := strconv.Atoi(queryValues.Get("item_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	if brandId == 0 || currencyId == 0 || date == "" || itemGroupId == 0 {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: 400, Err: errors.New("fill required params")})
+		return
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	response, err := r.pricelistservice.CheckPriceListItem(itemGroupId, brandId, currencyId, date, paginate)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, response.Rows, "Get Data Successfully!", 200, response.Limit, response.Page, response.TotalRows, response.TotalPages)
+}
+
+// UploadFile implements PriceListController.
+func (r *PriceListControllerImpl) UploadFile(writer http.ResponseWriter, request *http.Request) {
+
+	var formRequest masteritempayloads.PriceListUploadDataRequest
+
+	// Get the JSON part from the form data
+	jsonPart := request.FormValue("data")
+	if err := json.Unmarshal([]byte(jsonPart), &formRequest); err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: 400,
+			Err:        err,
+		})
+		return
+	}
+
+	err := validation.ValidationForm(writer, request, formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	// Parse the multipart form
+	errParse := request.ParseMultipartForm(10 << 20) // 10 MB
+	if errParse != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("file size max 10MB"), StatusCode: 400})
+		return
+	}
+
+	// Retrieve the file from form data
+	file, handler, errGetFile := request.FormFile("PriceList-File")
+	if errGetFile != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("key name must be PriceList-File"), StatusCode: 400})
+		return
+	}
+	defer file.Close()
+
+	//Check file is XML
+	if !strings.Contains(handler.Header.Get("Content-Type"), "xml") {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("make sure to upload xml file"), StatusCode: 400})
+		return
+	}
+	// Read the uploaded file into an excelize.File
+	f, errReadFile := excelize.OpenReader(file)
+	if errReadFile != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errReadFile, StatusCode: 500})
+		return
+	}
+
+	// Get all the rows in the ItemImportMaster.
+	rows, errGetRows := f.GetRows("PriceList")
+	if errGetRows != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("please check the sheet name must be PriceList"), StatusCode: 400})
+		return
+	}
+
+	previewData, errorPreview := r.pricelistservice.UploadFile(rows, formRequest)
+
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, previewData, "Get Data Successfully!", http.StatusOK)
+}
+
+// GenerateDownloadTemplateFile implements PriceListController.
+func (r *PriceListControllerImpl) GenerateDownloadTemplateFile(writer http.ResponseWriter, request *http.Request) {
+	f, errorGenerate := r.pricelistservice.GenerateDownloadTemplateFile()
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
+		return
+	}
+
+	// Write the Excel file to a buffer
+	var b bytes.Buffer
+	err := f.Write(&b)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("Template-Upload-PriceList.xlsx")
+
+	writer.Header().Set("Content-Description", "File Transfer")
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+
+	writer.Write(b.Bytes())
+}
+
+// GetPriceListById implements PriceListController.
+func (r *PriceListControllerImpl) GetPriceListById(writer http.ResponseWriter, request *http.Request) {
+	PriceListId, errA := strconv.Atoi(chi.URLParam(request, "price_list_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	response, err := r.pricelistservice.GetPriceListById(PriceListId)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, response, "Get Data Success!", http.StatusOK)
+
 }
 
 // @Summary Get All Price List Lookup
@@ -56,16 +298,41 @@ func NewPriceListController(PriceListService masteritemservice.PriceListService)
 // @Router /v1/price-list/lookup [get]
 func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	PriceListCode := queryValues.Get("price_list_code")
-	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
-	brandId, _ := strconv.Atoi(queryValues.Get("brand_id"))
-	currencyId, _ := strconv.Atoi(queryValues.Get("currency_id"))
-	effectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
-	itemGroupId, _ := strconv.Atoi(queryValues.Get("item_group_id"))
-	itemClassId, _ := strconv.Atoi(queryValues.Get("item_class_id"))
+	PriceListCodeId := queryValues.Get("price_list_code_id")
+	companyId, errA := strconv.Atoi(queryValues.Get("company_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	brandId, errA := strconv.Atoi(queryValues.Get("brand_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	currencyId, errA := strconv.Atoi(queryValues.Get("currency_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	effectiveDate, errA := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemGroupId, errA := strconv.Atoi(queryValues.Get("item_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemClassId, errA := strconv.Atoi(queryValues.Get("item_class_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
-		PriceListCode: PriceListCode,
+		PriceListCode: PriceListCodeId,
 		CompanyId:     companyId,
 		BrandId:       brandId,
 		CurrencyId:    currencyId,
@@ -107,17 +374,53 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	PriceListCode := queryValues.Get("price_list_code")
-	companyId, _ := strconv.Atoi(queryValues.Get("company_id"))
-	brandId, _ := strconv.Atoi(queryValues.Get("brand_id"))
-	currencyId, _ := strconv.Atoi(queryValues.Get("currency_id"))
-	effectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
-	itemId, _ := strconv.Atoi(queryValues.Get("item_id"))
-	itemGroupId, _ := strconv.Atoi(queryValues.Get("item_group_id"))
-	itemClassId, _ := strconv.Atoi(queryValues.Get("item_class_id"))
-	priceListAmount, _ := strconv.ParseFloat(queryValues.Get("price_list_amount"), 64)
+	companyId, errA := strconv.Atoi(queryValues.Get("company_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	brandId, errA := strconv.Atoi(queryValues.Get("brand_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	currencyId, errA := strconv.Atoi(queryValues.Get("currency_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	effectiveDate, errA := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemId, errA := strconv.Atoi(queryValues.Get("item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemGroupId, errA := strconv.Atoi(queryValues.Get("item_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	itemClassId, errA := strconv.Atoi(queryValues.Get("item_class_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	priceListAmount, errA := strconv.ParseFloat(queryValues.Get("price_list_amount"), 64)
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	priceListModifiable := queryValues.Get("price_list_modifiable")
 	atpmSyncronize := queryValues.Get("atpm_syncronize")
-	atpmSyncronizeTime, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("atpm_syncronize_time"))
+	atpmSyncronizeTime, errA := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("atpm_syncronize_time"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	priceListRequest := masteritempayloads.PriceListGetAllRequest{
 		PriceListCode:       PriceListCode,
@@ -154,8 +457,7 @@ func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, reque
 // @Router /v1/price-list/ [post]
 func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, request *http.Request) {
 
-	var formRequest masteritempayloads.PriceListResponse
-	var message = ""
+	var formRequest masteritempayloads.SavePriceListMultiple
 
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
@@ -178,13 +480,7 @@ func (r *PriceListControllerImpl) SavePriceList(writer http.ResponseWriter, requ
 		return
 	}
 
-	if formRequest.PriceListId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Success", http.StatusOK)
 }
 
 // @Summary Change Status Price List
@@ -210,17 +506,22 @@ func (r *PriceListControllerImpl) ChangeStatusPriceList(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, response, "Change Status Successfully!", http.StatusOK)
 }
 
-func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,request *http.Request){
-	
+func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter, request *http.Request) {
+
 	queryValues := request.URL.Query()
 
+	if mandatoryParamExist := queryValues.Get("price_list_code_id"); mandatoryParamExist == "" {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: 400, Err: errors.New("must input price list code")})
+		return
+	}
+
 	queryParams := map[string]string{
-		"brand_id":        queryValues.Get("brand_id"),
-		"item_group_id": queryValues.Get("item_group_id"),
-		"price_list_code":                             queryValues.Get("price_list_code"),
-		"item_class_id":                 queryValues.Get("item_class_id"),
-		"currency_id":                   queryValues.Get("currency_id"),
-		"effective_date":                 queryValues.Get("effective_date"),
+		"brand_id":                     queryValues.Get("brand_id"),
+		"mtr_price_list.item_group_id": queryValues.Get("item_group_id"),
+		"price_list_code_id":           queryValues.Get("price_list_code_id"),
+		"mtr_price_list.item_class_id": queryValues.Get("item_class_id"),
+		"currency_id":                  queryValues.Get("currency_id"),
+		"effective_date":               queryValues.Get("effective_date"),
 		"company_id":                   queryValues.Get("company_id"),
 	}
 
@@ -236,39 +537,39 @@ func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,
 	paginatedData, totalPages, totalRows, err := r.pricelistservice.GetAllPriceListNew(criteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
-func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, request *http.Request){
-	PriceListId :=chi.URLParam(request,"price_list_id")
-	response,err := r.pricelistservice.ActivatePriceList(PriceListId)
-	if err != nil{
-		exceptions.NewBadRequestException(writer,request,err)
+func (r *PriceListControllerImpl) ActivatePriceList(writer http.ResponseWriter, request *http.Request) {
+	PriceListId := chi.URLParam(request, "price_list_id")
+	response, err := r.pricelistservice.ActivatePriceList(PriceListId)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer,response,"Activate data successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Activate data successfully!", http.StatusOK)
 }
 
-func (r *PriceListControllerImpl) DeactivatePriceList (writer http.ResponseWriter, request *http.Request){
-	PriceListId := chi.URLParam(request,"price_list_id")
-	response,err := r.pricelistservice.DeactivatePriceList(PriceListId)
-	if err != nil{
-		exceptions.NewNotFoundException(writer,request,err)
+func (r *PriceListControllerImpl) DeactivatePriceList(writer http.ResponseWriter, request *http.Request) {
+	PriceListId := chi.URLParam(request, "price_list_id")
+	response, err := r.pricelistservice.DeactivatePriceList(PriceListId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer,response,"Deactivate data successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Deactivate data successfully!", http.StatusOK)
 }
 
-func (r *PriceListControllerImpl) DeletePriceList (writer http.ResponseWriter, request *http.Request){
-	priceListId :=chi.URLParam(request,"price_list_id")
-	response,err := r.pricelistservice.DeletePriceList(priceListId)
-	if err != nil{
-		exceptions.NewNotFoundException(writer,request,err)
+func (r *PriceListControllerImpl) DeletePriceList(writer http.ResponseWriter, request *http.Request) {
+	priceListId := chi.URLParam(request, "price_list_id")
+	response, err := r.pricelistservice.DeletePriceList(priceListId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer,response,"Deactivate data successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, response, "Delete data successfully!", http.StatusOK)
 }
