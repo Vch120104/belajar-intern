@@ -23,10 +23,15 @@ type PurchaseRequestController interface {
 	NewPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
 	NewPurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 	Void(writer http.ResponseWriter, request *http.Request)
+	VoidDetail(writer http.ResponseWriter, request *http.Request)
+
 	UpdatePurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
 	UpdatePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 	SubmitPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
 	SubmitPurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
+	GetAllItemTypePr(writer http.ResponseWriter, request *http.Request)
+	GetByIdItemTypePr(writer http.ResponseWriter, request *http.Request)
+	GetByCodeItemTypePr(writer http.ResponseWriter, request *http.Request)
 }
 
 type PurchaseRequestControllerImpl struct {
@@ -35,6 +40,59 @@ type PurchaseRequestControllerImpl struct {
 
 func NewPurchaseRequestController(PurchaseRequestService transactionsparepartservice.PurchaseRequestService) PurchaseRequestController {
 	return &PurchaseRequestControllerImpl{PurchaseRequestService: PurchaseRequestService}
+}
+
+// GetAllItemTypePr
+//
+//	@Summary		Get All Item For LookUp Purchase Request
+//	@Description	REST API All Item For LookUp Purchase Request
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Request
+//	@Param			page								query		string	true	"page"
+//	@Param			limit								query		string	true	"limit"
+//	@Param			item_code							query		string	false	"item_code"
+//	@Param			company_id							query		string	true	"company_id"
+//	@Param			item_name							query		string	false	"item_name"
+//	@Param			item_class_name						query		string	false	"item_class_name"
+//	@Param			item_type							query		string	false	"item_type"
+//	@Param			item_level_1						query		string	false	"item_level_1"
+//	@Param			item_level_2						query		string	false	"item_level_2"
+//	@Param			item_level_3						query		string	false	"item_level_3"
+//	@Param			item_level_4						query		string	false	"item_level_4"
+//	@Param			quantity							query		int		false	"quantity"
+//	@Param			sort_by								query		string	false	"sort_by"
+//	@Param			sort_of								query		string	false	"sort_of"
+//	@Success		200									{object}	[]transactionsparepartpayloads.PurchaseRequestItemGetAll
+//	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-request/item [get]
+func (controller *PurchaseRequestControllerImpl) GetAllItemTypePr(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"item_code":       queryValues.Get("item_code"),
+		"item_name":       queryValues.Get("item_name"),
+		"item_class_name": queryValues.Get("item_class_name"),
+		"item_type":       queryValues.Get("item_type"),
+		"item_level_1":    queryValues.Get("item_level_1"),
+		"item_level_2":    queryValues.Get("item_level_2"),
+		"item_level_3":    queryValues.Get("item_level_3"),
+		"item_level_4":    queryValues.Get("item_level_4"),
+		"quantity":        queryValues.Get("quantity"),
+	}
+	compid, _ := strconv.Atoi(queryValues.Get("company_id"))
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	filter := utils.BuildFilterCondition(queryParams)
+	result, err := controller.PurchaseRequestService.GetAllItemTypePurchaseRequest(filter, pagination, compid)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfull", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // GetAllPurchaseRequest
@@ -145,7 +203,8 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequestDetail(wri
 	filterCondition := utils.BuildFilterCondition(queryParams)
 	result, err := controller.PurchaseRequestService.GetAllPurchaseRequestDetail(filterCondition, pagination)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		//helper.ReturnError(writer, request, err)
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -323,15 +382,12 @@ func (controller *PurchaseRequestControllerImpl) Void(writer http.ResponseWriter
 //	@Produce		json
 //	@Tags			Transaction : Purchase Request
 //	@Param			purchase_request_system_number	path		int	true	"purchase_request_system_number"
-//	@Param			reqBody					body		transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest	true	"Purchase Request Header Data"
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
 func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request) {
 	var puchaseRequestHeader transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
-
-	helper.ReadFromRequestBody(request, &puchaseRequestHeader)
 	success, err := controller.PurchaseRequestService.InsertPurchaseRequestUpdateHeader(puchaseRequestHeader, PurchaseRequestSystemNumber)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -364,4 +420,84 @@ func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestDetail(wri
 		return
 	}
 	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
+}
+
+// GetByIdItemTypePr
+//
+//	@Summary		Get By Id Purchase Request Item Lookup
+//	@Description	REST API Purchase Request Item Lookup
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Request
+//	@Param			company_id		path		int	true	"company_id"
+//	@Param			item_id			path		int	true	"item_id"
+//	@Success		200								{object}	transactionsparepartpayloads.PurchaseRequestItemGetAll
+//	@Failure		500,400,401,404,403,422			{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-request/item/by-id/{company_id}/{item_id} [get]
+func (controller *PurchaseRequestControllerImpl) GetByIdItemTypePr(writer http.ResponseWriter, request *http.Request) {
+	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	CompId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	result, err := controller.PurchaseRequestService.GetByIdItemTypePurchaseRequest(CompId, ItemId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
+}
+
+// GetByCodeItemTypePr
+//
+//	@Summary		Get By Id Purchase Request Item Lookup
+//	@Description	REST API Purchase Request Item Lookup
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Request
+//	@Param			company_id		path		int	true	"company_id"
+//	@Param			item_code		path		string	true	"item_code"
+//	@Success		200								{object}	transactionsparepartpayloads.PurchaseRequestItemGetAll
+//	@Failure		500,400,401,404,403,422			{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-request/item/by-code/{company_id}/{item_code} [get]
+func (controller *PurchaseRequestControllerImpl) GetByCodeItemTypePr(writer http.ResponseWriter, request *http.Request) {
+	ItemCode := chi.URLParam(request, "item_code")
+	CompId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	result, err := controller.PurchaseRequestService.GetByCodeItemTypePurchaseRequest(CompId, ItemCode)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
+}
+
+// VoidDetail
+//
+// @Summary		Void Request Purchase Detail Multi Id
+// @Description	Void Request Purchase Detail Multi Id
+// @Accept			json
+// @Produce		json
+// @Tags			Transaction : Purchase Request
+// @Param			purchase_request_detail_system_number	path		string true	"purchase_request_detail_system_number"
+// @Success		201						{object}	payloads.Response
+// @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+// @Router			/v1/purchase-request/detail/{purchase_request_detail_system_number} [delete]
+func (controller *PurchaseRequestControllerImpl) VoidDetail(writer http.ResponseWriter, request *http.Request) {
+	// Void work order
+	PurchaseRequesDetailId := chi.URLParam(request, "purchase_request_detail_system_number")
+
+	success, baseErr := controller.PurchaseRequestService.VoidPurchaseRequestDetail(PurchaseRequesDetailId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			helper.ReturnError(writer, request, baseErr)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, nil, "Purchase Request Detail voided successfully", http.StatusOK)
+	} else {
+		helper.ReturnError(writer, request, baseErr)
+	}
 }

@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -94,7 +95,12 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 // @Router /v1/incentive/{incentive_level_id} [get]
 func (r *IncentiveMasterControllerImpl) GetIncentiveMasterById(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+	IncentiveLevelIds, errA := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.IncentiveMasterService.GetIncentiveMasterById(IncentiveLevelIds)
 	if err != nil {
@@ -144,7 +150,11 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 // @Router /v1/incentive/{incentive_level_id} [put]
 
 func (r *IncentiveMasterControllerImpl) UpdateIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
-	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+	IncentiveLevelIds, errA := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var formRequest masterpayloads.IncentiveMasterRequest
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -169,7 +179,11 @@ func (r *IncentiveMasterControllerImpl) UpdateIncentiveMaster(writer http.Respon
 // @Router /v1/incentive/{incentive_level_id} [patch]
 func (r *IncentiveMasterControllerImpl) ChangeStatusIncentiveMaster(writer http.ResponseWriter, request *http.Request) {
 
-	IncentiveLevelIds, _ := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+	IncentiveLevelIds, errA := strconv.Atoi(chi.URLParam(request, "incentive_level_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	entity, err := r.IncentiveMasterService.ChangeStatusIncentiveMaster(int(IncentiveLevelIds))
 	if err != nil {

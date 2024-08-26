@@ -51,7 +51,12 @@ func NewWarehouseLocationController(WarehouseLocationService masterwarehouseserv
 
 // ProcessWarehouseLocationTemplate implements WarehouseLocationController.
 func (r *WarehouseLocationControllerImpl) ProcessWarehouseLocationTemplate(writer http.ResponseWriter, request *http.Request) {
-	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	var formRequest masterwarehousepayloads.ProcessWarehouseLocationTemplate
 
@@ -84,7 +89,12 @@ func (r *WarehouseLocationControllerImpl) ProcessWarehouseLocationTemplate(write
 // UploadPreviewFile implements WarehouseLocationController.
 func (r *WarehouseLocationControllerImpl) UploadPreviewFile(writer http.ResponseWriter, request *http.Request) {
 
-	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	// Parse the multipart form
 	err := request.ParseMultipartForm(10 << 20) // 10 MB
@@ -215,7 +225,12 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 // @Router /v1/warehouse-location/{warehouse_location_id} [get]
 func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
+	warehouseLocationId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.WarehouseLocationService.GetById(warehouseLocationId)
 
@@ -268,7 +283,12 @@ func (r *WarehouseLocationControllerImpl) Save(writer http.ResponseWriter, reque
 // @Router /v1/warehouse-location/{warehouse_location_id} [patch]
 func (r *WarehouseLocationControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseLocationId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
+	warehouseLocationId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_location_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	change_status, err := r.WarehouseLocationService.ChangeStatus(warehouseLocationId)
 

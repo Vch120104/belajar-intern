@@ -2,7 +2,9 @@ package mastercontroller
 
 import (
 	// "after-sales/api/helper"
+	"after-sales/api/exceptions"
 	"after-sales/api/payloads"
+	"errors"
 	"strconv"
 
 	// masterpayloads "after-sales/api/payloads/master"
@@ -89,7 +91,7 @@ func (r *FieldActionControllerImpl) GetAllFieldAction(writer http.ResponseWriter
 		return
 	}
 
-payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
 // @Summary Save Field Action
@@ -132,7 +134,11 @@ func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, 
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/field-action/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.ResponseWriter, request *http.Request) {
-	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	FieldActionId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.FieldActionService.GetFieldActionHeaderById(FieldActionId)
 	if err != nil {
@@ -159,7 +165,11 @@ func (r *FieldActionControllerImpl) GetFieldActionHeaderById(writer http.Respons
 func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	FieldActionId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	queryParams := map[string]string{
 		"vehicle_id": queryValues.Get("vehicle_id"),
@@ -199,7 +209,11 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleDetailById(writer ht
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/field-action/vehicle/by-id/{field_action_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.ResponseWriter, request *http.Request) {
-	FieldActionVehicleDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	FieldActionVehicleDetailId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.FieldActionService.GetFieldActionVehicleDetailById(FieldActionVehicleDetailId)
 	if err != nil {
@@ -226,7 +240,12 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleDetailById(writer http.
 func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	FieldActionVehicleDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	FieldActionVehicleDetailId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	// queryParams := map[string]string{
 	// 	"vehicle_id": queryValues.Get("vehicle_id"),
@@ -240,7 +259,7 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 
 	// filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result,totalpage,totalrows, err := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
+	result, totalpage, totalrows, err := r.FieldActionService.GetAllFieldActionVehicleItemDetailById(FieldActionVehicleDetailId, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -263,10 +282,18 @@ func (r *FieldActionControllerImpl) GetAllFieldActionVehicleItemDetailById(write
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/field-action/vehicle-item/by-id/{field_action_eligible_vehicle_item_system_number} [get]
 func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer http.ResponseWriter, request *http.Request) {
-	FieldActionVehicleItemDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
-	LineTypeId,_ :=strconv.Atoi(chi.URLParam(request,"line_type_id"))
+	FieldActionVehicleItemDetailId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
-	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId,LineTypeId)
+	result, err := r.FieldActionService.GetFieldActionVehicleItemDetailById(FieldActionVehicleItemDetailId, LineTypeId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -287,7 +314,11 @@ func (r *FieldActionControllerImpl) GetFieldActionVehicleItemDetailById(writer h
 // @Router /v1/field-action/vehicle-item/{field_action_eligible_vehicle_system_number} [post]
 func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.FieldActionItemDetailResponse
-	FIeldActionVehicleDetailId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	FIeldActionVehicleDetailId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message string
 
@@ -318,7 +349,11 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http
 // @Router /v1/field-action/vehicle/{field_action_system_number} [post]
 func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.FieldActionDetailResponse
-	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	FieldActionId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message string
 
@@ -352,7 +387,11 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 	queryValues := request.URL.Query()
 	var formRequest masterpayloads.FieldActionDetailResponse
 
-	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	FieldActionId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	// CompanyIdStr := params.ByName("company_id")
 	// CompanyId, _ := strconv.Atoi(CompanyIdStr)
@@ -390,7 +429,11 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 	// queryValues := request.URL.Query()
 	var formRequest masterpayloads.FieldActionItemDetailResponse
 
-	FieldActionHeaderId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	FieldActionHeaderId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message string
@@ -421,7 +464,11 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 // @Router /v1/field-action/status/{field_action_system_number} [patch]
 func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.ResponseWriter, request *http.Request) {
 
-	FieldActionId, _ := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	FieldActionId, errA := strconv.Atoi(chi.URLParam(request, "field_action_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.FieldActionService.ChangeStatusFieldAction(FieldActionId)
 	if err != nil {
@@ -443,7 +490,11 @@ func (r *FieldActionControllerImpl) ChangeStatusFieldAction(writer http.Response
 // @Router /v1/field-action/vehicle/status/{field_action_eligible_vehicle_system_number} [patch]
 func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.ResponseWriter, request *http.Request) {
 
-	FieldActionVehicleId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	FieldActionVehicleId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.FieldActionService.ChangeStatusFieldActionVehicle(FieldActionVehicleId)
 	if err != nil {
@@ -464,7 +515,11 @@ func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicle(writer http.R
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/field-action/vehicle-item/status/{field_action_eligible_vehicle_item_system_number} [put]
 func (r *FieldActionControllerImpl) ChangeStatusFieldActionVehicleItem(writer http.ResponseWriter, request *http.Request) {
-	FieldActionVehicleItemId, _ := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
+	FieldActionVehicleItemId, errA := strconv.Atoi(chi.URLParam(request, "field_action_eligible_vehicle_item_system_number"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.FieldActionService.ChangeStatusFieldActionVehicleItem(FieldActionVehicleItemId)
 	if err != nil {

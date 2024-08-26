@@ -1,12 +1,14 @@
-	package masteritemcontroller
+package masteritemcontroller
 
 import (
+	"after-sales/api/exceptions"
 	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -82,7 +84,12 @@ func (r *LandedCostMasterControllerImpl) GetAllLandedCostMaster(writer http.Resp
 func (r *LandedCostMasterControllerImpl) GetByIdLandedCost(writer http.ResponseWriter, request *http.Request) {
 	LandedCostIdstr := chi.URLParam(request, "landed_cost_id")
 
-	LandedCostId, _ := strconv.Atoi(LandedCostIdstr)
+	LandedCostId, errA := strconv.Atoi(LandedCostIdstr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.LandedCostService.GetByIdLandedCost(LandedCostId)
 	if err != nil {
@@ -132,7 +139,7 @@ func (r *LandedCostMasterControllerImpl) SaveLandedCostMaster(writer http.Respon
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/activate/{landed_cost_id}  [patch]
 func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
-	queryId := chi.URLParam(request,"landed_cost_id")
+	queryId := chi.URLParam(request, "landed_cost_id")
 	response, err := r.LandedCostService.ActivateLandedCostMaster(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -151,7 +158,7 @@ func (r *LandedCostMasterControllerImpl) ActivateLandedCostMaster(writer http.Re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/landed-cost/deactivate/{landed_cost_id} [patch]
 func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.ResponseWriter, request *http.Request) {
-	queryId := chi.URLParam(request,"landed_cost_id")
+	queryId := chi.URLParam(request, "landed_cost_id")
 	response, err := r.LandedCostService.DeactivateLandedCostMaster(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -162,7 +169,12 @@ func (r *LandedCostMasterControllerImpl) DeactivateLandedCostmaster(writer http.
 
 func (r *LandedCostMasterControllerImpl) UpdateLandedCostMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.LandedCostMasterUpdateRequest
-	query, _ := strconv.Atoi(chi.URLParam(request, "landed_cost_id"))
+	query, errA := strconv.Atoi(chi.URLParam(request, "landed_cost_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	helper.ReadFromRequestBody(request, &formRequest)
 
 	update, err := r.LandedCostService.UpdateLandedCostMaster(query, formRequest)

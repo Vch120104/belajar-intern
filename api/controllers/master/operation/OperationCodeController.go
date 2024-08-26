@@ -9,6 +9,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -85,7 +86,12 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-code/by-id/{operation_id} [get]
 func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseWriter, request *http.Request) {
-	OperationIdStr, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
+	OperationIdStr, errA := strconv.Atoi(chi.URLParam(request, "operation_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationCodeService.GetOperationCodeById(int(OperationIdStr))
 
@@ -98,7 +104,12 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 }
 
 func (r *OperationCodeControllerImpl) GetByCodeOperationCode(writer http.ResponseWriter, request *http.Request) {
-	OperationCodeStr, _ := strconv.Atoi(chi.URLParam(request, "operation_code"))
+	OperationCodeStr, errA := strconv.Atoi(chi.URLParam(request, "operation_code"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationCodeService.GetOperationCodeById(OperationCodeStr)
 
@@ -148,7 +159,12 @@ func (r *OperationCodeControllerImpl) SaveOperationCode(writer http.ResponseWrit
 // @Router /v1/operation-code/{operation_id} [patch]
 func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.ResponseWriter, request *http.Request) {
 
-	OperationId, _ := strconv.Atoi(chi.URLParam(request, "operation_id"))
+	OperationId, errA := strconv.Atoi(chi.URLParam(request, "operation_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.operationCodeService.ChangeStatusOperationCode(OperationId)
 
@@ -160,17 +176,21 @@ func (r *OperationCodeControllerImpl) ChangeStatusOperationCode(writer http.Resp
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *OperationCodeControllerImpl) UpdateOperationCode(writer http.ResponseWriter, request *http.Request){
+func (r *OperationCodeControllerImpl) UpdateOperationCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationCodeUpdate
 
-	OperationCodeId,_ := strconv.Atoi(chi.URLParam(request,"operation_id"))
+	OperationCodeId, errA := strconv.Atoi(chi.URLParam(request, "operation_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
-	update, err := r.operationCodeService.UpdateItemCode(OperationCodeId,formRequest)
+	update, err := r.operationCodeService.UpdateItemCode(OperationCodeId, formRequest)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)

@@ -10,6 +10,7 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -38,7 +39,12 @@ func NewUnitOfMeasurementController(UnitOfMeasurementService masteritemservice.U
 
 // GetUnitOfMeasurementById implements UnitOfMeasurementController.
 func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementById(writer http.ResponseWriter, request *http.Request) {
-	uomId, _ := strconv.Atoi(chi.URLParam(request, "uom_id"))
+	uomId, errA := strconv.Atoi(chi.URLParam(request, "uom_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.unitofmeasurementservice.GetUnitOfMeasurementById(int(uomId))
 
@@ -189,7 +195,11 @@ func (r *UnitOfMeasurementControllerImpl) SaveUnitOfMeasurement(writer http.Resp
 // @Router			/v1/unit-of-measurement/{uom_id} [patch]
 func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request) {
 
-	uomId, _ := strconv.Atoi(chi.URLParam(request, "uom_id"))
+	uomId, errA := strconv.Atoi(chi.URLParam(request, "uom_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.unitofmeasurementservice.ChangeStatusUnitOfMeasurement(int(uomId))
 
@@ -212,7 +222,12 @@ func (r *UnitOfMeasurementControllerImpl) ChangeStatusUnitOfMeasurement(writer h
 // @Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 // @Router			/v1/unit-of-measurement/{item_id}/{source_type} [get]
 func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementItem(writer http.ResponseWriter, request *http.Request) {
-	ItemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	ItemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	SourceUomType := chi.URLParam(request, "source_type")
 	payload := masteritempayloads.UomItemRequest{
 		SourceType: SourceUomType,
