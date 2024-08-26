@@ -129,8 +129,15 @@ func Migrate() {
 		//&mastercampaignmasterentities.CampaignMasterDetailItem{},
 		//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 		//
-		//&transactionsparepartpentities.SupplySlip{},
-		//&transactionsparepartpentities.SupplySlipDetail{},
+		//&transactionjpcbentities.CarWash{},
+		//&transactionjpcbentities.BayMaster{},
+		//&transactionjpcbentities.CarWashPriority{},
+		//&transactionjpcbentities.CarWashStatus{},
+		//
+		//&transactionsparepartentities.SupplySlip{},
+		//&transactionsparepartentities.SupplySlipDetail{},
+        //&transactionsparepartpentities.SupplySlipReturn{},
+		//&transactionsparepartpentities.SupplySlipReturnDetail{},
 		//&transactionworkshopentities.WorkOrderMaster{},
 		//&transactionworkshopentities.WorkOrderMasterStatus{},
 		//&transactionworkshopentities.WorkOrderMasterType{},
@@ -154,18 +161,22 @@ func Migrate() {
 		//&transactionworkshopentities.BookingEstimationItemDetail{},
 		//&transactionworkshopentities.BookingEstimationOperationDetail{},
 		//&transactionworkshopentities.BookingEstimationRequest{},
-
-		// &transactionworkshopentities.BookingEstimation{},
-		// &transactionworkshopentities.BookingEstimationAllocation{},
-		// &transactionworkshopentities.BookingEstimationRequest{},
-		// &transactionworkshopentities.BookingEstimationServiceReminder{},
-		// &transactionworkshopentities.BookingEstimationServiceDiscount{},
-		// &transactionworkshopentities.BookingEstimationDetail{},
-
-		// &transactionsparepartentities.PurchaseRequestEntities{},
-		// &transactionsparepartentities.PurchaseRequestDetail{},
-		// &transactionsparepartentities.PurchaseRequestReferenceType{},
-		// &masterentities.LocationStock{},
+		//
+		//&transactionworkshopentities.BookingEstimation{},
+		//&transactionworkshopentities.BookingEstimationAllocation{},
+		//&transactionworkshopentities.BookingEstimationRequest{},
+		//&transactionworkshopentities.BookingEstimationServiceReminder{},
+		//&transactionworkshopentities.BookingEstimationServiceDiscount{},
+		////&transactionworkshopentities.BookingEstimationDetail{},
+		//
+		//&transactionsparepartentities.PurchaseRequestEntities{},
+		//&transactionsparepartentities.PurchaseRequestDetail{},
+		//
+		//&masterentities.ItemCycle{},
+		//&masterentities.MovingItemCode{},
+		//&transactionsparepartentities.PurchaseRequestReferenceType{},
+		//&masterentities.LocationStock{},
+		//&masterentities.WarehouseGroupMappingEntities{},
 	)
 
 	if err != nil {
