@@ -215,16 +215,16 @@ type SupplierResponsesAPI struct {
 		AddressStreet3 string `json:"address_street_3"`
 		VillageId      int    `json:"village_id"`
 	} `json:"supplier_address"`
-	SupplierPhoneNo      string `json:"supplier_phone_no"`
-	SupplierFaxNo        string `json:"supplier_fax_no"`
-	SupplierMobilePhone  string `json:"supplier_mobile_phone"`
-	SupplierEmailAddress string `json:"supplier_email_address"`
-	MinimumDownPayment   int    `json:"minimum_down_payment"`
-	BehaviourId          int    `json:"behaviour_id"`
-	SupplierCategoryId   int    `json:"supplier_category_id"`
-	TaxIndustry          int    `json:"tax_industry"`
-	VatSupplierId        int    `json:"vat_supplier_id"`
-	VatSupplier          struct {
+	SupplierPhoneNo      string   `json:"supplier_phone_no"`
+	SupplierFaxNo        string   `json:"supplier_fax_no"`
+	SupplierMobilePhone  string   `json:"supplier_mobile_phone"`
+	SupplierEmailAddress string   `json:"supplier_email_address"`
+	MinimumDownPayment   *float64 `json:"minimum_down_payment"`
+	BehaviourId          int      `json:"behaviour_id"`
+	SupplierCategoryId   int      `json:"supplier_category_id"`
+	//TaxIndustry          string `json:"tax_industry"`
+	VatSupplierId int `json:"vat_supplier_id"`
+	VatSupplier   struct {
 		NpwpNo             string `json:"npwp_no"`
 		NpwpDate           string `json:"npwp_date"`
 		PkpType            bool   `json:"pkp_type"`
@@ -286,7 +286,7 @@ type SupplierResponsesAPI struct {
 	} `json:"supplier_bank_account"`
 }
 type TaxRateResponseApi struct {
-	TaxPercent float64 `json:"tax_percent"`
+	TaxPercent *float64 `json:"tax_percent"`
 }
 
 type PurchaseRequestResponse struct {
@@ -363,15 +363,16 @@ type PurchaseOrderGetByIdResponses struct {
 	TotalAfterVat               *float64   `json:"total_after_vat" parent_entity:"customer_id"`
 	APMIsDirectShipment         string     `json:"apm_is_direct_shipment" parent_entity:"trx_item_purchase_order"`
 }
-type PurchaseOrderGetAllDetail struct {
-	Snp                   *float64 `gorm:"column:snp;"  parent_entity:"trx_item_purchase_order_detail"`
-	ItemDiscountAmount    *float64 `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
-	ItemPrice             *float64 `gorm:"column:item_price;" json:"item_price"`
-	ItemQuantity          *float64 `gorm:"column:item_quantity;" json:"item_quantity"`
-	ItemUnitOfMeasurement string   `gorm:"column:item_unit_of_measurement;size:1;" json:"item_unit_of_measurement"`
-	UnitOfMeasurementRate *float64 `gorm:"column:unit_of_measurement_rate;" json:"unit_of_measurement_rate"`
-	ItemCode              string   `gorm:"column:item_code;" json:"item_code"`
-	ItemName              string   `gorm:"column:item_name;" json:"item_name"`
+type PurchaseOrderGetDetail struct {
+	PurchaseOrderDetailSystemNumber int      `gorm:"column:purchase_order_detail_system_number;"  parent_entity:"trx_item_purchase_order_detail"`
+	Snp                             *float64 `gorm:"column:snp;"  parent_entity:"trx_item_purchase_order_detail"`
+	ItemDiscountAmount              *float64 `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
+	ItemPrice                       *float64 `gorm:"column:item_price;" json:"item_price"`
+	ItemQuantity                    *float64 `gorm:"column:item_quantity;" json:"item_quantity"`
+	ItemUnitOfMeasurement           string   `gorm:"column:item_unit_of_measurement;size:1;" json:"item_unit_of_measurement"`
+	UnitOfMeasurementRate           *float64 `gorm:"column:unit_of_measurement_rate;" json:"unit_of_measurement_rate"`
+	ItemCode                        string   `gorm:"column:item_code;" json:"item_code"`
+	ItemName                        string   `gorm:"column:item_name;" json:"item_name"`
 	//
 	PurchaseOrderSystemNumber     int      `gorm:"column:purchase_order_system_number;size:30;" json:"purchase_order_system_number"`
 	PurchaseOrderLineNumber       int      `gorm:"column:purchase_order_line_number;" json:"purchase_order_line_number"`
@@ -456,6 +457,65 @@ type PurchaseOrderNewPurchaseOrderResponses struct {
 	TotalAmount                 *float64   `json:"total_amount" parent_entity:"customer_id"`
 	TotalVat                    *float64   `json:"total_vat" parent_entity:"customer_id"`
 	TotalAfterVat               *float64   `json:"total_after_vat" parent_entity:"customer_id"`
+	APMIsDirectShipment         string     `json:"apm_is_direct_shipment" parent_entity:"trx_item_purchase_order"`
+}
+
+type PurchaseOrderDetailPayloads struct {
+	PurchaseOrderSystemNumber         int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
+	PurchaseOrderLine                 int        `json:"purchase_order_line"`
+	ItemId                            int        `json:"item_id"`
+	ItemUnitOfMeasurement             string     `json:"item_unit_of_measurement"`
+	UnitOfMeasurementRate             *float64   `json:"unit_of_measurement_rate"`
+	ItemQuantity                      *float64   `json:"item_quantity"`
+	ItemPrice                         *float64   `json:"item_price"`
+	ItemTotal                         *float64   `json:"item_total"`
+	PurchaseRequestDetailSystemNumber int        `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int        `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber         int        `json:"purchase_request_line_number"`
+	StockOnHand                       *float64   `json:"stock_on_hand"`
+	OldPurchaseOrderSystemNo          int        `json:"old_purchase_order_system_no"`
+	ItemRemark                        string     `json:"item_remark"`
+	OldPurchaseOrderLineNumber        int        `json:"old_purchase_order_line_number"`
+	CreatedByUserId                   int        `json:"created_by_user_id"`
+	CreatedDate                       *time.Time `json:"created_date"`
+	UpdatedByUserId                   int        `json:"updated_by_user_id"`
+	UpdatedDate                       *time.Time `json:"updated_date"`
+	Snp                               *float64   `json:"snp"`
+	ItemDiscountPercentage            *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
+	ItemDiscountAmount                *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
+	//ItemTotal                         *float64   `gorm:"column:item_total;" json:"item_total"`
+
+	//totaldiscountnyadjabb nggak kagak kagak kaga kaga kagak bmsananananan
+	//cek coba
+}
+type PurchaseOrderSaveDetailPayloads struct {
+	//PurchaseOrderDetailSystemNumber
+	PurchaseOrderDetailSystemNumber   int        `json:"purchase_order_detail_system_number"`
+	PurchaseOrderSystemNumber         int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
+	PurchaseOrderLine                 int        `json:"purchase_order_line"`
+	ItemId                            int        `json:"item_id"`
+	ItemUnitOfMeasurement             string     `json:"item_unit_of_measurement"`
+	UnitOfMeasurementRate             *float64   `json:"unit_of_measurement_rate"`
+	ItemQuantity                      *float64   `json:"item_quantity"`
+	ItemPrice                         *float64   `json:"item_price"`
+	ItemTotal                         *float64   `json:"item_total"`
+	PurchaseRequestDetailSystemNumber int        `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int        `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber         int        `json:"purchase_request_line_number"`
+	StockOnHand                       *float64   `json:"stock_on_hand"`
+	OldPurchaseOrderSystemNo          int        `json:"old_purchase_order_system_no"`
+	ItemRemark                        string     `json:"item_remark"`
+	OldPurchaseOrderLineNumber        int        `json:"old_purchase_order_line_number"`
+	CreatedByUserId                   int        `json:"created_by_user_id"`
+	CreatedDate                       *time.Time `json:"created_date"`
+	UpdatedByUserId                   int        `json:"updated_by_user_id"`
+	UpdatedDate                       *time.Time `json:"updated_date"`
+	Snp                               *float64   `json:"snp"`
+	ItemDiscountPercentage            *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
+	ItemDiscountAmount                *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
+	//ItemTotal                         *float64   `gorm:"column:item_total;" json:"item_total"`
+
+	//totaldiscountnya cek coba
 }
 
 //CompanyId                           int        `json:"company_id" parent_entity:"trx_item_purchase_order"`

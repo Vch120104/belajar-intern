@@ -484,8 +484,14 @@ func PurchaseOrderRouter(
 
 	router.Get("/", PurchaseOrder.GetAllPurchaserOrderWithPagination)
 	router.Get("/by-id/{purchase_order_system_number}", PurchaseOrder.GetByIdPurchaseOrder)
-	router.Get("/detail/{purchase_order_system_number}", PurchaseOrder.GetByIdPurchaseOrderDetail)
-	router.Post("/", PurchaseOrder.NewPurchaseOrderDetail)
+	router.Get("/detail/{purchase_order_system_number}", PurchaseOrder.GetPurchaseOrderDetailByHeaderId)
+	router.Post("/", PurchaseOrder.NewPurchaseOrderHeader)
+	router.Put("/{purchase_order_system_number}", PurchaseOrder.UpdatePurchaseOrderHeader)
+	router.Get("/detail/{purchase_order_detail_system_number}", PurchaseOrder.GetPurchaseOrderDetailById)
+
+	//	@Router			/v1/purchase-order/detail/{purchase_order_detail_system_number} [get]
+
+	//	@Router			/v1/purchase-order/{purchase_order_system_number} [put]
 
 	return router
 }

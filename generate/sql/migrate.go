@@ -2,6 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"time"
 
 	"fmt"
@@ -168,15 +169,15 @@ func Migrate() {
 		////&transactionworkshopentities.BookingEstimationDetail{},
 		//
 		//&transactionsparepartentities.PurchaseRequestEntities{},
-		//&transactionsparepartentities.PurchaseRequestDetail{},
+		&transactionsparepartentities.PurchaseRequestDetail{},
 		//
 		//&masterentities.ItemCycle{},
 		//&masterentities.MovingItemCode{},
 		//&transactionsparepartentities.PurchaseRequestReferenceType{},
 		//&masterentities.LocationStock{},
-		&masterentities.WarehouseGroupMappingEntities{},
-		&transactionsparepartentities.PurchaseOrderEntities{},
-		&transactionsparepartentities.PurchaseOrderDetailEntities{},
+		//&masterentities.WarehouseGroupMappingEntities{},
+		//&transactionsparepartentities.PurchaseOrderEntities{},
+		//&transactionsparepartentities.PurchaseOrderDetailEntities{},
 	)
 
 	if err != nil {

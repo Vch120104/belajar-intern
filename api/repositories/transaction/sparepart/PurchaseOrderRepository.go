@@ -13,7 +13,11 @@ type PurchaseOrderRepository interface {
 	GetAllPurchaseOrder(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination, DateParams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	//GetPurchaseOrderById(db *gorm.DB, id int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPurchaseOrder(*gorm.DB, int) (transactionsparepartpayloads.PurchaseOrderGetByIdResponses, *exceptions.BaseErrorResponse)
-	GetByIdPurchaseOrderDetail(*gorm.DB, int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllDetailByHeaderId(*gorm.DB, int, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	NewPurchaseOrderHeader(*gorm.DB, transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse)
-	UpdatePurchaseOrderHeader(*gorm.DB, transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse)
+	UpdatePurchaseOrderHeader(*gorm.DB, int, transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse)
+	GetPurchaseOrderDetailById(*gorm.DB, int) (transactionsparepartpayloads.PurchaseOrderGetDetail, *exceptions.BaseErrorResponse)
+	NewPurchaseOrderDetail(*gorm.DB, transactionsparepartpayloads.PurchaseOrderDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
+	DeletePurchaseOrderDetailMultiId(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
+	SavePurchaseOrderDetail(*gorm.DB, transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
 }

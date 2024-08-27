@@ -14,4 +14,7 @@ type PurchaseOrderService interface {
 	GetByIdPurchaseOrder(int) (transactionsparepartpayloads.PurchaseOrderGetByIdResponses, *exceptions.BaseErrorResponse)
 	GetByIdPurchaseOrderDetail(id int, page pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	NewPurchaseOrderHeader(responses transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse)
+	UpdatePurchaseOrderHeader(int, transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse)
+	GetPurchaseOrderDetailById(int) (transactionsparepartpayloads.PurchaseOrderGetDetail, *exceptions.BaseErrorResponse)
+	NewPurchaseOrderDetail(payloads transactionsparepartpayloads.PurchaseOrderDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
 }

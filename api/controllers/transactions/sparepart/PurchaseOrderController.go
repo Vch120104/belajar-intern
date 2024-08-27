@@ -19,7 +19,10 @@ type PurchaseOrderControllerImpl struct {
 type PurchaseOrderController interface {
 	GetAllPurchaserOrderWithPagination(writer http.ResponseWriter, request *http.Request)
 	GetByIdPurchaseOrder(writer http.ResponseWriter, request *http.Request)
-	GetByIdPurchaseOrderDetail(writer http.ResponseWriter, request *http.Request)
+	GetPurchaseOrderDetailByHeaderId(writer http.ResponseWriter, request *http.Request)
+	NewPurchaseOrderHeader(writer http.ResponseWriter, request *http.Request)
+	UpdatePurchaseOrderHeader(writer http.ResponseWriter, request *http.Request)
+	GetPurchaseOrderDetailById(writer http.ResponseWriter, request *http.Request)
 	NewPurchaseOrderDetail(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -108,7 +111,7 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrder(writer http.
 
 }
 
-// GetByIdPurchaseOrderDetail
+// GetPurchaseOrderDetailByHeaderId
 //
 //	@Summary		Get Purchase Reqeust Detail
 //	@Description	REST API Get Purchase Request Detail
@@ -120,10 +123,10 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrder(writer http.
 //	@Param			sort_by								query		string	false	"sort_by"
 //	@Param			sort_of								query		string	false	"sort_of"
 //	@Param			purchase_order_system_number		path		string	false	"purchase_order_system_number"
-//	@Success		200									{object}	transactionsparepartpayloads.PurchaseOrderGetAllDetail
+//	@Success		200									{object}	transactionsparepartpayloads.PurchaseOrderGetDetail
 //	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-order/detail/{purchase_order_system_number} [get]
-func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrderDetail(writer http.ResponseWriter, request *http.Request) {
+func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	purchaseOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_order_system_number"))
 	queryValues := request.URL.Query()
 
@@ -141,9 +144,9 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrderDetail(writer
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// NewPurchaseOrderDetail
+// NewPurchaseOrderHeader
 //
-//	@Summary		Create New Purchase Order Header
+//	@Summary		Create New Purchase Order Header2
 //	@Description	Create New Purchase Order Header
 //	@Accept			json
 //	@Produce		json
@@ -152,13 +155,86 @@ func (controller *PurchaseOrderControllerImpl) GetByIdPurchaseOrderDetail(writer
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-order [post]
-func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderDetail(writer http.ResponseWriter, request *http.Request) {
+func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderHeader(writer http.ResponseWriter, request *http.Request) {
 
 	var purchaseRequest transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses
 
 	helper.ReadFromRequestBody(request, &purchaseRequest)
 
 	success, err := controller.service.NewPurchaseOrderHeader(purchaseRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
+}
+
+// UpdatePurchaseOrderHeader
+//
+//	@Summary		Update Purchase Request order
+//	@Description	Update Purchase Request order
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Order
+//	@Param			purchase_order_system_number	path		int	true	"purchase_order_system_number"
+//	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads	true	"Purchase Request Header Data"
+//	@Success		201						{object}	payloads.Response
+//	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-order/{purchase_order_system_number} [put]
+func (controller *PurchaseOrderControllerImpl) UpdatePurchaseOrderHeader(writer http.ResponseWriter, request *http.Request) {
+	var puchaseRequestHeader transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads
+	PurchaseOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_order_system_number"))
+
+	helper.ReadFromRequestBody(request, &puchaseRequestHeader)
+	success, err := controller.service.UpdatePurchaseOrderHeader(PurchaseOrderSystemNumber, puchaseRequestHeader)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
+}
+
+// GetPurchaseOrderDetailById
+//
+//	@Summary		Get Purchase Order Detail Per Id
+//	@Description	Get Purchase Order Detail Per Id
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Order
+//	@Param			purchase_order_detail_system_number	path		int	true	"purchase_order_detail_system_number"	true	"Purchase Request Header Data"
+//	@Success		200						{object}	transactionsparepartpayloads.PurchaseOrderGetDetail
+//	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-order/detail/{purchase_order_detail_system_number} [get]
+func (controller *PurchaseOrderControllerImpl) GetPurchaseOrderDetailById(writer http.ResponseWriter, request *http.Request) {
+
+	PurchaseOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_order_system_number"))
+
+	//helper.ReadFromRequestBody(request, &puchaseRequestHeader)
+	success, err := controller.service.GetPurchaseOrderDetailById(PurchaseOrderSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, success, "save success", http.StatusOK)
+}
+
+// NewPurchaseOrderDetail
+//
+//	@Summary		Create New Purchase Order Detail
+//	@Description	Create New Purchase Order Detail
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Purchase Order
+//	@Param			reqBody					body		transactionsparepartpayloads.PurchaseOrderDetailPayloads	true	"Purchase Request Header Data"
+//	@Success		201						{object}	transactionsparepartentities.PurchaseOrderDetailEntities
+//	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/purchase-order/detail [post]
+func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderDetail(writer http.ResponseWriter, request *http.Request) {
+	var payload transactionsparepartpayloads.PurchaseOrderDetailPayloads
+
+	helper.ReadFromRequestBody(request, &payload)
+
+	success, err := controller.service.NewPurchaseOrderDetail(payload)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

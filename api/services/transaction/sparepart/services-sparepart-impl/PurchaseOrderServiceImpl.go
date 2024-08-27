@@ -49,7 +49,7 @@ func (service *PurchaseOrderServiceImpl) GetByIdPurchaseOrder(i int) (transactio
 
 func (service *PurchaseOrderServiceImpl) GetByIdPurchaseOrderDetail(id int, page pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := service.DB.Begin()
-	result, err := service.PurchaseOrderRepo.GetByIdPurchaseOrderDetail(tx, id, page)
+	result, err := service.PurchaseOrderRepo.GetAllDetailByHeaderId(tx, id, page)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
@@ -59,6 +59,35 @@ func (service *PurchaseOrderServiceImpl) GetByIdPurchaseOrderDetail(id int, page
 func (service *PurchaseOrderServiceImpl) NewPurchaseOrderHeader(responses transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse) {
 	tx := service.DB.Begin()
 	result, err := service.PurchaseOrderRepo.NewPurchaseOrderHeader(tx, responses)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *PurchaseOrderServiceImpl) UpdatePurchaseOrderHeader(id int, responses transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.UpdatePurchaseOrderHeader(tx, id, responses)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (service *PurchaseOrderServiceImpl) GetPurchaseOrderDetailById(id int) (transactionsparepartpayloads.PurchaseOrderGetDetail, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.GetPurchaseOrderDetailById(tx, id)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (service *PurchaseOrderServiceImpl) NewPurchaseOrderDetail(payloads transactionsparepartpayloads.PurchaseOrderDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.NewPurchaseOrderDetail(tx, payloads)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
