@@ -81,9 +81,13 @@ type CarWashWorkOrder struct {
 }
 
 type CarWashCompanyResponse struct {
-	CompanyId   int    `json:"company_id"`
-	CompanyCode string `json:"company_code"`
-	CompanyName string `json:"company_name"`
-	CompanyType string `json:"company_type"`
-	IsUseJPCB   bool   `json:"is_use_jpcb"`
+	CompanyId        int              `json:"company_id"`
+	CompanyCode      string           `json:"company_code"`
+	CompanyName      string           `json:"company_name"`
+	CompanyType      string           `json:"company_type"`
+	CompanyReference CompanyReference `json:"company_reference"`
+}
+
+type CompanyReference struct {
+	UseJPCB *bool `json:"use_jpcb"`
 }

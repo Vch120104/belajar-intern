@@ -184,6 +184,7 @@ func (*CarWashImpl) UpdatePriority(tx *gorm.DB, workOrderSystemNumber, carWashPr
 			return transactionjpcbentities.CarWash{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        updateQuery.Error,
+				Message:    updateQuery.Error.Error(),
 			}
 		}
 
@@ -327,7 +328,6 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(workOrderResponse.CompanyId)
 	var getCompanyResponse transactionjpcbpayloads.CarWashCompanyResponse
 	errFetchCompany := utils.Get(CompanyURL, &getCompanyResponse, nil)
-	getCompanyResponse.IsUseJPCB = true //TODO remove later
 	if errFetchCompany != nil {
 		return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -336,7 +336,11 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		}
 	}
 
-	if getCompanyResponse.IsUseJPCB { //TODO check if company use jpcb
+	if getCompanyResponse.CompanyReference.UseJPCB == nil {
+		return errorHelperBadRequest()
+	}
+
+	if *getCompanyResponse.CompanyReference.UseJPCB {
 		if workOrderResponse.WorkOrderStatusId == qcPass {
 			if workOrderResponse.CarWash {
 				var workOrder int
