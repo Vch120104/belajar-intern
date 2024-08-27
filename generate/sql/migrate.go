@@ -5,6 +5,16 @@ import (
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
+	// masterentities "after-sales/api/entities/master"
+	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+	// masteritementities "after-sales/api/entities/master/item"
+	// masteroperationentities "after-sales/api/entities/master/operation"
+	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
+
+	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+
 	"time"
 
 	"fmt"
@@ -139,6 +149,8 @@ func Migrate() {
 	//
 	//&transactionsparepartentities.SupplySlip{},
 	//&transactionsparepartentities.SupplySlipDetail{},
+	//&transactionsparepartpentities.SupplySlipReturn{},
+	//&transactionsparepartpentities.SupplySlipReturnDetail{},
 	//&transactionworkshopentities.WorkOrderMaster{},
 	//&transactionworkshopentities.WorkOrderMasterStatus{},
 	//&transactionworkshopentities.WorkOrderMasterType{},

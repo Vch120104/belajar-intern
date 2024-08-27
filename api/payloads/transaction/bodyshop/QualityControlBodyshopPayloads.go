@@ -1,4 +1,4 @@
-package transactionworkshoppayloads
+package transactionbodyshoppayloads
 
 type QualityControlResponse struct {
 	WorkOrderDocumentNumber string `json:"work_order_document_number"`
