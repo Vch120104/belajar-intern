@@ -24,7 +24,6 @@ func NewCarWashRepositoryImpl() transactionjpcbrepository.CarWashRepository {
 }
 
 func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// select field that is missing rn : model_color, model, color, tnkb, creation_time
 	joinQuery := tx.Table("trx_car_wash").
 		Select(`trx_work_order.work_order_system_number, trx_work_order.work_order_document_number, trx_work_order.model_id, trx_work_order.vehicle_id,
 				trx_work_order.promise_time, trx_work_order.promise_date, trx_car_wash.car_wash_bay_id, mtr_car_wash_bay.car_wash_bay_description,trx_car_wash.car_wash_status_id, 
@@ -99,15 +98,12 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 			}
 		}
 
-		//Fetch tnkb, from mtr_vehicle_registration_certificate get by vehicle_id
-		//TODO
-
 		carWashResponse := transactionjpcbpayloads.CarWashGetAllResponse{
 			WorkOrderSystemNumber:      carWashPayload.WorkOrderSystemNumber,
 			WorkOrderDocumentNumber:    carWashPayload.WorkOrderDocumentNumber,
 			Model:                      getModelResponse.ModelName,
 			Color:                      getColourResponse.VariantColourName,
-			Tnkb:                       "",
+			Tnkb:                       "", //TODO Fetch tnkb, from vehicle_master get by vehicle_id, currently api return error
 			PromiseTime:                carWashPayload.PromiseTime,
 			PromiseDate:                carWashPayload.PromiseDate,
 			CarWashBayId:               carWashPayload.CarWashBayId,
