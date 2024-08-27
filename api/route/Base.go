@@ -6,6 +6,7 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
+	transactionbodyshopcontroller "after-sales/api/controllers/transactions/bodyshop"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
@@ -1306,6 +1307,24 @@ func QualityControlRouter(
 	return router
 }
 
+func QualityControlBodyshopRouter(
+	QualityControlBodyshopController transactionbodyshopcontroller.QualityControlBodyshopController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", QualityControlBodyshopController.GetAll)
+	router.Get("/{work_order_system_number}", QualityControlBodyshopController.GetById)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/qcpass", QualityControlBodyshopController.Qcpass)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/reorder", QualityControlBodyshopController.Reorder)
+
+	return router
+}
+
 func SettingTechnicianRouter(
 	SettingTechnicianController transactionjpcbcontroller.SettingTechnicianController,
 ) chi.Router {
@@ -1342,6 +1361,24 @@ func ServiceWorkshopRouter(
 	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending", ServiceWorkshopController.PendingService)
 	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer", ServiceWorkshopController.TransferService)
 	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop", ServiceWorkshopController.StopService)
+
+	return router
+}
+func ServiceBodyshopRouter(
+	ServiceBodyshopController transactionbodyshopcontroller.ServiceBodyshopController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{technician_id}/{work_order_system_number}", ServiceBodyshopController.GetAllByTechnicianWOBodyshop)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/start", ServiceBodyshopController.StartService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending", ServiceBodyshopController.PendingService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer", ServiceBodyshopController.TransferService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop", ServiceBodyshopController.StopService)
 
 	return router
 }
