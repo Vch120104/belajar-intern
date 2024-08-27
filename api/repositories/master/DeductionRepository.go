@@ -16,7 +16,7 @@ type DeductionRepository interface {
 	GetDeductionById(*gorm.DB, int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse)
 	GetByIdDeductionDetail(*gorm.DB, int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse)
 	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (masterentities.DeductionList, *exceptions.BaseErrorResponse)
-	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse)
+	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse, int) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusDeduction(*gorm.DB,  int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	UpdateDeductionDetail( *gorm.DB, int, masterpayloads.DeductionDetailUpdate)(masterentities.DeductionDetail,*exceptions.BaseErrorResponse)
 }

@@ -60,6 +60,51 @@ type ServiceRequestSaveDataRequest struct {
 	ServiceDate      time.Time `json:"service_date"`
 }
 
+type ServiceRequestGetallResponse struct {
+	ServiceRequestSystemNumber int `json:"service_request_system_number"`
+	//ServiceRequestStatusId       int                           `json:"service_request_status_id"`
+	ServiceRequestStatusName     string `json:"service_request_status_name"`
+	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
+	ServiceRequestDate           string `json:"service_request_date"`
+	//BrandId                      int                           `json:"brand_id"`
+	BrandName string `json:"brand_name"`
+	//ModelId                      int                           `json:"model_id"`
+	ModelName string `json:"model_code_description"`
+	//VariantId         int    `json:"variant_id"`
+	VariantName       string `json:"variant_code_description"`
+	VariantColourName string `json:"colour_name"`
+	VehicleId         int    `json:"vehicle_id"`
+	VehicleCode       string `json:"chassis_no"`
+	VehicleTnkb       string `json:"no_polisi"`
+	CompanyId         int    `json:"company_id"`
+	CompanyName       string `json:"company_name"`
+	//DealerRepresentativeId       int                           `json:"dealer_representative_id"`
+	DealerRepresentativeName string `json:"dealer_rep_code_name"`
+	//ProfitCenterId               int                           `json:"profit_center_id"`
+	ProfitCenterName           string `json:"profit_center_name"`
+	WorkOrderSystemNumber      int    `json:"work_order_no"`
+	WorkOrderDocumentNumber    string `json:"work_order_document_number"`
+	BookingSystemNumber        int    `json:"booking_no"`
+	BookingDocumentNumber      string `json:"booking_document_number"`
+	EstimationSystemNumber     int    `json:"estimation_system_number"`
+	ReferenceDocSystemNumber   int    `json:"reference_doc_system_number"`
+	ReferenceDocDocumentNumber string `json:"reference_doc_document_number"`
+	ReferenceTypeId            int    `json:"ref_type_id"`
+	ReferenceTypeName          string `json:"reference_type_name"`
+	ReferenceDocId             int    `json:"ref_doc_id"`
+	ReferenceDocNumber         string `json:"ref_doc_no"`
+	ReferenceDocDate           string `json:"ref_doc_date"`
+	//ReplyId                      int                           `json:"reply_id"`
+	ReplyBy            string                        `json:"reply_by"`
+	ReplyDate          string                        `json:"reply_date"`
+	ReplyRemark        string                        `json:"reply_remark"`
+	ServiceCompanyId   int                           `json:"service_company_id"`
+	ServiceCompanyName string                        `json:"service_company_name"`
+	ServiceDate        string                        `json:"service_date"`
+	ServiceRequestBy   string                        `json:"service_request_by"`
+	ServiceDetails     ServiceRequestDetailsResponse `json:"service_details"`
+}
+
 type ServiceRequestResponse struct {
 	ServiceRequestSystemNumber int `json:"service_request_system_number"`
 	//ServiceRequestStatusId       int                           `json:"service_request_status_id"`

@@ -1,12 +1,13 @@
-package transactionworkshoprepositoryimpl
+package transactionbodyshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
+	transactionbodyshoppayloads "after-sales/api/payloads/transaction/bodyshop"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
-	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
+	transactionbodyshoprepository "after-sales/api/repositories/transaction/bodyshop"
 	"after-sales/api/utils"
 	"errors"
 	"math"
@@ -17,21 +18,21 @@ import (
 	"gorm.io/gorm"
 )
 
-type QualityControlRepositoryImpl struct {
+type QualityControlBodyshopRepositoryImpl struct {
 }
 
-func OpenQualityControlRepositoryImpl() transactionworkshoprepository.QualityControlRepository {
-	return &QualityControlRepositoryImpl{}
+func OpenQualityControlBodyshopRepositoryImpl() transactionbodyshoprepository.QualityControlBodyshopRepository {
+	return &QualityControlBodyshopRepositoryImpl{}
 }
 
 // uspg_wtWorkOrder0_Select
 // IF @Option = 7
 // USE IN MODUL : AWS - 006 QUALITY CONTROL PAGE 1 REQ: ???
-func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *QualityControlBodyshopRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
-	var entities []transactionworkshoppayloads.QualityControlRequest
+	var entities []transactionbodyshoppayloads.QualityControlRequest
 
-	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.QualityControlRequest{})
+	joinTable := utils.CreateJoinSelectStatement(tx, transactionbodyshoppayloads.QualityControlRequest{})
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	whereQuery = whereQuery.Where("work_order_status_id = ?", utils.WoStatStop) // 40 Stop
 
@@ -57,7 +58,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 	}
 
-	var convertedResponses []transactionworkshoppayloads.QualityControlResponse
+	var convertedResponses []transactionbodyshoppayloads.QualityControlResponse
 
 	for _, entity := range entities {
 		// Fetch data brand from external API
@@ -133,7 +134,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Append converted response
-		convertedResponses = append(convertedResponses, transactionworkshoppayloads.QualityControlResponse{
+		convertedResponses = append(convertedResponses, transactionbodyshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
 			VehicleCode:             vehicleResponses.VehicleCode,
@@ -165,8 +166,8 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	return paginatedData, totalPages, totalRows, nil
 }
 
-func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionworkshoppayloads.QualityControlIdResponse, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshoppayloads.QualityControlRequest
+func (r *QualityControlBodyshopRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionbodyshoppayloads.QualityControlIdResponse, *exceptions.BaseErrorResponse) {
+	var entity transactionbodyshoppayloads.QualityControlRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, entity)
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
@@ -174,13 +175,13 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 
 	if err := whereQuery.Find(&entity).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Work order not found",
 				Err:        err,
 			}
 		}
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch entity",
 			Err:        err,
@@ -192,7 +193,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	var brandResponses transactionworkshoppayloads.WorkOrderVehicleBrand
 	errBrand := utils.Get(BrandUrl, &brandResponses, nil)
 	if errBrand != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve brand data from the external API",
 			Err:        errBrand,
@@ -204,7 +205,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	var modelResponses transactionworkshoppayloads.WorkOrderVehicleModel
 	errModel := utils.Get(ModelUrl, &modelResponses, nil)
 	if errModel != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve model data from the external API",
 			Err:        errModel,
@@ -216,7 +217,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	var variantResponses transactionworkshoppayloads.WorkOrderVehicleVariant
 	errVariant := utils.Get(VariantUrl, &variantResponses, nil)
 	if errVariant != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve variant data from the external API",
 			Err:        errVariant,
@@ -228,7 +229,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	var vehicleResponses transactionworkshoppayloads.VehicleResponse
 	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
 			Err:        errVehicle,
@@ -240,7 +241,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	var customerResponses transactionworkshoppayloads.CustomerResponse
 	errCustomer := utils.Get(CustomerUrl, &customerResponses, nil)
 	if errCustomer != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve customer data from the external API",
 			Err:        errCustomer,
@@ -252,20 +253,20 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	var workOrderResponses transactionworkshoppayloads.WorkOrderResponse
 	errWorkOrder := utils.Get(WorkOrderUrl, &workOrderResponses, nil)
 	if errWorkOrder != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve work order data from the external API",
 			Err:        errWorkOrder,
 		}
 	}
 
-	var qualitycontrolDetails []transactionworkshoppayloads.QualityControlDetailResponse
+	var qualitycontrolDetails []transactionbodyshoppayloads.QualityControlDetailResponse
 	var totalRows int64
 	totalRowsQuery := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Where("work_order_system_number = ?", entity.WorkOrderSystemNumber).
 		Count(&totalRows).Error
 	if totalRowsQuery != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count quality control details",
 			Err:        totalRowsQuery,
@@ -282,7 +283,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		Limit(pages.GetLimit())
 
 	if err := query.Find(&qualitycontrolDetails).Error; err != nil {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get service details",
 			Err:        err,
@@ -291,7 +292,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 
 	// Check if the service_status_id is valid
 	if len(qualitycontrolDetails) == 0 {
-		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Quality control details not found",
 		}
@@ -304,14 +305,14 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 	for _, detail := range qualitycontrolDetails {
 		if !validStatuses[detail.ServiceStatusId] {
-			return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Operation Status is not valid",
 			}
 		}
 	}
 
-	response := transactionworkshoppayloads.QualityControlIdResponse{
+	response := transactionbodyshoppayloads.QualityControlIdResponse{
 		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 		WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
 		ModelName:               modelResponses.ModelName,
@@ -319,7 +320,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		VehicleCode:             vehicleResponses.VehicleCode,
 		VehicleTnkb:             vehicleResponses.VehicleTnkb,
 		CustomerName:            customerResponses.CustomerName,
-		QualityControlDetails: transactionworkshoppayloads.QualityControlDetailsResponse{
+		QualityControlDetails: transactionbodyshoppayloads.QualityControlDetailsResponse{
 			Page:       pages.GetPage(),
 			Limit:      pages.GetLimit(),
 			TotalPages: int(math.Ceil(float64(totalRows) / float64(pages.GetLimit()))),
@@ -334,7 +335,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 // uspg_wtWorkOrder2_Update
 // IF @Option = 2
 // USE IN MODUL : AWS - 006  UPDATE DATA BY KEY (QC PASS) - GENERAL REPAIR
-func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (transactionworkshoppayloads.QualityControlUpdateResponse, *exceptions.BaseErrorResponse) {
+func (r *QualityControlBodyshopRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (transactionbodyshoppayloads.QualityControlUpdateResponse, *exceptions.BaseErrorResponse) {
 	// Define variables
 	var (
 		currentStatus     int
@@ -350,14 +351,14 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 
-			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+			return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Operation Status is not valid",
 				Err:        err,
 			}
 		}
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch operation status",
 			Err:        err,
@@ -367,7 +368,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	// Validate the status
 	if currentStatus != utils.WoStatStop {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "The current status of the work order is not valid",
 		}
@@ -389,7 +390,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Scan(&details).Error
 	if err != nil {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order details",
 			Err:        err,
@@ -402,7 +403,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	errVehicle := utils.Get(vehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
 			Err:        errVehicle,
@@ -420,7 +421,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Scan(&techAllocSysNo).Error
 	if err != nil {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch the latest TechAllocSystemNumber",
 			Err:        err,
@@ -434,7 +435,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Error
 	if err != nil {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update WorkOrderDetail",
 			Err:        err,
@@ -448,7 +449,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Error
 	if err != nil {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update WorkOrderAllocation",
 			Err:        err,
@@ -462,7 +463,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Count(&statusCount).Error
 	if err != nil {
 
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count non-QC pass items",
 			Err:        err,
@@ -477,7 +478,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 			Error
 		if err != nil {
 
-			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+			return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to update WorkOrder",
 				Err:        err,
@@ -491,7 +492,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 			Error
 		if err != nil {
 
-			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+			return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to update WorkOrder",
 				Err:        err,
@@ -500,7 +501,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	}
 
 	// Return response
-	response := transactionworkshoppayloads.QualityControlUpdateResponse{
+	response := transactionbodyshoppayloads.QualityControlUpdateResponse{
 		WorkOrderSystemNumber: id,
 		WorkOrderDetailId:     iddet,
 		WorkOrderStatusId:     utils.SrvStatQcPass,
@@ -513,7 +514,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 // uspg_wtWorkOrder2_Update
 // IF @Option = 1
 // USE IN MODUL : AWS-006 SHEET: RE-ORDER
-func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, payload transactionworkshoppayloads.QualityControlReorder) (transactionworkshoppayloads.QualityControlUpdateResponse, *exceptions.BaseErrorResponse) {
+func (r *QualityControlBodyshopRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, payload transactionbodyshoppayloads.QualityControlReorder) (transactionbodyshoppayloads.QualityControlUpdateResponse, *exceptions.BaseErrorResponse) {
 	var (
 		lineTypeOperation = 1
 		woLine            = 1
@@ -527,13 +528,13 @@ func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, p
 		First(&currentStatus).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+			return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Operation Status is not valid",
 				Err:        err,
 			}
 		}
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch operation status",
 			Err:        err,
@@ -541,7 +542,7 @@ func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, p
 	}
 
 	if currentStatus != utils.SrvStatStop {
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Operation Status is not valid",
 		}
@@ -554,7 +555,7 @@ func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, p
 			"re_order": true,
 		}).Error
 	if err != nil {
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update atWOTechAlloc",
 			Err:        err,
@@ -572,7 +573,7 @@ func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, p
 			"reorder_number":                  gorm.Expr("ISNULL(reorder_number, 0) + 1"),
 		}).Error
 	if err != nil {
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update wtWorkOrder2",
 			Err:        err,
@@ -586,7 +587,7 @@ func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, p
 			"work_order_status_id": utils.WoStatOngoing,
 		}).Error
 	if err != nil {
-		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update wtWorkOrder0",
 			Err:        err,
@@ -594,7 +595,7 @@ func (r *QualityControlRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, p
 	}
 
 	//return a response
-	response := transactionworkshoppayloads.QualityControlUpdateResponse{
+	response := transactionbodyshoppayloads.QualityControlUpdateResponse{
 		WorkOrderSystemNumber: id,
 		WorkOrderDetailId:     iddet,
 		WorkOrderStatusId:     utils.SrvStatReOrder,
