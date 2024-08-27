@@ -98,3 +98,32 @@ type CarWashScreenGetAllResponse struct {
 	ModelDescription         string `json:"model_description"`
 	ColourCommercialName     string `json:"colour_commercial_name"`
 }
+
+type CarWashScreenUpdateBayNumberRequest struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	CarWashBayId          int `json:"car_wash_bay_id"`
+}
+
+type StartCarWashRequest struct {
+	CarWashStatusId int       `json:"car_wash_status_id"`
+	CarWashDate     time.Time `json:"car_wash_date"`
+	CarWashBayId    int       `json:"car_wash_bay_id"`
+	StartTime       float32   `json:"start_time"`
+}
+
+type CarWashCompanyReference struct {
+	CurrencyId                int     `json:"currency_id"`
+	CoaGroupId                int     `json:"coa_group_id"`
+	OperationDiscountOuterKpp int     `json:"operation_discount_outer_kpp"`
+	MarginOuterKpp            int     `json:"margin_outer_kpp"`
+	AdjustmentReasaonId       int     `json:"adjustment_reason_id"`
+	LeadTimeUnitEtd           int     `json:"lead_time_unit_etd"`
+	BankAccReceiveCompanyId   int     `json:"bank_acc_receive_company_id"`
+	UnitWarehouseId           int     `json:"unit_warehouse_id"`
+	TimeDifference            float32 `json:"time_difference"`
+	UseDms                    bool    `json:"use_dms"`
+	UseJpcb                   bool    `json:"use_jpcb"`
+	CheckMonthEnd             bool    `json:"check_month_end"`
+	IsDistributor             bool    `json:"is_distributor"`
+	WithVat                   bool    `json:"with_vat"`
+}

@@ -93,3 +93,14 @@ func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int) ([]transactionjp
 	}
 	return results, nil
 }
+
+func (s *CarWashServiceImpl) UpdateBayNumberCarWashScreen(bayNumber, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.UpdateBayNumberCarWashScreen(tx, bayNumber, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
+	}
+	return result, nil
+}
