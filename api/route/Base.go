@@ -1400,6 +1400,22 @@ func SupplySlipRouter(
 	return router
 }
 
+func SupplySlipReturnRouter(
+	SupplySlipReturnController transactionsparepartcontroller.SupplySlipReturnController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", SupplySlipReturnController.SaveSupplySlipReturn)
+	router.Post("/detail", SupplySlipReturnController.SaveSupplySlipReturnDetail)
+	router.Get("/", SupplySlipReturnController.GetAllSupplySlipDetail)
+	router.Get("/{supply_return_system_number}", SupplySlipReturnController.GetSupplySlipReturnById)
+	router.Get("/detail/{supply_return_detail_system_number}", SupplySlipReturnController.GetSupplySlipReturnDetailById)
+	router.Put("/{supply_return_system_number}", SupplySlipReturnController.UpdateSupplySlipReturn)
+	router.Put("/detail/{supply_return_detail_system_number}", SupplySlipReturnController.UpdateSupplySlipReturnDetail)
+
+	return router
+}
+
 func SalesOrderRouter(
 	SalesOrderController transactionsparepartcontroller.SalesOrderController,
 ) chi.Router {
