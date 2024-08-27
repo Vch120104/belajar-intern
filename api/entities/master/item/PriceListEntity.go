@@ -12,7 +12,7 @@ type PriceList struct {
 	BrandId             int       `gorm:"column:brand_id;not null;size:30;uniqueindex:idx_price_list"        json:"brand_id"`
 	CurrencyId          int       `gorm:"column:currency_id;not null;size:30;uniqueindex:idx_price_list"        json:"currency_id"`
 	EffectiveDate       time.Time `gorm:"column:effective_date;not null;uniqueindex:idx_price_list"        json:"effective_date"`
-	ItemId              int       `gorm:"column:item_id;not null;size:30"        json:"item_id"`
+	ItemId              int       `gorm:"column:item_id;not null;size:30;uniqueindex:idx_price_list"        json:"item_id"`
 	ItemGroupId         int       `gorm:"column:item_group_id;not null;size:30;uniqueindex:idx_price_list"        json:"item_group_id"`
 	ItemClassId         int       `gorm:"column:item_class_id;not null;size:30"        json:"item_class_id"`
 	ItemClass           *ItemClass

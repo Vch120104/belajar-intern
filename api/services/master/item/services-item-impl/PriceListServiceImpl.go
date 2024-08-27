@@ -313,6 +313,14 @@ func (s *PriceListServiceImpl) GenerateDownloadTemplateFile() (*excelize.File, *
 	f.SetCellValue(sheetName, "A1", "VEHICLE_BRAND")
 	f.SetCellValue(sheetName, "B1", "CURRENCY_CODE")
 	f.SetCellValue(sheetName, "C1", "EFFECTIVE_DATE")
+
+	//EXAMPLE DATE FORMAT
+	styleH9, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{
+		Color: "#FF0000",
+	}})
+	f.SetCellValue(sheetName, "H9", "*DATE FORMAT = 02/01/2006")
+	f.SetCellStyle(sheetName, "H9", "H9", styleH9)
+
 	f.SetCellValue(sheetName, "D1", "ITEM_CODE")
 	f.SetCellValue(sheetName, "E1", "PRICE_AMOUNT")
 	f.SetColWidth(sheetName, "A", "E", 21.5)
@@ -381,15 +389,15 @@ func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.Pric
 	return results, nil
 }
 
-func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.SavePriceListMultiple) (bool, *exceptions.BaseErrorResponse) {
+func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.SavePriceListMultiple) (int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	result, err := s.priceListRepo.SavePriceList(tx, request)
+	id, err := s.priceListRepo.SavePriceList(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return id, err
 	}
-	return result, nil
+	return id, nil
 }
 
 func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse) {

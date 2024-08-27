@@ -223,7 +223,7 @@ func (r *BayMasterImpl) ChangeStatus(tx *gorm.DB, request transactionjpcbpayload
 	carWashEntities := []transactionjpcbentities.CarWash{}
 	var bayEntity transactionjpcbentities.BayMaster
 
-	result := tx.Select("work_order_system_number").Where("company_id = ? AND car_wash_bay_id = ? AND car_wash_status_id = 3", request.CompanyId, request.CarWashBayId).
+	result := tx.Select("work_order_system_number").Where("company_id = ? AND car_wash_bay_id = ? AND car_wash_status_id = 2", request.CompanyId, request.CarWashBayId).
 		Find(&carWashEntities)
 
 	if result.Error != nil {

@@ -20,6 +20,16 @@ type PurchaseRequestServiceImpl struct {
 	RedisClient         *redis.Client
 }
 
+func (p *PurchaseRequestServiceImpl) GetAllItemTypePurchaseRequest(filterCondition []utils.FilterCondition, pages pagination.Pagination, companyId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	result, err := p.PurchaseRequestRepo.GetAllItemTypePrRequest(tx, filterCondition, pages, companyId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 func NewPurchaseRequestImpl(PurchaseRequestRepo transactionsparepartrepository.PurchaseRequestRepository, db *gorm.DB, redis *redis.Client) transactionsparepartservice.PurchaseRequestService {
 	return &PurchaseRequestServiceImpl{
 		PurchaseRequestRepo: PurchaseRequestRepo,
@@ -137,6 +147,35 @@ func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateDetail(payloads 
 	tx := p.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	res, err := p.PurchaseRequestRepo.SavePurchaseRequestDetail(tx, payloads, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+func (p *PurchaseRequestServiceImpl) GetByIdItemTypePurchaseRequest(companyId int, id int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	res, err := p.PurchaseRequestRepo.GetByIdPurchaseRequestItemPr(tx, companyId, id)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+
+func (p *PurchaseRequestServiceImpl) GetByCodeItemTypePurchaseRequest(companyId int, stingcode string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	res, err := p.PurchaseRequestRepo.GetByCodePurchaseRequestItemPr(tx, companyId, stingcode)
+	if err != nil {
+		return res, err
+	}
+	return res, nil
+}
+func (p *PurchaseRequestServiceImpl) VoidPurchaseRequestDetail(stringId string) (bool, *exceptions.BaseErrorResponse) {
+	tx := p.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	res, err := p.PurchaseRequestRepo.VoidPurchaseRequestDetailMultiId(tx, stringId)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return res, err

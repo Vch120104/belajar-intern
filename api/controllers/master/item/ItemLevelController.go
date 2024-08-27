@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"strconv"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
@@ -42,7 +43,12 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 
 // GetItemLevelLookUpbyId implements ItemLevelController.
 func (r *ItemLevelControllerImpl) GetItemLevelLookUpbyId(writer http.ResponseWriter, request *http.Request) {
-	itemLevel, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	itemLevel, errA := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.itemLevelService.GetItemLevelLookUpbyId(itemLevel)
 
@@ -58,7 +64,12 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUpbyId(writer http.ResponseWri
 func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+	itemClassId, errA := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	filter := map[string]string{
 		"mtr_item_level.item_level_code": queryValues.Get("item_level_1"),
@@ -166,7 +177,11 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Router /v1/item-level/by-id/{item_level_id} [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
 
-	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	itemLevelId, errA := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.itemLevelService.GetById(itemLevelId)
 
@@ -230,7 +245,12 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Router /v1/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	itemLevelId, _ := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	itemLevelId, errA := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
 

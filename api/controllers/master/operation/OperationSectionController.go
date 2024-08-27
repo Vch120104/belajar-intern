@@ -3,6 +3,7 @@ package masteroperationcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	"errors"
 
 	"after-sales/api/payloads"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -93,7 +94,11 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 // @Router /v1/operation-section/{operation_section_id} [get]
 func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.ResponseWriter, request *http.Request) {
 
-	operationSectionId, _ := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
+	operationSectionId, errA := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationsectionservice.GetOperationSectionById(int(operationSectionId))
 	if err != nil {
@@ -115,7 +120,11 @@ func (r *OperationSectionControllerImpl) GetOperationSectionByID(writer http.Res
 // @Router /v1/operation-section/code-by-group-id [get]
 func (r *OperationSectionControllerImpl) GetSectionCodeByGroupId(writer http.ResponseWriter, request *http.Request) {
 
-	groupId, _ := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+	groupId, errA := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.operationsectionservice.GetSectionCodeByGroupId(groupId)
 
@@ -194,7 +203,12 @@ func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.Respon
 // @Router /v1/operation-section/{operation_section_id} [patch]
 func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer http.ResponseWriter, request *http.Request) {
 
-	operationSectionId, _ := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
+	operationSectionId, errA := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.operationsectionservice.ChangeStatusOperationSection(int(operationSectionId))
 
