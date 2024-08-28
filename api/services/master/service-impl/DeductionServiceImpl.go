@@ -68,9 +68,9 @@ func (s *DeductionServiceImpl) PostDeductionList(req masterpayloads.DeductionLis
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
+func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionDetailResponse, id int) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.deductionrepo.SaveDeductionDetail(tx, req)
+	result, err := s.deductionrepo.SaveDeductionDetail(tx, req, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err

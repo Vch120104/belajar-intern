@@ -174,7 +174,7 @@ func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.
 	}
 
 	if success.WorkOrderSystemNumber > 0 {
-		payloads.NewHandleSuccess(writer, nil, "Work order created successfully", http.StatusCreated)
+		payloads.NewHandleSuccess(writer, success, "Work order created successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}

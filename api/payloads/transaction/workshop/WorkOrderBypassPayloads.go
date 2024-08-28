@@ -1,7 +1,5 @@
 package transactionworkshoppayloads
 
-import "time"
-
 type WorkOrderDetailBypassRequest struct {
 	WorkOrderDetailId     int     `json:"work_order_detail_id" parent_entity:"trx_work_order_detail" main_table:"trx_work_order_detail"`
 	WorkOrderSystemNumber int     `json:"work_order_system_number" parent_entity:"trx_work_order_detail"`
@@ -13,6 +11,7 @@ type WorkOrderDetailBypassRequest struct {
 	PriceListId           int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
 	WarehouseId           int     `json:"warehouse_id" parent_entity:"trx_work_order_detail"`
 	ItemId                int     `json:"item_id" parent_entity:"trx_work_order_detail"`
+	ServiceStatusId       int     `json:"service_status_id" parent_entity:"trx_work_order_detail"`
 	ProposedPrice         float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
 	OperationItemPrice    float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
 }
@@ -31,6 +30,7 @@ type WorkOrderDetailBypassResponse struct {
 	ItemName                           string  `json:"item_name"`
 	FrtQuantity                        float64 `json:"frt_quantity"`
 	SupplyQuantity                     float64 `json:"supply_quantity"`
+	ServiceStatusName                  string  `json:"service_status_name"`
 	OperationItemPrice                 float64 `json:"operation_item_price"`
 	OperationItemDiscountAmount        float64 `json:"operation_item_discount_amount"`
 	OperationItemDiscountRequestAmount float64 `json:"operation_item_discount_request_amount"`
@@ -68,19 +68,16 @@ type WorkOrderBypassResponse struct {
 }
 
 type WorkOrderBypassRequestDetail struct {
-	WorkOrderSystemNumber           int       `json:"work_order_system_number"`
-	WorkOrderDocumentNumber         string    `json:"work_order_document_number"`
-	WorkOrderQualityControlStatusID int       `json:"work_order_quality_control_status_id"`
-	WorkOrderStartDateTime          time.Time `json:"work_order_start_date_time"`
-	WorkOrderEndDateTime            time.Time `json:"work_order_end_date_time"`
-	WorkOrderActualTime             float32   `json:"work_order_actual_time"`
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	TechnicianId          int `json:"technician_id"`
 }
 
 type WorkOrderBypassResponseDetail struct {
-	WorkOrderSystemNumber           int       `json:"work_order_system_number"`
-	WorkOrderDocumentNumber         string    `json:"work_order_document_number"`
-	WorkOrderQualityControlStatusID int       `json:"work_order_quality_control_status_id"`
-	WorkOrderStartDateTime          time.Time `json:"work_order_start_date_time"`
-	WorkOrderEndDateTime            time.Time `json:"work_order_end_date_time"`
-	WorkOrderActualTime             float32   `json:"work_order_actual_time"`
+	WorkOrderSystemNumber int    `json:"work_order_system_number"`
+	TechnicianId          int    `json:"technician_id"`
+	TechnicianName        string `json:"technician_name"`
+	ForemanWSId           int    `json:"foreman_ws_id"`
+	ForemanWSName         string `json:"foreman_ws_name"`
+	ServiceStatusId       int    `json:"service_status_id"`
+	ServiceStatusName     string `json:"service_status_name"`
 }
