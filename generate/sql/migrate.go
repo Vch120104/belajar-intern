@@ -2,6 +2,8 @@ package migration
 
 import (
 	"after-sales/api/config"
+	// masterentities "after-sales/api/entities/master"
+	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
 	// masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
@@ -147,6 +149,8 @@ func Migrate() {
 	//
 	//&transactionsparepartentities.SupplySlip{},
 	//&transactionsparepartentities.SupplySlipDetail{},
+	//&transactionsparepartpentities.SupplySlipReturn{},
+	//&transactionsparepartpentities.SupplySlipReturnDetail{},
 	//&transactionworkshopentities.WorkOrderMaster{},
 	//&transactionworkshopentities.WorkOrderMasterStatus{},
 	//&transactionworkshopentities.WorkOrderMasterType{},
@@ -185,11 +189,7 @@ func Migrate() {
 	//&masterentities.MovingItemCode{},
 	//&transactionsparepartentities.PurchaseRequestReferenceType{},
 	//&masterentities.LocationStock{},
-	//&masterentities.WarehouseGroupMappingEntities{},
-	//
-	//&transactionjpcbentities.SettingTechnician{},
-	//&transactionjpcbentities.SettingTechnicianDetail{},
-	//&transactionjpcbentities.TechnicianAttendance{},
+	// &masterentities.WarehouseGroupMappingEntities{},
 	)
 
 	if err != nil {

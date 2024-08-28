@@ -61,6 +61,7 @@ func (r *DeductionControllerImpl) GetAllDeductionList(writer http.ResponseWriter
 		"deduction_id":   queryValues.Get("deduction_id"),
 		"is_active":      queryValues.Get("is_active"),
 		"deduction_name": queryValues.Get("deduction_name"),
+		"deduction_code": queryValues.Get("deduction_code"),
 		"effective_date": queryValues.Get("effective_date"),
 	}
 
@@ -124,11 +125,7 @@ func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, r
 
 func (r *DeductionControllerImpl) GetAllDeductionDetail(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	DeductionDetailId, errA := strconv.Atoi(chi.URLParam(request, "id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
+	DeductionDetailId, _ := strconv.Atoi(chi.URLParam(request, "deduction_id"))
 
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -193,6 +190,7 @@ func (r *DeductionControllerImpl) SaveDeductionList(writer http.ResponseWriter, 
 // @Router /v1/deduction/detail [post]
 func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter, request *http.Request) {
 	DeductionDetailRequest := masterpayloads.DeductionDetailResponse{}
+	DeductionId, _ := strconv.Atoi(chi.URLParam(request, "deduction_id"))
 	var message string
 
 	err := jsonchecker.ReadFromRequestBody(request, &DeductionDetailRequest)
@@ -205,7 +203,7 @@ func (r *DeductionControllerImpl) SaveDeductionDetail(writer http.ResponseWriter
 		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
-	create, err := r.DeductionService.PostDeductionDetail(DeductionDetailRequest)
+	create, err := r.DeductionService.PostDeductionDetail(DeductionDetailRequest, DeductionId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

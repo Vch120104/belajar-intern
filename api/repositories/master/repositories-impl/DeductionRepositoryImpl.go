@@ -21,36 +21,38 @@ func StartDeductionRepositoryImpl() masterrepository.DeductionRepository {
 }
 
 func (r *DeductionRepositoryImpl) GetAllDeduction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
 	entities := []masterentities.DeductionList{}
 	response := []masterpayloads.DeductionListResponse{}
 
-	baseModelQuery := tx.Model(&entities).Scan(&response)
+	// Start building the base query
+	baseModelQuery := tx.Model(&masterentities.DeductionList{})
 
-	wherequery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	// Apply filters
+	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, wherequery)).Scan(&response).Rows()
+	// Apply pagination
+	baseModelQuery = baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery))
 
+	// Execute the query and scan results
+	if err := baseModelQuery.Find(&response).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	// Check if no rows were found
 	if len(response) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
+		response = []masterpayloads.DeductionListResponse{} // Return an empty slice
 	}
 
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	defer rows.Close()
-
+	// Set the pagination rows
 	pages.Rows = response
 
 	return pages, nil
 }
+
+
 
 func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
 
@@ -161,9 +163,9 @@ func (r *DeductionRepositoryImpl) SaveDeductionList(tx *gorm.DB, request masterp
 	return entities, nil
 }
 
-func (r *DeductionRepositoryImpl) SaveDeductionDetail(tx *gorm.DB, request masterpayloads.DeductionDetailResponse) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
+func (r *DeductionRepositoryImpl) SaveDeductionDetail(tx *gorm.DB, request masterpayloads.DeductionDetailResponse, deductionid int) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	condition := masterentities.DeductionDetail{
-		DeductionId:          request.DeductionId,
+		DeductionId:          deductionid,
 		DeductionDetailLevel: request.DeductionDetailLevel,
 	}
 
