@@ -8,7 +8,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -181,34 +180,50 @@ func (r *LandedCostMasterRepositoryImpl) GetByIdLandedCost(tx *gorm.DB, id int) 
 // }
 
 func (r *LandedCostMasterRepositoryImpl) SaveLandedCost(tx *gorm.DB, req masteritempayloads.LandedCostMasterRequest) (masteritementities.LandedCost, *exceptions.BaseErrorResponse) {
-	entitiesGet := masteritementities.LandedCost{}
-	rows, _ := tx.Model(&entitiesGet).Where(masteritementities.LandedCost{CompanyId: req.CompanyId, SupplierId: req.SupplierId, ShippingMethodId: req.ShippingMethodId, LandedCostTypeId: req.LandedCostTypeId}).Rows()
-	defer rows.Close()
+    var existingLandedCost masteritementities.LandedCost
 
-	if !rows.Next() {
-		entities := masteritementities.LandedCost{
-			IsActive:         req.IsActive,
-			CompanyId:        req.CompanyId,
-			SupplierId:       req.SupplierId,
-			ShippingMethodId: req.ShippingMethodId,
-			LandedCostTypeId: req.LandedCostTypeId,
-			LandedCostId:     req.LandedCostId,
-			LandedCostfactor: req.LandedCostFactor,
-		}
-		err := tx.Save(&entities).Error
-		if err != nil {
-			return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
+    err := tx.Model(masteritementities.LandedCost{}).
+        Where(map[string]interface{}{
+            "company_id":            req.CompanyId,
+            "supplier_id":           req.SupplierId,
+            "shipping_method_id":    req.ShippingMethodId,
+            "landed_cost_type_id":   req.LandedCostTypeId,
+        }).
+        First(&existingLandedCost).Error
 
-	}
-	return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
-		StatusCode: http.StatusConflict,
-		Err:        errors.New("LandedCost already exists"),
-	}
+    if err == nil {
+        return existingLandedCost, nil
+    }
+
+    if err != gorm.ErrRecordNotFound {
+        return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusConflict,
+            Err:        err,
+        }
+    }
+
+    newLandedCost := masteritementities.LandedCost{
+        IsActive:          req.IsActive,
+        CompanyId:         req.CompanyId,
+        SupplierId:        req.SupplierId,
+        ShippingMethodId: req.ShippingMethodId,
+        LandedCostTypeId:  req.LandedCostTypeId,
+        LandedCostId:      req.LandedCostId,
+        LandedCostfactor:  req.LandedCostFactor,
+    }
+
+    err = tx.Save(&newLandedCost).Error
+    if err != nil {
+        return masteritementities.LandedCost{}, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusInternalServerError,
+            Err:        err,
+        }
+    }
+
+    // Return the newly saved entity with no error
+    return newLandedCost, nil
 }
+
 
 func (r *LandedCostMasterRepositoryImpl) DeactivateLandedCostmaster(tx *gorm.DB, id string) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
