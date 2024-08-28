@@ -322,15 +322,15 @@ func StartRouting(db *gorm.DB) {
 	SettingTechnicianService := transactionjpcbserviceimpl.StartServiceTechnicianService(SettingTechnicianRepository, db, rdb)
 	SettingTechnicianController := transactionjpcbcontroller.NewSettingTechnicianController(SettingTechnicianService)
 
+	//Technician Attendance
+	TechnicianAttendanceRepository := transactionjpcbrepositoryimpl.StartTechnicianAttendanceRepositoryImpl()
+	TechnicianAttendanceService := transactionjpcbserviceimpl.StartTechnicianAttendanceImpl(TechnicianAttendanceRepository, db, rdb)
+	TechnicianAttendanceController := transactionjpcbcontroller.NewTechnicianAttendanceController(TechnicianAttendanceService)
+
 	//Car Wash Bay
 	CarWashBayRepository := transactionjpcbrepositoryimpl.NewCarWashBayRepositoryImpl()
 	CarWashBayService := transactionjpcbserviceimpl.NewCarWashBayServiceImpl(CarWashBayRepository, db, rdb)
 	CarWashBayController := transactionjpcbcontroller.NewCarWashBayController(CarWashBayService)
-
-	//Technician Attendance
-	TechnicianAttendanceRepository := transactionjpcbrepositoryimpl.NewTechnicianAttendanceRepositoryImpl()
-	TechnicianAttendanceService := transactionjpcbserviceimpl.NewTechnicianAttendanceImpl(TechnicianAttendanceRepository, db, rdb)
-	TechnicianAttendanceController := transactionjpcbcontroller.NewTechnicianAttendanceController(TechnicianAttendanceService)
 
 	//Quality Control
 	QualityControlRepository := transactionworkshoprepositoryimpl.OpenQualityControlRepositoryImpl()

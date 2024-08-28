@@ -20,7 +20,7 @@ type TechnicianAttendanceImpl struct {
 	RedisClient                    *redis.Client
 }
 
-func NewTechnicianAttendanceImpl(technicianAttendanceRepository transactionjpcbrepository.TechnicianAttendanceRepository, db *gorm.DB, redisClient *redis.Client) transactionjpcbservice.TechnicianAttendanceService {
+func StartTechnicianAttendanceImpl(technicianAttendanceRepository transactionjpcbrepository.TechnicianAttendanceRepository, db *gorm.DB, redisClient *redis.Client) transactionjpcbservice.TechnicianAttendanceService {
 	return &TechnicianAttendanceImpl{
 		TechnicianAttendanceRepository: technicianAttendanceRepository,
 		DB:                             db,

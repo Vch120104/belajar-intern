@@ -16,7 +16,7 @@ import (
 type TechnicianAttendanceImpl struct {
 }
 
-func NewTechnicianAttendanceRepositoryImpl() transactionjpcbrepository.TechnicianAttendanceRepository {
+func StartTechnicianAttendanceRepositoryImpl() transactionjpcbrepository.TechnicianAttendanceRepository {
 	return &TechnicianAttendanceImpl{}
 }
 
