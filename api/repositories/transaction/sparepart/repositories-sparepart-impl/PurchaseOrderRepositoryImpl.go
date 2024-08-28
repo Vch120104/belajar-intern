@@ -431,7 +431,7 @@ func (repo *PurchaseOrderRepositoryImpl) UpdatePurchaseOrderHeader(db *gorm.DB, 
 	//END
 
 	if pkptype {
-		if SupplierVatPkpNo == CompanyVatPkpNo {
+		if SupplierVatPkpNo != CompanyVatPkpNo {
 			totalVat = (totalAmount - totalDiscount) * (taxRate / 100)
 		} else {
 			totalVat = 0
@@ -710,19 +710,20 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 		ItemDiscountAmount:        payloads.ItemDiscountAmount,
 		ItemTotal:                 payloads.ItemTotal,
 		//SubstituteTypeId: 0
-		PurchaseRequestSystemNumber:       payloads.PurchaseRequestSystemNumber,
-		PurchaseRequestLineNumber:         payloads.PurchaseRequestLineNumber,
-		PurchaseRequestDetailSystemNumber: payloads.PurchaseRequestDetailSystemNumber,
-		OldPurchaseOrderLineNumber:        payloads.OldPurchaseOrderLineNumber,
-		OldPurchaseOrderSystemNo:          payloads.OldPurchaseOrderSystemNo,
-		StockOnHand:                       payloads.StockOnHand,
-		ItemRemark:                        payloads.ItemRemark,
-		Snp:                               payloads.Snp,
-		ChangeNo:                          1,
-		CreatedByUserId:                   payloads.CreatedByUserId,
-		UpdatedDate:                       payloads.UpdatedDate,
-		CreatedDate:                       payloads.CreatedDate,
-		UpdatedByUserId:                   payloads.UpdatedByUserId,
+		PurchaseRequestSystemNumber:                payloads.PurchaseRequestSystemNumber,
+		PurchaseRequestLineNumber:                  payloads.PurchaseRequestLineNumber,
+		PurchaseRequestDetailSystemNumber:          payloads.PurchaseRequestDetailSystemNumber,
+		ChangedItemPurchaseOrderLineNumber:         0,
+		ChangedItemPurchaseOrderSystemNumber:       0,
+		ChangedItemPurchaseOrderDetailSystemNumber: 0,
+		StockOnHand:     payloads.StockOnHand,
+		ItemRemark:      payloads.ItemRemark,
+		Snp:             payloads.Snp,
+		ChangeNo:        1,
+		CreatedByUserId: payloads.CreatedByUserId,
+		UpdatedDate:     payloads.UpdatedDate,
+		CreatedDate:     payloads.CreatedDate,
+		UpdatedByUserId: payloads.UpdatedByUserId,
 		//VehicleChassisNumber: payloads.vehi
 	}
 	err = db.Create(&entities).Scan(&entities).Error
@@ -846,7 +847,7 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//END
 
 	if pkptype {
-		if SupplierVatPkpNo == CompanyVatPkpNo {
+		if SupplierVatPkpNo != CompanyVatPkpNo {
 			totalVat = (totalAmount - totalDiscount) * (taxRate / 100)
 		} else {
 			totalVat = 0
@@ -1049,7 +1050,7 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 		pkptype = SupplierResponse.TaxSupplier.PkpType
 
 		if pkptype {
-			if SupplierVatPkpNo == CompanyVatPkpNo {
+			if SupplierVatPkpNo != CompanyVatPkpNo {
 				totalVat = (totalAmount - totalDiscount) * (taxRate / 100)
 			} else {
 				totalVat = 0
@@ -1087,7 +1088,7 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	//@Pr_Line = PR_LINE
 	//FROM atItemPO1 where PO_SYS_NO = @Po_Sys_No AND PO_LINE = @Po_Line
 	var poDetailEntities transactionsparepartentities.PurchaseOrderDetailEntities
-
+	//var poChangedItemDetailEntities transactionsparepartentities.PurchaseOrderDetailChangedItem
 	err := db.Model(&poDetailEntities).Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: payloads.PurchaseOrderDetailSystemNumber}).
 		First(&poDetailEntities).Error
 	if err != nil {
@@ -1129,6 +1130,14 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 		*PurchaseOrderQuantity = 0
 	}
 	*PurchaseOrderQuantity = *PurchaseOrderQuantity - *poDetailEntities.ItemQuantity + *payloads.ItemQuantity
+	//IF @SNP>0
+	//BEGIN
+	//IF (@PO_QTY%@SNP)<>0
+	//BEGIN
+	//RAISERROR('Total Quantity does not equal multiples SNP ',16,1)
+	//RETURN 0
+	//END
+	//END
 	if payloads.Snp != nil || *payloads.Snp > 0 {
 		if math.Mod(*PurchaseOrderQuantity, *payloads.Snp) != 0 {
 			return poDetailEntities, &exceptions.BaseErrorResponse{
@@ -1137,15 +1146,324 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 			}
 		}
 	}
+	//IF @Pr_Qty < @PO_QTY
+	//BEGIN
+	//RAISERROR('Total Quantity Purchase Order cannot exceed Quantity Purchase Request',16,1)
+	//RETURN 0
+	//END
 	if *prDetailEntities.ItemQuantity < *PurchaseOrderQuantity {
-		if math.Mod(*PurchaseOrderQuantity, *payloads.Snp) != 0 {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Total Quantity Purchase Order cannot exceed Quantity Purchase Request",
+		}
+	}
+	//IF EXISTS (SELECT PO_SYS_NO FROM atItemPO1 WHERE OLD_PO_SYS_NO = @Po_Sys_No AND OLD_PO_LINE = @Old_Po_Line
+	//AND ISNULL(SUBSTITUTE_TYPE,'') = dbo.getVariableValue('SUBSTITUTE_NON'))
+	var exist bool
+	err = db.Table("trx_item_purchase_order_detail A").Select("1").
+		Joins("trx_item_purchase_order_detail_changed_item B ON A.purchase_order_detail_system_number = B.changed_item_purchase_order_detail_system_number").
+		Where(transactionsparepartentities.PurchaseOrderDetailEntities{
+			ChangedItemPurchaseOrderDetailSystemNumber: payloads.PurchaseOrderDetailSystemNumber,
+			SubstituteTypeId: 4,
+		}).Scan(&exist).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Total Quantity Purchase Order cannot exceed Quantity Purchase Request",
+			Err:        err,
+		}
+	}
+
+	if exist {
+		poDetailEntities.ItemQuantity = payloads.ItemQuantity
+		poDetailEntities.ItemPrice = payloads.ItemPrice
+		poDetailEntities.ItemDiscountAmount = payloads.ItemDiscountAmount
+		poDetailEntities.ItemDiscountPercentage = payloads.ItemDiscountPercentage
+		*poDetailEntities.ItemTotal = *payloads.ItemTotal * (*payloads.ItemPrice * *payloads.ItemDiscountAmount)
+		err = db.Save(&poDetailEntities).Error
+		if err != nil {
+			return poDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Total Quantity Purchase Order cannot exceed Quantity Purchase Request",
+				Err:        err,
+			}
+		}
+		//SELECT
+		//@Old_Po_Sys_No = P.OLD_PO_SYS_NO,
+		//@Old_Po_Line = P.OLD_PO_LINE ,
+		//@Substitute_Type = P2.SUBSTITUTE_TYPE
+		//FROM atItemPO1 P
+		//INNER JOIN atItemPO2 P2 ON P.OLD_PO_SYS_NO = P2.OLD_PO_SYS_NO AND P.OLD_PO_LINE = P2.OLD_PO_LINE
+		//WHERE PO_SYS_NO = @Po_Sys_No
+		//AND PO_LINE = @Old_Po_Line
+		var ChangedItemPurchaseOrderDetailSystemNumber int
+		err = db.Table("trx_item_purchase_order_detail A").Select("A.changed_item_purchase_order_detail_system_number").
+			Joins("trx_item_purchase_order_detail_changed_item B ON A.purchase_order_detail_system_number = B.changed_item_purchase_order_detail_system_number").
+			Where(transactionsparepartentities.PurchaseOrderDetailEntities{
+				ChangedItemPurchaseOrderDetailSystemNumber: payloads.PurchaseOrderDetailSystemNumber,
+			}).Scan(&ChangedItemPurchaseOrderDetailSystemNumber).Error
+
+		if err != nil {
 			return poDetailEntities, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusUnprocessableEntity,
-				Message:    "Total Quantity Purchase Order cannot exceed Quantity Purchase Request",
+				Message:    "Failed To Get changes purchase order detail system number",
+				Err:        err,
 			}
+		}
+		var doQty int
+		var poQty int
+
+		//SET @Do_Qty = ISNULL((SELECT
+		//SUM(DO_QTY)
+		//FROM atBinningStock1
+		//WHERE REF_SYS_NO = @Po_Sys_No
+		//AND REF_LINE = @Old_Po_Line),0)
+		err = db.Model(transactionsparepartentities.BinningStockDetail{}).
+			Select("ISNULL(SUM(delivery_order_quantity),0)").
+			Where(transactionsparepartentities.BinningStockDetail{PurchaseOrderDetailSystemNumber: payloads.PurchaseRequestDetailSystemNumber}).
+			Scan(&doQty).Error
+		if err != nil {
+			return poDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To Get Delivery Order Quantity",
+				Err:        err,
+			}
+		}
+
+		//SET @Po_Qty = ISNULL((SELECT
+		//SUM(ITEM_QTY)
+		//FROM atItemPO1
+		//WHERE OLD_PO_SYS_NO = @Po_Sys_No
+		//AND OLD_PO_LINE = @Old_Po_Line),0)
+		err = db.Model(&poDetailEntities).Select("ISNULL(SUM(item_quantity),0)").Where(&transactionsparepartentities.PurchaseOrderDetailEntities{ChangedItemPurchaseOrderDetailSystemNumber: ChangedItemPurchaseOrderDetailSystemNumber}).
+			Scan(&poQty).Error
+		if err != nil {
+			return poDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To Get Purchase Order Quantity",
+				Err:        err,
+			}
+		}
+		if poQty < doQty {
+			return poDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Item cannot be less than " + strconv.Itoa(doQty),
+				Err:        err,
+			}
+		}
+	}
+	//prDetailEntities.
+	//UPDATE atItemPR1
+	//SET
+	//PO_QTY = ISNULL(PO_QTY,0)- ISNULL(@Pr_Po_Qty,0) + ISNUll(@Item_Qty,0) ,
+	//--CHANGE_NO = CHANGE_NO + 1 ,
+	//	CHANGE_USER_ID = @Change_User_Id ,
+	//	CHANGE_DATETIME = @Change_Datetime
+	//WHERE PR_SYS_NO = @Pr_Sys_No AND PR_LINE  = @Pr_Line
+	currentTime := time.Now().UTC()
+	//timeString := currentTime.Format("2006-01-02T15:04:05.000Z")
+	prDetailEntities.ChangeNo += 1
+	*prDetailEntities.UpdatedDate = currentTime
+	prDetailEntities.UpdatedByUserId = payloads.UpdatedByUserId
+	err = db.Save(&prDetailEntities).Error
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed To Save Purchase Request Detail =" + err.Error()}
+	}
+	//UPDATE atItemPO1
+	//SET ITEM_PRICE = @Item_Price ,
+	//	ITEM_DISC_PERCENT = @Item_Disc_Percent ,
+	//	ITEM_DISC_AMOUNT = @Item_Disc_Amount ,
+	//	ITEM_TOTAL = @Item_Total ,
+	//	ITEM_REMARK = @Item_Remark,
+	//	ITEM_QTY = @Item_Qty,
+	//--CHANGE_NO = CHANGE_NO + 1 ,
+	//	CHANGE_USER_ID = @Change_User_Id ,
+	//	CHANGE_DATETIME = @Change_Datetime
+	//WHERE PO_SYS_NO = @Po_Sys_No AND PO_LINE = @Po_Line
+
+	poDetailEntities.ItemPrice = payloads.ItemPrice
+	poDetailEntities.ItemDiscountPercentage = payloads.ItemDiscountPercentage
+	poDetailEntities.ItemDiscountAmount = payloads.ItemDiscountAmount
+	poDetailEntities.ItemTotal = payloads.ItemTotal
+	poDetailEntities.ItemRemark = payloads.ItemRemark
+	poDetailEntities.ItemQuantity = payloads.ItemQuantity
+	*poDetailEntities.UpdatedDate = currentTime
+	poDetailEntities.UpdatedByUserId = payloads.UpdatedByUserId
+	err = db.Save(&poDetailEntities).Error
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed To Save Purchase Order Detail =" + err.Error()}
+	}
+
+	var taxRate float64
+	var totalDiscount float64
+	var totalAmount float64
+	var pkptype bool
+	var CompanyVatPkpNo string
+	var SupplierVatPkpNo string
+	var SupplierId int
+	var totalVat float64
+	//currentTime := time.Now().UTC()
+	timeString := currentTime.Format("2006-01-02T15:04:05.000Z")
+	var TaxRateResponse transactionsparepartpayloads.TaxRateResponseApi
+	//		SET @TAX_RATE = dbo.getTaxPercent(dbo.getVariableValue('TAX_TYPE_PPN'),dbo.getVariableValue('TAX_SERV_CODE_PPN'),@Change_Datetime)
+	TaxRateUrl := config.EnvConfigs.FinanceServiceUrl + "tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date=" + timeString
+	if err := utils.Get(TaxRateUrl, &TaxRateResponse, nil); err != nil {
+		fmt.Println(err.Error())
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Status data from external service",
+			Err:        err,
+		}
+	}
+	if TaxRateResponse.TaxPercent != nil {
+		taxRate = *TaxRateResponse.TaxPercent
+
+	} else {
+		taxRate = 0
+	}
+	//SET @TOTAL_DISCOUNT = (SELECT SUM(ITEM_QTY * ITEM_DISC_AMOUNT) FROM atItemPO1 WHERE PO_SYS_NO = @Po_Sys_No)
+
+	err = db.Table("trx_item_purchase_order_detail A").Select("ISNULL(SUM(item_quantity * item_discount_amount),0)").
+		Where("A.purchase_order_system_number =?", payloads.PurchaseOrderSystemNumber).Scan(&totalDiscount).Error
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed To Total Discount",
+			Err:        err,
+		}
+	}
+	//SET @TOTAL_AMOUNT = (SELECT SUM(ITEM_QTY * ITEM_PRICE) FROM atItemPO1 WHERE PO_SYS_NO = @Po_Sys_No)
+	err = db.Table("trx_item_purchase_order_detail A").Select("isnull(SUM(item_quantity * item_price),0)").
+		Where("A.purchase_order_system_number =?", payloads.PurchaseOrderSystemNumber).Scan(&totalAmount).Error
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed To Total Amount",
+			Err:        err,
+		}
+	}
+	//			SET @SUPPLIER = (SELECT SUPPLIER_CODE FROM atItemPO0 WHERE PO_SYS_NO = @Po_Sys_No)
+	err = db.Model(&transactionsparepartentities.PurchaseOrderEntities{}).Select("supplier_id").
+		Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
+		Scan(&SupplierId).Error
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed To Get Supplier ID from purchase order",
+			Err:        err,
+		}
+	}
+	//SET @Company_Code = (SELECT COMPANY_CODE FROM atItemPO0 WHERE PO_SYS_NO = @Po_Sys_No)
+	//
+	var CompanyId int
+	var poEntities transactionsparepartentities.PurchaseOrderEntities
+	err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
+		First(&CompanyId).Error
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed To Get Customer from purchase order",
+			Err:        err,
+		}
+	}
+	//SET @Supplier_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmSupplier0 WHERE SUPPLIER_CODE = @SUPPLIER)
+	var SupplierResponse transactionsparepartpayloads.SupplierResponsesAPI
+	SupplierByIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(SupplierId)
+	if err := utils.Get(SupplierByIdUrl, &SupplierResponse, nil); err != nil {
+		fmt.Println(err.Error())
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed to fetch Supplier Id from external service",
+			Err:        err,
+		}
+	}
+	pkptype = SupplierResponse.TaxSupplier.PkpType
+	SupplierVatPkpNo = SupplierResponse.TaxSupplier.PkpNo
+	//SET @Company_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmComp0 WHERE COMPANY_CODE = @Company_Code)
+	var CompanyDetailResponse transactionsparepartpayloads.CompanyDetailResponses
+	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(CompanyId)
+	if err := utils.Get(CompanyDetailUrl, &CompanyDetailResponse, nil); err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed to fetch Company Id Detail from external service",
+			Err:        err,
+		}
+	}
+	//IF @PKP='Y'
+	//BEGIN
+	//IF LTRIM(RTRIM(ISNULL(@Supplier_Vat_Pkp_No,'')))<>LTRIM(RTRIM(ISNULL(@Company_Vat_Pkp_No,'')))
+	//BEGIN
+	//SET @TOTAL_VAT = (@TOTAL_AMOUNT - @TOTAL_DISCOUNT) * (@TAX_RATE / 100)
+	//END
+	//ELSE
+	//BEGIN
+	//SET @TOTAL_VAT = 0
+	//END
+	//END
+	//ELSE
+	//BEGIN
+	//SET @TOTAL_VAT = 0
+	//END
+
+	if pkptype {
+		if SupplierVatPkpNo != CompanyVatPkpNo {
+			totalVat = (totalAmount - totalDiscount) * (taxRate / 100)
+		} else {
+			totalVat = 0
+		}
+
+	} else {
+		totalVat = 0
+	}
+	//SET @TOTAL_AFTER_VAT = @TOTAL_AMOUNT - @TOTAL_DISCOUNT + @TOTAL_VAT
+
+	totalAfterVat := totalAmount - totalDiscount + totalVat
+	err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
+		Scan(&poEntities).Error
+
+	// AMBIL DP REQ DARI SUPPLIER
+
+	//var SupplierResponses transactionsparepartpayloads.SupplierResponsesAPI
+	//		SET @TAX_RATE = dbo.getTaxPercent(dbo.getVariableValue('TAX_TYPE_PPN'),dbo.getVariableValue('TAX_SERV_CODE_PPN'),@Change_Datetime)
+	//SupplierResponseUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(poEntities.SupplierId)
+	//if err := utils.Get(SupplierResponseUrl, &SupplierResponses, nil); err != nil {
+	//	fmt.Println(err.Error())
+	//	return entities, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Message:    "Failed to fetch Status data from external service",
+	//		Err:        err,
+	//	}
+	//}
+	//dpRequest = SupplierResponse.MinimumDownPayment
+	var dpRequest float64
+	if SupplierResponse.MinimumDownPayment != nil && *SupplierResponse.MinimumDownPayment != 0 {
+		dpRequest = totalAfterVat * (*SupplierResponse.MinimumDownPayment / 100)
+	} else {
+		dpRequest = *poEntities.DpRequest
+	}
+	*poEntities.DpRequest = dpRequest
+	*poEntities.TotalDiscount = totalDiscount
+	*poEntities.TotalAmount = totalAmount
+	*poEntities.TotalVat = totalVat
+	*poEntities.TotalAfterVat = totalAfterVat
+	poEntities.ChangeNo += 1
+	poEntities.UpdatedByUserId = payloads.UpdatedByUserId
+	*poEntities.UpdatedDate = currentTime
+
+	err = db.Save(&poEntities).Error
+
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Update Header Failed",
+			Data:       nil,
+			Err:        err,
 		}
 	}
 
 	return poDetailEntities, nil
-
 }

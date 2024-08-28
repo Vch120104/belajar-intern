@@ -177,6 +177,10 @@ func Migrate() {
 	//&masterentities.WarehouseGroupMappingEntities{},
 	//&transactionsparepartentities.PurchaseOrderEntities{},
 	//&transactionsparepartentities.PurchaseOrderDetailEntities{},
+	//&transactionsparepartentities.PurchaseOrderDetailChangedItem{},
+	//
+	//&transactionsparepartentities.BinningStock{},
+	//&transactionsparepartentities.BinningStockDetail{},
 	)
 
 	if err != nil {

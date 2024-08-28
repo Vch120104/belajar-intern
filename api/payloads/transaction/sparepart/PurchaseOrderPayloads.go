@@ -461,28 +461,28 @@ type PurchaseOrderNewPurchaseOrderResponses struct {
 }
 
 type PurchaseOrderDetailPayloads struct {
-	PurchaseOrderSystemNumber         int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
-	PurchaseOrderLine                 int        `json:"purchase_order_line"`
-	ItemId                            int        `json:"item_id"`
-	ItemUnitOfMeasurement             string     `json:"item_unit_of_measurement"`
-	UnitOfMeasurementRate             *float64   `json:"unit_of_measurement_rate"`
-	ItemQuantity                      *float64   `json:"item_quantity"`
-	ItemPrice                         *float64   `json:"item_price"`
-	ItemTotal                         *float64   `json:"item_total"`
-	PurchaseRequestDetailSystemNumber int        `json:"purchase_request_detail_system_number"`
-	PurchaseRequestSystemNumber       int        `json:"purchase_request_system_number"`
-	PurchaseRequestLineNumber         int        `json:"purchase_request_line_number"`
-	StockOnHand                       *float64   `json:"stock_on_hand"`
-	OldPurchaseOrderSystemNo          int        `json:"old_purchase_order_system_no"`
-	ItemRemark                        string     `json:"item_remark"`
-	OldPurchaseOrderLineNumber        int        `json:"old_purchase_order_line_number"`
-	CreatedByUserId                   int        `json:"created_by_user_id"`
-	CreatedDate                       *time.Time `json:"created_date"`
-	UpdatedByUserId                   int        `json:"updated_by_user_id"`
-	UpdatedDate                       *time.Time `json:"updated_date"`
-	Snp                               *float64   `json:"snp"`
-	ItemDiscountPercentage            *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
-	ItemDiscountAmount                *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
+	PurchaseOrderSystemNumber         int      `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
+	PurchaseOrderLine                 int      `json:"purchase_order_line"`
+	ItemId                            int      `json:"item_id"`
+	ItemUnitOfMeasurement             string   `json:"item_unit_of_measurement"`
+	UnitOfMeasurementRate             *float64 `json:"unit_of_measurement_rate"`
+	ItemQuantity                      *float64 `json:"item_quantity"`
+	ItemPrice                         *float64 `json:"item_price"`
+	ItemTotal                         *float64 `json:"item_total"`
+	PurchaseRequestDetailSystemNumber int      `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int      `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber         int      `json:"purchase_request_line_number"`
+	StockOnHand                       *float64 `json:"stock_on_hand"`
+	//ChangedItemPurchaseOrderSystemNo   int        `json:"old_purchase_order_system_no"`
+	ItemRemark string `json:"item_remark"`
+	//ChangedItemPurchaseOrderLineNumber int        `json:"old_purchase_order_line_number"`
+	CreatedByUserId        int        `json:"created_by_user_id"`
+	CreatedDate            *time.Time `json:"created_date"`
+	UpdatedByUserId        int        `json:"updated_by_user_id"`
+	UpdatedDate            *time.Time `json:"updated_date"`
+	Snp                    *float64   `json:"snp"`
+	ItemDiscountPercentage *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
+	ItemDiscountAmount     *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
 	//ItemTotal                         *float64   `gorm:"column:item_total;" json:"item_total"`
 
 	//totaldiscountnyadjabb nggak kagak kagak kaga kaga kagak bmsananananan
@@ -490,29 +490,29 @@ type PurchaseOrderDetailPayloads struct {
 }
 type PurchaseOrderSaveDetailPayloads struct {
 	//PurchaseOrderDetailSystemNumber
-	PurchaseOrderDetailSystemNumber   int        `json:"purchase_order_detail_system_number"`
-	PurchaseOrderSystemNumber         int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
-	PurchaseOrderLine                 int        `json:"purchase_order_line"`
-	ItemId                            int        `json:"item_id"`
-	ItemUnitOfMeasurement             string     `json:"item_unit_of_measurement"`
-	UnitOfMeasurementRate             *float64   `json:"unit_of_measurement_rate"`
-	ItemQuantity                      *float64   `json:"item_quantity"`
-	ItemPrice                         *float64   `json:"item_price"`
-	ItemTotal                         *float64   `json:"item_total"`
-	PurchaseRequestDetailSystemNumber int        `json:"purchase_request_detail_system_number"`
-	PurchaseRequestSystemNumber       int        `json:"purchase_request_system_number"`
-	PurchaseRequestLineNumber         int        `json:"purchase_request_line_number"`
-	StockOnHand                       *float64   `json:"stock_on_hand"`
-	OldPurchaseOrderSystemNo          int        `json:"old_purchase_order_system_no"`
-	ItemRemark                        string     `json:"item_remark"`
-	OldPurchaseOrderLineNumber        int        `json:"old_purchase_order_line_number"`
-	CreatedByUserId                   int        `json:"created_by_user_id"`
-	CreatedDate                       *time.Time `json:"created_date"`
-	UpdatedByUserId                   int        `json:"updated_by_user_id"`
-	UpdatedDate                       *time.Time `json:"updated_date"`
-	Snp                               *float64   `json:"snp"`
-	ItemDiscountPercentage            *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
-	ItemDiscountAmount                *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
+	PurchaseOrderDetailSystemNumber    int        `json:"purchase_order_detail_system_number"`
+	PurchaseOrderSystemNumber          int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
+	PurchaseOrderLine                  int        `json:"purchase_order_line"`
+	ItemId                             int        `json:"item_id"`
+	ItemUnitOfMeasurement              string     `json:"item_unit_of_measurement"`
+	UnitOfMeasurementRate              *float64   `json:"unit_of_measurement_rate"`
+	ItemQuantity                       *float64   `json:"item_quantity"`
+	ItemPrice                          *float64   `json:"item_price"`
+	ItemTotal                          *float64   `json:"item_total"`
+	PurchaseRequestDetailSystemNumber  int        `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber        int        `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber          int        `json:"purchase_request_line_number"`
+	StockOnHand                        *float64   `json:"stock_on_hand"`
+	ChangedItemPurchaseOrderSystemNo   int        `json:"old_purchase_order_system_no"`
+	ItemRemark                         string     `json:"item_remark"`
+	ChangedItemPurchaseOrderLineNumber int        `json:"old_purchase_order_line_number"`
+	CreatedByUserId                    int        `json:"created_by_user_id"`
+	CreatedDate                        *time.Time `json:"created_date"`
+	UpdatedByUserId                    int        `json:"updated_by_user_id"`
+	UpdatedDate                        *time.Time `json:"updated_date"`
+	Snp                                *float64   `json:"snp"`
+	ItemDiscountPercentage             *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
+	ItemDiscountAmount                 *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
 	//ItemTotal                         *float64   `gorm:"column:item_total;" json:"item_total"`
 
 	//totaldiscountnya cek coba
