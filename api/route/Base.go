@@ -1346,6 +1346,23 @@ func SettingTechnicianRouter(
 	return router
 }
 
+func TechnicianAttendanceRouter(
+	TechnicianAttendanceController transactionjpcbcontroller.TechnicianAttendanceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
+	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
+	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
+
+	return router
+}
+
 func ServiceWorkshopRouter(
 	ServiceWorkshopController transactionworkshopcontroller.ServiceWorkshopController,
 ) chi.Router {
