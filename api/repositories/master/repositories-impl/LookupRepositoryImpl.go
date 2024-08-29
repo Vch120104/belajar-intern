@@ -1,9 +1,6 @@
 package masterrepositoryimpl
 
 import (
-	masterentities "after-sales/api/entities/master"
-	masteritementities "after-sales/api/entities/master/item"
-	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -22,78 +19,76 @@ func StartLookupRepositoryImpl() masterrepository.LookupRepository {
 	return &LookupRepositoryImpl{}
 }
 
-func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var results []map[string]interface{}
 	var err error
 
 	// Default filters and variables
-	ItmGrpInventory := "IN"
+	ItmGrpInventory := 1 // "IN"
 	PurchaseTypeGoods := "G"
 	ItmCls := ""
-	year, month, companyCode := 2024, 8, "COMP_CODE" // Placeholder for real values or dynamic fetching
+	year, month, companyCode := 2024, 8, 1 // Placeholder for real values or dynamic fetching
 
+	// pagination limit is set
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	baseQuery := tx.Table("")
+
+	// Switch based on the linetypeId
 	switch linetypeId {
 	case utils.LinetypePackage:
-		// GORM query for Line Type Package
-		err = tx.Table("mtr_package A").
-			Select("A.PACKAGE_CODE AS PackageCode, A.PACKAGE_NAME AS PackageName, SUM(A1.FRT_QTY) AS FRT, B.CPC_DESCRIPTION AS ProfitCenter, A.MODEL_CODE AS ModelCode, C.MODEL_DESCRIPTION AS Description, A.PACKAGE_PRICE AS Price").
-			Joins("LEFT JOIN mtr_package_detail A1 ON A.PACKAGE_CODE = A1.PACKAGE_CODE").
-			Joins("LEFT JOIN mtr_profit_center B ON A.CPC_CODE = B.CPC_CODE").
-			Joins("LEFT JOIN mtr_unit_model C ON A.MODEL_CODE = C.MODEL_CODE").
-			Where("A.RECORD_STATUS = ? AND A1.RECORD_STATUS = ?", "A", "A").
-			Group("A.PACKAGE_CODE, A.PACKAGE_NAME, B.CPC_DESCRIPTION, A.MODEL_CODE, C.MODEL_DESCRIPTION, A.PACKAGE_PRICE").
-			Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
+		baseQuery = baseQuery.Table("mtr_package A").
+			Select("A.package_code AS package_code, A.package_name AS package_name, SUM(A1.frt_quantity) AS frt, B.profit_center_id AS profit_center, C.model_code AS model_code, C.model_description AS description, A.package_price AS price").
+			Joins("LEFT JOIN mtr_package_master_detail_item A1 ON A.package_id = A1.package_id").
+			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ? AND A1.is_active = ?", 1, 1).
+			Group("A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
 
 	case utils.LinetypeOperation:
-		// GORM query for Line Type Operation
-		err = tx.Table("amOperation2 A").
+		baseQuery = baseQuery.Table("mtr_operation_frt A").
 			Select("A.OPERATION_CODE AS Code, B.OPERATION_NAME AS Description, A.FRT_HOUR AS FRT, C.OPR_ENTRIES_CODE AS OprEntriesCode, G.OPR_ENTRIES_DESC AS OprEntriesName, C.OPR_KEY_CODE AS OprKeyCode, F.OPR_KEY_DESC AS OprKeyName").
-			Joins("INNER JOIN amOperation0 O ON O.OPERATION_CODE = A.OPERATION_CODE AND O.VEHICLE_BRAND = A.VEHICLE_BRAND AND O.MODEL_CODE = A.MODEL_CODE").
-			Joins("LEFT JOIN amOperation3 C ON A.OPERATION_CODE = C.OPERATION_CODE AND A.VEHICLE_BRAND = C.VEHICLE_BRAND AND A.MODEL_CODE = C.MODEL_CODE").
-			Joins("LEFT JOIN amOperationCode B ON A.OPERATION_CODE = B.OPERATION_CODE").
-			Joins("LEFT JOIN amOprKey F ON C.OPR_KEY_CODE = F.OPR_KEY_CODE").
-			Joins("LEFT JOIN amOprEntries G ON C.OPR_ENTRIES_CODE = G.OPR_ENTRIES_CODE").
-			Where("A.RECORD_STATUS = ? AND O.RECORD_STATUS = ?", "A", "A").
-			Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
+			Joins("INNER JOIN mtr_operation_model_mapping O ON O.OPERATION_CODE = A.OPERATION_CODE AND O.VEHICLE_BRAND = A.VEHICLE_BRAND AND O.MODEL_CODE = A.MODEL_CODE").
+			Joins("LEFT JOIN mtr_operation_level C ON A.OPERATION_CODE = C.OPERATION_CODE AND A.VEHICLE_BRAND = C.VEHICLE_BRAND AND A.MODEL_CODE = C.MODEL_CODE").
+			Joins("LEFT JOIN mtr_operation_code B ON A.OPERATION_CODE = B.OPERATION_CODE").
+			Joins("LEFT JOIN mtr_operation_key F ON C.OPR_KEY_CODE = F.OPR_KEY_CODE").
+			Joins("LEFT JOIN mtr_operation_entries G ON C.OPR_ENTRIES_CODE = G.OPR_ENTRIES_CODE").
+			Where("A.is_active = ? AND O.is_active = ?", 1, 1)
 
 	case utils.LinetypeSparepart:
-		// GORM query for Line Type Sparepart
-		ItmCls = "SP"
-		err = tx.Table("gmItem0 A").
-			Select("A.ITEM_CODE AS Code, A.ITEM_NAME AS Description, ISNULL((SELECT SUM(V.QTY_AVAILABLE) FROM viewLocationStock V WHERE A.ITEM_CODE = V.ITEM_CODE AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.COMPANY_CODE = ?), 0) AS AvailQty, A.ITEM_LVL_1 AS ItemLvl1, A.ITEM_LVL_2 AS ItemLvl2, A.ITEM_LVL_3 AS ItemLvl3, A.ITEM_LVL_4 AS ItemLvl4", year, month, companyCode).
-			Joins("INNER JOIN gmItem1 B ON A.ITEM_CODE = B.ITEM_CODE").
-			Where("A.ITEM_GROUP = ? AND A.ITEM_TYPE = ? AND A.ITEM_CLASS = ? AND A.RECORD_STATUS = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, "A").
-			Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
+		ItmCls = "1" // "SP"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select("A.item_code AS item_code, A.item_name AS item_name, ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V WHERE A.item_id = V.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, A.item_level_1 AS item_level_1, A.item_level_2 AS item_level_2, A.item_level_3 AS item_level_3, A.item_level_4 AS item_level_4", year, month, companyCode).
+			Joins("INNER JOIN mtr_item_detail B ON A.item_id = B.item_id").
+			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1)
 
 	case utils.LinetypeOil:
-		// GORM query for Line Type Oil
-		ItmCls = "OL"
-		err = tx.Table("gmItem0 A").
-			Select("A.ITEM_CODE AS Code, A.ITEM_NAME AS Description, ISNULL((SELECT SUM(V.QTY_AVAILABLE) FROM viewLocationStock V WHERE A.ITEM_CODE = V.ITEM_CODE AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.COMPANY_CODE = ?), 0) AS AvailQty, A.ITEM_LVL_1 AS ItemLvl1, A.ITEM_LVL_2 AS ItemLvl2, A.ITEM_LVL_3 AS ItemLvl3, A.ITEM_LVL_4 AS ItemLvl4", year, month, companyCode).
-			Joins("INNER JOIN gmItem1 B ON A.ITEM_CODE = B.ITEM_CODE").
-			Where("A.ITEM_GROUP = ? AND A.ITEM_TYPE = ? AND A.ITEM_CLASS = ? AND A.RECORD_STATUS = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, "A").
-			Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
+		ItmCls = "1" // "OL"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select("A.item_code AS item_code, A.item_name AS item_name, ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V WHERE A.item_id = V.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, A.item_level_1 AS item_level_1, A.item_level_2 AS item_level_2, A.item_level_3 AS item_level_3, A.item_level_4 AS item_level_4", year, month, companyCode).
+			Joins("INNER JOIN mtr_item_detail B ON A.item_id = B.item_id").
+			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1)
 
 	case utils.LinetypeMaterial:
-		// GORM query for Line Type Material
-		ItmCls = "MT"
-		ItmClsSublet := "Sublet_Class"
-		err = tx.Table("gmItem0 A").
-			Select("DISTINCT A.ITEM_CODE AS Code, A.ITEM_NAME AS Description, ISNULL((SELECT SUM(V.QTY_AVAILABLE) FROM viewLocationStock V WHERE A.ITEM_CODE = V.ITEM_CODE AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.COMPANY_CODE = ?), 0) AS AvailQty, A.ITEM_LVL_1 AS ItemLvl1, A.ITEM_LVL_2 AS ItemLvl2, A.ITEM_LVL_3 AS ItemLvl3, A.ITEM_LVL_4 AS ItemLvl4", year, month, companyCode).
-			Joins("INNER JOIN gmItem1 B ON A.ITEM_CODE = B.ITEM_CODE").
-			Where("A.ITEM_GROUP = ? AND A.ITEM_TYPE = ? AND (A.ITEM_CLASS = ? OR A.ITEM_CLASS = ?) AND A.RECORD_STATUS = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, "A").
-			Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
+		ItmCls = "1"        // "MT"
+		ItmClsSublet := "2" //"Sublet_Class"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select("DISTINCT A.item_code AS item_code, A.item_name AS item_name, ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V WHERE A.item_id = V.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, A.item_level_1 AS item_level_1, A.item_level_2 AS item_level_2, A.item_level_3 AS item_level_3, A.item_level_4 AS item_level_4", year, month, companyCode).
+			Joins("INNER JOIN mtr_item_detail B ON A.item_id = B.item_id").
+			Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
+			Order("A.item_code")
 
 	case utils.LinetypeSublet:
-		// GORM query for Line Type Sublet
-		ItmCls = "Fee_Class"
-		ItmGrpOutsideJob := "OutsideJob_Group"
-		PurchaseTypeServices := "Service_Type"
-		err = tx.Table("gmItem0 A").
-			Select("DISTINCT A.ITEM_CODE AS Code, A.ITEM_NAME AS Description, ISNULL((SELECT SUM(V.QTY_AVAILABLE) FROM viewLocationStock V WHERE A.ITEM_CODE = V.ITEM_CODE AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.COMPANY_CODE = ?), 0) AS AvailQty, A.ITEM_LVL_1 AS ItemLvl1, A.ITEM_LVL_2 AS ItemLvl2, A.ITEM_LVL_3 AS ItemLvl3, A.ITEM_LVL_4 AS ItemLvl4", year, month, companyCode).
-			Joins("INNER JOIN gmItem1 B ON A.ITEM_CODE = B.ITEM_CODE").
-			Where("(A.ITEM_GROUP = ? OR (A.ITEM_GROUP = ? AND A.ITEM_CLASS = ?)) AND A.ITEM_TYPE = ? AND A.RECORD_STATUS = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, "A").
-			Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
+		ItmCls = "1"                //"Fee_Class"
+		ItmGrpOutsideJob := "1"     //"OutsideJob_Group"
+		PurchaseTypeServices := "1" //"Service_Type"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select("DISTINCT A.item_code AS item_code, A.item_name AS item_name, ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V WHERE A.item_id = V.item_id AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, A.item_level_1 AS item_level_1, A.item_level_2 AS item_level_2, A.item_level_3 AS item_level_3, A.item_level_4 AS item_level_4", year, month, companyCode).
+			Joins("INNER JOIN mtr_item_detail B ON A.item_id = B.item_id").
+			Where("(A.item_group_id = ? OR (A.item_group_id = ? AND A.item_class_id = ?)) AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
+			Order("A.item_code")
 
 	default:
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -103,6 +98,11 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		}
 	}
 
+	for _, filter := range filters {
+		baseQuery = baseQuery.Where(fmt.Sprintf("%s = ?", filter.ColumnField), filter.ColumnValue)
+	}
+
+	err = baseQuery.Offset((paginate.Page - 1) * paginate.Limit).Limit(paginate.Limit).Find(&results).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -110,30 +110,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		}
 	}
 
-	// Calculate Total Rows and Pages
 	var totalRows int64
-	var countErr error
-	switch linetypeId {
-	case utils.LinetypePackage:
-		countErr = tx.Model(&masterentities.PackageMaster{}).Where("RECORD_STATUS = ?", "A").Count(&totalRows).Error
-	case utils.LinetypeOperation:
-		countErr = tx.Model(&masteroperationentities.OperationFrt{}).Where("RECORD_STATUS = ?", "A").Count(&totalRows).Error
-	case utils.LinetypeSparepart:
-		countErr = tx.Model(&masteritementities.Item{}).Where("ITEM_GROUP = ? AND ITEM_TYPE = ? AND ITEM_CLASS = ? AND RECORD_STATUS = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, "A").Count(&totalRows).Error
-	case utils.LinetypeOil:
-		countErr = tx.Model(&masteritementities.Item{}).Where("ITEM_GROUP = ? AND ITEM_TYPE = ? AND ITEM_CLASS = ? AND RECORD_STATUS = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, "A").Count(&totalRows).Error
-	case utils.LinetypeMaterial:
-		countErr = tx.Model(&masteritementities.Item{}).Where("ITEM_GROUP = ? AND ITEM_TYPE = ? AND (ITEM_CLASS = ? OR ITEM_CLASS = ?) AND RECORD_STATUS = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, "Sublet_Class", "A").Count(&totalRows).Error
-	case utils.LinetypeSublet:
-		ItmGrpOutsideJob := "OutsideJob_Group"
-		PurchaseTypeServices := "Service_Type"
-		countErr = tx.Model(&masteritementities.Item{}).Where("(ITEM_GROUP = ? OR (ITEM_GROUP = ? AND ITEM_CLASS = ?)) AND ITEM_TYPE = ? AND RECORD_STATUS = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, "A").Count(&totalRows).Error
-	}
-
+	countQuery := baseQuery.Session(&gorm.Session{}).Model(&results)
+	countErr := countQuery.Count(&totalRows).Error
 	if countErr != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			Err:        countErr,
 		}
 	}
 

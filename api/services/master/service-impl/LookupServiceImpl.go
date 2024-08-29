@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -25,11 +26,11 @@ func StartLookupService(LookupRepo masterrepository.LookupRepository, db *gorm.D
 	}
 }
 
-func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCode(tx, linetypeId, pages)
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCode(tx, linetypeId, pages, filterCondition)
 	if baseErr != nil {
 		return nil, 0, 0, baseErr
 	}
