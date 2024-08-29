@@ -233,7 +233,7 @@ func ItemSubstituteRouter(
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
-
+	router.Get("/item-for-substitute",itemSubstituteController.GetallItemForFilter)
 	return router
 }
 
