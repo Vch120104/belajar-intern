@@ -142,6 +142,9 @@ func Migrate() {
 	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
 	//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 	//
+	//&transactionjpcbentities.SettingTechnician{},
+	//&transactionjpcbentities.SettingTechnicianDetail{},
+	//&transactionjpcbentities.TechnicianAttendance{},
 	//&transactionjpcbentities.CarWash{},
 	//&transactionjpcbentities.BayMaster{},
 	//&transactionjpcbentities.CarWashPriority{},

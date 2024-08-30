@@ -20,4 +20,5 @@ type ItemSubstituteRepository interface {
 	ChangeStatusItemSubstitute(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	DeactivateItemSubstituteDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	ActivateItemSubstituteDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
+	GetallItemForFilter(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

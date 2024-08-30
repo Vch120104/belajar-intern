@@ -18,4 +18,5 @@ type ItemSubstituteService interface {
 	ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse)
 	DeactivateItemSubstituteDetail(id string) (bool, *exceptions.BaseErrorResponse)
 	ActivateItemSubstituteDetail(id string) (bool, *exceptions.BaseErrorResponse)
+	GetallItemForFilter(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }
