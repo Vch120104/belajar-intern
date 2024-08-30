@@ -94,3 +94,22 @@ func (service *PurchaseOrderServiceImpl) NewPurchaseOrderDetail(payloads transac
 	}
 	return result, nil
 }
+func (service *PurchaseOrderServiceImpl) DeletePurchaseOrderDetailMultiId(multiid string) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.DeletePurchaseOrderDetailMultiId(tx, multiid)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (service *PurchaseOrderServiceImpl) SavePurchaseOrderDetail(payloads transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.PurchaseOrderRepo.SavePurchaseOrderDetail(tx, payloads)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

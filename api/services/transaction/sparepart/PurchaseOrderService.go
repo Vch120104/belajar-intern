@@ -17,4 +17,10 @@ type PurchaseOrderService interface {
 	UpdatePurchaseOrderHeader(int, transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderPayloads) (transactionsparepartentities.PurchaseOrderEntities, *exceptions.BaseErrorResponse)
 	GetPurchaseOrderDetailById(int) (transactionsparepartpayloads.PurchaseOrderGetDetail, *exceptions.BaseErrorResponse)
 	NewPurchaseOrderDetail(payloads transactionsparepartpayloads.PurchaseOrderDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
+	DeletePurchaseOrderDetailMultiId(string) (bool, *exceptions.BaseErrorResponse)
+	SavePurchaseOrderDetail(transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
 }
+
+//NewPurchaseOrderDetail(*gorm.DB, transactionsparepartpayloads.PurchaseOrderDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
+//DeletePurchaseOrderDetailMultiId(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
+//SavePurchaseOrderDetail(*gorm.DB, transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)

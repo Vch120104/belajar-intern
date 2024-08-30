@@ -595,7 +595,9 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//FROM atItemPR1 WHERE PR_SYS_NO = @Pr_Sys_No AND PR_LINE = @Pr_Line
 	var prentities transactionsparepartentities.PurchaseRequestDetail
 	err = db.Model(&prentities).Select("vehicle_id,item_quantity,item_quantity").
-		Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseRequestDetailSystemNumber: payloads.PurchaseRequestDetailSystemNumber}).Error
+		Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseRequestDetailSystemNumber: payloads.PurchaseRequestDetailSystemNumber}).
+		First(&prentities).
+		Error
 	if err != nil {
 		return entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
@@ -796,14 +798,14 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	}
 	//SET @Company_Code = (SELECT COMPANY_CODE FROM atItemPO0 WHERE PO_SYS_NO = @Po_Sys_No)
 	//
-	var CompanyId int
+	//var CompanyId int
 	var poEntities transactionsparepartentities.PurchaseOrderEntities
 	err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
-		First(&CompanyId).Error
+		First(&poEntities).Error
 	if err != nil {
 		return entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
-			Message:    "Failed To Get Customer from purchase order",
+			Message:    "Header Not Found",
 			Err:        err,
 		}
 	}
@@ -822,7 +824,7 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	SupplierVatPkpNo = SupplierResponse.TaxSupplier.PkpNo
 	//SET @Company_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmComp0 WHERE COMPANY_CODE = @Company_Code)
 	var CompanyDetailResponse transactionsparepartpayloads.CompanyDetailResponses
-	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(CompanyId)
+	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(poEntities.CompanyId)
 	if err := utils.Get(CompanyDetailUrl, &CompanyDetailResponse, nil); err != nil {
 		return entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
@@ -859,8 +861,8 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//SET @TOTAL_AFTER_VAT = @TOTAL_AMOUNT - @TOTAL_DISCOUNT + @TOTAL_VAT
 
 	totalAfterVat := totalAmount - totalDiscount + totalVat
-	err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
-		Scan(&poEntities).Error
+	//err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
+	//	Scan(&poEntities).Error
 
 	// AMBIL DP REQ DARI SUPPLIER
 
@@ -877,6 +879,9 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//}
 	//dpRequest = SupplierResponse.MinimumDownPayment
 	var dpRequest float64
+	//SupplierResponse.MinimumDownPayment = new(float64)
+	//*SupplierResponse.MinimumDownPayment = 2
+
 	if SupplierResponse.MinimumDownPayment != nil && *SupplierResponse.MinimumDownPayment != 0 {
 		dpRequest = totalAfterVat * (*SupplierResponse.MinimumDownPayment / 100)
 	} else {
@@ -909,11 +914,29 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//	CHANGE_USER_ID = @Change_User_Id ,
 	//	CHANGE_DATETIME = @Change_Datetime
 	//WHERE PR_SYS_NO = @Pr_Sys_No AND PR_LINE = @Pr_Line
+	err = db.Model(&prentities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseOrderDetailSystemNumber: payloads.PurchaseRequestDetailSystemNumber}).
+		First(&prentities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return entities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To Update Purchaes Request Because Purchase Request Data Not Found",
+				Data:       nil,
+				Err:        err,
+			}
+		}
+		return entities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Update PR Failed",
+			Data:       nil,
+			Err:        err,
+		}
+	}
 	prentities.PurchaseOrderDetailSystemNumber = entities.PurchaseOrderDetailSystemNumber
 	prentities.PurchaseOrderSystemNumber = payloads.PurchaseOrderSystemNumber
 	prentities.ChangeNo += 1
 	prentities.UpdatedByUserId = payloads.UpdatedByUserId
-	*prentities.UpdatedDate = currentTime
+	prentities.UpdatedDate = &currentTime
 
 	err = db.Save(&prentities).Error
 	if err != nil {
@@ -935,7 +958,10 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 		//WHERE PO_SYS_NO = @Po_Sys_No AND PO_LINE = @Po_Line
 		err := db.Model(&entities).Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: converted}).First(&entities).Error
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Purchase Order Detail Is Not Found" + err.Error()}
+			}
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusUnprocessableEntity, Message: err.Error()}
 		}
 		//PurchaseOrderDetailSystemNumber := entities.PurchaseOrderDetailSystemNumber
 		//PurchaseOrderSystemNumber := entities.PurchaseOrderSystemNumber
@@ -945,16 +971,19 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Failed to get PO Header" + err.Error()}
 		}
-
-		err = db.Model(&entities).Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: converted}).Delete(&entities).Error
+		//DELETE atItemPO1
+		//WHERE PO_SYS_NO = @Po_Sys_No AND PO_LINE = @Po_Line
+		err = db.Model(&entities).Where(transactionsparepartentities.PurchaseOrderDetailEntities{
+			PurchaseOrderDetailSystemNumber: converted}).Delete(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Failed To Delete = " + err.Error()}
 		}
 		PrEntities := transactionsparepartentities.PurchaseRequestDetail{}
 		err = db.Model(&PrEntities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseOrderDetailSystemNumber: converted}).
-			First(&entities).Error
+			First(&PrEntities).Error
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest,
+				Message: "Purchase Request Is Not Found On Requested Payloads" + err.Error()}
 		}
 		//UPDATE atItemPR1 SET
 		//PO_SYS_NO = 0,
@@ -964,12 +993,11 @@ func (repo *PurchaseOrderRepositoryImpl) DeletePurchaseOrderDetailMultiId(db *go
 		//	CHANGE_USER_ID = @Change_User_Id ,
 		//	CHANGE_DATETIME = @Change_Datetime
 		//WHERE PO_SYS_NO = @Po_Sys_No AND PO_LINE = @Po_Line
-		entities.PurchaseOrderDetailSystemNumber = 0
-		entities.PurchaseOrderSystemNumber = 0
-		entities.PurchaseOrderLineNumber = 0
-		entities.ChangeNo += 1
-
-		err = db.Save(&entities).Error
+		PrEntities.PurchaseOrderDetailSystemNumber = 0
+		PrEntities.PurchaseOrderSystemNumber = 0
+		PrEntities.PurchaseOrderLine = 0
+		PrEntities.ChangeNo += 1
+		err = db.Save(&PrEntities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
@@ -1138,7 +1166,7 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	//RETURN 0
 	//END
 	//END
-	if payloads.Snp != nil || *payloads.Snp > 0 {
+	if payloads.Snp != nil && *payloads.Snp > 0 {
 		if math.Mod(*PurchaseOrderQuantity, *payloads.Snp) != 0 {
 			return poDetailEntities, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusUnprocessableEntity,
@@ -1161,7 +1189,7 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	//AND ISNULL(SUBSTITUTE_TYPE,'') = dbo.getVariableValue('SUBSTITUTE_NON'))
 	var exist bool
 	err = db.Table("trx_item_purchase_order_detail A").Select("1").
-		Joins("trx_item_purchase_order_detail_changed_item B ON A.purchase_order_detail_system_number = B.changed_item_purchase_order_detail_system_number").
+		Joins("JOIN trx_item_purchase_order_detail_changed_item B ON A.purchase_order_detail_system_number = B.changed_item_purchase_order_detail_system_number").
 		Where(transactionsparepartentities.PurchaseOrderDetailEntities{
 			ChangedItemPurchaseOrderDetailSystemNumber: payloads.PurchaseOrderDetailSystemNumber,
 			SubstituteTypeId: 4,
@@ -1263,7 +1291,7 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	currentTime := time.Now().UTC()
 	//timeString := currentTime.Format("2006-01-02T15:04:05.000Z")
 	prDetailEntities.ChangeNo += 1
-	*prDetailEntities.UpdatedDate = currentTime
+	prDetailEntities.UpdatedDate = &currentTime
 	prDetailEntities.UpdatedByUserId = payloads.UpdatedByUserId
 	err = db.Save(&prDetailEntities).Error
 	if err != nil {
@@ -1271,6 +1299,7 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 			StatusCode: http.StatusUnprocessableEntity,
 			Message:    "Failed To Save Purchase Request Detail =" + err.Error()}
 	}
+
 	//UPDATE atItemPO1
 	//SET ITEM_PRICE = @Item_Price ,
 	//	ITEM_DISC_PERCENT = @Item_Disc_Percent ,
@@ -1359,10 +1388,10 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	}
 	//SET @Company_Code = (SELECT COMPANY_CODE FROM atItemPO0 WHERE PO_SYS_NO = @Po_Sys_No)
 	//
-	var CompanyId int
+	//var CompanyId int
 	var poEntities transactionsparepartentities.PurchaseOrderEntities
 	err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
-		First(&CompanyId).Error
+		First(&poEntities).Error
 	if err != nil {
 		return poDetailEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
@@ -1385,7 +1414,7 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	SupplierVatPkpNo = SupplierResponse.TaxSupplier.PkpNo
 	//SET @Company_Vat_Pkp_No = (SELECT ISNULL(VAT_PKP_NO, '') FROM gmComp0 WHERE COMPANY_CODE = @Company_Code)
 	var CompanyDetailResponse transactionsparepartpayloads.CompanyDetailResponses
-	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(CompanyId)
+	CompanyDetailUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(poEntities.CompanyId)
 	if err := utils.Get(CompanyDetailUrl, &CompanyDetailResponse, nil); err != nil {
 		return poDetailEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
@@ -1424,7 +1453,13 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	totalAfterVat := totalAmount - totalDiscount + totalVat
 	err = db.Model(&poEntities).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
 		Scan(&poEntities).Error
-
+	if err != nil {
+		return poDetailEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Header Not Found",
+			Err:        err,
+		}
+	}
 	// AMBIL DP REQ DARI SUPPLIER
 
 	//var SupplierResponses transactionsparepartpayloads.SupplierResponsesAPI
@@ -1464,6 +1499,5 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 			Err:        err,
 		}
 	}
-
 	return poDetailEntities, nil
 }
