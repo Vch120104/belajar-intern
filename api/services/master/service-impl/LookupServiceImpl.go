@@ -37,3 +37,39 @@ func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Paginat
 
 	return lookup, totalPages, totalRows, nil
 }
+
+func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ItemOprCodeWithPrice(tx, linetypeId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) VehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.VehicleUnitMaster(tx, brandId, modelId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) CampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.CampaignMaster(tx, companyId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
