@@ -1501,3 +1501,68 @@ func (repo *PurchaseOrderRepositoryImpl) SavePurchaseOrderDetail(db *gorm.DB, pa
 	}
 	return poDetailEntities, nil
 }
+func (repo *PurchaseOrderRepositoryImpl) DeleteDocument(db *gorm.DB, i int) (bool, *exceptions.BaseErrorResponse) {
+	var PrDetailSysNo []int
+	var poDetailEntities transactionsparepartentities.PurchaseOrderDetailEntities
+	err := db.Model(&poDetailEntities).Select("purchase_request_detail_system_number").Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderSystemNumber: i}).
+		Scan(&PrDetailSysNo).Error
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Update Header Failed",
+				Data:       nil,
+				Err:        err,
+			}
+		}
+	}
+	for _, prDetail := range PrDetailSysNo {
+		var prDetailEntities transactionsparepartentities.PurchaseRequestDetail
+		err = db.Model(&transactionsparepartentities.PurchaseRequestDetail{}).
+			Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseOrderDetailSystemNumber: prDetail}).
+			First(&prDetailEntities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Purchase Request Is Not Found",
+				Data:       nil,
+				Err:        err,
+			}
+		}
+		//update pr
+		prDetailEntities.PurchaseOrderDetailSystemNumber = 0
+		prDetailEntities.PurchaseOrderLine = 0
+		prDetailEntities.ChangeNo += 1
+		*prDetailEntities.UpdatedDate = time.Now()
+		err = db.Save(&prDetailEntities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Purchase Request Update Failed, " + err.Error(),
+				Data:       nil,
+				Err:        err,
+			}
+		}
+		err = db.Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: i}).
+			Delete(&transactionsparepartentities.PurchaseOrderEntities{}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To Delete Header, " + err.Error(),
+				Data:       nil,
+				Err:        err,
+			}
+		}
+		err = db.Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderSystemNumber: i}).
+			Delete(&transactionsparepartentities.PurchaseOrderDetailEntities{}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To Delete Detail, " + err.Error(),
+				Data:       nil,
+				Err:        err,
+			}
+		}
+	}
+	return true, nil
+}

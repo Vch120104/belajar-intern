@@ -20,4 +20,5 @@ type PurchaseOrderRepository interface {
 	NewPurchaseOrderDetail(*gorm.DB, transactionsparepartpayloads.PurchaseOrderDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
 	DeletePurchaseOrderDetailMultiId(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	SavePurchaseOrderDetail(*gorm.DB, transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads) (transactionsparepartentities.PurchaseOrderDetailEntities, *exceptions.BaseErrorResponse)
+	DeleteDocument(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }
