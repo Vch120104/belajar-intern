@@ -124,3 +124,14 @@ func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (boo
 	}
 	return result, nil
 }
+
+func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse){
+	tx := s.Db.Begin()
+
+	result, err := s.itemSubstituteRepo.GetallItemForFilter(tx, filterCondition,pages)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

@@ -242,3 +242,38 @@ func (r *ItemSubstituteRepositoryImpl) ActivateItemSubstituteDetail(tx *gorm.DB,
 
 	return true, nil
 }
+
+func (r *ItemSubstituteRepositoryImpl) GetallItemForFilter(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+    // Declare the payload slice and query
+    payloads := []masteritempayloads.Itemforfilter{}
+
+    // Build the query, ensure Select is used properly
+    query := tx.Select("mtr_item.item_code, mtr_item.item_name, mtr_item.item_level_1, mtr_item.item_level_2, mtr_item.item_level_3, mtr_item.item_level_4, mtr_item_class.item_class_code, mtr_item.item_type").
+		Table("mtr_item").
+        Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item.item_class_id")
+
+    // Apply filters
+    whereQuery := utils.ApplyFilter(query, filterCondition)
+
+    // Apply pagination and execute the query
+    err := whereQuery.Scopes(pagination.Paginate(nil, &pages, whereQuery)).Scan(&payloads).Error
+    if err != nil {
+        return pages, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusInternalServerError,
+            Err:        err,
+        }
+    }
+
+    // Check if the result set is empty
+    if len(payloads) == 0 {
+        return pages, &exceptions.BaseErrorResponse{
+            StatusCode: http.StatusNotFound,
+            Err:        errors.New("no data found"),
+        }
+    }
+
+    // Set the result rows to the pagination object
+    pages.Rows = payloads
+
+    return pages, nil
+}
