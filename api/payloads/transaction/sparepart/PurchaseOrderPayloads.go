@@ -461,32 +461,27 @@ type PurchaseOrderNewPurchaseOrderResponses struct {
 }
 
 type PurchaseOrderDetailPayloads struct {
-	PurchaseOrderSystemNumber         int      `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
-	PurchaseOrderLine                 int      `json:"purchase_order_line"`
-	ItemId                            int      `json:"item_id"`
-	ItemUnitOfMeasurement             string   `json:"item_unit_of_measurement"`
-	UnitOfMeasurementRate             *float64 `json:"unit_of_measurement_rate"`
-	ItemQuantity                      *float64 `json:"item_quantity"`
-	ItemPrice                         *float64 `json:"item_price"`
-	ItemTotal                         *float64 `json:"item_total"`
-	PurchaseRequestDetailSystemNumber int      `json:"purchase_request_detail_system_number"`
-	PurchaseRequestSystemNumber       int      `json:"purchase_request_system_number"`
-	PurchaseRequestLineNumber         int      `json:"purchase_request_line_number"`
-	StockOnHand                       *float64 `json:"stock_on_hand"`
-	//ChangedItemPurchaseOrderSystemNo   int        `json:"old_purchase_order_system_no"`
-	ItemRemark string `json:"item_remark"`
-	//ChangedItemPurchaseOrderLineNumber int        `json:"old_purchase_order_line_number"`
-	CreatedByUserId        int        `json:"created_by_user_id"`
-	CreatedDate            *time.Time `json:"created_date"`
-	UpdatedByUserId        int        `json:"updated_by_user_id"`
-	UpdatedDate            *time.Time `json:"updated_date"`
-	Snp                    *float64   `json:"snp"`
-	ItemDiscountPercentage *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
-	ItemDiscountAmount     *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
+	PurchaseOrderSystemNumber         int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
+	PurchaseOrderLine                 int        `json:"purchase_order_line"`
+	ItemId                            int        `json:"item_id"`
+	ItemUnitOfMeasurement             string     `json:"item_unit_of_measurement"`
+	UnitOfMeasurementRate             *float64   `json:"unit_of_measurement_rate"`
+	ItemQuantity                      *float64   `json:"item_quantity"`
+	ItemPrice                         *float64   `json:"item_price"`
+	ItemTotal                         *float64   `json:"item_total"`
+	PurchaseRequestDetailSystemNumber int        `json:"purchase_request_detail_system_number"`
+	PurchaseRequestSystemNumber       int        `json:"purchase_request_system_number"`
+	PurchaseRequestLineNumber         int        `json:"purchase_request_line_number"`
+	StockOnHand                       *float64   `json:"stock_on_hand"`
+	ItemRemark                        string     `json:"item_remark"`
+	CreatedByUserId                   int        `json:"created_by_user_id"`
+	CreatedDate                       *time.Time `json:"created_date"`
+	UpdatedByUserId                   int        `json:"updated_by_user_id"`
+	UpdatedDate                       *time.Time `json:"updated_date"`
+	Snp                               *float64   `json:"snp"`
+	ItemDiscountPercentage            *float64   `gorm:"column:item_discount_percentage;" json:"item_discount_percentage"`
+	ItemDiscountAmount                *float64   `gorm:"column:item_discount_amount;" json:"item_discount_amount"`
 	//ItemTotal                         *float64   `gorm:"column:item_total;" json:"item_total"`
-
-	//totaldiscountnyadjabb nggak kagak kagak kaga kaga kagak bmsananananan
-	//cek coba
 }
 type PurchaseOrderSaveDetailPayloads struct {
 	//PurchaseOrderDetailSystemNumber
@@ -517,73 +512,3 @@ type PurchaseOrderSaveDetailPayloads struct {
 
 	//totaldiscountnya cek coba
 }
-
-//CompanyId                           int        `json:"company_id" parent_entity:"trx_item_purchase_order"`
-//PurchaseOrderSystemNumber   int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
-//PurchaseOrderDocumentNumber string     `json:"purchase_order_document_number" parent_entity:"trx_item_purchase_order"`
-//PurchaseOrderDocumentDate   *time.Time `json:"purchase_order_document_date" parent_entity:"trx_item_purchase_order"`
-////pr cari external po dari mana
-//PurchaseOrderStatusId int `json:"purchase_order_status_id" parent_entity:"trx_item_purchase_order"`
-//BrandId               int `json:"brand_id" parent_entity:"trx_item_purchase_order"`
-//ItemGroupId           int `json:"item_group_id" parent_entity:"trx_item_purchase_order"`
-////OrderTypeId                         int        `json:"order_type_id" parent_entity:"trx_item_purchase_order"`
-//SupplierId int `json:"supplier_id" parent_entity:"trx_item_purchase_order"`
-////SupplierPicId                       int        `json:"supplier_pic_id" parent_entity:"trx_item_purchase_order"`
-//WarehouseId      int `json:"warehouse_id" parent_entity:"trx_item_purchase_order"`
-//WarehouseGroupId int `json:"warehouse_group_id" parent_entity:"trx_item_purchase_order"`
-//CostCenterId     int `json:"cost_center_id" parent_entity:"trx_item_purchase_order"`
-////ProfitType                          string     `json:"profit_type" parent_entity:"trx_item_purchase_order"`
-//ProfitCenterId          int  `json:"profit_center_id" parent_entity:"trx_item_purchase_order"`
-//AffiliatedPurchaseOrder bool `json:"affiliated_purchase_order" parent_entity:"trx_item_purchase_order"`
-//CurrencyId              int  `json:"currency_id" parent_entity:"trx_item_purchase_order"`
-//BackOrder               bool `json:"back_order" parent_entity:"trx_item_purchase_order"`
-//SetOrder                bool `json:"set_order" parent_entity:"trx_item_purchase_order"`
-//ViaBinning              bool `json:"via_binning" parent_entity:"trx_item_purchase_order"`
-////VatCode                             string     `json:"vat_code" parent_entity:"trx_item_purchase_order"`
-////TotalDiscount                       *float64   `json:"total_discount" parent_entity:"trx_item_purchase_order"`
-////TotalAmount                         *float64   `json:"total_amount" parent_entity:"trx_item_purchase_order"`
-////TotalVat                            *float64   `json:"total_vat" parent_entity:"trx_item_purchase_order"`
-////TotalAfterVat                       *float64   `json:"total_after_vat" parent_entity:"trx_item_purchase_order"`
-////LastTotalDiscount                   *float64   `json:"last_total_discount" parent_entity:"trx_item_purchase_order"`
-////LastTotalAmount                     *float64   `json:"last_total_amount" parent_entity:"trx_item_purchase_order"`
-////LastTotalVat                        *float64   `json:"last_total_vat" parent_entity:"trx_item_purchase_order"`
-////LastTotalAfterVat                   *float64   `json:"last_total_after_vat" parent_entity:"trx_item_purchase_order"`
-////TotalAmountConfirm                  *float64   `json:"total_amount_confirm" parent_entity:"trx_item_purchase_order"`
-//PurchaseOrderRemark string   `json:"purchase_order_remark" parent_entity:"trx_item_purchase_order"`
-//DpRequest           *float64 `json:"dp_request" parent_entity:"trx_item_purchase_order"`
-////DpPayment                           *float64   `json:"dp_payment" parent_entity:"trx_item_purchase_order"`
-////DpPaymentAllocated                  *float64   `json:"dp_payment_allocated" parent_entity:"trx_item_purchase_order"`
-////DpPaymentAllocatedInvoice           *float64   `json:"dp_payment_allocated_invoice" parent_entity:"trx_item_purchase_order"`
-////DpPaymentAllocatedPpn               *float64   `json:"dp_payment_allocated_ppn" parent_entity:"trx_item_purchase_order"`
-////DpPaymentAllocatedRequestForPayment *float64   `json:"dp_payment_allocated_request_for_payment" parent_entity:"trx_item_purchase_order"`
-//DeliveryId           int        `json:"delivery_id" parent_entity:"trx_item_purchase_order"`
-//ExpectedDeliveryDate *time.Time `json:"expected_delivery_date" parent_entity:"trx_item_purchase_order"`
-//ExpectedArrivalDate  *time.Time `json:"expected_arrival_date" parent_entity:"trx_item_purchase_order"`
-////EstimatedDeliveryDate               *time.Time `json:"estimated_delivery_date" parent_entity:"trx_item_purchase_order"`
-////EstimatedDeliveryTime               string     `json:"estimated_delivery_time" parent_entity:"trx_item_purchase_order"`
-////SalesOrderSystemNumber              int        `json:"sales_order_system_number" parent_entity:"trx_item_purchase_order"`
-////SalesOrderDocumentNumber            string     `json:"sales_order_document_number" parent_entity:"trx_item_purchase_order"`
-////LastPrintById                       int        `json:"last_print_by_id" parent_entity:"trx_item_purchase_order"`
-////ApprovalRequestById                 int        `json:"approval_request_by_id" parent_entity:"trx_item_purchase_order"`
-////ApprovalRequestNumber               int        `json:"approval_request_number" parent_entity:"trx_item_purchase_order"`
-////ApprovalRequestDate                 *time.Time `json:"approval_request_date" parent_entity:"trx_item_purchase_order"`
-////ApprovalRemark                      string     `json:"approval_remark" parent_entity:"trx_item_purchase_order"`
-////ApprovalLastById                    int        `json:"approval_last_by_id" parent_entity:"trx_item_purchase_order"`
-////ApprovalLastDate                    *time.Time `json:"approval_last_date" parent_entity:"trx_item_purchase_order"`
-////TotalInvoiceDownPayment             *float64   `json:"total_invoice_down_payment" parent_entity:"trx_item_purchase_order"`
-////TotalInvoiceDownPaymentVat          *float64   `json:"total_invoice_down_payment_vat" parent_entity:"trx_item_purchase_order"`
-////TotalInvoiceDownPaymentAfterVat     *float64   `json:"total_invoice_down_payment_after_vat" parent_entity:"trx_item_purchase_order"`
-////DownPaymentReturn                   *float64   `json:"down_payment_return" parent_entity:"trx_item_purchase_order"`
-////JournalSystemNumber                 int        `json:"journal_system_number" parent_entity:"trx_item_purchase_order"`
-////EventNumber                         string     `json:"event_number" parent_entity:"trx_item_purchase_order"`
-////ItemClassId                         int        `json:"item_class_id" parent_entity:"trx_item_purchase_order"`
-////APMIsDirectShipment                    string     `json:"is_direct_shipment" parent_entity:"trx_item_purchase_order"`
-////DirectShipmentCustomerId                          int        `json:"customer_id" parent_entity:"trx_item_purchase_order"`
-////ExternalPurchaseOrderNumber         string     `json:"external_purchase_order_number" parent_entity:"trx_item_purchase_order"`
-//PurchaseOrderTypeId int `json:"purchase_order_type_id" parent_entity:"trx_item_purchase_order"`
-////CurrencyExchangeRate                *float64   `json:"currency_exchange_rate" parent_entity:"trx_item_purchase_order"`
-//CreatedByUserId int        `json:"created_by_user_id" parent_entity:"trx_item_purchase_order"`
-//CreatedDate     *time.Time `json:"created_date" parent_entity:"trx_item_purchase_order"`
-//UpdatedByUserId int        `json:"updated_by_user_id" parent_entity:"trx_item_purchase_order"`
-//UpdatedDate     *time.Time `json:"updated_date" parent_entity:"trx_item_purchase_order"`
-//ChangeNo        int        `json:"change_no" parent_entity:"trx_item_purchase_order"`
