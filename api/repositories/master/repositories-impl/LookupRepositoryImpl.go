@@ -395,7 +395,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LinetypeSublet:
+	case utils.LineTypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 
@@ -639,7 +639,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LinetypeSublet:
+	case utils.LineTypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 		PurchaseTypeServices := "S"
