@@ -27,6 +27,7 @@ type ItemDetailForSubstitute struct {
 }
 
 type Itemforfilter struct {
+	ItemId      int    `json:"item_id"`
 	ItemCode    string `json:"item_code"`
 	Description string `json:"item_description"`
 	ItemClass   string `json:"item_class"`
