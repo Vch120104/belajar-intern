@@ -332,6 +332,11 @@ func StartRouting(db *gorm.DB) {
 	CarWashBayService := transactionjpcbserviceimpl.NewCarWashBayServiceImpl(CarWashBayRepository, db, rdb)
 	CarWashBayController := transactionjpcbcontroller.NewCarWashBayController(CarWashBayService)
 
+	//Car Wash
+	CarWashRepository := transactionjpcbrepositoryimpl.NewCarWashRepositoryImpl()
+	CarWashService := transactionjpcbserviceimpl.NewCarWashServiceImpl(CarWashRepository, db, rdb)
+	CarWashController := transactionjpcbcontroller.NewCarWashController(CarWashService)
+
 	//Quality Control
 	QualityControlRepository := transactionworkshoprepositoryimpl.OpenQualityControlRepositoryImpl()
 	QualityControlService := transactionworkshopserviceimpl.OpenQualityControlServiceImpl(QualityControlRepository, db, rdb)
@@ -410,6 +415,7 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
 	SettingTechnicianRouter := SettingTechnicianRouter(SettingTechnicianController)
 	CarWashBayRouter := CarWashBayRouter(CarWashBayController)
+	CarWashRouter := CarWashRouter(CarWashController)
 	TechnicianAttendanceRouter := TechnicianAttendanceRouter(TechnicianAttendanceController)
 	QualityControlRouter := QualityControlRouter(QualityControlController)
 	QualityControlBodyshopRouter := QualityControlBodyshopRouter(QualityControlBodyshopController)
@@ -482,6 +488,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/bay", CarWashBayRouter)
 		r.Mount("/setting-technician", SettingTechnicianRouter)
 		r.Mount("/technician-attendance", TechnicianAttendanceRouter)
+		r.Mount("/car-wash", CarWashRouter)
 
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
