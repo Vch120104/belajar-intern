@@ -77,6 +77,12 @@ type PurchaseRequestRequestedByResponse struct {
 	UserEmployeeName string `json:"employee_name"`
 	UserId           int    `json:"user_id"`
 }
+type PurchaseRequestReferenceType struct {
+	ReferenceTypePurchaseRequestId   int    `json:"reference_type_purchase_request_id"`
+	ReferenceTypePurchaseRequestName string `json:"reference_type_purchase_request_name"`
+	IsActive                         bool   `json:"is_active"`
+	ReferenceTypePurchaseRequestCode string `json:"reference_type_purchase_request_code"`
+}
 type WorkOrderDocNoResponses struct {
 	WorkOrderDocumentNumber string `json:"work_order_document_number"`
 	WorkOrderSystemNumber   int    `json:"work_order_system_number"`

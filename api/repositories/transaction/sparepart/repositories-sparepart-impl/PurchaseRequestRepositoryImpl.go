@@ -267,22 +267,32 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		}
 	}
 	//
-	refEntities := transactionsparepartentities.PurchaseRequestReferenceType{}
-	RefTypeRespons := transactionsparepartpayloads.PurchaseRequestReferenceResponses{}
-	row, errs := db.Model(&refEntities).
-		Where(transactionsparepartentities.PurchaseRequestReferenceType{ReferencesTypeId: response.ReferenceTypeId}).
-		First(&RefTypeRespons).
-		Rows()
-	if errs == nil {
-		row.Close()
-	}
-
-	if errs != nil {
+	//refEntities := transactionsparepartentities.PurchaseRequestReferenceType{}
+	//RefTypeRespons := transactionsparepartpayloads.PurchaseRequestReferenceResponses{}
+	//row, errs := db.Model(&refEntities).
+	//	Where(transactionsparepartentities.PurchaseRequestReferenceType{ReferencesTypeId: response.ReferenceTypeId}).
+	//	First(&RefTypeRespons).
+	//	Rows()
+	//if errs == nil {
+	//	row.Close()
+	//}
+	//
+	//if errs != nil {
+	//	return response, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Err:        errs,
+	//	}
+	//}
+	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
+	PurchaseReuqestReferenceType := config.EnvConfigs.GeneralServiceUrl + "reference-type-purchase-request/" + strconv.Itoa(response.ReferenceTypeId)
+	if err := utils.Get(PurchaseReuqestReferenceType, &PurchaseRequestReferenceType, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errs,
+			StatusCode: http.StatusBadRequest,
+			Message:    "Failed to fetch Reference from external service",
+			Err:        err,
 		}
 	}
+
 	//var docNo string
 	//
 	//if response.ReferenceTypeId == 7 {
@@ -309,7 +319,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		PurchaseRequestDocumentStatus: purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
 		ItemGroup:                     ItemGroup.ItemGroupName,
 		Brand:                         GetBrandName.PurchaseRequestStatusDescription,
-		ReferenceType:                 RefTypeRespons.ReferenceTypeName,
+		ReferenceType:                 PurchaseRequestReferenceType.ReferenceTypePurchaseRequestName,
 		//ReferenceDocumentNumber:       docNo,
 		ReferenceDocumentNumber: response.ReferenceDocumentNumber,
 
