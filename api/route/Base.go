@@ -233,7 +233,7 @@ func ItemSubstituteRouter(
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
-	router.Get("/item-for-substitute",itemSubstituteController.GetallItemForFilter)
+	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
 	return router
 }
 
@@ -356,6 +356,23 @@ func IncentiveGroupRouter(
 	router.Post("/", incentiveGroupController.SaveIncentiveGroup)
 	router.Patch("/{incentive_group_id}", incentiveGroupController.ChangeStatusIncentiveGroup)
 	router.Put("/{incentive_group_id}", incentiveGroupController.UpdateIncentiveGroup)
+
+	return router
+}
+
+func ItemOperationRouter(
+	ItemOperationController mastercontroller.ItemOperationController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemOperationController.GetAllItemOperation)
+	router.Get("/by-id/{item_operation_id}", ItemOperationController.GetByIdItemOperation)
+	router.Post("/", ItemOperationController.PostItemOperation)
+	router.Delete("/{item_operation_id}", ItemOperationController.DeleteItemOperation)
+	router.Put("/{item_operation_id}", ItemOperationController.UpdateItemOperation)
 
 	return router
 }

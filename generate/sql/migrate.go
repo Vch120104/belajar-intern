@@ -5,7 +5,7 @@ import (
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
-	// masterentities "after-sales/api/entities/master"
+	masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	// masteritementities "after-sales/api/entities/master/item"
 	// masteroperationentities "after-sales/api/entities/master/operation"
@@ -141,6 +141,7 @@ func Migrate() {
 	//&mastercampaignmasterentities.CampaignMaster{},
 	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
 	//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
+	&masterentities.ItemOperation{},
 	//
 	//&transactionjpcbentities.SettingTechnician{},
 	//&transactionjpcbentities.SettingTechnicianDetail{},
