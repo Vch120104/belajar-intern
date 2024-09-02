@@ -36,33 +36,31 @@ func (r *JobAllocationRepositoryImpl) GetAllJobAllocation(tx *gorm.DB, filterCon
 		}
 	}
 
-	query := `
-		trx_work_order_allocation.technician_allocation_system_number,
-		trx_work_order_allocation.technician_id,
-		trx_work_order_allocation.service_status_id,
-		trx_work_order_allocation.sequence_number,
-		CASE WHEN ISNULL(trx_work_order_allocation.work_order_system_number, 0) = 0
-			THEN 'BOOKING'
-			ELSE 'WORK ORDER'
-		END reference_document_type,
-		CASE WHEN ISNULL(trx_work_order_allocation.work_order_system_number, 0) = 0
-			THEN trx_work_order_allocation.booking_document_number
-			ELSE trx_work_order_allocation.work_order_document_number
-		END reference_document_number,
-		tbe.vehicle_id,
-		CASE WHEN ISNULL(moc.operation_id, 0) != 0
-			THEN moc.operation_name
-			ELSE mi.item_name
-		END operation,
-		trx_work_order_allocation.frt,
-		trx_work_order_allocation.factor_x,
-		trx_work_order_allocation.tech_alloc_total_time AS frt_jpcb,
-		trx_work_order_allocation.tech_alloc_last_start_time,
-		trx_work_order_allocation.tech_alloc_last_end_time,
-		trx_work_order_allocation.is_express
-	`
 	baseModelQuery := tx.Model(&entities).
-		Select(query).
+		Select(`
+			trx_work_order_allocation.technician_allocation_system_number,
+			trx_work_order_allocation.technician_id,
+			trx_work_order_allocation.service_status_id,
+			trx_work_order_allocation.sequence_number,
+			CASE WHEN ISNULL(trx_work_order_allocation.work_order_system_number, 0) = 0
+				THEN 'BOOKING'
+				ELSE 'WORK ORDER'
+			END reference_document_type,
+			CASE WHEN ISNULL(trx_work_order_allocation.work_order_system_number, 0) = 0
+				THEN trx_work_order_allocation.booking_document_number
+				ELSE trx_work_order_allocation.work_order_document_number
+			END reference_document_number,
+			tbe.vehicle_id,
+			CASE WHEN ISNULL(moc.operation_id, 0) != 0
+				THEN moc.operation_name
+				ELSE mi.item_name
+			END operation,
+			trx_work_order_allocation.frt,
+			trx_work_order_allocation.factor_x,
+			trx_work_order_allocation.tech_alloc_total_time AS frt_jpcb,
+			trx_work_order_allocation.tech_alloc_last_start_time,
+			trx_work_order_allocation.tech_alloc_last_end_time,
+			trx_work_order_allocation.is_express`).
 		Joins("LEFT JOIN trx_booking_estimation tbe ON tbe.booking_system_number = trx_work_order_allocation.booking_system_number").
 		Joins("LEFT JOIN mtr_operation_code moc ON moc.operation_code = trx_work_order_allocation.operation_code").
 		Joins("LEFT JOIN mtr_item mi ON mi.item_code = trx_work_order_allocation.operation_code AND mi.item_group_id = ?", itemGroupPayloads[0].ItemGroupId).
@@ -157,25 +155,23 @@ func (r *JobAllocationRepositoryImpl) GetJobAllocationById(tx *gorm.DB, technici
 		}
 	}
 
-	query := `
-		trx_work_order_allocation.technician_allocation_system_number,
-		trx_work_order_allocation.company_id,
-		trx_work_order_allocation.technician_id,
-		trx_work_order_allocation.sequence_number,
-		CASE WHEN ISNULL(trx_work_order_allocation.work_order_system_number, 0) = 0
-			THEN trx_work_order_allocation.booking_document_number
-			ELSE trx_work_order_allocation.work_order_document_number
-		END reference_document_number,
-		CASE WHEN ISNULL(moc.operation_id, 0) != 0
-			THEN moc.operation_name
-			ELSE mi.item_name
-		END operation,
-		trx_work_order_allocation.frt,
-		trx_work_order_allocation.factor_x,
-		trx_work_order_allocation.work_order_system_number
-	`
 	err := tx.Model(&entities).
-		Select(query).
+		Select(`
+			trx_work_order_allocation.technician_allocation_system_number,
+			trx_work_order_allocation.company_id,
+			trx_work_order_allocation.technician_id,
+			trx_work_order_allocation.sequence_number,
+			CASE WHEN ISNULL(trx_work_order_allocation.work_order_system_number, 0) = 0
+				THEN trx_work_order_allocation.booking_document_number
+				ELSE trx_work_order_allocation.work_order_document_number
+			END reference_document_number,
+			CASE WHEN ISNULL(moc.operation_id, 0) != 0
+				THEN moc.operation_name
+				ELSE mi.item_name
+			END operation,
+			trx_work_order_allocation.frt,
+			trx_work_order_allocation.factor_x,
+			trx_work_order_allocation.work_order_system_number`).
 		Where("trx_work_order_allocation.technician_allocation_system_number = ?", technicianAllocationSystemNumber).
 		Joins("LEFT JOIN mtr_operation_code moc ON moc.operation_code = trx_work_order_allocation.operation_code").
 		Joins("LEFT JOIN mtr_item mi ON mi.item_code = trx_work_order_allocation.operation_code AND mi.item_group_id = ?", itemGroupPayloads[0].ItemGroupId).
@@ -206,21 +202,18 @@ func (r *JobAllocationRepositoryImpl) GetJobAllocationById(tx *gorm.DB, technici
 	}
 
 	entityServiceLog := transactionworkshopentities.ServiceLog{}
-	progressResponse := transactionjpcbpayloads.GetProgressResponse{}
+	var progress float64
 
-	queryProgress := `
-		CONVERT(decimal(5,2), round((SUM(actual_time)/(trx_service_log.frt))*100,2)) AS progress
-	`
 	err = tx.Model(&entityServiceLog).
-		Select(queryProgress).
+		Select("CONVERT(decimal(5,2), ROUND((SUM(actual_time)/(trx_service_log.frt)) * 100, 2)) AS progress").
 		Joins("INNER JOIN work_order_operation woo on trx_service_log.work_order_operation_id = woo.work_order_operation_id").
 		Joins("INNER JOIN mtr_operation_model_mapping momm on momm.operation_model_mapping_id = woo.operation_id").
-		Joins("inner join mtr_operation_code moc on moc.operation_id = momm.operation_id").
+		Joins("INNER JOIN mtr_operation_code moc on moc.operation_id = momm.operation_id").
 		Joins("LEFT JOIN trx_work_order_allocation twoa ON twoa.work_order_system_number = trx_service_log.work_order_system_number").
 		Where("trx_service_log.work_order_system_number = ?", payloads.WorkOrderSystemNumber).
 		Where("twoa.operation_code = moc.operation_code").
 		Group("twoa.technician_id, trx_service_log.work_order_system_number, trx_service_log.frt, twoa.factor_x, trx_service_log.service_log_system_number").
-		First(&progressResponse).
+		Pluck("progress", &progress).
 		Error
 
 	if err != nil {
@@ -236,7 +229,7 @@ func (r *JobAllocationRepositoryImpl) GetJobAllocationById(tx *gorm.DB, technici
 	responses.FactorX = payloads.FactorX
 	responses.TechnicianName = technicianName
 	responses.SequenceNumber = payloads.SequenceNumber
-	responses.Progress = &progressResponse.Progress
+	responses.Progress = &progress
 
 	return responses, nil
 }

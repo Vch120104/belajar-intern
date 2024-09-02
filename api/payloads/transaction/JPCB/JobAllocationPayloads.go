@@ -73,10 +73,6 @@ type GetJobAllocationByIdPayload struct {
 	WorkOrderSystemNumber            *int     `json:"work_order_system_number"`
 }
 
-type GetProgressResponse struct {
-	Progress float64 `json:"progress"`
-}
-
 type GetJobAllocationByIdResponse struct {
 	TechnicianAllocationSystemNumber *int     `json:"technician_allocation_system_number"`
 	Operation                        *string  `json:"operation"`
