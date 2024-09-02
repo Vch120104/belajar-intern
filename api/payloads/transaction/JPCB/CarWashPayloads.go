@@ -104,7 +104,7 @@ type CarWashScreenUpdateBayNumberRequest struct {
 	CarWashBayId          int `json:"car_wash_bay_id"`
 }
 
-type StartCarWashRequest struct {
+type StartCarWashUpdates struct {
 	CarWashStatusId int       `json:"car_wash_status_id"`
 	CarWashDate     time.Time `json:"car_wash_date"`
 	CarWashBayId    int       `json:"car_wash_bay_id"`

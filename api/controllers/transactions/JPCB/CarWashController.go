@@ -24,6 +24,7 @@ type CarWashController interface {
 	PostCarWash(writer http.ResponseWriter, request *http.Request)
 	CarWashScreen(writer http.ResponseWriter, request *http.Request)
 	UpdateBayNumberCarWashScreenn(writer http.ResponseWriter, request *http.Request)
+	StartCarWash(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -171,4 +172,26 @@ func (r *CarWashControllerImpl) UpdateBayNumberCarWashScreenn(writer http.Respon
 		return
 	}
 	payloads.NewHandleSuccess(writer, data, "Successfully update data", http.StatusOK)
+}
+
+func (r *CarWashControllerImpl) StartCarWash(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	data, err := r.CarWashService.StartCarWash(formRequest.WorkOrderSystemNumber, formRequest.CarWashBayId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
 }
