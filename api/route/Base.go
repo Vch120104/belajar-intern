@@ -6,6 +6,7 @@ import (
 	masteroperationcontroller "after-sales/api/controllers/master/operation"
 	masterwarehousecontroller "after-sales/api/controllers/master/warehouse"
 	transactionjpcbcontroller "after-sales/api/controllers/transactions/JPCB"
+	transactionbodyshopcontroller "after-sales/api/controllers/transactions/bodyshop"
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
@@ -251,7 +252,7 @@ func ItemSubstituteRouter(
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
-
+	router.Get("/item-for-substitute",itemSubstituteController.GetallItemForFilter)
 	return router
 }
 
@@ -1082,7 +1083,7 @@ func DeductionRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", DeductionController.GetAllDeductionList)
-	router.Get("/{id}", DeductionController.GetAllDeductionDetail)
+	router.Get("/{deduction_id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
 	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
 	router.Post("/detail", DeductionController.SaveDeductionDetail)
@@ -1325,6 +1326,24 @@ func QualityControlRouter(
 	return router
 }
 
+func QualityControlBodyshopRouter(
+	QualityControlBodyshopController transactionbodyshopcontroller.QualityControlBodyshopController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", QualityControlBodyshopController.GetAll)
+	router.Get("/{work_order_system_number}", QualityControlBodyshopController.GetById)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/qcpass", QualityControlBodyshopController.Qcpass)
+	router.Put("/{work_order_system_number}/{work_order_detail_id}/reorder", QualityControlBodyshopController.Reorder)
+
+	return router
+}
+
 func SettingTechnicianRouter(
 	SettingTechnicianController transactionjpcbcontroller.SettingTechnicianController,
 ) chi.Router {
@@ -1346,6 +1365,60 @@ func SettingTechnicianRouter(
 	return router
 }
 
+func TechnicianAttendanceRouter(
+	TechnicianAttendanceController transactionjpcbcontroller.TechnicianAttendanceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
+	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
+	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
+
+	return router
+}
+
+func ServiceWorkshopRouter(
+	ServiceWorkshopController transactionworkshopcontroller.ServiceWorkshopController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{technician_id}/{work_order_system_number}", ServiceWorkshopController.GetAllByTechnicianWO)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/start", ServiceWorkshopController.StartService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending", ServiceWorkshopController.PendingService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer", ServiceWorkshopController.TransferService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop", ServiceWorkshopController.StopService)
+
+	return router
+}
+func ServiceBodyshopRouter(
+	ServiceBodyshopController transactionbodyshopcontroller.ServiceBodyshopController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{technician_id}/{work_order_system_number}", ServiceBodyshopController.GetAllByTechnicianWOBodyshop)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/start", ServiceBodyshopController.StartService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/pending", ServiceBodyshopController.PendingService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/transfer", ServiceBodyshopController.TransferService)
+	router.Post("/{technician_allocation_system_number}/{work_order_system_number}/{company_id}/stop", ServiceBodyshopController.StopService)
+
+	return router
+}
+
 func SupplySlipRouter(
 	SupplySlipController transactionsparepartcontroller.SupplySlipController,
 ) chi.Router {
@@ -1359,6 +1432,22 @@ func SupplySlipRouter(
 	router.Put("/{supply_system_number}", SupplySlipController.UpdateSupplySlip)
 	router.Put("/detail/{supply_detail_system_number}", SupplySlipController.UpdateSupplySlipDetail)
 	router.Put("/submit/{supply_system_number}", SupplySlipController.SubmitSupplySlip)
+
+	return router
+}
+
+func SupplySlipReturnRouter(
+	SupplySlipReturnController transactionsparepartcontroller.SupplySlipReturnController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	router.Post("/", SupplySlipReturnController.SaveSupplySlipReturn)
+	router.Post("/detail", SupplySlipReturnController.SaveSupplySlipReturnDetail)
+	router.Get("/", SupplySlipReturnController.GetAllSupplySlipDetail)
+	router.Get("/{supply_return_system_number}", SupplySlipReturnController.GetSupplySlipReturnById)
+	router.Get("/detail/{supply_return_detail_system_number}", SupplySlipReturnController.GetSupplySlipReturnDetailById)
+	router.Put("/{supply_return_system_number}", SupplySlipReturnController.UpdateSupplySlipReturn)
+	router.Put("/detail/{supply_return_detail_system_number}", SupplySlipReturnController.UpdateSupplySlipReturnDetail)
 
 	return router
 }

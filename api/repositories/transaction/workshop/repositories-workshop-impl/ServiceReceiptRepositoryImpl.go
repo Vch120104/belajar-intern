@@ -41,11 +41,11 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	}
 	defer rows.Close()
 
-	var convertedResponses []transactionworkshoppayloads.ServiceReceiptResponse
+	var convertedResponses []transactionworkshoppayloads.ServiceReceiptGetAllResponse
 	for rows.Next() {
 		var (
 			ServiceReceiptReq transactionworkshoppayloads.ServiceReceiptNew
-			ServiceReceiptRes transactionworkshoppayloads.ServiceReceiptResponse
+			ServiceReceiptRes transactionworkshoppayloads.ServiceReceiptGetAllResponse
 		)
 
 		if err := rows.Scan(
@@ -149,7 +149,7 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		ServiceReceiptRes = transactionworkshoppayloads.ServiceReceiptResponse{
+		ServiceReceiptRes = transactionworkshoppayloads.ServiceReceiptGetAllResponse{
 			ServiceRequestSystemNumber:   ServiceReceiptReq.ServiceRequestSystemNumber,
 			ServiceRequestDocumentNumber: ServiceReceiptReq.ServiceRequestDocumentNumber,
 			ServiceRequestDate:           ServiceReceiptReq.ServiceRequestDate.Format("2006-01-02 15:04:05"),
@@ -187,9 +187,12 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			"chassis_no":                      response.VehicleCode,
 			"no_polisi":                       response.VehicleTnkb,
 			"status":                          response.ServiceRequestStatusName,
-			"work_order_no":                   response.WorkOrderSystemNumber,
-			"booking_no":                      response.BookingSystemNumber,
-			"ref_doc_no":                      response.ReferenceDocSystemNumber,
+			"work_order_system_number":        response.WorkOrderSystemNumber,
+			"work_order_no":                   response.WorkOrderDocumentNumber,
+			"booking_system_number":           response.BookingSystemNumber,
+			"booking_no":                      response.BookingDocumentNumber,
+			"reference_doc_system_number":     response.ReferenceDocSystemNumber,
+			"ref_doc_no":                      response.ReferenceDocDocumentNumber,
 		}
 
 		mapResponses = append(mapResponses, responseMap)
