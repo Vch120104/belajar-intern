@@ -2,6 +2,18 @@ package migration
 
 import (
 	"after-sales/api/config"
+	// masterentities "after-sales/api/entities/master"
+	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+
+	// masterentities "after-sales/api/entities/master"
+	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+	// masteritementities "after-sales/api/entities/master/item"
+	// masteroperationentities "after-sales/api/entities/master/operation"
+	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
+
+	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
+	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
 
@@ -56,14 +68,14 @@ func Migrate() {
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
 	//&masteroperationentities.OperationModelMapping{},
-	// &masteroperationentities.OperationLevel{},
+	//&masteroperationentities.OperationLevel{},
 	//&masteroperationentities.OperationFrt{},
 	//&masteroperationentities.OperationGroup{},
 	//&masteroperationentities.OperationSection{},
 	//&masteroperationentities.OperationKey{},
 	//&masteroperationentities.OperationEntries{},
 	//&masteroperationentities.OperationCode{},
-	//
+	////
 	//&masterwarehouseentities.WarehouseGroup{},
 	//&masterwarehouseentities.WarehouseMaster{},
 	//&masterwarehouseentities.WarehouseLocation{},
@@ -130,26 +142,30 @@ func Migrate() {
 	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
 	//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 	//
-
-	// &transactionjpcbentities.CarWash{},
-	// &transactionjpcbentities.BayMaster{},
-	// &transactionjpcbentities.CarWashPriority{},
-	// &transactionjpcbentities.CarWashStatus{},
-
-	//&transactionsparepartpentities.SupplySlip{},
-	//&transactionsparepartpentities.SupplySlipDetail{},
-	// &transactionworkshopentities.WorkOrderMaster{},
-	// &transactionworkshopentities.WorkOrderMasterStatus{},
-	// &transactionworkshopentities.WorkOrderMasterType{},
-	// &transactionworkshopentities.WorkOrderMasterBillAbleto{},
-	// &transactionworkshopentities.WorkOrder{},
-	// &transactionworkshopentities.WorkOrderRequestDescription{},
-	// &transactionworkshopentities.WorkOrderDetail{},
-	// &transactionworkshopentities.WorkOrderHistory{},
-	// &transactionworkshopentities.WorkOrderHistoryRequest{},
-	// &transactionworkshopentities.WorkOrderHistoryDetail{},
-	// &transactionworkshopentities.WorkOrderService{},
-	// &transactionworkshopentities.WorkOrderServiceVehicle{},
+	//&transactionjpcbentities.SettingTechnician{},
+	//&transactionjpcbentities.SettingTechnicianDetail{},
+	//&transactionjpcbentities.TechnicianAttendance{},
+	//&transactionjpcbentities.CarWash{},
+	//&transactionjpcbentities.BayMaster{},
+	//&transactionjpcbentities.CarWashPriority{},
+	//&transactionjpcbentities.CarWashStatus{},
+	//
+	//&transactionsparepartentities.SupplySlip{},
+	//&transactionsparepartentities.SupplySlipDetail{},
+	//&transactionsparepartpentities.SupplySlipReturn{},
+	//&transactionsparepartpentities.SupplySlipReturnDetail{},
+	//&transactionworkshopentities.WorkOrderMaster{},
+	//&transactionworkshopentities.WorkOrderMasterStatus{},
+	//&transactionworkshopentities.WorkOrderMasterType{},
+	//&transactionworkshopentities.WorkOrderMasterBillAbleto{},
+	//&transactionworkshopentities.WorkOrder{},
+	//&transactionworkshopentities.WorkOrderRequestDescription{},
+	//&transactionworkshopentities.WorkOrderDetail{},
+	//&transactionworkshopentities.WorkOrderHistory{},
+	//&transactionworkshopentities.WorkOrderHistoryRequest{},
+	//&transactionworkshopentities.WorkOrderHistoryDetail{},
+	//&transactionworkshopentities.WorkOrderService{},
+	//&transactionworkshopentities.WorkOrderServiceVehicle{},
 	//&transactionworkshopentities.ServiceRequest{},
 	//&transactionworkshopentities.ServiceRequestDetail{},
 	//&transactionworkshopentities.ServiceRequestMasterStatus{},
@@ -161,18 +177,22 @@ func Migrate() {
 	//&transactionworkshopentities.BookingEstimationItemDetail{},
 	//&transactionworkshopentities.BookingEstimationOperationDetail{},
 	//&transactionworkshopentities.BookingEstimationRequest{},
-
-	// &transactionworkshopentities.BookingEstimation{},
-	// &transactionworkshopentities.BookingEstimationAllocation{},
-	// &transactionworkshopentities.BookingEstimationRequest{},
-	// &transactionworkshopentities.BookingEstimationServiceReminder{},
-	// &transactionworkshopentities.BookingEstimationServiceDiscount{},
-	// &transactionworkshopentities.BookingEstimationDetail{},
-
-	// &transactionsparepartentities.PurchaseRequestEntities{},
-	// &transactionsparepartentities.PurchaseRequestDetail{},
-	// &transactionsparepartentities.PurchaseRequestReferenceType{},
-	// &masterentities.LocationStock{},
+	//
+	//&transactionworkshopentities.BookingEstimation{},
+	//&transactionworkshopentities.BookingEstimationAllocation{},
+	//&transactionworkshopentities.BookingEstimationRequest{},
+	//&transactionworkshopentities.BookingEstimationServiceReminder{},
+	//&transactionworkshopentities.BookingEstimationServiceDiscount{},
+	////&transactionworkshopentities.BookingEstimationDetail{},
+	//
+	//&transactionsparepartentities.PurchaseRequestEntities{},
+	//&transactionsparepartentities.PurchaseRequestDetail{},
+	//
+	//&masterentities.ItemCycle{},
+	//&masterentities.MovingItemCode{},
+	//&transactionsparepartentities.PurchaseRequestReferenceType{},
+	//&masterentities.LocationStock{},
+	// &masterentities.WarehouseGroupMappingEntities{},
 	)
 
 	if err != nil {

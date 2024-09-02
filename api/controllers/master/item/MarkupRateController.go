@@ -9,6 +9,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -97,7 +98,12 @@ func (r *MarkupRateControllerImpl) GetAllMarkupRate(writer http.ResponseWriter, 
 // @Router /v1/markup-rate/{markup_rate_id} [get]
 func (r *MarkupRateControllerImpl) GetMarkupRateByID(writer http.ResponseWriter, request *http.Request) {
 
-	markupRateId, _ := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
+	markupRateId, errA := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.MarkupRateService.GetMarkupRateById(markupRateId)
 
@@ -161,7 +167,12 @@ func (r *MarkupRateControllerImpl) SaveMarkupRate(writer http.ResponseWriter, re
 // @Router /v1/markup-rate/{markup_rate_id} [patch]
 func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWriter, request *http.Request) {
 
-	markupRateId, _ := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
+	markupRateId, errA := strconv.Atoi(chi.URLParam(request, "markup_rate_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.MarkupRateService.ChangeStatusMarkupRate(int(markupRateId))
 
@@ -175,8 +186,17 @@ func (r *MarkupRateControllerImpl) ChangeStatusMarkupRate(writer http.ResponseWr
 
 func (r *MarkupRateControllerImpl) GetMarkupRateByMarkupMasterAndOrderType(writer http.ResponseWriter, request *http.Request) {
 
-	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
-	orderTypeId, _ := strconv.Atoi(chi.URLParam(request, "order_type_id"))
+	markupMasterId, errA := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	orderTypeId, errA := strconv.Atoi(chi.URLParam(request, "order_type_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.MarkupRateService.GetMarkupRateByMarkupMasterAndOrderType(markupMasterId, orderTypeId)
 
