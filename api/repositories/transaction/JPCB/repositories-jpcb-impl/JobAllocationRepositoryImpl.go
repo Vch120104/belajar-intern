@@ -193,7 +193,7 @@ func (r *JobAllocationRepositoryImpl) GetJobAllocationById(tx *gorm.DB, technici
 		userDetailsUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(*payloads.TechnicianId)
 		userDetailsPayload := transactionjpcbpayloads.UserDetailsPayload{}
 		if err := utils.Get(userDetailsUrl, &userDetailsPayload, nil); err != nil || userDetailsPayload.UserEmployeeId == 0 {
-			return transactionjpcbpayloads.GetJobAllocationByIdResponse{}, &exceptions.BaseErrorResponse{
+			return responses, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        errors.New("fail to retrieve"),
 			}
