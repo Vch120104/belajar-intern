@@ -27,8 +27,14 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnician(tx *gorm.DB, f
 	entities := transactionjpcbentities.SettingTechnician{}
 	responses := []transactionjpcbpayloads.SettingTechnicianPayload{}
 
+	for i, filter := range filterCondition {
+		if filter.ColumnField == "effective_date" {
+			filterCondition[i].ColumnValue = utils.SafeConvertDateStrFormat(filter.ColumnValue)
+		}
+	}
+
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {

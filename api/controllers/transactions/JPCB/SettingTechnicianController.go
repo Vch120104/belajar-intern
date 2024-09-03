@@ -38,7 +38,9 @@ func NewSettingTechnicianController(SettingTechnicianServ transactionjpcbservice
 func (r *SettingTechnicianControllerImpl) GetAllSettingTechnician(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"company_id": queryValues.Get("company_id"),
+		"company_id":                       queryValues.Get("company_id"),
+		"effective_date":                   queryValues.Get("effective_date"),
+		"setting_technician_system_number": queryValues.Get("setting_id"),
 	}
 
 	paginate := pagination.Pagination{
