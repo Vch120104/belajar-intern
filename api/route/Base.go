@@ -16,6 +16,24 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+func CarWashRouter(
+	carWashController transactionjpcbcontroller.CarWashController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", carWashController.GetAllCarWash)
+	router.Put("/update-priority", carWashController.UpdatePriority)
+	router.Get("/priority/dropdown", carWashController.GetAllCarWashPriorityDropDown)
+	router.Delete("/{work_order_system_number}", carWashController.DeleteCarWash)
+	router.Post("/", carWashController.PostCarWash)
+	return router
+}
+
 /* Master */
 
 func CarWashBayRouter(
@@ -32,6 +50,7 @@ func CarWashBayRouter(
 	router.Get("/active", bayController.GetAllActiveCarWashBay)
 	router.Get("/deactive", bayController.GetAllDeactiveCarWashBay)
 	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
+	router.Get("/dropdown", bayController.GetAllCarWashBayDropDown)
 
 	return router
 }
