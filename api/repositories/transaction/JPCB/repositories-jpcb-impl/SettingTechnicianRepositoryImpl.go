@@ -63,7 +63,17 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 	entities := transactionjpcbentities.SettingTechnicianDetail{}
 	responses := []transactionjpcbpayloads.SettingTechnicianGetAllDetailPayload{}
 
-	baseModelQuery := tx.Model(&entities)
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			trx_setting_technician_detail.setting_technician_detail_system_number,
+			trx_setting_technician_detail.setting_technician_system_number,
+			trx_setting_technician_detail.technician_number,
+			trx_setting_technician_detail.technician_employee_number_id,
+			trx_setting_technician_detail.group_express,
+			trx_setting_technician_detail.shift_group_id,
+			mss.shift_group,
+			trx_setting_technician_detail.is_booking`).
+		Joins("INNER JOIN mtr_shift_schedule mss ON mss.shift_schedule_id = trx_setting_technician_detail.shift_group_id")
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
@@ -115,6 +125,7 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 			EmployeeName:                        employeeName,
 			GroupExpress:                        result.GroupExpress,
 			ShiftGroupId:                        result.ShiftGroupId,
+			ShiftGroup:                          result.ShiftGroup,
 			IsBooking:                           result.IsBooking,
 		}
 		mapResponses = append(mapResponses, responsePayloads)
