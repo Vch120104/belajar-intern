@@ -179,6 +179,8 @@ func (r *SettingTechnicianRepositoryImpl) GetSettingTechnicianByCompanyDate(tx *
 	entities := transactionjpcbentities.SettingTechnician{}
 	response := transactionjpcbpayloads.SettingTechnicianGetByIdResponse{}
 
+	effectiveDate = time.Date(effectiveDate.Year(), effectiveDate.Month(), effectiveDate.Day(), 0, 0, 0, 0, effectiveDate.Location())
+
 	err := tx.Model(&entities).
 		Where(transactionjpcbentities.SettingTechnician{
 			CompanyId:     companyId,
