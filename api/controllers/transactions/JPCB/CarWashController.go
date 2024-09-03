@@ -26,6 +26,7 @@ type CarWashController interface {
 	UpdateBayNumberCarWashScreenn(writer http.ResponseWriter, request *http.Request)
 	StartCarWash(writer http.ResponseWriter, request *http.Request)
 	StopCarWash(writer http.ResponseWriter, request *http.Request)
+	CancelCarWash(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -213,6 +214,29 @@ func (r *CarWashControllerImpl) StopCarWash(writer http.ResponseWriter, request 
 	}
 
 	data, err := r.CarWashService.StopCarWash(formRequest.WorkOrderSystemNumber)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
+}
+
+// CancelCarWash implements CarWashController.
+func (r *CarWashControllerImpl) CancelCarWash(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.StopCarWashScreenRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	data, err := r.CarWashService.CancelCarWash(formRequest.WorkOrderSystemNumber)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

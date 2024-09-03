@@ -126,3 +126,14 @@ func (s *CarWashServiceImpl) StopCarWash(workOrderSystemNumber int) (transaction
 	}
 	return result, nil
 }
+
+func (s *CarWashServiceImpl) CancelCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.CancelCarWash(tx, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
+	}
+	return result, nil
+}

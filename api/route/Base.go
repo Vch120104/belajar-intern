@@ -33,9 +33,10 @@ func CarWashRouter(
 	router.Post("/", carWashController.PostCarWash)
 
 	router.Get("/screen", carWashController.CarWashScreen)
-	router.Get("/screen/update-bay", carWashController.UpdateBayNumberCarWashScreenn)
+	router.Put("/screen/update-bay", carWashController.UpdateBayNumberCarWashScreenn)
 	router.Put("/start", carWashController.StartCarWash)
 	router.Put("/stop", carWashController.StopCarWash)
+	router.Put("/cancel", carWashController.CancelCarWash)
 	return router
 }
 

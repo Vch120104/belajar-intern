@@ -590,35 +590,20 @@ func (r *CarWashImpl) GetCarWashScreenDataByWorkOrderSystemNumber(tx *gorm.DB, w
 }
 
 func (r *CarWashImpl) UpdateBayNumberCarWashScreen(tx *gorm.DB, bayNumber int, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
-	var carWash transactionjpcbentities.CarWash
-	err := tx.Model(&transactionjpcbentities.CarWash{}).Where("work_order_system_number = ?", workOrderSystemNumber).First(&carWash).Error
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Where("work_order_system_number = ?", workOrderSystemNumber).Update("car_wash_bay_id", bayNumber).Error
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	if carWash.BayId != nil {
-		err = tx.Model(&transactionjpcbentities.CarWash{}).Where("work_order_system_number = ?", workOrderSystemNumber).Update("car_wash_bay_id", bayNumber).Error
-		if err != nil {
-			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
 
-		response, getCarWashDataError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
-		if getCarWashDataError != nil {
-			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, getCarWashDataError
-		}
-
-		return response, nil
+	response, getCarWashDataError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
+	if getCarWashDataError != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, getCarWashDataError
 	}
 
-	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
-		StatusCode: http.StatusNotFound,
-		Err:        err,
-	}
+	return response, nil
 }
 
 func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBayId int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
@@ -633,8 +618,8 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 		}
 	}
 
-	statusDraft := 1
-	if carWashStatusId == statusDraft {
+	statusStart := 2
+	if carWashStatusId != statusStart {
 		mainTable := "trx_car_wash"
 		mainAlias := "carwash"
 
@@ -854,6 +839,50 @@ func (r *CarWashImpl) StopCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		StatusCode: http.StatusBadRequest,
 		Err:        fmt.Errorf("work order carwash has not started"),
 		Message:    "Work order carwash has not started",
+	}
+}
+
+func (r *CarWashImpl) CancelCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var carWashStatus int
+
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Select("car_wash_status_id").Where(&transactionjpcbentities.CarWash{
+		WorkOrderSystemNumber: workOrderSystemNumber,
+	}).First(&carWashStatus).Error
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	fmt.Print(carWashStatus)
+
+	statusStart := 2
+	if carWashStatus != statusStart {
+		err := tx.Model(&transactionjpcbentities.CarWash{}).Where(&transactionjpcbentities.CarWash{
+			WorkOrderSystemNumber: workOrderSystemNumber,
+		}).Update("car_wash_bay_id", nil).Error
+		if err != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		result, getCarWashError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
+		if getCarWashError != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		return result, nil
+	}
+
+	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Err:        fmt.Errorf("already start"),
+		Message:    "Work order carwash already started",
 	}
 }
 
