@@ -96,6 +96,7 @@ type CarWashScreenGetAllResponse struct {
 	CarWashStatusDescription string `json:"car_wash_status_description"`
 	ModelId                  int    `json:"model_id"`
 	ModelDescription         string `json:"model_description"`
+	VehicleId                int    `json:"vehicle_id"`
 	ColourCommercialName     string `json:"colour_commercial_name"`
 }
 
@@ -103,12 +104,21 @@ type CarWashScreenUpdateBayNumberRequest struct {
 	WorkOrderSystemNumber int `json:"work_order_system_number"`
 	CarWashBayId          int `json:"car_wash_bay_id"`
 }
+type StopCarWashScreenRequest struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+}
 
 type StartCarWashUpdates struct {
 	CarWashStatusId int       `json:"car_wash_status_id"`
 	CarWashDate     time.Time `json:"car_wash_date"`
 	CarWashBayId    int       `json:"car_wash_bay_id"`
 	StartTime       float32   `json:"start_time"`
+}
+
+type StopCarWashUpdates struct {
+	CarWashStatusId int     `json:"car_wash_status_id"`
+	EndTime         float32 `json:"end_time"`
+	ActualTime      float32 `json:"actual_time"`
 }
 
 type CarWashCompanyReference struct {

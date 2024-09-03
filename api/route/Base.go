@@ -35,6 +35,7 @@ func CarWashRouter(
 	router.Get("/screen", carWashController.CarWashScreen)
 	router.Get("/screen/update-bay", carWashController.UpdateBayNumberCarWashScreenn)
 	router.Put("/start", carWashController.StartCarWash)
+	router.Put("/stop", carWashController.StopCarWash)
 	return router
 }
 
@@ -256,7 +257,7 @@ func ItemSubstituteRouter(
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
-	router.Get("/item-for-substitute",itemSubstituteController.GetallItemForFilter)
+	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
 	return router
 }
 
