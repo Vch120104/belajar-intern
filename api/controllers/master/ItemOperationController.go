@@ -59,11 +59,11 @@ func (r *ItemOperationControllerImpl) GetAllItemOperation(writer http.ResponseWr
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccessPagination(writer,result.Rows,"Get data successfully",200,result.Limit,result.Page,result.TotalRows,result.TotalPages)
 }
 
 func (r *ItemOperationControllerImpl) GetByIdItemOperation(writer http.ResponseWriter, request *http.Request){
-	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_class_id"))
+	itemClassId, _ := strconv.Atoi(chi.URLParam(request, "item_operation_id"))
 
 	result,err := r.ItemOperationService.GetByIdItemOperation(itemClassId)
 	if err != nil {

@@ -1,8 +1,6 @@
 package masteritementities
 
-import (
-	masterentities "after-sales/api/entities/master"
-)
+import masterentities "after-sales/api/entities/master"
 
 var CreateItemTable = "mtr_item"
 

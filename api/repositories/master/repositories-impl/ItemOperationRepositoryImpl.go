@@ -45,7 +45,7 @@ func(r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCond
 
 func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB,id int)(masterpayloads.ItemOperationGet,*exceptions.BaseErrorResponse){
 	var responses masterpayloads.ItemOperationGet
-	err := tx.Select("mtr_item_operation.*,mtr_item.Item_name,mtr_operation_code.operation_name").
+	err := tx.Select("mtr_item_operation.*,mtr_item.Item_name,mtr_operation_code.operation_name").Table("mtr_item_operation").
 		Joins("Join mtr_item on mtr_item.Item_id=mtr_item_operation.item_id").
 		Joins("Join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.operation_model_mapping_id").
 		Joins("Join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Where("item_operation_id=?",id).Scan(&responses).Error
@@ -61,7 +61,7 @@ func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB,id int)(m
 func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterpayloads.ItemOperationPost)(masterentities.ItemOperation,*exceptions.BaseErrorResponse){
 	entities := masterentities.ItemOperation{
 		ItemId: req.ItemId,
-		OperationModelMappingId: req.OperationId,
+		OperationModelMappingId: req.OperationModelMappingId,
 		LineTypeId: req.LineTypeId,
 	}
 	err := tx.Save(&entities).Error
@@ -88,7 +88,7 @@ func (r *ItemOperationRepositoryImpl) DeleteItemOperation (tx *gorm.DB, id int)(
 func (r *ItemOperationRepositoryImpl) UpdateItemOperation (tx *gorm.DB, id int, req masterpayloads.ItemOperationPost)(masterentities.ItemOperation,*exceptions.BaseErrorResponse){
 	entities:= masterentities.ItemOperation{
 		ItemId: req.ItemId,
-		OperationModelMappingId: req.OperationId,
+		OperationModelMappingId: req.OperationModelMappingId,
 		LineTypeId: req.LineTypeId,
 	}
 	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id=?",id).Updates(&entities).Error
