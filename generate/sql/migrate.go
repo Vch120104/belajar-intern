@@ -197,6 +197,9 @@ func Migrate() {
 	//
 	//&transactionsparepartentities.BinningStock{},
 	//&transactionsparepartentities.BinningStockDetail{},
+
+	//&masterentities.AtpmCompanyMapping{},
+	//&transactionsparepartentities.PurchaseOrderLimit{},
 	)
 
 	if err != nil {

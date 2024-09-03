@@ -459,7 +459,44 @@ type PurchaseOrderNewPurchaseOrderResponses struct {
 	TotalAfterVat               *float64   `json:"total_after_vat" parent_entity:"customer_id"`
 	APMIsDirectShipment         string     `json:"apm_is_direct_shipment" parent_entity:"trx_item_purchase_order"`
 }
-
+type PurchaseOrderHeaderSubmitRequest struct {
+	CompanyId                   int        `json:"company_id" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderSystemNumber   int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
+	PurchaseOrderDocumentNumber string     `json:"purchase_order_document_number" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderDocumentDate   *time.Time `json:"purchase_order_document_date" parent_entity:"trx_item_purchase_order"`
+	ExternalPurchaseOrderNumber string     `json:"external_purchase_order_number" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderStatusId       int        `json:"purchase_order_status_id" parent_entity:"trx_item_purchase_order"`
+	BrandId                     int        `json:"brand_id" parent_entity:"trx_item_purchase_order"`
+	ItemGroupId                 int        `json:"item_group_id" parent_entity:"trx_item_purchase_order"`
+	SupplierId                  int        `json:"supplier_id" parent_entity:"trx_item_purchase_order"`
+	SupplierPicId               int        `json:"supplier_pic_id" parent_entity:"trx_item_purchase_order"`
+	WarehouseId                 int        `json:"warehouse_id" parent_entity:"trx_item_purchase_order"`
+	WarehouseGroupId            int        `json:"warehouse_group_id" parent_entity:"trx_item_purchase_order"`
+	CostCenterId                int        `json:"cost_center_id" parent_entity:"trx_item_purchase_order"`
+	ProfitCenterId              int        `json:"profit_center_id" parent_entity:"trx_item_purchase_order"`
+	AffiliatedPurchaseOrder     bool       `json:"affiliated_purchase_order" parent_entity:"trx_item_purchase_order"`
+	CurrencyId                  int        `json:"currency_id" parent_entity:"trx_item_purchase_order"`
+	BackOrder                   bool       `json:"back_order" parent_entity:"trx_item_purchase_order"`
+	SetOrder                    bool       `json:"set_order" parent_entity:"trx_item_purchase_order"`
+	ViaBinning                  bool       `json:"via_binning" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderRemark         string     `json:"purchase_order_remark" parent_entity:"trx_item_purchase_order"`
+	DpRequest                   *float64   `json:"dp_request" parent_entity:"trx_item_purchase_order"`
+	DeliveryId                  int        `json:"delivery_id" parent_entity:"trx_item_purchase_order"`
+	ExpectedDeliveryDate        *time.Time `json:"expected_delivery_date" parent_entity:"trx_item_purchase_order"`
+	ExpectedArrivalDate         *time.Time `json:"expected_arrival_date" parent_entity:"trx_item_purchase_order"`
+	PurchaseOrderTypeId         int        `json:"purchase_order_type_id" parent_entity:"trx_item_purchase_order"`
+	CreatedByUserId             int        `json:"created_by_user_id" parent_entity:"trx_item_purchase_order"`
+	CreatedDate                 *time.Time `json:"created_date" parent_entity:"trx_item_purchase_order"`
+	UpdatedByUserId             int        `json:"updated_by_user_id" parent_entity:"trx_item_purchase_order"`
+	UpdatedDate                 *time.Time `json:"updated_date" parent_entity:"trx_item_purchase_order"`
+	ChangeNo                    int        `json:"change_no" parent_entity:"trx_item_purchase_order"`
+	CustomerId                  int        `json:"customer_id" parent_entity:"customer_id"`
+	TotalDiscount               *float64   `json:"total_discount" parent_entity:"customer_id"`
+	TotalAmount                 *float64   `json:"total_amount" parent_entity:"customer_id"`
+	TotalVat                    *float64   `json:"total_vat" parent_entity:"customer_id"`
+	TotalAfterVat               *float64   `json:"total_after_vat" parent_entity:"customer_id"`
+	APMIsDirectShipment         string     `json:"apm_is_direct_shipment" parent_entity:"trx_item_purchase_order"`
+}
 type PurchaseOrderDetailPayloads struct {
 	PurchaseOrderSystemNumber         int        `json:"purchase_order_system_number" parent_entity:"trx_item_purchase_order" gorm:"not null;primaryKey;"`
 	PurchaseOrderLine                 int        `json:"purchase_order_line"`
@@ -512,9 +549,18 @@ type PurchaseOrderSaveDetailPayloads struct {
 
 	//totaldiscountnya cek coba
 }
-
+type PurchaseOrderItemGroupResponse struct {
+	ItemGroupId   int    `json:"item_group_id"`
+	ItemGroupCode string `json:"item_group_code"`
+	ItemGroupName string `json:"item_group_name"`
+}
 type CopyPurchaseRequestResponses struct {
 	PurchaseRequestSystemNumber   int        `gorm:"column:purchase_request_system_number;size:30;not null;primaryKey;" json:"purchase_request_system_number"`
 	PurchaseRequestDocumentNumber string     `gorm:"column:purchase_request_document_number;size:50;" json:"purchase_request_document_number"`
 	PurchaseRequestDocumentDate   *time.Time `gorm:"column:purchase_request_document_date" json:"purchase_request_document_date"`
+}
+type PurchaseOrderResponse struct {
+	CompanyId   int    `json:"company_id"`
+	CompanyCode string `json:"company_code"`
+	CompanyName string `json:"company_name"`
 }

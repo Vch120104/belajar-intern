@@ -163,8 +163,8 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequest(writer h
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
 	result, err := controller.PurchaseRequestService.GetByIdPurchaseRequest(PurchaseRequestSystemNumber)
 	if err != nil {
-		err.Message = "Id Not Found"
-		err.Data = "Id Not Found"
+		//err.Message = "Id Not Found"
+		//err.Data = "Id Not Found"
 		helper.ReturnError(writer, request, err)
 		return
 	}

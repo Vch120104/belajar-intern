@@ -1,11 +1,14 @@
 package transactionsparepartrepositoryimpl
 
+import "C"
 import (
 	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
+	"after-sales/api/payloads/crossservice/generalservice"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -1564,5 +1567,318 @@ func (repo *PurchaseOrderRepositoryImpl) DeleteDocument(db *gorm.DB, i int) (boo
 			}
 		}
 	}
+	return true, nil
+}
+
+func (repo *PurchaseOrderRepositoryImpl) GetFromPurchaseRequest(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderHeaderSubmitRequest) (bool, *exceptions.BaseErrorResponse) {
+	var poEntities transactionsparepartentities.PurchaseOrderEntities
+	//SELECT @Company_Code = COMPANY_CODE,
+	//@Supplier_Code = SUPPLIER_CODE,
+	//@Order_Type = ORDER_TYPE
+	//FROM atitempo0
+	//WHERE PO_SYS_NO = @Po_Sys_No
+	whereQuery := transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}
+	err := db.Model(&poEntities).Where(whereQuery).Scan(&poEntities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Purchase Order Header Is Not Found" + err.Error(),
+			Data:       nil,
+			Err:        err,
+		}
+	}
+	// cek apakah supplier codenya ini itu atpm vw atau bukan
+	//123 itu id nya gmm(garuda mataram motor)
+	if poEntities.SupplierId == 123 {
+		totalOrder := 0
+		totalOrderLimit := 0
+		//SET @TotalOrder = (SELECT COUNT(PO_SYS_NO)
+		//FROM atitempo0
+		//WHERE COMPANY_CODE = @Company_Code
+		//AND YEAR(@Po_Doc_Date) = YEAR(PO_DOC_DATE)
+		//AND MONTH(@Po_Doc_Date) = MONTH(PO_DOC_DATE))
+		whereQuery = transactionsparepartentities.PurchaseOrderEntities{CompanyId: payloads.CompanyId}
+		err = db.Model(&poEntities).Select("count(purchase_order_system_number)").
+			Where(whereQuery).
+			Where("YEAR(purchase_order_date) = ? "+
+				"AND MONTH(purchase_order_date) = ?",
+				payloads.PurchaseOrderDocumentDate.Year(),
+				payloads.PurchaseOrderDocumentDate.Month()).
+			Scan(&totalOrder).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Failed To Get Total Order" + err.Error(),
+				Data:       nil,
+				Err:        err,
+			}
+		}
+		var OrderLimitEntities transactionsparepartentities.PurchaseOrderLimit
+		//SET @TotalOrderLimit = (SELECT CAST(ISNULL(TABLE_KEY1,0) AS INT)
+		//FROM comgentable2
+		//WHERE TABLE_CODE = 'GMMPOLimit'
+		//AND TABLE_KEY0 = @ORDER_TYPE)
+		err = db.Model(&OrderLimitEntities).Select("ISNULL(order_limit)").
+			Where(transactionsparepartentities.PurchaseOrderLimit{CompanyId: payloads.CompanyId,
+				OrderTypeId: payloads.PurchaseOrderTypeId}).
+			Scan(&totalOrder).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Failed To Get Purchase Order Limit" + err.Error(),
+				Data:       nil,
+				Err:        err,
+			}
+		}
+		//IF (@TotalOrder > @TotalOrderLimit)
+		//BEGIN
+		//SET @ErrMsg = 'This dealer has exceed''s GMM monthly order limit.\nGMM Order Limit : '+CAST(@TotalOrderLimit AS VARCHAR)+'\nCurrent Dealer Order : '+CAST(@TotalOrder AS VARCHAR)
+		//RAISERROR(@ErrMsg,16,1)
+		//RETURN 0
+		//END
+		if totalOrder > totalOrderLimit {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message: "This dealer has exceed''s GMM monthly order limit. \nGMM Order Limit" +
+					"\n GMM Order Limit : " + strconv.Itoa(totalOrderLimit) +
+					"\n Current Dealer Order : " + strconv.Itoa(totalOrder),
+				Data: nil,
+				Err:  err,
+			}
+		}
+	}
+	//SET @Supplier_Default = dbo.getVariableValue('FREE_ACCS_SUPPLIER_DEFAULT')
+	//62
+	//DECLARE @Is_SP_PO integer = 1
+	//,@tmpPo_Date DATETIME = GETDATE()
+	//select top 1 @Is_SP_PO = ISNULL(V.ORDER_NO,1), @tmpPo_Date = ISNULL(P0.PO_DOC_DATE,GETDATE())
+	//	from atItemPO0 P0 LEFT JOIN comGenVariable V ON V.VALUE = P0.ITEM_GROUP and VARIABLE like 'ITMGRP_%'
+	//	where P0.PO_SYS_NO = @Po_Sys_No
+
+	//IsSparepartPo := 1
+	//tmpPoDate := time.Now()
+
+	//CEK APAKAH GRUP ITU IN ATAU OJ?
+	var ItemGroup transactionsparepartpayloads.PurchaseOrderItemGroupResponse
+	ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(payloads.ItemGroupId)
+	if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Item Group data from external service",
+			Err:        err,
+		}
+	}
+	//		SET @TAX_RATE = dbo.getTaxPercent(dbo.getVariableValue('TAX_TYPE_PPN'),dbo.getVariableValue('TAX_SERV_CODE_PPN'),@Change_Datetime)
+	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(payloads.CompanyId) + "&closing_module_detail_code=" //strconv.Itoa(response.ItemCode)
+	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+	//IF @Is_SP_PO = 1
+	//if purchase order is sparepart po
+	if ItemGroup.ItemGroupCode == "IN" || ItemGroup.ItemGroupCode == "OJ" {
+		//BEGIN
+		//IF dbo.getPeriodStatus(@Company_Code,@Po_Doc_Date,dbo.getVariableValue('MODULE_SP')) <> 'O'
+		//BEGIN
+		//RAISERROR('Period is already Closed',16,1)
+		//RETURN 0
+		//END
+		//SET @Po_Doc_Date = GETDATE()
+		PeriodUrl = PeriodUrl + "SP"
+		if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed to Period Response data from external service",
+				Err:        err,
+			}
+		}
+		if PeriodResponse.PeriodYear != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) && PeriodResponse.PeriodMonth != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Period is already Closed",
+				Err:        err,
+			}
+		}
+		//SET @Po_Doc_Date = GETDATE()
+
+		*payloads.PurchaseOrderDocumentDate = time.Now()
+		//get Current Open Period
+	} else {
+		//if purchase order is ga po
+		PeriodUrl = PeriodUrl + "FXA"
+		if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed to Get Period Response data from external service",
+				Err:        err,
+			}
+		}
+		if PeriodResponse.PeriodYear != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) && PeriodResponse.PeriodMonth != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Period is already Closed",
+				Err:        err,
+			}
+		}
+		//SET @Po_Doc_Date = @tmpPo_Date
+
+		if poEntities.PurchaseOrderDocumentDate == nil {
+			poEntities.PurchaseOrderDocumentDate = new(time.Time)
+			*poEntities.PurchaseOrderDocumentDate = time.Now()
+		} else {
+			*payloads.PurchaseOrderDocumentDate = *poEntities.PurchaseOrderDocumentDate
+		}
+	}
+
+	//--tidak boleh campur item gmitem0.item_regulation
+	//IF (SELECT COUNT(DISTINCT ISNULL(B.ITEM_REGULATION,'N'))
+	//FROM dbo.atItemPO1 A
+	//INNER JOIN gmitem0 B ON A.ITEM_CODE = B.ITEM_CODE
+	//INNER JOIN ATITEMPO0 C ON C.PO_SYS_NO = A.PO_SYS_NO
+	//WHERE A.PO_SYS_NO = @Po_Sys_No
+	//AND C.COMPANY_CODE = 3125098
+	//AND ISNULL(B.ITEM_REGULATION,'N') IN ('Y','N')) > 1
+	//BEGIN
+	//RAISERROR('Regulated item can''t be mixed with non regulated item on same PO.',16,1)
+	//RETURN 0
+	//END
+	var CompanyResponses generalservicepayloads.GetCompanyByIdResponses
+	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(payloads.CompanyId)
+	if err := utils.Get(CompanyUrl, &CompanyResponses, nil); err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    "Failed to Get Company data from external service",
+			Err:        err,
+		}
+	}
+	//checking regulated item but based on sp only checking for nmdi
+	if CompanyResponses.CompanyCode == "3125098" {
+		count := 0
+		//Untuk hitung apaakah ada item regulation yang dicampur atau aman
+		err = db.Table("trx_item_purchase_order_detail A").Select("distinct COUNT(ISNULL(B.is_item_regulation,'N')").
+			Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id").
+			Joins("INNER JOIN trx_item_purchase_order C ON A.old_purchase_order_system_no = C.purchase_order_system_number").
+			Where("A.purchase_order_system_number = ? AND ISNULL(B.is_item_regulation,'N') IN ('Y','N') ", payloads.PurchaseOrderSystemNumber).
+			Scan(&count).
+			Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To Checked Regulated item ",
+				Err:        err,
+			}
+		}
+		if count != 0 {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Regulated item can''t be mixed with non regulated item on same PO.",
+				Err:        err,
+			}
+		}
+
+		//check of defect item
+		//DECLARE @ListDefectItem varchar(500) = (SELECT STUFF((SELECT DISTINCT ',' + A.ITEM_CODE +'<br>'
+		//FROM dbo.atItemPO1 A
+		//INNER JOIN gmitem0 B ON A.ITEM_CODE = B.ITEM_CODE
+		//INNER JOIN ATITEMPO0 C ON C.PO_SYS_NO = A.PO_SYS_NO
+		//WHERE A.PO_SYS_NO = @Po_Sys_No
+		//AND C.SUPPLIER_CODE = '3125098'
+		//AND ISNULL(B.TECHNICAL_DEFECT,'NO') IN ('YES','Y')
+		//FOR XML PATH ('')),1,1,''))
+		var listOfDefectItem []string
+		err = db.Table("trx_item_purchase_order_detail A").Select("distinct COUNT(ISNULL(B.item_code,'N')").
+			Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id").
+			Joins("INNER JOIN trx_item_purchase_order C ON A.old_purchase_order_system_no = C.purchase_order_system_number").
+			Where("A.purchase_order_system_number = ? AND ISNULL(B.is_technical_defect,'NO') IN ('YES','Y') ", payloads.PurchaseOrderSystemNumber).
+			Scan(&listOfDefectItem).
+			Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed To technical defect item ",
+				Err:        err,
+			}
+		}
+		if len(listOfDefectItem) > 0 {
+			DefectedItem := "There is technical defect Item in Purchase Order : \n"
+			for _, defected := range listOfDefectItem {
+				DefectedItem = DefectedItem + defected + "\n"
+			}
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    DefectedItem,
+				Err:        err,
+			}
+		}
+
+	}
+	//IF EXISTS (SELECT PO_LINE FROM dbo.atItemPO1 WHERE PO_SYS_NO = @Po_Sys_No AND ITEM_QTY <= 0)
+	//BEGIN
+	//RAISERROR('Qty PO must be bigger than 0',16,1)
+	//RETURN 0
+	//END
+	var exist bool
+	err = db.Model(transactionsparepartentities.PurchaseOrderDetailEntities{}).Select("1").
+		Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
+		Where("item_quantity <= 0").Scan(&exist).Error
+	if err != nil || !exist {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Qty PO must be bigger than 0",
+			Err:        err,
+		}
+	}
+
+	//IF EXISTS (SELECT PO_LINE FROM dbo.atItemPO1 WHERE PO_SYS_NO = @Po_Sys_No AND ITEM_PRICE <= 0)
+	//BEGIN
+	//RAISERROR('Price PO must be bigger than 0',16,1)
+	//RETURN 0
+	//END
+	err = db.Model(transactionsparepartentities.PurchaseOrderDetailEntities{}).Select("1").
+		Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderSystemNumber: payloads.PurchaseOrderSystemNumber}).
+		Where("item_price <= 0").Scan(&exist).Error
+	if err != nil || !exist {
+		return false, &exceptions.BaseErrorResponse{
+
+			StatusCode: http.StatusBadRequest,
+			Message:    "Price PO must be bigger than 0",
+			Err:        err,
+		}
+	}
+	//CHECK IF PO FOR NEW ACCESCORIES MUST TO DEFAULT FREE ACCESORIES SUPPLIER
+	//IF EXISTS (SELECT PO_LINE FROM atItemPO1 P1
+	//INNER JOIN atItemPO0 P ON P.PO_SYS_NO = P1.PO_SYS_NO
+	//WHERE P1.PO_SYS_NO = @Po_Sys_No AND ISNULL(VEHICLE_CHASSIS_NO,'') <> ''
+	//AND P.SUPPLIER_CODE <> @Supplier_Default)
+	//BEGIN
+	//SET @ErrMsg = 'PO for Free Accessories Standard must be directed to Supplier ' + @Supplier_Default
+	//RAISERROR(@ErrMsg,16,1)
+	//RETURN 0
+	//END
+	exist = false
+	err = db.Table("trx_item_purchase_order A").Select("1").
+		Joins("trx_item_purchase_order_detail B ON A.").
+		Where("A.purchase_order_system_number = ? AND ISNULL(B.vehicle_id,'')<>''", payloads.PurchaseOrderSystemNumber).
+		Scan(&exist).
+		Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    err.Error(),
+			Err:        err,
+		}
+	}
+	var supplierDefault string
+	if !exist {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "PO for Free Accessories Standard must be directed to Supplier " + supplierDefault,
+			Err:        err,
+		}
+	}
+	//err = db.Table()
 	return true, nil
 }

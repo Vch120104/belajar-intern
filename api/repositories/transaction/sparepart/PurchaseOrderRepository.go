@@ -24,4 +24,5 @@ type PurchaseOrderRepository interface {
 
 	//-=-=-=-=-=
 	GetFromPurchaseRequest(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination)
+	SubmitPurchaseOrderRequest(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderHeaderSubmitRequest) (bool, *exceptions.BaseErrorResponse)
 }
