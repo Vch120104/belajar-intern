@@ -233,7 +233,7 @@ func ItemSubstituteRouter(
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
-	router.Get("/item-for-substitute",itemSubstituteController.GetallItemForFilter)
+	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
 	return router
 }
 
@@ -1337,6 +1337,7 @@ func SettingTechnicianRouter(
 
 	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
 	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+	router.Get("/{company_id}/{effective_date}", SettingTechnicianController.GetSettingTechnicianByCompanyDate)
 
 	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
 	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)

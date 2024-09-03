@@ -12,6 +12,7 @@ import (
 	"after-sales/api/validation"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -21,6 +22,7 @@ type SettingTechnicianController interface {
 	GetAllSettingTechinicianDetail(writer http.ResponseWriter, request *http.Request)
 	GetSettingTechnicianById(writer http.ResponseWriter, request *http.Request)
 	GetSettingTechnicianDetailById(writer http.ResponseWriter, request *http.Request)
+	GetSettingTechnicianByCompanyDate(writer http.ResponseWriter, request *http.Request)
 	SaveSettingTechnicianDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateSettingTechnicianDetail(writer http.ResponseWriter, request *http.Request)
 }
@@ -96,6 +98,18 @@ func (r *SettingTechnicianControllerImpl) GetSettingTechnicianDetailById(writer 
 
 	result, err := r.SettingTechnicianService.GetSettingTechnicianDetailById(settingTechnicianDetailId)
 
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
+}
+
+func (r *SettingTechnicianControllerImpl) GetSettingTechnicianByCompanyDate(writer http.ResponseWriter, request *http.Request) {
+	companyId, _ := strconv.Atoi(chi.URLParam(request, "company_id"))
+	effectiveDate, _ := time.Parse(time.RFC3339, chi.URLParam(request, "effective_date"))
+
+	result, err := r.SettingTechnicianService.GetSettingTechnicianByCompanyDate(companyId, effectiveDate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

@@ -175,6 +175,32 @@ func (r *SettingTechnicianRepositoryImpl) GetSettingTechnicianDetailById(tx *gor
 	return responses, nil
 }
 
+func (r *SettingTechnicianRepositoryImpl) GetSettingTechnicianByCompanyDate(tx *gorm.DB, companyId int, effectiveDate time.Time) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
+	entities := transactionjpcbentities.SettingTechnician{}
+	response := transactionjpcbpayloads.SettingTechnicianGetByIdResponse{}
+
+	err := tx.Model(&entities).
+		Where(transactionjpcbentities.SettingTechnician{
+			CompanyId:     companyId,
+			EffectiveDate: &effectiveDate,
+		}).
+		First(&entities).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.SettingTechnicianSystemNumber = entities.SettingTechnicianSystemNumber
+	response.CompanyId = entities.CompanyId
+	response.SettingId = entities.SettingTechnicianSystemNumber
+	response.EffectiveDate = *entities.EffectiveDate
+
+	return response, nil
+}
+
 func (r *SettingTechnicianRepositoryImpl) SaveSettingTechnician(tx *gorm.DB, CompanyId int) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
 	currentTime := time.Now().Truncate(24 * time.Hour)
 	entities := transactionjpcbentities.SettingTechnician{
