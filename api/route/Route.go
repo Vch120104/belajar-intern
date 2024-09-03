@@ -110,7 +110,7 @@ func StartRouting(db *gorm.DB) {
 
 	// Item Operation
 	ItemOperationRepository := masterrepositoryimpl.StartItemOperationRepositoryImpl()
-	ItemOperationService := masterserviceimpl.StartItemOperationService(ItemOperationRepository,db,rdb)
+	ItemOperationService := masterserviceimpl.StartItemOperationService(ItemOperationRepository, db, rdb)
 	ItemOperationController := mastercontroller.NewItemOperationController(ItemOperationService)
 
 	// // Landed Cost
@@ -437,7 +437,7 @@ func StartRouting(db *gorm.DB) {
 	ServiceWorkshopRouter := ServiceWorkshopRouter(ServiceWorkshopController)
 	ServiceBodyshopRouter := ServiceBodyshopRouter(ServiceBodyshopController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
-
+	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	LookupRouter := LookupRouter(LookupController)
 
 	r := chi.NewRouter()
@@ -462,6 +462,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/bom", BomRouter)
 		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/purchase-price", PurchasePriceRouter)
+
 		r.Mount("/landed-cost", LandedCostMasterRouter)
 		//r.Mount("/import-duty", ImportDutyRouter)
 
@@ -528,6 +529,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/supply-slip-return", SupplySlipReturnRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
+		r.Mount("/purchase-order", PurchaseOrderRouter)
 
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
