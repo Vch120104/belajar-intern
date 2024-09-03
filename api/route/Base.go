@@ -1471,7 +1471,7 @@ func LookupRouter(
 
 	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
 	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
-	router.Get("/item-opr-code-with-price/{item_opr_code_id}", LookupController.ItemOprCodeWithPrice)
+	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 
 	return router
