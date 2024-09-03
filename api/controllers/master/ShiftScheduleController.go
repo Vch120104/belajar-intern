@@ -25,6 +25,7 @@ type ShiftScheduleController interface {
 	SaveShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	GetShiftScheduleById(writer http.ResponseWriter, request *http.Request)
+	GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request)
 }
 type ShiftScheduleControllerImpl struct {
 	ShiftScheduleService masterservice.ShiftScheduleService
@@ -190,4 +191,14 @@ func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.Resp
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *ShiftScheduleControllerImpl) GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.ShiftScheduleService.GetShiftScheduleDropDown()
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }

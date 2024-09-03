@@ -253,7 +253,7 @@ func (r *ServiceBodyshopRepositoryImpl) GetAllByTechnicianWOBodyshop(tx *gorm.DB
 	}
 
 	response := transactionbodyshoppayloads.ServiceBodyshopDetailResponse{
-		ServiceTypeName:         "Workshop",
+		ServiceTypeName:         "Bodyshop",
 		TechnicianId:            entity.TechnicianId,
 		WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
 		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,

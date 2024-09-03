@@ -104,3 +104,13 @@ func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftSch
 	}
 	return results, nil
 }
+
+func (s *ShiftScheduleServiceImpl) GetShiftScheduleDropDown() ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.ShiftScheduleRepo.GetShiftScheduleDropDown(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
