@@ -46,7 +46,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 	}
 
 	if err := tx.Model(&masteritementities.Item{}).
-		Where("item_code = ?", oprItemCode).
+		Where("item_id = ?", oprItemCode).
 		Select("common_pricelist").
 		Scan(&commonPriceList).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
@@ -81,7 +81,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		// Operation price logic
 		query := tx.Model(&masteroperationentities.LabourSellingPriceDetail{}).
 			Joins("JOIN mtr_labour_selling_price ON mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
-			Where("mtr_labour_selling_price.brand_id = ? AND mtr_labour_selling_price.effective_date <= ? AND mtr_labour_selling_price.job_type_id = ? AND mtr_labour_selling_price.model_id = ? AND mtr_labour_selling_price.company_id = ?",
+			Where("mtr_labour_selling_price.brand_id = ? AND mtr_labour_selling_price.effective_date <= ? AND mtr_labour_selling_price.job_type_id = ? AND mtr_labour_selling_price_detail.model_id = ? AND mtr_labour_selling_price.company_id = ?",
 				brandId, effDate, jobTypeId, modelId, companyId)
 
 		if variantId == 0 {
@@ -479,22 +479,25 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	}
 
 	var (
-		ItmCls      string
-		year, month string
-		period      Period
-		companyCode = 1
+		ItmCls       string
+		year, month  string
+		period       Period
+		companyCode  = 151
+		closingModul = 10
+		yearNow      = time.Now().Format("2006")
+		monthNow     = time.Now().Format("01")
 	)
 
 	result := tx.Table("dms_microservices_finance_dev.dbo.mtr_closing_period_company").
 		Select("TOP 1 PERIOD_YEAR, PERIOD_MONTH").
-		Where("COMPANY_CODE = ? AND MODULE_CODE = 'SP' AND PERIOD_YEAR <= ? AND PERIOD_MONTH <= ? AND PERIOD_STATUS = 'O'", companyCode, 2024, 8).
+		Where("company_id = ? AND closing_module_detail_id = ? AND PERIOD_YEAR <= ? AND PERIOD_MONTH <= ? AND is_period_closed = '0'", companyCode, closingModul, yearNow, monthNow).
 		Order("PERIOD_YEAR DESC, PERIOD_MONTH DESC").
 		Scan(&period)
 
 	if result.Error != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to get period",
+			Message:    "Failed to get period , please check closing period company",
 			Err:        result.Error,
 		}
 	}
