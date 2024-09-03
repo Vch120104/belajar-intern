@@ -230,6 +230,7 @@ func StartRouting(db *gorm.DB) {
 	LocationStockRepository := masterwarehouserepository.NewLocationStockRepositoryImpl()
 	LocationStockService := masterserviceimpl.NewLocationStockServiceImpl(LocationStockRepository, db, rdb)
 	LocationStockController := mastercontroller.NewLocationStockController(LocationStockService)
+
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
 	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
@@ -260,11 +261,15 @@ func StartRouting(db *gorm.DB) {
 	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository, db)
 	CampaignMasterController := mastercontroller.NewCampaignMasterController(CampaignMasterService)
 
-	// Master
 	//Field Action
 	FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
+
+	//Lookup
+	LookupRepository := masterrepositoryimpl.StartLookupRepositoryImpl()
+	LookupService := masterserviceimpl.StartLookupService(LookupRepository, db, rdb)
+	LookupController := mastercontroller.NewLookupController(LookupService)
 
 	/* Transaction */
 	//Supply Slip
@@ -429,6 +434,8 @@ func StartRouting(db *gorm.DB) {
 	ServiceBodyshopRouter := ServiceBodyshopRouter(ServiceBodyshopController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 
+	LookupRouter := LookupRouter(LookupController)
+
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -517,6 +524,9 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/supply-slip-return", SupplySlipReturnRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
+
+		/* Support Func Afs */
+		r.Mount("/lookup", LookupRouter)
 	})
 
 	// Route untuk Swagger

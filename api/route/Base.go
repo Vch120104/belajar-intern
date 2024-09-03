@@ -1169,6 +1169,23 @@ func WorkOrderRouter(
 	router.Delete("/normal/void/{work_order_system_number}", WorkOrderController.Void)
 	router.Patch("/normal/close/{work_order_system_number}", WorkOrderController.CloseOrder)
 
+	//add trx booking
+	router.Get("/booking", WorkOrderController.GetAllBooking)
+	router.Get("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.GetBookingById)
+	router.Post("/booking", WorkOrderController.NewBooking)
+	router.Put("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.SaveBooking)
+	router.Delete("/booking/void/{work_order_system_number}/{booking_system_number}", WorkOrderController.VoidBooking)
+	router.Post("/booking/submit/{work_order_system_number}", WorkOrderController.SubmitBooking)
+	router.Patch("/booking/close/{work_order_system_number}/{booking_system_number}", WorkOrderController.CloseBooking)
+
+	//add trx affiliate
+	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
+	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
+	router.Post("/affiliated", WorkOrderController.NewAffiliated)
+	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
+	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
+	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
+
 	//add post trx sub
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
 	router.Get("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.GetRequestById)
@@ -1209,26 +1226,8 @@ func WorkOrderRouter(
 	router.Delete("/dropdown-bill/{bill_id}", WorkOrderController.DeleteBill)
 
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
-
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
-	router.Get("/lookup-vehicle", WorkOrderController.VehicleLookup)
-	router.Get("/lookup-campaign", WorkOrderController.CampaignLookup)
-
-	router.Get("/booking", WorkOrderController.GetAllBooking)
-	router.Get("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.GetBookingById)
-	router.Post("/booking", WorkOrderController.NewBooking)
-	router.Put("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.SaveBooking)
-	router.Delete("/booking/void/{work_order_system_number}/{booking_system_number}", WorkOrderController.VoidBooking)
-	router.Post("/booking/submit/{work_order_system_number}", WorkOrderController.SubmitBooking)
-	router.Patch("/booking/close/{work_order_system_number}/{booking_system_number}", WorkOrderController.CloseBooking)
-
-	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
-	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
-	router.Post("/affiliated", WorkOrderController.NewAffiliated)
-	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
-	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
-	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
 
 	return router
 }
@@ -1476,6 +1475,24 @@ func SalesOrderRouter(
 	router := chi.NewRouter()
 
 	router.Get("/{sales_order_system_number}", SalesOrderController.GetSalesOrderByID)
+
+	return router
+}
+
+func LookupRouter(
+	LookupController mastercontroller.LookupController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
+	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
+	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
+	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 
 	return router
 }

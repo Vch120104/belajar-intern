@@ -561,17 +561,23 @@ type WorkOrderAffiliateRequest struct {
 }
 
 type WorkOrderLookupRequest struct {
-	WorkOrderSystemNumber   int    `json:"work_order_system_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
-	WorkOrderDocumentNumber string `json:"work_order_document_number" parent_entity:"trx_work_order" main_table:"trx_work_order"`
-	VehicleId               int    `json:"vehicle_id" parent_entity:"trx_work_order"`
-	CustomerId              int    `json:"customer_id" parent_entity:"trx_work_order"`
+	BrandId int `json:"brand_id"`
+	ModelId int `json:"model_id"`
 }
 
 type WorkOrderLookupResponse struct {
-	WorkOrderDocumentNumber string `json:"work_order_document_number"`
-	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
-	VehicleId               int    `json:"vehicle_id"`
-	CustomerId              int    `json:"customer_id"`
+	BrandId                 int       `json:"brand_id"`
+	ModelId                 int       `json:"model_id"`
+	VehicleId               int       `json:"vehicle_id"`
+	CustomerId              int       `json:"customer_id"`
+	VehicleCode             string    `json:"vehicle_chassis_number"`
+	VehicleTnkb             string    `json:"vehicle_registration_certificate_tnkb"`
+	VehicleCertificateOwner string    `json:"vehicle_registration_certificate_owner_name"`
+	VehicleProduction       string    `json:"vehicle_production_year"`
+	VehicleVariantColour    string    `json:"variant_colour_description"`
+	VehicleServiceBookingNo string    `json:"service_booking_number"`
+	VehicleLastServiceDate  time.Time `json:"last_service_date"`
+	VehicleLastKm           int       `json:"last_km"`
 }
 
 type WorkOrderVehicleResponse struct {

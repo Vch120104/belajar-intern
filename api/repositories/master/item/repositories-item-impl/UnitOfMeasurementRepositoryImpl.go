@@ -7,8 +7,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,23 +22,43 @@ func (r *UnitOfMeasurementRepositoryImpl) GetUnitOfMeasurementItem(tx *gorm.DB, 
 	entities := masteritementities.UomItem{}
 	response := masteritempayloads.UomItemResponses{}
 
-	rows, err := tx.Model(&entities).
+	// rows, err := tx.Model(&entities).
+	// 	Where(masteritementities.UomItem{ItemId: Payload.ItemId, UomSourceTypeCode: Payload.SourceType}).
+	// 	First(&response).
+	// 	Rows()
+
+	// if err != nil {
+	// 	return response, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Err:        err,
+	// 	}
+	// } else {
+	// 	defer func(rows *sql.Rows) {
+	// 		err := rows.Close()
+	// 		if err != nil {
+
+	// 		}
+	// 	}(rows)
+	// }
+
+	// refactored empty branch
+	err := tx.Model(&entities).
 		Where(masteritementities.UomItem{ItemId: Payload.ItemId, UomSourceTypeCode: Payload.SourceType}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "item not found",
+				Err:        fmt.Errorf("item not found"),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "internal server error, please check entity",
 			Err:        err,
 		}
-	} else {
-		defer func(rows *sql.Rows) {
-			err := rows.Close()
-			if err != nil {
-
-			}
-		}(rows)
 	}
 
 	return response, nil
