@@ -108,6 +108,11 @@ func StartRouting(db *gorm.DB) {
 	PurchasePriceService := masteritemserviceimpl.StartPurchasePriceService(PurchasePriceRepository, db, rdb)
 	PurchasePriceController := masteritemcontroller.NewPurchasePriceController(PurchasePriceService)
 
+	// Item Operation
+	ItemOperationRepository := masterrepositoryimpl.StartItemOperationRepositoryImpl()
+	ItemOperationService := masterserviceimpl.StartItemOperationService(ItemOperationRepository,db,rdb)
+	ItemOperationController := mastercontroller.NewItemOperationController(ItemOperationService)
+
 	// // Landed Cost
 	LandedCostRepository := masteritemrepositoryimpl.StartLandedCostMasterRepositoryImpl()
 	LandedCostService := masteritemserviceimpl.StartLandedCostMasterService(LandedCostRepository, db, rdb)
@@ -225,6 +230,7 @@ func StartRouting(db *gorm.DB) {
 	LocationStockRepository := masterwarehouserepository.NewLocationStockRepositoryImpl()
 	LocationStockService := masterserviceimpl.NewLocationStockServiceImpl(LocationStockRepository, db, rdb)
 	LocationStockController := mastercontroller.NewLocationStockController(LocationStockService)
+
 	// Bom Master
 	BomRepository := masteritemrepositoryimpl.StartBomRepositoryImpl()
 	BomService := masteritemserviceimpl.StartBomService(BomRepository, db, rdb)
@@ -255,11 +261,15 @@ func StartRouting(db *gorm.DB) {
 	CampaignMasterService := masterserviceimpl.StartCampaignMasterService(CampaignMasterRepository, db)
 	CampaignMasterController := mastercontroller.NewCampaignMasterController(CampaignMasterService)
 
-	// Master
 	//Field Action
 	FieldActionRepository := masterrepositoryimpl.StartFieldActionRepositoryImpl()
 	FieldActionService := masterserviceimpl.StartFieldActionService(FieldActionRepository, db, rdb)
 	FieldActionController := mastercontroller.NewFieldActionController(FieldActionService)
+
+	//Lookup
+	LookupRepository := masterrepositoryimpl.StartLookupRepositoryImpl()
+	LookupService := masterserviceimpl.StartLookupService(LookupRepository, db, rdb)
+	LookupController := mastercontroller.NewLookupController(LookupService)
 
 	/* Transaction */
 	//Supply Slip
@@ -336,6 +346,11 @@ func StartRouting(db *gorm.DB) {
 	CarWashBayService := transactionjpcbserviceimpl.NewCarWashBayServiceImpl(CarWashBayRepository, db, rdb)
 	CarWashBayController := transactionjpcbcontroller.NewCarWashBayController(CarWashBayService)
 
+	//Car Wash
+	CarWashRepository := transactionjpcbrepositoryimpl.NewCarWashRepositoryImpl()
+	CarWashService := transactionjpcbserviceimpl.NewCarWashServiceImpl(CarWashRepository, db, rdb)
+	CarWashController := transactionjpcbcontroller.NewCarWashController(CarWashService)
+
 	//Quality Control
 	QualityControlRepository := transactionworkshoprepositoryimpl.OpenQualityControlRepositoryImpl()
 	QualityControlService := transactionworkshopserviceimpl.OpenQualityControlServiceImpl(QualityControlRepository, db, rdb)
@@ -401,6 +416,7 @@ func StartRouting(db *gorm.DB) {
 	CampaignMasterRouter := CampaignMasterRouter(CampaignMasterController)
 	PackageMasterRouter := PackageMasterRouter(PackageMasterController)
 	LocationStockRouter := LocationStockRouter(LocationStockController)
+	ItemOperationRouter := ItemOperationRouter(ItemOperationController)
 	/* Transaction */
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
 	SupplySlipReturnRouter := SupplySlipReturnRouter(SupplySlipReturnController)
@@ -414,13 +430,15 @@ func StartRouting(db *gorm.DB) {
 	WorkOrderAllocationRouter := WorkOrderAllocationRouter(WorkOrderAllocationController)
 	SettingTechnicianRouter := SettingTechnicianRouter(SettingTechnicianController)
 	CarWashBayRouter := CarWashBayRouter(CarWashBayController)
+	CarWashRouter := CarWashRouter(CarWashController)
 	TechnicianAttendanceRouter := TechnicianAttendanceRouter(TechnicianAttendanceController)
 	QualityControlRouter := QualityControlRouter(QualityControlController)
 	QualityControlBodyshopRouter := QualityControlBodyshopRouter(QualityControlBodyshopController)
 	ServiceWorkshopRouter := ServiceWorkshopRouter(ServiceWorkshopController)
 	ServiceBodyshopRouter := ServiceBodyshopRouter(ServiceBodyshopController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
-	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
+
+	LookupRouter := LookupRouter(LookupController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -480,6 +498,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/incentive-group-detail", IncentiveGroupDetailRouter)
 		r.Mount("/deduction", DeductionRouter)
 		r.Mount("/location-stock", LocationStockRouter)
+		r.Mount("/item-operation", ItemOperationRouter)
 
 		/* Transaction */
 
@@ -487,6 +506,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/bay", CarWashBayRouter)
 		r.Mount("/setting-technician", SettingTechnicianRouter)
 		r.Mount("/technician-attendance", TechnicianAttendanceRouter)
+		r.Mount("/car-wash", CarWashRouter)
 
 		/* Transaction Workshop */
 		r.Mount("/booking-estimation", BookingEstimationRouter)
@@ -508,7 +528,9 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/supply-slip-return", SupplySlipReturnRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
-		r.Mount("/purchase-order", PurchaseOrderRouter)
+
+		/* Support Func Afs */
+		r.Mount("/lookup", LookupRouter)
 	})
 	// Route untuk Swagger
 	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
