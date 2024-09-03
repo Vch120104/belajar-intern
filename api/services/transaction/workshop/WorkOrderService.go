@@ -32,8 +32,6 @@ type WorkOrderService interface {
 	NewVehicleModel(brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse)
 
 	// Lookup Function
-	VehicleLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	CampaignLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GenerateDocumentNumber(workOrderId int) (string, *exceptions.BaseErrorResponse)
 
 	// normal function
