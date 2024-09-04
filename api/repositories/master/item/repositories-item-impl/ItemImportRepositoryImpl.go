@@ -202,7 +202,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master-multi-id/" + supplierMultipleId
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-multi-id/" + supplierMultipleId
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
