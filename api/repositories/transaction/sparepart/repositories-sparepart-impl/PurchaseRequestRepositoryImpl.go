@@ -773,30 +773,6 @@ func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, reque
 			Err:        err,
 		}
 	}
-	//entities.BudgetCode = request.BudgetCode
-	//entities.ProjectNo = request.ProjectNo
-	//entities.DivisionId = request.DivisionId
-	//entities.PurchaseRequestRemark = request.PurchaseRequestRemark
-	//entities.ExpectedArrivalTime = &request.ExpectedArrivalTime
-	//entities.ExpectedArrivalDate = &request.ExpectedArrivalDate
-	//entities.CostCenterId = request.CostCenterId
-	//entities.ProfitCenterId = request.ProfitCenterId
-	//entities.BackOrder = request.BackOrder
-	//entities.SetOrder = request.BackOrder
-	//entities.CurrencyId = request.CurrencyId
-	//entities.OrderTypeId = request.OrderTypeId
-	//entities.ChangeNo = entities.ChangeNo + 1
-	//entities.UpdatedDate = &request.UpdatedDate
-	//entities.UpdatedByUserId = request.UpdatedByUserId
-	//err = db.Save(&entities).Error
-	//if err != nil {
-	//	return res, &exceptions.BaseErrorResponse{
-	//		StatusCode: http.StatusBadRequest,
-	//		Message:    "Failed To Insert Data",
-	//		Data:       res,
-	//		Err:        err,
-	//	}
-	//}
 	//this is logic for getting doc no
 	//CEK DOC STATUS ID FOR READY CODE = 20 status ready code = 20
 	var DocResponse transactionsparepartpayloads.PurchaseRequestDocumentStatus
@@ -835,16 +811,7 @@ func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, reque
 			Err:        err,
 		}
 	}
-	//turn of checking for test
-	//if count == 0 {
-	//	return res, &exceptions.BaseErrorResponse{
-	//		StatusCode: http.StatusBadRequest,
-	//		Message:    "PR Qty does not match with WO Qty",
-	//		Data:       nil,
-	//		Err:        err,
-	//	}
-	//}
-	//return res, nil
+
 	result, errs := p.GetByIdPurchaseRequest(db, id)
 	return result, errs
 }
