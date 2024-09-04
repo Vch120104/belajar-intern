@@ -127,6 +127,7 @@ func (s *WarehouseLocationServiceImpl) GenerateTemplateFile() (*excelize.File, *
 	f := excelize.NewFile()
 	sheetName := "WarehouseLocation"
 	defer func() {
+		f.DeleteSheet("Sheet1")
 		if err := f.Close(); err != nil {
 			return
 		}

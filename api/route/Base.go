@@ -9,6 +9,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -173,6 +174,7 @@ func ItemRouter(
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Get("/search", itemController.GetAllItem)
+	router.Get("/test", itemController.ItemTest)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem)
@@ -872,7 +874,7 @@ func LabourSellingPriceDetailRouter(
 	router.Get("/detail/{labour_selling_price_detail_id}", LabourSellingPriceDetailController.GetSellingPriceDetailById)
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
 	router.Get("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
-	router.Get("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
+	router.Post("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
 
 	return router
 }

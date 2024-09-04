@@ -37,10 +37,52 @@ type ItemController interface {
 	GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request)
 	AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
+	ItemTest(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
 	itemservice masteritemservice.ItemService
+}
+
+// ItemTest implements ItemController.
+func (r *ItemControllerImpl) ItemTest(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	internal := map[string]string{
+		"mtr_item.item_id":               queryValues.Get("item_id"),
+		"mtr_item.item_code":             queryValues.Get("item_code"),
+		"mtr_item.item_name":             queryValues.Get("item_name"),
+		"mtr_item.item_type":             queryValues.Get("item_type"),
+		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
+		"mtr_item.is_active":             queryValues.Get("is_active"),
+		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
+		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
+		"mtr_item.supplier_id":           queryValues.Get("supplier_id"), // Add supplier_id to internal
+	}
+
+	external := map[string]string{
+
+		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(internal)
+	c := utils.BuildFilterCondition(external)
+
+	data, totalPages, totalRows, err := r.itemservice.ItemTest(criteria, c, paginate)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 func NewItemController(ItemService masteritemservice.ItemService) ItemController {

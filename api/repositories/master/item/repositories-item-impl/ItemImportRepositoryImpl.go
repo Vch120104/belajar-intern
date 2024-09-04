@@ -129,6 +129,13 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 }
 
 // GetAllItemImport implements masteritemrepository.ItemImportRepository.
+
+// |
+// V
+// ERROR!!!, failed to get supplier multi id from external, still on revision from general supplier-multi-ids, last updated (26 Aug 2024, by Kenth)
+// ^
+// |
+
 func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemImport{}
 	var responses []masteritempayloads.ItemImportResponse
@@ -164,8 +171,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		for _, value := range supplierResponses {
 			supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
 		}
-
-		fmt.Println(supplierMultipleId)
 	}
 
 	query := tx.Model(&model).Select("mtr_item_import.*, Item.item_code AS item_code, Item.item_name AS item_name").
@@ -193,8 +198,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	fmt.Println(responses)
-
 	for _, value := range responses {
 		supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
 	}
@@ -207,7 +210,6 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 			Err:        errSupplier,
 		}
 	}
-	fmt.Println(supplierUrl)
 
 	if len(supplierResponses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{

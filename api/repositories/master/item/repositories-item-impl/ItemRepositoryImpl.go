@@ -28,6 +28,70 @@ func StartItemRepositoryImpl() masteritemrepository.ItemRepository {
 	return &ItemRepositoryImpl{}
 }
 
+// ItemTest implements masteritemrepository.ItemRepository.
+func (r *ItemRepositoryImpl) ItemTest(tx *gorm.DB, internal []utils.FilterCondition, external []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var responses []masteritempayloads.ItemLookup
+	var itemgroupReponses []masteritempayloads.ItemGroupResponse
+
+	tableStruct := masteritempayloads.ItemLookup{}
+
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	whereQuery := utils.ApplyFilter(joinTable, internal)
+
+	ItemGroupCode := ""
+	ItemGroupName := "c"
+
+	err := whereQuery.Limit(10).Scan(&responses).Error
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
+		}
+	}
+
+	if len(responses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
+		}
+	}
+
+	//item group
+
+	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + fmt.Sprintf("filter-item-group?item_group_code=%s&item_group_name=%s", ItemGroupCode, ItemGroupName)
+
+	errUrlMarkupRate := utils.Get(itemGroupUrl, &itemgroupReponses, nil)
+	if errUrlMarkupRate != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlMarkupRate,
+		}
+	}
+
+	if len(itemgroupReponses) == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no content"),
+		}
+	}
+
+	// Perform inner join with order type data
+	joinedData, errdf := utils.DataFrameInnerJoin(responses, itemgroupReponses, "ItemGroupId")
+
+	if errdf != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	// Paginate the joined data
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
+
+	return dataPaginate, totalPages, totalRows, nil
+}
+
 // CheckItemCodeExist implements masteritemrepository.ItemRepository.
 func (r *ItemRepositoryImpl) CheckItemCodeExist(tx *gorm.DB, itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse) {
 	model := masteritementities.Item{}
@@ -761,5 +825,3 @@ func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId
 
 	return itemDetails, nil
 }
-
-

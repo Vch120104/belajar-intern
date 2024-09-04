@@ -3,7 +3,6 @@ package migration
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
 	"time"
 

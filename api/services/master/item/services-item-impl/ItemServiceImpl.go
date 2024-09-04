@@ -28,6 +28,18 @@ func StartItemService(itemRepo masteritemrepository.ItemRepository, db *gorm.DB,
 	}
 }
 
+// ItemTest implements masteritemservice.ItemService.
+func (s *ItemServiceImpl) ItemTest(internal []utils.FilterCondition, external []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, totalpages, totalrows, repoErr := s.itemRepo.ItemTest(tx, internal, external, pages)
+	defer helper.CommitOrRollback(tx, repoErr)
+
+	if repoErr != nil {
+		return results, totalpages, totalrows, repoErr
+	}
+	return results, totalpages, totalrows, nil
+}
+
 // CheckItemCodeExist implements masteritemservice.ItemService.
 func (s *ItemServiceImpl) CheckItemCodeExist(itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
