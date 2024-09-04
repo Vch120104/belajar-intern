@@ -2,6 +2,7 @@ package masteritemcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"errors"
 	"time"
 
 	helper "after-sales/api/helper"
@@ -27,6 +28,7 @@ type ItemSubstituteController interface {
 	ChangeStatusItemSubstitute(writer http.ResponseWriter, request *http.Request)
 	ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
+	GetallItemForFilter(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemSubstituteControllerImpl struct {
@@ -97,7 +99,12 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 func (r *ItemSubstituteControllerImpl) GetByIdItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 	ItemSubstituteIdStr := chi.URLParam(request, "item_substitute_id")
 
-	ItemSubstituteId, _ := strconv.Atoi(ItemSubstituteIdStr)
+	ItemSubstituteId, errA := strconv.Atoi(ItemSubstituteIdStr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemSubstituteService.GetByIdItemSubstitute(ItemSubstituteId)
 
@@ -132,7 +139,12 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 
 	ItemSubstituteIdStr := chi.URLParam(request, "item_substitute_id")
 
-	ItemSubstituteId, _ := strconv.Atoi(ItemSubstituteIdStr)
+	ItemSubstituteId, errA := strconv.Atoi(ItemSubstituteIdStr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -161,7 +173,12 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstituteDetail(writer http.Re
 func (r *ItemSubstituteControllerImpl) GetByIdItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
 	ItemSubstituteDetailIdStr := chi.URLParam(request, "item_substitute_detail_id")
 
-	ItemSubstituteDetailId, _ := strconv.Atoi(ItemSubstituteDetailIdStr)
+	ItemSubstituteDetailId, errA := strconv.Atoi(ItemSubstituteDetailIdStr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemSubstituteService.GetByIdItemSubstituteDetail(ItemSubstituteDetailId)
 
@@ -222,7 +239,12 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 	var formRequest masteritempayloads.ItemSubstituteDetailPostPayloads
 	ItemSubstituteDetailIdStr := chi.URLParam(request, "item_substitute_id")
 
-	ItemSubstituteDetailId, _ := strconv.Atoi(ItemSubstituteDetailIdStr)
+	ItemSubstituteDetailId, errA := strconv.Atoi(ItemSubstituteDetailIdStr)
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 	var message = ""
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 
@@ -258,7 +280,12 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 // @Router /v1/item-substitute/{item_substitute_id} [patch]
 func (r *ItemSubstituteControllerImpl) ChangeStatusItemSubstitute(writer http.ResponseWriter, request *http.Request) {
 
-	ItemSubstituteId, _ := strconv.Atoi(chi.URLParam(request, "item_substitute_id"))
+	ItemSubstituteId, errA := strconv.Atoi(chi.URLParam(request, "item_substitute_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ItemSubstituteService.ChangeStatusItemSubstitute(ItemSubstituteId)
 
@@ -313,4 +340,36 @@ func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer htt
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *ItemSubstituteControllerImpl)GetallItemForFilter(writer http.ResponseWriter, request *http.Request){
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"item_code":            queryValues.Get("item_code"),
+		"item_name": queryValues.Get("item_name"),
+		"item_class":     queryValues.Get("item-class"),
+		"item_type": queryValues.Get("item_get"),
+		"item_level_1":queryValues.Get("item_level_1"),
+		"item_level_2":queryValues.Get("item_level_2"),
+		"item_level_3":queryValues.Get("item_level_3"),
+		"item_level_4":queryValues.Get("item_level_4"),
+	}
+
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	filterCondition := utils.BuildFilterCondition(queryParams)
+
+	result, err := r.ItemSubstituteService.GetallItemForFilter(filterCondition, pagination)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }

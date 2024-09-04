@@ -1,9 +1,11 @@
 package masterwarehousecontroller
 
 import (
+	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -46,7 +48,12 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 // DropdownbyGroupId implements WarehouseMasterController.
 func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	warehouseGroupId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.WarehouseMasterService.DropdownbyGroupId(warehouseGroupId)
 	if err != nil {
@@ -151,7 +158,11 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+	warehouseId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.WarehouseMasterService.GetById(warehouseId)
 	if err != nil {
@@ -251,7 +262,12 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 // @Router /v1/warehouse-master/{warehouse_id} [patch]
 func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseId, _ := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+	warehouseId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	change_status, err := r.WarehouseMasterService.ChangeStatus(warehouseId)
 	if err != nil {
@@ -263,7 +279,7 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 
 }
 
-func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWriter, request *http.Request){
+func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -271,8 +287,13 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
 	}
-	warehouseId,_ := strconv.Atoi(chi.URLParam(request,"warehouse_id"))
-	result,err := r.WarehouseMasterService.GetAuthorizeUser(pagination,warehouseId)
+	warehouseId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	result, err := r.WarehouseMasterService.GetAuthorizeUser(pagination, warehouseId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -280,21 +301,21 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 
-func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request){
-	formRequest:= masterwarehousepayloads.WarehouseAuthorize{}
+func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
+	formRequest := masterwarehousepayloads.WarehouseAuthorize{}
 	helper.ReadFromRequestBody(request, &formRequest)
-	save,err := r.WarehouseMasterService.PostAuthorizeUser(formRequest)
-	if err != nil{
+	save, err := r.WarehouseMasterService.PostAuthorizeUser(formRequest)
+	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, "data saved succesfully", http.StatusOK)
 }
 
-func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.ResponseWriter, request *http.Request){
-	warehouseAuthorizeId := chi.URLParam(request,"warehouse_authorize_id")
-	delete,err:= r.WarehouseMasterService.DeleteMultiIdAuthorizeUser(warehouseAuthorizeId)
-	if err != nil{
+func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
+	warehouseAuthorizeId := chi.URLParam(request, "warehouse_authorize_id")
+	delete, err := r.WarehouseMasterService.DeleteMultiIdAuthorizeUser(warehouseAuthorizeId)
+	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}

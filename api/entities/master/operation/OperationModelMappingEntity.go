@@ -18,8 +18,10 @@ type OperationModelMapping struct {
 	OperationPdi                  bool                                                       `gorm:"column:operation_pdi;null" json:"operation_pdi"`
 	OperationFrt                  []OperationFrt                                             `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	OperationDocumentRequirement  []OperationDocumentRequirement                             `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
+	OperationLevel                []OperationLevel                                           `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	FieldActionEligibleVehicle    masterentities.FieldActionEligibleVehicleOperation         `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	CampaignMasterDetailOperation mastercampaignmasterentities.CampaignMasterOperationDetail `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
+	ItemOperation                 masterentities.ItemOperation                               `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 }
 
 func (*OperationModelMapping) TableName() string {

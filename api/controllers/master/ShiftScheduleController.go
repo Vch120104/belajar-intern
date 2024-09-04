@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"errors"
 
 	// "after-sales/api/middlewares"
 
@@ -24,6 +25,7 @@ type ShiftScheduleController interface {
 	SaveShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	GetShiftScheduleById(writer http.ResponseWriter, request *http.Request)
+	GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request)
 }
 type ShiftScheduleControllerImpl struct {
 	ShiftScheduleService masterservice.ShiftScheduleService
@@ -119,7 +121,12 @@ func (r *ShiftScheduleControllerImpl) GetAllShiftSchedule(writer http.ResponseWr
 // @Router /v1/shift-schedule/{shift_schedule_id} [get]
 func (r *ShiftScheduleControllerImpl) GetShiftScheduleById(writer http.ResponseWriter, request *http.Request) {
 
-	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+	ShiftScheduleId, errA := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ShiftScheduleService.GetShiftScheduleById(ShiftScheduleId)
 	if err != nil {
@@ -171,7 +178,12 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 // @Router /v1/shift-schedule/{shift_schedule_id} [patch]
 func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request) {
 
-	ShiftScheduleId, _ := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+	ShiftScheduleId, errA := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.ShiftScheduleService.ChangeStatusShiftSchedule(int(ShiftScheduleId))
 	if err != nil {
@@ -179,4 +191,14 @@ func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.Resp
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *ShiftScheduleControllerImpl) GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.ShiftScheduleService.GetShiftScheduleDropDown()
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }

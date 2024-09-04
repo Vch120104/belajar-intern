@@ -16,4 +16,5 @@ type ShiftScheduleRepository interface {
 	ChangeStatusShiftSchedule(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	// GetShiftScheduleByCode(*gorm.DB, string) (masterpayloads.ShiftScheduleResponse, error)
 	// GetAllShiftScheduleIsActive(*gorm.DB) ([]masterpayloads.ShiftScheduleResponse, error)
+	GetShiftScheduleDropDown(tx *gorm.DB) ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse)
 }

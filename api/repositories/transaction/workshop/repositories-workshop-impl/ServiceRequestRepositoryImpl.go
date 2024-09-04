@@ -140,11 +140,11 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 
 	defer rows.Close()
 
-	var convertedResponses []transactionworkshoppayloads.ServiceRequestResponse
+	var convertedResponses []transactionworkshoppayloads.ServiceRequestGetallResponse
 	for rows.Next() {
 		var (
 			ServiceRequestReq transactionworkshoppayloads.ServiceRequestNew
-			ServiceRequestRes transactionworkshoppayloads.ServiceRequestResponse
+			ServiceRequestRes transactionworkshoppayloads.ServiceRequestGetallResponse
 		)
 
 		if err := rows.Scan(
@@ -267,7 +267,7 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		ServiceRequestRes = transactionworkshoppayloads.ServiceRequestResponse{
+		ServiceRequestRes = transactionworkshoppayloads.ServiceRequestGetallResponse{
 			ServiceRequestSystemNumber:   ServiceRequestReq.ServiceRequestSystemNumber,
 			ServiceRequestDocumentNumber: ServiceRequestReq.ServiceRequestDocumentNumber,
 			ServiceRequestDate:           ServiceRequestReq.ServiceRequestDate.Format("2006-01-02 15:04:05"),
@@ -277,8 +277,8 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ModelName:                    modelResponses.ModelName,
 			VariantName:                  variantResponses.VariantName,
 			VariantColourName:            colourResponses[0].VariantColourName,
-			VehicleCode:                  vehicleResponses.Master.VehicleCode,
-			VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
+			VehicleCode:                  vehicleResponses.VehicleCode,
+			VehicleTnkb:                  vehicleResponses.VehicleTnkb,
 			CompanyName:                  companyResponses[0].CompanyName,
 			WorkOrderSystemNumber:        ServiceRequestReq.WorkOrderSystemNumber,
 			BookingSystemNumber:          ServiceRequestReq.BookingSystemNumber,
@@ -305,9 +305,12 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			"chassis_no":                      response.VehicleCode,
 			"no_polisi":                       response.VehicleTnkb,
 			"status":                          response.ServiceRequestStatusName,
-			"work_order_no":                   response.WorkOrderSystemNumber,
-			"booking_no":                      response.BookingSystemNumber,
-			"ref_doc_no":                      response.ReferenceDocSystemNumber,
+			"work_order_system_number":        response.WorkOrderSystemNumber,
+			"work_order_no":                   response.WorkOrderDocumentNumber,
+			"booking_system_number":           response.BookingSystemNumber,
+			"booking_no":                      response.BookingDocumentNumber,
+			"reference_doc_system_number":     response.ReferenceDocSystemNumber,
+			"ref_doc_no":                      response.ReferenceDocDocumentNumber,
 		}
 
 		mapResponses = append(mapResponses, responseMap)
@@ -472,7 +475,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
-		Select("service_request_detail_id, service_request_id, service_request_system_number, line_type_id, operation_item_id, frt_quantity, reference_doc_system_number, reference_doc_id").
+		Select("service_request_detail_id, service_request_line_number, service_request_system_number, line_type_id, operation_item_id, frt_quantity, reference_doc_system_number, reference_doc_id").
 		Where("service_request_system_number = ?", Id).
 		Offset(pagination.GetOffset()).
 		Limit(pagination.GetLimit())
@@ -573,8 +576,8 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		VariantName:                  variantResponse.VariantName,
 		VariantColourName:            colourResponses[0].VariantColourName,
 		VehicleId:                    entity.VehicleId,
-		VehicleCode:                  vehicleResponses.Master.VehicleCode,
-		VehicleTnkb:                  vehicleResponses.Stnk.VehicleTnkb,
+		VehicleCode:                  vehicleResponses.VehicleCode,
+		VehicleTnkb:                  vehicleResponses.VehicleTnkb,
 		CompanyId:                    entity.CompanyId,
 		CompanyName:                  companyResponses[0].CompanyName,
 		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,

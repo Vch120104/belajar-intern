@@ -1,6 +1,7 @@
 package masteritempayloads
 
 type ItemSubstituteDetailPayloads struct {
+	IsActive               bool    `json:"is_active" parent_entity:"mtr_item_substitute_detail" main_table:"mtr_item_substitute_detail"`
 	ItemSubstituteDetailId int     `json:"item_substitute_detail_id" parent_entity:"mtr_item_substitute_detail" main_table:"mtr_item_substitute_detail" `
 	ItemSubstituteId       int     `json:"item_substitute_id" parent_entity:"mtr_item_substitute" references:"mtr_item_substitute"`
 	ItemId                 int     `json:"item_id" parent_entity:"mtr_item" references:"mtr_item"`
@@ -18,6 +19,7 @@ type ItemSubstituteDetailPostPayloads struct {
 }
 
 type ItemSubstituteDetailGetPayloads struct {
+	IsActive               bool    `json:"is_active"`
 	ItemSubstituteDetailId int     `json:"item_substitute_detail_id"`
 	ItemSubstituteId       int     `json:"item_substitute_id"`
 	ItemId                 int     `json:"item_id"`

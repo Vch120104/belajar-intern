@@ -143,8 +143,16 @@ func (r *ItemImportControllerImpl) DownloadTemplate(writer http.ResponseWriter, 
 
 // GetItemImportbyItemIdandSupplierId implements ItemImportController.
 func (r *ItemImportControllerImpl) GetItemImportbyItemIdandSupplierId(writer http.ResponseWriter, request *http.Request) {
-	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
-	supplierId, _ := strconv.Atoi(chi.URLParam(request, "supplier_id"))
+	itemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	supplierId, errA := strconv.Atoi(chi.URLParam(request, "supplier_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemImportService.GetItemImportbyItemIdandSupplierId(itemId, supplierId)
 
@@ -168,7 +176,12 @@ func (r *ItemImportControllerImpl) GetItemImportbyItemIdandSupplierId(writer htt
 // @Router /v1/item-import/{item_import_id} [get]
 func (r *ItemImportControllerImpl) GetItemImportbyId(writer http.ResponseWriter, request *http.Request) {
 
-	itemPackageId, _ := strconv.Atoi(chi.URLParam(request, "item_import_id"))
+	itemPackageId, errA := strconv.Atoi(chi.URLParam(request, "item_import_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.ItemImportService.GetItemImportbyId(itemPackageId)
 

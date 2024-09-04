@@ -1,7 +1,6 @@
 package transactionworkshopserviceimpl
 
 import (
-	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -53,36 +52,14 @@ func (s *WorkOrderBypassServiceImpl) GetById(id int) (transactionworkshoppayload
 	return workOrder, nil
 }
 
-func (s *WorkOrderBypassServiceImpl) Bypass(request transactionworkshoppayloads.WorkOrderBypassRequestDetail) (transactionworkshopentities.WorkOrderQualityControl, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderBypassServiceImpl) Bypass(id int, request transactionworkshoppayloads.WorkOrderBypassRequestDetail) (transactionworkshoppayloads.WorkOrderBypassResponseDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	workOrder, err := s.structWorkOrderBypassRepo.Bypass(tx, request)
+	workOrder, err := s.structWorkOrderBypassRepo.Bypass(tx, id, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return workOrder, err
 	}
-
-	// if workOrder.Status != "BYPASS" {
-	// 	return workOrder, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusUnprocessableEntity,
-	// 		Err:        fmt.Errorf("Work order status is not BYPASS"),
-	// 	}
-	// }
-
-	// workOrder.Status = "QUALITY_CONTROL"
-	// if err := s.structWorkOrderBypassRepo.UpdateWorkOrder(tx, workOrder); err != nil {
-	// 	return workOrder, err
-	// }
-
-	// // Create quality control
-	// qualityControl := transactionworkshopentities.WorkOrderQualityControl{
-	// 	WorkOrderID: workOrder.ID,
-	// 	Status:      "OPEN",
-	// }
-
-	// if err := s.structWorkOrderBypassRepo.CreateQualityControl(tx, qualityControl); err != nil {
-	// 	return workOrder, err
-	// }
 
 	return workOrder, nil
 }

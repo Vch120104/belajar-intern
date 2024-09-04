@@ -69,7 +69,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -78,7 +78,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	if len(payloads) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -89,7 +89,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	if errProfitcenterUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errProfitcenterUrl,
 		}
 	}
@@ -98,7 +98,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -109,7 +109,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	if errUrlUnitModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlUnitModel,
 		}
 	}
@@ -117,7 +117,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 	joinedData2, errdf := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
 	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -128,14 +128,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 
 	if errUrlVariantModel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlVariantModel,
 		}
 	}
 	joinedData3, errdf := utils.DataFrameInnerJoin(joinedData2, getVariantResponse, "VariantId")
 	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -153,7 +153,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 	}).Scan(&response).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -162,14 +162,14 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetailBodyshop(tx *gorm
 	errLineTypeUrl := utils.Get(LineTypeUrl, &getlinetype, nil)
 	if errLineTypeUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 	joinedData1, errdf := utils.DataFrameInnerJoin(rows, getlinetype, "LineTypeId")
 	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -190,7 +190,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 	}).Scan(&payloadheader).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -204,7 +204,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 			Scan(&operationpayloads).Rows()
 		if err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
 		}
@@ -220,7 +220,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 
 		if err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
 		}
@@ -246,7 +246,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 			Select("mtr_package_master_detail_item.*,mtr_item.item_code,mtr_item.item_name").Scan(&itempayloads).Error
 		if err2 != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        err2,
 			}
 		}
@@ -270,7 +270,7 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 		return dataPaginate, totalPages, totalRows, nil
 	}
 	return nil, 0, 0, &exceptions.BaseErrorResponse{
-		StatusCode: http.StatusInternalServerError,
+		StatusCode: http.StatusNotFound,
 		Err:        nil,
 	}
 }
@@ -292,7 +292,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -305,7 +305,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errProfitcenterUrl != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errProfitcenterUrl,
 		}
 	}
@@ -314,7 +314,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -325,7 +325,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errUrlUnitModel != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlUnitModel,
 		}
 	}
@@ -334,7 +334,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -345,7 +345,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errUrlVariantModel != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlVariantModel,
 		}
 	}
@@ -354,7 +354,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -365,7 +365,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errUrlBrandModel != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlBrandModel,
 		}
 	}
@@ -374,7 +374,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -385,7 +385,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errUrlCurrencyModel != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errUrlCurrencyModel,
 		}
 	}
@@ -394,7 +394,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMaster(tx *gorm.DB, id int) 
 
 	if errdf != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        errdf,
 		}
 	}
@@ -442,7 +442,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
@@ -455,18 +455,18 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 			First(&PayloadsOperationBodyshop).Rows()
 		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
 		}
 		defer rows.Close()
-		LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
+		LineTypeUrl := config.EnvConfigs.GeneralServiceUrl+"line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
 
 		errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
 		if errProfitcenterUrl != nil {
 			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
 		}
@@ -474,7 +474,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 
 		if errdf != nil {
 			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusNotFound,
 				Err:        errdf,
 			}
 		}
@@ -491,18 +491,18 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				Select("mtr_package_detail_operation.*,mtr_operation_code.operation_code,mtr_operation_code.operation_name").First(&PayloadsOperation).Rows()
 			if err != nil {
 				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusNotFound,
 					Err:        err,
 				}
 			}
 			defer rows.Close()
-			LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
+			LineTypeUrl := config.EnvConfigs.GeneralServiceUrl+"line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
 			if errProfitcenterUrl != nil {
 				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusNotFound,
 					Err:        err,
 				}
 			}
@@ -510,7 +510,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 
 			if errdf != nil {
 				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusNotFound,
 					Err:        errdf,
 				}
 			}
@@ -527,18 +527,18 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				First(&PayloadsItem).Rows()
 			if err != nil {
 				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusNotFound,
 					Err:        err,
 				}
 			}
 			defer result.Close()
-			LineTypeUrl := "http://10.1.32.26:8000/general-service/v1/line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
+			LineTypeUrl := config.EnvConfigs.GeneralServiceUrl+"line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
 			if errProfitcenterUrl != nil {
 				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusNotFound,
 					Err:        err,
 				}
 			}
@@ -546,7 +546,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 
 			if errdf != nil {
 				return nil, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusNotFound,
 					Err:        errdf,
 				}
 			}
@@ -577,7 +577,7 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 	err := tx.Save(&entities).Error
 	if err != nil {
 		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
@@ -591,7 +591,7 @@ func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.D
 		if err != nil {
 			tx.Rollback()
 			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusBadRequest,
 				Err:        err,
 			}
 		}
@@ -606,7 +606,7 @@ func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.D
 		err2 := tx.Save(&entities).Error
 		if err2 != nil {
 			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusBadRequest,
 				Err:        err2,
 			}
 		}
@@ -625,7 +625,7 @@ func (r *PackageMasterRepositoryImpl) PostPackageMasterDetailWorkshop(tx *gorm.D
 		err := tx.Save(&entities).Error
 		if err != nil {
 			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusBadRequest,
 				Err:        err,
 			}
 		}
@@ -642,7 +642,7 @@ func (r *PackageMasterRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id in
 
 	if result.Error != nil {
 		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusBadRequest,
 			Err:        result.Error,
 		}
 	}
@@ -657,7 +657,7 @@ func (r *PackageMasterRepositoryImpl) ChangeStatusItemPackage(tx *gorm.DB, id in
 
 	if result.Error != nil {
 		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
+			StatusCode: http.StatusBadRequest,
 			Err:        result.Error,
 		}
 	}
@@ -687,7 +687,7 @@ func (r *PackageMasterRepositoryImpl) DeactivateMultiIdPackageMasterDetail(tx *g
 			result := tx.Model(&entityToUpdate).Where("package_detail_operation_id = ?", id).Update("is_active", false)
 			if result.Error != nil {
 				return 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusBadRequest,
 					Err:        result.Error,
 				}
 			}
@@ -702,7 +702,7 @@ func (r *PackageMasterRepositoryImpl) DeactivateMultiIdPackageMasterDetail(tx *g
 			result := tx.Model(&entityToUpdate).Where("package_detail_item_id = ?", id).Update("is_active", false)
 			if result.Error != nil {
 				return 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusBadRequest,
 					Err:        result.Error,
 				}
 			}
@@ -733,7 +733,7 @@ func (r *PackageMasterRepositoryImpl) ActivateMultiIdPackageMasterDetail(tx *gor
 			result := tx.Model(&entityToUpdate).Where("package_detail_id = ?", id).Update("is_active", true)
 			if result.Error != nil {
 				return 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusBadRequest,
 					Err:        result.Error,
 				}
 			}
@@ -748,7 +748,7 @@ func (r *PackageMasterRepositoryImpl) ActivateMultiIdPackageMasterDetail(tx *gor
 			result := tx.Model(&entityToUpdate).Where("package_detail_item_id = ?", id).Update("is_active", true)
 			if result.Error != nil {
 				return 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
+					StatusCode: http.StatusBadRequest,
 					Err:        result.Error,
 				}
 			}
