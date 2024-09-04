@@ -194,10 +194,9 @@ func ItemRouter(
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Get("/search", itemController.GetAllItem)
-	router.Get("/test", itemController.ItemTest)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
-	// router.Put("/{item_id}", itemController.UpdateItem)
+	// router.Put("/{item_id}", itemController.UpdateItem
 
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
