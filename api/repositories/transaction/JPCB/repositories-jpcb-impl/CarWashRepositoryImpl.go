@@ -78,7 +78,7 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 		}
 
 		//Fetch data Color from vehicle master then unit color
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master-by-chassis-number/" + strconv.Itoa(vehicleId)
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(vehicleId)
 		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
 		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
 		if errFetchVehicle != nil {
@@ -104,7 +104,7 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 			WorkOrderDocumentNumber:    carWashPayload.WorkOrderDocumentNumber,
 			Model:                      getModelResponse.ModelName,
 			Color:                      getColourResponse.VariantColourName,
-			Tnkb:                       "", //TODO Fetch tnkb, from vehicle_master get by vehicle_id, currently api return error
+			Tnkb:                       getVehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
 			PromiseTime:                carWashPayload.PromiseTime,
 			PromiseDate:                carWashPayload.PromiseDate,
 			CarWashBayId:               carWashPayload.CarWashBayId,
@@ -307,12 +307,6 @@ func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (boo
 }
 
 func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
-	const (
-		qcPass         = 6
-		statusDraft    = 1
-		priorityNormal = 2
-	)
-
 	var workOrderEntity transactionworkshopentities.WorkOrder
 	var workOrderResponse transactionjpcbpayloads.CarWashWorkOrder
 
@@ -338,7 +332,7 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 	}
 
 	if *getCompanyResponse.CompanyReference.UseJPCB {
-		if workOrderResponse.WorkOrderStatusId == qcPass {
+		if workOrderResponse.WorkOrderStatusId == utils.WoStatQC {
 			if workOrderResponse.CarWash {
 				var workOrder int
 				result := tx.Model(&transactionjpcbentities.CarWash{}).Select("work_order_system_number").
@@ -350,8 +344,8 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 					newCarWash := transactionjpcbentities.CarWash{
 						CompanyId:             workOrderResponse.CompanyId,
 						WorkOrderSystemNumber: workOrderSystemNumber,
-						StatusId:              statusDraft,
-						PriorityId:            priorityNormal,
+						StatusId:              utils.CarWashStatDraft,
+						PriorityId:            utils.CarWashPriorityNormal,
 						CarWashDate:           time.Now(),
 						BayId:                 nil,
 					}
@@ -410,8 +404,8 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 							newCarWash := transactionjpcbentities.CarWash{
 								CompanyId:             workOrderResponse.CompanyId,
 								WorkOrderSystemNumber: workOrderSystemNumber,
-								StatusId:              statusDraft,
-								PriorityId:            priorityNormal,
+								StatusId:              utils.CarWashStatDraft,
+								PriorityId:            utils.CarWashPriorityNormal,
 								CarWashDate:           time.Now(),
 								BayId:                 nil,
 							}
@@ -473,7 +467,6 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 }
 
 func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
-	const carWashStatusId = 3
 	var responses []transactionjpcbpayloads.CarWashScreenGetAllResponse
 
 	keyAttributes := []string{
@@ -484,7 +477,7 @@ func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transacti
 	rows, err := tx.Model(&transactionjpcbentities.CarWash{}).Select(keyAttributes).
 		Order("trx_car_wash.car_wash_status_id desc, trx_car_wash.car_wash_bay_id desc, trx_car_wash.car_wash_priority_id desc").
 		Order("trx_work_order.promise_date desc, trx_work_order.promise_time asc").
-		Where("trx_work_order.company_id = ? AND trx_work_order.car_wash = ? AND trx_car_wash.car_wash_status_id <> ?", companyId, 1, carWashStatusId).
+		Where("trx_work_order.company_id = ? AND trx_work_order.car_wash = ? AND trx_car_wash.car_wash_status_id <> ?", companyId, 1, utils.CarWashStatStop).
 		Joins("LEFT JOIN mtr_car_wash_bay on mtr_car_wash_bay.car_wash_bay_id = trx_car_wash.car_wash_bay_id AND mtr_car_wash_bay.company_id =  trx_car_wash.company_id").
 		Joins("LEFT JOIN mtr_car_wash_status on mtr_car_wash_status.car_wash_status_id = trx_car_wash.car_wash_status_id").
 		Joins("LEFT JOIN trx_work_order on trx_work_order.work_order_system_number = trx_car_wash.work_order_system_number").
@@ -555,6 +548,7 @@ func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transacti
 			CarWashStatusDescription: carWashStatusDescription,
 			ModelId:                  modelId,
 			ModelDescription:         getModelResponse.ModelName,
+			VehicleId:                vehicleId,
 			ColourCommercialName:     getColourResponse.VariantColourName,
 		}
 
@@ -618,8 +612,7 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 		}
 	}
 
-	statusStart := 2
-	if carWashStatusId != statusStart {
+	if carWashStatusId != utils.CarWashStatStart {
 		mainTable := "trx_car_wash"
 		mainAlias := "carwash"
 
@@ -665,11 +658,10 @@ func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBa
 			}
 		}
 
-		statusStart := 2
 		err = tx.Model(&transactionjpcbentities.CarWash{}).Where(transactionjpcbentities.CarWash{
 			WorkOrderSystemNumber: workOrderSystemNumber,
 		}).Updates(&transactionjpcbpayloads.StartCarWashUpdates{
-			CarWashStatusId: statusStart,
+			CarWashStatusId: utils.CarWashStatStart,
 			CarWashDate:     time.Now(),
 			CarWashBayId:    carWash.CarWashBayId,
 			StartTime:       createCurrentTime(getCompanyReferenceResponse.TimeDifference),
@@ -754,8 +746,7 @@ func (r *CarWashImpl) StopCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		}
 	}
 
-	if carWashStatus == 2 {
-		statusStop := 3
+	if carWashStatus == utils.CarWashStatStart {
 		var startTime float32
 		err := tx.Model(&transactionjpcbentities.CarWash{}).Select("start_time").Where(&transactionjpcbentities.CarWash{
 			WorkOrderSystemNumber: workOrderSystemNumber,
@@ -770,7 +761,7 @@ func (r *CarWashImpl) StopCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 		err = tx.Table("trx_car_wash").
 			Where("trx_car_wash.work_order_system_number = ?", workOrderSystemNumber).
 			Updates(transactionjpcbentities.CarWash{
-				StatusId:   statusStop,
+				StatusId:   utils.CarWashStatStop,
 				EndTime:    createCurrentTime(0),
 				ActualTime: createCurrentTime(0) - startTime,
 			}).Error
@@ -856,8 +847,7 @@ func (r *CarWashImpl) CancelCarWash(tx *gorm.DB, workOrderSystemNumber int) (tra
 	}
 	fmt.Print(carWashStatus)
 
-	statusStart := 2
-	if carWashStatus != statusStart {
+	if carWashStatus != utils.CarWashStatStart {
 		err := tx.Model(&transactionjpcbentities.CarWash{}).Where(&transactionjpcbentities.CarWash{
 			WorkOrderSystemNumber: workOrderSystemNumber,
 		}).Update("car_wash_bay_id", nil).Error

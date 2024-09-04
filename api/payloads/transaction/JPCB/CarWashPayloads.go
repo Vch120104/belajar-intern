@@ -42,9 +42,17 @@ type CarWashModelResponse struct {
 	ModelName string `json:"model_description"`
 }
 
+type CarWashVehicleSTNKResponse struct {
+	VehicleRegistrationCertificateTnkb      string `json:"vehicle_registration_certificate_tnkb"`
+	VehicleRegistrationCertificateNumber    string `json:"vehicle_registration_certificate_number"`
+	VehicleRegistrationCertificateValidDate string `json:"vehicle_registration_certificate_valid_date"`
+	VehicleRegistrationCertificateCode      string `json:"vehicle_registration_certificate_code"`
+	VehicleRegistrationCertificateOwnerName string `json:"vehicle_registration_certificate_owner_name"`
+}
 type CarWashVehicleResponse struct {
-	VehicleId       int `json:"vehicle_id"`
-	VehicleColourId int `json:"vehicle_colour_id"`
+	VehicleId       int                        `json:"vehicle_id"`
+	VehicleColourId int                        `json:"vehicle_colour_id"`
+	STNK            CarWashVehicleSTNKResponse `json:"stnk"`
 }
 
 type CarWashColourResponse struct {
