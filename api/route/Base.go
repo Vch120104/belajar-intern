@@ -1399,6 +1399,24 @@ func TechnicianAttendanceRouter(
 	return router
 }
 
+func JobAllocationRouter(
+	JobAllocationController transactionjpcbcontroller.JobAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", JobAllocationController.GetAllJobAllocation)
+	router.Get("/{technician_allocation_system_number}", JobAllocationController.GetJobAllocationById)
+	router.Put("/{technician_allocation_system_number}", JobAllocationController.UpdateJobAllocation)
+	router.Delete("/{technician_allocation_system_number}", JobAllocationController.DeleteJobAllocation)
+
+	return router
+}
+
 func ServiceWorkshopRouter(
 	ServiceWorkshopController transactionworkshopcontroller.ServiceWorkshopController,
 ) chi.Router {
