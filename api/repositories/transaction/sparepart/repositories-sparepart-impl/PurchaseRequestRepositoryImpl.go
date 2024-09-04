@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			"purchase_request_document_number," +
 			"purchase_request_document_status_id," +
 			"item_group_id,purchase_request_document_number," +
-			"reference_system_number,order_type_id," +
+			"reference_system_number,order_type_id,purchase_request_document_date," +
 			"expected_arrival_date,created_by_user_id,reference_document_number," +
 			"'A.purchase_request_system_number'") //.Scan(&responses).Error
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
@@ -386,7 +387,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 		}
 		if UomItemResponse.SourceConvertion == nil {
 			return paginationResponses, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
+				StatusCode: http.StatusBadRequest,
 				Message:    "Failed to fetch Uom Source Convertion From External Data",
 				Err:        err,
 			}
@@ -418,7 +419,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	entities := transactionsparepartentities.PurchaseRequestDetail{}
 	response := transactionsparepartpayloads.PurchaseRequestDetailRequestPayloads{}
 	rows, err := db.Model(&entities).
-		Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: i}).
+		Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: i}).
 		First(&response).
 		Rows()
 	if err != nil {
@@ -468,11 +469,11 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
 
 	result = transactionsparepartpayloads.PurchaseRequestDetailResponsesPayloads{
-		ItemId:                            ItemResponse.ItemId,
 		PurchaseRequestDetailSystemNumber: response.PurchaseRequestDetailSystemNumber,
 		PurchaseRequestSystemNumber:       response.PurchaseRequestSystemNumber,
 		PurchaseRequestLineNumber:         response.PurchaseRequestLineNumber,
 		ReferenceSystemNumber:             response.ReferenceSystemNumber,
+		ItemId:                            ItemResponse.ItemId,
 		ReferenceLine:                     response.ReferenceLine,
 		ItemCode:                          response.ItemCode,
 		ItemName:                          ItemResponse.ItemName,
@@ -480,6 +481,10 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 		ItemUnitOfMeasure:                 response.ItemUnitOfMeasure,
 		ItemUnitOfMeasureRate:             UomRate,
 		ItemRemark:                        response.ItemRemark,
+		CreatedByUserId:                   response.CreatedByUserId,
+		CreatedDate:                       response.CreatedDate,
+		UpdatedByUserId:                   response.UpdatedByUserId,
+		UpdatedDate:                       response.UpdatedDate,
 	}
 	return result, nil
 }
@@ -755,30 +760,30 @@ func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestHeader(db *gorm.DB,
 			Err:        err,
 		}
 	}
-	entities.BudgetCode = request.BudgetCode
-	entities.ProjectNo = request.ProjectNo
-	entities.DivisionId = request.DivisionId
-	entities.PurchaseRequestRemark = request.PurchaseRequestRemark
-	entities.ExpectedArrivalTime = &request.ExpectedArrivalTime
-	entities.ExpectedArrivalDate = &request.ExpectedArrivalDate
-	entities.CostCenterId = request.CostCenterId
-	entities.ProfitCenterId = request.ProfitCenterId
-	entities.BackOrder = request.BackOrder
-	entities.SetOrder = request.BackOrder
-	entities.CurrencyId = request.CurrencyId
-	entities.OrderTypeId = request.OrderTypeId
-	entities.ChangeNo = entities.ChangeNo + 1
-	entities.UpdatedDate = &request.UpdatedDate
-	entities.UpdatedByUserId = request.UpdatedByUserId
-	err = db.Save(&entities).Error
-	if err != nil {
-		return res, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Failed To Insert Data",
-			Data:       res,
-			Err:        err,
-		}
-	}
+	//entities.BudgetCode = request.BudgetCode
+	//entities.ProjectNo = request.ProjectNo
+	//entities.DivisionId = request.DivisionId
+	//entities.PurchaseRequestRemark = request.PurchaseRequestRemark
+	//entities.ExpectedArrivalTime = &request.ExpectedArrivalTime
+	//entities.ExpectedArrivalDate = &request.ExpectedArrivalDate
+	//entities.CostCenterId = request.CostCenterId
+	//entities.ProfitCenterId = request.ProfitCenterId
+	//entities.BackOrder = request.BackOrder
+	//entities.SetOrder = request.BackOrder
+	//entities.CurrencyId = request.CurrencyId
+	//entities.OrderTypeId = request.OrderTypeId
+	//entities.ChangeNo = entities.ChangeNo + 1
+	//entities.UpdatedDate = &request.UpdatedDate
+	//entities.UpdatedByUserId = request.UpdatedByUserId
+	//err = db.Save(&entities).Error
+	//if err != nil {
+	//	return res, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusBadRequest,
+	//		Message:    "Failed To Insert Data",
+	//		Data:       res,
+	//		Err:        err,
+	//	}
+	//}
 	//this is logic for getting doc no
 	entities.PurchaseRequestDocumentStatusId = 20 //status ready
 	entities.PurchaseRequestDocumentNumber = "SPPR/N/10/19/11111"
@@ -1136,4 +1141,59 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	}
 	response.UnitOfMeasurementCode = uomentities.UomTypeCode
 	return response, nil
+}
+
+func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePr(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, i int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse) {
+	//resultitem := transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads{}
+	//
+	//err := db.Table("gmItem0 A").
+	//	Select("DISTINCT A.ITEM_CODE AS Code, A.ITEM_NAME AS Description, A.ITEM_CLASS AS ItemClass, "+
+	//		"A.ITEM_TYPE AS ItemType, A.ITEM_LVL_1 AS ItemLvl1, A.ITEM_LVL_2 AS ItemLvl2, "+
+	//		"A.ITEM_LVL_3 AS ItemLvl3, A.ITEM_LVL_4 AS ItemLvl4, "+
+	//		"ISNULL(C.QTY_AVAILABLE, 0) AS AvailQty, D.MOVING_CODE AS MovingCode, "+
+	//		"ISNULL(AmIc.QTY_ON_ORDER, 0) AS QtyOnOrder").
+	//	Joins("LEFT OUTER JOIN (SELECT DISTINCT ITEM_CODE, VEHICLE_BRAND FROM gmItem1) B ON A.ITEM_CODE = B.ITEM_CODE").
+	//	Joins("LEFT JOIN (SELECT F.ITEM_CODE, SUM(F.QTY_AVAILABLE) AS QTY_AVAILABLE "+
+	//		"FROM viewLocationStock F "+
+	//		"INNER JOIN gmLoc1 G ON F.COMPANY_CODE = G.COMPANY_CODE AND F.WHS_CODE = G.WAREHOUSE_CODE "+
+	//		"WHERE F.PERIOD_YEAR = ? AND F.PERIOD_MONTH = ? AND F.COMPANY_CODE = ? AND F.WHS_GROUP = ? "+
+	//		"AND G.COSTING_TYPE <> dbo.getVariableValue('HPP_WH_TYPE_NON') "+
+	//		"GROUP BY F.ITEM_CODE) AS C ON C.ITEM_CODE = A.ITEM_CODE", year, month, companyCode, varValue2).
+	//	Joins("LEFT JOIN (SELECT Z.ITEM_CODE, Z.QTY_ON_ORDER "+
+	//		"FROM amItemCycle Z "+
+	//		"WHERE Z.PERIOD_YEAR = ? AND Z.PERIOD_MONTH = ? AND Z.COMPANY_CODE = ?) AS AmIc ON AmIc.ITEM_CODE = A.ITEM_CODE", year, month, companyCode).
+	//	Joins("LEFT JOIN amMovingCodeItem D ON D.COMPANY_CODE = ? AND D.ITEM_CODE = A.ITEM_CODE AND "+
+	//		"D.PROCESS_DATE = (SELECT TOP 1 E.PROCESS_DATE FROM amMovingCodeItem E "+
+	//		"WHERE E.COMPANY_CODE = ? AND E.ITEM_CODE = D.ITEM_CODE ORDER BY E.PROCESS_DATE DESC)", companyCode, companyCode).
+	//	Find(&items).Error
+	//pertanyuaan 1 dbo getvariable value itu belum ada
+	//gmLoc1 gada costingril
+	return transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads{}, nil
+}
+func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequestDetailMultiId(db *gorm.DB, s string) (bool, *exceptions.BaseErrorResponse) {
+	ids := strings.Split(s, ",")
+	for _, i2 := range ids {
+		entities := transactionsparepartentities.PurchaseRequestDetail{}
+		converted, _ := strconv.Atoi(i2)
+
+		err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
+		}
+		HeaderEntities := transactionsparepartentities.PurchaseRequestEntities{}
+		err = db.Model(HeaderEntities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: entities.PurchaseRequestSystemNumber}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
+		}
+		if HeaderEntities.PurchaseRequestDocumentStatusId != 10 {
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Document is Not Draf"}
+			}
+		}
+		err = db.Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).Delete(&entities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
+		}
+	}
+	return true, nil
 }
