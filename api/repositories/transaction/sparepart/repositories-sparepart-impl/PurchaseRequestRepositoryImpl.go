@@ -266,23 +266,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 			Err:        err,
 		}
 	}
-	//
-	//refEntities := transactionsparepartentities.PurchaseRequestReferenceType{}
-	//RefTypeRespons := transactionsparepartpayloads.PurchaseRequestReferenceResponses{}
-	//row, errs := db.Model(&refEntities).
-	//	Where(transactionsparepartentities.PurchaseRequestReferenceType{ReferencesTypeId: response.ReferenceTypeId}).
-	//	First(&RefTypeRespons).
-	//	Rows()
-	//if errs == nil {
-	//	row.Close()
-	//}
-	//
-	//if errs != nil {
-	//	return response, &exceptions.BaseErrorResponse{
-	//		StatusCode: http.StatusInternalServerError,
-	//		Err:        errs,
-	//	}
-	//}
+
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
 	PurchaseReuqestReferenceType := config.EnvConfigs.GeneralServiceUrl + "reference-type-purchase-request/" + strconv.Itoa(response.ReferenceTypeId)
 	if err := utils.Get(PurchaseReuqestReferenceType, &PurchaseRequestReferenceType, nil); err != nil {
@@ -293,24 +277,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		}
 	}
 
-	//var docNo string
-	//
-	//if response.ReferenceTypeId == 7 {
-	//	var WorkOrder transactionsparepartpayloads.WorkOrderDocNoResponses
-	//	WorkOrderURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(response.ReferenceSystemNumber)
-	//	if err := utils.Get(WorkOrderURL, &WorkOrder, nil); err != nil {
-	//		return result, &exceptions.BaseErrorResponse{
-	//			StatusCode: http.StatusInternalServerError,
-	//			Message:    "Failed to fetch Requested By data from external service",
-	//			Err:        err,
-	//		}
-	//	}
-	//	docNo = WorkOrder.WorkOrderDocumentNumber
-	//	docNo = response.ReferenceDocumentNumber
-	//
-	//	fmt.Println(docNo)
-	//}
-	//reference type pendiong
 	result = transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{
 		Company:                       CompanyReponse[0].CompanyName,
 		PurchaseRequestSystemNumber:   response.PurchaseRequestSystemNumber,
@@ -344,7 +310,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		UpdatedDate:                response.UpdatedDate,
 	}
 	fmt.Println(result)
-	//panic(tempResult)
 	return response, nil
 }
 func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB, conditions []utils.FilterCondition, paginationResponses pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
@@ -454,7 +419,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(ItemResponse.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
 	var UomItemResponse transactionsparepartpayloads.UomItemResponses
 
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -506,7 +470,6 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestHeader(db *gorm.DB, re
 	var DocResponse transactionsparepartpayloads.PurchaseRequestDocumentStatus
 	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/10"
 
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
 		return transactionsparepartentities.PurchaseRequestEntities{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -516,8 +479,7 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestHeader(db *gorm.DB, re
 	}
 
 	purchaserequestentities := transactionsparepartentities.PurchaseRequestEntities{
-		CompanyId: request.CompanyId,
-		//PurchaseRequestSystemNumber:     request.PurchaseRequestSystemNumber,
+		CompanyId:                       request.CompanyId,
 		PurchaseRequestDocumentNumber:   request.PurchaseRequestDocumentNumber,
 		PurchaseRequestDocumentDate:     &request.PurchaseRequestDocumentDate,
 		PurchaseRequestDocumentStatusId: DocResponse.DocumentStatusId, //request.PurchaseRequestDocumentStatusId,
@@ -542,7 +504,7 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestHeader(db *gorm.DB, re
 		SetOrder:                        request.SetOrder,
 		CurrencyId:                      request.CurrencyId,
 		ItemClassId:                     request.ItemClassId,
-		//PurchaseRequestDetail:           request.purchaserequestde,
+
 		ChangeNo:        1,
 		CreatedByUserId: request.CreatedByUserId,
 		CreatedDate:     &request.CreatedDate,
@@ -978,8 +940,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 		}
 		UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 		UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-		//var uomCode string
-		//err = db.Table("mtr_uom A").Select("A.uom_code").Where("A.uom_id = ?", res.UnitOfMeasurement).First(&res.UnitOfMeasurementCode).Error
+
 		uomentities := masteritementities.UomItem{}
 		err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: res.ItemId}).Scan(&uomentities).Error
 		res.UnitOfMeasurementCode = uomentities.UomTypeCode
@@ -1005,11 +966,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 }
 func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB, compid int, i int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
-	//entities := masteritementities.Item{}
 	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
-
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1059,7 +1017,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	}
 	var UomItemResponse transactionsparepartpayloads.UomItemResponses
 	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(response.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
+
 	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1084,8 +1042,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	}
 	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	//var uomCode string
-	//err = db.Table("mtr_uom A").Select("A.uom_code").Where("A.uom_id = ?", res.UnitOfMeasurement).First(&res.UnitOfMeasurementCode).Error
 	uomentities := masteritementities.UomItem{}
 	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
 	response.UnitOfMeasurementCode = uomentities.UomTypeCode
@@ -1107,12 +1063,10 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 
 func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.DB, compid int, s string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
-	//entities := masteritementities.Item{}
 
 	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
 
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1161,7 +1115,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	}
 	var UomItemResponse transactionsparepartpayloads.UomItemResponses
 	UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + strconv.Itoa(response.ItemId) + "/P" //strconv.Itoa(response.ItemCode)
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	if err := utils.Get(UomItem, &UomItemResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1186,8 +1139,6 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	}
 	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
-	//var uomCode string
-	//err = db.Table("mtr_uom A").Select("A.uom_code").Where("A.uom_id = ?", res.UnitOfMeasurement).First(&res.UnitOfMeasurementCode).Error
 	uomentities := masteritementities.UomItem{}
 	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
 	response.UnitOfMeasurementCode = uomentities.UomTypeCode
