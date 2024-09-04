@@ -10,6 +10,7 @@ import (
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -18,7 +19,10 @@ import (
 
 type LabourSellingPriceDetailController interface {
 	GetAllSellingPriceDetailByHeaderId(writer http.ResponseWriter, request *http.Request)
+	GetSellingPriceDetailById(writer http.ResponseWriter, request *http.Request)
 	SaveLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request)
+	Duplicate(writer http.ResponseWriter, request *http.Request)
+	SaveDuplicate(writer http.ResponseWriter, request *http.Request)
 }
 type LabourSellingPriceDetailControllerImpl struct {
 	LabourSellingPriceService masteroperationservice.LabourSellingPriceService
@@ -30,9 +34,76 @@ func NewLabourSellingPriceDetailController(LabourSellingPriceService masteropera
 	}
 }
 
+// GetSellingPriceDetailById implements LabourSellingPriceDetailController.
+func (r *LabourSellingPriceDetailControllerImpl) GetSellingPriceDetailById(writer http.ResponseWriter, request *http.Request) {
+	detailId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_detail_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.LabourSellingPriceService.GetSellingPriceDetailById(detailId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "success", 200)
+}
+
+// SaveDuplicate implements LabourSellingPriceDetailController.
+func (r *LabourSellingPriceDetailControllerImpl) SaveDuplicate(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteroperationpayloads.SaveDuplicateLabourSellingPrice
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.LabourSellingPriceService.SaveDuplicate(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Save Duplicate", http.StatusOK)
+}
+
+// Duplicate implements LabourSellingPriceDetailController.
+func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseWriter, request *http.Request) {
+	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.LabourSellingPriceService.Duplicate(sellingPriceId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "success", 200)
+}
+
 func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	sellingPriceId, _ := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+	sellingPriceId, errA := strconv.Atoi(chi.URLParam(request, "labour_selling_price_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),

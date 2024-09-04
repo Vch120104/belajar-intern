@@ -6,6 +6,36 @@ import (
 	"time"
 )
 
+// WO and Service Status
+var SrvStatDraft int = 1    // 0 Draft
+var SrvStatStart int = 2    // 10 Start
+var SrvStatPending int = 3  // 15 Pending
+var SrvStatStop int = 4     // 20 Stop
+var SrvStatTransfer int = 5 // 25 Transfer
+var SrvStatQcPass int = 6   // 30 QC Pass
+var SrvStatReOrder int = 7  // 35 Re-Order
+
+var WoStatDraft int = 1   // 0 Draft
+var WoStatNew int = 2     // 10 New
+var WoStatReady int = 3   // 20 Ready
+var WoStatOngoing int = 4 // 30 On Going
+var WoStatStop int = 5    // 40 Stop
+var WoStatQC int = 6      // 50 QC
+var WoStatCancel int = 7  // 60 Cancel
+var WoStatClosed int = 8  // 70 Close
+
+// Linetype Status
+var LinetypePackage int = 0            // 0 Package BodyShop
+var LinetypeOperation int = 1          // 1 Operation
+var LinetypeSparepart int = 2          // 2 Sparepart
+var LinetypeOil int = 3                // 3 Oil
+var LinetypeMaterial int = 4           // 4 Material
+var LineTypeFee int = 5                // 5 Fee
+var LinetypeAccesories int = 6         // 6 Accesories
+var LinetypeConsumableMaterial int = 7 // 7 Consumable Material
+var LineTypeSublet int = 8             // 8 Sublet
+var LinetypeSouvenir int = 9           // 9 Souvenir
+
 // Status
 
 var Draft int = 1

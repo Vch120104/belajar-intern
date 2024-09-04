@@ -71,3 +71,15 @@ func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpay
 	}
 	return results, nil
 }
+
+func (s *BayMasterServiceImpl) GetAllCarWashBayDropDown(filterCondition []utils.FilterCondition) ([]transactionjpcbpayloads.CarWashBayDropDownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.BayMasterRepository.CarWashBayDropDown(tx, filterCondition)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}

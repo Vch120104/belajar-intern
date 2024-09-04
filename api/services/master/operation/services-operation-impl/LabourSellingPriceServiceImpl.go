@@ -24,6 +24,55 @@ func StartLabourSellingPriceService(labourSellingPriceRepo masteroperationreposi
 	}
 }
 
+// GetSellingPriceDetailById implements masteroperationservice.LabourSellingPriceService.
+func (s *LabourSellingPriceServiceImpl) GetSellingPriceDetailById(detailId int) (masteroperationpayloads.LabourSellingPriceDetailbyIdResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.labourSellingPriceRepo.GetSellingPriceDetailById(tx, detailId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+// SaveDuplicate implements masteroperationservice.LabourSellingPriceService.
+func (s *LabourSellingPriceServiceImpl) SaveDuplicate(req masteroperationpayloads.SaveDuplicateLabourSellingPrice) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		helper.CommitOrRollback(tx, err)
+	}()
+
+	_, err = s.labourSellingPriceRepo.SaveLabourSellingPrice(tx, req.Header)
+
+	if err != nil {
+		return false, err
+	}
+
+	_, err = s.labourSellingPriceRepo.SaveMultipleDetail(tx, req.Detail)
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+
+}
+
+// Duplicate implements masteroperationservice.LabourSellingPriceService.
+func (s *LabourSellingPriceServiceImpl) Duplicate(headerId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.labourSellingPriceRepo.GetAllDetailbyHeaderId(tx, headerId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 // GetAllSellingPrice implements masteroperationservice.LabourSellingPriceService.
 func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
@@ -58,26 +107,26 @@ func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(heade
 	return results, totalPages, totalRows, nil
 }
 
-func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPrice(req masteroperationpayloads.LabourSellingPriceRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPrice(req masteroperationpayloads.LabourSellingPriceRequest) (int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, err := s.labourSellingPriceRepo.SaveLabourSellingPrice(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return results, err
 	}
 	return results, nil
 }
 
-func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPriceDetail(req masteroperationpayloads.LabourSellingPriceDetailRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPriceDetail(req masteroperationpayloads.LabourSellingPriceDetailRequest) (int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	results, err := s.labourSellingPriceRepo.SaveLabourSellingPriceDetail(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return false, err
+		return results, err
 	}
 	return results, nil
 }

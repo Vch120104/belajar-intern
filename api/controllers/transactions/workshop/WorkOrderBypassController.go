@@ -109,18 +109,31 @@ func (r *WorkOrderBypassControllerImpl) GetById(writer http.ResponseWriter, requ
 // @Param body body transactionworkshoppayloads.WorkOrderBypassRequestDetail true "Work Order Bypass Request"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/{work_order_system_number}/bypass [post]
+// @Router /v1/work-order-bypass/{work_order_system_number}/bypass [post]
 func (r *WorkOrderBypassControllerImpl) Bypass(writer http.ResponseWriter, request *http.Request) {
+
+	idstr := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(idstr)
+	if err != nil {
+
+		payloads.NewHandleError(writer, "Invalid Work Order ID", http.StatusBadRequest)
+		return
+	}
 
 	var detailRequest transactionworkshoppayloads.WorkOrderBypassRequestDetail
 	helper.ReadFromRequestBody(request, &detailRequest)
 
-	workOrder, err := r.WorkOrderBypassService.Bypass(detailRequest)
-	if err != nil {
-		exceptions.NewAppException(writer, request, err)
+	workOrder, baseErr := r.WorkOrderBypassService.Bypass(workOrderId, detailRequest)
+	if baseErr != nil {
+
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "id request not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(workOrder), "Bypass Work Order Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, workOrder, "Bypass Work Order Successfully", http.StatusOK)
 
 }

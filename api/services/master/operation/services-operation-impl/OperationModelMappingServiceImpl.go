@@ -176,3 +176,53 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationDocumentRequirement(
 	}
 	return results, nil
 }
+
+func (s *OperationModelMappingServiceImpl) SaveOperationLevel(request masteroperationpayloads.OperationLevelRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.SaveOperationLevel(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}
+
+func (s *OperationModelMappingServiceImpl) GetAllOperationLevel(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.GetAllOperationLevel(tx, id, pages)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (s *OperationModelMappingServiceImpl) GetOperationLevelById(id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.GetOperationLevelById(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masteroperationpayloads.OperationLevelByIdResponse{}, err
+	}
+	return results, nil
+}
+
+func (s *OperationModelMappingServiceImpl) DeactivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.DeactivateOperationLevel(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}
+
+func (s *OperationModelMappingServiceImpl) ActivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.ActivateOperationLevel(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}

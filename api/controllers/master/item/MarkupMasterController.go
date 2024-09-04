@@ -6,6 +6,7 @@ import (
 	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -85,7 +86,12 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWri
 
 func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWriter, request *http.Request) {
 
-	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+	markupMasterId, errA := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	result, err := r.markupMasterService.GetMarkupMasterById(markupMasterId)
 
@@ -184,7 +190,12 @@ func (r *MarkupMasterControllerImpl) SaveMarkupMaster(writer http.ResponseWriter
 // @Router /v1/markup-master/{markup_master_id} [patch]
 func (r *MarkupMasterControllerImpl) ChangeStatusMarkupMaster(writer http.ResponseWriter, request *http.Request) {
 
-	markupMasterId, _ := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+	markupMasterId, errA := strconv.Atoi(chi.URLParam(request, "markup_master_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	response, err := r.markupMasterService.ChangeStatusMasterMarkupMaster(int(markupMasterId))
 

@@ -10,6 +10,7 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -40,7 +41,12 @@ type ItemModelMappingControllerImpl struct {
 // @Router /v1/item-model-mapping/{item_id} [get]
 func (r *ItemModelMappingControllerImpl) GetItemModelMappingByItemId(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	itemId, _ := strconv.Atoi(chi.URLParam(request, "item_id"))
+	itemId, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	paginate := pagination.Pagination{
 		Limit: utils.NewGetQueryInt(queryValues, "limit"),
