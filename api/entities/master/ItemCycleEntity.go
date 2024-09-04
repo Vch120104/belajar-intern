@@ -4,7 +4,7 @@ const itemCycletableName = "mtr_item_cycle"
 
 type ItemCycle struct {
 	IsActive          bool    `gorm:"column:is_active;not null;default:true" json:"is_active"`
-	ItemCycleId       int     `gorm:"column:item_cycle_id;size:30;not null;primaryKey"json:"item_cycle_id"`
+	ItemCycleId       int     `gorm:"column:item_cycle_id;size:30;not null;primaryKey" json:"item_cycle_id"`
 	CompanyId         int     `gorm:"column:company_id;size:30;not null;uniqueindex:item_cycle" json:"company_id"`
 	PeriodYear        string  `gorm:"column:period_year;size:4;not null;uniqueindex:item_cycle" json:"period_year"`
 	PeriodMonth       string  `gorm:"column:period_month;size:2;not null;uniqueindex:item_cycle" json:"period_month"`

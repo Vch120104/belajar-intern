@@ -1,8 +1,6 @@
 package masteritementities
 
-import (
-	masterentities "after-sales/api/entities/master"
-)
+import masterentities "after-sales/api/entities/master"
 
 var CreateItemTable = "mtr_item"
 
@@ -73,6 +71,7 @@ type Item struct {
 	FieldActionItem              masterentities.FieldActionEligibleVehicleItem `gorm:"foreignKey:ItemId;references:ItemId"`
 	ItemImport                   ItemImport                                    `gorm:"foreignKey:ItemId;references:ItemId"`
 	ItemDetail                   ItemDetail                                    `gorm:"foreignKey:ItemId;references:ItemId" `
+	ItemOperation                masterentities.ItemOperation                  `gorm:"foreignKey:ItemId;references:ItemId"`
 }
 
 func (*Item) TableName() string {
