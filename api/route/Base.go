@@ -1373,6 +1373,7 @@ func SettingTechnicianRouter(
 
 	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
 	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+	router.Get("/{company_id}/{effective_date}", SettingTechnicianController.GetSettingTechnicianByCompanyDate)
 
 	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
 	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)
