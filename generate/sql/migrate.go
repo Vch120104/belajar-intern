@@ -5,10 +5,10 @@ import (
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
-	masterentities "after-sales/api/entities/master"
+	// masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
 	masteritementities "after-sales/api/entities/master/item"
-	masteroperationentities "after-sales/api/entities/master/operation"
+	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
 	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
@@ -67,8 +67,8 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-	&masterentities.ItemOperation{},
-	&masteroperationentities.OperationModelMapping{},
+	// &masterentities.ItemOperation{},
+	// &masteroperationentities.OperationModelMapping{},
 	//&masteroperationentities.OperationLevel{},
 	//&masteroperationentities.OperationFrt{},
 	//&masteroperationentities.OperationGroup{},
@@ -94,8 +94,8 @@ func Migrate() {
 	//&masteritementities.MarkupMaster{},
 	//&masteritementities.ItemLevel{},
 	//&masteritementities.PriceList{},
-	//&masteritementities.ItemSubstituteDetail{},
-	//&masteritementities.ItemSubstitute{},
+	&masteritementities.ItemSubstituteDetail{},
+	&masteritementities.ItemSubstitute{},
 	//&masteritementities.ItemPackage{},
 	//&masteritementities.ItemPackageDetail{},
 	//&masteritementities.ItemImport{},
