@@ -8,6 +8,7 @@ import (
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -60,6 +61,16 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianById(settingTechnicia
 func (s *SettingTechnicianServiceImpl) GetSettingTechnicianDetailById(settingTechnicianDetailId int) (transactionjpcbpayloads.SettingTechnicianDetailGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.SettingTechnicianRepository.GetSettingTechnicianDetailById(tx, settingTechnicianDetailId)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *SettingTechnicianServiceImpl) GetSettingTechnicianByCompanyDate(companyId int, effectiveDate time.Time) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.SettingTechnicianRepository.GetSettingTechnicianByCompanyDate(tx, companyId, effectiveDate)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
