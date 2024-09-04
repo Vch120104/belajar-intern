@@ -14,4 +14,5 @@ type ShiftScheduleService interface {
 	// GetShiftScheduleByCode(string) masterpayloads.ShiftScheduleResponse
 	ChangeStatusShiftSchedule(int) (bool, *exceptions.BaseErrorResponse)
 	SaveShiftSchedule(masterpayloads.ShiftScheduleResponse) (bool, *exceptions.BaseErrorResponse)
+	GetShiftScheduleDropDown() ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse)
 }

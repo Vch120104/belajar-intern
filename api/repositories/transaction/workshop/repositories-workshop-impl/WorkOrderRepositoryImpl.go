@@ -1346,18 +1346,12 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, id int, Id
 }
 
 func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrderSystemNumber int, lineTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	const (
-		LineTypePackage            = 0 // Package Bodyshop
-		LineTypeOperation          = 1 // Operation
-		LineTypeSparePart          = 2 // Spare Part
-		LineTypeOil                = 3 // Oil
-		LineTypeMaterial           = 4 // Material
-		LineTypeFee                = 5 // Fee
-		LineTypeAccessories        = 6 // Accessories
-		LineTypeConsumableMaterial = 7 // Consumable Material
-		LineTypeSublet             = 8 // Sublet
-		LineTypeSouvenir           = 9 // Souvenir
-	)
+
+	type WorkOrderDetail struct {
+		OperationItemPrice float64
+		FrtQuantity        float64
+		LineTypeId         int
+	}
 
 	type Result struct {
 		TotalPackage            float64
@@ -1374,32 +1368,22 @@ func (r *WorkOrderRepositoryImpl) CalculateWorkOrderTotal(tx *gorm.DB, workOrder
 
 	var result Result
 
-	// Calculate totals for each line type
-	err := tx.Raw(`
-		SELECT
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0), 0) ELSE 0 END) AS total_package,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_operation,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_spare_part,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_oil,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_material,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_fee,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_accessories,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_consumable_material,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_sublet,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0) ELSE 0 END) AS total_souvenir
-		FROM trx_work_order_detail
-		WHERE work_order_system_number = ?`,
-		LineTypePackage,
-		LineTypeOperation,
-		LineTypeSparePart,
-		LineTypeOil,
-		LineTypeMaterial,
-		LineTypeFee,
-		LineTypeAccessories,
-		LineTypeConsumableMaterial,
-		LineTypeSublet,
-		LineTypeSouvenir,
-		workOrderSystemNumber).Scan(&result).Error
+	// Aggregate data using GORM
+	err := tx.Model(&WorkOrderDetail{}).
+		Select(`
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0), 0) ELSE 0 END) AS total_package,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_operation,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_spare_part,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_oil,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_material,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_fee,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_accessories,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_consumable_material,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_sublet,
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0) ELSE 0 END) AS total_souvenir
+		`).
+		Where("work_order_system_number = ?", workOrderSystemNumber).
+		Scan(&result).Error
 
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to calculate totals: %v", err)}
@@ -2634,129 +2618,6 @@ func (r *WorkOrderRepositoryImpl) CloseAffiliated(tx *gorm.DB, IdWorkorder int, 
 	}
 
 	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) VehicleLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
-	var responses []transactionworkshoppayloads.WorkOrderLookupResponse
-
-	tableStruct := transactionworkshoppayloads.WorkOrderLookupRequest{}
-
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-	rows, err := whereQuery.Find(&responses).Rows()
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	defer rows.Close()
-
-	var convertedResponses []transactionworkshoppayloads.WorkOrderLookupResponse
-
-	for rows.Next() {
-
-		var (
-			workOrderReq transactionworkshoppayloads.WorkOrderLookupRequest
-			workOrderRes transactionworkshoppayloads.WorkOrderLookupResponse
-		)
-
-		if err := rows.Scan(
-			&workOrderReq.WorkOrderSystemNumber,
-			&workOrderReq.WorkOrderDocumentNumber,
-			&workOrderReq.VehicleId,
-			&workOrderReq.CustomerId,
-		); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(workOrderReq.VehicleId)
-		//fmt.Println("Fetching Vehicle data from:", VehicleURL)
-		var getVehicleResponse transactionworkshoppayloads.WorkOrderVehicleResponse
-		if err := utils.Get(VehicleURL, &getVehicleResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch vehicle data from external service",
-				Err:        err,
-			}
-		}
-
-		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "customer-detail/" + strconv.Itoa(workOrderReq.CustomerId)
-		//fmt.Println("Fetching Customer data from:", CustomerURL)
-		var getCustomerResponse transactionworkshoppayloads.CustomerResponse
-		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch customer data from external service",
-				Err:        err,
-			}
-		}
-
-		workOrderRes = transactionworkshoppayloads.WorkOrderLookupResponse{
-			WorkOrderDocumentNumber: workOrderRes.WorkOrderDocumentNumber,
-			WorkOrderSystemNumber:   workOrderRes.WorkOrderSystemNumber,
-			VehicleId:               workOrderRes.VehicleId,
-			CustomerId:              workOrderRes.CustomerId,
-		}
-
-		convertedResponses = append(convertedResponses, workOrderRes)
-	}
-
-	var mapResponses []map[string]interface{}
-
-	for _, response := range convertedResponses {
-		responseMap := map[string]interface{}{
-			"work_order_document_number": response.WorkOrderDocumentNumber,
-			"work_order_system_number":   response.WorkOrderSystemNumber,
-			"vehicle_id":                 response.VehicleId,
-			"customer_id":                response.CustomerId,
-		}
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
-
-}
-
-func (r *WorkOrderRepositoryImpl) CampaignLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
-	var entities []mastercampaignmasterentities.CampaignMaster
-
-	query := tx.Model(&mastercampaignmasterentities.CampaignMaster{})
-	if len(filterCondition) > 0 {
-		query = query.Where(filterCondition)
-	}
-	err := query.Find(&entities).Error
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve campaign master from the database"}
-	}
-
-	var WorkOrderCampaignResponse []map[string]interface{}
-
-	for _, entity := range entities {
-		campaignData := make(map[string]interface{})
-
-		campaignData["campaign_id"] = entity.CampaignId
-		campaignData["campaign_code"] = entity.CampaignCode
-		campaignData["campaign_name"] = entity.CampaignName
-		campaignData["campaign_period_from"] = entity.CampaignPeriodFrom
-		campaignData["campaign_period_to"] = entity.CampaignPeriodTo
-
-		WorkOrderCampaignResponse = append(WorkOrderCampaignResponse, campaignData)
-	}
-
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(WorkOrderCampaignResponse, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
 }
 
 func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {

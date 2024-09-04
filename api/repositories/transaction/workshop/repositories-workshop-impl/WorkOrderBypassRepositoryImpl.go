@@ -82,7 +82,7 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 		// Fetch data work order from internal services
 		ModelURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(workOrderReq.WorkOrderSystemNumber)
 		//fmt.Println("Fetching  work order data from:", ModelURL)
-		var getModelResponse transactionworkshoppayloads.WorkOrderLookupResponse
+		var getModelResponse transactionworkshoppayloads.WorkOrderResponse
 		if err := utils.Get(ModelURL, &getModelResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -189,7 +189,7 @@ func (r *WorkOrderBypassRepositoryImpl) GetById(tx *gorm.DB, id int) (transactio
 	// Fetch data work order from internal services
 	ModelURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/normal/" + strconv.Itoa(tableStruct.WorkOrderSystemNumber)
 	//fmt.Println("Fetching  work order data from:", ModelURL)
-	var getModelResponse transactionworkshoppayloads.WorkOrderLookupResponse
+	var getModelResponse transactionworkshoppayloads.WorkOrderResponse
 	if err := utils.Get(ModelURL, &getModelResponse, nil); err != nil {
 		return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

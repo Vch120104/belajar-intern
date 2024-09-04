@@ -51,8 +51,14 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"trx_work_order.work_order_system_number":   queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_document_number": queryValues.Get("work_order_document_number"),
+		"customer_name":                         queryValues.Get("customer_name"),
+		"model_code":                            queryValues.Get("model_code"),
+		"varian_code":                           queryValues.Get("varian_code"),
+		"vehicle_chassis_number":                queryValues.Get("vehicle_chassis_number"),
+		"vehicle_registration_certificate_tnkb": queryValues.Get("vehicle_registration_certificate_tnkb"),
+		"work_order_date":                       queryValues.Get("work_order_date"),
+		"work_order_document_number":            queryValues.Get("work_order_document_number"),
+		"work_order_system_number":              queryValues.Get("work_order_system_number"),
 	}
 
 	paginate := pagination.Pagination{
