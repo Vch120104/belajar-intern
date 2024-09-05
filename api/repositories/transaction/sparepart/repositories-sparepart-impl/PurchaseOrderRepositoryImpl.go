@@ -45,7 +45,8 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	JoinTable := db.Table("trx_item_purchase_order as A").
 		Select("*").
 		//Select("A.purchase_order_system_number,A.purchase_order_document_number,A.purchase_order_document_date,A.purchase_order_status_id,A.purchase_order_type_id,A.warehouse_id,A.supplier_id,C.purchase_request_document_number").
-		Joins("LEFT JOIN trx_item_purchase_order_detail B ON A.purchase_order_system_number = B.purchase_order_system_number LEFT JOIN trx_purchase_request C ON B.purchase_request_system_number = C.purchase_request_system_number").
+		Joins("LEFT JOIN trx_item_purchase_order_detail B ON A.purchase_order_system_number = B.purchase_order_system_number " +
+			"LEFT JOIN trx_purchase_request C ON B.purchase_request_system_number = C.purchase_request_system_number").
 		Where(strfilter)
 	whereQuery := utils.ApplyFilter(JoinTable, filter)
 	var strDateFilter string
@@ -628,11 +629,11 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//END
 	var exists bool
 	err = db.Model(&entities). // Assuming AtItemPO1 is your struct
-					Select("1").
-					Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id AND B.item_group_id IN (?,?)", 15, 23). //in and oj
-					Where("purchase_order_system_number = ? A.item_id = ?", payloads.PurchaseOrderSystemNumber, payloads.ItemId).
-					Limit(1).
-					Find(&exists).Error
+		Select("1").
+		Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id AND B.item_group_id IN (?,?)", 15, 23). //in and oj
+		Where("purchase_order_system_number = ? A.item_id = ?", payloads.PurchaseOrderSystemNumber, payloads.ItemId).
+		Limit(1).
+		Find(&exists).Error
 	if exists {
 		return entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
@@ -1679,7 +1680,10 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	//IF @Is_SP_PO = 1
 	//if purchase order is sparepart po
+	//make a variable to check isSparepartPo
+	var isSparepartPo bool = false
 	if ItemGroup.ItemGroupCode == "IN" || ItemGroup.ItemGroupCode == "OJ" {
+		isSparepartPo = true
 		//BEGIN
 		//IF dbo.getPeriodStatus(@Company_Code,@Po_Doc_Date,dbo.getVariableValue('MODULE_SP')) <> 'O'
 		//BEGIN
@@ -1745,9 +1749,9 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//RAISERROR('Regulated item can''t be mixed with non regulated item on same PO.',16,1)
 	//RETURN 0
 	//END
-	var CompanyResponses generalservicepayloads.GetCompanyByIdResponses
+	var SupplierCompanyResponse generalservicepayloads.GetCompanyByIdResponses
 	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(payloads.CompanyId)
-	if err := utils.Get(CompanyUrl, &CompanyResponses, nil); err != nil {
+	if err := utils.Get(CompanyUrl, &SupplierCompanyResponse, nil); err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
 			Message:    "Failed to Get Company data from external service",
@@ -1755,7 +1759,7 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 		}
 	}
 	//checking regulated item but based on sp only checking for nmdi
-	if CompanyResponses.CompanyCode == "3125098" {
+	if SupplierCompanyResponse.CompanyCode == "3125098" {
 		count := 0
 		//Untuk hitung apaakah ada item regulation yang dicampur atau aman
 		err = db.Table("trx_item_purchase_order_detail A").Select("distinct COUNT(ISNULL(B.is_item_regulation,'N')").
@@ -1879,6 +1883,187 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 			Err:        err,
 		}
 	}
-	//err = db.Table()
+	//IF @Total_After_Vat <= 0
+	//BEGIN
+	//RAISERROR('Total Amount PO must be bigger than 0',16,1)
+	//RETURN 0
+	//END
+	if *poEntities.TotalAfterVat <= 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Total Amount PO must be bigger than 0" + supplierDefault,
+			Err:        err,
+		}
+	}
+	//undone
+	//	IF ISNULL((SELECT COSTING_TYPE
+	//	FROM gmLoc1
+	//	WHERE COMPANY_CODE = @Company_Code
+	//	AND WAREHOUSE_CODE = (SELECT WHS_CODE
+	//	FROM atitempo0
+	//	WHERE PO_SYS_NO = @Po_Sys_No
+	//	)
+	//),'NON') <> 'HPP'
+	//	AND @Item_Group = @Item_Group_IN
+	//	BEGIN
+	//	RAISERROR('Warehouse Code Costing Type is NON HPP, please check again!',16,1)
+	//	RETURN 0
+
+	//Check apakah ada doble item in
+
+	//DECLARE @ListDoubleItem varchar(500) = (	select TOP 1 ITEM_CODE from atitempo1 where PO_SYS_NO = @Po_Sys_No
+	//	group by ITEM_CODE
+	//	having count(*) > 1)
+	var listDoubleItemCode []string
+	err = db.Table("trx_item_purchase_order_detail A").
+		Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id").
+		Select("B.item_code").
+		Where("purchase_order_system_number = ?", payloads.PurchaseOrderSystemNumber).
+		Group("A.item_id").
+		Having("COUNT(*) > 1").
+		Limit(1).
+		Scan(&listDoubleItemCode).Error
+	if len(listDoubleItemCode) != 0 && isSparepartPo {
+		ErrMsg := "There is Item with multiple line!\n" +
+			"Item Code : "
+		//IF @Is_SP_PO = 1 AND ISNULL(@ListDoubleItem,'') <> ''
+		//BEGIN
+		//SET @ListDoubleItem = 'There is Item with multiple line!<br> Item Code : '+@ListDoubleItem+'<br>'
+		//RAISERROR(@ListDoubleItem,16,1)
+		//RETURN 0
+		//END
+		for _, Items := range listDoubleItemCode {
+			ErrMsg = ErrMsg + Items + "\n"
+		}
+	}
+
+	//	IF ISNULL((SELECT SUPPLIER_CODE FROM atItemPO0 WHERE PO_SYS_NO = @Po_Sys_No),'') = '3125098'
+	//BEGIN
+	//IF EXISTS	(
+	//	SELECT 1
+	//FROM atItemPO1 A
+	//LEFT JOIN GMITEM2 B ON A.ITEM_CODE = B.ITEM_CODE AND B.SUPPLIER_CODE = '3125098'
+	//WHERE (A.ITEM_QTY % B.ORDER_QTY_MULTIPLIER) > 0
+	//AND A.PO_SYS_NO = @Po_Sys_No
+	//)
+	//BEGIN
+	//SET @ErrMsg =	(
+	//	SELECT TOP 1 A.ITEM_CODE + ' ORDER : ' + CONVERT(VARCHAR,CONVERT(NUMERIC(17,2),(A.ITEM_QTY))) + ' SNP : ' + CONVERT(VARCHAR,CONVERT(NUMERIC(17,2),(B.ORDER_QTY_MULTIPLIER))) + '<br><br>'
+	//FROM atItemPO1 A
+	//LEFT JOIN GMITEM2 B ON A.ITEM_CODE = B.ITEM_CODE AND B.SUPPLIER_CODE = '3125098'
+	//WHERE (A.ITEM_QTY % B.ORDER_QTY_MULTIPLIER) > 0
+	//AND A.PO_SYS_NO = @Po_Sys_No
+	//)
+	//RAISERROR('There is Item with SNP! Please adjust Item Qty to the following SNP! <br><br>%s',16,1, @ErrMsg)
+	//RETURN 0
+	//END
+	//END
+	//check if supplier is nmdi or no
+	//ini nanti cek nya ke supplier
+	if SupplierCompanyResponse.CompanyCode == "3125098" && isSparepartPo {
+
+		IsSnpExist := false
+		err = db.Table("trx_item_purchase_order A").Select("1").
+			Joins("JOIN mtr_item_import B ON A.item_id = B.item_id AND B.supplier_id = ?", SupplierCompanyResponse.CompanyId).
+			Where("(A.item_quantity%B.order_qty_multiplier) > 0").
+			Where("A.purchase_order_system_number = ?", payloads.PurchaseOrderSystemNumber).
+			Scan(&IsSnpExist).
+			Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Error Found When Check SNP NMDI" + err.Error(),
+				Err:        err,
+			}
+		}
+		if IsSnpExist {
+			errSnpMsg := ""
+			err = db.Table("trx_item_purchase_order_detail A").
+				Select("A.item_id + ' ORDER : ' + CONVERT(VARCHAR,CONVERT(NUMERIC(17,2),A.item_quantity)) + ' SNP : ' + CONVERT(VARCHAR,CONVERT(NUMERIC(17,2),B.order_qty_multiplier))").
+				Joins("JOIN mtr_item_import B ON A.item_id = B.item_id AND B.supplier_id = ?", SupplierCompanyResponse.CompanyId).
+				Where("(A.item_quantity%B.order_qty_multiplier) > 0").
+				Where("A.purchase_order_system_number = ?", payloads.PurchaseOrderSystemNumber).
+				Scan(&errSnpMsg).
+				Error
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "There is Item with SNP! Please adjust Item Qty to the following SNP!\n\n" + errSnpMsg,
+				Err:        err,
+			}
+		}
+	}
+	//IF @Is_SP_PO = 1  AND ISNULL((SELECT WHS_CODE FROM atItemPO0 WHERE PO_SYS_NO = @Po_Sys_No),'') LIKE '%GA%'
+	//BEGIN
+	//RAISERROR('PO Inventory cannot use Whs GA!',16,1)
+	//RETURN 0
+	//END
+	exist = false
+	err = db.Model(masterwarehouseentities.WarehouseMaster{}).Select("1").
+		Where(masterwarehouseentities.WarehouseMaster{WarehouseId: poEntities.WarehouseId}).
+		Scan(&exist).
+		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	if isSparepartPo && exist {
+		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "PO Inventory cannot use Whs GA!"}
+	}
+	var ItemGroupInventoryId int
+	err = db.Model(masteritementities.ItemGroup{}).Select("item_group_id").
+		Where(masteritementities.ItemGroup{ItemGroupCode: "IN"}).Scan(&ItemGroupInventoryId).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+	}
+	employeeCostCenter := 0
+	if poEntities.ItemGroupId != ItemGroupInventoryId {
+		var empReponse generalservicepayloads.EmployeeMasterResponses
+		empReponseUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(payloads.CreatedByUserId)
+		if err := utils.Get(empReponseUrl, &empReponse, nil); err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Message:    "Failed to Get Employee Data from external service",
+				Err:        err,
+			}
+		}
+		employeeCostCenter = empReponse.CostCenterId
+		fmt.Println(employeeCostCenter)
+	}
+	//SET @Approval_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Code,@Item_Group,@Vehicle_Brand,@Profit_Center,@Employee_Cost_center)
+	//Company_Code = payloads.CompanyId
+	//Item_Group = payloads.ItemGroupId
+	//Vehicle_Brand  =
+	//Src_Code = select * from comGenVariable where variable like '%SRC_DOC_CM%'
+	//Profit_Center = payloads.ProfitCenterId
+	//Employee_Cost_center = employeeCostCenter
+
+	//IF ISNULL(@Approval_Req_No, 0) <> 0
+	//BEGIN
+	//UPDATE atItemPO0
+	//
+	
+	if 1 == 1 { //ISNULL(@Approval_Req_No, 0)
+		poEntities.PurchaseOrderStatusId = payloads.PurchaseOrderStatusId
+		poEntities.PurchaseOrderRemark = payloads.PurchaseOrderRemark
+		*poEntities.LastTotalDiscount = *poEntities.TotalDiscount
+		*poEntities.TotalAmount = *poEntities.TotalAmountConfirm
+		*poEntities.LastTotalVat = *poEntities.TotalVat
+		*poEntities.LastTotalAfterVat = *poEntities.TotalAfterVat
+		poEntities.ApprovalRequestById = payloads.UpdatedByUserId
+		//poEntities.ApprovalRequestNumber = approvalreqno
+		poEntities.ApprovalRequestDate = payloads.UpdatedDate
+		poEntities.ChangeNo += 1
+		poEntities.UpdatedDate = payloads.UpdatedDate
+		poEntities.UpdatedByUserId = payloads.UpdatedByUserId
+		poEntities.ExternalPurchaseOrderNumber = payloads.ExternalPurchaseOrderNumber
+		err = db.Save(&poEntities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Failed Update Purchase Order : " + err.Error()}
+		}
+	}
 	return true, nil
 }
