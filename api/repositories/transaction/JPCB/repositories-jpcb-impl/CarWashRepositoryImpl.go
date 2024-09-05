@@ -584,7 +584,20 @@ func (r *CarWashImpl) GetCarWashScreenDataByWorkOrderSystemNumber(tx *gorm.DB, w
 }
 
 func (r *CarWashImpl) UpdateBayNumberCarWashScreen(tx *gorm.DB, bayNumber int, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
-	err := tx.Model(&transactionjpcbentities.CarWash{}).Where("work_order_system_number = ?", workOrderSystemNumber).Update("car_wash_bay_id", bayNumber).Error
+	var carWashBay int
+	err := tx.Model(&transactionjpcbentities.BayMaster{}).Select("car_wash_bay_id").Where(&transactionjpcbentities.BayMaster{
+		CarWashBayId: bayNumber,
+	}).First(&carWashBay).Error
+
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+			Message:    "Car wash bay doesn't exist",
+		}
+	}
+
+	err = tx.Model(&transactionjpcbentities.CarWash{}).Where("work_order_system_number = ?", workOrderSystemNumber).Update("car_wash_bay_id", bayNumber).Error
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -602,13 +615,18 @@ func (r *CarWashImpl) UpdateBayNumberCarWashScreen(tx *gorm.DB, bayNumber int, w
 
 func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBayId int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
 	var carWashStatusId int
-	err := tx.Model(&transactionjpcbentities.CarWash{}).Select("car_wash_status_id").Where(transactionjpcbentities.CarWash{
-		WorkOrderSystemNumber: workOrderSystemNumber,
-	}).Scan(&carWashStatusId).Error
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Select("car_wash_status_id").Where("work_order_system_number = ? AND car_wash_bay_id = ?", workOrderSystemNumber, carWashBayId).Scan(&carWashStatusId).Error
 	if err != nil {
 		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+		}
+	}
+	if carWashStatusId == 0 {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("bad request"),
+			Message:    "please check if bay is correct",
 		}
 	}
 
