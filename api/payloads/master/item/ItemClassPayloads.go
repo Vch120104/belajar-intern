@@ -18,6 +18,15 @@ type ItemClassResponse struct {
 	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
 }
 
+type ItemClassGetAllResponse struct {
+	IsActive      bool   `json:"is_active" parent_entity:"mtr_item_class"`
+	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class"`
+	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class"`
+	ItemGroupId   int    `json:"item_group_id"` //FK with mtr_item_group common-general service
+	LineTypeId    int    `json:"line_type_id"`  //FK with mtr_line_type common-general service
+	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
+}
+
 type ItemClassDropdownResponse struct {
 	IsActive      bool   `json:"is_active" parent_entity:"mtr_item_class"`
 	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class"`
