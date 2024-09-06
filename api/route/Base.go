@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -883,6 +884,7 @@ func ShiftScheduleRouter(
 	router.Get("/by-id/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
 	router.Patch("/{shift_schedule_id}", ShiftScheduleController.ChangeStatusShiftSchedule)
 	router.Get("/drop-down", ShiftScheduleController.GetShiftScheduleDropdown)
+	router.Put("/{shift_schedule_id}", ShiftScheduleController.UpdateShiftSchedule)
 
 	return router
 }
