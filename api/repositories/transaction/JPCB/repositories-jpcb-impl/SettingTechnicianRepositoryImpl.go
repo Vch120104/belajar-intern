@@ -27,8 +27,14 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnician(tx *gorm.DB, f
 	entities := transactionjpcbentities.SettingTechnician{}
 	responses := []transactionjpcbpayloads.SettingTechnicianPayload{}
 
+	for i, filter := range filterCondition {
+		if filter.ColumnField == "effective_date" {
+			filterCondition[i].ColumnValue = utils.SafeConvertDateStrFormat(filter.ColumnValue)
+		}
+	}
+
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
@@ -57,7 +63,17 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 	entities := transactionjpcbentities.SettingTechnicianDetail{}
 	responses := []transactionjpcbpayloads.SettingTechnicianGetAllDetailPayload{}
 
-	baseModelQuery := tx.Model(&entities)
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			trx_setting_technician_detail.setting_technician_detail_system_number,
+			trx_setting_technician_detail.setting_technician_system_number,
+			trx_setting_technician_detail.technician_number,
+			trx_setting_technician_detail.technician_employee_number_id,
+			trx_setting_technician_detail.group_express,
+			trx_setting_technician_detail.shift_group_id,
+			mss.shift_group,
+			trx_setting_technician_detail.is_booking`).
+		Joins("INNER JOIN mtr_shift_schedule mss ON mss.shift_schedule_id = trx_setting_technician_detail.shift_group_id")
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
@@ -109,6 +125,7 @@ func (r *SettingTechnicianRepositoryImpl) GetAllSettingTechnicianDetail(tx *gorm
 			EmployeeName:                        employeeName,
 			GroupExpress:                        result.GroupExpress,
 			ShiftGroupId:                        result.ShiftGroupId,
+			ShiftGroup:                          result.ShiftGroup,
 			IsBooking:                           result.IsBooking,
 		}
 		mapResponses = append(mapResponses, responsePayloads)
@@ -156,6 +173,34 @@ func (r *SettingTechnicianRepositoryImpl) GetSettingTechnicianDetailById(tx *gor
 	}
 
 	return responses, nil
+}
+
+func (r *SettingTechnicianRepositoryImpl) GetSettingTechnicianByCompanyDate(tx *gorm.DB, companyId int, effectiveDate time.Time) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
+	entities := transactionjpcbentities.SettingTechnician{}
+	response := transactionjpcbpayloads.SettingTechnicianGetByIdResponse{}
+
+	effectiveDate = time.Date(effectiveDate.Year(), effectiveDate.Month(), effectiveDate.Day(), 0, 0, 0, 0, effectiveDate.Location())
+
+	err := tx.Model(&entities).
+		Where(transactionjpcbentities.SettingTechnician{
+			CompanyId:     companyId,
+			EffectiveDate: &effectiveDate,
+		}).
+		First(&entities).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.SettingTechnicianSystemNumber = entities.SettingTechnicianSystemNumber
+	response.CompanyId = entities.CompanyId
+	response.SettingId = entities.SettingTechnicianSystemNumber
+	response.EffectiveDate = *entities.EffectiveDate
+
+	return response, nil
 }
 
 func (r *SettingTechnicianRepositoryImpl) SaveSettingTechnician(tx *gorm.DB, CompanyId int) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {

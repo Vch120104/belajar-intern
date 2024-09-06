@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -474,7 +473,7 @@ func PurchaseRequestRouter(
 	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
 	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
-	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
+	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequest)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
 	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
 	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
@@ -1373,6 +1372,7 @@ func SettingTechnicianRouter(
 
 	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
 	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+	router.Get("/{company_id}/{effective_date}", SettingTechnicianController.GetSettingTechnicianByCompanyDate)
 
 	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
 	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)
@@ -1395,6 +1395,24 @@ func TechnicianAttendanceRouter(
 	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
 	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
 	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
+
+	return router
+}
+
+func JobAllocationRouter(
+	JobAllocationController transactionjpcbcontroller.JobAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", JobAllocationController.GetAllJobAllocation)
+	router.Get("/{technician_allocation_system_number}", JobAllocationController.GetJobAllocationById)
+	router.Put("/{technician_allocation_system_number}", JobAllocationController.UpdateJobAllocation)
+	router.Delete("/{technician_allocation_system_number}", JobAllocationController.DeleteJobAllocation)
 
 	return router
 }
