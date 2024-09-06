@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -55,7 +56,13 @@ func ApplyFilter(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 			columnValue[i] = n[columnValue[i]]
 		}
 		if strings.Contains(columnName[i], "id") {
-			condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
+			if strings.Contains(columnName[i], "#multiple") {
+				//SCENARIO FILTER FOR MULTIPLE ID
+				s := strings.Split(columnName[i], " ")
+				condition = s[0] + fmt.Sprintf(" IN (%s)", columnValue[i])
+			} else {
+				condition = columnName[i] + " LIKE " + "'" + columnValue[i] + "'"
+			}
 		} else if strings.Contains(columnName[i], "date") {
 			condition = "CAST(" + columnName[i] + " AS DATETIME)" + " LIKE " + "'%" + columnValue[i] + "%'"
 		} else {
@@ -135,7 +142,6 @@ func ApplyFilterForDB(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	}
 	return db
 }
-
 
 func ApplyFilterSearch(db *gorm.DB, criteria []FilterCondition) *gorm.DB {
 	var queryWhere []string

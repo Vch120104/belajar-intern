@@ -37,6 +37,14 @@ var LinetypeConsumableMaterial int = 7 // 7 Consumable Material
 var LineTypeSublet int = 8             // 8 Sublet
 var LinetypeSouvenir int = 9           // 9 Souvenir
 
+// CarWash
+var CarWashStatDraft int = 1
+var CarWashStatStart int = 2
+var CarWashStatStop int = 3
+
+var CarWashPriorityHigh int = 1
+var CarWashPriorityNormal int = 2
+
 // Status
 
 var Draft int = 1

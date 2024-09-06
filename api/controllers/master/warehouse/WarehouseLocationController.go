@@ -187,7 +187,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 	queryValues := request.URL.Query()
 
 	filter := map[string]string{
-		"WarehouseGroup.warehouse_group_name":            queryValues.Get("warehouse_group_name"),
+		"mtr_warehouse_group.warehouse_group_name":       queryValues.Get("warehouse_group_name"),
 		"mtr_warehouse_master.warehouse_code":            queryValues.Get("warehouse_code"),
 		"mtr_warehouse_master.warehouse_name":            queryValues.Get("warehouse_name"),
 		"mtr_warehouse_location.warehouse_location_code": queryValues.Get("warehouse_location_code"),

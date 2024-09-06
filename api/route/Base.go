@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -31,6 +30,12 @@ func CarWashRouter(
 	router.Get("/priority/dropdown", carWashController.GetAllCarWashPriorityDropDown)
 	router.Delete("/{work_order_system_number}", carWashController.DeleteCarWash)
 	router.Post("/", carWashController.PostCarWash)
+
+	router.Get("/screen", carWashController.CarWashScreen)
+	router.Put("/screen/update-bay", carWashController.UpdateBayNumberCarWashScreenn)
+	router.Put("/start", carWashController.StartCarWash)
+	router.Put("/stop", carWashController.StopCarWash)
+	router.Put("/cancel", carWashController.CancelCarWash)
 	return router
 }
 
@@ -196,7 +201,7 @@ func ItemRouter(
 	router.Get("/search", itemController.GetAllItem)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
-	// router.Put("/{item_id}", itemController.UpdateItem)
+	// router.Put("/{item_id}", itemController.UpdateItem
 
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
@@ -474,7 +479,7 @@ func PurchaseRequestRouter(
 	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
 	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
-	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
+	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequest)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
 	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
 	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
@@ -912,8 +917,8 @@ func LabourSellingPriceDetailRouter(
 	router.Get("/{labour_selling_price_id}", LabourSellingPriceDetailController.GetAllSellingPriceDetailByHeaderId)
 	router.Get("/detail/{labour_selling_price_detail_id}", LabourSellingPriceDetailController.GetSellingPriceDetailById)
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
-	router.Get("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
-	router.Get("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
+	router.Post("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
+	router.Post("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
 
 	return router
 }
