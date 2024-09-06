@@ -60,14 +60,16 @@ func (s *ItemClassServiceImpl) GetItemClassDropDown() ([]masteritempayloads.Item
 	return results, nil
 }
 
-func (s *ItemClassServiceImpl) GetAllItemClass(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemClassServiceImpl) GetAllItemClass(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, totalPages, totalRows, err := s.itemRepo.GetAllItemClass(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	results, err := s.itemRepo.GetAllItemClass(tx, internalFilter, externalFilter, pages)
+	defer func() {
+		helper.CommitOrRollback(tx, err)
+	}()
 	if err != nil {
-		return nil, 0, 0, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *ItemClassServiceImpl) GetItemClassById(Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {

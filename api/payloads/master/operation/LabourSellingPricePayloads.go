@@ -34,6 +34,9 @@ type LabourSellingPriceDetailbyIdResponse struct {
 	Model              string  `json:"model"`
 	Variant            string  `json:"variant"`
 	LabourSellingPrice float64 `json:"labour_selling_price"`
+	ModelId            int     `json:"model_id"`
+	VariantId          int     `json:"variant_id"`
+	IsActive           bool    `json:"is_active"`
 }
 
 type LabourSellingPriceDetailResponse struct {
