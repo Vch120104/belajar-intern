@@ -11,8 +11,9 @@ type LandedCostMasterPayloads struct {
 }
 
 type ShippingMethodResponse struct {
-	ShippingMethodId   int    `json:"shipping_method_id"`
-	ShippingMethodCode string `json:"shipping_method_code"`
+	ShippingMethodId          int    `json:"shipping_method_id"`
+	ShippingMethodCode        string `json:"shipping_method_code"`
+	ShippingMethodDescription string `json:"shipping_method_description"`
 }
 
 type LandedCostTypeResponse struct {
