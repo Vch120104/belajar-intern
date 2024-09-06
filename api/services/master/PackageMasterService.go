@@ -14,9 +14,9 @@ type PackageMasterService interface {
 	GetByIdPackageMaster(int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByIdPackageMasterDetail(int, int, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	PostPackageMaster(masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
-	PostPackageMasterDetailWorkshop(masterpayloads.PackageMasterDetailWorkshop) (int, *exceptions.BaseErrorResponse)
+	PostPackageMasterDetail(masterpayloads.PackageMasterDetail) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(int) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
-	ActivateMultiIdPackageMasterDetail(string, int) (int, *exceptions.BaseErrorResponse)
-	DeactivateMultiIdPackageMasterDetail(string, int) (int, *exceptions.BaseErrorResponse)
+	ActivateMultiIdPackageMasterDetail(string) (bool, *exceptions.BaseErrorResponse)
+	DeactivateMultiIdPackageMasterDetail(string) (bool, *exceptions.BaseErrorResponse)
 	CopyToOtherModel(int, string, int) (int, *exceptions.BaseErrorResponse)
 }

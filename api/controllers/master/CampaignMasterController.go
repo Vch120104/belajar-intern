@@ -111,12 +111,7 @@ func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.Re
 
 func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
-	idhead, errA := strconv.Atoi(chi.URLParam(request, "campaign_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	_, id, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId, idhead)
+	id, err := r.CampaignMasterService.ActivateCampaignMasterDetail(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -127,12 +122,7 @@ func (r *CampaignMasterControllerImpl) ActivateCampaignMasterDetail(writer http.
 
 func (r *CampaignMasterControllerImpl) DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	queryId := chi.URLParam(request, "campaign_detail_id")
-	idhead, errA := strconv.Atoi(chi.URLParam(request, "campaign_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	_, id, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId, idhead)
+	id, err := r.CampaignMasterService.DeactivateCampaignMasterDetail(queryId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -163,13 +153,6 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.Respons
 
 func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
-	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
-
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
 	CampaignDetailId, errA := strconv.Atoi(CampaignDetailIdstr)
 
 	if errA != nil {
@@ -177,7 +160,7 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 		return
 	}
 
-	result, err := r.CampaignMasterService.GetByIdCampaignMasterDetail(CampaignDetailId, LineTypeId)
+	result, err := r.CampaignMasterService.GetByIdCampaignMasterDetail(CampaignDetailId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -264,12 +247,6 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterCodeAndName(writer ht
 func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	CampaignDetailIdstr := chi.URLParam(request, "campaign_detail_id")
-	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
 	CampaignDetailId, errA := strconv.Atoi(CampaignDetailIdstr)
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
@@ -277,7 +254,7 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 	}
 	helper.ReadFromRequestBody(request, &formRequest)
 	var message = ""
-	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, LineTypeId, formRequest)
+	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

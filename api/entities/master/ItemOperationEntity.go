@@ -7,6 +7,7 @@ type ItemOperation struct {
 	ItemId                  int `gorm:"column:item_id;not null;size:30;uniqueIndex:item_cycle;default:0" json:"item_id"`
 	OperationModelMappingId int `gorm:"column:operation_model_mapping_id;not null;uniqueIndex:item_cycle;default:0;size:30" json:"operation_model_mapping_id"`
 	LineTypeId              int `gorm:"column:line_type_id;not null" json:"line_type_id"`
+	PackageMasterDetail     *PackageMasterDetail
 }
 
 func (*ItemOperation) TableName() string {
