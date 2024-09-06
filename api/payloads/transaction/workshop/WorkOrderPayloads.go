@@ -1,6 +1,7 @@
 package transactionworkshoppayloads
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -127,6 +128,7 @@ type WorkOrderResponseDetail struct {
 	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
 	WorkOrderDate           time.Time `json:"work_order_date"`
 	WorkOrderTypeId         int       `json:"work_order_type_id"`
+	WorkOrderTypeName       string    `json:"work_order_type_name"`
 	WorkOrderStatusId       int       `json:"work_order_status_id"`
 	WorkOrderStatusName     string    `json:"work_order_status_name"`
 	ServiceAdvisorId        int       `json:"service_advisor_id"`
@@ -217,8 +219,6 @@ type WorkOrderDetailsResponse struct {
 
 type WorkOrderNormalRequest struct {
 	// Basic information
-	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
-	WorkOrderDate           time.Time `json:"work_order_date"`
 	WorkOrderTypeId         int       `json:"work_order_type_id"`
 	BookingSystemNumber     int       `json:"booking_system_number"`
 	EstimationSystemNumber  int       `json:"estimation_system_number"`
@@ -350,6 +350,7 @@ type WorkOrderGetAllRequest struct {
 	CustomerId              int       `json:"customer_id" parent_entity:"trx_work_order"`
 	BilltoCustomerId        int       `json:"billable_to_id" parent_entity:"trx_work_order"`
 	StatusId                int       `json:"work_order_status_id" parent_entity:"trx_work_order"`
+	RepeatedJob             int       `json:"work_order_repeated_system_number" parent_entity:"trx_work_order"`
 }
 
 type WorkOrderGetAllResponse struct {
@@ -373,15 +374,19 @@ type WorkOrderGetAllResponse struct {
 	VehicleTnkb             string    `json:"vehicle_registration_certificate_tnkb"`
 	CustomerId              int       `json:"customer_id"`
 	BilltoCustomerId        int       `json:"billable_to_id"`
+	RepeatedJob             int       `json:"work_order_repeated_system_number"`
 }
 
 type WorkOrderBookingRequest struct {
 	// Basic information
 	BatchSystemNumber       int       `json:"batch_system_number"`
+	BookingSystemNumber     int       `json:"booking_system_number"`
+	EstimationSystemNumber  int       `json:"estimation_system_number"`
 	WorkOrderSystemNumber   int       `json:"work_order_system_number"`
 	WorkOrderDocumentNumber string    `json:"work_order_document_number"`
 	WorkOrderDate           time.Time `json:"work_order_date"`
 	WorkOrderTypeId         int       `json:"work_order_type_id"`
+	WorkOrderTypeName       string    `json:"work_order_type_name"`
 	ServiceAdvisorId        int       `json:"service_advisor_id"`
 	BrandId                 int       `json:"brand_id"`
 	ModelId                 int       `json:"model_id"`
@@ -392,8 +397,6 @@ type WorkOrderBookingRequest struct {
 	BilltoCustomerId        int       `json:"billto_customer_id"`
 	CampaignId              int       `json:"campaign_id"`
 	AgreementId             int       `json:"agreement_id"`
-	BoookingId              int       `json:"booking_system_number"`
-	EstimationId            int       `json:"estimation_system_number"`
 	ContractSystemNumber    int       `json:"contract_system_number"`
 	CompanyId               int       `json:"company_id"`
 	DealerRepresentativeId  int       `json:"dealer_representative_id"`
@@ -404,7 +407,7 @@ type WorkOrderBookingRequest struct {
 	Storing                 bool      `json:"storing"`
 	WorkOrderRemark         string    `json:"work_order_remark"`
 	Unregistered            bool      `json:"unregistered"`
-	WorkOrderProfitCenter   int       `json:"work_order_profit_center"`
+	WorkOrderProfitCenterId int       `json:"work_order_profit_center"`
 
 	// Work order status and details
 	WorkOrderEraNo           string    `json:"work_order_era_no"`
@@ -465,27 +468,72 @@ type WorkOrderBooking struct {
 }
 
 type WorkOrderBookingResponse struct {
-	WorkOrderSystemNumber      int    `json:"work_order_system_number"`
-	WorkOrderDocumentNumber    string `json:"work_order_document_number"`
-	EstimationSystemNumber     int    `json:"estimation_system_number"`
-	BookingSystemNumber        int    `json:"booking_system_number"`
-	ServiceRequestSystemNumber int    `json:"service_request_system_number"`
-	WorkOrderTypeId            int    `json:"work_order_type_id"`
-	WorkOrderTypeName          string `json:"work_order_type_name"`
-	StatusId                   int    `json:"work_order_status_id"`
-	StatusName                 string `json:"work_order_status_description"`
-	ServiceAdvisorId           int    `json:"service_advisor_id"`
-	BrandId                    int    `json:"brand_id"`
-	BrandName                  string `json:"brand_name"`
-	ModelId                    int    `json:"model_id"`
-	ModelName                  string `json:"model_name"`
-	VariantId                  int    `json:"variant_id"`
-	ServiceSite                string `json:"service_site"`
-	VehicleId                  int    `json:"vehicle_id"`
-	VehicleCode                string `json:"vehicle_chassis_number"`
-	VehicleTnkb                string `json:"vehicle_registration_certificate_tnkb"`
-	CustomerId                 int    `json:"customer_id"`
-	BilltoCustomerId           int    `json:"billable_to_id"`
+	WorkOrderSystemNumber         int                             `json:"work_order_system_number"`
+	WorkOrderDocumentNumber       string                          `json:"work_order_document_number"`
+	WorkOrderDate                 string                          `json:"work_order_date"`
+	EstimationSystemNumber        int                             `json:"estimation_system_number"`
+	EstimationDocumentNumber      string                          `json:"estimation_document_number"`
+	BookingSystemNumber           int                             `json:"booking_system_number"`
+	BookingDocumentNumber         string                          `json:"booking_document_number"`
+	ServiceRequestSystemNumber    int                             `json:"service_request_system_number"`
+	WorkOrderTypeId               int                             `json:"work_order_type_id"`
+	WorkOrderTypeName             string                          `json:"work_order_type_name"`
+	WorkOrderStatusId             int                             `json:"work_order_status_id"`
+	WorkOrderStatusName           string                          `json:"work_order_status_description"`
+	ServiceAdvisorId              int                             `json:"service_advisor_id"`
+	BrandId                       int                             `json:"brand_id"`
+	BrandName                     string                          `json:"brand_name"`
+	ModelId                       int                             `json:"model_id"`
+	ModelName                     string                          `json:"model_name"`
+	VariantId                     int                             `json:"variant_id"`
+	VariantName                   string                          `json:"variant_name"`
+	ServiceSite                   string                          `json:"service_site"`
+	VehicleId                     int                             `json:"vehicle_id"`
+	VehicleCode                   string                          `json:"vehicle_chassis_number"`
+	VehicleTnkb                   string                          `json:"vehicle_registration_certificate_tnkb"`
+	CustomerId                    int                             `json:"customer_id"`
+	BilltoCustomerId              int                             `json:"billable_to_id"`
+	CampaignId                    int                             `json:"campaign_id"`
+	AgreementId                   int                             `json:"agreement_id"`
+	ContractSystemNumber          int                             `json:"contract_system_number"`
+	FromEra                       bool                            `json:"from_era"`
+	QueueSystemNumber             int                             `json:"queue_system_number"`
+	WorkOrderArrivalTime          time.Time                       `json:"work_order_arrival_time"`
+	WorkOrderCurrentMileage       int                             `json:"work_order_current_mileage"`
+	WorkOrderRemark               string                          `json:"work_order_remark"`
+	DealerRepresentativeId        int                             `json:"dealer_representative_id"`
+	CompanyId                     int                             `json:"company_id"`
+	WorkOrderProfitCenterId       int                             `json:"work_order_profit_center"`
+	Titleprefix                   string                          `json:"title_prefix"`
+	NameCust                      string                          `json:"name_customer"`
+	PhoneCust                     string                          `json:"phone_customer"`
+	MobileCust                    string                          `json:"mobile_customer"`
+	MobileCustAlternative         string                          `json:"mobile_customer_alternative"`
+	MobileCustDriver              string                          `json:"mobile_customer_driver"`
+	ContactVia                    string                          `json:"contact_via"`
+	WorkOrderInsuranceCheck       bool                            `json:"insurance_check"`
+	WorkOrderInsurancePolicyNo    string                          `json:"insurance_policy_no"`
+	WorkOrderInsuranceExpiredDate time.Time                       `json:"insurance_expired_date"`
+	WorkOrderInsuranceClaimNo     string                          `json:"insurance_claim_no"`
+	WorkOrderEraExpiredDate       time.Time                       `json:"work_order_era_expired_date"`
+	PromiseDate                   time.Time                       `json:"promise_date"`
+	PromiseTime                   time.Time                       `json:"promise_time"`
+	EstimationDuration            float64                         `json:"estimation_duration"`
+	WorkOrderInsuranceOwnRisk     float64                         `json:"insurance_own_risk"`
+	CustomerExpress               bool                            `json:"customer_express"`
+	LeaveCar                      bool                            `json:"leave_car"`
+	CarWash                       bool                            `json:"car_wash"`
+	FSCouponNo                    string                          `json:"fs_coupon_no"`
+	Notes                         string                          `json:"notes"`
+	Suggestion                    string                          `json:"suggestion"`
+	DownpaymentAmount             float64                         `json:"dp_amount"`
+	WorkOrderInsurancePic         string                          `json:"insurance_pic"`
+	WorkOrderInsuranceWONumber    string                          `json:"insurance_workorder_number"`
+	WorkOrderEraNo                string                          `json:"work_order_era_no"`
+	WorkOrderStatusInsurance      bool                            `json:"work_order_status_insurance"`
+	WorkOrderDetailService        WorkOrderDetailsResponseRequest `json:"work_order_details_service"`
+	WorkOrderDetailVehicle        WorkOrderDetailsResponseVehicle `json:"work_order_details_vehicle"`
+	WorkOrderDetails              WorkOrderDetailsResponse        `json:"work_order_details"`
 }
 
 type WorkOrderAffiliateRequest struct {
@@ -558,6 +606,93 @@ type WorkOrderAffiliateRequest struct {
 	Notes             string  `json:"notes"`
 	Suggestion        string  `json:"suggestion"`
 	DownpaymentAmount float64 `json:"dp_amount"`
+}
+
+type WorkOrderAffiliateGetResponse struct {
+	WorkOrderSystemNumber        int    `json:"work_order_system_number"`
+	WorkOrderDocumentNumber      string `json:"work_order_document_number"`
+	ServiceRequestSystemNumber   int    `json:"service_request_system_number"`
+	ServiceRequestDate           string `json:"service_request_date"`
+	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
+	BrandId                      int    `json:"brand_id"`
+	BrandName                    string `json:"brand_name"`
+	ModelId                      int    `json:"model_id"`
+	ModelName                    string `json:"model_name"`
+	VehicleId                    int    `json:"vehicle_id"`
+	VehicleCode                  string `json:"vehicle_chassis_number"`
+	VehicleTnkb                  string `json:"vehicle_registration_certificate_tnkb"`
+	CompanyId                    int    `json:"company_id"`
+	CompanyName                  string `json:"company_name"`
+}
+
+type WorkOrderAffiliateResponse struct {
+	WorkOrderSystemNumber         int                             `json:"work_order_system_number"`
+	WorkOrderDocumentNumber       string                          `json:"work_order_document_number"`
+	WorkOrderDate                 string                          `json:"work_order_date"`
+	EstimationSystemNumber        int                             `json:"estimation_system_number"`
+	EstimationDocumentNumber      string                          `json:"estimation_document_number"`
+	BookingSystemNumber           int                             `json:"booking_system_number"`
+	BookingDocumentNumber         string                          `json:"booking_document_number"`
+	ServiceRequestSystemNumber    int                             `json:"service_request_system_number"`
+	ServiceRequestDocumentNumber  string                          `json:"service_request_document_number"`
+	WorkOrderTypeId               int                             `json:"work_order_type_id"`
+	WorkOrderTypeName             string                          `json:"work_order_type_name"`
+	WorkOrderStatusId             int                             `json:"work_order_status_id"`
+	WorkOrderStatusName           string                          `json:"work_order_status_description"`
+	ServiceAdvisorId              int                             `json:"service_advisor_id"`
+	BrandId                       int                             `json:"brand_id"`
+	BrandName                     string                          `json:"brand_name"`
+	ModelId                       int                             `json:"model_id"`
+	ModelName                     string                          `json:"model_name"`
+	VariantId                     int                             `json:"variant_id"`
+	VariantName                   string                          `json:"variant_name"`
+	ServiceSite                   string                          `json:"service_site"`
+	VehicleId                     int                             `json:"vehicle_id"`
+	VehicleCode                   string                          `json:"vehicle_chassis_number"`
+	VehicleTnkb                   string                          `json:"vehicle_registration_certificate_tnkb"`
+	CustomerId                    int                             `json:"customer_id"`
+	BilltoCustomerId              int                             `json:"billable_to_id"`
+	CampaignId                    int                             `json:"campaign_id"`
+	AgreementId                   int                             `json:"agreement_id"`
+	ContractSystemNumber          int                             `json:"contract_system_number"`
+	FromEra                       bool                            `json:"from_era"`
+	QueueSystemNumber             int                             `json:"queue_system_number"`
+	WorkOrderArrivalTime          time.Time                       `json:"work_order_arrival_time"`
+	WorkOrderCurrentMileage       int                             `json:"work_order_current_mileage"`
+	WorkOrderRemark               string                          `json:"work_order_remark"`
+	DealerRepresentativeId        int                             `json:"dealer_representative_id"`
+	CompanyId                     int                             `json:"company_id"`
+	WorkOrderProfitCenterId       int                             `json:"work_order_profit_center"`
+	Titleprefix                   string                          `json:"title_prefix"`
+	NameCust                      string                          `json:"name_customer"`
+	PhoneCust                     string                          `json:"phone_customer"`
+	MobileCust                    string                          `json:"mobile_customer"`
+	MobileCustAlternative         string                          `json:"mobile_customer_alternative"`
+	MobileCustDriver              string                          `json:"mobile_customer_driver"`
+	ContactVia                    string                          `json:"contact_via"`
+	WorkOrderInsuranceCheck       bool                            `json:"insurance_check"`
+	WorkOrderInsurancePolicyNo    string                          `json:"insurance_policy_no"`
+	WorkOrderInsuranceExpiredDate time.Time                       `json:"insurance_expired_date"`
+	WorkOrderInsuranceClaimNo     string                          `json:"insurance_claim_no"`
+	WorkOrderEraExpiredDate       time.Time                       `json:"work_order_era_expired_date"`
+	PromiseDate                   time.Time                       `json:"promise_date"`
+	PromiseTime                   time.Time                       `json:"promise_time"`
+	EstimationDuration            float64                         `json:"estimation_duration"`
+	WorkOrderInsuranceOwnRisk     float64                         `json:"insurance_own_risk"`
+	CustomerExpress               bool                            `json:"customer_express"`
+	LeaveCar                      bool                            `json:"leave_car"`
+	CarWash                       bool                            `json:"car_wash"`
+	FSCouponNo                    string                          `json:"fs_coupon_no"`
+	Notes                         string                          `json:"notes"`
+	Suggestion                    string                          `json:"suggestion"`
+	DownpaymentAmount             float64                         `json:"dp_amount"`
+	WorkOrderInsurancePic         string                          `json:"insurance_pic"`
+	WorkOrderInsuranceWONumber    string                          `json:"insurance_workorder_number"`
+	WorkOrderEraNo                string                          `json:"work_order_era_no"`
+	WorkOrderStatusInsurance      bool                            `json:"work_order_status_insurance"`
+	WorkOrderDetailService        WorkOrderDetailsResponseRequest `json:"work_order_details_service"`
+	WorkOrderDetailVehicle        WorkOrderDetailsResponseVehicle `json:"work_order_details_vehicle"`
+	WorkOrderDetails              WorkOrderDetailsResponse        `json:"work_order_details"`
 }
 
 type WorkOrderLookupRequest struct {
@@ -698,6 +833,8 @@ type WorkOrderDetailRequest struct {
 	PriceListId           int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
 	WarehouseId           int     `json:"warehouse_id" parent_entity:"trx_work_order_detail"`
 	ItemId                int     `json:"item_id" parent_entity:"trx_work_order_detail"`
+	OperationId           int     `json:"operation_id" parent_entity:"trx_work_order_detail"`
+	OperationItemId       int     `json:"operation_item_id" parent_entity:"trx_work_order_detail"`
 	ProposedPrice         float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
 	OperationItemPrice    float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
 }
@@ -724,21 +861,7 @@ type WorkOrderAffiliate struct {
 	BrandId                    int    `json:"brand_id" parent_entity:"trx_work_order"`
 	ModelId                    int    `json:"model_id" parent_entity:"trx_work_order"`
 	VehicleId                  int    `json:"vehicle_id" parent_entity:"trx_work_order"`
-}
-
-type WorkOrderAffiliateResponse struct {
-	WorkOrderSystemNumber        int    `json:"work_order_system_number"`
-	WorkOrderDocumentNumber      string `json:"work_order_document_number"`
-	ServiceRequestSystemNumber   int    `json:"service_request_system_number"`
-	ServiceRequestDate           string `json:"service_request_date"`
-	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
-	BrandId                      int    `json:"brand_id"`
-	BrandName                    string `json:"brand_name"`
-	ModelId                      int    `json:"model_id"`
-	ModelName                    string `json:"model_name"`
-	VehicleId                    int    `json:"vehicle_id"`
-	VehicleCode                  string `json:"vehicle_chassis_number"`
-	VehicleTnkb                  string `json:"vehicle_registration_certificate_tnkb"`
+	CompanyId                  int    `json:"company_id" parent_entity:"trx_work_order"`
 }
 
 type WorkOrderAffiliatedRequest struct {
@@ -792,17 +915,17 @@ type BrandDocResponse struct {
 }
 
 type VehicleResponse struct {
-	VehicleId           int    `json:"vehicle_id"`
-	VehicleCode         string `json:"vehicle_chassis_number"`
-	VehicleTnkb         string `json:"vehicle_registration_certificate_tnkb"`
-	VehicleProduction   string `json:"vehicle_production_year"`
-	VehicleLastKm       int    `json:"vehicle_last_km"`
-	VehicleBrandId      int    `json:"vehicle_brand_id"`
-	VehicleModelId      int    `json:"vehicle_model_id"`
-	VehicleModelVariant string `json:"model_variant_colour_description"`
-	VehicleVariantId    int    `json:"vehicle_variant_id"`
-	VehicleColourId     int    `json:"vehicle_colour_id"`
-	VehicleOwner        string `json:"vehicle_registration_certificate_owner_name"`
+	VehicleId           int             `json:"vehicle_id"`
+	VehicleCode         string          `json:"vehicle_chassis_number"`
+	VehicleTnkb         string          `json:"vehicle_registration_certificate_tnkb"`
+	VehicleProduction   json.RawMessage `json:"vehicle_production_year"`
+	VehicleLastKm       json.RawMessage `json:"vehicle_last_km"`
+	VehicleBrandId      int             `json:"vehicle_brand_id"`
+	VehicleModelId      int             `json:"vehicle_model_id"`
+	VehicleModelVariant string          `json:"model_variant_colour_description"`
+	VehicleVariantId    int             `json:"vehicle_variant_id"`
+	VehicleColourId     int             `json:"vehicle_colour_id"`
+	VehicleOwner        string          `json:"vehicle_registration_certificate_owner_name"`
 }
 
 type Linetype struct {

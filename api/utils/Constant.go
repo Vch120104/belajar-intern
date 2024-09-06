@@ -7,13 +7,14 @@ import (
 )
 
 // WO and Service Status
-var SrvStatDraft int = 1    // 0 Draft
-var SrvStatStart int = 2    // 10 Start
-var SrvStatPending int = 3  // 15 Pending
-var SrvStatStop int = 4     // 20 Stop
-var SrvStatTransfer int = 5 // 25 Transfer
-var SrvStatQcPass int = 6   // 30 QC Pass
-var SrvStatReOrder int = 7  // 35 Re-Order
+var SrvStatDraft int = 1       // 0 Draft
+var SrvStatStart int = 2       // 10 Start
+var SrvStatPending int = 3     // 15 Pending
+var SrvStatStop int = 4        // 20 Stop
+var SrvStatTransfer int = 5    // 25 Transfer
+var SrvStatQcPass int = 6      // 30 QC Pass
+var SrvStatReOrder int = 7     // 35 Re-Order
+var SrvStatAutoRelease int = 8 // 40 Auto Release
 
 var WoStatDraft int = 1   // 0 Draft
 var WoStatNew int = 2     // 10 New

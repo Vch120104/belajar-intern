@@ -976,6 +976,156 @@ func (r *LookupRepositoryImpl) VehicleUnitMaster(tx *gorm.DB, brandId int, model
 	return vehicleMasters, totalPages, int(totalRows), nil
 }
 
+func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		vehicleMasters []map[string]interface{}
+		totalRows      int64
+		totalPages     int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	// Apply filters
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	query := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle V").
+		Select(`
+			V.vehicle_id AS vehicle_id,
+			V.vehicle_chassis_number AS vehicle_chassis_number, 
+			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
+			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
+			UM.model_variant_colour_name AS Vehicle, 
+			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
+			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
+			V.vehicle_last_km AS vehicle_last_km, 
+			CASE 
+				WHEN V.is_active = 1 THEN 'Active' 
+				WHEN V.is_active = 0 THEN 'Deactive' 
+			END AS Status
+		`).
+		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
+		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
+                                       UM.model_id = V.vehicle_model_id AND 
+                                       UM.colour_id = V.vehicle_colour_id AND 
+                                       ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Where(filterQuery, filterValues...).
+		Where("V.vehicle_id = ?", vehicleID)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total vehicle units",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&vehicleMasters).Error
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get vehicle unit data by ID",
+			Err:        err,
+		}
+	}
+
+	return vehicleMasters, totalPages, int(totalRows), nil
+}
+
+func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		vehicleMasters []map[string]interface{}
+		totalRows      int64
+		totalPages     int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	// Apply filters
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	query := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle V").
+		Select(`
+			V.vehicle_id AS vehicle_id,
+			V.vehicle_chassis_number AS vehicle_chassis_number, 
+			RC.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb, 
+			RC.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name, 
+			UM.model_variant_colour_name AS Vehicle, 
+			CAST(V.vehicle_production_year AS VARCHAR) AS vehicle_production_year, 
+			CONVERT(VARCHAR, V.vehicle_last_service_date, 106) AS vehicle_last_service_date, 
+			V.vehicle_last_km AS vehicle_last_km, 
+			CASE 
+				WHEN V.is_active = 1 THEN 'Active' 
+				WHEN V.is_active = 0 THEN 'Deactive' 
+			END AS Status
+		`).
+		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate RC ON V.vehicle_id = RC.vehicle_id`).
+		Joins(`LEFT JOIN dms_microservices_sales_dev.dbo.mtr_model_variant_colour UM ON UM.brand_id = V.vehicle_brand_id AND 
+                                       UM.model_id = V.vehicle_model_id AND 
+                                       UM.colour_id = V.vehicle_colour_id AND 
+                                       ISNULL(UM.accessories_option_id, '') = ISNULL(V.option_id, '')`).
+		Where(filterQuery, filterValues...).
+		Where("V.vehicle_chassis_number = ?", chassisNumber)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total vehicle units",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&vehicleMasters).Error
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get vehicle unit data by chassis number",
+			Err:        err,
+		}
+	}
+
+	return vehicleMasters, totalPages, int(totalRows), nil
+}
+
 // usp_comLookUp
 // IF @strEntity = 'CampaignMaster'--CAMPAIGN MASTER
 func (r *LookupRepositoryImpl) CampaignMaster(tx *gorm.DB, companyId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -1046,4 +1196,94 @@ func (r *LookupRepositoryImpl) CampaignMaster(tx *gorm.DB, companyId int, pagina
 	}
 
 	return campaignMasters, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'WorkOrderService'--WO SERVICE
+func (r *LookupRepositoryImpl) WorkOrderService(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		results []struct {
+			WorkOrderNo    string
+			WorkOrderDate  time.Time
+			NoPolisi       string
+			ChassisNo      string
+			Brand          int
+			Model          int
+			Variant        int
+			WorkOrderSysNo int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_work_order_allocation AS A").
+		Select("A.work_order_document_number AS WorkOrderNo, B.work_order_date AS WorkOrderDate, "+
+			"B.vehicle_chassis_number AS ChassisNo, B.brand_id AS Brand, B.model_id AS Model, "+
+			"B.variant_id AS Variant, A.work_order_system_number AS WorkOrderSysNo").
+		Joins("LEFT JOIN trx_work_order AS B ON B.work_order_system_number = A.work_order_system_number").
+		Where("A.service_status_id NOT IN (?, ?, ?, ?)", utils.SrvStatStop, utils.SrvStatAutoRelease, utils.SrvStatTransfer, utils.SrvStatQcPass)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total vehicle units",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Order("A.work_order_document_number").
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&results).Error
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get vehicle unit master data",
+			Err:        err,
+		}
+	}
+
+	mappedResults := make([]map[string]interface{}, len(results))
+	for i, result := range results {
+		mappedResults[i] = map[string]interface{}{
+			"work_order_document_number": result.WorkOrderNo,
+			"work_order_date":            result.WorkOrderDate,
+			"vehicle_tnkb":               result.NoPolisi,
+			"vehicle_chassis_number":     result.ChassisNo,
+			"brand_id":                   result.Brand,
+			"model_id":                   result.Model,
+			"variant_id":                 result.Variant,
+			"work_order_system_number":   result.WorkOrderSysNo,
+		}
+	}
+
+	return mappedResults, totalPages, int(totalRows), nil
 }

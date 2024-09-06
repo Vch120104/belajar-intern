@@ -116,14 +116,21 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_type_id":       queryValues.Get("work_order_type_id"),
-		"trx_work_order.work_order_status_id":     queryValues.Get("work_order_status_id"),
-		"trx_work_order.brand_id":                 queryValues.Get("brand_id"),
-		"trx_work_order.model_id":                 queryValues.Get("model_id"),
-		"trx_work_order.vehicle_id":               queryValues.Get("vehicle_id"),
-		"trx_work_order.work_order_date":          queryValues.Get("work_order_date"),
-		"trx_work_order.work_order_close_date":    queryValues.Get("work_order_close_date"),
+		"trx_work_order.work_order_document_number":        queryValues.Get("work_order_document_number"),
+		"trx_work_order.work_order_system_number":          queryValues.Get("work_order_system_number"),
+		"trx_work_order.work_order_date":                   queryValues.Get("work_order_date"),
+		"trx_work_order.work_order_type_id":                queryValues.Get("work_order_type_id"),
+		"trx_work_order.work_order_type_description":       queryValues.Get("work_order_type_description"),
+		"trx_work_order.brand_id":                          queryValues.Get("brand_id"),
+		"trx_work_order.brand_name":                        queryValues.Get("brand_name"),
+		"trx_work_order.model_id":                          queryValues.Get("model_id"),
+		"trx_work_order.model_name":                        queryValues.Get("model_name"),
+		"trx_work_order.vehicle_id":                        queryValues.Get("vehicle_id"),
+		"trx_work_order.vehicle_chassis_number":            queryValues.Get("vehicle_chassis_number"),
+		"trx_work_order.vehicle_tnkb":                      queryValues.Get("vehicle_tnkb"),
+		"trx_work_order.work_order_status_id":              queryValues.Get("work_order_status_id"),
+		"trx_work_order.work_order_status_name":            queryValues.Get("work_order_status_name"),
+		"trx_work_order.work_order_repeated_system_number": queryValues.Get("work_order_repeated_system_number"),
 	}
 
 	paginate := pagination.Pagination{
@@ -236,7 +243,7 @@ func (r *WorkOrderControllerImpl) AddStatus(writer http.ResponseWriter, request 
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Status added successfully", http.StatusCreated)
+		payloads.NewHandleSuccess(writer, success, "Status added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -267,7 +274,7 @@ func (r *WorkOrderControllerImpl) UpdateStatus(writer http.ResponseWriter, reque
 	}
 
 	if update {
-		payloads.NewHandleSuccess(writer, nil, "Status updated successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, update, "Status updated successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -294,7 +301,7 @@ func (r *WorkOrderControllerImpl) DeleteStatus(writer http.ResponseWriter, reque
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, nil, "Status deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Status deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -347,7 +354,7 @@ func (r *WorkOrderControllerImpl) AddBill(writer http.ResponseWriter, request *h
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Bill added successfully", http.StatusCreated)
+		payloads.NewHandleSuccess(writer, success, "Bill added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -377,7 +384,7 @@ func (r *WorkOrderControllerImpl) UpdateBill(writer http.ResponseWriter, request
 		return
 	}
 	if update {
-		payloads.NewHandleSuccess(writer, nil, "Bill updated successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, update, "Bill updated successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -404,7 +411,7 @@ func (r *WorkOrderControllerImpl) DeleteBill(writer http.ResponseWriter, request
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, nil, "Bill deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Bill deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -468,7 +475,7 @@ func (r *WorkOrderControllerImpl) AddType(writer http.ResponseWriter, request *h
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Type added successfully", http.StatusCreated)
+		payloads.NewHandleSuccess(writer, success, "Type added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -499,7 +506,7 @@ func (r *WorkOrderControllerImpl) UpdateType(writer http.ResponseWriter, request
 	}
 
 	if update {
-		payloads.NewHandleSuccess(writer, nil, "Type updated successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, update, "Type updated successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -526,7 +533,7 @@ func (r *WorkOrderControllerImpl) DeleteType(writer http.ResponseWriter, request
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, nil, "Type deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Type deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -738,7 +745,7 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 	}
 
 	if success.WorkOrderRequestId > 0 {
-		payloads.NewHandleSuccess(writer, nil, "Request added successfully", http.StatusCreated)
+		payloads.NewHandleSuccess(writer, success, "Request added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -767,7 +774,7 @@ func (r *WorkOrderControllerImpl) DeleteRequest(writer http.ResponseWriter, requ
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, nil, "Request deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Request deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -955,7 +962,7 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 	}
 
 	if success.WorkOrderServiceVehicleId > 0 {
-		payloads.NewHandleSuccess(writer, nil, "Vehicle service added successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Vehicle service added successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to add vehicle service", http.StatusInternalServerError)
 	}
@@ -984,7 +991,7 @@ func (r *WorkOrderControllerImpl) DeleteVehicleService(writer http.ResponseWrite
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, nil, "Vehicle service deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Vehicle service deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -1118,7 +1125,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Work order saved successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
 	}
@@ -1197,7 +1204,7 @@ func (r *WorkOrderControllerImpl) Void(writer http.ResponseWriter, request *http
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order voided successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Work order voided successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to void work order", http.StatusInternalServerError)
 	}
@@ -1247,7 +1254,7 @@ func (r *WorkOrderControllerImpl) CloseOrder(writer http.ResponseWriter, request
 	}
 
 	if success {
-		payloads.NewHandleSuccess(writer, nil, "Work order closed successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, success, "Work order closed successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to close work order", http.StatusInternalServerError)
 	}
@@ -1369,7 +1376,7 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 	}
 
 	if update.WorkOrderSystemNumber > 0 {
-		payloads.NewHandleSuccess(writer, nil, "Detail updated successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, update, "Detail updated successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -1387,23 +1394,23 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/{work_order_system_number}/detail [post]
 func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter, request *http.Request) {
-	// Add a new detail to a work order
-	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	workOrderStrId := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(workOrderStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
 
 	var detailRequest transactionworkshoppayloads.WorkOrderDetailRequest
 	helper.ReadFromRequestBody(request, &detailRequest)
 
-	success, err := r.WorkOrderService.AddDetailWorkOrder(int(workOrderId), detailRequest)
-	if err != nil {
-		exceptions.NewAppException(writer, request, err)
+	success, serviceErr := r.WorkOrderService.AddDetailWorkOrder(workOrderId, detailRequest)
+	if serviceErr != nil {
+		exceptions.NewAppException(writer, request, serviceErr)
 		return
 	}
 
-	if success.WorkOrderSystemNumber > 0 {
-		payloads.NewHandleSuccess(writer, nil, "Detail added successfully", http.StatusCreated)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccess(writer, success, "Detail added successfully", http.StatusCreated)
 
 }
 
@@ -1430,7 +1437,7 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrder(writer http.ResponseWrit
 	}
 
 	if delete {
-		payloads.NewHandleSuccess(writer, nil, "Detail deleted successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, delete, "Detail deleted successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
@@ -1508,7 +1515,6 @@ func (r *WorkOrderControllerImpl) DeleteDetailWorkOrderMultiId(writer http.Respo
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/booking [get]
 func (r *WorkOrderControllerImpl) GetAllBooking(writer http.ResponseWriter, request *http.Request) {
-	// Get all work order bookings
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
@@ -1559,7 +1565,16 @@ func (r *WorkOrderControllerImpl) GetBookingById(writer http.ResponseWriter, req
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	workOrderBookId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
 
-	workOrder, baseErr := r.WorkOrderService.GetBookingById(workOrderId, workOrderBookId)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	workOrder, baseErr := r.WorkOrderService.GetBookingById(workOrderId, workOrderBookId, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
@@ -1598,7 +1613,7 @@ func (r *WorkOrderControllerImpl) SaveBooking(writer http.ResponseWriter, reques
 	}
 
 	if result {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, result, "Work order saved successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
 	}
@@ -1626,11 +1641,7 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 		return
 	}
 
-	if result {
-		payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusCreated)
-	} else {
-		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
-	}
+	payloads.NewHandleSuccess(writer, result, "Work order saved successfully", http.StatusCreated)
 
 }
 
@@ -1731,7 +1742,7 @@ func (r *WorkOrderControllerImpl) CloseBooking(writer http.ResponseWriter, reque
 	}
 
 	if close {
-		payloads.NewHandleSuccess(writer, nil, "Work order closed successfully", http.StatusOK)
+		payloads.NewHandleSuccess(writer, close, "Work order closed successfully", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to close work order", http.StatusInternalServerError)
 	}
@@ -1795,7 +1806,16 @@ func (r *WorkOrderControllerImpl) GetAffiliatedById(writer http.ResponseWriter, 
 	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
 	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "service_request_system_number"))
 
-	workOrder, baseErr := r.WorkOrderService.GetAffiliatedById(workOrderId, affiliatedWorkOrderId)
+	queryValues := request.URL.Query()
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	workOrder, baseErr := r.WorkOrderService.GetAffiliatedById(workOrderId, affiliatedWorkOrderId, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)

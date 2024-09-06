@@ -62,11 +62,47 @@ func (s *LookupServiceImpl) VehicleUnitMaster(brandId int, modelId int, pages pa
 	return lookup, totalPages, totalRows, nil
 }
 
+func (s *LookupServiceImpl) GetVehicleUnitByID(vehicleID int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetVehicleUnitByID(tx, vehicleID, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetVehicleUnitByChassisNumber(tx, chassisNumber, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
 func (s *LookupServiceImpl) CampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
 	lookup, totalPages, totalRows, baseErr := s.LookupRepo.CampaignMaster(tx, companyId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) WorkOrderService(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.WorkOrderService(tx, pages, filterCondition)
 	if baseErr != nil {
 		return nil, 0, 0, baseErr
 	}

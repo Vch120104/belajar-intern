@@ -1180,7 +1180,7 @@ func WorkOrderRouter(
 
 	//add trx affiliate
 	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
-	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
+	router.Get("/affiliated/{work_order_system_number}/{service_request_system_number}", WorkOrderController.GetAffiliatedById)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
 	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
@@ -1512,6 +1512,9 @@ func LookupRouter(
 	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
+	router.Get("/vehicle-unit-master/by-id/{vehicle_id}", LookupController.GetVehicleUnitByID)
+	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
+	router.Get("/work-order-service", LookupController.WorkOrderService)
 
 	return router
 }

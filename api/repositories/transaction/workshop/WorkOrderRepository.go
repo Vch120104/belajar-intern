@@ -60,9 +60,9 @@ type WorkOrderRepository interface {
 	DeleteDetailWorkOrder(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrderMultiId(*gorm.DB, int, []int) (bool, *exceptions.BaseErrorResponse)
 
-	NewBooking(*gorm.DB, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	NewBooking(*gorm.DB, transactionworkshoppayloads.WorkOrderBookingRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)
 	GetAllBooking(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetBookingById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse)
+	GetBookingById(*gorm.DB, int, int, pagination.Pagination) (transactionworkshoppayloads.WorkOrderBookingResponse, *exceptions.BaseErrorResponse)
 	SaveBooking(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
 	SubmitBooking(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse)
 	VoidBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
@@ -70,7 +70,7 @@ type WorkOrderRepository interface {
 
 	NewAffiliated(*gorm.DB, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAllAffiliated(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAffiliatedById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse)
+	GetAffiliatedById(*gorm.DB, int, int, pagination.Pagination) (transactionworkshoppayloads.WorkOrderAffiliateResponse, *exceptions.BaseErrorResponse)
 	SaveAffiliated(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
 	VoidAffiliated(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	CloseAffiliated(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
