@@ -30,6 +30,12 @@ func CarWashRouter(
 	router.Get("/priority/dropdown", carWashController.GetAllCarWashPriorityDropDown)
 	router.Delete("/{work_order_system_number}", carWashController.DeleteCarWash)
 	router.Post("/", carWashController.PostCarWash)
+
+	router.Get("/screen", carWashController.CarWashScreen)
+	router.Put("/screen/update-bay", carWashController.UpdateBayNumberCarWashScreenn)
+	router.Put("/start", carWashController.StartCarWash)
+	router.Put("/stop", carWashController.StopCarWash)
+	router.Put("/cancel", carWashController.CancelCarWash)
 	return router
 }
 
