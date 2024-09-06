@@ -94,7 +94,7 @@ func (r *LabourSellingPriceDetailControllerImpl) Duplicate(writer http.ResponseW
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "success", 200)
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "success", 200)
 }
 
 func (r *LabourSellingPriceDetailControllerImpl) GetAllSellingPriceDetailByHeaderId(writer http.ResponseWriter, request *http.Request) {

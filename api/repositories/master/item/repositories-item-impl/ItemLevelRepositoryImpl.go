@@ -122,7 +122,9 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, page
 
 	var itemLevelResponse []masteritemlevelpayloads.GetAllItemLevelResponse
 
-	query := tx.Model(entities).Select("mtr_item_level.*,mtr_item_class.*").Joins("left join mtr_item_class on mtr_item_level.item_class_id = mtr_item_class.item_class_id")
+	query := tx.Model(entities).Select("mtr_item_level.item_level_id,mtr_item_level.item_level_code,mtr_item_level.item_level,mtr_item_level.item_level_name,mtr_item_level.is_active,mtr_item_class.*,mil.item_level_code as item_level_parent").
+		Joins("join mtr_item_class on mtr_item_level.item_class_id = mtr_item_class.item_class_id").
+		Joins("left join mtr_item_level mil on mtr_item_level.item_level_parent = mil.item_level_id")
 
 	queryFilter := utils.ApplyFilter(query, filter)
 

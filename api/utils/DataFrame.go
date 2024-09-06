@@ -118,11 +118,12 @@ func DataFrameInnerJoin(data1 interface{}, data2 interface{}, key string) ([]map
 		result = ConvertNullValueToEmptyString(dfJoin.Maps())
 
 	} else {
+
 		df1 := dataframe.LoadStructs(data1)
 		df2 := dataframe.LoadStructs(data2)
 		dfJoin := df1.InnerJoin(df2, key)
-		result = ConvertNullValueToEmptyString(dfJoin.Maps())
 
+		result = ConvertNullValueToEmptyString(dfJoin.Maps())
 	}
 	if len(result) == 0 {
 		return result, fmt.Errorf("failed to perform InnerJoin Dataframe with key %s", key)
