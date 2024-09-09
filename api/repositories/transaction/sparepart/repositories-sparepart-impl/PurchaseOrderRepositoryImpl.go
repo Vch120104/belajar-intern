@@ -133,6 +133,15 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	page.Rows = Result
 	return page, nil
 }
+func GetApprovalStatusId(code string) int {
+	var DocResponse transactionsparepartpayloads.PurchaseOrderApprovalStatusResponses
+
+	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
+	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+		return 0
+	}
+	return DocResponse.ApprovalStatusId
+}
 func (repo *PurchaseOrderRepositoryImpl) GetByIdPurchaseOrder(db *gorm.DB, id int) (transactionsparepartpayloads.PurchaseOrderGetByIdResponses, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.PurchaseOrderEntities
 	response := transactionsparepartpayloads.PurchaseOrderGetByIdResponses{}
@@ -629,11 +638,11 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 	//END
 	var exists bool
 	err = db.Model(&entities). // Assuming AtItemPO1 is your struct
-		Select("1").
-		Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id AND B.item_group_id IN (?,?)", 15, 23). //in and oj
-		Where("purchase_order_system_number = ? A.item_id = ?", payloads.PurchaseOrderSystemNumber, payloads.ItemId).
-		Limit(1).
-		Find(&exists).Error
+					Select("1").
+					Joins("INNER JOIN mtr_item B ON A.item_id = B.item_id AND B.item_group_id IN (?,?)", 15, 23). //in and oj
+					Where("purchase_order_system_number = ? A.item_id = ?", payloads.PurchaseOrderSystemNumber, payloads.ItemId).
+					Limit(1).
+					Find(&exists).Error
 	if exists {
 		return entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusUnprocessableEntity,
@@ -2043,16 +2052,19 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//BEGIN
 	//UPDATE atItemPO0
 	//
-	
+	//get document status id for approved
+	ApprovedStatusId := GetApprovalStatusId("20")
+	//masi dummy anggap always true belum ada
+	//dbo.getApprovalCodeBrand
+	//dan approvalreqrfp
 	if 1 == 1 { //ISNULL(@Approval_Req_No, 0)
-		poEntities.PurchaseOrderStatusId = payloads.PurchaseOrderStatusId
+		poEntities.PurchaseOrderStatusId = ApprovedStatusId
 		poEntities.PurchaseOrderRemark = payloads.PurchaseOrderRemark
 		*poEntities.LastTotalDiscount = *poEntities.TotalDiscount
 		*poEntities.TotalAmount = *poEntities.TotalAmountConfirm
 		*poEntities.LastTotalVat = *poEntities.TotalVat
 		*poEntities.LastTotalAfterVat = *poEntities.TotalAfterVat
 		poEntities.ApprovalRequestById = payloads.UpdatedByUserId
-		//poEntities.ApprovalRequestNumber = approvalreqno
 		poEntities.ApprovalRequestDate = payloads.UpdatedDate
 		poEntities.ChangeNo += 1
 		poEntities.UpdatedDate = payloads.UpdatedDate
