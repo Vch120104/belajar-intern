@@ -512,8 +512,8 @@ func (r *QualityControlBodyshopRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet
 }
 
 // uspg_wtWorkOrder2_Update
-// IF @Option = 1
-// USE IN MODUL : AWS-006 SHEET: RE-ORDER
+// IF @Option = 4
+// USE IN MODUL : AWS-006 SHEET: UPDATE DATA BY KEY (REORDER) - BODY REPAIR
 func (r *QualityControlBodyshopRepositoryImpl) Reorder(tx *gorm.DB, id int, iddet int, payload transactionbodyshoppayloads.QualityControlReorder) (transactionbodyshoppayloads.QualityControlUpdateResponse, *exceptions.BaseErrorResponse) {
 	var (
 		lineTypeOperation = 1
@@ -544,7 +544,7 @@ func (r *QualityControlBodyshopRepositoryImpl) Reorder(tx *gorm.DB, id int, idde
 	if currentStatus != utils.SrvStatStop {
 		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Message:    "Operation Status is not valid",
+			Message:    "Operation Status is not valid, There are other technicians that is not Stop",
 		}
 	}
 

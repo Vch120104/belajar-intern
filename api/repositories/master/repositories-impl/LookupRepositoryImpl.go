@@ -451,9 +451,419 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
-	fmt.Println("Final Results:", results)
-	fmt.Println("Total Rows:", totalRows)
-	fmt.Println("Total Pages:", totalPages)
+	return results, int(totalRows), totalPages, nil
+}
+
+func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var results []map[string]interface{}
+
+	// Default filters and variables
+	const (
+		ItmGrpInventory      = 1 // "IN"
+		PurchaseTypeGoods    = "G"
+		PurchaseTypeServices = "S"
+	)
+
+	var (
+		ItmCls                   string
+		year, month, companyCode = 2024, 8, 1
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	baseQuery := tx.Table("")
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	switch linetypeId {
+	case utils.LinetypePackage:
+		combinedDetailsSubQuery := `
+				(
+					SELECT package_id, frt_quantity, is_active 
+					FROM mtr_package_master_detail_item
+					WHERE is_active = 1
+					UNION ALL
+					SELECT package_id, frt_quantity, is_active 
+					FROM mtr_package_master_detail_operation
+					WHERE is_active = 1
+				) AS CombinedDetails
+			`
+
+		baseQuery = baseQuery.Table("mtr_package A").
+			Select(`
+				A.package_code AS package_code, 
+				A.package_name AS package_name, 
+				SUM(CombinedDetails.frt_quantity) AS frt, 
+				B.profit_center_id AS profit_center, 
+				C.model_code AS model_code, 
+				C.model_description AS description, 
+				A.package_price AS price
+			`).
+			Joins("LEFT JOIN "+combinedDetailsSubQuery+" ON A.package_id = CombinedDetails.package_id").
+			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
+			Where("A.package_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...).
+			Group("A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
+
+	case utils.LinetypeOperation:
+		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
+			Select(`
+        oc.operation_code AS OPERATION_CODE, 
+        oc.operation_name AS OPERATION_NAME, 
+        ofrt.frt_hour AS FRT_HOUR, 
+        oe.operation_entries_code AS OPERATION_ENTRIES_CODE, 
+        oe.operation_entries_description AS OPERATION_ENTRIES_DESCRIPTION, 
+        ok.operation_key_code AS OPERATION_KEY_CODE, 
+        ok.operation_key_description AS OPERATION_KEY_DESCRIPTION
+    `).
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+			Where("oc.is_active = ? ", 1).
+			Where("oc.operation_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...)
+
+	case utils.LinetypeSparepart:
+		ItmCls = "1"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...)
+
+	case utils.LinetypeOil:
+		ItmCls = "2"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...)
+
+	case utils.LinetypeMaterial:
+		ItmCls = "3"
+		ItmClsSublet := "2"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				DISTINCT A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LineTypeFee:
+		ItmCls = "4"
+		ItmGrpOutsideJob := 4
+
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				DISTINCT A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LinetypeAccesories:
+		ItmCls = "5"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				DISTINCT A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	default:
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Invalid linetype ID",
+			Err:        errors.New("invalid linetype ID"),
+		}
+	}
+
+	var totalRows int64
+	if err := baseQuery.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count rows",
+			Err:        err,
+		}
+	}
+
+	offset := (paginate.Page - 1) * paginate.Limit
+	if err := baseQuery.Offset(offset).Limit(paginate.Limit).Find(&results).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve data",
+			Err:        err,
+		}
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
+
+	return results, int(totalRows), totalPages, nil
+}
+
+func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var results []map[string]interface{}
+
+	// Default filters and variables
+	const (
+		ItmGrpInventory      = 1 // "IN"
+		PurchaseTypeGoods    = "G"
+		PurchaseTypeServices = "S"
+	)
+
+	var (
+		ItmCls                   string
+		year, month, companyCode = 2024, 8, 1
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	baseQuery := tx.Table("")
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	switch linetypeId {
+	case utils.LinetypePackage:
+		combinedDetailsSubQuery := `
+				(
+					SELECT package_id, frt_quantity, is_active 
+					FROM mtr_package_master_detail_item
+					WHERE is_active = 1
+					UNION ALL
+					SELECT package_id, frt_quantity, is_active 
+					FROM mtr_package_master_detail_operation
+					WHERE is_active = 1
+				) AS CombinedDetails
+			`
+
+		baseQuery = baseQuery.Table("mtr_package A").
+			Select(`
+				A.package_code AS package_code, 
+				A.package_name AS package_name, 
+				SUM(CombinedDetails.frt_quantity) AS frt, 
+				B.profit_center_id AS profit_center, 
+				C.model_code AS model_code, 
+				C.model_description AS description, 
+				A.package_price AS price
+			`).
+			Joins("LEFT JOIN "+combinedDetailsSubQuery+" ON A.package_id = CombinedDetails.package_id").
+			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+			Where("A.is_active = ?", 1).
+			Where("A.package_id = ?", oprItemId).
+			Where(filterQuery, filterValues...).
+			Group("A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
+
+	case utils.LinetypeOperation:
+		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
+			Select(`
+        oc.operation_code AS OPERATION_CODE, 
+        oc.operation_name AS OPERATION_NAME, 
+        ofrt.frt_hour AS FRT_HOUR, 
+        oe.operation_entries_code AS OPERATION_ENTRIES_CODE, 
+        oe.operation_entries_description AS OPERATION_ENTRIES_DESCRIPTION, 
+        ok.operation_key_code AS OPERATION_KEY_CODE, 
+        ok.operation_key_description AS OPERATION_KEY_DESCRIPTION
+    `).
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
+			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+			Where("oc.is_active = ? ", 1).
+			Where("oc.operation_id = ?", oprItemId).
+			Where(filterQuery, filterValues...)
+
+	case utils.LinetypeSparepart:
+		ItmCls = "1"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...)
+
+	case utils.LinetypeOil:
+		ItmCls = "2"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...)
+
+	case utils.LinetypeMaterial:
+		ItmCls = "3"
+		ItmClsSublet := "2"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				DISTINCT A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LineTypeFee:
+		ItmCls = "4"
+		ItmGrpOutsideJob := 4
+
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				DISTINCT A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LinetypeAccesories:
+		ItmCls = "5"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+				DISTINCT A.item_code AS item_code, 
+				A.item_name AS item_name, 
+				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+				        WHERE A.item_id = V.item_id 
+				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS AvailQty, 
+				A.item_level_1 AS item_level_1, 
+				A.item_level_2 AS item_level_2, 
+				A.item_level_3 AS item_level_3, 
+				A.item_level_4 AS item_level_4
+			`, year, month, companyCode).
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	default:
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Invalid linetype ID",
+			Err:        errors.New("invalid linetype ID"),
+		}
+	}
+
+	var totalRows int64
+	if err := baseQuery.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count rows",
+			Err:        err,
+		}
+	}
+
+	offset := (paginate.Page - 1) * paginate.Limit
+	if err := baseQuery.Offset(offset).Limit(paginate.Limit).Find(&results).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve data",
+			Err:        err,
+		}
+	}
+
+	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
 	return results, int(totalRows), totalPages, nil
 }
@@ -1286,4 +1696,205 @@ func (r *LookupRepositoryImpl) WorkOrderService(tx *gorm.DB, paginate pagination
 	}
 
 	return mappedResults, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity =  'CustomerByTypeAndAddress'--CUSTOMER MASTER
+func (r *LookupRepositoryImpl) CustomerByTypeAndAddress(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		customerMasters []map[string]interface{}
+		totalRows       int64
+		totalPages      int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	query := tx.Table("dms_microservices_general_dev.dbo.mtr_customer C").
+		Select(`
+			C.customer_id AS customer_id,
+			C.customer_code AS customer_code,
+			C.customer_name AS customer_name,
+			CA.client_type_description AS client_type_description,
+			A.address_street_1 AS address_1,
+			A.address_street_2 AS address_2,
+			A.address_street_3 AS address_3,
+			C.id_phone_no AS id_phone_no
+		`).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_client_type CA ON C.client_type_id = CA.client_type_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_address AS A ON C.id_address_id = A.address_id").
+		Where(filterQuery, filterValues...).
+		Where("C.is_active = 1")
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total vehicle units",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&customerMasters).Error
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get vehicle unit master data",
+			Err:        err,
+		}
+	}
+
+	return customerMasters, totalPages, int(totalRows), nil
+}
+
+func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByID(tx *gorm.DB, customerId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		customerMasters []map[string]interface{}
+		totalRows       int64
+		totalPages      int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	query := tx.Table("dms_microservices_general_dev.dbo.mtr_customer C").
+		Select(`
+			C.customer_id AS customer_id,
+			C.customer_code AS customer_code,
+			C.customer_name AS customer_name,
+			CA.client_type_description AS client_type_description,
+			A.address_street_1 AS address_1,
+			A.address_street_2 AS address_2,
+			A.address_street_3 AS address_3,
+			C.id_phone_no AS id_phone_no
+		`).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_client_type CA ON C.client_type_id = CA.client_type_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_address AS A ON C.id_address_id = A.address_id").
+		Where(filterQuery, filterValues...).
+		Where("C.customer_id = ?", customerId)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total customers",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&customerMasters).Error
+
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get customer data",
+			Err:        err,
+		}
+	}
+
+	return customerMasters, totalPages, int(totalRows), nil
+}
+
+func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByCode(tx *gorm.DB, customerCode string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		customerMasters []map[string]interface{}
+		totalRows       int64
+		totalPages      int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	for _, filter := range filters {
+		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+		filterValues = append(filterValues, filter.ColumnValue)
+	}
+	filterQuery := strings.Join(filterStrings, " AND ")
+
+	query := tx.Table("dms_microservices_general_dev.dbo.mtr_customer C").
+		Select(`
+			C.customer_id,
+			C.customer_code,
+			C.customer_name,
+			CA.client_type_description,
+			A.address_street_1 AS address_1,
+			A.address_street_2 AS address_2,
+			A.address_street_3 AS address_3,
+			C.id_phone_no
+		`).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_client_type CA ON C.client_type_id = CA.client_type_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_address AS A ON C.id_address_id = A.address_id").
+		Where(filterQuery, filterValues...).
+		Where("C.customer_code = ?", customerCode)
+
+	if err := query.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total customers",
+			Err:        err,
+		}
+	}
+
+	if totalRows > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	if err := query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&customerMasters).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get customer data",
+			Err:        err,
+		}
+	}
+
+	return customerMasters, totalPages, int(totalRows), nil
 }

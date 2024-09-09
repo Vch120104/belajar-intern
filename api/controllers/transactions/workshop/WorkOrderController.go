@@ -74,16 +74,15 @@ type WorkOrderController interface {
 	GetBookingById(writer http.ResponseWriter, request *http.Request)
 	NewBooking(writer http.ResponseWriter, request *http.Request)
 	SaveBooking(writer http.ResponseWriter, request *http.Request)
-	SubmitBooking(writer http.ResponseWriter, request *http.Request)
-	VoidBooking(writer http.ResponseWriter, request *http.Request)
-	CloseBooking(writer http.ResponseWriter, request *http.Request)
 
 	GetAllAffiliated(writer http.ResponseWriter, request *http.Request)
 	GetAffiliatedById(writer http.ResponseWriter, request *http.Request)
 	NewAffiliated(writer http.ResponseWriter, request *http.Request)
 	SaveAffiliated(writer http.ResponseWriter, request *http.Request)
-	VoidAffiliated(writer http.ResponseWriter, request *http.Request)
-	CloseAffiliated(writer http.ResponseWriter, request *http.Request)
+
+	ChangeBillTo(writer http.ResponseWriter, request *http.Request)
+	ChangePhoneNo(writer http.ResponseWriter, request *http.Request)
+	ConfirmPrice(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrderService) WorkOrderController {
@@ -1645,110 +1644,6 @@ func (r *WorkOrderControllerImpl) NewBooking(writer http.ResponseWriter, request
 
 }
 
-// SubmitBooking submits a work order booking
-// @Summary Submit Work Order Booking
-// @Description Submit a work order booking
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Booking
-// @Param work_order_system_number path string true "Work Order ID"
-// Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/booking/submit/{work_order_system_number} [post]
-func (r *WorkOrderControllerImpl) SubmitBooking(writer http.ResponseWriter, request *http.Request) {
-	workOrderId := chi.URLParam(request, "work_order_system_number")
-	workOrderIdInt, err := strconv.Atoi(workOrderId)
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
-		return
-	}
-
-	// Submit work order
-	success, newDocumentNumber, baseErr := r.WorkOrderService.SubmitBooking(workOrderIdInt)
-	if baseErr != nil {
-		if baseErr.Message == "Document number has already been generated" {
-			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
-		} else if baseErr.Message == "No work order data found" {
-			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
-		} else {
-			exceptions.NewAppException(writer, request, baseErr)
-		}
-		return
-	}
-
-	// Handle success and failure responses
-	if success {
-		responseData := transactionworkshoppayloads.SubmitWorkOrderResponse{
-			DocumentNumber:        newDocumentNumber,
-			WorkOrderSystemNumber: workOrderIdInt,
-		}
-		payloads.NewHandleSuccess(writer, responseData, "Work order submitted successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Failed to submit work order", http.StatusInternalServerError)
-	}
-}
-
-// Void WorkOrderBooking deletes a work order booking
-// @Summary Void Work Order Booking
-// @Description Void a work order booking
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Booking
-// @Param work_order_system_number path string true "Work Order ID"
-// @Param booking_system_number path string true "Work Order Booking ID"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/booking/void/{work_order_system_number}/{booking_system_number} [delete]
-func (r *WorkOrderControllerImpl) VoidBooking(writer http.ResponseWriter, request *http.Request) {
-	// Void a work order booking
-	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
-	bookingId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
-
-	result, err := r.WorkOrderService.VoidBooking(workOrderId, bookingId)
-	if err != nil {
-		exceptions.NewAppException(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccess(writer, result, "Work order voided successfully", http.StatusOK)
-}
-
-// CloseWorkOrderBooking closes a work order booking
-// @Summary Close Work Order Booking
-// @Description Close a work order booking
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Booking
-// @Param work_order_system_number path string true "Work Order ID"
-// @Param booking_system_number path string true "Work Order Booking ID"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/booking/close/{work_order_system_number}/{booking_system_number} [patch]
-func (r *WorkOrderControllerImpl) CloseBooking(writer http.ResponseWriter, request *http.Request) {
-	// Close a work order booking
-	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
-	bookingId, _ := strconv.Atoi(chi.URLParam(request, "booking_system_number"))
-
-	close, baseErr := r.WorkOrderService.CloseBooking(workOrderId, bookingId)
-	if baseErr != nil {
-		if baseErr.StatusCode == http.StatusNotFound {
-			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
-		} else if baseErr.Message == "Work order cannot be closed because status is draft" {
-			payloads.NewHandleError(writer, baseErr.Message, http.StatusConflict)
-		} else {
-			exceptions.NewAppException(writer, request, baseErr)
-		}
-		return
-	}
-
-	if close {
-		payloads.NewHandleSuccess(writer, close, "Work order closed successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Failed to close work order", http.StatusInternalServerError)
-	}
-
-}
-
 // GetAllAffiliated gets all affiliated work orders
 // @Summary Get All Affiliated Work Orders
 // @Description Retrieve all affiliated work orders
@@ -1881,58 +1776,6 @@ func (r *WorkOrderControllerImpl) SaveAffiliated(writer http.ResponseWriter, req
 	payloads.NewHandleSuccess(writer, result, "Work order updated successfully", http.StatusOK)
 }
 
-// Void Affiliated Work Order deletes an affiliated work order
-// @Summary Void Affiliated Work Order
-// @Description Void an affiliated work order
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
-// @Param work_order_system_number path string true "Work Order ID"
-// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
-// @Param reqBody body transactionworkshoppayloads.WorkOrderAffiliatedRequest true "Work Order Data"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/affiliated/void/{work_order_system_number}/{affiliated_work_order_system_number} [delete]
-func (r *WorkOrderControllerImpl) VoidAffiliated(writer http.ResponseWriter, request *http.Request) {
-	// Void an affiliated work order
-	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
-	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
-
-	result, err := r.WorkOrderService.VoidAffiliated(workOrderId, affiliatedWorkOrderId)
-	if err != nil {
-		exceptions.NewAppException(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccess(writer, result, "Work order voided successfully", http.StatusOK)
-}
-
-// CloseAffiliated closes an affiliated work order
-// @Summary Close Affiliated Work Order
-// @Description Close an affiliated work order
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Affiliated
-// @Param work_order_system_number path string true "Work Order ID"
-// @Param affiliated_work_order_system_number path string true "Affiliated Work Order ID"
-// @Param reqBody body transactionworkshoppayloads.WorkOrderAffiliatedRequest true "Work Order Data"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/affiliated/{work_order_system_number}/close/{affiliated_work_order_system_number} [patch]
-func (r *WorkOrderControllerImpl) CloseAffiliated(writer http.ResponseWriter, request *http.Request) {
-	// Close an affiliated work order
-	workOrderId, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
-	affiliatedWorkOrderId, _ := strconv.Atoi(chi.URLParam(request, "affiliated_work_order_system_number"))
-
-	result, err := r.WorkOrderService.CloseAffiliated(workOrderId, affiliatedWorkOrderId)
-	if err != nil {
-		exceptions.NewAppException(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccess(writer, result, "Work order closed successfully", http.StatusOK)
-}
-
 // GenerateWorkOrderDocumentNumber generates a new work order document number
 // @Summary Generate Work Order Document Number
 // @Description Generate a new work order document number
@@ -1955,4 +1798,114 @@ func (r *WorkOrderControllerImpl) GenerateDocumentNumber(writer http.ResponseWri
 
 	payloads.NewHandleSuccess(writer, result, "Document number generated successfully", http.StatusOK)
 
+}
+
+// ChangeBillTo changes the bill to of a work order
+// @Summary Change Bill To
+// @Description Change the bill to of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.ChangeBillToRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/change-bill-to/{work_order_system_number} [put]
+func (r *WorkOrderControllerImpl) ChangeBillTo(writer http.ResponseWriter, request *http.Request) {
+	// Change the bill to of a work order
+	workOrderIdStr := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(workOrderIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	var workOrderRequest transactionworkshoppayloads.ChangeBillToRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	result, baseErr := r.WorkOrderService.ChangeBillTo(workOrderId, workOrderRequest)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Bill to changed successfully", http.StatusOK)
+}
+
+// ChangePhoneNo changes the phone number of a work order
+// @Summary Change Phone Number
+// @Description Change the phone number of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.ChangePhoneNoRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/change-phone-no/{work_order_system_number} [put]
+func (r *WorkOrderControllerImpl) ChangePhoneNo(writer http.ResponseWriter, request *http.Request) {
+	workOrderIdStr := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(workOrderIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	var workOrderRequest transactionworkshoppayloads.ChangePhoneNoRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	result, baseErr := r.WorkOrderService.ChangePhoneNo(workOrderId, workOrderRequest)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Phone number changed successfully", http.StatusOK)
+}
+
+// ConfirmPriceList confirms the price list of a work order
+// @Summary Confirm Price List
+// @Description Confirm the price list of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.ConfirmPriceListRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/confirm-price/{work_order_system_number}/{multi_id} [put]
+func (r *WorkOrderControllerImpl) ConfirmPrice(writer http.ResponseWriter, request *http.Request) {
+	workOrderIdStr := chi.URLParam(request, "work_order_system_number")
+	workOrderId, err := strconv.Atoi(workOrderIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	result, baseErr := r.WorkOrderService.ConfirmPrice(workOrderId, intIds)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Price list confirmed successfully", http.StatusOK)
 }

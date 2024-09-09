@@ -907,6 +907,16 @@ type SubmitWorkOrderResponse struct {
 	WorkOrderSystemNumber int    `json:"work_order_system_number"`
 }
 
+type ChangeBillToRequest struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	BillToCustomerId      int `json:"billable_to_id"`
+}
+
+type ChangePhoneNoRequest struct {
+	WorkOrderSystemNumber int    `json:"work_order_system_number"`
+	PhoneNo               string `json:"contact_person_phone"`
+}
+
 type BrandDocResponse struct {
 	BrandId           int    `json:"brand_id"`
 	BrandCode         string `json:"brand_code"`

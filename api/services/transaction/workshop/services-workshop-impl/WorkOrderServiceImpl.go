@@ -684,41 +684,6 @@ func (s *WorkOrderServiceImpl) SaveBooking(workOrderId int, id int, request tran
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) SubmitBooking(id int) (bool, string, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	submitbooking, newDocumentNumber, err := s.structWorkOrderRepo.SubmitBooking(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-
-	if err != nil {
-		return false, "", err
-	}
-	return submitbooking, newDocumentNumber, nil
-}
-
-func (s *WorkOrderServiceImpl) VoidBooking(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	delete, err := s.structWorkOrderRepo.VoidBooking(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) CloseBooking(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	close, err := s.structWorkOrderRepo.CloseBooking(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return close, nil
-}
-
 func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
@@ -812,30 +777,6 @@ func (s *WorkOrderServiceImpl) SaveAffiliated(workOrderId int, id int, request t
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) VoidAffiliated(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	delete, err := s.structWorkOrderRepo.VoidAffiliated(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) CloseAffiliated(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	close, err := s.structWorkOrderRepo.CloseAffiliated(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-
-	return close, nil
-}
-
 func (s *WorkOrderServiceImpl) DeleteRequestMultiId(workOrderId int, id []int) (bool, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
@@ -873,4 +814,39 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrderMultiId(workOrderId int, id 
 	}
 
 	return deletemultiid, nil
+}
+
+func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	change, err := s.structWorkOrderRepo.ChangeBillTo(tx, workOrderId, request)
+	if err != nil {
+		return false, err
+	}
+
+	return change, nil
+}
+
+func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	change, err := s.structWorkOrderRepo.ChangePhoneNo(tx, workOrderId, request)
+	if err != nil {
+		return false, err
+	}
+
+	return change, nil
+}
+
+func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	confirm, err := s.structWorkOrderRepo.ConfirmPrice(tx, workOrderId, idwos)
+	if err != nil {
+		return false, err
+	}
+
+	return confirm, nil
 }
