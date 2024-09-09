@@ -884,6 +884,7 @@ func ShiftScheduleRouter(
 	router.Get("/by-id/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
 	router.Patch("/{shift_schedule_id}", ShiftScheduleController.ChangeStatusShiftSchedule)
 	router.Get("/drop-down", ShiftScheduleController.GetShiftScheduleDropdown)
+	router.Put("/{shift_schedule_id}", ShiftScheduleController.UpdateShiftSchedule)
 
 	return router
 }

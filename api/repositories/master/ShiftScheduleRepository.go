@@ -1,6 +1,7 @@
 package masterrepository
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
@@ -17,4 +18,5 @@ type ShiftScheduleRepository interface {
 	// GetShiftScheduleByCode(*gorm.DB, string) (masterpayloads.ShiftScheduleResponse, error)
 	// GetAllShiftScheduleIsActive(*gorm.DB) ([]masterpayloads.ShiftScheduleResponse, error)
 	GetShiftScheduleDropDown(tx *gorm.DB) ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse)
+	UpdateShiftSchedule(tx *gorm.DB, Id int, request masterpayloads.ShiftScheduleUpdate) (masterentities.ShiftSchedule, *exceptions.BaseErrorResponse)
 }
