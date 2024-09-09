@@ -2079,3 +2079,7 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	}
 	return true, nil
 }
+func (repo *PurchaseOrderRepositoryImpl) CloseOrderPurchaseOrder(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderCloseOrderPayloads) (bool, *exceptions.BaseErrorResponse) {
+	//TODO implement me
+	panic("implement me")
+}
