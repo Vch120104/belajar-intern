@@ -143,7 +143,9 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 
 	if req.LineTypeId != 5 {//not operation line type id
 		err := tx.Model(&itemprice).Select("mtr_price_list.price_list_amount").
-			Where("item_id=?", req.OperationItemId).
+		Joins("JOIN mtr_item on mtr_item.item_id==mtr_price_list.item_id").
+		Joins("Join mtr_item_operation on mtr_item.item_id==mtr_item_operation.item_id").
+			Where("item_operation_id=?", req.OperationItemId).
 			Scan(&lastprice).Error
 		if err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -734,7 +736,9 @@ func (r *CampaignMasterRepositoryImpl) SelectFromPackageMaster(tx *gorm.DB, id i
 				}
 			}
 			err := tx.Model(&itemprice).Select("mtr_price_list.price_list_amount").
-				Where("item_id=?", itempayloads.ItemOperationId).
+				Joins("join mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+				Joins("join mtr_item_operation on mtr_item_operation.item_id=mtr_item.item_id").
+				Where("item_operation_id=?", itempayloads.ItemOperationId).
 				Scan(&lastprice).Error
 			if err != nil {
 				return 0, &exceptions.BaseErrorResponse{
