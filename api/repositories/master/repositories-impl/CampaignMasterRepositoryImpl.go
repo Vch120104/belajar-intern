@@ -141,7 +141,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 		}
 	}
 
-	if req.LineTypeId != 5 {
+	if req.LineTypeId != 5 {//not operation line type id
 		err := tx.Model(&itemprice).Select("mtr_price_list.price_list_amount").
 			Where("item_id=?", req.OperationItemId).
 			Scan(&lastprice).Error
@@ -155,25 +155,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			lastprice = new(float64)
 			*lastprice = 0.0
 		}
-		entities := &masterentities.CampaignMasterDetail{
-			CampaignId:      req.CampaignId,
-			LineTypeId:      req.LineTypeId,
-			Quantity:        req.Quantity,
-			ItemOperationId: req.OperationItemId,
-			ShareBillTo:     req.ShareBillTo,
-			DiscountPercent: req.DiscountPercent,
-			SharePercent:    req.SharePercent,
-			Price:           *lastprice,
-		}
-		err2 := tx.Save(&entities).Error
-
-		if err2 != nil {
-			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err2,
-			}
-		}
-		return entities.CampaignDetailId, nil
+		
 	} else {
 		err1 := tx.Model(&entity).Where("campaign_id = ?", req.CampaignId).Scan(&entity).Error
 		if err1 != nil {
@@ -200,7 +182,8 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			lastprice = new(float64)
 			*lastprice = 0.0
 		}
-		entities2 := &masterentities.CampaignMasterDetail{
+	}
+	entities := &masterentities.CampaignMasterDetail{
 			CampaignId:      req.CampaignId,
 			LineTypeId:      req.LineTypeId,
 			Quantity:        req.Quantity,
@@ -210,15 +193,15 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 			SharePercent:    req.SharePercent,
 			Price:           *lastprice,
 		}
-		err2 := tx.Save(&entities2).Error
+		err2 := tx.Save(&entities).Error
+
 		if err2 != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err2,
 			}
 		}
-		return entities2.CampaignDetailId, nil
-	}
+		return entities.CampaignDetailId, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
