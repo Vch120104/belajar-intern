@@ -91,8 +91,8 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
         mtr_warehouse_group.warehouse_group_code,
 		mtr_warehouse_master.warehouse_code,
 		mtr_warehouse_master.warehouse_name`).
-		Joins("LEFT OUTER JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
-		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
+		Joins(" JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
+		Joins(" JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
 		Where(masterwarehouseentities.WarehouseLocation{WarehouseLocationId: warehouseLocationId}).
 		First(&warehouseLocationResponse).Error
 
@@ -125,8 +125,8 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
         mtr_warehouse_group.warehouse_group_code,
 		mtr_warehouse_master.warehouse_code,
 		mtr_warehouse_master.warehouse_name`).
-		Joins("LEFT OUTER JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
-		Joins("LEFT OUTER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id")
+		Joins("JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
+		Joins("JOIN mtr_warehouse_master ON mtr_warehouse_location.warehouse_id  = mtr_warehouse_master.warehouse_id")
 
 	filterQuery := utils.ApplyFilter(query, filter)
 

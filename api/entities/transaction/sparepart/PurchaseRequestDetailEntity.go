@@ -9,7 +9,8 @@ type PurchaseRequestDetail struct {
 	PurchaseRequestSystemNumber       int        `gorm:"column:purchase_request_system_number;size:30" json:"purchase_request_system_number"`
 	PurchaseRequestLineNumber         int        `gorm:"column:purchase_request_line_number;size:30" json:"purchase_request_line_number"`
 	PurchaseRequestLineStatus         string     `gorm:"column:purchase_request_line_status;size:2;" json:"purchase_request_line_status"`
-	ItemCode                          string     `gorm:"column:item_code;size:30;" json:"item_id"`
+	ItemCode                          string     `gorm:"column:item_code;size:30;" json:"item_code"`
+	ItemId                            int        `gorm:"column:item_id;size:30;" json:"item_id"`
 	ItemQuantity                      *float64   `gorm:"column:item_quantity;" json:"item_quantity"`
 	ItemUnitOfMeasure                 string     `gorm:"column:item_unit_of_measure;size:5;" json:"item_unit_of_measures"`
 	ItemPrice                         *float64   `gorm:"column:item_price;" json:"item_price"`
