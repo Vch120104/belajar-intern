@@ -132,10 +132,10 @@ func (p *PurchaseRequestServiceImpl) VoidPurchaseRequest(id int) (bool, *excepti
 	}
 	return res, nil
 }
-func (p *PurchaseRequestServiceImpl) InsertPurchaseRequestUpdateHeader(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
+func (p *PurchaseRequestServiceImpl) SubmitPurchaseRequest(request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	tx := p.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	res, err := p.PurchaseRequestRepo.InsertPurchaseRequestHeader(tx, request, id)
+	res, err := p.PurchaseRequestRepo.SubmitPurchaseRequest(tx, request, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return res, err

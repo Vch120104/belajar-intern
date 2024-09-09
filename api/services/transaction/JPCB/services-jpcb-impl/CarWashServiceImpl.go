@@ -72,7 +72,6 @@ func (s *CarWashServiceImpl) DeleteCarWash(workOrderSystemNumber int) (bool, *ex
 	return result, nil
 }
 
-// PostCarWash implements transactionjpcbservice.CarWashService.
 func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
@@ -80,6 +79,61 @@ func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transaction
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionjpcbpayloads.CarWashPostResponse{}, err
+	}
+	return result, nil
+}
+
+func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	results, err := s.CarWashRepository.GetAllCarWashScreen(tx, companyId)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (s *CarWashServiceImpl) UpdateBayNumberCarWashScreen(bayNumber, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.UpdateBayNumberCarWashScreen(tx, bayNumber, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
+	}
+	return result, nil
+}
+
+func (s *CarWashServiceImpl) StartCarWash(workOrderSystemNumber int, carWashBayId int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.StartCarWash(tx, workOrderSystemNumber, carWashBayId)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
+	}
+	return result, nil
+}
+
+func (s *CarWashServiceImpl) StopCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.StopCarWash(tx, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
+	}
+	return result, nil
+}
+
+func (s *CarWashServiceImpl) CancelCarWash(workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	result, err := s.CarWashRepository.CancelCarWash(tx, workOrderSystemNumber)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, err
 	}
 	return result, nil
 }

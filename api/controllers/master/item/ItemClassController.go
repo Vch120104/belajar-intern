@@ -108,13 +108,16 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 // @Router /v1/item-class/pop-up [get]
 func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
-	queryParams := map[string]string{
+	internalFilter := map[string]string{
 		"mtr_item_class.is_active":       queryValues.Get("is_active"),
 		"mtr_item_class.item_class_id":   queryValues.Get("item_class_id"),
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item_class.item_class_name": queryValues.Get("item_class_name"),
-		"item_group_name":                queryValues.Get("item_group_name"),
-		"line_type_code":                 queryValues.Get("line_type_code"),
+	}
+
+	externalFilter := map[string]string{
+		"item_group_name": queryValues.Get("item_group_name"),
+		"line_type_code":  queryValues.Get("line_type_code"),
 	}
 
 	pagination := pagination.Pagination{
@@ -124,15 +127,16 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	criteria := utils.BuildFilterCondition(queryParams)
+	internal := utils.BuildFilterCondition(internalFilter)
+	external := utils.BuildFilterCondition(externalFilter)
 
-	result, totalPages, totalRows, err := r.ItemClassService.GetAllItemClass(criteria, pagination)
+	result, err := r.ItemClassService.GetAllItemClass(internal, external, pagination)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result.Rows), "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, result.TotalRows, result.TotalPages)
 
 }
 
