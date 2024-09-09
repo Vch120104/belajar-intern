@@ -26,6 +26,7 @@ type ShiftScheduleController interface {
 	ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	GetShiftScheduleById(writer http.ResponseWriter, request *http.Request)
 	GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request)
+	UpdateShiftSchedule(writer http.ResponseWriter, request *http.Request)
 }
 type ShiftScheduleControllerImpl struct {
 	ShiftScheduleService masterservice.ShiftScheduleService
@@ -165,6 +166,25 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 	}
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *ShiftScheduleControllerImpl) UpdateShiftSchedule(writer http.ResponseWriter, request *http.Request) {
+	ShiftScheduleIds, errA := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var formRequest masterpayloads.ShiftScheduleUpdate
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	entity, err := r.ShiftScheduleService.UpdateShiftSchedule(ShiftScheduleIds, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Status Shift Schedule

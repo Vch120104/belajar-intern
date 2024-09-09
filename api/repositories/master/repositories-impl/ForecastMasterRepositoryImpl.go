@@ -195,7 +195,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		return dataPaginate, totalPages, totalRows, nil
 	}
 
-	supplierURL := config.EnvConfigs.GeneralServiceUrl + "/supplier-master?page=0&limit=10000"
+	supplierURL := config.EnvConfigs.GeneralServiceUrl + "/supplier?page=0&limit=10000"
 	if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
