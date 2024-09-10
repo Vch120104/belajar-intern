@@ -9,8 +9,11 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 
 	"gorm.io/gorm"
 )
@@ -46,15 +49,67 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 	}
 
-	//// Brand
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand-dropdown"
+	var wg sync.WaitGroup
 
-	if errBrand := utils.Get(brandUrl, &brandResponses, nil); errBrand != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+	//// Brand
+	wg.Add(1)
+	go func() *exceptions.BaseErrorResponse {
+
+		defer wg.Done()
+
+		brandUrl := config.EnvConfigs.SalesServiceUrl + "/unit-brand-dropdown"
+
+		if errBrand := utils.Get(brandUrl, &brandResponses, nil); errBrand != nil {
+			return &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New(""),
+			}
 		}
-	}
+		return nil
+	}()
+
+	//// Unit Model
+	wg.Add(1)
+	go func() *exceptions.BaseErrorResponse {
+
+		defer wg.Done()
+
+		unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model-dropdown"
+
+		if errModel := utils.Get(unitModelUrl, &modelResponses, nil); errModel != nil {
+			return &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New(""),
+			}
+		}
+		return nil
+	}()
+
+	//// Unit Variant
+	wg.Add(1)
+	go func() *exceptions.BaseErrorResponse {
+
+		defer wg.Done()
+
+		ids := ""
+
+		for _, value := range responses {
+			ids += fmt.Sprintf("%d,", value.VariantId)
+		}
+
+		unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant-multi-id/" + ids
+
+		if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
+			return &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New(""),
+			}
+		}
+		return nil
+	}()
+
+	//AWAIT Goroutines
+	wg.Wait()
 
 	joinedDataBrand, errdf := utils.DataFrameInnerJoin(responses, brandResponses, "BrandId")
 
@@ -65,32 +120,12 @@ func (r *ItemModelMappingRepositoryImpl) GetItemModelMappingByItemId(tx *gorm.DB
 		}
 	}
 
-	//// Unit Model
-	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "/unit-model-dropdown"
-
-	if errModel := utils.Get(unitModelUrl, &modelResponses, nil); errModel != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
-	}
-
 	joinedDataModel, errdf := utils.DataFrameInnerJoin(joinedDataBrand, modelResponses, "ModelId")
 
 	if errdf != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errdf,
-		}
-	}
-
-	//// Unit Variant
-	unitVariantUrl := config.EnvConfigs.SalesServiceUrl + "/unit-variant?page=0&limit=10000"
-
-	if errVariant := utils.Get(unitVariantUrl, &variantResponses, nil); errVariant != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
 		}
 	}
 
@@ -133,6 +168,43 @@ func (r *ItemModelMappingRepositoryImpl) UpdateItemModelMapping(tx *gorm.DB, req
 
 // CreateItemModelMapping implements masteritemrepository.ItemModelMappingRepository.
 func (r *ItemModelMappingRepositoryImpl) CreateItemModelMapping(tx *gorm.DB, req masteritempayloads.CreateItemModelMapping) (bool, *exceptions.BaseErrorResponse) {
+
+	//Check brandID
+	var brandResponses masteritempayloads.UnitBrandResponses
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(req.BrandId)
+
+	if errBrandUrl := utils.Get(brandUrl, &brandResponses, nil); errBrandUrl != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("brand not found"),
+		}
+	}
+	//
+
+	//check unit model
+	var unitmodelresponses masteritempayloads.UnitModelResponses
+
+	unitmodelurl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(req.ModelId)
+
+	if errunitmodelurl := utils.Get(unitmodelurl, &unitmodelresponses, nil); errunitmodelurl != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("unit model not found"),
+		}
+	}
+
+	//check variant
+	var variantResponses masteritempayloads.UnitVariantResponses
+
+	variantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(req.VariantId)
+
+	if errvarianturl := utils.Get(variantUrl, &variantResponses, nil); errvarianturl != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("variant not found"),
+		}
+	}
+
 	entities := masteritementities.ItemDetail{
 		IsActive:     req.IsActive,
 		ItemId:       req.ItemId,

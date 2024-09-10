@@ -2,6 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
@@ -63,7 +64,7 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-		//&masterentities.ItemOperation{},
+		// &masterentities.ItemOperation{},
 		// &masteroperationentities.OperationModelMapping{},
 		//&masteroperationentities.OperationLevel{},
 		//&masteroperationentities.OperationFrt{},
@@ -99,34 +100,35 @@ func Migrate() {
 		//&masteritementities.ItemLocationSource{},
 		// &masteritementities.Item{},
 
-		//&masteritementities.ItemLocation{},
-		//&masteritementities.ItemLocationDetail{},
-		//&masteritementities.ItemClass{},
-		//&masteritementities.Bom{},
-		//&masteritementities.BomDetail{},
-		//&masteritementities.Discount{},
-		//&masteritementities.DiscountPercent{},
-		//
-		//&masterentities.ForecastMaster{},
-		//&masterentities.MovingCode{},
-		//&masterentities.IncentiveGroup{},
-		//&masterentities.PackageMaster{},
-		//&masterentities.ShiftSchedule{},
-		//&masterentities.IncentiveMaster{},
-		//&masterentities.IncentiveGroupDetail{},
-		//&masterentities.SkillLevel{},
-		//&masterentities.WarrantyFreeService{},
-		//&masterentities.DeductionList{},
-		//&masterentities.DeductionDetail{},
-		//&masterentities.FieldAction{},
-		//&masterentities.FieldActionEligibleVehicleItem{},
-		//&masterentities.FieldActionEligibleVehicleOperation{},
-		//&masterentities.FieldActionEligibleVehicle{},
-		//&masteritementities.DiscountPercent{},
-		//&masterentities.Agreement{},
-		//&masterentities.AgreementDiscount{},
-		//&masterentities.AgreementDiscountGroupDetail{},
-		//&masterentities.AgreementItemDetail{},
+    //&masteritementities.ItemLocation{},
+    //&masteritementities.ItemLocationDetail{},
+    //&masteritementities.ItemClass{},
+    //&masteritementities.Bom{},
+    //&masteritementities.BomDetail{},
+    //&masteritementities.Discount{},
+    //&masteritementities.DiscountPercent{},
+    //
+    //&masterentities.ForecastMaster{},
+    //&masterentities.MovingCode{},
+    //&masterentities.IncentiveGroup{},
+    //&masterentities.PackageMaster{},
+    //&masterentities.ShiftSchedule{},
+    //&masterentities.IncentiveMaster{},
+    //&masterentities.IncentiveGroupDetail{},
+    //&masterentities.SkillLevel{},
+    //&masterentities.WarrantyFreeService{},
+    //&masterentities.DeductionList{},
+    //&masterentities.DeductionDetail{},
+    //&masterentities.FieldAction{},
+    //&masterentities.FieldActionEligibleVehicleItem{},
+    //&masterentities.FieldActionEligibleVehicleOperation{},
+    //&masterentities.FieldActionEligibleVehicle{},
+    //&masteritementities.DiscountPercent{},
+    //&masterentities.Agreement{},
+    //&masterentities.AgreementDiscount{},
+    //&masterentities.AgreementDiscountGroupDetail{},
+    //&masterentities.AgreementItemDetail{},
+
 
 		//
 		//&masterentities.FieldAction{},

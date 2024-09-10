@@ -22,6 +22,11 @@ type CarWashController interface {
 	GetAllCarWashPriorityDropDown(writer http.ResponseWriter, request *http.Request)
 	DeleteCarWash(writer http.ResponseWriter, request *http.Request)
 	PostCarWash(writer http.ResponseWriter, request *http.Request)
+	CarWashScreen(writer http.ResponseWriter, request *http.Request)
+	UpdateBayNumberCarWashScreenn(writer http.ResponseWriter, request *http.Request)
+	StartCarWash(writer http.ResponseWriter, request *http.Request)
+	StopCarWash(writer http.ResponseWriter, request *http.Request)
+	CancelCarWash(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -55,7 +60,6 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 		SortOf: chi.URLParam(request, "sort_of"),
 		SortBy: chi.URLParam(request, "sort_by"),
 	}
-	print(queryParams)
 
 	criteria := utils.BuildFilterCondition(queryParams)
 	paginatedData, totalPages, totalRows, err := r.CarWashService.GetAll(criteria, paginate)
@@ -129,4 +133,113 @@ func (r *CarWashControllerImpl) PostCarWash(writer http.ResponseWriter, request 
 	}
 
 	payloads.NewHandleSuccess(writer, insert, "Data created successfully", http.StatusOK)
+}
+
+func (r *CarWashControllerImpl) CarWashScreen(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	companyId, strConvError := strconv.Atoi(queryValues.Get("company_id"))
+	if strConvError != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        strConvError,
+		})
+	}
+
+	data, err := r.CarWashService.GetAllCarWashScreen(companyId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, data, "Successfully get data", http.StatusOK)
+}
+
+func (r *CarWashControllerImpl) UpdateBayNumberCarWashScreenn(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	data, err := r.CarWashService.UpdateBayNumberCarWashScreen(formRequest.CarWashBayId, formRequest.WorkOrderSystemNumber)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, data, "Successfully update data", http.StatusOK)
+}
+
+func (r *CarWashControllerImpl) StartCarWash(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.CarWashScreenUpdateBayNumberRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	data, err := r.CarWashService.StartCarWash(formRequest.WorkOrderSystemNumber, formRequest.CarWashBayId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
+}
+
+// StopCarWash implements CarWashController.
+func (r *CarWashControllerImpl) StopCarWash(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.StopCarWashScreenRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	data, err := r.CarWashService.StopCarWash(formRequest.WorkOrderSystemNumber)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
+}
+
+// CancelCarWash implements CarWashController.
+func (r *CarWashControllerImpl) CancelCarWash(writer http.ResponseWriter, request *http.Request) {
+	var formRequest transactionjpcbpayloads.StopCarWashScreenRequest
+
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	data, err := r.CarWashService.CancelCarWash(formRequest.WorkOrderSystemNumber)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
 }

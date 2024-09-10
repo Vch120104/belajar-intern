@@ -370,7 +370,7 @@ func RemoveDuplicates(input []string) []string {
 	return result
 }
 
-func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]any, int, int, *exceptions.BaseErrorResponse) {
 	var payloads []masteritempayloads.PriceListGetAllResponse
 	var brandpayloads []masterpayloads.BrandResponse
 	var itemgrouppayloads []masteritempayloads.ItemGroupResponse
