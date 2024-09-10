@@ -87,24 +87,11 @@ func (*BayMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterConditio
 func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []map[string]interface{}
 
-	mainTable := "trx_car_wash"
-	mainAlias := "carwash"
-
-	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: "carwash.car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
-	}
-
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
-
 	keyAttributes := []string{
-		"carwash.car_wash_id",
-		"bay.car_wash_bay_id",
-		"bay.car_wash_bay_description",
-		"carwash.car_wash_status_id",
-		"carwash.work_order_system_number",
+		"car_wash_bay_id",
+		"car_wash_bay_description",
+		"order_number",
 	}
-
-	joinQuery = joinQuery.Select(keyAttributes)
 
 	var companyIdFilter int
 	for _, condition := range filterCondition {
@@ -117,7 +104,7 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 		}
 	}
 
-	rows, err := joinQuery.Where("carwash.company_id = ? AND bay.is_active = 1", companyIdFilter).Rows()
+	rows, err := tx.Model(&transactionjpcbentities.BayMaster{}).Select(keyAttributes).Where("company_id = ? AND is_active = 1", companyIdFilter).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -128,13 +115,11 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 	defer rows.Close()
 
 	for rows.Next() {
-		var carWashId int
 		var carWashBayId int
 		var carWashBayDescription string
-		var carWashStatusId string
-		var WorkOrderSystemNumber int
+		var orderNumber int
 
-		err := rows.Scan(&carWashId, &carWashBayId, &carWashBayDescription, &carWashStatusId, &WorkOrderSystemNumber)
+		err := rows.Scan(&carWashBayId, &carWashBayDescription, &orderNumber)
 
 		if err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -144,11 +129,9 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 		}
 
 		responseMap := map[string]interface{}{
-			"car_wash_id":              carWashId,
 			"car_wash_bay_id":          carWashBayId,
 			"car_wash_bay_description": carWashBayDescription,
-			"car_wash_bay_status_id":   carWashStatusId,
-			"work_order_system_number": WorkOrderSystemNumber,
+			"order_number":             orderNumber,
 		}
 		responses = append(responses, responseMap)
 	}
@@ -160,21 +143,11 @@ func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCo
 func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var responses []map[string]interface{}
 
-	mainTable := "trx_car_wash"
-	mainAlias := "carwash"
-
-	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: "carwash.car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
-	}
-
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
-
 	keyAttributes := []string{
-		"carwash.car_wash_id",
-		"bay.car_wash_bay_id",
+		"car_wash_bay_id",
+		"car_wash_bay_description",
+		"order_number",
 	}
-
-	joinQuery = joinQuery.Select(keyAttributes)
 
 	var companyIdFilter int
 	for _, condition := range filterCondition {
@@ -187,7 +160,7 @@ func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.Filter
 		}
 	}
 
-	rows, err := joinQuery.Where("carwash.company_id = ? AND work_order_system_number = 0", companyIdFilter).Rows()
+	rows, err := tx.Model(&transactionjpcbentities.BayMaster{}).Select(keyAttributes).Where("company_id = ? AND order_number = 0", companyIdFilter).Rows()
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -289,7 +262,7 @@ func (r *BayMasterImpl) ChangeStatus(tx *gorm.DB, request transactionjpcbpayload
 	}
 
 	return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
-		StatusCode: http.StatusOK,
+		StatusCode: http.StatusBadRequest,
 		Err:        fmt.Errorf("already start"),
 	}
 
@@ -411,25 +384,15 @@ func resetAllOrderNumber(tx *gorm.DB, companyId int) *exceptions.BaseErrorRespon
 func (*BayMasterImpl) CarWashBayDropDown(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]transactionjpcbpayloads.CarWashBayDropDownResponse, *exceptions.BaseErrorResponse) {
 	var responses []transactionjpcbpayloads.CarWashBayDropDownResponse
 
-	mainTable := "trx_car_wash"
-	mainAlias := "carwash"
-	mainAliasBay := "bay"
-
-	joinTables := []utils.JoinTable{
-		{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
-	}
-
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
-
 	keyAttributes := []string{
-		mainAliasBay + ".car_wash_bay_id",
-		mainAliasBay + ".car_wash_bay_code",
-		mainAliasBay + ".car_wash_bay_description",
-		mainAliasBay + ".is_active",
+		"car_wash_bay_id",
+		"car_wash_bay_code",
+		"car_wash_bay_description",
+		"is_active",
 	}
 
-	joinQuery = joinQuery.Select(keyAttributes)
-	whereQuery := utils.ApplyFilter(joinQuery, filterCondition)
+	query := tx.Model(&transactionjpcbentities.BayMaster{}).Select(keyAttributes)
+	whereQuery := utils.ApplyFilter(query, filterCondition)
 
 	rows, err := whereQuery.Rows()
 	if err != nil {
