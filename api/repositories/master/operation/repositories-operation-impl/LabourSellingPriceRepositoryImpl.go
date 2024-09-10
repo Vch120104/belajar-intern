@@ -41,6 +41,9 @@ func (r *LabourSellingPriceRepositoryImpl) GetSellingPriceDetailById(tx *gorm.DB
 	}
 
 	response.LabourSellingPrice = entities.SellingPrice
+	response.IsActive = entities.IsActive
+	response.ModelId = entities.ModelId
+	response.VariantId = entities.VariantId
 
 	// join with mtr_unit_model
 

@@ -25,6 +25,8 @@ type ShiftScheduleController interface {
 	SaveShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusShiftSchedule(writer http.ResponseWriter, request *http.Request)
 	GetShiftScheduleById(writer http.ResponseWriter, request *http.Request)
+	GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request)
+	UpdateShiftSchedule(writer http.ResponseWriter, request *http.Request)
 }
 type ShiftScheduleControllerImpl struct {
 	ShiftScheduleService masterservice.ShiftScheduleService
@@ -166,6 +168,25 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+func (r *ShiftScheduleControllerImpl) UpdateShiftSchedule(writer http.ResponseWriter, request *http.Request) {
+	ShiftScheduleIds, errA := strconv.Atoi(chi.URLParam(request, "shift_schedule_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var formRequest masterpayloads.ShiftScheduleUpdate
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	entity, err := r.ShiftScheduleService.UpdateShiftSchedule(ShiftScheduleIds, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, entity, "Update Data Successfully!", http.StatusOK)
+}
+
 // @Summary Change Status Shift Schedule
 // @Description REST API Shift Schedule
 // @Accept json
@@ -190,4 +211,14 @@ func (r *ShiftScheduleControllerImpl) ChangeStatusShiftSchedule(writer http.Resp
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *ShiftScheduleControllerImpl) GetShiftScheduleDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.ShiftScheduleService.GetShiftScheduleDropDown()
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }

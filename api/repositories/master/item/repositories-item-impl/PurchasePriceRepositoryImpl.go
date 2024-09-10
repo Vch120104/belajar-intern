@@ -57,7 +57,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 
 		// Fetch Supplier data from external service
-		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(purchasePriceReq.SupplierId)
+		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(purchasePriceReq.SupplierId)
 		var getSupplierResponse masteritempayloads.PurchasePriceSupplierResponse
 		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -209,7 +209,7 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 	}
 
 	// Fetch Supplier data from external service
-	SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(entities.SupplierId)
+	SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(entities.SupplierId)
 	var getSupplierResponse masteritempayloads.PurchasePriceSupplierResponse
 	if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{

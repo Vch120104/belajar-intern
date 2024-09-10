@@ -1,6 +1,7 @@
 package masterserviceimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
@@ -101,6 +102,26 @@ func (s *ShiftScheduleServiceImpl) SaveShiftSchedule(req masterpayloads.ShiftSch
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
+	}
+	return results, nil
+}
+
+func (s *ShiftScheduleServiceImpl) GetShiftScheduleDropDown() ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.ShiftScheduleRepo.GetShiftScheduleDropDown(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func (s *ShiftScheduleServiceImpl) UpdateShiftSchedule(Id int, request masterpayloads.ShiftScheduleUpdate) (masterentities.ShiftSchedule, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.ShiftScheduleRepo.UpdateShiftSchedule(tx, Id, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return masterentities.ShiftSchedule{}, err
 	}
 	return results, nil
 }
