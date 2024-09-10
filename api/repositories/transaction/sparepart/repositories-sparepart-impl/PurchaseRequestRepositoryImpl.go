@@ -5,7 +5,7 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
-	masterpayloads "after-sales/api/payloads/master"
+	"after-sales/api/payloads/crossservice/financeservice"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -829,7 +829,7 @@ func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestDetail(db *gorm.DB,
 func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, conditions []utils.FilterCondition, page pagination.Pagination, companyid int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var response []transactionsparepartpayloads.PurchaseRequestItemGetAll
 	entities := masteritementities.Item{}
-	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	var PeriodResponse financeservice.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(companyid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
 
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
@@ -942,7 +942,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB, compid int, i int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
 	//entities := masteritementities.Item{}
-	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	var PeriodResponse financeservice.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
 
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
@@ -1045,7 +1045,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
 	//entities := masteritementities.Item{}
 
-	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	var PeriodResponse financeservice.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
 
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
