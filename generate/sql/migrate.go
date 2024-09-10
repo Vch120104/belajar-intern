@@ -138,6 +138,10 @@ func Migrate() {
 	//&masterentities.AgreementDiscount{},
 	//&masterentities.AgreementDiscountGroupDetail{},
 	//&masterentities.AgreementItemDetail{},
+	//&masterentities.LocationStock{},
+	//&masterentities.WarehouseGroupMappingEntities{},
+	//&masterentities.ItemCycle{},
+	//&masterentities.MovingItemCode{},
 	//
 	//&mastercampaignmasterentities.CampaignMaster{},
 	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
@@ -189,11 +193,8 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseRequestEntities{},
 	//&transactionsparepartentities.PurchaseRequestDetail{},
 	//
-	//&masterentities.ItemCycle{},
-	//&masterentities.MovingItemCode{},
+
 	//&transactionsparepartentities.PurchaseRequestReferenceType{},
-	//&masterentities.LocationStock{},
-	//&masterentities.WarehouseGroupMappingEntities{},
 	//&transactionsparepartentities.PurchaseOrderEntities{},
 	//&transactionsparepartentities.PurchaseOrderDetailEntities{},
 	//&transactionsparepartentities.PurchaseOrderDetailChangedItem{},
