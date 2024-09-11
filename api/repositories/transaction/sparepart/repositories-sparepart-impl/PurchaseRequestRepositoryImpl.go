@@ -823,7 +823,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 	var response []transactionsparepartpayloads.PurchaseRequestItemGetAll
 	entities := masteritementities.Item{}
 	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(companyid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
+	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(companyid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
 
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
@@ -874,7 +874,6 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
-
 	}
 	i := 1
 	var result []transactionsparepartpayloads.PurchaseRequestItemGetAll

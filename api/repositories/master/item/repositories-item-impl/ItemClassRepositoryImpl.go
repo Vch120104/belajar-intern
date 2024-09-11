@@ -198,6 +198,9 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 		internalFilter = append(internalFilter, condition)
 	}
 
+	// fmt.Println("internal filter", internalServiceFilter)
+	// fmt.Println("external filter", externalServiceFilter)
+
 	//define base model
 	baseModelQuery := tx.Model(&entities)
 	//apply where query
@@ -301,7 +304,6 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
-
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
