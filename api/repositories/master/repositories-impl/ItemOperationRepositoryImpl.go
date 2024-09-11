@@ -75,7 +75,8 @@ func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterp
 }
 
 func (r *ItemOperationRepositoryImpl) DeleteItemOperation (tx *gorm.DB, id int)(bool,*exceptions.BaseErrorResponse){
-	err := tx.Delete(masterentities.ItemOperation{}).Where("item_operation_id=?",id).Error
+	var entity masterentities.ItemOperation
+	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id = ?", id).Delete(&entity).Error
 	if err != nil{
 		return false,&exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
