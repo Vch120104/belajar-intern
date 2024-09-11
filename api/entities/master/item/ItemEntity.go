@@ -1,14 +1,12 @@
 package masteritementities
 
-import (
-	masterentities "after-sales/api/entities/master"
-)
+import masterentities "after-sales/api/entities/master"
 
 var CreateItemTable = "mtr_item"
 
 type Item struct {
 	IsActive                     bool              `gorm:"column:is_active;type:bool;not null"        json:"is_active"`
-	ItemId                       int               `gorm:"column:item_id;type:int;size:30;primaryKey"        json:"item_id"`
+	ItemId                       int               `gorm:"column:item_id; ;size:30;primaryKey"        json:"item_id"`
 	ItemCode                     string            `gorm:"column:item_code;size:50;unique;not null"        json:"item_code"`
 	ItemClassId                  int               `gorm:"column:item_class_id;type:int;size:30;not null"        json:"item_class_id"`
 	ItemName                     string            `gorm:"column:item_name;size:100;null"        json:"item_name"`
@@ -73,6 +71,7 @@ type Item struct {
 	FieldActionItem              masterentities.FieldActionEligibleVehicleItem `gorm:"foreignKey:ItemId;references:ItemId"`
 	ItemImport                   ItemImport                                    `gorm:"foreignKey:ItemId;references:ItemId"`
 	ItemDetail                   ItemDetail                                    `gorm:"foreignKey:ItemId;references:ItemId" `
+	ItemOperation                masterentities.ItemOperation                  `gorm:"foreignKey:ItemId;references:ItemId"`
 }
 
 func (*Item) TableName() string {

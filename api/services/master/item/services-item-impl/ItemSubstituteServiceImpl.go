@@ -28,17 +28,17 @@ func StartItemSubstituteService(itemSubstituteRepo masteritemrepository.ItemSubs
 	}
 }
 
-func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) ([]map[string]interface{},int,int, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
-	results, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
+	results,limit,page, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results, err
+		return results,0,0, err
 	}
-	return results, nil
+	return results,page,limit,nil
 }
 
-func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (masteritempayloads.ItemSubstitutePayloads, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
 	defer helper.CommitOrRollback(tx, err)
@@ -118,6 +118,17 @@ func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (boo
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.ActivateItemSubstituteDetail(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse){
+	tx := s.Db.Begin()
+
+	result, err := s.itemSubstituteRepo.GetallItemForFilter(tx, filterCondition,pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err

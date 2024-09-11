@@ -136,11 +136,12 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-			ModelName:               modelResponses.ModelName,
-			VariantName:             variantResponses.VariantName,
 			VehicleCode:             vehicleResponses.VehicleCode,
 			VehicleTnkb:             vehicleResponses.VehicleTnkb,
 			CustomerName:            customerResponses.CustomerName,
+			WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
+			VarianCode:              variantResponses.VariantCode,
+			ModelCode:               modelResponses.ModelCode,
 		})
 	}
 
@@ -149,11 +150,12 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		responseMap := map[string]interface{}{
 			"work_order_document_number":            response.WorkOrderDocumentNumber,
 			"work_order_date":                       response.WorkOrderDate,
-			"model_name":                            response.ModelName,
-			"variant_name":                          response.VariantName,
+			"model_code":                            response.ModelCode,
+			"varian_code":                           response.VarianCode,
 			"vehicle_chassis_number":                response.VehicleCode,
 			"vehicle_registration_certificate_tnkb": response.VehicleTnkb,
 			"customer_name":                         response.CustomerName,
+			"work_order_system_number":              response.WorkOrderSystemNumber,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}

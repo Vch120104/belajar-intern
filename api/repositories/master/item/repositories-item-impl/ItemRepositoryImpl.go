@@ -761,5 +761,3 @@ func (r *ItemRepositoryImpl) AddItemDetailByBrand(tx *gorm.DB, id string, itemId
 
 	return itemDetails, nil
 }
-
-

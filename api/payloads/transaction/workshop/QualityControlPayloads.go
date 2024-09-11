@@ -8,6 +8,10 @@ type QualityControlResponse struct {
 	VehicleCode             string `json:"vehicle_chassis_number"`
 	VehicleTnkb             string `json:"vehicle_registration_certificate_tnkb"`
 	CustomerName            string `json:"customer_name"`
+	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
+	BrandCode               string `json:"brand_code"`
+	VarianCode              string `json:"varian_code"`
+	ModelCode               string `json:"model_code"`
 }
 
 type QualityControlRequest struct {

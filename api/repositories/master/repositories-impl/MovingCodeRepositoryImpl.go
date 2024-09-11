@@ -153,18 +153,18 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 		var responses []masterentities.MovingCode
 
 		//CHECK COMPANY
-		companyResponses := []masterpayloads.CompanyResponse{}
+		companyResponses := masterpayloads.CompanyResponse{}
 
 		companyByIdUrl := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(req.CompanyId)
 
 		if errUrlCompany := utils.Get(companyByIdUrl, &companyResponses, nil); errUrlCompany != nil {
 			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
+				StatusCode: http.StatusInternalServerError,
+				Err:        errUrlCompany,
 			}
 		}
 
-		if len(companyResponses) == 0 {
+		if companyResponses == (masterpayloads.CompanyResponse{}) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errors.New("failed to find company"),
@@ -249,9 +249,17 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 		err := tx.Save(&entities).Error
 
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+			if strings.Contains(err.Error(), "duplicate") {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusConflict,
+					Err:        err,
+				}
+			} else {
+
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
 			}
 		}
 

@@ -11,9 +11,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
 	"gorm.io/gorm"
 )
@@ -115,110 +115,173 @@ func (r *ItemClassRepositoryImpl) GetItemClassDropDown(tx *gorm.DB) ([]masterite
 	return response, nil
 }
 
-func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteritementities.ItemClass{}
-	var responses []masteritempayloads.ItemClassResponse
+	var responses []masteritempayloads.ItemClassGetAllResponse
 	var getLineTypeResponse []masteritempayloads.LineTypeResponse
 	var getItemGroupResponse []masteritempayloads.ItemGroupResponse
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
 	var groupName, lineTypeCode string
-	responseStruct := reflect.TypeOf(masteritempayloads.ItemClassResponse{})
-
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
-		}
-	}
 
 	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		if strings.Contains(externalServiceFilter[i].ColumnField, "line_type_code") {
-			lineTypeCode = externalServiceFilter[i].ColumnValue
+	for _, value := range externalFilter {
+		if strings.Contains(value.ColumnField, "line_type_code") {
+			lineTypeCode = value.ColumnValue
 		} else {
-			groupName = externalServiceFilter[i].ColumnValue
+			groupName = value.ColumnValue
 		}
 	}
+
+	//IF GROUP NAME ON FILTER (EXTERNAL)
+	if groupName != "" {
+		groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
+
+		errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
+		if errUrlItemGroup != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errUrlItemGroup,
+			}
+		}
+
+		if len(getItemGroupResponse) == 0 {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNoContent,
+				Err:        errors.New("item group not found"),
+			}
+		}
+
+		var ids string
+		for _, value := range getItemGroupResponse {
+			ids += fmt.Sprintf("%d,", value.ItemGroupId)
+		}
+
+		condition := utils.FilterCondition{
+			//add tag -> #multiple, to initiate filter for multiple ID
+			ColumnField: "item_group_id #multiple",
+			ColumnValue: strings.TrimSuffix(ids, ","),
+		}
+
+		internalFilter = append(internalFilter, condition)
+	}
+
+	//IF LINE TYPE ON FILTER
+	if lineTypeCode != "" {
+		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
+
+		errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
+
+		if errUrlLineType != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errUrlLineType,
+			}
+		}
+
+		if len(getLineTypeResponse) == 0 {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNoContent,
+				Err:        errors.New("line type not found"),
+			}
+		}
+
+		var ids string
+		for _, value := range getLineTypeResponse {
+			ids += fmt.Sprintf("%d,", value.LineTypeId)
+		}
+
+		condition := utils.FilterCondition{
+			//add tag -> #multiple, to initiate filter for multiple ID
+			ColumnField: "line_type_id #multiple",
+			ColumnValue: strings.TrimSuffix(ids, ","),
+		}
+
+		internalFilter = append(internalFilter, condition)
+	}
+
+	// fmt.Println("internal filter", internalServiceFilter)
+	// fmt.Println("external filter", externalServiceFilter)
 
 	//define base model
 	baseModelQuery := tx.Model(&entities)
 	//apply where query
-	whereQuery := utils.ApplyFilter(baseModelQuery, internalServiceFilter)
+	whereQuery := utils.ApplyFilter(baseModelQuery, internalFilter)
 	//apply pagination and execute
 	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
-	fmt.Print(responses)
-
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNoContent,
+			Err:        errors.New("no contents"),
 		}
 	}
 
-	groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
+	var wg sync.WaitGroup
 
-	errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
+	wg.Add(1)
+	go func() *exceptions.BaseErrorResponse {
+		defer wg.Done()
+		groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
 
-	if errUrlItemGroup != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlItemGroup,
+		errUrlItemGroup := utils.Get(groupServiceUrl, &getItemGroupResponse, nil)
+
+		if errUrlItemGroup != nil {
+			return &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errUrlItemGroup,
+			}
 		}
-	}
+
+		return nil
+	}()
+
+	wg.Add(1)
+	go func() *exceptions.BaseErrorResponse {
+		defer wg.Done()
+
+		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
+
+		errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
+
+		if errUrlLineType != nil {
+			return &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errUrlLineType,
+			}
+		}
+		return nil
+	}()
+
+	wg.Wait()
 
 	joinedData, errdf := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
 
 	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errdf,
 		}
 	}
-
-	// fmt.Println("join ", joinedData)
-
-	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type?line_type_code=" + lineTypeCode
-
-	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
-
-	if errUrlLineType != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlLineType,
-		}
-	}
-
-	fmt.Println(getLineTypeResponse)
 
 	joinedDataSecond, errdf := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
 
 	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errdf,
 		}
 	}
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSecond, &pages)
+	pages.Rows = joinedDataSecond
 
-	// fmt.Print(joinedDataSecond)
+	return pages, nil
 
-	return dataPaginate, totalPages, totalRows, nil
 }
 
 func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteritempayloads.ItemClassResponse, *exceptions.BaseErrorResponse) {
@@ -241,7 +304,6 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)
-
 	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -271,6 +333,48 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 }
 
 func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritempayloads.ItemClassResponse) (bool, *exceptions.BaseErrorResponse) {
+	var getLineTypeResponse masteritempayloads.LineTypeResponse
+	var getItemGroupResponse masteritempayloads.ItemGroupResponse
+
+	//CHECK ITEM GROUP ID
+	groupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(request.ItemGroupId)
+
+	errUrlItemGroup := utils.Get(groupUrl, &getItemGroupResponse, nil)
+
+	if errUrlItemGroup != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlItemGroup,
+		}
+	}
+
+	if getItemGroupResponse == (masteritempayloads.ItemGroupResponse{}) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("item group not found"),
+		}
+	}
+
+	//CHECK LINE TYPE ID
+
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(request.LineTypeId)
+
+	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
+
+	if errUrlLineType != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errUrlLineType,
+		}
+	}
+
+	if getLineTypeResponse == (masteritempayloads.LineTypeResponse{}) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("line type not found"),
+		}
+	}
+
 	entities := masteritementities.ItemClass{
 		IsActive:      request.IsActive,
 		ItemClassId:   request.ItemClassId,

@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -140,6 +141,38 @@ func (*ShiftScheduleRepositoryImpl) SaveShiftSchedule(tx *gorm.DB, req masterpay
 	return true, nil
 }
 
+func (r *ShiftScheduleRepositoryImpl) UpdateShiftSchedule(tx *gorm.DB, Id int, request masterpayloads.ShiftScheduleUpdate) (masterentities.ShiftSchedule, *exceptions.BaseErrorResponse) {
+	entities := masterentities.ShiftSchedule{
+		ShiftGroup:      request.ShiftGroup,
+		StartTime:       request.StartTime,
+		EndTime:         request.EndTime,
+		RestStartTime:   request.RestStartTime,
+		RestEndTime:     request.RestEndTime,
+		Monday:          request.Monday,
+		Tuesday:         request.Tuesday,
+		Wednesday:       request.Wednesday,
+		Thursday:        request.Thursday,
+		Friday:          request.Friday,
+		Saturday:        request.Saturday,
+		Sunday:          request.Sunday,
+		Manpower:        request.Manpower,
+		ManpowerBooking: request.ManpowerBooking,
+	}
+
+	err := tx.Model(&masterentities.ShiftSchedule{}).
+		Where("shift_schedule_id = ?", Id).
+		Updates(entities).Error
+
+	if err != nil {
+		return masterentities.ShiftSchedule{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return entities, nil
+}
+
 func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.ShiftSchedule
 
@@ -170,4 +203,23 @@ func (*ShiftScheduleRepositoryImpl) ChangeStatusShiftSchedule(tx *gorm.DB, Id in
 	}
 
 	return true, nil
+}
+
+func (r *ShiftScheduleRepositoryImpl) GetShiftScheduleDropDown(tx *gorm.DB) ([]masterpayloads.ShiftScheduleDropDownResponse, *exceptions.BaseErrorResponse) {
+	entities := []masterentities.ShiftSchedule{}
+	response := []masterpayloads.ShiftScheduleDropDownResponse{}
+	if err := tx.Model(entities).Scan(&response).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(response) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New(""),
+		}
+	}
+	return response, nil
 }

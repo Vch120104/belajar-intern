@@ -92,6 +92,16 @@ func ConvertDateFormat(dateTime time.Time) (string, error) {
 	return date, nil
 }
 
+// Converts a date string from the format '2 Jan 2006' to '2006-01-02'.
+func ConvertDateStrFormat(dateStr string) (string, error) {
+	parsedDate, err := time.Parse("2 Jan 2006", dateStr)
+	if err != nil {
+		return "", err
+	}
+	date := parsedDate.Format("2006-01-02")
+	return date, nil
+}
+
 func ConvertTimeFormat(dateTimeStr string) (string, error) {
 	// Parse the input string into time.Time
 	parsedTime, err := time.Parse(time.RFC3339Nano, dateTimeStr)
@@ -126,6 +136,16 @@ func SafeConvertDateFormat(dateTime time.Time) string {
 		return ""
 	}
 	date, err := ConvertDateFormat(dateTime)
+	if err != nil {
+		return ""
+	}
+	return date
+}
+
+// Converts a date string from the format '2 Jan 2006' to '2006-01-02'.
+// If conversion fails, returns an empty string.
+func SafeConvertDateStrFormat(dateStr string) string {
+	date, err := ConvertDateStrFormat(dateStr)
 	if err != nil {
 		return ""
 	}

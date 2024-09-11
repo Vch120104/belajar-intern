@@ -27,7 +27,7 @@ type PurchaseRequestController interface {
 
 	UpdatePurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
 	UpdatePurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
-	SubmitPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request)
+	SubmitPurchaseRequest(writer http.ResponseWriter, request *http.Request)
 	SubmitPurchaseRequestDetail(writer http.ResponseWriter, request *http.Request)
 	GetAllItemTypePr(writer http.ResponseWriter, request *http.Request)
 	GetByIdItemTypePr(writer http.ResponseWriter, request *http.Request)
@@ -163,8 +163,8 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequest(writer h
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
 	result, err := controller.PurchaseRequestService.GetByIdPurchaseRequest(PurchaseRequestSystemNumber)
 	if err != nil {
-		err.Message = "Id Not Found"
-		err.Data = "Id Not Found"
+		//err.Message = "Id Not Found"
+		//err.Data = "Id Not Found"
 		helper.ReturnError(writer, request, err)
 		return
 	}
@@ -374,7 +374,7 @@ func (controller *PurchaseRequestControllerImpl) Void(writer http.ResponseWriter
 	}
 }
 
-// SubmitPurchaseRequestHeader
+// SubmitPurchaseRequest
 //
 //	@Summary		Submit Purchase Request Header
 //	@Description	Submit Purchase Request Header
@@ -385,10 +385,10 @@ func (controller *PurchaseRequestControllerImpl) Void(writer http.ResponseWriter
 //	@Success		201						{object}	payloads.Response
 //	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
 //	@Router			/v1/purchase-request/submit/{purchase_request_system_number} [post]
-func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestHeader(writer http.ResponseWriter, request *http.Request) {
+func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequest(writer http.ResponseWriter, request *http.Request) {
 	var puchaseRequestHeader transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
-	success, err := controller.PurchaseRequestService.InsertPurchaseRequestUpdateHeader(puchaseRequestHeader, PurchaseRequestSystemNumber)
+	success, err := controller.PurchaseRequestService.SubmitPurchaseRequest(puchaseRequestHeader, PurchaseRequestSystemNumber)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
