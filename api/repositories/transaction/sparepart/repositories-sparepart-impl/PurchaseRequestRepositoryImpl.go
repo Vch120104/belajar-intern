@@ -874,7 +874,6 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
-
 	}
 	i := 1
 	var result []transactionsparepartpayloads.PurchaseRequestItemGetAll
