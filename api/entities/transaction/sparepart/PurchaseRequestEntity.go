@@ -17,7 +17,6 @@ type PurchaseRequestEntities struct {
 	ReferenceTypeId                 int        `gorm:"column:reference_type_id;size:30;" json:"reference_type_id"`
 	ReferenceSystemNumber           int        `gorm:"column:reference_system_number;size:30;" json:"reference_system_number"`
 	ReferenceDocumentNumber         string     `gorm:"column:reference_document_number;size:50;" json:"reference_document_number"`
-
 	//ReferenceWorkOrderSystemNumber   int                     `gorm:"column:reference_work_order_system_number;size:30;" json:"reference_work_order_system_number"`
 	//ReferenceInvoiceUnitSystemNumber int                     `gorm:"column:reference_invoice_unit_system_number;size:30;" json:"reference_invoice_unit_system_number"`
 	//ReferencePickingListSystemNumber int                     `gorm:"column:reference_picking_list_system_number;size:30;" json:"reference_picking_list_system_number"`
