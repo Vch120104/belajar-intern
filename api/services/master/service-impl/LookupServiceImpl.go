@@ -169,3 +169,15 @@ func (s *LookupServiceImpl) CustomerByTypeAndAddressByCode(customerCode string, 
 
 	return lookup, totalPages, totalRows, nil
 }
+
+func (s *LookupServiceImpl) GetOprItemPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode string, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	price, baseErr := s.LookupRepo.GetOprItemPrice(tx, linetypeId, companyId, oprItemCode, brandId, modelId, jobTypeId, variantId, currencyId, billCode, whsGroup)
+	if baseErr != nil {
+		return 0, baseErr
+	}
+
+	return price, nil
+}

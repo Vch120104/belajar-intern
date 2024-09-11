@@ -91,6 +91,7 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 		return
 	}
 
+	// Call service to fetch data
 	paginatedData, apiErr := r.WorkOrderAllocationService.GetAll(
 		companyId,
 		technicianId,
@@ -102,6 +103,7 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 		return
 	}
 
+	// Handle the response
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccess(writer, paginatedData, "Get Data Successfully", http.StatusOK)
 	} else {
@@ -124,21 +126,8 @@ func (r *WorkOrderAllocationControllerImp) GetAll(writer http.ResponseWriter, re
 // @Param sort_by query string false "Field to sort by"
 // @Success 200 {object}  payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order-allocation/allocate/{service_request_date}/{brand_id}/{work_order_system_number} [get]
+// @Router /v1/work-order-allocation/allocate/{brand_id}/{work_order_system_number} [get]
 func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWriter, request *http.Request) {
-	serviceDateStr := chi.URLParam(request, "service_date")
-	if serviceDateStr == "" {
-		payloads.NewHandleError(writer, "Service date is required", http.StatusBadRequest)
-		return
-	}
-
-	// Attempt to parse serviceDateStr to time.Time
-	serviceRequestDate, err := time.Parse("2006-01-02", serviceDateStr)
-	if err != nil {
-		payloads.NewHandleError(writer, "Invalid date format", http.StatusBadRequest)
-		return
-	}
-
 	brandStrId := chi.URLParam(request, "brand_id")
 	brandId, err := strconv.Atoi(brandStrId)
 	if err != nil {
@@ -149,17 +138,17 @@ func (r *WorkOrderAllocationControllerImp) GetAllocate(writer http.ResponseWrite
 	workorderStrId := chi.URLParam(request, "work_order_system_number")
 	workorderId, err := strconv.Atoi(workorderStrId)
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid Work Order", http.StatusBadRequest)
+		payloads.NewHandleError(writer, "Invalid Work Order System Number", http.StatusBadRequest)
 		return
 	}
 
-	WoAssign, baseErr := r.WorkOrderAllocationService.GetAllocate(serviceRequestDate, brandId, workorderId)
+	woAssign, baseErr := r.WorkOrderAllocationService.GetAllocate(brandId, workorderId)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, WoAssign, "Get Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, woAssign, "Data retrieved successfully", http.StatusOK)
 }
 
 // GetAllocateDetail gets all allocated work orders detail

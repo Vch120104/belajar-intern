@@ -1299,7 +1299,7 @@ func WorkOrderAllocationRouter(
 	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
 	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
-	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 

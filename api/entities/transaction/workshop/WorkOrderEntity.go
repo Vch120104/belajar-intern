@@ -12,8 +12,8 @@ type WorkOrder struct {
 	WorkOrderDate                      time.Time         `gorm:"column:work_order_date;default:null" json:"work_order_date"`
 	WorkOrderCloseDate                 *time.Time        `gorm:"column:work_order_close_date;default:null" json:"work_order_close_date"`
 	WorkOrderTypeId                    int               `gorm:"column:work_order_type_id;size:30;" json:"work_order_type_id"`
-	WorkOrderRepeatedSystemNumber      int               `gorm:"column:work_order_repeated_system_number;size:30;" json:"work_order_repeated_system_number"`
-	WorkOrderRepeatedDocumentNumber    string            `gorm:"column:work_order_repeated_document_number;size:50;" json:"work_order_repeated_document_number"`
+	RepeatedSystemNumber               int               `gorm:"column:repeated_system_number;size:30;" json:"repeated_system_number"`
+	RepeatedDocumentNumber             string            `gorm:"column:repeated_document_number;size:50;" json:"repeated_document_number"`
 	AffiliatedCompany                  int               `gorm:"column:afiliated_company;size:30;" json:"afiliated_company"`
 	ProfitCenterId                     int               `gorm:"column:profit_center_id;size:30;" json:"profit_center_id"`
 	BrandId                            int               `gorm:"column:brand_id;size:30;" json:"brand_id"`
@@ -45,7 +45,7 @@ type WorkOrder struct {
 	AgreementBodyRepairId              int               `gorm:"column:agreement_body_repair_id;size:30;" json:"agreement_body_repair_id"`
 	BookingSystemNumber                int               `gorm:"column:booking_system_number;size:30;" json:"booking_system_number"`
 	EstimationSystemNumber             int               `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`
-	PDISystemNumber                    *float64          `gorm:"column:pdi_system_number;default:null" json:"pdi_system_number"`
+	PDISystemNumber                    int               `gorm:"column:pdi_system_number;size:30;" json:"pdi_system_number"`
 	PDIDocumentNumber                  string            `gorm:"column:pdi_document_number;size:50;" json:"pdi_document_number"`
 	PDILineNumber                      int               `gorm:"column:pdi_line_number;size:30;" json:"pdi_line_number"`
 	ServiceRequestSystemNumber         int               `gorm:"column:service_request_system_number;size:30;" json:"service_request_system_number"`
@@ -86,6 +86,7 @@ type WorkOrder struct {
 	Suggestion                         string            `gorm:"column:suggestion;size:50;" json:"suggestion"`
 	FSCouponNo                         string            `gorm:"column:fs_coupon_number;size:50;" json:"fs_coupon_number"`
 	ServiceAdvisor                     int               `gorm:"column:service_advisor_id;size:30;" json:"service_advisor_id"`
+	CPCcode                            string            `gorm:"column:cpc_code;size:5;" json:"cpc_code"`
 	IncentiveDate                      *time.Time        `gorm:"column:incentive_date;default:null" json:"incentive_date"`
 	WOCancelReason                     string            `gorm:"column:work_order_cancel_reason;size:50;" json:"work_order_cancel_reason"`
 	InvoiceSystemNumber                int               `gorm:"column:invoice_system_number;size:30;" json:"invoice_system_number"`

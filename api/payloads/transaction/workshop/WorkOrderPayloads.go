@@ -219,27 +219,30 @@ type WorkOrderDetailsResponse struct {
 
 type WorkOrderNormalRequest struct {
 	// Basic information
-	WorkOrderTypeId         int       `json:"work_order_type_id"`
-	BookingSystemNumber     int       `json:"booking_system_number"`
-	EstimationSystemNumber  int       `json:"estimation_system_number"`
-	BrandId                 int       `json:"brand_id"`
-	ModelId                 int       `json:"model_id"`
-	VariantId               int       `json:"variant_id"`
-	ServiceSite             string    `json:"servicesite"`
-	VehicleId               int       `json:"vehicle_id"`
-	CustomerId              int       `json:"customer_id"`
-	BilltoCustomerId        int       `json:"billto_customer_id"`
-	CampaignId              int       `json:"campaign_id"`
-	CompanyId               int       `json:"company_id"`
-	FromEra                 bool      `json:"from_era"`
-	QueueSystemNumber       int       `json:"queue_system_number"`
-	WorkOrderArrivalTime    time.Time `json:"work_order_arrival_time"`
-	WorkOrderCurrentMileage int       `json:"work_order_current_mileage"`
-	Storing                 bool      `json:"storing"`
-	WorkOrderRemark         string    `json:"work_order_remark"`
-	Unregistered            bool      `json:"unregistered"`
-	WorkOrderProfitCenter   int       `json:"work_order_profit_center"`
-	DealerRepresentativeId  int       `json:"dealer_representative_id"`
+	WorkOrderTypeId            int       `json:"work_order_type_id"`
+	BookingSystemNumber        int       `json:"booking_system_number"`
+	EstimationSystemNumber     int       `json:"estimation_system_number"`
+	ServiceRequestSystemNumber int       `json:"service_request_system_number"`
+	PDISystemNumber            int       `json:"pdi_system_number"`
+	RepeatedSystemNumber       int       `json:"repeated_system_number"`
+	BrandId                    int       `json:"brand_id"`
+	ModelId                    int       `json:"model_id"`
+	VariantId                  int       `json:"variant_id"`
+	ServiceSite                string    `json:"servicesite"`
+	VehicleId                  int       `json:"vehicle_id"`
+	CustomerId                 int       `json:"customer_id"`
+	BilltoCustomerId           int       `json:"billto_customer_id"`
+	CampaignId                 int       `json:"campaign_id"`
+	CompanyId                  int       `json:"company_id"`
+	FromEra                    bool      `json:"from_era"`
+	QueueSystemNumber          int       `json:"queue_system_number"`
+	WorkOrderArrivalTime       time.Time `json:"work_order_arrival_time"`
+	WorkOrderCurrentMileage    int       `json:"work_order_current_mileage"`
+	Storing                    bool      `json:"storing"`
+	WorkOrderRemark            string    `json:"work_order_remark"`
+	Unregistered               bool      `json:"unregistered"`
+	WorkOrderProfitCenter      int       `json:"work_order_profit_center"`
+	DealerRepresentativeId     int       `json:"dealer_representative_id"`
 
 	// Work order status and details
 	WorkOrderEraNo           string    `json:"work_order_era_no"`
@@ -350,7 +353,7 @@ type WorkOrderGetAllRequest struct {
 	CustomerId              int       `json:"customer_id" parent_entity:"trx_work_order"`
 	BilltoCustomerId        int       `json:"billable_to_id" parent_entity:"trx_work_order"`
 	StatusId                int       `json:"work_order_status_id" parent_entity:"trx_work_order"`
-	RepeatedJob             int       `json:"work_order_repeated_system_number" parent_entity:"trx_work_order"`
+	RepeatedJob             int       `json:"repeated_system_number" parent_entity:"trx_work_order"`
 }
 
 type WorkOrderGetAllResponse struct {
@@ -374,7 +377,7 @@ type WorkOrderGetAllResponse struct {
 	VehicleTnkb             string    `json:"vehicle_registration_certificate_tnkb"`
 	CustomerId              int       `json:"customer_id"`
 	BilltoCustomerId        int       `json:"billable_to_id"`
-	RepeatedJob             int       `json:"work_order_repeated_system_number"`
+	RepeatedJob             int       `json:"repeated_system_number"`
 }
 
 type WorkOrderBookingRequest struct {
@@ -909,7 +912,7 @@ type SubmitWorkOrderResponse struct {
 
 type ChangeBillToRequest struct {
 	WorkOrderSystemNumber int `json:"work_order_system_number"`
-	BillToCustomerId      int `json:"billable_to_id"`
+	BillToCustomerId      int `json:"customer_id"`
 }
 
 type ChangePhoneNoRequest struct {

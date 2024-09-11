@@ -25,6 +25,11 @@ func StartLookupRepositoryImpl() masterrepository.LookupRepository {
 	return &LookupRepositoryImpl{}
 }
 
+func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, linetypeId int, billCode string, oprItemCode int, agreementId int, profitCenterId int, minValue int, companyId int, brandId int, contractServSysno int, whsGroup string, orderType string) (float64, *exceptions.BaseErrorResponse) {
+
+	return 0, nil
+}
+
 func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode string, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
 	var (
 		price               float64
