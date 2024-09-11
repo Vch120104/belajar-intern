@@ -23,7 +23,7 @@ type PurchaseOrderRepository interface {
 	DeleteDocument(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 
 	//-=-=-=-=-=
-	GetFromPurchaseRequest(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination)
+	//GetFromPurchaseRequest(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination)
 	SubmitPurchaseOrderRequest(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderHeaderSubmitRequest) (bool, *exceptions.BaseErrorResponse)
-	CloseOrderPurchaseOrder(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderCloseOrderPayloads) (bool, *exceptions.BaseErrorResponse)
+	//CloseOrderPurchaseOrder(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderCloseOrderPayloads) (bool, *exceptions.BaseErrorResponse)
 }

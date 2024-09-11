@@ -1,6 +1,5 @@
 package transactionsparepartrepositoryimpl
 
-import "C"
 import (
 	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
@@ -458,6 +457,13 @@ func (repo *PurchaseOrderRepositoryImpl) UpdatePurchaseOrderHeader(db *gorm.DB, 
 	var totalAfterVat = totalAmount - totalDiscount + totalVat
 	err = db.Model(&EntitiesPurchaseOrder).Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: id}).
 		Scan(&EntitiesPurchaseOrder).Error
+	if err != nil {
+		return EntitiesPurchaseOrder, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusUnprocessableEntity,
+			Message:    err.Error(),
+			Err:        err,
+		}
+	}
 	//process update
 	//UPDATE atItemPO0 SET
 	//SUPPLIER_CODE = @Supplier_Code ,
@@ -523,7 +529,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetPurchaseOrderDetailById(db *gorm.DB,
 	entities := transactionsparepartentities.PurchaseOrderDetailEntities{}
 	var ResultPerId transactionsparepartpayloads.PurchaseOrderGetDetail
 	err := db.Model(&entities).Where(&transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: i}).First(&entities).Error
-
+	fmt.Println(err)
 	var ItemEntities masteritementities.Item
 	err = db.Model(ItemEntities).Where(masteritementities.Item{ItemId: entities.ItemId}).First(&ItemEntities).Error
 	if err != nil {
@@ -622,6 +628,7 @@ func (repo *PurchaseOrderRepositoryImpl) NewPurchaseOrderDetail(db *gorm.DB, pay
 		Joins("JOIN trx_item_purchase_order B ON A.purchase_order_system_number = b.purchase_order_system_number").
 		Where("B.purchase_order_status_id NOT IN (?,?) AND A.purchase_request_system_number = 1", 80, 90).
 		Scan(&PurchaseOrderQuantity).Error
+	fmt.Println(err)
 	//dimana ga closed dan ga canceled
 	VehicleId = prentities.VehicleId
 	PurchaseRequestQuantity = *prentities.ItemQuantity
@@ -1580,10 +1587,10 @@ func (repo *PurchaseOrderRepositoryImpl) DeleteDocument(db *gorm.DB, i int) (boo
 	return true, nil
 }
 
-func (repo *PurchaseOrderRepositoryImpl) GetFromPurchaseRequest(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination) {
-	//TODO implement me
-	panic("implement me")
-}
+//func (repo *PurchaseOrderRepositoryImpl) GetFromPurchaseRequest(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination) {
+//	//TODO implement me
+//	panic("implement me")
+//}
 
 func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderHeaderSubmitRequest) (bool, *exceptions.BaseErrorResponse) {
 	var poEntities transactionsparepartentities.PurchaseOrderEntities
@@ -1932,6 +1939,7 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 		Having("COUNT(*) > 1").
 		Limit(1).
 		Scan(&listDoubleItemCode).Error
+	fmt.Println(err)
 	if len(listDoubleItemCode) != 0 && isSparepartPo {
 		ErrMsg := "There is Item with multiple line!\n" +
 			"Item Code : "
@@ -2057,7 +2065,7 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//masi dummy anggap always true belum ada
 	//dbo.getApprovalCodeBrand
 	//dan approvalreqrfp
-	if 1 == 1 { //ISNULL(@Approval_Req_No, 0)
+	if true { //ISNULL(@Approval_Req_No, 0)
 		poEntities.PurchaseOrderStatusId = ApprovedStatusId
 		poEntities.PurchaseOrderRemark = payloads.PurchaseOrderRemark
 		*poEntities.LastTotalDiscount = *poEntities.TotalDiscount
@@ -2079,7 +2087,8 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	}
 	return true, nil
 }
-func (repo *PurchaseOrderRepositoryImpl) CloseOrderPurchaseOrder(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderCloseOrderPayloads) (bool, *exceptions.BaseErrorResponse) {
-	//TODO implement me
-	panic("implement me")
-}
+
+//func (repo *PurchaseOrderRepositoryImpl) CloseOrderPurchaseOrder(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderCloseOrderPayloads) (bool, *exceptions.BaseErrorResponse) {
+//	//TODO implement me
+//	panic("implement me")
+//}
