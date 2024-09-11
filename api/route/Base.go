@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -515,6 +514,36 @@ func LocationStockRouter(
 	return router
 }
 
+func PurchaseOrderRouter(
+	PurchaseOrder transactionsparepartcontroller.PurchaseOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", PurchaseOrder.GetAllPurchaserOrderWithPagination)
+	router.Get("/by-id/{purchase_order_system_number}", PurchaseOrder.GetByIdPurchaseOrder)
+	router.Get("/detail", PurchaseOrder.GetPurchaseOrderDetailByHeaderId)
+	router.Post("/", PurchaseOrder.NewPurchaseOrderHeader)
+	router.Put("/{purchase_order_system_number}", PurchaseOrder.UpdatePurchaseOrderHeader)
+	router.Get("/detail/by-id/{purchase_order_detail_system_number}", PurchaseOrder.GetPurchaseOrderDetailById)
+	router.Delete("/detail/{purchase_order_detail_system_number}", PurchaseOrder.DeletePurchaseOrderDetailMultiId)
+	router.Post("/detail", PurchaseOrder.NewPurchaseOrderDetail)
+	router.Patch("/detail", PurchaseOrder.SavePurchaseOrderDetail)
+
+	//	@Router			/v1/purchase-order/detail [post]
+
+	//	@Router			/v1/purchase-order/detail [patch]
+
+	//	@Router			/v1/purchase-order/detail/{purchase_order_detail_system_number} [get]
+
+	//	@Router			/v1/purchase-order/{purchase_order_system_number} [put]
+
+	return router
+}
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {

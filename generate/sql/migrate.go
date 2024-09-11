@@ -2,13 +2,9 @@ package migration
 
 import (
 	"after-sales/api/config"
-	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
-	// masterentities "after-sales/api/entities/master"
-	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
-	// masteritementities "after-sales/api/entities/master/item"
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
@@ -141,6 +137,10 @@ func Migrate() {
 	//&masterentities.AgreementDiscount{},
 	//&masterentities.AgreementDiscountGroupDetail{},
 	//&masterentities.AgreementItemDetail{},
+	//&masterentities.LocationStock{},
+	//&masterentities.WarehouseGroupMappingEntities{},
+	//&masterentities.ItemCycle{},
+	//&masterentities.MovingItemCode{},
 	//
 	//&mastercampaignmasterentities.CampaignMaster{},
 	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
@@ -187,16 +187,20 @@ func Migrate() {
 	//&transactionworkshopentities.BookingEstimationRequest{},
 	//&transactionworkshopentities.BookingEstimationServiceReminder{},
 	//&transactionworkshopentities.BookingEstimationServiceDiscount{},
-	////&transactionworkshopentities.BookingEstimationDetail{},
+	//&transactionworkshopentities.BookingEstimationDetail{},
 	//
-	// &transactionsparepartentities.PurchaseRequestEntities{},
-	// &transactionsparepartentities.PurchaseRequestDetail{},
+	//&transactionsparepartentities.PurchaseRequestEntities{},
+	//&transactionsparepartentities.PurchaseRequestDetail{},
 	//
-	//&masterentities.ItemCycle{},
-	//&masterentities.MovingItemCode{},
+
 	//&transactionsparepartentities.PurchaseRequestReferenceType{},
-	//&masterentities.LocationStock{},
-	// &masterentities.WarehouseGroupMappingEntities{},
+	//&transactionsparepartentities.PurchaseOrderEntities{},
+	//&transactionsparepartentities.PurchaseOrderDetailEntities{},
+	//&transactionsparepartentities.PurchaseOrderDetailChangedItem{},
+	//
+	//&transactionsparepartentities.BinningStock{},
+	//&transactionsparepartentities.BinningStockDetail{},
+	//&transactionsparepartentities.PurchaseOrderLimit{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)
