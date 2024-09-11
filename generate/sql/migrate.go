@@ -128,8 +128,7 @@ func Migrate() {
 	//&masterentities.AgreementDiscount{},
 	//&masterentities.AgreementDiscountGroupDetail{},
 	//&masterentities.AgreementItemDetail{},
-	//
-	//&masterentities.AtpmCompanyMapping{},
+
 	//
 	//&masterentities.FieldAction{},
 	//&masterentities.FieldActionEligibleVehicleItem{},
@@ -202,7 +201,6 @@ func Migrate() {
 	//&transactionsparepartentities.BinningStock{},
 	//&transactionsparepartentities.BinningStockDetail{},
 	//&transactionsparepartentities.PurchaseOrderLimit{},
-
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)
