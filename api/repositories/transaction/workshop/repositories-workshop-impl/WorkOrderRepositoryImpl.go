@@ -4,6 +4,7 @@ package transactionworkshoprepositoryimpl
 import (
 	"after-sales/api/config"
 	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+	masteritementities "after-sales/api/entities/master/item"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -3388,7 +3389,7 @@ func (s *WorkOrderRepositoryImpl) DeleteRequestMultiId(tx *gorm.DB, Id int, Deta
 	return true, nil
 }
 
-// usp_wtWorkOrder2_Update
+// usp_comLookUp
 // IF @strEntity = 'CustomerByTypeAndAddress'--CUSTOMER MASTER
 func (s *WorkOrderRepositoryImpl) ChangeBillTo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
 	var existingWorkOrder struct {
@@ -3694,7 +3695,8 @@ func (s *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idw
 						CASE WHEN approval_id = "20" AND ISNULL(operation_item_discount_request_amount, 0) > 0 
 						THEN ISNULL(operation_item_discount_request_amount, 0) 
 						ELSE ISNULL(operation_item_discount_amount, 0) 
-						END * 
+						END 
+						* 
 						CASE WHEN LINE_TYPE <> ? THEN ISNULL(frt_quantity, 0) 
 						ELSE CASE WHEN ISNULL(supply_quantity, 0) > 0 
 						THEN ISNULL(supply_quantity, 0) ELSE ISNULL(frt_quantity, 0) END 
@@ -3760,7 +3762,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 			operation_item_code, transaction_type_id
 		`).
 		Where("work_order_system_number = ? AND work_order_operation_item_line IN (?)", workOrderId, idwos).
-		First(&detailentity).Error // Corrected to detailentity
+		First(&detailentity).Error
 
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -3867,7 +3869,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									SupplyQty    float64
 									SubsType     string
 								}
-								err = rows.Scan(&substituteItem.SubsItemCode, &substituteItem.ItemName, &substituteItem.SupplyQty, &substituteItem.SubsType)
+								err := rows.Scan(&substituteItem.SubsItemCode, &substituteItem.ItemName, &substituteItem.SupplyQty, &substituteItem.SubsType)
 								if err != nil {
 									return false, &exceptions.BaseErrorResponse{
 										StatusCode: http.StatusInternalServerError,
@@ -3878,17 +3880,15 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 
 								// Step 6: Check and update the original item if not substituted
 								if substituteItem.SubsType != "" {
-									err = tx.Exec(`
-										IF NOT EXISTS (
-											SELECT WO_OPR_ITEM_LINE FROM wtWorkOrder2 
-											WHERE WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND WO_OPR_ITEM_LINE = ? AND SUBSTITUTE_TYPE = 'SUBTITUTE_ITEM'
-										)
-										BEGIN
-											UPDATE wtWorkOrder2
-											SET SUBSTITUTE_TYPE = 'SUBTITUTE_ITEM', WHS_GROUP = ?
-											WHERE WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND WO_OPR_ITEM_LINE = ?
-										END
-									`, workOrderId, detailentity.OperationItemCode, idwos, detailentity.WarehouseId, workOrderId, detailentity.OperationItemCode, idwos).Error
+									err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+										Where("work_order_system_number = ? AND operation_item_code = ? AND work_order_operation_item_line = ? AND substitute_id IS NULL",
+											workOrderId, detailentity.OperationItemCode, idwos).
+										Updates(map[string]interface{}{
+											"substitute_id":   1,
+											"substitute_type": "SUBSTITUTE_ITEM",
+											"warehouse_id":    detailentity.WarehouseId,
+										}).Error
+
 									if err != nil {
 										return false, &exceptions.BaseErrorResponse{
 											StatusCode: http.StatusInternalServerError,
@@ -3913,9 +3913,11 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 
 								// Step 8: Calculate the next line number for the work order
 								var nextLineNumber int
-								err = tx.Raw(`
-									SELECT ISNULL(MAX(WO_OPR_ITEM_LINE),0) + 1 FROM wtWorkOrder2 WHERE WO_SYS_NO = ?
-								`, workOrderId).Scan(&nextLineNumber).Error
+								err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+									Select("COALESCE(MAX(work_order_operation_item_line), 0) + 1").
+									Where("work_order_system_number = ?", workOrderId).
+									Pluck("work_order_operation_item_line", &nextLineNumber).Error
+
 								if err != nil {
 									return false, &exceptions.BaseErrorResponse{
 										StatusCode: http.StatusInternalServerError,
@@ -3925,42 +3927,49 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 								}
 
 								// Step 9: Insert the substitute item into wtWorkOrder2
-								err = tx.Exec(`
-									IF NOT EXISTS (
-										SELECT * FROM wtWorkOrder2 WHERE WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND SUBSTITUTE_ITEM_CODE = ?
-									)
-									BEGIN
-										DECLARE @Opr_Item_Price DECIMAL(18,2);
-										SET @Opr_Item_Price = (
-											SELECT dbo.getOprItemPrice(LINE_TYPE, ?, BILL_CODE, ?, ?, JOB_TYPE, '', ?, ?, '', '', 0, ?, ?) 
-											FROM dbo.wtWorkOrder2 
-											WHERE WO_SYS_NO = ? AND WO_OPR_ITEM_LINE = ?
-										);
-				
-										-- Apply markup to the item price
-										SET @Opr_Item_Price = @Opr_Item_Price + ? + (@Opr_Item_Price * (? / 100));
-				
-										INSERT INTO wtWorkOrder2 (
-											RECORD_STATUS, WO_SYS_NO, WO_DOC_NO, WO_OPR_ITEM_LINE, WO_LINE_STAT, 
-											LINE_TYPE, WO_OPR_STATUS, BILL_CODE, JOB_TYPE, WO_LINE_DISC_STAT, 
-											OPR_ITEM_CODE, OPR_ITEM_NAME, WHS_GROUP, WHS_CODE, OPR_QTY, 
-											OPR_PRICE, SUBSTITUTE_ITEM_CODE, SUBSTITUTE_ITEM_NAME, SUBSTITUTE_ITEM_PRICE, 
-											VEHICLE_BRAND, CURRENCY_CODE
-										)
-										VALUES (
-											'Active', ?, ?, ?, 'Active', 
-											'Substitute', 'Active', ?, ?, 'No', 
-											?, ?, ?, ?, ?, 
-											@Opr_Item_Price, ?, ?, ?, 
-											?, ?
-										);
-									END
-								`, workOrderId, detailentity.OperationItemCode, substituteItem.SubsItemCode, detailentity.OperationItemCode, detailentity.WarehouseId, entity.CompanyId, entity.BrandId, entity.CurrencyId, workOrderId, idwos, detailentity.OperationItemCode, substituteItem.SupplyQty, detailentity.WarehouseId, 10.00, 5.00).Error
+								// Check if the substitute item already exists
+								var count int64
+								err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+									Where("work_order_system_number = ? AND operation_item_code = ? AND substritute_item_code = ?",
+										workOrderId, detailentity.OperationItemCode, substituteItem.SubsItemCode).
+									Count(&count).Error
 								if err != nil {
 									return false, &exceptions.BaseErrorResponse{
 										StatusCode: http.StatusInternalServerError,
-										Message:    "Failed to insert the substitute item into wtWorkOrder2",
+										Message:    "Failed to check the existence of the substitute item",
 										Err:        err,
+									}
+								}
+
+								// If the substitute item does not exist, insert it
+								if count == 0 {
+									// Get operation item price using custom logic
+									var oprItemPrice float64
+
+									// Fetch Opr_Item_Price
+									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
+
+									// Apply markup to the item price
+									oprItemPrice = oprItemPrice + 10.00 + (oprItemPrice * (5.00 / 100))
+
+									// Insert the substitute item into wtWorkOrder2
+									err = tx.Create(&transactionworkshopentities.WorkOrderDetail{
+										WorkOrderSystemNumber:      workOrderId,
+										WorkOrderOperationItemLine: nextLineNumber,
+										LineType:                   "Substitute",
+										WorkorderStatusId:          detailentity.WorkorderStatusId,
+										OperationItemCode:          detailentity.OperationItemCode,
+										OperationItemPrice:         oprItemPrice,
+										SubstrituteItemCode:        substituteItem.SubsItemCode,
+										SupplyQuantity:             substituteItem.SupplyQty,
+										WarehouseId:                detailentity.WarehouseId,
+									}).Error
+									if err != nil {
+										return false, &exceptions.BaseErrorResponse{
+											StatusCode: http.StatusInternalServerError,
+											Message:    "Failed to insert the substitute item into wtWorkOrder2",
+											Err:        err,
+										}
 									}
 								}
 							}
@@ -3984,59 +3993,77 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 
 			//-- By default price of all items will be replaced with the price from PriceList
 			//-- Exclude Fee from the replacing process
-			//if detailentity.LineTypeId != utils.LineTypeSublet {
+			var oprItemPrice, oprItemPriceDisc, discountPercent float64
+			var markupAmount, markupPercentage float64
+			var warrantyClaimType string
 
-			// Fetch Opr_Item_Price
-			// oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
-			// if err != nil {
-			// 	return false, &exceptions.BaseErrorResponse{
-			// 		StatusCode: http.StatusInternalServerError,
-			// 		Message:    "Failed to get Opr_Item_Price",
-			// 	}
-			// }
+			if detailentity.LineTypeId == utils.LineTypeSublet {
 
-			// Set markup percentage based on company ID
-			// markupPercentage = 0
-			// markupAmount = 0
-			// if entity.CompanyId == 139 {
-			// 	markupPercentage = 11.00
-			// }
+				// Fetch Opr_Item_Price
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
 
-			// // Apply markup amount and percentage
-			//oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
+				// Set markup percentage based on company ID
+				if entity.CompanyId == 139 {
+					markupPercentage = 11.00
+				}
 
-			// Fetch Opr_Item_Disc_Percent
-			// oprItemPriceDisc, err = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, "W", detailentity.ItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, 1, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, "W", "1")
-			// if err != nil {
-			// 	return false, &exceptions.BaseErrorResponse{
-			// 		StatusCode: http.StatusInternalServerError,
-			// 		Message:    "Failed to get Opr_Item_Price",
-			// 	}
-			// }
+				// // Apply markup amount and percentage
+				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
-			// err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-			// 	Select("dbo.getOprItemDisc(LINE_TYPE, BILL_CODE, OPR_ITEM_CODE, ?, ?, ?, ?, ?, ?, ?, ?, '')",
-			// 		agreementNo, cpcCode, frtQty*oprItemPrice, companyCode, vehicleBrand, whsGroup, contractServSysNo).
-			// 	Where("work_order_system_number = ? AND work_order_operation_item_line = ?", workOrderId, woOprItemLine).
-			// 	Pluck("dbo.getOprItemDisc(LINE_TYPE, BILL_CODE, OPR_ITEM_CODE, ?, ?, ?, ?, ?, ?, ?, ?, '')",
-			// 		agreementNo, cpcCode, frtQty*oprItemPrice, companyCode, vehicleBrand, whsGroup, contractServSysNo, &oprItemDiscPercent).Error
-			// if err != nil {
-			// 	return false, &exceptions.BaseErrorResponse{
-			// 		StatusCode: http.StatusInternalServerError,
-			// 		Message:    "Failed to get Opr_Item_Disc_Percent",
-			// 	}
-			// }
-			//}
+				// Fetch Opr_Item_Disc_Percent
+				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, utils.TrxTypeSoDeCentralize, detailentity.ItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, "W", utils.EstWoOrderTypeId)
+
+			} else {
+				// Fetch Opr_Item_Price
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
+
+				// Set markup percentage based on company ID
+				if entity.CompanyId == 139 {
+					markupPercentage = 11.00
+				}
+
+				// // Apply markup amount and percentage
+				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
+
+				// Fetch Opr_Item_Disc_Percent
+				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, utils.TrxTypeSoDeCentralize, detailentity.ItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, "W", utils.EstWoOrderTypeId)
+
+			}
+
+			err = tx.Model(&masteritementities.Item{}).
+				Where("item_code = ?", detailentity.OperationItemCode).
+				Select("atpm_warranty_claim_type_id").Error
+
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch ATPM warranty claim type ID",
+					Err:        err,
+				}
+			}
+
+			// nilai warranty_claim_type_id berdasarkan kondisi
+			if detailentity.LineTypeId != utils.LinetypeOperation && detailentity.LineTypeId != utils.LinetypePackage {
+				warrantyClaimType = entity.ATPMWCFDocNo
+			} else {
+				warrantyClaimType = ""
+			}
+
+			// nilai discountPercent berdasarkan kondisi
+			discountPercent = oprItemPriceDisc
+			if oprItemPriceDisc == 0 {
+				discountPercent = 0
+			}
 
 			// update work order detail
 			err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 				Where("work_order_system_number = ? AND work_order_operation_item_line = ?", workOrderId, idwos).
 				Updates(map[string]interface{}{
-					"operation_item_price":                   0,
-					"operation_item_discount_amount_percent": 0,
-					"operation_item_discount_amount":         0,
-					"operation_item_discount_request_amount": 0,
-					"warranty_claim_type_id":                 "",
+					"operation_item_price":                   oprItemPrice,
+					"operation_item_discount_amount_percent": oprItemPriceDisc,
+					"operation_item_discount_amount":         math.Round(oprItemPrice * (discountPercent / 100)),
+					"operation_item_discount_request_amount": math.Round(oprItemPrice * (discountPercent / 100)),
+					"warranty_claim_type_id":                 warrantyClaimType,
 					"price_list_id":                          "",
 				}).Error
 
@@ -4184,7 +4211,9 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 							CASE WHEN approval_id = "20" AND ISNULL(operation_item_discount_request_amount, 0) > 0
 							THEN ISNULL(operation_item_discount_request_amount, 0)
 							ELSE ISNULL(operation_item_discount_amount, 0)
-							END *
+							END 
+							
+							*
 
 							CASE WHEN LINE_TYPE <> ? THEN ISNULL(frt_quantity, 0)
 							ELSE CASE WHEN ISNULL(supply_quantity, 0) > 0

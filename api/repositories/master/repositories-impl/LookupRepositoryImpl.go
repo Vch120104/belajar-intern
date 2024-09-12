@@ -4,6 +4,7 @@ import (
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -25,9 +26,266 @@ func StartLookupRepositoryImpl() masterrepository.LookupRepository {
 	return &LookupRepositoryImpl{}
 }
 
-func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, linetypeId int, billCode string, oprItemCode int, agreementId int, profitCenterId int, minValue int, companyId int, brandId int, contractServSysno int, whsGroup string, orderType string) (float64, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billCode string, oprItemCode int, agreementId int, profitCenterId int, minValue float64, companyId int, brandId int, contractServSysNo int, whsGroup string, orderTypeId int) (float64, *exceptions.BaseErrorResponse) {
+	var discount float64
+	var discCode string
+	var itemType string
+	var itemTypeServices string
+	var companyCodePrice int
+	var useDiscDecentralize string
+	var hpp float64
+	var outerMargin float64
+	var ccy string
+	var pricelist float64
+	var total float64
+	var agreementCount int64
 
-	return 0, nil
+	discount = 0
+
+	if orderTypeId == 0 {
+		orderTypeId = utils.EstWoOrderTypeId // Default value E
+	}
+
+	// Get Company Code for Price List
+	var commonPricelist bool
+	err := tx.Model(&masteritementities.Item{}).
+		Where("item_id = ?", oprItemCode).
+		Pluck("common_pricelist", &commonPricelist).
+		Error
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get common price list",
+			Err:        err,
+		}
+	}
+
+	if commonPricelist {
+		companyCodePrice = 0
+	} else {
+		companyCodePrice = companyId
+	}
+
+	// Handle BILLCODE_NOCHARGE
+	if billCode == utils.TrxTypeWoNoCharge {
+		return 100, nil
+	}
+
+	// Handle BILLCODE_EXTERNAL OR INSURANCE
+	if billCode == utils.TrxTypeWoExternal ||
+		billCode == utils.TrxTypeWoInsurance ||
+		billCode == utils.TrxTypeSoChannel ||
+		billCode == utils.TrxTypeSoDirect ||
+		billCode == utils.TrxTypeSoGSO ||
+		billCode == utils.TrxTypeWoWarranty ||
+		billCode == utils.TrxTypeWoFreeService {
+
+		if agreementId != 0 {
+			// Retrieve Discount Code
+			err = tx.Model(&masteritementities.Item{}).
+				Where("item_id = ?", oprItemCode).
+				Pluck("discount_code", &discCode).Error
+			if err != nil {
+				return 0, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to get discount code",
+					Err:        err,
+				}
+			}
+
+			// Check Agreement Validity
+			err = tx.Model(&masterentities.Agreement{}).
+				Where("aggreement_id = ? AND profit_center_id = ? AND (GETDATE() BETWEEN agreement_date_from AND agreement_date_to)", agreementId, profitCenterId).
+				Count(&agreementCount).Error
+			if err != nil {
+				return 0, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check agreement validity",
+					Err:        err,
+				}
+			}
+
+			if agreementCount > 0 {
+				if lineTypeId != utils.LinetypeOperation && lineTypeId != utils.LinetypePackage {
+					if discount == 0 {
+						// Check Agreement2
+						err = tx.Model(&masterentities.AgreementDiscountGroupDetail{}).
+							Where("agreement_id = ? AND order_type_id = ? AND agreement_discount_markup_id = ? AND agreement_selection_id = ?", agreementId, orderTypeId, discCode, utils.EstWoDiscSelectionId).
+							Pluck("agreement_discount", &discount).Error
+						if err != nil {
+							return 0, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get agreement discount",
+								Err:        err,
+							}
+						}
+					}
+
+					if discount == 0 {
+						// Check Agreement3
+						err = tx.Model(&masterentities.AgreementItemDetail{}).
+							Where("agreement_id = ? AND line_type_id = ? AND agreement_item_operation_id = ? AND min_value <= ?", agreementId, lineTypeId, oprItemCode, minValue).
+							Order("min_value DESC").
+							Limit(1).
+							Pluck("discount_percent", &discount).Error
+						if err != nil {
+							return 0, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get agreement item detail discount percent",
+								Err:        err,
+							}
+						}
+					}
+
+					if discount == 0 {
+						// Check Agreement1
+						err = tx.Model(&masterentities.AgreementDiscount{}).
+							Where("agreement_id = ? AND line_type_id = ? AND min_value <= ?", agreementId, lineTypeId, minValue).
+							Order("min_value DESC").
+							Limit(1).
+							Pluck("discount_percent", &discount).Error
+						if err != nil {
+							return 0, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get agreement discount",
+								Err:        err,
+							}
+						}
+					}
+				}
+
+				if lineTypeId == utils.LinetypeOperation || lineTypeId == utils.LinetypePackage {
+					if discount == 0 {
+						// Check Agreement3 for Operations
+						err = tx.Model(&masterentities.AgreementItemDetail{}).
+							Where("agreement_id = ? AND line_type_id = ? AND agreement_item_operation_id = ? AND min_value <= ?", agreementId, lineTypeId, oprItemCode, minValue).
+							Order("min_value DESC").
+							Limit(1).
+							Pluck("discount_percent", &discount).Error
+						if err != nil {
+							return 0, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get agreement item detail discount percent",
+								Err:        err,
+							}
+						}
+					}
+
+					if discount == 0 {
+						// Check Agreement1 for Operations
+						err = tx.Model(&masterentities.AgreementDiscount{}).
+							Where("agreement_id = ? AND line_type_id = ? AND min_value <= ?", agreementId, lineTypeId, minValue).
+							Order("min_value DESC").
+							Limit(1).
+							Pluck("discount_percent", &discount).Error
+						if err != nil {
+							return 0, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get agreement discount",
+								Err:        err,
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Handle BILLCODE_DECENTRALIZE
+	if billCode == utils.TrxTypeWoDeCentralize ||
+		billCode == utils.TrxTypeSoDeCentralize {
+
+		if lineTypeId != utils.LinetypeOperation && lineTypeId != utils.LinetypePackage {
+
+			// Get Use Disc Decentralize and Item Type
+			tx.Model(&masteritementities.Item{}).
+				Where("item_id = ?", oprItemCode).
+				Select("use_disc_decentralize, item_type").
+				Row().Scan(&useDiscDecentralize, &itemType)
+
+			if useDiscDecentralize == "N" {
+				discount = 0
+			} else {
+				// Calculate HPP
+				tx.Model(&masterentities.GroupStock{}).
+					Where("period_year = YEAR(GETDATE()) AND period_month = RIGHT('0' + CAST(MONTH(GETDATE()) AS VARCHAR), 2) AND company_code = ? AND item_code = ? AND whs_group = ?", companyId, oprItemCode, whsGroup).
+					Select("CASE ISNULL(price_current, 0) WHEN 0 THEN price_begin ELSE price_current END AS hpp").
+					Row().Scan(&hpp)
+
+				// Get Outer Margin
+				err = tx.Table("dms_microservices_general_dev.dbo.mtr_company_reference").
+					Where("company_code = ?", companyId).
+					Pluck("margin_outer_kpp", &outerMargin).Error
+				if err != nil {
+					return 0, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get outer margin",
+						Err:        err,
+					}
+				}
+
+				// Get Currency
+				err = tx.Table("dms_microservices_general_dev.dbo.mtr_company_reference").
+					Where("company_code = ?", companyId).
+					Pluck("currency_id", &ccy).Error
+				if err != nil {
+					return 0, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get currency",
+						Err:        err,
+					}
+				}
+
+				// Get Price List
+				err = tx.Table("dms_microservices_sales_dev.dbo.mtr_price_list").
+					Where("is_active = 1 AND brand_id = ? AND effective_date <= GETDATE() AND item_code = ? AND currency_id = ? AND company_id = ?", brandId, oprItemCode, ccy, companyCodePrice).
+					Order("effective_date DESC").
+					Limit(1).
+					Pluck("price_list_amount", &pricelist).Error
+
+				if err != nil {
+					return 0, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get price list amount",
+						Err:        err,
+					}
+				}
+
+				total = hpp + (hpp * outerMargin / 100)
+				if pricelist != 0 {
+					discount = 100 - ((total * 100) / pricelist)
+					if discount < 0 {
+						discount = 0
+					}
+				} else {
+					discount = 0
+				}
+			}
+
+			// Check ItemType Services
+			if itemType == itemTypeServices {
+				discount = 0
+			}
+		}
+	}
+
+	// Handle BILLCODE_CONTRACT_SERVICE
+	if billCode == utils.TrxTypeWoContractService {
+		err = tx.Model(&transactionworkshopentities.ContractService{}).
+			Joins("INNER JOIN trx_contract_service_Operation_detail ON trx_contract_service_Operation_detail.contract_service_system_number = trx_contract_service.contract_service_system_number").
+			Where("trx_contract_service.contract_service_system_number = ? AND trx_contract_service_Operation_detail.line_type_id = ? AND trx_contract_service_Operation_detail.operation_id = ?", contractServSysNo, lineTypeId, oprItemCode).
+			Pluck("trx_contract_service_Operation_detail.operation_discount_percent", &discount).Error
+
+		if err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to get contract service operation detail discount percent",
+				Err:        err,
+			}
+		}
+	}
+
+	return discount, nil
 }
 
 func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode string, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
@@ -104,7 +362,6 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 
 	default:
-
 		if err := tx.Model(&masteritementities.PriceList{}).
 			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCode).Count(&priceCount).Error; err != nil {
@@ -120,7 +377,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 
 		// Handling based on bill code
-		if billCode == "N" || billCode == "C" || billCode == "I" || billCode == "SU06" || billCode == "SU05" || billCode == "SU08" {
+		if billCode == utils.TrxTypeWoNoCharge || billCode == utils.TrxTypeWoCentralize || billCode == utils.TrxTypeWoInternal || billCode == utils.TrxTypeSoCentralize || billCode == utils.TrxTypeSoInternal || billCode == utils.TrxTypeSoExport {
 			var periodYear, periodMonth string
 
 			month := effDate.Format("01")
@@ -203,7 +460,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 			}
 
-			if billCode != "I" && billCode != "SU08" && billCode != "SU05" {
+			if billCode != utils.TrxTypeWoInternal && billCode != utils.TrxTypeSoExport && billCode != utils.TrxTypeSoInternal {
 				if err := tx.Model(&masteritementities.Item{}).
 					Where("item_code = ?", oprItemCode).
 					Pluck("use_disc_decentralize", &useDiscDecentralize).Error; err != nil {
@@ -221,19 +478,16 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				if useDiscDecentralize == "N" {
 					if err := tx.Model(&masteritementities.PriceList{}).
 						Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_code = ?",
-							brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCode).
-						Order("effective_date DESC").
-						Limit(1).
+							brandId, effDate, oprItemCode, currencyId, companyId, defaultPriceCode).
 						Pluck("price_list_amount", &price).Error; err != nil {
 						return 0, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
-							Message:    "Failed to get price amount",
+							Message:    "Failed to get default price list amount",
 							Err:        err,
 						}
 					}
 				}
 			}
-
 		} else {
 			if err := tx.Model(&masteritementities.PriceList{}).
 				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
@@ -250,7 +504,8 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 	}
 
-	if linetypeId == utils.LinetypeOperation && billCode == "I" {
+	// Apply markup percentage if applicable
+	if linetypeId == utils.LinetypeOperation && billCode == utils.TrxTypeWoInternal {
 		price += price * markupPercentage / 100
 	}
 
