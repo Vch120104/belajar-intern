@@ -23,11 +23,7 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 	var responses []masterpayloads.ItemOperationGet
 	var entities masterentities.ItemOperation
 
-	query := tx.Select("mtr_item_operation.*,mtr_item.item_name,mtr_operation_code.operation_name").
-		Joins("Join mtr_item on mtr_item.Item_id=mtr_item_operation.item_id").
-		Joins("Join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.operation_model_mapping_id").
-		Joins("Join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id")
-
+	query := tx.Select("mtr_item_operation.*")
 	WhereQuery := utils.ApplyFilter(query, filterCondition)
 
 	err := WhereQuery.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&responses).Error
@@ -44,10 +40,8 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 
 func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) (masterpayloads.ItemOperationGet, *exceptions.BaseErrorResponse) {
 	var responses masterpayloads.ItemOperationGet
-	err := tx.Select("mtr_item_operation.*,mtr_item.item_name,mtr_operation_code.operation_name").Table("mtr_item_operation").
-		Joins("Join mtr_item on mtr_item.Item_id=mtr_item_operation.item_id").
-		Joins("Join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.operation_model_mapping_id").
-		Joins("Join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Where("item_operation_id=?", id).Scan(&responses).Error
+	err := tx.Select("mtr_item_operation.*").Table("mtr_item_operation").
+		Where("item_operation_id=?", id).Scan(&responses).Error
 	if err != nil {
 		return masterpayloads.ItemOperationGet{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -59,9 +53,8 @@ func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) 
 
 func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
 	entities := masterentities.ItemOperation{
-		ItemId:                  req.ItemId,
-		OperationModelMappingId: req.OperationModelMappingId,
-		LineTypeId:              req.LineTypeId,
+		ItemOperationModelMappingId: req.ItemOperationModelMappingId,
+		LineTypeId:                  req.LineTypeId,
 	}
 	err := tx.Save(&entities).Error
 	if err != nil {
@@ -87,9 +80,8 @@ func (r *ItemOperationRepositoryImpl) DeleteItemOperation(tx *gorm.DB, id int) (
 
 func (r *ItemOperationRepositoryImpl) UpdateItemOperation(tx *gorm.DB, id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
 	entities := masterentities.ItemOperation{
-		ItemId:                  req.ItemId,
-		OperationModelMappingId: req.OperationModelMappingId,
-		LineTypeId:              req.LineTypeId,
+		ItemOperationModelMappingId: req.ItemOperationModelMappingId,
+		LineTypeId:                  req.LineTypeId,
 	}
 	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id=?", id).Updates(&entities).Error
 	if err != nil {
