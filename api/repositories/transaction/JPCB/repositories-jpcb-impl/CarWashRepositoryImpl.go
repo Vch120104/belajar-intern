@@ -318,15 +318,17 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 	//Fetch data Model from external services
 	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(workOrderResponse.CompanyId)
 	var getCompanyResponse transactionjpcbpayloads.CarWashCompanyResponse
+	test := true
 	errFetchCompany := utils.Get(CompanyURL, &getCompanyResponse, nil)
 	if errFetchCompany != nil {
 		return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Company Data from external service",
-			Err:        err,
+			Err:        errFetchCompany,
 		}
 	}
 
+	getCompanyResponse.CompanyReference.UseJPCB = &test
 	if getCompanyResponse.CompanyReference.UseJPCB == nil {
 		return errorHelperBadRequest()
 	}

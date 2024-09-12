@@ -316,6 +316,10 @@ func StartRouting(db *gorm.DB) {
 	PurchaseRequestRepository := transactionsparepartrepositoryimpl.NewPurchaseRequestRepositoryImpl()
 	PurchaseRequestService := transactionsparepartserviceimpl.NewPurchaseRequestImpl(PurchaseRequestRepository, db, rdb)
 	PurchaseRequestController := transactionsparepartcontroller.NewPurchaseRequestController(PurchaseRequestService)
+	//Purchase Order
+	PurchaseOrderRepository := transactionsparepartrepositoryimpl.NewPurchaseOrderRepositoryImpl()
+	PurchaseOrderService := transactionsparepartserviceimpl.NewPurchaseOrderService(PurchaseOrderRepository, db, rdb)
+	PurchaseOrderController := transactionsparepartcontroller.NewPurchaseOrderControllerImpl(PurchaseOrderService)
 
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
@@ -439,7 +443,7 @@ func StartRouting(db *gorm.DB) {
 	ServiceWorkshopRouter := ServiceWorkshopRouter(ServiceWorkshopController)
 	ServiceBodyshopRouter := ServiceBodyshopRouter(ServiceBodyshopController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
-
+	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	LookupRouter := LookupRouter(LookupController)
 
 	r := chi.NewRouter()
@@ -464,6 +468,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/bom", BomRouter)
 		r.Mount("/item-import", itemImportRouter)
 		r.Mount("/purchase-price", PurchasePriceRouter)
+
 		r.Mount("/landed-cost", LandedCostMasterRouter)
 		//r.Mount("/import-duty", ImportDutyRouter)
 
@@ -531,11 +536,11 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/supply-slip-return", SupplySlipReturnRouter)
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
+		r.Mount("/purchase-order", PurchaseOrderRouter)
 
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
 	})
-
 	// Route untuk Swagger
 	r.Mount("/aftersales-service/docs", httpSwagger.WrapHandler)
 	// Route untuk Prometheus metrics
