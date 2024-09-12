@@ -23,7 +23,7 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 	var responses []masterpayloads.ItemOperationGet
 	var entities masterentities.ItemOperation
 
-	query := tx.Select("mtr_item_operation.*,mtr_item.Item_name,mtr_operation_code.operation_name").
+	query := tx.Select("mtr_item_operation.*,mtr_item.item_name,mtr_operation_code.operation_name").
 		Joins("Join mtr_item on mtr_item.Item_id=mtr_item_operation.item_id").
 		Joins("Join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.operation_model_mapping_id").
 		Joins("Join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id")
@@ -44,7 +44,7 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 
 func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) (masterpayloads.ItemOperationGet, *exceptions.BaseErrorResponse) {
 	var responses masterpayloads.ItemOperationGet
-	err := tx.Select("mtr_item_operation.*,mtr_item.Item_name,mtr_operation_code.operation_name").Table("mtr_item_operation").
+	err := tx.Select("mtr_item_operation.*,mtr_item.item_name,mtr_operation_code.operation_name").Table("mtr_item_operation").
 		Joins("Join mtr_item on mtr_item.Item_id=mtr_item_operation.item_id").
 		Joins("Join mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.operation_model_mapping_id").
 		Joins("Join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").Where("item_operation_id=?", id).Scan(&responses).Error
@@ -75,7 +75,7 @@ func (r *ItemOperationRepositoryImpl) PostItemOperation(tx *gorm.DB, req masterp
 
 func (r *ItemOperationRepositoryImpl) DeleteItemOperation(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entity masterentities.ItemOperation
-	err := tx.Model(masterentities.ItemOperation{}).Delete(&entity).Where("item_operation_id = ?", id).Error
+	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id = ?", id).Delete(&entity).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -91,7 +91,7 @@ func (r *ItemOperationRepositoryImpl) UpdateItemOperation(tx *gorm.DB, id int, r
 		OperationModelMappingId: req.OperationModelMappingId,
 		LineTypeId:              req.LineTypeId,
 	}
-	err := tx.Model(masterentities.ItemOperation{}).Updates(&entities).Where("item_operation_id=?", id).Error
+	err := tx.Model(masterentities.ItemOperation{}).Where("item_operation_id=?", id).Updates(&entities).Error
 	if err != nil {
 		return masterentities.ItemOperation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
