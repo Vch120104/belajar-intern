@@ -73,7 +73,25 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	}
 
 	paginatedata, totalPages, totalrows := pagination.NewDataFramePaginate(joinedData1, &pages)
-	return paginatedata, totalPages, totalrows, nil
+	var result []map[string]interface{}
+	for _,res  := range paginatedata{
+		data := map[string]interface{}{
+			"effective_date":       res["EffectiveDate"],
+			"is_active":            res["IsActive"],
+			"item_class_code":      res["ItemClassCode"],
+			"item_class_id":        res["ItemClassId"],
+			"item_code":            res["ItemCode"],
+			"item_group_id":        res["ItemgroupId"],
+			"item_id":              res["ItemId"],
+			"item_name":            res["ItemName"],
+			"item_substitute_id":   res["ItemSubstituteId"],
+			"substitute_type_id":   res["SubstituteTypeId"],
+			"substitute_type_name": res["SubstituteTypeName"],
+		}
+		
+		result = append(result, data)
+	}
+	return result, totalPages, totalrows, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
