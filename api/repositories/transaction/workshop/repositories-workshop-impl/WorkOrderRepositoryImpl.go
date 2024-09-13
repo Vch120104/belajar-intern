@@ -3,6 +3,8 @@ package transactionworkshoprepositoryimpl
 ////  NOTES  ////
 import (
 	"after-sales/api/config"
+	masterentities "after-sales/api/entities/master"
+	masteritementities "after-sales/api/entities/master/item"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -1579,9 +1581,9 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 		}
 
 		if campaignId > 0 {
-			var campaignMaster mastercampaignmasterentities.CampaignMaster
+			var campaignMaster masterentities.CampaignMaster
 
-			if err := tx.Model(&mastercampaignmasterentities.CampaignMaster{}).
+			if err := tx.Model(&masterentities.CampaignMaster{}).
 				Where("campaign_id = ? AND ? BETWEEN campaign_period_from AND campaign_period_to", campaignId, currentDate).
 				First(&campaignMaster).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
