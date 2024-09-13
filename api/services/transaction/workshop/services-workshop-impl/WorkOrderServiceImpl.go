@@ -391,15 +391,8 @@ func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppay
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.AddRequest(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderRequestDescription{}, err
-	}
-
-	cacheKeyPattern := "all_request_*"
-	ctx := context.Background()
-	if err := s.RedisClient.Del(ctx, s.RedisClient.Keys(ctx, cacheKeyPattern).Val()...).Err(); err != nil {
-		fmt.Println("Failed to delete cache for pattern", cacheKeyPattern, ":", err)
 	}
 
 	return save, nil
@@ -479,12 +472,6 @@ func (s *WorkOrderServiceImpl) UpdateVehicleService(idwosn int, idwos int, reque
 		return transactionworkshopentities.WorkOrderServiceVehicle{}, err
 	}
 
-	cacheKey := utils.GenerateCacheKeyIds("vehicle_service", idwosn, idwos)
-	ctx := context.Background()
-	if err := s.RedisClient.Del(ctx, cacheKey).Err(); err != nil {
-		fmt.Println("Failed to delete cache for key", cacheKey, ":", err)
-	}
-
 	return update, nil
 }
 
@@ -492,15 +479,8 @@ func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionwork
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.AddVehicleService(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderServiceVehicle{}, err
-	}
-
-	cacheKeyPattern := "vehicle_service_*"
-	ctx := context.Background()
-	if err := s.RedisClient.Del(ctx, s.RedisClient.Keys(ctx, cacheKeyPattern).Val()...).Err(); err != nil {
-		fmt.Println("Failed to delete cache for pattern", cacheKeyPattern, ":", err)
 	}
 
 	return save, nil
@@ -591,15 +571,8 @@ func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(idwosn int, idwos int, requ
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	update, err := s.structWorkOrderRepo.UpdateDetailWorkOrder(tx, idwosn, idwos, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderDetail{}, err
-	}
-
-	cacheKey := utils.GenerateCacheKeyIds("detail_work_orders_id", idwosn, idwos)
-	ctx := context.Background()
-	if err := s.RedisClient.Del(ctx, cacheKey).Err(); err != nil {
-		fmt.Println("Failed to delete cache for key", cacheKey, ":", err)
 	}
 
 	return update, nil
@@ -609,15 +582,8 @@ func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionwor
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	submit, err := s.structWorkOrderRepo.AddDetailWorkOrder(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderDetail{}, err
-	}
-
-	cacheKeyPattern := "detail_work_orders_*"
-	ctx := context.Background()
-	if err := s.RedisClient.Del(ctx, s.RedisClient.Keys(ctx, cacheKeyPattern).Val()...).Err(); err != nil {
-		fmt.Println("Failed to delete cache for pattern", cacheKeyPattern, ":", err)
 	}
 
 	return submit, nil
@@ -649,13 +615,13 @@ func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondi
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderBookingResponse, *exceptions.BaseErrorResponse) {
 	cacheKey := utils.GenerateCacheKeyIds("work_orders_booking", workOrderId, id)
 
 	ctx := context.Background()
 	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
 	if err == nil {
-		var result transactionworkshoppayloads.WorkOrderBookingRequest
+		var result transactionworkshoppayloads.WorkOrderBookingResponse
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
 			return result, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -664,7 +630,7 @@ func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transact
 		}
 		return result, nil
 	} else if err != redis.Nil {
-		return transactionworkshoppayloads.WorkOrderBookingRequest{}, &exceptions.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderBookingResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -673,7 +639,7 @@ func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transact
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	result, repoErr := s.structWorkOrderRepo.GetBookingById(tx, workOrderId, id)
+	result, repoErr := s.structWorkOrderRepo.GetBookingById(tx, workOrderId, id, pages)
 	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return result, repoErr
@@ -689,18 +655,12 @@ func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int) (transact
 	return result, nil
 }
 
-func (s *WorkOrderServiceImpl) NewBooking(request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) NewBooking(request transactionworkshoppayloads.WorkOrderBookingRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.NewBooking(tx, request)
 	if err != nil {
-		return false, err
-	}
-
-	cacheKeyPattern := "all_booking_*"
-	ctx := context.Background()
-	if err := s.RedisClient.Del(ctx, s.RedisClient.Keys(ctx, cacheKeyPattern).Val()...).Err(); err != nil {
-		fmt.Println("Failed to delete cache for pattern", cacheKeyPattern, ":", err)
+		return transactionworkshopentities.WorkOrder{}, err
 	}
 
 	return save, nil
@@ -724,41 +684,6 @@ func (s *WorkOrderServiceImpl) SaveBooking(workOrderId int, id int, request tran
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) SubmitBooking(id int) (bool, string, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	submitbooking, newDocumentNumber, err := s.structWorkOrderRepo.SubmitBooking(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-
-	if err != nil {
-		return false, "", err
-	}
-	return submitbooking, newDocumentNumber, nil
-}
-
-func (s *WorkOrderServiceImpl) VoidBooking(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	delete, err := s.structWorkOrderRepo.VoidBooking(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) CloseBooking(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	close, err := s.structWorkOrderRepo.CloseBooking(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return close, nil
-}
-
 func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
@@ -774,23 +699,23 @@ func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCo
 
 }
 
-func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderAffiliateResponse, *exceptions.BaseErrorResponse) {
 	ctx := context.Background()
 	idString := strconv.Itoa(id)
 	cacheKey := utils.GenerateCacheKeyIds("work_orders_affiliate", idString)
 
 	cachedData, err := s.RedisClient.Get(ctx, cacheKey).Result()
 	if err == nil {
-		var result transactionworkshoppayloads.WorkOrderAffiliatedRequest
+		var result transactionworkshoppayloads.WorkOrderAffiliateResponse
 		if err := json.Unmarshal([]byte(cachedData), &result); err != nil {
-			return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{
+			return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
 		return result, nil
 	} else if err != redis.Nil {
-		return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -799,7 +724,7 @@ func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int) (trans
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	result, repoErr := s.structWorkOrderRepo.GetAffiliatedById(tx, workOrderId, id)
+	result, repoErr := s.structWorkOrderRepo.GetAffiliatedById(tx, workOrderId, id, pages)
 	defer helper.CommitOrRollback(tx, repoErr)
 	if repoErr != nil {
 		return result, repoErr
@@ -807,7 +732,7 @@ func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int) (trans
 
 	jsonData, err := json.Marshal(result)
 	if err != nil {
-		return transactionworkshoppayloads.WorkOrderAffiliatedRequest{}, &exceptions.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -852,30 +777,6 @@ func (s *WorkOrderServiceImpl) SaveAffiliated(workOrderId int, id int, request t
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) VoidAffiliated(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	delete, err := s.structWorkOrderRepo.VoidAffiliated(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) CloseAffiliated(workOrderId int, id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	close, err := s.structWorkOrderRepo.CloseAffiliated(tx, workOrderId, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-
-	return close, nil
-}
-
 func (s *WorkOrderServiceImpl) DeleteRequestMultiId(workOrderId int, id []int) (bool, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
@@ -913,4 +814,39 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrderMultiId(workOrderId int, id 
 	}
 
 	return deletemultiid, nil
+}
+
+func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	change, err := s.structWorkOrderRepo.ChangeBillTo(tx, workOrderId, request)
+	if err != nil {
+		return false, err
+	}
+
+	return change, nil
+}
+
+func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	change, err := s.structWorkOrderRepo.ChangePhoneNo(tx, workOrderId, request)
+	if err != nil {
+		return false, err
+	}
+
+	return change, nil
+}
+
+func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	confirm, err := s.structWorkOrderRepo.ConfirmPrice(tx, workOrderId, idwos)
+	if err != nil {
+		return false, err
+	}
+
+	return confirm, nil
 }

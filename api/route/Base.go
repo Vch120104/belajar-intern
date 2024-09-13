@@ -1058,7 +1058,7 @@ func PackageMasterRouter(
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+	router.Post("/workshop", PackageMasterController.SavePackageMasterDetail)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
 	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
@@ -1106,11 +1106,11 @@ func CampaignMasterRouter(
 
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
-	router.Get("/detail/by-id/{campaign_detail_id}/{line_type_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
 	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
-	router.Patch("/detail/deactivate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
-	router.Patch("/detail/activate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
+	router.Patch("/detail/deactivate/{campaign_detail_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
+	router.Patch("/detail/activate/{campaign_detail_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
 	router.Put("/detail/update/{campaign_detail_id}", campaignmastercontroller.UpdateCampaignMasterDetail)
 
 	//from package master
@@ -1222,17 +1222,12 @@ func WorkOrderRouter(
 	router.Get("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.GetBookingById)
 	router.Post("/booking", WorkOrderController.NewBooking)
 	router.Put("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.SaveBooking)
-	router.Delete("/booking/void/{work_order_system_number}/{booking_system_number}", WorkOrderController.VoidBooking)
-	router.Post("/booking/submit/{work_order_system_number}", WorkOrderController.SubmitBooking)
-	router.Patch("/booking/close/{work_order_system_number}/{booking_system_number}", WorkOrderController.CloseBooking)
 
 	//add trx affiliate
 	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
-	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
+	router.Get("/affiliated/{work_order_system_number}/{service_request_system_number}", WorkOrderController.GetAffiliatedById)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
-	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
-	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
 
 	//add post trx sub
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
@@ -1277,6 +1272,9 @@ func WorkOrderRouter(
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 
+	router.Put("/change-bill-to/{work_order_system_number}", WorkOrderController.ChangeBillTo)
+	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
+	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)
 	return router
 }
 
@@ -1342,7 +1340,7 @@ func WorkOrderAllocationRouter(
 	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
 	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
-	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 
@@ -1557,9 +1555,17 @@ func LookupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
+	router.Get("/item-opr-code/{linetype_id}/{code}", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_id}/{id}", LookupController.ItemOprCodeByID)
 	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
+	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
+	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
+	router.Get("/new-bill-to", LookupController.CustomerByTypeAndAddress)
+	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
+	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
+	router.Get("/work-order-service", LookupController.WorkOrderService)
 
 	return router
 }

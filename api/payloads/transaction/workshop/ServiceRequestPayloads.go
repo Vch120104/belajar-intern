@@ -214,7 +214,7 @@ type UomItemServiceRequestDetail struct {
 }
 
 type CompanyResponse struct {
-	CompanyId   string `json:"company_id"`
+	CompanyId   int    `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	BizCategory string `json:"biz_category"`
 }

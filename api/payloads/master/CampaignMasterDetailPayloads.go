@@ -35,6 +35,7 @@ type CampaignMasterDetailItemPayloads struct {
 	PackageCode     int     `json:"package_code"`
 	PackageId       int     `json:"package_id"`
 	LineTypeId      int     `json:"line_type_id"`
+	ItemOperationId int     `json:"item_operation_id"`
 	ItemCode        string  `json:"item_code"`
 	ItemName        string  `json:"item_name"`
 	Quantity        float64 `json:"quantity"`

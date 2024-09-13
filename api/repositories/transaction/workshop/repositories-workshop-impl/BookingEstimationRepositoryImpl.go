@@ -3,7 +3,6 @@ package transactionworkshoprepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	masterpackagemasterentity "after-sales/api/entities/master/package-master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -13,11 +12,12 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -705,8 +705,8 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 }
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var modeloperation masterpackagemasterentity.PackageMasterDetailOperation
-	var modelitem masterpackagemasterentity.PackageMasterDetailItem
+	var modeloperation masterentities.PackageMasterDetail
+	var modelitem masterentities.PackageMasterDetail
 	var operationpayloads []masterpayloads.CampaignMasterDetailOperationPayloads
 	var itempayloads []masterpayloads.PackageMasterDetailItem
 	var payloads []map[string]interface{}
@@ -720,7 +720,7 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 	for _, item := range itempayloads {
 		entity := transactionworkshopentities.BookingEstimationItemDetail{
 			EstimationSystemNumber: id,
-			ItemID:                 item.ItemId,
+			ItemID:                 item.ItemOperationId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
 			RequestDescription:     item.ItemName,
@@ -733,15 +733,6 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 				Err:        err,
 			}
 		}
-		payload := map[string]interface{}{
-			"item_id":      item.ItemId,
-			"line_type_id": item.LineTypeId,
-			"package_id":   item.PackageId,
-			"item_name":    item.ItemName,
-			"frt_quantity": item.FrtQuantity,
-			"item_price":   float64(item.PackageId),
-		}
-		payloads = append(payloads, payload)
 	}
 	err3 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
 	if err3 != nil {
@@ -1221,7 +1212,7 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 	return id, nil
 }
 
-func (r *BookingEstimationImpl) PutBookingEstimationCalculationPutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int)([]map[string]interface{},*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) PutBookingEstimationCalculationPutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	const (
 		LineTypePackage            = 0 // Package Bodyshop
 		LineTypeOperation          = 1 // Operation

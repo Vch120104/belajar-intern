@@ -17,6 +17,7 @@ type PackageMaster struct {
 	PackagePrice   float64 `gorm:"column:package_price;not null" json:"package_price"`
 	TaxTypeId      int     `gorm:"column:tax_type_id;not null;size:30" json:"tax_type_id"`
 	PackageRemark  string  `gorm:"column:package_remark;size:256" json:"package_remark"`
+	PackageMasterDetail *PackageMasterDetail ``
 }
 
 func (*PackageMaster) TableName() string {

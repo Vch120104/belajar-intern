@@ -21,7 +21,7 @@ type PackageMasterController interface {
 	GetByIdPackageMaster(writer http.ResponseWriter, request *http.Request)
 	GetByIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
 	SavepackageMaster(writer http.ResponseWriter, request *http.Request)
-	SavePackageMasterDetailWorkshop(writer http.ResponseWriter, request *http.Request)
+	SavePackageMasterDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPackageMaster(writer http.ResponseWriter, request *http.Request)
 	ActivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
 	DeactivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
@@ -147,24 +147,17 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
-func (r *PackageMasterControllerImpl) SavePackageMasterDetailWorkshop(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masterpayloads.PackageMasterDetailWorkshop
+func (r *PackageMasterControllerImpl) SavePackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masterpayloads.PackageMasterDetail
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message string
 
-	create, err := r.PackageMasterService.PostPackageMasterDetailWorkshop(formRequest)
+	create, err := r.PackageMasterService.PostPackageMasterDetail(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	if formRequest.PackageDetailItemId == 0 {
-		message = "Create Data Successfully!"
-	} else {
-		message = "Update Data Successfully!"
-	}
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "create data successfully", http.StatusOK)
 }
 
 func (r *PackageMasterControllerImpl) ChangeStatusPackageMaster(writer http.ResponseWriter, request *http.Request) {
@@ -183,12 +176,8 @@ func (r *PackageMasterControllerImpl) ChangeStatusPackageMaster(writer http.Resp
 
 func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	PackageDetailId := chi.URLParam(request, "package_detail_id")
-	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	response, err := r.PackageMasterService.ActivateMultiIdPackageMasterDetail(PackageDetailId, PackageMasterId)
+
+	response, err := r.PackageMasterService.ActivateMultiIdPackageMasterDetail(PackageDetailId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -200,13 +189,8 @@ func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer 
 
 func (r *PackageMasterControllerImpl) DeactivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	PackageDetailId := chi.URLParam(request, "package_detail_id")
-	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
-
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	response, err := r.PackageMasterService.DeactivateMultiIdPackageMasterDetail(PackageDetailId, PackageMasterId)
+	
+	response, err := r.PackageMasterService.DeactivateMultiIdPackageMasterDetail(PackageDetailId)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
