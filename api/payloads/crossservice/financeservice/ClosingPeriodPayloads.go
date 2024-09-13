@@ -1,4 +1,4 @@
-package masterpayloads
+package financeservice
 
 type OpenPeriodPayloadResponse struct {
 	PeriodYear        string `json:"period_year"`

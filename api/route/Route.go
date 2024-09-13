@@ -270,6 +270,10 @@ func StartRouting(db *gorm.DB) {
 	LookupRepository := masterrepositoryimpl.StartLookupRepositoryImpl()
 	LookupService := masterserviceimpl.StartLookupService(LookupRepository, db, rdb)
 	LookupController := mastercontroller.NewLookupController(LookupService)
+	//Item Cycle
+	ItemCycleRepository := masterrepositoryimpl.NewItemCycleRepositoryImpl()
+	ItemCycleService := masterserviceimpl.NewItemCycleServiceImpl(ItemCycleRepository, db, rdb)
+	ItemCycleController := mastercontroller.NewItemCycleController(ItemCycleService)
 
 	/* Transaction */
 	//Supply Slip
@@ -422,6 +426,7 @@ func StartRouting(db *gorm.DB) {
 	PackageMasterRouter := PackageMasterRouter(PackageMasterController)
 	LocationStockRouter := LocationStockRouter(LocationStockController)
 	ItemOperationRouter := ItemOperationRouter(ItemOperationController)
+	ItemCycleRouter := ItemCycleRouter(ItemCycleController)
 	/* Transaction */
 	SupplySlipRouter := SupplySlipRouter(SupplySlipController)
 	SupplySlipReturnRouter := SupplySlipReturnRouter(SupplySlipReturnController)
@@ -506,7 +511,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/deduction", DeductionRouter)
 		r.Mount("/location-stock", LocationStockRouter)
 		r.Mount("/item-operation", ItemOperationRouter)
-
+		r.Mount("/item-cycle", ItemCycleRouter)
 		/* Transaction */
 
 		/* Transaction JPCB */

@@ -2,16 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-	// masterentities "after-sales/api/entities/master"
-	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
-
-	// masteroperationentities "after-sales/api/entities/master/operation"
-	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
-
-	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
-	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
-	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
-
 	"time"
 
 	"fmt"
@@ -64,8 +54,6 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-	
-	
 	//&masteroperationentities.OperationModelMapping{},
 	//&masteroperationentities.OperationLevel{},
 	//&masteroperationentities.OperationFrt{},
