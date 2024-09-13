@@ -460,7 +460,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 			}
 		}
 		defer rows.Close()
-		LineTypeUrl := config.EnvConfigs.GeneralServiceUrl+"line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
+		LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(PayloadsOperationBodyshop.LineTypeId)
 
 		errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -496,7 +496,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				}
 			}
 			defer rows.Close()
-			LineTypeUrl := config.EnvConfigs.GeneralServiceUrl+"line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
+			LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(PayloadsOperation.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
@@ -532,7 +532,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 				}
 			}
 			defer result.Close()
-			LineTypeUrl := config.EnvConfigs.GeneralServiceUrl+"line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
+			LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(PayloadsItem.LineTypeId)
 
 			errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
 
