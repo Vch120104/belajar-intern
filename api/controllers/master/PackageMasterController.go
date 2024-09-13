@@ -109,17 +109,7 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMasterDetail(writer http.Res
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
-	PackageMasterId, errA := strconv.Atoi(chi.URLParam(request, "package_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	LineTypeId, errA := strconv.Atoi(chi.URLParam(request, "line_type_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	result, err := r.PackageMasterService.GetByIdPackageMasterDetail(PackageMasterDetailId, PackageMasterId, LineTypeId)
+	result, err := r.PackageMasterService.GetByIdPackageMasterDetail(PackageMasterDetailId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -150,8 +140,9 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 func (r *PackageMasterControllerImpl) SavePackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.PackageMasterDetail
 	helper.ReadFromRequestBody(request, &formRequest)
+	packageId,_ := strconv.Atoi(chi.URLParam(request,"package_id"))
 
-	create, err := r.PackageMasterService.PostPackageMasterDetail(formRequest)
+	create, err := r.PackageMasterService.PostPackageMasterDetail(formRequest,packageId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

@@ -16,7 +16,7 @@ type PackageMasterRepository interface {
 	GetByIdPackageMaster(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByIdPackageMasterDetail(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	PostpackageMaster(*gorm.DB, masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
-	PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse)
+	PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(*gorm.DB, int) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
 	DeactivateMultiIdPackageMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	ActivateMultiIdPackageMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)

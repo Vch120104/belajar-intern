@@ -705,26 +705,22 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 }
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var modeloperation masterentities.PackageMasterDetail
-	var modelitem masterentities.PackageMasterDetail
-	var operationpayloads []masterpayloads.CampaignMasterDetailOperationPayloads
-	var itempayloads []masterpayloads.PackageMasterDetailItem
+	var model masterentities.PackageMasterDetail
+	var operationpayloads []masterpayloads.CampaignMasterDetailGetPayloads
 	var payloads []map[string]interface{}
-	err2 := tx.Model(&modelitem).Where("package_id = ?", packId).Scan(&itempayloads).Error
+	err2 := tx.Model(&model).Where("package_id = ?", packId).Scan(&operationpayloads).Error
 	if err2 != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err2,
 		}
 	}
-	for _, item := range itempayloads {
+	for _, item := range operationpayloads {
 		entity := transactionworkshopentities.BookingEstimationItemDetail{
 			EstimationSystemNumber: id,
 			ItemID:                 item.ItemOperationId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
-			RequestDescription:     item.ItemName,
-			FRTQuantity:            item.FrtQuantity,
 			ItemPrice:              float64(item.PackageId),
 		}
 		if err := tx.Save(&entity).Error; err != nil {
@@ -733,8 +729,15 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 				Err:        err,
 			}
 		}
+		payload := map[string]interface{}{
+			"item_id":      item.ItemOperationId,
+			"line_type_id": item.LineTypeId,
+			"package_id":   item.PackageId,
+			"item_price":   float64(item.PackageId),
+		}
+		payloads = append(payloads, payload)
 	}
-	err3 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
+	err3 := tx.Model(&model).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
 	if err3 != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
@@ -744,10 +747,9 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 	for _, operation := range operationpayloads {
 		entity := transactionworkshopentities.BookingEstimationOperationDetail{
 			EstimationSystemNumber: id,
-			OperationId:            operation.OperationId,
+			OperationId:            operation.ItemOperationId,
 			LineTypeID:             operation.LineTypeId,
 			PackageID:              operation.PackageId,
-			RequestDescription:     operation.OperationName,
 			FRTQuantity:            operation.Quantity,
 			OperationPrice:         operation.Price,
 		}
@@ -758,10 +760,9 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 			}
 		}
 		payload := map[string]interface{}{
-			"operation_id":    operation.OperationId,
+			"operation_id":    operation.ItemOperationId,
 			"line_type_id":    operation.LineTypeId,
 			"package_id":      operation.PackageId,
-			"operation_name":  operation.OperationName,
 			"frt_quantity":    operation.Quantity,
 			"operation_price": operation.Price,
 		}

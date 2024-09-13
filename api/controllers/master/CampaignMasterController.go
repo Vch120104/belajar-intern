@@ -59,16 +59,14 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	campaignId,_:=strconv.Atoi(chi.URLParam(request,"campaign_id"))
 
-	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest)
+	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest,campaignId)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
-	message = "Create Data Successfully!"
-
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully!", http.StatusOK)
 }
 
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(writer http.ResponseWriter, request *http.Request) {

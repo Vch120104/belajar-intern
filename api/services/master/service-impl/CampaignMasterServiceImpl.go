@@ -35,12 +35,12 @@ func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.Campai
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads,id int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req)
+	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req,id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return 0, err
+		return masterentities.CampaignMasterDetail{}, err
 	}
 	return result, nil
 }

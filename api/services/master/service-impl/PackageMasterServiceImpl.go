@@ -55,7 +55,7 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int, idhead int, LineTypeId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
 	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id)
 	defer helper.CommitOrRollback(tx, err)
@@ -75,9 +75,9 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.PackageMasterDetail) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.PackageMasterDetail,id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	result, err := s.PackageMasterRepo.PostPackageMasterDetail(tx, req)
+	result, err := s.PackageMasterRepo.PostPackageMasterDetail(tx, req,id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.PackageMasterDetail{}, err
