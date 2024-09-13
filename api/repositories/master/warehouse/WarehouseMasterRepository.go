@@ -25,4 +25,5 @@ type WarehouseMasterRepository interface {
 	GetAuthorizeUser(tx *gorm.DB,pages pagination.Pagination, id int)(pagination.Pagination,*exceptions.BaseErrorResponse)
 	PostAuthorizeUser(tx *gorm.DB,req masterwarehousepayloads.WarehouseAuthorize)(masterwarehousepayloads.WarehouseAuthorize,*exceptions.BaseErrorResponse)
 	DeleteMultiIdAuthorizeUser(tx *gorm.DB, id string)(bool,*exceptions.BaseErrorResponse)
+	InTransitWarehouseCodeDropdown(*gorm.DB, int, int)([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse,*exceptions.BaseErrorResponse)
 }

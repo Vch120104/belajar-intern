@@ -58,6 +58,17 @@ func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(co
 	return isExist
 }
 
+func(s *WarehouseMasterServiceImpl)InTransitWarehouseCodeDropdown(companyID int, warehouseGroupID int)([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	get, err := s.warehouseMasterRepo.InTransitWarehouseCodeDropdown(tx, companyID, warehouseGroupID)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}
+
 // DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
 func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
