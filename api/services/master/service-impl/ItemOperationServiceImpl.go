@@ -3,6 +3,7 @@ package masterserviceimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
+	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
@@ -30,6 +31,7 @@ func StartItemOperationService(ItemOperationRepo masterrepository.ItemOperationR
 func (s *ItemOperationServiceImpl) GetAllItemOperation(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemOperationRepository.GetAllItemOperation(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return pages, err
 	}
@@ -39,6 +41,7 @@ func (s *ItemOperationServiceImpl) GetAllItemOperation(filterCondition []utils.F
 func (s *ItemOperationServiceImpl) GetByIdItemOperation(id int) (masterpayloads.ItemOperationGet, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemOperationRepository.GetByIdItemOperation(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterpayloads.ItemOperationGet{}, err
 	}
@@ -48,6 +51,7 @@ func (s *ItemOperationServiceImpl) GetByIdItemOperation(id int) (masterpayloads.
 func (s *ItemOperationServiceImpl) PostItemOperation(req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemOperationRepository.PostItemOperation(tx, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.ItemOperation{}, err
 	}
@@ -57,6 +61,7 @@ func (s *ItemOperationServiceImpl) PostItemOperation(req masterpayloads.ItemOper
 func (s *ItemOperationServiceImpl) DeleteItemOperation(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemOperationRepository.DeleteItemOperation(tx, id)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -66,6 +71,7 @@ func (s *ItemOperationServiceImpl) DeleteItemOperation(id int) (bool, *exception
 func (s *ItemOperationServiceImpl) UpdateItemOperation(id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemOperationRepository.UpdateItemOperation(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.ItemOperation{}, err
 	}

@@ -10,7 +10,7 @@ type ItemOperationGet struct {
 }
 
 type ItemOperationPost struct {
-	ItemId                  int `json:"item_id"`
-	OperationModelMappingId int `json:"operation_model_mapping_id"`
-	LineTypeId              int `json:"line_type_id"`
+	ItemId                      int `json:"item_id"`
+	ItemOperationModelMappingId int `json:"item_operation_model_mapping_id"`
+	LineTypeId                  int `json:"line_type_id"`
 }
