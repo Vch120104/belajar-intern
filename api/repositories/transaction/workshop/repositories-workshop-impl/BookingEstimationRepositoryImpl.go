@@ -3,7 +3,6 @@ package transactionworkshoprepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	masterpackagemasterentity "after-sales/api/entities/master/package-master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -706,8 +705,8 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 }
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var modeloperation masterpackagemasterentity.PackageMasterDetailOperation
-	var modelitem masterpackagemasterentity.PackageMasterDetailItem
+	var modeloperation masterentities.PackageMasterDetail
+	var modelitem masterentities.PackageMasterDetail
 	var operationpayloads []masterpayloads.CampaignMasterDetailOperationPayloads
 	var itempayloads []masterpayloads.PackageMasterDetailItem
 	var payloads []map[string]interface{}
