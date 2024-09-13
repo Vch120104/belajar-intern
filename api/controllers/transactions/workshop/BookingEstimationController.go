@@ -39,12 +39,13 @@ type BookingEstimationController interface {
 	AddPackage(writer http.ResponseWriter, request *http.Request)
 	AddContractService(writer http.ResponseWriter, request *http.Request)
 	InputDiscount(writer http.ResponseWriter, request *http.Request)
+	CopyFromHistory(writer http.ResponseWriter, request *http.Request)
 	AddFieldAction(writer http.ResponseWriter, request *http.Request)
 	GetByIdBookEstimDetail(writer http.ResponseWriter, request *http.Request)
 	PostBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request)
-	PutBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request)
 	SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request)
+	SaveBookingEstimationAllocation(Writer http.ResponseWriter, request *http.Request)
 }
 
 func NewBookingEstimationController(BookingEstimationService transactionworkshopservice.BookingEstimationService) BookingEstimationController {
@@ -71,7 +72,14 @@ func (r *BookingEstimationControllerImpl) GetAll(writer http.ResponseWriter, req
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"trx_work_order.brand_id": queryValues.Get("brand_id"),
+		"brand_id": queryValues.Get("brand_id"),
+		"model_id": queryValues.Get("model_id"),
+		"booking_system_number":queryValues.Get("booking_system_number"),
+		"estimation_system_number": queryValues.Get("estimation_system_number"),
+		"vehicle_id":queryValues.Get("vehicle_id"),
+		"document_status_id":queryValues.Get("document_status_id"),
+		"contract_person_name":queryValues.Get("contract_person_name"),
+		
 	}
 
 	paginate := pagination.Pagination{
@@ -175,14 +183,15 @@ func (r *BookingEstimationControllerImpl) Save(writer http.ResponseWriter, reque
 	}
 
 	// Panggil fungsi Save dari layanan untuk menyimpan data booking estimation
-	if _, err := r.bookingEstimationService.Save(db, bookingEstimationRequest); err != nil {
+	created, err := r.bookingEstimationService.Save(db, bookingEstimationRequest)
+	if err != nil {
 		// Tangani kesalahan dari layanan
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
 	// Kirim respons ke klien sesuai hasil penyimpanan
-	payloads.NewHandleSuccess(writer, nil, "Work order saved successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, created, "Work order saved successfully", http.StatusOK)
 }
 
 // Submit submits a new booking estimation
@@ -210,6 +219,13 @@ func (r *BookingEstimationControllerImpl) Submit(writer http.ResponseWriter, req
 // @Router /v1/booking-estimation/{booking_estimation_id} [delete]
 func (r *BookingEstimationControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
 	// Cancel booking estimation
+	batchSystemNumber,_ := strconv.Atoi(chi.URLParam(request,"id"))
+	delete,err := r.bookingEstimationService.Void(batchSystemNumber)
+	if err != nil{
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, delete, "Get Data Successfully!", http.StatusOK)
 }
 
 // CloseOrder closes a booking estimation
@@ -230,7 +246,7 @@ func (r *BookingEstimationControllerImpl) CloseOrder(writer http.ResponseWriter,
 func (r *BookingEstimationControllerImpl) SaveBookEstimReq(writer http.ResponseWriter, request *http.Request){
 	var formrequest transactionworkshoppayloads.BookEstimRemarkRequest
 	helper.ReadFromRequestBody(request,&formrequest)
-	BookingEstimationId,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_id"))
+	BookingEstimationId,_ := strconv.Atoi(chi.URLParam(request,"booking_system_number"))
 	create,err := r.bookingEstimationService.SaveBookEstimReq(formrequest,BookingEstimationId)
 	if err != nil{
 		exceptions.NewNotFoundException(writer, request, err)
@@ -242,7 +258,7 @@ func (r *BookingEstimationControllerImpl) SaveBookEstimReq(writer http.ResponseW
 func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.ResponseWriter, request *http.Request){
 	var formrequest transactionworkshoppayloads.BookEstimRemarkRequest
 	helper.ReadFromRequestBody(request,&formrequest)
-	BookingEstimationRequestId,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_request_id"))
+	BookingEstimationRequestId,_ := strconv.Atoi(chi.URLParam(request,"booking_system_number"))
 	update,err := r.bookingEstimationService.UpdateBookEstimReq(formrequest,BookingEstimationRequestId)
 	if err != nil{
 		exceptions.NewNotFoundException(writer, request, err)
@@ -252,7 +268,7 @@ func (r *BookingEstimationControllerImpl) UpdateBookEstimReq(writer http.Respons
 }
 
 func (r *BookingEstimationControllerImpl)GetByIdBookEstimReq(writer http.ResponseWriter, request *http.Request){
-	bookingestimationrequestid,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_request_id"))
+	bookingestimationrequestid,_ := strconv.Atoi(chi.URLParam(request,"booking_system_number"))
 	get,err:= r.bookingEstimationService.GetByIdBookEstimReq(bookingestimationrequestid)
 	if err != nil{
 		exceptions.NewNotFoundException(writer, request, err)
@@ -269,7 +285,7 @@ func (r *BookingEstimationControllerImpl) GetAllBookEstimReq(writer http.Respons
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
 	}
-	bookestimid,_ := strconv.Atoi(chi.URLParam(request,"book_estim_id"))
+	bookestimid,_ := strconv.Atoi(chi.URLParam(request,"booking_system_number"))
 	get,err := r.bookingEstimationService.GetAllBookEstimReq(&pagination,bookestimid)
 	if err != nil{
 		exceptions.NewNotFoundException(writer, request, err)
@@ -368,19 +384,6 @@ func (r *BookingEstimationControllerImpl) PostBookingEstimationCalculation(write
 	payloads.NewHandleSuccess(writer, create, "Get Data Successfully!", http.StatusOK)
 }
 
-func (r *BookingEstimationControllerImpl) PutBookingEstimationCalculation(writer http.ResponseWriter, request *http.Request){
-	var formrequest transactionworkshoppayloads.BookingEstimationCalculationPayloads
-	bookingestiomationid,_ := strconv.Atoi(chi.URLParam(request,"booking_estimation_id"))
-	LineTypeId,_:=strconv.Atoi(chi.URLParam(request,"line_type_id"))
-	helper.ReadFromRequestBody(request,&formrequest)
-	update,err := r.bookingEstimationService.PutBookingEstimationCalculation(bookingestiomationid,LineTypeId,formrequest)
-	if err != nil{
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-	payloads.NewHandleSuccess(writer, update, "Get Data Successfully!", http.StatusOK)
-}
-
 func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request){
 	pdisystemnumber,_ := strconv.Atoi(chi.URLParam(request,"pdi_system_number"))
 	save,err:= r.bookingEstimationService.SaveBookingEstimationFromPDI(pdisystemnumber)
@@ -399,4 +402,26 @@ func (r *BookingEstimationControllerImpl)SaveBookingEstimationFromServiceRequest
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
+}
+
+func (r *BookingEstimationControllerImpl)CopyFromHistory(writer http.ResponseWriter, request *http.Request){
+	EstimationSystemNumber,_ := strconv.Atoi(chi.URLParam(request,"estimation_system_number"))
+	save,err := r.bookingEstimationService.CopyFromHistory(EstimationSystemNumber)
+	if err != nil{
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
+}
+
+func (r *BookingEstimationControllerImpl)SaveBookingEstimationAllocation(Writer http.ResponseWriter, request *http.Request){
+	BatchSystemNumber,_ := strconv.Atoi(chi.URLParam(request,"batch_system_number"))
+	var allocationpayload transactionworkshoppayloads.BookEstimationAllocation
+	helper.ReadFromRequestBody(request,&allocationpayload)
+	save,err := r.bookingEstimationService.SaveBookingEstimationAllocation(BatchSystemNumber,allocationpayload)
+	if err != nil{
+		exceptions.NewNotFoundException(Writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(Writer, save, "Save Data Successfully!", http.StatusOK) 
 }
