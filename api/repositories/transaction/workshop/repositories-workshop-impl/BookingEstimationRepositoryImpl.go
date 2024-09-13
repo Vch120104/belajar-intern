@@ -625,7 +625,7 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) (bool, *exc
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int, *exceptions.BaseErrorResponse) {
 	var model masterentities.PackageMasterDetail
-	var operationpayloads []masterpayloads.CampaignMasterDetailOperationPayloads
+	var operationpayloads []masterpayloads.CampaignMasterDetailGetPayloads
 	var itempayloads []masterpayloads.PackageMasterDetailItem
 	err2 := tx.Model(&model).Where("package_id = ?", packId).Scan(&itempayloads).Error
 	if err2 != nil {
@@ -637,7 +637,7 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int
 	for _, item := range itempayloads {
 		entity := transactionworkshopentities.BookingEstimationItemDetail{
 			EstimationSystemNumber: id,
-			ItemID:                 item.ItemOperationId ,
+			ItemID:                 item.ItemOperationId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
 			RequestDescription:     item.ItemName,
@@ -662,10 +662,9 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int
 	for _, operation := range operationpayloads {
 		entity := transactionworkshopentities.BookingEstimationOperationDetail{
 			EstimationSystemNumber: id,
-			OperationId:            operation.OperationId,
+			OperationId:            operation.ItemOperationId,
 			LineTypeID:             operation.LineTypeId,
 			PackageID:              operation.PackageId,
-			RequestDescription:     operation.OperationName,
 			FRTQuantity:            operation.Quantity,
 			OperationPrice:         operation.Price,
 		}

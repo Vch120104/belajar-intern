@@ -102,3 +102,8 @@ type PackageMasterDetailItemCampaign struct {
 	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id" parent_entity:"mtr_package_master_detail"`
 	JobTypeId                  int     `json:"job_type_id" parent_entity:"mtr_package_master_detail"`
 }
+
+type Operation struct {
+	OperationCode string `json:"operation_code"`
+	OperationName string `json:"operation_name"`
+}

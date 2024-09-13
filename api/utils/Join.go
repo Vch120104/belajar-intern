@@ -297,3 +297,11 @@ func NewCreateJoinSelectStatement(db *gorm.DB, tableStruct interface{}) *gorm.DB
 
 	return query
 }
+
+func PerformJoin(tx *gorm.DB, id int, result interface{},primaryId string ,joinTable string, joinOnLeft string, joinOnRight string, selectFields string) error {
+	return tx.Model(&result).
+		Where(primaryId+"", id).
+		Joins("JOIN " + joinTable + " ON " + joinOnLeft + "=" + joinOnRight).
+		Select(selectFields).
+		First(&result).Error
+}

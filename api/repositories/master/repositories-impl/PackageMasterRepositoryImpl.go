@@ -147,8 +147,9 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMaster(tx *gorm.DB, filterCon
 func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []masterentities.PackageMasterDetail
 	var Detailpayloads []masterpayloads.PackageMasterDetail
-	var operationpayloads []masterpayloads.PackageMasterDetailOperation
-	var itempayloads []masterpayloads.PackageMasterDetailItem
+	var item masteritempayloads.BomItemNameResponse
+	var operation masterpayloads.Operation
+
 	rows, err := tx.Model(&entities).Where(masterentities.PackageMasterDetail{
 		PackageId: id,
 	}).Scan(&Detailpayloads).Rows()
@@ -160,65 +161,51 @@ func (r *PackageMasterRepositoryImpl) GetAllPackageMasterDetail(tx *gorm.DB, id 
 	}
 	defer rows.Close()
 	combinedPayloads := make([]map[string]interface{}, 0)
-	for _, packdetail := range Detailpayloads {
-		if packdetail.LineTypeId == 5 { //operation line type id
-			err := tx.Model(&entities).Where("package_id=?", id).
-				Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_detail.item_operation_id").
-				Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.tem_operation_id").
+	for _, detail := range Detailpayloads {
+		if detail.LineTypeId != 9 && detail.LineTypeId != 0 {
+			err = tx.Select("mtr_item.item_name,mtr_item.item_code").Table("mtr_package_master_detail").
+				Joins("join mtr_item_operation on mtr_item_operation.item_operation_id=mtr_package_master_detail.item_operation_id").
+				Joins("join mtr_item on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
+				Where("mtr_package_master_detail.package_detail_id=?", detail.PackageDetailId).
+				Scan(&item).
+				Error
+		} else {
+			err = tx.Select("operation_code.operation_name,operation_code.operation_code").Where("package_detail_id=?", detail.PackageDetailId).
+				Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_master_detail.item_operation_id").
+				Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.item_operation_model_mapping_id").
 				Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").
 				Select("mtr_package_master_detail.*,mtr_operation_code.operation_code,mtr_operation_code.operation_name").
-				Scan(&operationpayloads).Error
-
-			if err != nil {
-				return nil, 0, 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusNotFound,
-					Err:        err,
-				}
-			}
-			for _, op := range operationpayloads {
-				combinedPayloads = append(combinedPayloads, map[string]interface{}{
-					"is_active":                     op.IsActive,
-					"package_detail_operation_id":   op.PackageDetailId,
-					"package_id":                    op.PackageId,
-					"line_type_id":                  op.LineTypeId,
-					"item_operation_id":             op.ItemOperationId,
-					"operation_name":                op.OperationName,
-					"operation_code":                op.OperationCode,
-					"frt_quantity":                  op.FrtQuantity,
-					"workorder_transaction_type_id": op.WorkorderTransactionTypeId,
-					"job_type_id":                   op.JobTypeId,
-				})
-			}
-
-		} else {
-			err2 := tx.Model(&entities).Where(masterentities.PackageMasterDetail{
-				PackageId: id,
-			}).Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_detail.item_operation_id").
-				Joins("JOIN mtr_item ON mtr_item.item_id=mtr_item_operation.item_id").
-				Select("mtr_package_master_detail.*,mtr_item.item_code,mtr_item.item_name").Scan(&itempayloads).Error
-			if err2 != nil {
-				return nil, 0, 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusNotFound,
-					Err:        err2,
-				}
-			}
-			for _, it := range itempayloads {
-				combinedPayloads = append(combinedPayloads, map[string]interface{}{
-					"is_active":                     it.IsActive,
-					"package_detail_operation_id":   it.PackageDetailId,
-					"package_id":                    it.PackageId,
-					"line_type_id":                  it.LineTypeId,
-					"item_operation_id":             it.ItemOperationId,
-					"item_name":                     it.ItemName,
-					"item_code":                     it.ItemCode,
-					"frt_quantity":                  it.FrtQuantity,
-					"workorder_transaction_type_id": it.WorkorderTransactionTypeId,
-					"job_type_id":                   it.JobTypeId,
-				})
+				Table("mtr_package_master_detail").
+				Scan(&operation).Error
+		}
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
 			}
 		}
 
+		response := map[string]interface{}{
+			"is_active":                     detail.IsActive,
+			"package_detail_operation_id":   detail.PackageDetailId,
+			"package_id":                    detail.PackageId,
+			"line_type_id":                  detail.LineTypeId,
+			"item_operation_id":             detail.ItemOperationId,
+			"frt_quantity":                  detail.FrtQuantity,
+			"workorder_transaction_type_id": detail.WorkorderTransactionTypeId,
+			"job_type_id":                   detail.JobTypeId,
+		}
+
+		if detail.LineTypeId != 9 && detail.LineTypeId != 1 {
+			response["item_name"] = item.ItemName
+			response["item_code"] = item.ItemCode
+		} else {
+			response["operation_name"] = operation.OperationName
+			response["operation_code"] = operation.OperationCode
+		}
+		combinedPayloads = append(combinedPayloads, response)
 	}
+
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(combinedPayloads, &pages)
 	return dataPaginate, totalPages, totalRows, nil
 }
@@ -377,101 +364,81 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 	var entity masterentities.PackageMasterDetail
 	var detailpayloads masterpayloads.PackageMasterDetail
 	var getLineType masteritempayloads.LineTypeResponse
-	err := tx.Model(&entity).Where("package_master_detail_id=?", id).Scan(entity).Error
+	var item masteritempayloads.BomItemNameResponse
+	var operation masterpayloads.Operation
+	err := tx.Model(&entity).Where("package_detail_id=?", id).Scan(&detailpayloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
-	if entity.LineTypeId == 5 {
-		err := tx.Model(&entity).Where("package_id =?", id).
-			Joins("JOIN mtr_item ON mtr_item.item_id=mtr_package_master_detail_item.item_id").
-			Select("mtr_package_master_detail_item.*,mtr_item.item_code,mtr_item.item_name").
-			First(&detailpayloads).Error
-		if err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-		LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(detailpayloads.LineTypeId)
-
-		errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
-
-		if errProfitcenterUrl != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-		joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetail{detailpayloads}, []masteritempayloads.LineTypeResponse{getLineType}, "LineTypeId")
-
-		if errdf != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errdf,
-			}
-		}
-		response := map[string]interface{}{
-			"is_active":                     joinedData1[0]["IsActive"],
-			"package_detail_operation_id":   joinedData1[0]["PackageDetailId"],
-			"package_id":                    joinedData1[0]["PackageId"],
-			"line_type_id":                  joinedData1[0]["LineTypeId"],
-			"item_operation_id":             joinedData1[0]["ItemOperationId"],
-			"item_name":                     joinedData1[0]["ItemName"],
-			"item_code":                     joinedData1[0]["ItemCode"],
-			"frt_quantity":                  joinedData1[0]["FrtQuantity"],
-			"workorder_transaction_type_id": joinedData1[0]["WorkorderTransactionTypeId"],
-			"job_type_id":                   joinedData1[0]["JobTypeId"],
-		}
-		return response, nil
+	if detailpayloads.LineTypeId != 9 && detailpayloads.LineTypeId != 0 {
+		err = tx.Select("mtr_item.item_name,mtr_item.item_code").Table("mtr_package_master_detail").
+			Joins("join mtr_item_operation on mtr_item_operation.item_operation_id=mtr_package_master_detail.item_operation_id").
+			Joins("join mtr_item on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
+			Where("mtr_package_master_detail.package_detail_id=?", id).
+			Scan(&item).
+			Error
 	} else {
-		err := tx.Model(&entity).Where("package_id=?", id).
-			Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_detail.item_operation_id").
-			Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.tem_operation_id").
+		err = tx.Select("operation_code.operation_name,operation_code.operation_code").Where("package_detail_id=?", id).
+			Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_master_detail.item_operation_id").
+			Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.item_operation_model_mapping_id").
 			Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").
 			Select("mtr_package_master_detail.*,mtr_operation_code.operation_code,mtr_operation_code.operation_name").
-			First(&detailpayloads).Error
-		LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(detailpayloads.LineTypeId)
-
-		errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
-
-		if errProfitcenterUrl != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-		joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetail{detailpayloads}, []masteritempayloads.LineTypeResponse{getLineType}, "LineTypeId")
-
-		if errdf != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errdf,
-			}
-		}
-
-		response := map[string]interface{}{
-			"is_active":                     joinedData1[0]["IsActive"],
-			"package_detail_operation_id":   joinedData1[0]["PackageDetailId"],
-			"package_id":                    joinedData1[0]["PackageId"],
-			"line_type_id":                  joinedData1[0]["LineTypeId"],
-			"item_operation_id":             joinedData1[0]["ItemOperationId"],
-			"operation_name":                joinedData1[0]["OperationName"],
-			"operation_code":                joinedData1[0]["OperationCode"],
-			"frt_quantity":                  joinedData1[0]["FrtQuantity"],
-			"workorder_transaction_type_id": joinedData1[0]["WorkorderTransactionTypeId"],
-			"job_type_id":                   joinedData1[0]["JobTypeId"],
-		}
-		return response, nil
+			Table("mtr_package_master_detail").
+			Scan(&operation).Error
 	}
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	LineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(detailpayloads.LineTypeId)
+	errProfitcenterUrl := utils.Get(LineTypeUrl, &getLineType, nil)
+	if errProfitcenterUrl != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errProfitcenterUrl,
+		}
+	}
+
+	joinedData1, errdf := utils.DataFrameInnerJoin([]masterpayloads.PackageMasterDetail{detailpayloads}, []masteritempayloads.LineTypeResponse{getLineType}, "LineTypeId")
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errdf,
+		}
+	}
+
+	response := map[string]interface{}{
+		"is_active":                     joinedData1[0]["IsActive"],
+		"package_detail_id":             joinedData1[0]["PackageDetailId"],
+		"package_id":                    joinedData1[0]["PackageId"],
+		"line_type_id":                  joinedData1[0]["LineTypeId"],
+		"item_operation_id":             joinedData1[0]["ItemOperationId"],
+		"frt_quantity":                  joinedData1[0]["FrtQuantity"],
+		"workorder_transaction_type_id": joinedData1[0]["WorkorderTransactionTypeId"],
+		"job_type_id":                   joinedData1[0]["JobTypeId"],
+	}
+
+	if detailpayloads.LineTypeId != 9 && detailpayloads.LineTypeId != 1 {
+		response["item_name"] = item.ItemName
+		response["item_code"] = item.ItemCode
+	} else {
+		response["operation_name"] = operation.OperationName
+		response["operation_code"] = operation.OperationCode
+	}
+
+	return response, nil
 }
 
 func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMaster{
 		IsActive:       req.IsActive,
-		PackageId:      req.PackageId,
 		ItemGroupId:    req.ItemGroupId,
 		PackageName:    req.PackageName,
 		PackageCode:    req.PackageCode,
@@ -495,10 +462,10 @@ func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterp
 	return entities, nil
 }
 
-func (r *PackageMasterRepositoryImpl) PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
+func (r *PackageMasterRepositoryImpl) PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMasterDetail{
 		IsActive:                   req.IsActive,
-		PackageId:                  req.PackageId,
+		PackageId:                  id,
 		LineTypeId:                 req.LineTypeId,
 		ItemOperationId:            req.ItemOperationId,
 		FrtQuantity:                req.FrtQuantity,

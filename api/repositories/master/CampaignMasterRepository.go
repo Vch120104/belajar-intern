@@ -12,7 +12,7 @@ import (
 
 type CampaignMasterRepository interface {
 	PostCampaignMaster(*gorm.DB, masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse)
-	PostCampaignDetailMaster(*gorm.DB, masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse)
+	PostCampaignDetailMaster(*gorm.DB, masterpayloads.CampaignMasterDetailPayloads,int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse)
 	PostCampaignMasterDetailFromHistory(*gorm.DB, int, int) (int, *exceptions.BaseErrorResponse)
 	ChangeStatusCampaignMaster(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	ActivateCampaignMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
