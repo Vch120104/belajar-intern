@@ -47,7 +47,7 @@ func TestSaveBookingEstimation(t *testing.T) {
 		ContactPersonName:              "TEST1",
 		ContactPersonPhone:             "TEST1",
 		ContactPersonMobile:            "TEST1",
-		ContactPersonVia:               "TEST1",
+		ContactPersonViaId:             1,
 		InsurancePolicyNo:              "TEST1",
 		InsuranceExpiredDate:           time.Now(),
 		InsuranceClaimNo:               "TEST1",
