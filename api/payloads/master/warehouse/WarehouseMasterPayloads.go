@@ -126,6 +126,12 @@ type DropdownWarehouseMasterResponse struct {
 	WarehouseCode string `json:"warehouse_code_name"`
 }
 
+type DropdownWarehouseMasterByCodeResponse struct {
+	WarehouseId          int    `json:"warehouse_id"`
+	WarehouseCode        string `json:"warehouse_code_name"`
+	WarehouseDescription string `json:"warehouse_description"`
+}
+
 type IsActiveWarehouseMasterResponse struct {
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`

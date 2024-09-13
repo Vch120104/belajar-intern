@@ -19,7 +19,7 @@ type OperationModelMapping struct {
 	OperationDocumentRequirement  []OperationDocumentRequirement                             `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	OperationLevel                []OperationLevel                                           `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 	FieldActionEligibleVehicle    masterentities.FieldActionEligibleVehicleOperation         `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
-	ItemOperation                 masterentities.ItemOperation                               `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
+	CampaignMasterDetailOperation mastercampaignmasterentities.CampaignMasterOperationDetail `gorm:"foreignkey:OperationModelMappingId;references:OperationModelMappingId"`
 }
 
 func (*OperationModelMapping) TableName() string {

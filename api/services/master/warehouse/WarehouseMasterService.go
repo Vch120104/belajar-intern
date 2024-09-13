@@ -23,4 +23,5 @@ type WarehouseMasterService interface {
 	GetAuthorizeUser(pages pagination.Pagination,id int)(pagination.Pagination,*exceptions.BaseErrorResponse)
 	PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize)(masterwarehousepayloads.WarehouseAuthorize,*exceptions.BaseErrorResponse)
 	DeleteMultiIdAuthorizeUser(id string)(bool,*exceptions.BaseErrorResponse)
+	InTransitWarehouseCodeDropdown(int, int)([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse,*exceptions.BaseErrorResponse)
 }

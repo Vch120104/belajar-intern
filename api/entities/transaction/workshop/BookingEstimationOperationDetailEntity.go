@@ -4,7 +4,7 @@ import "time"
 
 const TableNameBookingEstimationOperationDetail = "trx_booking_estimation_operation_detail"
 
-type 																																																																																BookingEstimationOperationDetail struct {
+type BookingEstimationOperationDetail struct {
 	EstimationLineID               int        `gorm:"column:estimation_line_id;size:30;primaryKey" json:"estimation_line_id"`
 	EstimationLineCode             int        `gorm:"column:estimation_line_code;size:30;default:null" json:"estimation_line_code"`
 	EstimationSystemNumber         int        `gorm:"column:estimation_system_number;size:30;default:null" json:"estimation_system_number"`
@@ -20,8 +20,8 @@ type 																																																																											
 	RequestDescription             string     `gorm:"column:request_description;default:null" json:"request_description"`
 	FRTQuantity                    float64    `gorm:"column:frt_quantity;default:null" json:"frt_quantity"`
 	OperationPrice                 float64    `gorm:"column:operation_price;default:null" json:"operation_price"`
-	DiscountOperationAmount             float64    `gorm:"column:discount_operation_amount;default:null" json:"discount_operation_amount"`
-	DiscountOperationPercent            float64    `gorm:"column:discount_operation_percent;default:null" json:"discount_operation_percent"`
+	DiscountOperationAmount        float64    `gorm:"column:discount_operation_amount;default:null" json:"discount_operation_amount"`
+	DiscountOperationPercent       float64    `gorm:"column:discount_operation_percent;default:null" json:"discount_operation_percent"`
 	DiscountRequestPercent         float64    `gorm:"column:discount_request_percent;default:null" json:"discount_request_percent"`
 	DiscountRequestAmount          float64    `gorm:"column:discount_request_amount;default:null" json:"discount_request_amount"`
 	DiscountApprovalBy             string     `gorm:"column:discount_approval_by;size:10;default:null" json:"discount_approval_by"`
