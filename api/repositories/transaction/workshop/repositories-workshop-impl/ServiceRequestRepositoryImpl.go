@@ -6,7 +6,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -226,31 +225,33 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data company from external API
-		CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "companies-redis?company_id=" + strconv.Itoa(ServiceRequestReq.CompanyId)
-		var companyResponses []transactionworkshoppayloads.CompanyResponse
-		errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
-		if errCompany != nil || len(companyResponses) == 0 {
+		CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(ServiceRequestReq.CompanyId)
+		var companyResponses transactionworkshoppayloads.CompanyResponse
+		if err := utils.Get(CompanyUrl, &companyResponses, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve company data from the external API",
-				Err:        errCompany,
+				Message:    "Failed to fetch company data from internal service",
+				Err:        err,
 			}
 		}
 
 		// Fetch data vehicle from external API
-		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(ServiceRequestReq.VehicleId)
-		fmt.Println("Fetching URL: ", VehicleUrl) // Debug: Print URL
-
-		var vehicleResponses transactionworkshoppayloads.VehicleResponse
-		errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
-		// Debug: Print the fetched vehicle response
-		vehicleResponseJSON, _ := json.Marshal(vehicleResponses)
-		fmt.Println("Vehicle Response: ", string(vehicleResponseJSON))
+		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(ServiceRequestReq.VehicleId)
+		var vehicleResponses []transactionworkshoppayloads.VehicleResponse
+		errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
+		fmt.Println(VehicleUrl)
 		if errVehicle != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve vehicle data from the external API",
 				Err:        errVehicle,
+			}
+		}
+
+		if len(vehicleResponses) == 0 {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "No vehicle data found",
 			}
 		}
 
@@ -277,9 +278,9 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ModelName:                    modelResponses.ModelName,
 			VariantName:                  variantResponses.VariantName,
 			VariantColourName:            colourResponses[0].VariantColourName,
-			VehicleCode:                  vehicleResponses.VehicleCode,
-			VehicleTnkb:                  vehicleResponses.VehicleTnkb,
-			CompanyName:                  companyResponses[0].CompanyName,
+			VehicleCode:                  vehicleResponses[0].VehicleCode,
+			VehicleTnkb:                  vehicleResponses[0].VehicleTnkb,
+			CompanyName:                  companyResponses.CompanyName,
 			WorkOrderSystemNumber:        ServiceRequestReq.WorkOrderSystemNumber,
 			BookingSystemNumber:          ServiceRequestReq.BookingSystemNumber,
 			EstimationSystemNumber:       ServiceRequestReq.EstimationSystemNumber,
@@ -391,10 +392,10 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 	}
 
-	// Fetch data vehicle from external API
-	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-	var vehicleResponses transactionworkshoppayloads.VehicleResponse
-	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
+	// Fetch data vehicle from external
+	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(entity.VehicleId)
+	var vehicleResponses []transactionworkshoppayloads.VehicleResponse
+	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -416,26 +417,24 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	// Fetch data company from external API
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "companies-redis?company_id=" + strconv.Itoa(entity.CompanyId)
-	var companyResponses []transactionworkshoppayloads.CompanyResponse
-	errCompany := utils.GetArray(CompanyUrl, &companyResponses, nil)
-	if errCompany != nil || len(companyResponses) == 0 {
+	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(entity.CompanyId)
+	var companyResponses transactionworkshoppayloads.CompanyResponse
+	if err := utils.Get(CompanyUrl, &companyResponses, nil); err != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve company data from the external API",
-			Err:        errCompany,
+			Message:    "Failed to fetch company data from internal service",
+			Err:        err,
 		}
 	}
 
 	// Fetch data company from external API
-	ServiceCompanyUrl := config.EnvConfigs.GeneralServiceUrl + "companies-redis?company_id=" + strconv.Itoa(entity.ServiceCompanyId)
-	var servicecompanyResponses []transactionworkshoppayloads.CompanyResponse
-	errservCompany := utils.GetArray(ServiceCompanyUrl, &servicecompanyResponses, nil)
-	if errservCompany != nil || len(servicecompanyResponses) == 0 {
+	ServiceCompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(entity.ServiceCompanyId)
+	var servicecompanyResponses transactionworkshoppayloads.CompanyResponse
+	if err := utils.Get(ServiceCompanyUrl, &servicecompanyResponses, nil); err != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve company data from the external API",
-			Err:        errservCompany,
+			Message:    "Failed to fetch company data from internal service",
+			Err:        err,
 		}
 	}
 
@@ -576,10 +575,10 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		VariantName:                  variantResponse.VariantName,
 		VariantColourName:            colourResponses[0].VariantColourName,
 		VehicleId:                    entity.VehicleId,
-		VehicleCode:                  vehicleResponses.VehicleCode,
-		VehicleTnkb:                  vehicleResponses.VehicleTnkb,
+		VehicleCode:                  vehicleResponses[0].VehicleCode,
+		VehicleTnkb:                  vehicleResponses[0].VehicleTnkb,
 		CompanyId:                    entity.CompanyId,
-		CompanyName:                  companyResponses[0].CompanyName,
+		CompanyName:                  companyResponses.CompanyName,
 		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,
 		ProfitCenterName:             profitCenterResponses.ProfitCenterName,
 		WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
@@ -595,7 +594,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ReplyDate:                    ReplyDate,
 		ReplyRemark:                  entity.ReplyRemark,
 		ServiceCompanyId:             entity.ServiceCompanyId,
-		ServiceCompanyName:           servicecompanyResponses[0].CompanyName,
+		ServiceCompanyName:           servicecompanyResponses.CompanyName,
 		ServiceDate:                  serviceDate,
 		ServiceRequestBy:             entity.ServiceRequestBy,
 		ServiceDetails: transactionworkshoppayloads.ServiceRequestDetailsResponse{
@@ -998,7 +997,7 @@ func (s *ServiceRequestRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *e
 	}
 
 	// check company category is not "001" uspg_atServiceReq0_Update / IMG Bina Trada - Pusat / company_id 130
-	if companyResponse.CompanyId != "130" {
+	if companyResponse.CompanyId != 130 {
 
 		if entity.WorkOrderSystemNumber == 0 && entity.BookingSystemNumber == 0 {
 

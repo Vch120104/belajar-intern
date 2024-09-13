@@ -12,11 +12,12 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -1212,7 +1213,7 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 	return id, nil
 }
 
-func (r *BookingEstimationImpl) PutBookingEstimationCalculationPutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int)([]map[string]interface{},*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) PutBookingEstimationCalculationPutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	const (
 		LineTypePackage            = 0 // Package Bodyshop
 		LineTypeOperation          = 1 // Operation

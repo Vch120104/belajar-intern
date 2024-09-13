@@ -385,7 +385,7 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 			Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_package_master_detail.item_operation_id").
 			Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.item_operation_model_mapping_id").
 			Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").
-			Select("mtr_package_master_detail.*,mtr_operation_code.operation_code,mtr_operation_code.operation_name").
+			Select("mtr_operation_code.operation_code,mtr_operation_code.operation_name").
 			Table("mtr_package_master_detail").
 			Scan(&operation).Error
 	}
