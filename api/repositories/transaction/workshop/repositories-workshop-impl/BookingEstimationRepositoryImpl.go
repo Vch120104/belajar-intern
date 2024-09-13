@@ -2,7 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
-	masterpackagemasterentity "after-sales/api/entities/master/package-master"
+	masterentities "after-sales/api/entities/master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -624,11 +624,10 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) (bool, *exc
 }
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int, *exceptions.BaseErrorResponse) {
-	var modeloperation masterpackagemasterentity.PackageMasterDetailOperation
-	var modelitem masterpackagemasterentity.PackageMasterDetailItem
+	var model masterentities.PackageMasterDetail
 	var operationpayloads []masterpayloads.CampaignMasterDetailOperationPayloads
 	var itempayloads []masterpayloads.PackageMasterDetailItem
-	err2 := tx.Model(&modelitem).Where("package_id = ?", packId).Scan(&itempayloads).Error
+	err2 := tx.Model(&model).Where("package_id = ?", packId).Scan(&itempayloads).Error
 	if err2 != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
@@ -638,7 +637,7 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int
 	for _, item := range itempayloads {
 		entity := transactionworkshopentities.BookingEstimationItemDetail{
 			EstimationSystemNumber: id,
-			ItemID:                 item.ItemId,
+			ItemID:                 item.ItemOperationId ,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
 			RequestDescription:     item.ItemName,
@@ -653,7 +652,7 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int
 			}
 		}
 	}
-	err3 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
+	err3 := tx.Model(&model).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
 	if err3 != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,

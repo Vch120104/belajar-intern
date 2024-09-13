@@ -3,8 +3,6 @@ package transactionworkshoprepositoryimpl
 ////  NOTES  ////
 import (
 	"after-sales/api/config"
-	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
-	masteritementities "after-sales/api/entities/master/item"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
