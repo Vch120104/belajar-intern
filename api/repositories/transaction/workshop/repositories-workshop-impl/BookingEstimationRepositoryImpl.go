@@ -703,25 +703,23 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 	return payloads, nil
 }
 
-func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int, *exceptions.BaseErrorResponse) {
+func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var model masterentities.PackageMasterDetail
 	var operationpayloads []masterpayloads.CampaignMasterDetailGetPayloads
-	var itempayloads []masterpayloads.PackageMasterDetailItem
-	err2 := tx.Model(&model).Where("package_id = ?", packId).Scan(&itempayloads).Error
+	var payloads []map[string]interface{}
+	err2 := tx.Model(&model).Where("package_id = ?", packId).Scan(&operationpayloads).Error
 	if err2 != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err2,
 		}
 	}
-	for _, item := range itempayloads {
+	for _, item := range operationpayloads {
 		entity := transactionworkshopentities.BookingEstimationItemDetail{
 			EstimationSystemNumber: id,
 			ItemID:                 item.ItemOperationId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
-			RequestDescription:     item.ItemName,
-			FRTQuantity:            item.FrtQuantity,
 			ItemPrice:              float64(item.PackageId),
 		}
 		if err := tx.Save(&entity).Error; err != nil {
@@ -731,11 +729,9 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int
 			}
 		}
 		payload := map[string]interface{}{
-			"item_id":      item.ItemId,
+			"item_id":      item.ItemOperationId,
 			"line_type_id": item.LineTypeId,
 			"package_id":   item.PackageId,
-			"item_name":    item.ItemName,
-			"frt_quantity": item.FrtQuantity,
 			"item_price":   float64(item.PackageId),
 		}
 		payloads = append(payloads, payload)
@@ -763,10 +759,9 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) (int
 			}
 		}
 		payload := map[string]interface{}{
-			"operation_id":    operation.OperationId,
+			"operation_id":    operation.ItemOperationId,
 			"line_type_id":    operation.LineTypeId,
 			"package_id":      operation.PackageId,
-			"operation_name":  operation.OperationName,
 			"frt_quantity":    operation.Quantity,
 			"operation_price": operation.Price,
 		}
