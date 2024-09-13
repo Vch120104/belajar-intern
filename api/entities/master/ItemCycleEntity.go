@@ -9,7 +9,7 @@ type ItemCycle struct {
 	PeriodYear        string  `gorm:"column:period_year;size:4;not null;uniqueindex:item_cycle" json:"period_year"`
 	PeriodMonth       string  `gorm:"column:period_month;size:2;not null;uniqueindex:item_cycle" json:"period_month"`
 	ItemId            int     `gorm:"column:item_id;size:30;not null;uniqueindex:item_cycle" json:"item_id"`
-	OrderCycle        int     `gorm:"column:order_cycle;size:30;null;" json:"order_cycle"`
+	OrderCycle        float64 `gorm:"column:order_cycle;null;" json:"order_cycle"`
 	QuantityOnOrder   float64 `gorm:"column:quantity_on_order;null" json:"quantity_on_order"`
 	QuantityBackOrder float64 `gorm:"column:quantity_back_order;null" json:"quantity_back_order"`
 }

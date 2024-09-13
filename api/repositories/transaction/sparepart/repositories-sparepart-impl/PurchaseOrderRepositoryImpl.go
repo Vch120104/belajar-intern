@@ -6,8 +6,8 @@ import (
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
+	"after-sales/api/payloads/crossservice/financeservice"
 	"after-sales/api/payloads/crossservice/generalservice"
-	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -1691,7 +1691,7 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 		}
 	}
 	//		SET @TAX_RATE = dbo.getTaxPercent(dbo.getVariableValue('TAX_TYPE_PPN'),dbo.getVariableValue('TAX_SERV_CODE_PPN'),@Change_Datetime)
-	var PeriodResponse masterpayloads.OpenPeriodPayloadResponse
+	var PeriodResponse financeservice.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(payloads.CompanyId) + "&closing_module_detail_code=" //strconv.Itoa(response.ItemCode)
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	//IF @Is_SP_PO = 1
@@ -2087,8 +2087,3 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	}
 	return true, nil
 }
-
-//func (repo *PurchaseOrderRepositoryImpl) CloseOrderPurchaseOrder(db *gorm.DB, payloads transactionsparepartpayloads.PurchaseOrderCloseOrderPayloads) (bool, *exceptions.BaseErrorResponse) {
-//	//TODO implement me
-//	panic("implement me")
-//}
