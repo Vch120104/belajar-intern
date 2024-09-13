@@ -400,7 +400,18 @@ func ItemOperationRouter(
 
 	return router
 }
+func ItemCycleRouter(
+	ItemCycle mastercontroller.ItemCycleController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
+	router.Post("/", ItemCycle.ItemCycleInsert)
+
+	return router
+}
 func PriceListRouter(
 	priceListController masteritemcontroller.PriceListController,
 ) chi.Router {
