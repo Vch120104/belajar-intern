@@ -37,6 +37,7 @@ type WarehouseMasterController interface {
 	GetAuthorizeUser(writer http.ResponseWriter, request *http.Request)
 	PostAuthorizeUser(writer http.ResponseWriter, request *http.Request)
 	DeleteMultiIdAuthorizeUser(writer http.ResponseWriter, request *http.Request)
+	InTransitWarehouseCodeDropdown(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.WarehouseMasterService) WarehouseMasterController {
@@ -320,4 +321,31 @@ func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.R
 		return
 	}
 	payloads.NewHandleSuccess(writer, delete, "data deleted succesfully", http.StatusOK)
+}
+
+func (r *WarehouseMasterControllerImpl) InTransitWarehouseCodeDropdown(writer http.ResponseWriter, request *http.Request) {
+	// Parse query parameters
+	companyID, err := strconv.Atoi(chi.URLParam(request, "company_id"))
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		})
+		return
+	}
+	warehouseGroupId, err := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		})
+		return
+	}
+	get, errResp := r.WarehouseMasterService.InTransitWarehouseCodeDropdown(companyID, warehouseGroupId)
+	if errResp != nil {
+		helper.ReturnError(writer, request, errResp)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
