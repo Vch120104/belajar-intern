@@ -837,7 +837,7 @@ type WorkOrderDetailRequest struct {
 	WarehouseId           int     `json:"warehouse_id" parent_entity:"trx_work_order_detail"`
 	ItemId                int     `json:"item_id" parent_entity:"trx_work_order_detail"`
 	OperationId           int     `json:"operation_id" parent_entity:"trx_work_order_detail"`
-	OperationItemId       int     `json:"operation_item_id" parent_entity:"trx_work_order_detail"`
+	OperationItemCode     string  `json:"operation_item_code" parent_entity:"trx_work_order_detail"`
 	ProposedPrice         float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
 	OperationItemPrice    float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
 }
@@ -945,4 +945,10 @@ type Linetype struct {
 	LineTypeId   int    `json:"line_type_id"`
 	LineTypeCode string `json:"line_type_code"`
 	LineTypeName string `json:"line_type_name"`
+}
+
+type WorkOrderTransactionType struct {
+	TransactionTypeId   int    `json:"work_order_transaction_type_id"`
+	TransactionTypeCode string `json:"work_order_transaction_type_code"`
+	TransactionTypeName string `json:"work_order_transaction_type_description"`
 }

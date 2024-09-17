@@ -850,3 +850,87 @@ func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int) (bool,
 
 	return confirm, nil
 }
+
+func (s *WorkOrderServiceImpl) NewTrxType() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	bills, err := s.structWorkOrderRepo.NewTrxType(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return bills, nil
+}
+
+func (s *WorkOrderServiceImpl) AddTrxType(request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	save, err := s.structWorkOrderRepo.AddTrxType(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateTrxType(id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	update, err := s.structWorkOrderRepo.UpdateTrxType(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+
+}
+
+func (s *WorkOrderServiceImpl) DeleteTrxType(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	delete, err := s.structWorkOrderRepo.DeleteTrxType(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
+func (s *WorkOrderServiceImpl) NewTrxTypeSo() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	bills, err := s.structWorkOrderRepo.NewTrxTypeSo(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return bills, nil
+}
+
+func (s *WorkOrderServiceImpl) AddTrxTypeSo(request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	save, err := s.structWorkOrderRepo.AddTrxTypeSo(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateTrxTypeSo(id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	update, err := s.structWorkOrderRepo.UpdateTrxTypeSo(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+
+}
+
+func (s *WorkOrderServiceImpl) DeleteTrxTypeSo(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	delete, err := s.structWorkOrderRepo.DeleteTrxTypeSo(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}

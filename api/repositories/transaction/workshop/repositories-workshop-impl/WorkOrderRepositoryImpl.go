@@ -96,7 +96,6 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 
 		// Fetch data brand from external services
 		BrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(workOrderReq.BrandId)
-		//fmt.Println("Fetching Brand data from:", BrandURL)
 		var getBrandResponse transactionworkshoppayloads.WorkOrderVehicleBrand
 		if err := utils.Get(BrandURL, &getBrandResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -108,7 +107,6 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 
 		// Fetch data model from external services
 		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(workOrderReq.ModelId)
-		//fmt.Println("Fetching Model data from:", ModelURL)
 		var getModelResponse transactionworkshoppayloads.WorkOrderVehicleModel
 		if err := utils.Get(ModelURL, &getModelResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -121,7 +119,6 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(workOrderReq.VehicleId)
 		var vehicleResponses []transactionworkshoppayloads.VehicleResponse
 		errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
-		fmt.Println(VehicleUrl)
 		if errVehicle != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -138,7 +135,6 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		}
 
 		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "customer-detail/" + strconv.Itoa(workOrderReq.CustomerId)
-
 		var getCustomerResponse transactionworkshoppayloads.CustomerResponse
 		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -149,8 +145,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		}
 
 		WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(workOrderReq.WorkOrderTypeId)
-		//fmt.Println("Fetching Work Order Type data from:", WorkOrderTypeURL)
-		var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse // Use slice of WorkOrderTypeResponse
+		var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse
 		if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -165,8 +160,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 		}
 
 		WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(workOrderReq.StatusId)
-		//fmt.Println("Fetching Work Order Status data from:", WorkOrderStatusURL)
-		var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
+		var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse
 		if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -183,7 +177,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			WorkOrderDocumentNumber: workOrderReq.WorkOrderDocumentNumber,
 			WorkOrderSystemNumber:   workOrderReq.WorkOrderSystemNumber,
 			WorkOrderDate:           workOrderReq.WorkOrderDate,
-			FormattedWorkOrderDate:  workOrderReq.WorkOrderDate.Format("2006-01-02 15:04:05"), // Set formatted date
+			FormattedWorkOrderDate:  utils.FormatRFC3339(workOrderReq.WorkOrderDate), // Use RFC3339 format
 			WorkOrderTypeId:         workOrderReq.WorkOrderTypeId,
 			WorkOrderTypeName:       workOrderTypeName,
 			BrandId:                 workOrderReq.BrandId,
@@ -2070,7 +2064,7 @@ func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder
 	entity.OperationItemPrice = request.OperationItemPrice
 
 	if request.LineTypeId == 1 {
-		entity.OperationId = request.OperationItemId
+		entity.OperationId = request.OperationId
 	} else {
 		entity.ItemId = request.ItemId
 	}
@@ -3221,17 +3215,20 @@ func (r *WorkOrderRepositoryImpl) DeleteType(tx *gorm.DB, id int) (bool, *except
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewBill(*gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
-	BillableURL := config.EnvConfigs.GeneralServiceUrl + "billable-to"
-	fmt.Println("Fetching Billable data from:", BillableURL)
+func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+	var types []transactionworkshopentities.WorkOrderMasterBillAbleto
+
+	if err := tx.Find(&types).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
 
 	var getBillables []transactionworkshoppayloads.WorkOrderBillable
-	if err := utils.Get(BillableURL, &getBillables, nil); err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch billable data from external service",
-			Err:        err,
-		}
+	for _, t := range types {
+		getBillables = append(getBillables, transactionworkshoppayloads.WorkOrderBillable{
+			BillableToID:   t.WorkOrderBillabletoId,
+			BillableToCode: t.WorkOrderBillabletoCode,
+			BillableToName: t.WorkOrderBillabletoName,
+		})
 	}
 
 	return getBillables, nil
@@ -3275,6 +3272,143 @@ func (r *WorkOrderRepositoryImpl) UpdateBill(tx *gorm.DB, id int, request transa
 func (r *WorkOrderRepositoryImpl) DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderMasterBillAbleto
 	err := tx.Model(&transactionworkshopentities.WorkOrderMasterBillAbleto{}).Where("billable_to_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) NewTrxType(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+	var types []transactionworkshopentities.WorkOrderMasterTrxType
+
+	if err := tx.Find(&types).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
+
+	var payloadTypes []transactionworkshoppayloads.WorkOrderTransactionType
+	for _, t := range types {
+		payloadTypes = append(payloadTypes, transactionworkshoppayloads.WorkOrderTransactionType{
+			TransactionTypeCode: t.WorkOrderTrxTypeCode,
+			TransactionTypeName: t.WorkOrderTrxTypeDescription,
+		})
+	}
+
+	return payloadTypes, nil
+}
+
+func (r *WorkOrderRepositoryImpl) AddTrxType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterTrxType{
+		WorkOrderTrxTypeDescription: request.TransactionTypeName,
+		WorkOrderTrxTypeCode:        request.TransactionTypeCode,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateTrxType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterTrxType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxType{}).Where("work_order_transaction_type_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	entity.WorkOrderTrxTypeDescription = request.TransactionTypeName
+	entity.WorkOrderTrxTypeCode = request.TransactionTypeCode
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteTrxType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterTrxType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxType{}).Where("work_order_transaction_type_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) NewTrxTypeSo(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+	var types []transactionworkshopentities.WorkOrderMasterTrxSoType
+
+	if err := tx.Find(&types).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
+
+	var payloadTypes []transactionworkshoppayloads.WorkOrderTransactionType
+	for _, t := range types {
+		payloadTypes = append(payloadTypes, transactionworkshoppayloads.WorkOrderTransactionType{
+			TransactionTypeCode: t.WorkOrderTrxTypeSoCode,
+			TransactionTypeName: t.WorkOrderTrxTypeSoDescription,
+		})
+	}
+
+	return payloadTypes, nil
+
+}
+
+func (r *WorkOrderRepositoryImpl) AddTrxTypeSo(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterTrxSoType{
+		WorkOrderTrxTypeSoDescription: request.TransactionTypeName,
+		WorkOrderTrxTypeSoCode:        request.TransactionTypeCode,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateTrxTypeSo(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterTrxSoType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxSoType{}).Where("work_order_transaction_type_so_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	entity.WorkOrderTrxTypeSoDescription = request.TransactionTypeName
+	entity.WorkOrderTrxTypeSoCode = request.TransactionTypeCode
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteTrxTypeSo(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterTrxSoType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxSoType{}).Where("work_order_transaction_type_so_id = ?", id).First(&entity).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
 	}
