@@ -210,6 +210,7 @@ func ItemRouter(
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
+	router.Get("/catalog-by-code/{gmm_catalog_code}", itemController.GetCatalogCode)
 
 	return router
 }

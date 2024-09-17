@@ -174,6 +174,10 @@ type ItemDetailResponse struct {
 	ReturnEvery  float64 `json:"return_every"`
 }
 
+type GetCatalogCode struct {
+	GmmCatalogCode int `json:"gmm_catalog_code"`
+}
+
 type ItemDetailRequest struct {
 	ItemDetailId int     `json:"item_detail_id" parent_entity:"mtr_item_detail" main_table:"mtr_item_detail"`
 	ItemId       int     `json:"item_id" parent_entity:"mtr_item_detail"`

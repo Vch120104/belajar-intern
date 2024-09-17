@@ -28,4 +28,5 @@ type ItemService interface {
 	AddItemDetailByBrand(id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse)
 	GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	CheckItemCodeExist(itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse)
+	GetCatalogCode(gmmCatalogCode int) (masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse)
 }

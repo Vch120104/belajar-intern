@@ -105,6 +105,16 @@ func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, 
 	return result, nil
 }
 
+func (s *ItemServiceImpl) GetCatalogCode(gmmCatalogCode int) (masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	result, err := s.itemRepo.GetCatalogCode(tx, gmmCatalogCode)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.itemRepo.GetItemWithMultiId(tx, MultiIds)
