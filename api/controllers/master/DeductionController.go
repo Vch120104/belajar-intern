@@ -25,7 +25,7 @@ type DeductionController interface {
 	SaveDeductionList(writer http.ResponseWriter, request *http.Request)
 	SaveDeductionDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusDeduction(writer http.ResponseWriter, request *http.Request)
-	UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateDeductionDetail(writer http.ResponseWriter, request *http.Request)																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																																			
 }
 
 type DeductionControllerImpl struct {
@@ -108,13 +108,22 @@ func (r *DeductionControllerImpl) GetByIdDeductionDetail(writer http.ResponseWri
 }
 
 func (r *DeductionControllerImpl) GetDeductionById(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	
 	DeductionListId, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	pagination := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 
-	result, err := r.DeductionService.GetDeductionById(DeductionListId)
+	result, err := r.DeductionService.GetDeductionById(DeductionListId,pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

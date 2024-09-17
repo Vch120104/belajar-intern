@@ -20,3 +20,11 @@ type DeductionDetailUpdate struct {
 	DeductionPercent float64 `json:"deduction_percent"`
 	LimitDays        int     `json:"limit_days"`
 }
+
+type DeductionDetailById struct {
+	TotalRows  int                      `json:"total_rows"`
+	TotalPages int                      `json:"total_pages"`
+	Pages      int                      `json:"pages"`
+	Rows       int                      `json:"rows"`
+	Data       []map[string]interface{} `json:"data"`
+}

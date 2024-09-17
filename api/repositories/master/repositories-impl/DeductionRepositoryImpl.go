@@ -52,20 +52,16 @@ func (r *DeductionRepositoryImpl) GetAllDeduction(tx *gorm.DB, filterCondition [
 	return pages, nil
 }
 
+func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int, pages pagination.Pagination) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
 
+	var entities masterentities.DeductionList
+	var response masterpayloads.DeductionListResponse
+	var detail masterentities.DeductionDetail
 
-func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
-
-	entities := masterentities.DeductionList{}
-
-	response := masterpayloads.DeductionListResponse{}
-
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Where(masterentities.DeductionList{
 			DeductionId: Id,
-		}).
-		First(&response).
-		Rows()
+		}).First(&response).Error
 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -74,7 +70,26 @@ func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int) (masterp
 		}
 	}
 
-	defer rows.Close()
+	var detailresponse []masterpayloads.DeductionDetailResponse
+	err2 := tx.Model(&detail).Where("mtr_deduction_detail.deduction_id = ?", response.DeductionId).
+		Find(&detailresponse).Error
+
+	if err2 != nil {
+		return masterpayloads.DeductionListResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err2,
+		}
+	}
+
+	paginatedResult, totalPages, totalRows := pagination.NewDataFramePaginate(detailresponse, &pages)
+
+	response.DeductionDetail = masterpayloads.DeductionDetailById{
+		TotalRows:  totalRows,
+		TotalPages: totalPages,
+		Pages:      pages.GetPage(),
+		Rows:       pages.GetLimit(),
+		Data:       paginatedResult,
+	}
 
 	return response, nil
 }
@@ -243,7 +258,7 @@ func (r *DeductionRepositoryImpl) UpdateDeductionDetail(tx *gorm.DB, id int, req
 		}
 	}
 	err = tx.Where("deduction_detail_id = ?", id).First(&entities).Error
-	if err != nil{
+	if err != nil {
 		return masterentities.DeductionDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
