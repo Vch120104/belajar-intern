@@ -27,7 +27,6 @@ type WorkOrderRepository interface {
 	DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 
 	NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse)
-
 	NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse)
 	NewVehicleModel(tx *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse)
 
@@ -60,20 +59,18 @@ type WorkOrderRepository interface {
 	DeleteDetailWorkOrder(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrderMultiId(*gorm.DB, int, []int) (bool, *exceptions.BaseErrorResponse)
 
-	NewBooking(*gorm.DB, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	NewBooking(*gorm.DB, transactionworkshoppayloads.WorkOrderBookingRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)
 	GetAllBooking(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetBookingById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse)
+	GetBookingById(*gorm.DB, int, int, pagination.Pagination) (transactionworkshoppayloads.WorkOrderBookingResponse, *exceptions.BaseErrorResponse)
 	SaveBooking(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
-	SubmitBooking(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse)
-	VoidBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
-	CloseBooking(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 
 	NewAffiliated(*gorm.DB, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAllAffiliated(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAffiliatedById(*gorm.DB, int, int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse)
+	GetAffiliatedById(*gorm.DB, int, int, pagination.Pagination) (transactionworkshoppayloads.WorkOrderAffiliateResponse, *exceptions.BaseErrorResponse)
 	SaveAffiliated(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
-	VoidAffiliated(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
-	CloseAffiliated(*gorm.DB, int, int) (bool, *exceptions.BaseErrorResponse)
 
 	GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse)
+	ChangeBillTo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse)
+	ChangePhoneNo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (bool, *exceptions.BaseErrorResponse)
+	ConfirmPrice(tx *gorm.DB, workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse)
 }

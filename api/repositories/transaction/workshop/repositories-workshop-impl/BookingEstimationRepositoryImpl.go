@@ -3,7 +3,6 @@ package transactionworkshoprepositoryimpl
 import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
-	masterpackagemasterentity "after-sales/api/entities/master/package-master"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -684,31 +683,28 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 			RequestDescription:     item.ItemName,
 			FRTQuantity:            item.FrtQuantity,
 			ItemOperationPrice:     float64(item.PackageId),
-		}
-		if err := tx.Save(&entity).Error; err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
+	for _, item := range operationpayloads {
+		entity := transactionworkshopentities.BookingEstimationItemDetail{
+			EstimationSystemNumber: id,
+			ItemID:                 item.ItemOperationId,
+			LineTypeID:             item.LineTypeId,
 		}
 		payload := map[string]interface{}{
-			"item_id":      item.ItemId,
+			"item_id":      item.ItemOperationId,
 			"line_type_id": item.LineTypeId,
 			"package_id":   item.PackageId,
-			"item_name":    item.ItemName,
-			"frt_quantity": item.FrtQuantity,
 			"item_price":   float64(item.PackageId),
 		}
 		payloads = append(payloads, payload)
 	}
-	err3 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
+	err3 := tx.Model(&model).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
 	if err3 != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err3,
 		}
 	}
-
+	}
 	return payloads, nil
 }
 

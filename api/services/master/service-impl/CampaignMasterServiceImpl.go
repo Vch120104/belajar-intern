@@ -1,7 +1,7 @@
 package masterserviceimpl
 
 import (
-	mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
+	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
@@ -25,7 +25,7 @@ func StartCampaignMasterService(CampaignMasterRepo masterrepository.CampaignMast
 	}
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.CampaignMasterPost) (mastercampaignmasterentities.CampaignMaster, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.CampaignMasterRepo.PostCampaignMaster(tx, req)
 	defer helper.CommitOrRollback(tx, err)
@@ -35,12 +35,12 @@ func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.Campai
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads,id int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req)
+	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req,id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return 0, err
+		return masterentities.CampaignMasterDetail{}, err
 	}
 	return result, nil
 }
@@ -65,24 +65,24 @@ func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int) (bool, *e
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) ActivateCampaignMasterDetail(ids string, id int) (bool,int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) ActivateCampaignMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,id, err := s.CampaignMasterRepo.ActivateCampaignMasterDetail(tx, ids, id)
+	result, err := s.CampaignMasterRepo.ActivateCampaignMasterDetail(tx, ids)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return result,0, err
+		return result, err
 	}
-	return result,id, err
+	return result, err
 }
 
-func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string, id int) (bool,int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) DeactivateCampaignMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,id, err := s.CampaignMasterRepo.DeactivateCampaignMasterDetail(tx, ids, id)
+	result, err := s.CampaignMasterRepo.DeactivateCampaignMasterDetail(tx, ids)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return result,0, err
+		return result, err
 	}
-	return result,id, nil
+	return result, nil
 }
 
 func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
@@ -95,9 +95,9 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMaster(id int) (map[string]in
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int, idhead int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.CampaignMasterRepo.GetByIdCampaignMasterDetail(tx, id, idhead)
+	result, err := s.CampaignMasterRepo.GetByIdCampaignMasterDetail(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
@@ -135,9 +135,9 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.
 	return result, page, limit, nil
 }
 
-func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int,linetypeid int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) UpdateCampaignMasterDetail(id int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.CampaignMasterRepo.UpdateCampaignMasterDetail(tx, id, linetypeid, req)
+	result, err := s.CampaignMasterRepo.UpdateCampaignMasterDetail(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return 0, err

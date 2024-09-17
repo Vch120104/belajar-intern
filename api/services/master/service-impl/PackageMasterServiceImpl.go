@@ -55,9 +55,9 @@ func (s *PackageMasterServiceImpl) GetByIdPackageMaster(id int) (map[string]inte
 	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int, idhead int, LineTypeId int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) GetByIdPackageMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id, idhead, LineTypeId)
+	result, err := s.PackageMasterRepo.GetByIdPackageMasterDetail(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
@@ -75,12 +75,12 @@ func (s *PackageMasterServiceImpl) PostPackageMaster(req masterpayloads.PackageM
 	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) PostPackageMasterDetailWorkshop(req masterpayloads.PackageMasterDetailWorkshop) (int, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) PostPackageMasterDetail(req masterpayloads.PackageMasterDetail,id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	result, err := s.PackageMasterRepo.PostPackageMasterDetailWorkshop(tx, req)
+	result, err := s.PackageMasterRepo.PostPackageMasterDetail(tx, req,id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return 0, err
+		return masterentities.PackageMasterDetail{}, err
 	}
 	return result, nil
 }
@@ -95,22 +95,22 @@ func (s *PackageMasterServiceImpl) ChangeStatusItemPackage(id int) (masterentiti
 	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string, idhead int) (int, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) ActivateMultiIdPackageMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	result, err := s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx, ids, idhead)
+	result, err := s.PackageMasterRepo.ActivateMultiIdPackageMasterDetail(tx, ids)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 	return result, nil
 }
 
-func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string, idhead int) (int, *exceptions.BaseErrorResponse) {
+func (s *PackageMasterServiceImpl) DeactivateMultiIdPackageMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.db.Begin()
-	result, err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx, ids, idhead)
+	result, err := s.PackageMasterRepo.DeactivateMultiIdPackageMasterDetail(tx, ids)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
 	return result, nil
 }

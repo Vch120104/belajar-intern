@@ -9,6 +9,7 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -97,14 +98,22 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data vehicle from external API
-		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-		var vehicleResponses transactionworkshoppayloads.VehicleResponse
-		errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
+		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(entity.VehicleId)
+		var vehicleResponses []transactionworkshoppayloads.VehicleResponse
+		errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
+		fmt.Println(VehicleUrl)
 		if errVehicle != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve vehicle data from the external API",
 				Err:        errVehicle,
+			}
+		}
+
+		if len(vehicleResponses) == 0 {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "No vehicle data found",
 			}
 		}
 
@@ -136,8 +145,8 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-			VehicleCode:             vehicleResponses.VehicleCode,
-			VehicleTnkb:             vehicleResponses.VehicleTnkb,
+			VehicleCode:             vehicleResponses[0].VehicleCode,
+			VehicleTnkb:             vehicleResponses[0].VehicleTnkb,
 			CustomerName:            customerResponses.CustomerName,
 			WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
 			VarianCode:              variantResponses.VariantCode,

@@ -14,9 +14,17 @@ import (
 
 type LookupController interface {
 	ItemOprCode(writer http.ResponseWriter, request *http.Request)
+	ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request)
+	ItemOprCodeByID(writer http.ResponseWriter, request *http.Request)
 	CampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
+	GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request)
+	GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request)
+	CustomerByTypeAndAddress(writer http.ResponseWriter, request *http.Request)
+	CustomerByTypeAndAddressByID(writer http.ResponseWriter, request *http.Request)
+	CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request)
+	WorkOrderService(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -47,6 +55,80 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
 	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCode(linetypeId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request) {
+	linetypeStrId := chi.URLParam(request, "linetype_id")
+	linetypeId, err := strconv.Atoi(linetypeStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Line Type ID", http.StatusBadRequest)
+		return
+	}
+
+	itemCode := chi.URLParam(request, "item_code")
+	if itemCode == "" {
+		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCode, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) ItemOprCodeByID(writer http.ResponseWriter, request *http.Request) {
+	linetypeStrId := chi.URLParam(request, "linetype_id")
+	linetypeId, err := strconv.Atoi(linetypeStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Line Type ID", http.StatusBadRequest)
+		return
+	}
+
+	itemStrId := chi.URLParam(request, "item_id")
+	itemId, err := strconv.Atoi(itemStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Item ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByID(linetypeId, itemId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -188,6 +270,62 @@ func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, req
 	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
+func (r *LookupControllerImpl) GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request) {
+	vehicleStrId := chi.URLParam(request, "vehicle_id")
+	vehicleId, err := strconv.Atoi(vehicleStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Vehicle ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.GetVehicleUnitByID(vehicleId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.ResponseWriter, request *http.Request) {
+	chassisNumber := chi.URLParam(request, "vehicle_chassis_number")
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.GetVehicleUnitByChassisNumber(chassisNumber, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
 func (r *LookupControllerImpl) CampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	companyStrId := chi.URLParam(request, "company_id")
 	companyId, err := strconv.Atoi(companyStrId)
@@ -206,6 +344,113 @@ func (r *LookupControllerImpl) CampaignMaster(writer http.ResponseWriter, reques
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
 	lookup, totalPages, totalRows, baseErr := r.LookupService.CampaignMaster(companyId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) WorkOrderService(writer http.ResponseWriter, request *http.Request) {
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.WorkOrderService(paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) CustomerByTypeAndAddressByID(writer http.ResponseWriter, request *http.Request) {
+	customerStrId := chi.URLParam(request, "customer_id")
+	customerId, err := strconv.Atoi(customerStrId)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Customer ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.CustomerByTypeAndAddressByID(customerId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) CustomerByTypeAndAddress(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	criteria := utils.BuildFilterCondition(queryParams)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.CustomerByTypeAndAddress(paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request) {
+
+	customerCodeStrId := chi.URLParam(request, "customer_code")
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	queryParams := map[string]string{}
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	lookup, totalPages, totalRows, baseErr := r.LookupService.CustomerByTypeAndAddressByCode(customerCodeStrId, paginate, criteria)
+
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)

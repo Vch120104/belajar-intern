@@ -68,19 +68,18 @@ type WorkOrderService interface {
 	DeleteDetailWorkOrderMultiId(idwosn int, idwos []int) (bool, *exceptions.BaseErrorResponse)
 
 	// booking function
-	NewBooking(request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
+	NewBooking(request transactionworkshoppayloads.WorkOrderBookingRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)
 	GetAllBooking(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetBookingById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderBookingRequest, *exceptions.BaseErrorResponse)
+	GetBookingById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderBookingResponse, *exceptions.BaseErrorResponse)
 	SaveBooking(workOrderId int, id int, request transactionworkshoppayloads.WorkOrderBookingRequest) (bool, *exceptions.BaseErrorResponse)
-	SubmitBooking(Id int) (bool, string, *exceptions.BaseErrorResponse)
-	VoidBooking(workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
-	CloseBooking(workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
 
 	// affiliate function
 	NewAffiliated(workOrderId int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
 	GetAllAffiliated(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetAffiliatedById(workOrderId int, id int) (transactionworkshoppayloads.WorkOrderAffiliatedRequest, *exceptions.BaseErrorResponse)
+	GetAffiliatedById(workOrderId int, id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderAffiliateResponse, *exceptions.BaseErrorResponse)
 	SaveAffiliated(workOrderId int, id int, request transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
-	VoidAffiliated(workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
-	CloseAffiliated(workOrderId int, Id int) (bool, *exceptions.BaseErrorResponse)
+
+	ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse)
+	ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (bool, *exceptions.BaseErrorResponse)
+	ConfirmPrice(workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse)
 }

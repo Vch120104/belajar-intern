@@ -16,29 +16,15 @@ type CampaignMasterDetailSearchPayloads struct {
 	LineTypeId  int    `json:"line_type_id"`
 }
 
-type CampaignMasterDetailOperationPayloads struct {
-	IsActive        bool    `json:"is_active"`
-	PackageCode     int     `json:"package_code"`
-	PackageId       int     `json:"package_id"`
-	LineTypeId      int     `json:"line_type_id"`
-	OperationId     int     `json:"operation_id"`
-	OperationCode   string  `json:"operation_code"`
-	OperationName   string  `json:"operation_name"`
-	Quantity        float64 `json:"quantity"`
-	Price           float64 `json:"price"`
-	DiscountPercent float64 `json:"discount_percent"`
-	SharePercent    float64 `json:"share_percent"`
-}
-
-type CampaignMasterDetailItemPayloads struct {
-	IsActive        bool    `json:"is_active"`
-	PackageCode     int     `json:"package_code"`
-	PackageId       int     `json:"package_id"`
-	LineTypeId      int     `json:"line_type_id"`
-	ItemCode        string  `json:"item_code"`
-	ItemName        string  `json:"item_name"`
-	Quantity        float64 `json:"quantity"`
-	Price           float64 `json:"price"`
-	DiscountPercent float64 `json:"discount_percent"`
-	SharePercent    float64 `json:"share_percent"`
+type CampaignMasterDetailGetPayloads struct {
+	IsActive         bool    `json:"is_active"`
+	CampaignId       int     `json:"campaign_id"`
+	CampaignDetailId int     `json:"campaign_detail_id"`
+	PackageId        int     `json:"package_id"`
+	LineTypeId       int     `json:"line_type_id"`
+	ItemOperationId  int     `json:"item_operation_id"`
+	Quantity         float64 `json:"quantity"`
+	Price            float64 `json:"price"`
+	DiscountPercent  float64 `json:"discount_percent"`
+	SharePercent     float64 `json:"share_percent"`
 }

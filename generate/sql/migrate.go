@@ -68,7 +68,6 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-	//&masterentities.ItemOperation{},
 	//&masteroperationentities.OperationModelMapping{},
 	//&masteroperationentities.OperationLevel{},
 	//&masteroperationentities.OperationFrt{},
@@ -112,6 +111,8 @@ func Migrate() {
 	//&masteritementities.Discount{},
 	//&masteritementities.DiscountPercent{},
 	//
+	//&masterentities.ItemOperation{},
+	//&masterentities.PackageMasterDetail{},
 	//&masterentities.ForecastMaster{},
 	//&masterentities.MovingCode{},
 	//&masterentities.IncentiveGroup{},
@@ -132,7 +133,8 @@ func Migrate() {
 	//&masterentities.AgreementDiscount{},
 	//&masterentities.AgreementDiscountGroupDetail{},
 	//&masterentities.AgreementItemDetail{},
-
+	//&masterentities.CampaignMaster{},
+	// &masterentities.CampaignMasterDetail{},
 	//
 	//&masterentities.FieldAction{},
 	//&masterentities.FieldActionEligibleVehicleItem{},
@@ -145,10 +147,6 @@ func Migrate() {
 	//&masterentities.WarehouseGroupMappingEntities{},
 	//&masterentities.ItemCycle{},
 	//&masterentities.MovingItemCode{},
-	//
-	//&mastercampaignmasterentities.CampaignMaster{},
-	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
-	//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
 	//
 	//&transactionjpcbentities.SettingTechnician{},
 	//&transactionjpcbentities.SettingTechnicianDetail{},
