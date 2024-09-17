@@ -300,3 +300,14 @@ type ItemSearch struct {
 	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
 	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
 }
+
+type ItemListTransLookUp struct {
+	ItemCode    string `json:"item_code"`
+	ItemName    string `json:"item_name"`
+	ItemClassId int    `json:"item_class_id"`
+	ItemType    string `json:"item_type"`
+	ItemLevel1  string `json:"item_level_1"`
+	ItemLevel2  string `json:"item_level_2"`
+	ItemLevel3  string `json:"item_level_3"`
+	ItemLevel4  string `json:"item_level_4"`
+}
