@@ -211,6 +211,7 @@ func ItemRouter(
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
 	router.Get("/catalog-by-code/{gmm_catalog_code}", itemController.GetCatalogCode)
+	router.Get("/brand-parent-by-code/{gmm_catalog_code}", itemController.GetPrincipleBrandParent)
 
 	return router
 }
