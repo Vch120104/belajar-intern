@@ -160,8 +160,7 @@ type BookEstimDetailReq struct {
 	EstimationSystemNumber         int        `json:"estimation_system_number"`
 	BillID                         int        `json:"bill_id"`
 	EstimationLineDiscountApproval int        `json:"estimation_line_discount_approval_status"`
-	ItemID                         int        `json:"item_id"`
-	OperationId                    int        `json:"operation_id"`
+	ItemOperationID                int        `json:"item_operation_id"`
 	LineTypeID                     int        `json:"line_type_id"`
 	PackageID                      int        `json:"package_id"`
 	JobTypeID                      int        `json:"job_type_id"`
@@ -170,7 +169,6 @@ type BookEstimDetailReq struct {
 	UOMID                          int        `json:"uom_id"`
 	RequestDescription             string     `json:"request_description"`
 	FRTQuantity                    float64    `json:"frt_quantity"`
-	OperationItemPrice             float64    `json:"operation_item_price"`
 	DiscountItemAmount             float64    `json:"discount_item_amount"`
 	DiscountItemPercent            float64    `json:"discount_item_percent"`
 	DiscountRequestPercent         float64    `json:"discount_request_percent"`
@@ -184,13 +182,13 @@ type BookEstimDetailUpdate struct {
 	DiscountRequestPercent float32 `json:"discount_request_percent"`
 }
 
-type BookEstimItemPayloads struct {
+type BookEstimDetailPayloads struct {
 	EstimationLineID               int        `json:"estimation_line_id"`
 	EstimationLineCode             int        `json:"estimation_line_code"`
 	EstimationSystemNumber         int        `json:"estimation_system_number"`
 	BillID                         int        `json:"bill_id"`
 	EstimationLineDiscountApproval int        `json:"estimation_line_discount_approval_status"`
-	ItemID                         int        `json:"item_id"`
+	ItemOperationID                int        `json:"item_operation_id"`
 	LineTypeID                     int        `json:"line_type_id"`
 	PackageID                      int        `json:"package_id"`
 	JobTypeID                      int        `json:"job_type_id"`
@@ -200,32 +198,8 @@ type BookEstimItemPayloads struct {
 	RequestDescription             string     `json:"request_description"`
 	FRTQuantity                    float64    `json:"frt_quantity"`
 	OperationItemPrice             float64    `json:"operation_item_price"`
-	DiscountItemAmount             float64    `json:"discount_item_amount"`
-	DiscountItemPercent            float64    `json:"discount_item_percent"`
-	DiscountRequestPercent         float64    `json:"discount_request_percent"`
-	DiscountRequestAmount          float64    `json:"discount_request_amount"`
-	DiscountApprovalBy             string     `json:"discount_approval_by"`
-	DiscountApprovalDate           *time.Time `json:"discount_approval_date"`
-}
-
-type BookEstimOperationPayloads struct {
-	EstimationLineID               int        `json:"estimation_line_id"`
-	EstimationLineCode             int        `json:"estimation_line_code"`
-	EstimationSystemNumber         int        `json:"estimation_system_number"`
-	BillID                         int        `json:"bill_id"`
-	EstimationLineDiscountApproval int        `json:"estimation_line_discount_approval_status"`
-	OperationId                    int        `json:"operation_id"`
-	LineTypeID                     int        `json:"line_type_id"`
-	PackageID                      int        `json:"package_id"`
-	JobTypeID                      int        `json:"job_type_id"`
-	FieldActionSystemNumber        int        `json:"field_action_system_number"`
-	ApprovalRequestNumber          int        `json:"approval_request_number"`
-	UOMID                          int        `json:"uom_id"`
-	RequestDescription             string     `json:"request_description"`
-	FRTQuantity                    float64    `json:"frt_quantity"`
-	OperationItemPrice             float64    `json:"operation_item_price"`
-	DiscountItemAmount             float64    `json:"discount_item_amount"`
-	DiscountItemPercent            float64    `json:"discount_item_percent"`
+	DiscountItemOperationAmount    float64    `json:"discount_item_operation_amount"`
+	DiscountItemOperationPercent   float64    `json:"discount_item_operation_percent"`
 	DiscountRequestPercent         float64    `json:"discount_request_percent"`
 	DiscountRequestAmount          float64    `json:"discount_request_amount"`
 	DiscountApprovalBy             string     `json:"discount_approval_by"`
@@ -374,14 +348,14 @@ type GetAllBookEstim struct {
 }
 
 type BookEstimationAllocation struct {
-	DocumentStatusID      int       `json:"document_status_id"`
-	CompanyID             int       `json:"company_id"`
-	PdiSystemNumber       int       `json:"pdi_system_number"`
-	BookingDocumentNumber string    `json:"booking_document_number"`
+	DocumentStatusID      int        `json:"document_status_id"`
+	CompanyID             int        `json:"company_id"`
+	PdiSystemNumber       int        `json:"pdi_system_number"`
+	BookingDocumentNumber string     `json:"booking_document_number"`
 	BookingDate           *time.Time `json:"booking_date"`
-	BookingStall          string    `json:"booking_stall"`
+	BookingStall          string     `json:"booking_stall"`
 	BookingReminderDate   *time.Time `json:"booking_reminder_date"`
 	BookingServiceDate    *time.Time `json:"booking_service_date"`
 	BookingServiceTime    float32    `json:"booking_service_time"`
-	BookingEstimationTime float32   `json:"booking_estimation_time"`
+	BookingEstimationTime float32    `json:"booking_estimation_time"`
 }

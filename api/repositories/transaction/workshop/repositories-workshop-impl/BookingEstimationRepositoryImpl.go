@@ -13,11 +13,12 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
-	"fmt"
+
 	"gorm.io/gorm"
 )
 
@@ -459,140 +460,114 @@ func (r *BookingEstimationImpl) SaveBookEstimReminderServ(tx *gorm.DB, req trans
 	return entities.BookingSystemNumber, nil
 }
 
-func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailReq) (int, *exceptions.BaseErrorResponse) {
-	var bookestimcalc transactionworkshopentities.BookingEstimationServiceDiscount
-	var bookestimpayloads []transactionworkshoppayloads.BookingEstimationCalculationPayloads
-	if req.LineTypeID == 5 {
-		entity := transactionworkshopentities.BookingEstimationOperationDetail{
-			EstimationLineID:               req.EstimationLineID,
-			EstimationLineCode:             req.EstimationLineCode,
-			EstimationSystemNumber:         req.EstimationSystemNumber,
-			BillID:                         req.BillID,
-			EstimationLineDiscountApproval: req.EstimationLineDiscountApproval,
-			OperationId:                    req.OperationId,
-			LineTypeID:                     req.LineTypeID,
-			PackageID:                      req.PackageID,
-			JobTypeID:                      req.JobTypeID,
-			FieldActionSystemNumber:        req.FieldActionSystemNumber,
-			ApprovalRequestNumber:          req.ApprovalRequestNumber,
-			UOMID:                          req.UOMID,
-			RequestDescription:             req.RequestDescription,
-			FRTQuantity:                    req.FRTQuantity,
-			OperationPrice:                 req.OperationItemPrice,
-			DiscountOperationAmount:        req.DiscountItemAmount,
-			DiscountOperationPercent:       req.DiscountItemPercent,
-			DiscountRequestPercent:         req.DiscountRequestPercent,
-			DiscountRequestAmount:          req.DiscountRequestAmount,
+func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailReq, id int) (transactionworkshopentities.BookingEstimationDetail, *exceptions.BaseErrorResponse) {
+	var lastprice float64
+	var entity transactionworkshopentities.BookingEstimation
+	// repo := masterrepositoryimpl.LookupRepositoryImpl{}
+	errs := tx.Model(&entity).Where("batch_system_number=?", id).Scan(&entity).Error
+	if errs != nil {
+		return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errs,
 		}
-
-		if err := tx.Save(&entity).Error; err != nil {
-			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
+	}
+	if req.LineTypeID != 9 && req.LineTypeID != 0 {
+		err := tx.Select("mtr_price_list.price_list_amount").Table("mtr_price_list").
+			Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+			Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
+			Where("item_operation_id=?", req.ItemOperationID).
+			Scan(&lastprice).Error
+		if err != nil {
+			return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
 				Err:        err,
 			}
 		}
 	} else {
-		entity := transactionworkshopentities.BookingEstimationItemDetail{
-			EstimationLineID:               req.EstimationLineID,
-			EstimationLineCode:             req.EstimationLineCode,
-			EstimationSystemNumber:         req.EstimationSystemNumber,
-			BillID:                         req.BillID,
-			EstimationLineDiscountApproval: req.EstimationLineDiscountApproval,
-			ItemID:                         req.ItemID,
-			LineTypeID:                     req.LineTypeID,
-			FieldActionSystemNumber:        req.FieldActionSystemNumber,
-			ApprovalRequestNumber:          req.ApprovalRequestNumber,
-			UOMID:                          req.UOMID,
-			RequestDescription:             req.RequestDescription,
-			FRTQuantity:                    req.FRTQuantity,
-			ItemPrice:                      req.OperationItemPrice,
-			DiscountItemAmount:             req.DiscountItemAmount,
-			DiscountItemPercent:            req.DiscountItemPercent,
-			DiscountRequestPercent:         req.DiscountRequestPercent,
-			DiscountRequestAmount:          req.DiscountRequestAmount,
-		}
-
-		if err := tx.Save(&entity).Error; err != nil {
-			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
+		err := tx.Select("mtr_labour_selling_price_detail.selling_price").
+			Table("mtr_labour_selling_price_detail").
+			Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
+			Where("mtr_labour_selling_price.brand_id =?", entity.BrandId).
+			Where("mtr_labour_selling_price_detail.model_id=?", entity.ModelId).
+			Where("mtr_labour_selling_price.company_id = ?", entity.CompanyId).
+			Where("mtr_labour_selling_price.effective_date < ?", time.Now()).
+			Scan(&lastprice).Error
+		if err != nil {
+			return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
 				Err:        err,
 			}
 		}
 	}
+	// price,err:= repo.GetOprItemPrice(tx,req.LineTypeID,entity.CompanyId,req.ItemOperationID,entity.BrandId,entity.ModelId,req.JobTypeID,entity.VariantId)
+	entities := transactionworkshopentities.BookingEstimationDetail{
+		EstimationLineID:               req.EstimationLineID,
+		EstimationLineCode:             req.EstimationLineCode,
+		EstimationSystemNumber:         req.EstimationSystemNumber,
+		BillID:                         req.BillID,
+		EstimationLineDiscountApproval: req.EstimationLineDiscountApproval,
+		ItemOperationID:                req.ItemOperationID,
+		LineTypeID:                     req.LineTypeID,
+		PackageID:                      req.PackageID,
+		JobTypeID:                      req.JobTypeID,
+		FieldActionSystemNumber:        req.FieldActionSystemNumber,
+		ApprovalRequestNumber:          req.ApprovalRequestNumber,
+		UOMID:                          req.UOMID,
+		RequestDescription:             req.RequestDescription,
+		FRTQuantity:                    req.FRTQuantity,
+		ItemOperationPrice:             lastprice,
+		DiscountItemOperationAmount:    req.DiscountItemAmount,
+		DiscountItemOperationPercent:   req.DiscountItemPercent,
+		DiscountRequestPercent:         req.DiscountRequestPercent,
+		DiscountRequestAmount:          req.DiscountRequestAmount,
+	}
 
-	err := tx.Select(&bookestimcalc).Where("batch_system_number = ?", req.EstimationSystemNumber).Scan(&bookestimpayloads).Error
+	if err := tx.Save(&entities).Error; err != nil {
+		return transactionworkshopentities.BookingEstimationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	return entities, nil
+}
+
+func (r *BookingEstimationImpl) UpdateBookEstimDetail(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailUpdate, id int, LineTypeId int) (bool, *exceptions.BaseErrorResponse) {
+	var model transactionworkshopentities.BookingEstimationDetail
+	err := tx.Model(&model).Where("estimation_line_id =?", id).Updates(map[string]interface{}{
+		"frt_quantity":             req.FRTQuantity,
+		"discount_request_percent": req.DiscountRequestPercent,
+	}).Error
 	if err != nil {
-		return 0, &exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
-	return bookestimpayloads[0].BatchSystemNumber, nil
-}
 
-func (r *BookingEstimationImpl) UpdateBookEstimDetail(tx *gorm.DB, req transactionworkshoppayloads.BookEstimDetailUpdate, id int, LineTypeId int) (bool, *exceptions.BaseErrorResponse) {
-	if LineTypeId == 5 {
-		var model transactionworkshopentities.BookingEstimationOperationDetail
-		err := tx.Model(&model).Where("estimation_line_id =?", id).Updates(map[string]interface{}{
-			"frt_quantity":             req.FRTQuantity,
-			"discount_request_percent": req.DiscountRequestPercent,
-		}).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        err,
-			}
-		}
-	} else {
-		var model transactionworkshopentities.BookingEstimationItemDetail
-		err := tx.Model(&model).Where("estimation_line_id =?", id).Updates(map[string]interface{}{
-			"frt_quantity":             req.FRTQuantity,
-			"discount_request_percent": req.DiscountRequestPercent,
-		}).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        err,
-			}
-		}
-	}
 	return true, nil
 }
 
 func (r *BookingEstimationImpl) DeleteBookEstimDetail(tx *gorm.DB, id int, linetypeid int) (bool, *exceptions.BaseErrorResponse) {
-	if linetypeid == 5 {
-		var model transactionworkshopentities.BookingEstimationOperationDetail
-		err := tx.Delete(&model).Where("estimation_line_id =?", id).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        err,
-			}
-		}
-	} else {
-		var model transactionworkshopentities.BookingEstimationItemDetail
-		err := tx.Delete(&model).Where("estimation_line_id =?", id).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        err,
-			}
+	var model transactionworkshopentities.BookingEstimationDetail
+	err := tx.Delete(&model).Where("estimation_line_id =?", id).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
 		}
 	}
 	return true, nil
 }
 
 func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var modeloperation transactionworkshopentities.BookingEstimationOperationDetail
-	var modelitem transactionworkshopentities.BookingEstimationItemDetail
-	var operationpayloads []transactionworkshoppayloads.BookEstimOperationPayloads
-	var itempayloads []transactionworkshoppayloads.BookEstimItemPayloads
+	var modelitem transactionworkshopentities.BookingEstimationDetail
+	var detailpayloads []transactionworkshoppayloads.BookEstimDetailPayloads
 
 	// Slice to hold the payloads
 	var payloads []map[string]interface{}
 
 	// Query item details
-	err := tx.Model(&modelitem).Where("estimation_system_number = ?", id).Scan(&itempayloads).Error
+	err := tx.Model(&modelitem).Where("estimation_system_number = ?", id).Scan(&detailpayloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
@@ -601,14 +576,14 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 	}
 
 	// Process item details
-	for _, item := range itempayloads {
-		entity := transactionworkshopentities.BookingEstimationItemDetail{
+	for _, item := range detailpayloads {
+		entity := transactionworkshopentities.BookingEstimationDetail{
 			EstimationLineID:               item.EstimationLineID,
 			EstimationLineCode:             item.EstimationLineCode,
 			EstimationSystemNumber:         id,
 			BillID:                         item.BillID,
 			EstimationLineDiscountApproval: item.EstimationLineDiscountApproval,
-			ItemID:                         item.ItemID,
+			ItemOperationID:                item.ItemOperationID,
 			LineTypeID:                     item.LineTypeID,
 			PackageID:                      item.PackageID,
 			JobTypeID:                      item.JobTypeID,
@@ -617,9 +592,9 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 			UOMID:                          item.UOMID,
 			RequestDescription:             item.RequestDescription,
 			FRTQuantity:                    item.FRTQuantity,
-			ItemPrice:                      item.OperationItemPrice,
-			DiscountItemAmount:             item.DiscountItemAmount,
-			DiscountItemPercent:            item.DiscountItemPercent,
+			ItemOperationPrice:             item.OperationItemPrice,
+			DiscountItemOperationAmount:    item.DiscountItemOperationAmount,
+			DiscountItemOperationPercent:   item.DiscountItemOperationPercent,
 			DiscountRequestPercent:         item.DiscountRequestPercent,
 			DiscountRequestAmount:          item.DiscountRequestAmount,
 		}
@@ -635,7 +610,7 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 		payload := map[string]interface{}{
 			"estimation_line_id":   item.EstimationLineID,
 			"estimation_line_code": item.EstimationLineCode,
-			"item_id":              item.ItemID,
+			"item__operation_id":   item.ItemOperationID,
 			"line_type_id":         item.LineTypeID,
 			"package_id":           item.PackageID,
 			"job_type_id":          item.JobTypeID,
@@ -647,85 +622,68 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, id int) ([]map[stri
 		}
 		payloads = append(payloads, payload)
 	}
-
-	// Query operation details
-	err2 := tx.Model(&modeloperation).Where("estimation_system_number = ?", id).Scan(&operationpayloads).Error
-	if err2 != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        err2,
-		}
-	}
-
-	// Process operation details
-	for _, operation := range operationpayloads {
-		entity := transactionworkshopentities.BookingEstimationOperationDetail{
-			EstimationLineID:               operation.EstimationLineID,
-			EstimationLineCode:             operation.EstimationLineCode,
-			EstimationSystemNumber:         id,
-			BillID:                         operation.BillID,
-			EstimationLineDiscountApproval: operation.EstimationLineDiscountApproval,
-			OperationId:                    operation.OperationId,
-			LineTypeID:                     operation.LineTypeID,
-			FieldActionSystemNumber:        operation.FieldActionSystemNumber,
-			ApprovalRequestNumber:          operation.ApprovalRequestNumber,
-			UOMID:                          operation.UOMID,
-			RequestDescription:             operation.RequestDescription,
-			FRTQuantity:                    operation.FRTQuantity,
-			OperationPrice:                 operation.OperationItemPrice,
-			DiscountOperationAmount:        operation.DiscountItemAmount,
-			DiscountOperationPercent:       operation.DiscountItemPercent,
-			DiscountRequestPercent:         operation.DiscountRequestPercent,
-			DiscountRequestAmount:          operation.DiscountRequestAmount,
-		}
-
-		if err := tx.Save(&entity).Error; err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		// Add operation payload to the payloads slice
-		payload := map[string]interface{}{
-			"estimation_line_id":   operation.EstimationLineID,
-			"estimation_line_code": operation.EstimationLineCode,
-			"operation_id":         operation.OperationId,
-			"line_type_id":         operation.LineTypeID,
-			"request_description":  operation.RequestDescription,
-			"frt_quantity":         operation.FRTQuantity,
-			"operation_price":      operation.OperationItemPrice,
-			"item_name":            "", // Empty item_name
-			"operation_name":       operation.RequestDescription,
-		}
-		payloads = append(payloads, payload)
-	}
-
 	return payloads, nil
 }
 
 func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
-	var modeloperation masterpackagemasterentity.PackageMasterDetailOperation
-	var modelitem masterpackagemasterentity.PackageMasterDetailItem
-	var operationpayloads []masterpayloads.CampaignMasterDetailOperationPayloads
-	var itempayloads []masterpayloads.PackageMasterDetailItem
+	var model masterentities.PackageMasterDetail
+	var entity transactionworkshopentities.BookingEstimation
+	var detailpayloads []masterpayloads.PackageMasterdetail
 	var payloads []map[string]interface{}
-	err2 := tx.Model(&modelitem).Where("package_id = ?", packId).Scan(&itempayloads).Error
+	var lastprice float64
+	err2 := tx.Model(&model).Where("package_id = ?", packId).Scan(&detailpayloads).Error
 	if err2 != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Err:        err2,
 		}
 	}
+	errs:= tx.Model(&entity).Where("batch_system_number=?",id).Scan(&entity).Error
+	if errs != nil{
+		return nil,&exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err: errs,
+		}
+	}
+	if detailpayloads.LineTypeID != 9 && detailpayloads.LineTypeID != 0 {
+		err := tx.Select("mtr_price_list.price_list_amount").Table("mtr_price_list").
+			Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+			Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
+			Where("item_operation_id=?", detailpayloads.ItemOperationID).
+			Scan(&lastprice).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
+		}
+	} else {
+		err := tx.Select("mtr_labour_selling_price_detail.selling_price").
+			Table("mtr_labour_selling_price_detail").
+			Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
+			Where("mtr_labour_selling_price.brand_id =?", entity.BrandId).
+			Where("mtr_labour_selling_price_detail.model_id=?", entity.ModelId).
+			Where("mtr_labour_selling_price.company_id = ?", entity.CompanyId).
+			Where("mtr_labour_selling_price.effective_date < ?", time.Now()).
+			Scan(&lastprice).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
+		}
+	}
+	// price,err:= repo.GetOprItemPrice(tx,req.LineTypeID,entity.CompanyId,req.ItemOperationID,entity.BrandId,entity.ModelId,req.JobTypeID,entity.VariantId)
+
 	for _, item := range itempayloads {
-		entity := transactionworkshopentities.BookingEstimationItemDetail{
+		entity := transactionworkshopentities.BookingEstimationDetail{
 			EstimationSystemNumber: id,
-			ItemID:                 item.ItemId,
+			ItemOperationID:        item.ItemId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
 			RequestDescription:     item.ItemName,
 			FRTQuantity:            item.FrtQuantity,
-			ItemPrice:              float64(item.PackageId),
+			ItemOperationPrice:     float64(item.PackageId),
 		}
 		if err := tx.Save(&entity).Error; err != nil {
 			return nil, &exceptions.BaseErrorResponse{
@@ -750,46 +708,18 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, id int, packId int) ([]m
 			Err:        err3,
 		}
 	}
-	for _, operation := range operationpayloads {
-		entity := transactionworkshopentities.BookingEstimationOperationDetail{
-			EstimationSystemNumber: id,
-			OperationId:            operation.OperationId,
-			LineTypeID:             operation.LineTypeId,
-			PackageID:              operation.PackageId,
-			RequestDescription:     operation.OperationName,
-			FRTQuantity:            operation.Quantity,
-			OperationPrice:         operation.Price,
-		}
-		if err := tx.Save(&entity).Error; err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-		payload := map[string]interface{}{
-			"operation_id":    operation.OperationId,
-			"line_type_id":    operation.LineTypeId,
-			"package_id":      operation.PackageId,
-			"operation_name":  operation.OperationName,
-			"frt_quantity":    operation.Quantity,
-			"operation_price": operation.Price,
-		}
-		payloads = append(payloads, payload)
-	}
 
 	return payloads, nil
 }
 
 func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, id int, contractserviceid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	var model transactionworkshopentities.ContractService
-	var modeloperation []transactionworkshopentities.ContractServiceOperationDetail
-	var modelitem []transactionworkshopentities.ContractServiceItemDetail
-
-	// Slice to hold the payloads
+	var modeldetail []transactionworkshopentities.ContractServiceDetail
+	var lastprice float64
 	var payloads []map[string]interface{}
 
 	// Query the contract service
-	err := tx.Model(&model).Where("contract_service_system_number = ?", contractserviceid).Scan(&model).Error
+	err := tx.Model(&model).Where("contract_service_system_number = ?", contractserviceid).Scan(&modeldetail).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
@@ -797,25 +727,44 @@ func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, id int, contract
 		}
 	}
 
-	// Query the item details
-	err2 := tx.Model(&modelitem).Where("contract_service_system_number = ?", contractserviceid).Scan(&modelitem).Error
-	if err2 != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        err2,
+	if req.LineTypeID != 9 && req.LineTypeID != 0 {
+		err := tx.Select("mtr_price_list.price_list_amount").Table("mtr_price_list").
+			Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+			Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
+			Where("item_operation_id=?", req.ItemOperationID).
+			Scan(&lastprice).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
+		}
+	} else {
+		err := tx.Select("mtr_labour_selling_price_detail.selling_price").
+			Table("mtr_labour_selling_price_detail").
+			Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
+			Where("mtr_labour_selling_price.brand_id =?", entity.BrandId).
+			Where("mtr_labour_selling_price_detail.model_id=?", entity.ModelId).
+			Where("mtr_labour_selling_price.company_id = ?", entity.CompanyId).
+			Where("mtr_labour_selling_price.effective_date < ?", time.Now()).
+			Scan(&lastprice).Error
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
 		}
 	}
 
-	// Process the item details
-	for _, item := range modelitem {
-		entity := transactionworkshopentities.BookingEstimationItemDetail{
+	for _, item := range modeldetail {
+		entity := transactionworkshopentities.BookingEstimationDetail{
 			EstimationSystemNumber: id,
-			ItemID:                 item.ItemId,
+			ItemOperationID:        item.ItemId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
 			RequestDescription:     item.Description,
 			FRTQuantity:            item.FrtQuantity,
-			ItemPrice:              item.ItemPrice,
+			ItemOperationPrice:     item.ItemPrice,
 		}
 
 		if err := tx.Save(&entity).Error; err != nil {
@@ -836,45 +785,6 @@ func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, id int, contract
 		}
 		payloads = append(payloads, payload)
 	}
-
-	// Query the operation details
-	err3 := tx.Model(&modeloperation).Where("contract_service_system_number = ?", contractserviceid).Scan(&modeloperation).Error
-	if err3 != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        err3,
-		}
-	}
-
-	// Process the operation details
-	for _, operation := range modeloperation {
-		entity := transactionworkshopentities.BookingEstimationOperationDetail{
-			EstimationSystemNumber: id,
-			OperationId:            operation.OperationId,
-			LineTypeID:             operation.LineTypeId,
-			RequestDescription:     operation.Description,
-			FRTQuantity:            operation.FrtQuantity,
-			OperationPrice:         operation.OperationPrice,
-		}
-
-		if err := tx.Save(&entity).Error; err != nil {
-			return nil, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		// Add operation payload to the payloads slice
-		payload := map[string]interface{}{
-			"operation_id":    operation.OperationId,
-			"line_type_id":    operation.LineTypeId,
-			"operation_name":  operation.Description,
-			"frt_quantity":    operation.FrtQuantity,
-			"operation_price": operation.OperationPrice,
-		}
-		payloads = append(payloads, payload)
-	}
-
 	return payloads, nil
 }
 
@@ -889,32 +799,14 @@ func (r *BookingEstimationImpl) InputDiscount(tx *gorm.DB, id int, req transacti
 		{7, req.Souvenir},
 		{8, req.Sparepart},
 		{9, req.Fee},
-	}
-
-	for _, detail := range itemDetails {
-		err := tx.Model(&transactionworkshopentities.BookingEstimationItemDetail{}).
-			Where("estimation_system_number = ? AND line_type_id = ?", id, detail.LineTypeID).
-			Update("discount_item_percent", detail.Value).Error
-		if err != nil {
-			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        err,
-			}
-		}
-	}
-
-	operationDetails := []struct {
-		LineTypeID int
-		Value      int
-	}{
 		{5, req.Operation},
 		{6, req.PackageDiscount},
 	}
 
-	for _, detail := range operationDetails {
-		err := tx.Model(&transactionworkshopentities.BookingEstimationOperationDetail{}).
+	for _, detail := range itemDetails {
+		err := tx.Model(&transactionworkshopentities.BookingEstimationDetail{}).
 			Where("estimation_system_number = ? AND line_type_id = ?", id, detail.LineTypeID).
-			Update("discount_operation_percent", detail.Value).Error
+			Update("discount_item_percent", detail.Value).Error
 		if err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -926,7 +818,6 @@ func (r *BookingEstimationImpl) InputDiscount(tx *gorm.DB, id int, req transacti
 }
 
 func (r *BookingEstimationImpl) AddFieldAction(tx *gorm.DB, id int, idrecall int) (int, *exceptions.BaseErrorResponse) {
-	var modeloperation []transactionworkshopentities.ContractServiceOperationDetail
 	var modelitem []transactionworkshopentities.ContractServiceItemDetail
 	err2 := tx.Model(&modelitem).Where("contract_service_system_number = ?", idrecall).Scan(&modelitem).Error
 	if err2 != nil {
@@ -936,40 +827,14 @@ func (r *BookingEstimationImpl) AddFieldAction(tx *gorm.DB, id int, idrecall int
 		}
 	}
 	for _, item := range modelitem {
-		entity := transactionworkshopentities.BookingEstimationItemDetail{
+		entity := transactionworkshopentities.BookingEstimationDetail{
 			EstimationSystemNumber: id,
-			ItemID:                 item.ItemId,
+			ItemOperationID:        item.ItemId,
 			LineTypeID:             item.LineTypeId,
 			PackageID:              item.PackageId,
 			RequestDescription:     item.Description,
 			FRTQuantity:            item.FrtQuantity,
-			ItemPrice:              item.ItemPrice,
-		}
-
-		if err := tx.Save(&entity).Error; err != nil {
-			return 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-	}
-	err3 := tx.Model(&modeloperation).Where("contract_service_system_number = ?", id).Scan(&modeloperation).Error
-	if err3 !=
-
-		nil {
-		return 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err:        err3,
-		}
-	}
-	for _, operation := range modeloperation {
-		entity := transactionworkshopentities.BookingEstimationOperationDetail{
-			EstimationSystemNumber: id,
-			OperationId:            operation.OperationId,
-			LineTypeID:             operation.LineTypeId,
-			RequestDescription:     operation.Description,
-			FRTQuantity:            operation.FrtQuantity,
-			OperationPrice:         operation.OperationPrice,
+			ItemOperationPrice:     item.ItemPrice,
 		}
 
 		if err := tx.Save(&entity).Error; err != nil {
@@ -1221,7 +1086,7 @@ func (r *BookingEstimationImpl) PostBookingEstimationCalculation(tx *gorm.DB, id
 	return id, nil
 }
 
-func (r *BookingEstimationImpl) PutBookingEstimationCalculationPutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int)([]map[string]interface{},*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) PutBookingEstimationCalculationPutBookingEstimationCalculation(tx *gorm.DB, id int, linetypeid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
 	const (
 		LineTypePackage            = 0 // Package Bodyshop
 		LineTypeOperation          = 1 // Operation
@@ -1594,17 +1459,17 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 			Err:        err3,
 		}
 	}
-	entities3 := transactionworkshopentities.BookingEstimationOperationDetail{
+	entities3 := transactionworkshopentities.BookingEstimationDetail{
 		EstimationSystemNumber:         entities2.EstimationSystemNumber,
 		BillID:                         1, //transaction type workorder external
 		EstimationLineDiscountApproval: 1, //status draft
-		OperationId:                    pdidetailpayloads.OperationNumberId,
+		ItemOperationID:                    pdidetailpayloads.OperationNumberId,
 		LineTypeID:                     1, //line type id where line type description = operation
 		RequestDescription:             "",
 		FRTQuantity:                    pdidetailpayloads.Frt,
-		OperationPrice:                 lastprice,
-		DiscountOperationAmount:        0,
-		DiscountOperationPercent:       0,
+		ItemOperationPrice:                 lastprice,
+		DiscountItemOperationAmount:        0,
+		DiscountItemOperationPercent:       0,
 		DiscountRequestPercent:         0,
 		DiscountRequestAmount:          0,
 	}
@@ -1742,7 +1607,6 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 		}
 	}
 	for _, detail := range servicerequestdetail {
-		if detail.LineTypeId != 5 { //set for line type id is not operation
 			err3 := tx.Select("mtr_labour_selling_price_detail.selling_price").
 				Table("mtr_labour_selling_price_detail").
 				Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
@@ -1756,17 +1620,17 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 					Err:        err3,
 				}
 			}
-			entities3 := transactionworkshopentities.BookingEstimationOperationDetail{
+			entities3 := transactionworkshopentities.BookingEstimationDetail{
 				EstimationSystemNumber:         entities.EstimationSystemNumber,
 				BillID:                         1, //transaction type workorder external
 				EstimationLineDiscountApproval: 1, //status draft
-				OperationId:                    detail.OperationItemId,
+				ItemOperationID:                    detail.OperationItemId,
 				LineTypeID:                     detail.LineTypeId, //line type id where line type description = operation
 				RequestDescription:             "",
 				FRTQuantity:                    detail.FrtQuantity,
-				OperationPrice:                 lastprice,
-				DiscountOperationAmount:        0,
-				DiscountOperationPercent:       0,
+				ItemOperationPrice:                 lastprice,
+				DiscountItemOperationAmount:        0,
+				DiscountItemOperationPercent:       0,
 				DiscountRequestPercent:         0,
 				DiscountRequestAmount:          0,
 			}
@@ -1776,37 +1640,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 					StatusCode: http.StatusConflict,
 					Err:        err4,
 				}
-			}
-		} else {
-			err3 := tx.Select("mtr_item.last_price").Where("mtr_item.item_id = ?", detail.OperationItemId).Scan(lastprice).Error
-			if err3 != nil {
-				return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusConflict,
-					Err:        err3,
-				}
-			}
-			entities3 := transactionworkshopentities.BookingEstimationItemDetail{
-				EstimationSystemNumber:         entities.EstimationSystemNumber,
-				BillID:                         1, //transaction type workorder external
-				EstimationLineDiscountApproval: 1, //status draft
-				ItemID:                         detail.OperationItemId,
-				LineTypeID:                     detail.LineTypeId, //line type id where line type description = operation
-				RequestDescription:             "",
-				FRTQuantity:                    detail.FrtQuantity,
-				ItemPrice:                      lastprice,
-				DiscountItemAmount:             0,
-				DiscountItemPercent:            0,
-				DiscountRequestPercent:         0,
-				DiscountRequestAmount:          0,
-			}
-			err4 := tx.Save(entities3).Error
-			if err4 != nil {
-				return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusConflict,
-					Err:        err4,
-				}
-			}
-		}
+			}	
 	}
 	return entity, nil
 }
