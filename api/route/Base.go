@@ -1156,7 +1156,7 @@ func DeductionRouter(
 	router.Get("/{deduction_id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
 	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
-	router.Post("/detail", DeductionController.SaveDeductionDetail)
+	router.Post("/detail/{deduction_id}", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
 	router.Put("/{id}", DeductionController.UpdateDeductionDetail)
