@@ -235,7 +235,7 @@ func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWrite
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data.Rows), "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
 }
 
 // @Summary Get All Item Lookup

@@ -104,23 +104,8 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			Err:        err,
 		}
 	}
-	
-	var mapResponses []map[string]interface{}
-	for _, res := range response { 
-		responseMap := map[string]interface{}{
-			"item_code":     res.ItemCode,
-			"item_name":     res.ItemName,
-			"item_class_id": res.ItemClassId,
-			"item_type":     res.ItemType,
-			"item_level_1":  res.ItemLevel1, 
-			"item_level_2":  res.ItemLevel2,
-			"item_level_3":  res.ItemLevel3,
-			"item_level_4":  res.ItemLevel4,
-		}
-		mapResponses = append(mapResponses, responseMap)
-	}
 
-	pages.Rows = mapResponses
+	pages.Rows = response
 
 	return pages, nil
 }
