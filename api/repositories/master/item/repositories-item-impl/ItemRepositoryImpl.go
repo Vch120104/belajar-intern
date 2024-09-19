@@ -754,7 +754,7 @@ func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) (
 	entities := masteritementities.PrincipleBrandParent{}
 	payloads := []masteritempayloads.PrincipleBrandDropdownDescription{}
 	err := tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
-		PrincipalBrandParentCode: code,
+		CatalogueCode: code,
 	}).Scan(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{

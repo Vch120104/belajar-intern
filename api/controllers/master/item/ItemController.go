@@ -573,7 +573,7 @@ func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWrite
 }
 
 func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request) {
-	principleBrandCode := chi.URLParam(request, "principle_brand_code")
+	principleBrandCode := chi.URLParam(request, "catalogue_code")
 	result, err := r.itemservice.GetPrincipleBrandParent(principleBrandCode)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)

@@ -270,13 +270,13 @@ type ItemDetailUpdateRequest struct {
 
 type PrincipleBrandDropdownResponse struct {
 	IsActive                 bool   `json:"is_active"`
-	PrincipleBrandParentId   int    `json:"principle_brand_parent_id"`
-	PrincipleBrandParentCode string `json:"principle_brand_parent_code"`
+	PrincipalBrandParentId   int    `json:"principle_brand_parent_id"`
+	PrincipalBrandParentCode string `json:"principle_brand_parent_code"`
 }
 
 type PrincipleBrandDropdownDescription struct {
-	PrincipleBrandParentId          int    `json:"principle_brand_parent_id"`
-	PrincipleBrandParentDescription string `json:"principle_brand_parent_description"`
+	PrincipalBrandParentId          int    `json:"principle_brand_parent_id"`
+	PrincipalBrandParentDescription string `json:"principle_brand_parent_description"`
 }
 
 type BrandModelVariantResponse struct {
