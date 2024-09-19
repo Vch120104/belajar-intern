@@ -175,7 +175,7 @@ type ItemDetailResponse struct {
 }
 
 type GetCatalogCode struct {
-	GmmCatalogCode int `json:"gmm_catalog_code"`
+	CatalogueCode int `json:"catalogue_code"`
 }
 
 type ItemDetailRequest struct {
@@ -269,14 +269,14 @@ type ItemDetailUpdateRequest struct {
 }
 
 type PrincipleBrandDropdownResponse struct {
-	IsActive           bool   `json:"is_active"`
-	PrincipleBrandId   int    `json:"principle_brand_id"`
-	PrincipleBrandCode string `json:"principle_brand_code"`
+	IsActive                 bool   `json:"is_active"`
+	PrincipleBrandParentId   int    `json:"principle_brand_parent_id"`
+	PrincipleBrandParentCode string `json:"principle_brand_parent_code"`
 }
 
 type PrincipleBrandDropdownDescription struct {
-	PrincipleBrandId          int    `json:"principle_brand_id"`
-	PrincipleBrandDescription string `json:"principle_brand_description"`
+	PrincipleBrandParentId          int    `json:"principle_brand_parent_id"`
+	PrincipleBrandParentDescription string `json:"principle_brand_parent_description"`
 }
 
 type BrandModelVariantResponse struct {

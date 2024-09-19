@@ -598,15 +598,10 @@ func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, re
 }
 
 func (r *ItemControllerImpl) GetCatalogCode(writer http.ResponseWriter, request *http.Request) {
-	catalogCode, err := strconv.Atoi(chi.URLParam(request, "gmm_catalog_code"))
+	result, err := r.itemservice.GetCatalogCode()
 	if err != nil {
-		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		exceptions.NewAppException(writer, request, err)
 		return
 	}
-	get, errResp := r.itemservice.GetCatalogCode(catalogCode)
-	if errResp != nil {
-		helper.ReturnError(writer, request, errResp)
-		return
-	}
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "success", 200)
 }

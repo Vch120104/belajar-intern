@@ -115,9 +115,9 @@ func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, 
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetCatalogCode(gmmCatalogCode int) (masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse){
+func (s *ItemServiceImpl) GetCatalogCode() ([]masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.itemRepo.GetCatalogCode(tx, gmmCatalogCode)
+	result, err := s.itemRepo.GetCatalogCode(tx)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err

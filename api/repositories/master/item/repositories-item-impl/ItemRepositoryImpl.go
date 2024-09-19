@@ -735,15 +735,11 @@ func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masterite
 	return payloads, nil
 }
 
-func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB, gmmCatalogCode int) (masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.Item{}
-	payloads := masteritempayloads.GetCatalogCode{}
+func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipleBrandParent{}
+	payloads := []masteritempayloads.GetCatalogCode{}
 
-	err := tx.Model(&entities).
-		Select("gmm_catalog_code").
-		Where("gmm_catalog_code = ?", gmmCatalogCode).
-		Scan(&payloads).Error
-
+	err := tx.Model(&entities).Scan(&payloads).Error
 	if err != nil {
 		return payloads, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
