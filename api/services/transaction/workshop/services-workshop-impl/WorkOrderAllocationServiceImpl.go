@@ -56,11 +56,11 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 	return results, nil
 }
 
-func (s *WorkOrderAllocationServiceImpl) GetAllocate(date time.Time, brandId int, woSysNum int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, woSysNum int) (transactionworkshoppayloads.WorkOrderAllocationResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, date, brandId, woSysNum)
+	results, repoErr := s.WorkOrderAllocationRepository.GetAllocate(tx, brandId, woSysNum)
 	if repoErr != nil {
 		return results, repoErr
 	}

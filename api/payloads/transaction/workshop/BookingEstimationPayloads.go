@@ -27,7 +27,7 @@ type BookingEstimationRequest struct {
 	ContactPersonName              string    `json:"contact_person_name"`
 	ContactPersonPhone             string    `json:"contact_person_phone"`
 	ContactPersonMobile            string    `json:"contact_person_mobile"`
-	ContactPersonVia               string    `json:"contact_person_via"`
+	ContactPersonViaId             int       `json:"contact_person_via_id"`
 	InsurancePolicyNo              string    `json:"insurance_policy_no"`
 	InsuranceExpiredDate           time.Time `json:"insurance_expired_date"`
 	InsuranceClaimNo               string    `json:"insurance_claim_no"`
@@ -39,11 +39,11 @@ type BookEstimRemarkRequest struct {
 }
 
 type GetBookingById struct {
-	BookingId               int       `json:"booking_id"`
+	BookingSystemNumber     int       `json:"booking_system_number"`
 	Type                    string    `json:"type"`
 	BatchNumber             string    `json:"batch_number"`
 	CreatedBy               string    `json:"created_by"`
-	BrandName               string    `json:"brand_name"`
+	BrandId                 int       `json:"brand_id"`
 	ModelId                 int       `json:"model_id"`
 	VehicleId               int       `json:"vehicle_id"`
 	NoPolisi                string    `json:"no_polisi"`
@@ -66,7 +66,7 @@ type GetBookingById struct {
 	ClaimNo                 string    `json:"claim_no"`
 	InsurancePicName        string    `json:"insurance_pic_name"`
 	CampaignId              int       `json:"campaign_id"`
-	ContractServiceNo       string    `json:"contact_service_no"`
+	ContractSystemNumber    string    `json:"contact_system_number"`
 	ContractExpireDate      time.Time `json:"contract_expire_date"`
 	ContractDealer          string    `json:"contract_dealer_number"`
 	AgreementNo             string    `json:"agreement_no"`
@@ -288,70 +288,100 @@ type BookingEstimationCalculationPayloads struct {
 }
 
 type BookEstimDetailPayloadsOperation struct {
-	LineTypeid int `json:"line_type_id"`
-	TransactionTypeId int `json:"transaction_type_id"`
-	OperationId int `json:"operation_id"`
-	OperationName string `json:"operation_name"`
-	Quantity int `json:"quantity"`
-	Price float64 `json:"price"`
-	SubTotal float64 `json:"subtotal"`
-	OriginalDiscount float64 `json:"original_discount"`
-	ProposalDiscount float64 `json:"proposal_discount"`
-	Total float64 `json:"total"`
+	LineTypeid        int     `json:"line_type_id"`
+	TransactionTypeId int     `json:"transaction_type_id"`
+	OperationId       int     `json:"operation_id"`
+	OperationName     string  `json:"operation_name"`
+	Quantity          int     `json:"quantity"`
+	Price             float64 `json:"price"`
+	SubTotal          float64 `json:"subtotal"`
+	OriginalDiscount  float64 `json:"original_discount"`
+	ProposalDiscount  float64 `json:"proposal_discount"`
+	Total             float64 `json:"total"`
 }
 
-type TransactionTypePayloads struct{
-	TransactionTypeId int `json:"transaction_type_id"`
+type TransactionTypePayloads struct {
+	TransactionTypeId   int    `json:"transaction_type_id"`
 	TransactionTypeCode string `jon:"transaction_type_code"`
 }
 
 type BookEstimDetailPayloadsItem struct {
-	LineTypeid int `json:"line_type_id"`
-	TransactionTypeId int `json:"transaction_type_id"`
-	ItemId int `json:"item_id"`
-	ItemName string `json:"item_name"`
-	Quantity int `json:"quantity"`
-	Price float64 `json:"price"`
-	SubTotal float64 `json:"subtotal"`
-	OriginalDiscount float64 `json:"original_discount"`
-	ProposalDiscount float64 `json:"proposal_discount"`
-	Total float64 `json:"total"`
+	LineTypeid        int     `json:"line_type_id"`
+	TransactionTypeId int     `json:"transaction_type_id"`
+	ItemId            int     `json:"item_id"`
+	ItemName          string  `json:"item_name"`
+	Quantity          int     `json:"quantity"`
+	Price             float64 `json:"price"`
+	SubTotal          float64 `json:"subtotal"`
+	OriginalDiscount  float64 `json:"original_discount"`
+	ProposalDiscount  float64 `json:"proposal_discount"`
+	Total             float64 `json:"total"`
 }
 
-
-type VehicleDetailPayloads struct{
-	EngineNo string `json:"engine_no"`
-	VariantId int `json:"variant_id"`
-	OptionId int `json:"option_id"`
-	ColourId int `json:"colour_id"`
-	DeliveryDate string  `json:"delivery_date"`
-	LastServiceDate string `json:"last_service_date"`
+type VehicleDetailPayloads struct {
+	EngineNo           string `json:"engine_no"`
+	VariantId          int    `json:"variant_id"`
+	OptionId           int    `json:"option_id"`
+	ColourId           int    `json:"colour_id"`
+	DeliveryDate       string `json:"delivery_date"`
+	LastServiceDate    string `json:"last_service_date"`
 	LastServiceMileage string `json:"last_service_mileage"`
-	StnkName string `json:"stnk_name"`
-	StnkAddress string `json:"stnk_address"`
-	BillingName string `json:"billing_name"`
-	BillingAddress string `json:"billing_address"`
-	BillingZipNo string `json:"billing_zip_number"`
-	
+	StnkName           string `json:"stnk_name"`
+	StnkAddress        string `json:"stnk_address"`
+	BillingName        string `json:"billing_name"`
+	BillingAddress     string `json:"billing_address"`
+	BillingZipNo       string `json:"billing_zip_number"`
 }
 
-type BillingDetail struct{
-	Name string `json:"name"`
-	AddressId int `json:"address_id"`
-	VillageId int `json:"villgae_id"`
-	DistrictId int `json:"district_id"`
-	CityId int `json:"cistr_id"`
-	ZipCode string `json:"zip_code"`
-	PhoneNo string `json:"phone_number"`
-	FaxNumber string `json:"fax_number"`
+type BillingDetail struct {
+	Name       string `json:"name"`
+	AddressId  int    `json:"address_id"`
+	VillageId  int    `json:"villgae_id"`
+	DistrictId int    `json:"district_id"`
+	CityId     int    `json:"cistr_id"`
+	ZipCode    string `json:"zip_code"`
+	PhoneNo    string `json:"phone_number"`
+	FaxNumber  string `json:"fax_number"`
 }
 
-type StnkDetail struct{
-	STNKName string `json:"stnk_name"`
+type StnkDetail struct {
+	STNKName    string `json:"stnk_name"`
 	STNKAddress string `json:"stnk_address"`
-	Village string `json:"village"`
-	Disrict string `json:"dictrict"`
-	City string `json:"city"`
-	Province string `json:"province"`
-	ZipCode string `json:"zip_code"`
+	Village     string `json:"village"`
+	Disrict     string `json:"dictrict"`
+	City        string `json:"city"`
+	Province    string `json:"province"`
+	ZipCode     string `json:"zip_code"`
+}
+
+type VehicleTnkb struct {
+	VehicleId        int    `json:"vehicle_id"`
+	VehicleBrandId   int    `json:"vehicle_brand_id"`
+	VehicleModelId   int    `json:"vehicle_model_id"`
+	VehicleVariantId int    `json:"vehicle_variant_id"`
+	Tnkb             string `json:"vehicle_registration_certificate_tnkb"`
+}
+
+type GetAllBookEstim struct {
+	BatchSystemNo       int       `json:"batch_system_number"`
+	BookingSystemNumber int       `json:"booking_system_number"`
+	ServiceDate         time.Time `json:"service_date"`
+	ServiceTime         float64   `json:"service_time"`
+	DocumentStatusId    int       `json:"document_status_id"`
+	EstimationNo        string    `json:"estimation_number"`
+	EstimationDate      time.Time `json:"estimation_date"`
+	EstimationStatus    int       `json:"estimation_status"`
+}
+
+type BookEstimationAllocation struct {
+	DocumentStatusID      int       `json:"document_status_id"`
+	CompanyID             int       `json:"company_id"`
+	PdiSystemNumber       int       `json:"pdi_system_number"`
+	BookingDocumentNumber string    `json:"booking_document_number"`
+	BookingDate           *time.Time `json:"booking_date"`
+	BookingStall          string    `json:"booking_stall"`
+	BookingReminderDate   *time.Time `json:"booking_reminder_date"`
+	BookingServiceDate    *time.Time `json:"booking_service_date"`
+	BookingServiceTime    float32    `json:"booking_service_time"`
+	BookingEstimationTime float32   `json:"booking_estimation_time"`
 }

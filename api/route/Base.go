@@ -31,6 +31,12 @@ func CarWashRouter(
 	router.Get("/priority/dropdown", carWashController.GetAllCarWashPriorityDropDown)
 	router.Delete("/{work_order_system_number}", carWashController.DeleteCarWash)
 	router.Post("/", carWashController.PostCarWash)
+
+	router.Get("/screen", carWashController.CarWashScreen)
+	router.Put("/screen/update-bay", carWashController.UpdateBayNumberCarWashScreenn)
+	router.Put("/start", carWashController.StartCarWash)
+	router.Put("/stop", carWashController.StopCarWash)
+	router.Put("/cancel", carWashController.CancelCarWash)
 	return router
 }
 
@@ -395,7 +401,18 @@ func ItemOperationRouter(
 
 	return router
 }
+func ItemCycleRouter(
+	ItemCycle mastercontroller.ItemCycleController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
 
+	router.Post("/", ItemCycle.ItemCycleInsert)
+
+	return router
+}
 func PriceListRouter(
 	priceListController masteritemcontroller.PriceListController,
 ) chi.Router {
@@ -474,7 +491,7 @@ func PurchaseRequestRouter(
 	router.Post("/detail", PurchaseRequest.NewPurchaseRequestDetail)
 	router.Put("/{purchase_request_system_number}", PurchaseRequest.UpdatePurchaseRequestHeader)
 	router.Put("/detail/{purchase_request_detail_system_number}", PurchaseRequest.UpdatePurchaseRequestDetail)
-	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequestHeader)
+	router.Post("/submit/{purchase_request_system_number}", PurchaseRequest.SubmitPurchaseRequest)
 	router.Post("/submit/detail/{purchase_request_detail_system_number}", PurchaseRequest.SubmitPurchaseRequestDetail)
 	router.Get("/item/by-id/{company_id}/{item_id}", PurchaseRequest.GetByIdItemTypePr)
 	router.Get("/item/by-code/{company_id}/{item_code}", PurchaseRequest.GetByCodeItemTypePr)
@@ -509,6 +526,36 @@ func LocationStockRouter(
 	return router
 }
 
+func PurchaseOrderRouter(
+	PurchaseOrder transactionsparepartcontroller.PurchaseOrderController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", PurchaseOrder.GetAllPurchaserOrderWithPagination)
+	router.Get("/by-id/{purchase_order_system_number}", PurchaseOrder.GetByIdPurchaseOrder)
+	router.Get("/detail", PurchaseOrder.GetPurchaseOrderDetailByHeaderId)
+	router.Post("/", PurchaseOrder.NewPurchaseOrderHeader)
+	router.Put("/{purchase_order_system_number}", PurchaseOrder.UpdatePurchaseOrderHeader)
+	router.Get("/detail/by-id/{purchase_order_detail_system_number}", PurchaseOrder.GetPurchaseOrderDetailById)
+	router.Delete("/detail/{purchase_order_detail_system_number}", PurchaseOrder.DeletePurchaseOrderDetailMultiId)
+	router.Post("/detail", PurchaseOrder.NewPurchaseOrderDetail)
+	router.Patch("/detail", PurchaseOrder.SavePurchaseOrderDetail)
+
+	//	@Router			/v1/purchase-order/detail [post]
+
+	//	@Router			/v1/purchase-order/detail [patch]
+
+	//	@Router			/v1/purchase-order/detail/{purchase_order_detail_system_number} [get]
+
+	//	@Router			/v1/purchase-order/{purchase_order_system_number} [put]
+
+	return router
+}
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {
@@ -761,6 +808,7 @@ func WarehouseMasterRouter(
 	router.Get("/authorize-user/{warehouse_id}", warehouseMasterController.GetAuthorizeUser)
 	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
 	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
+	router.Get("/drop-down/in-transit/{company_id}/{warehouse_group_id}", warehouseMasterController.InTransitWarehouseCodeDropdown)
 	return router
 }
 
@@ -878,6 +926,7 @@ func ShiftScheduleRouter(
 	router.Get("/by-id/{shift_schedule_id}", ShiftScheduleController.GetShiftScheduleById)
 	router.Patch("/{shift_schedule_id}", ShiftScheduleController.ChangeStatusShiftSchedule)
 	router.Get("/drop-down", ShiftScheduleController.GetShiftScheduleDropdown)
+	router.Put("/{shift_schedule_id}", ShiftScheduleController.UpdateShiftSchedule)
 
 	return router
 }
@@ -1006,11 +1055,11 @@ func PackageMasterRouter(
 	router.Get("/", PackageMasterController.GetAllPackageMaster)
 	router.Get("/detail/{package_id}", PackageMasterController.GetAllPackageMasterDetail)
 	router.Get("/header/{package_id}", PackageMasterController.GetByIdPackageMaster)
-	router.Get("/detail/{package_id}/{package_detail_id}/{line_type_id}", PackageMasterController.GetByIdPackageMasterDetail)
+	router.Get("/detail/by-id/{package_detail_id}", PackageMasterController.GetByIdPackageMasterDetail)
 	router.Get("/copy/{package_id}/{package_name}/{model_id}", PackageMasterController.CopyToOtherModel)
 
 	router.Post("/", PackageMasterController.SavepackageMaster)
-	router.Post("/workshop", PackageMasterController.SavePackageMasterDetailWorkshop)
+	router.Post("/detail/{package_id}", PackageMasterController.SavePackageMasterDetail)
 
 	router.Patch("/{package_id}", PackageMasterController.ChangeStatusPackageMaster)
 	router.Patch("/detail/activate/{package_id}/{package_detail_id}", PackageMasterController.ActivateMultiIdPackageMasterDetail)
@@ -1058,11 +1107,11 @@ func CampaignMasterRouter(
 
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
-	router.Get("/detail/by-id/{campaign_detail_id}/{line_type_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
-	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
+	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
-	router.Patch("/detail/deactivate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
-	router.Patch("/detail/activate/{campaign_detail_id}/{campaign_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
+	router.Patch("/detail/deactivate/{campaign_detail_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
+	router.Patch("/detail/activate/{campaign_detail_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
 	router.Put("/detail/update/{campaign_detail_id}", campaignmastercontroller.UpdateCampaignMasterDetail)
 
 	//from package master
@@ -1104,7 +1153,7 @@ func DeductionRouter(
 	router.Get("/{deduction_id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
 	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
-	router.Post("/detail", DeductionController.SaveDeductionDetail)
+	router.Post("/detail/{deduction_id}", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
 	router.Put("/{id}", DeductionController.UpdateDeductionDetail)
@@ -1125,25 +1174,25 @@ func BookingEstimationRouter(
 	router.Get("/", BookingEstimationController.GetAll)
 	router.Get("/normal", BookingEstimationController.New)
 	router.Get("/find/{batch_system_number}", BookingEstimationController.GetById)
-	router.Put("/{id}", BookingEstimationController.Save)
+	router.Post("/", BookingEstimationController.Save)
 	router.Post("/submit", BookingEstimationController.Submit)
 	router.Delete("/{id}", BookingEstimationController.Void)
 	router.Put("/close/{id}", BookingEstimationController.CloseOrder)
-	router.Post("/request", BookingEstimationController.SaveBookEstimReq)
-	router.Put("/request/{booking_estimation_request_id}", BookingEstimationController.UpdateBookEstimReq)
-	router.Get("/request/{booking_estimation_request_id}", BookingEstimationController.GetByIdBookEstimReq)
-	router.Get("/request/all", BookingEstimationController.GetAllBookEstimReq)
-	router.Post("/reminder-service", BookingEstimationController.SaveBookEstimReminderServ)
-	router.Post("/booking-estimation", BookingEstimationController.SaveDetailBookEstim)
-	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)
-	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}", BookingEstimationController.AddContractService)
-	router.Put("/input-discount/{booking_estimation_id}", BookingEstimationController.InputDiscount)
-	router.Post("/field-action/{booking_stimation_id}/{field_action_id}", BookingEstimationController.AddFieldAction)
-	router.Get("/detail/{booking_estimation_id}/{line_type_id}", BookingEstimationController.GetByIdBookEstimDetail)
-	router.Post("/calculation/{booking_estimation_id}", BookingEstimationController.PostBookingEstimationCalculation)
-	router.Put("/calculation/{booking_estimation_id/{line_type_id}}", BookingEstimationController.PutBookingEstimationCalculation)
-	router.Post("/book-estim-pdi/{pdi_system_number}", BookingEstimationController.SaveBookingEstimationFromPDI)
-	router.Post("/book-estim-service-request/{service_request_system_number}", BookingEstimationController.SaveBookingEstimationFromServiceRequest)
+	router.Post("/request/{booking_system_number}", BookingEstimationController.SaveBookEstimReq)
+	router.Put("/request/{booking_system_number}",BookingEstimationController.UpdateBookEstimReq)
+	router.Get("/request/{booking_system_number}",BookingEstimationController.GetByIdBookEstimReq)
+	router.Get("/request/all/{book_estim_id}",BookingEstimationController.GetAllBookEstimReq)
+	router.Post("/reminder-service/{booking_estimation_id}",BookingEstimationController.SaveBookEstimReminderServ)
+	router.Post("/booking-estimation",BookingEstimationController.SaveDetailBookEstim)
+	router.Post("/package/{booking_estimation_id}/{package_id}",BookingEstimationController.AddPackage)
+	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}",BookingEstimationController.AddContractService)
+	router.Put("/input-discount/{booking_estimation_id}",BookingEstimationController.InputDiscount)
+	router.Post("/field-action/{booking_stimation_id}/{field_action_id}",BookingEstimationController.AddFieldAction)
+	router.Get("/detail/{booking_estimation_id}/{line_type_id}",BookingEstimationController.GetByIdBookEstimDetail)
+	router.Post("/calculation/{booking_estimation_id}",BookingEstimationController.PostBookingEstimationCalculation)
+	router.Post("/book-estim-pdi/{pdi_system_number}",BookingEstimationController.SaveBookingEstimationFromPDI)
+	router.Post("/book-estim-service-request/{service_request_system_number}",BookingEstimationController.SaveBookingEstimationFromServiceRequest)
+	router.Post("/allocation/{batch_system_number}",BookingEstimationController.SaveBookingEstimationAllocation)
 	return router
 }
 
@@ -1174,17 +1223,12 @@ func WorkOrderRouter(
 	router.Get("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.GetBookingById)
 	router.Post("/booking", WorkOrderController.NewBooking)
 	router.Put("/booking/{work_order_system_number}/{booking_system_number}", WorkOrderController.SaveBooking)
-	router.Delete("/booking/void/{work_order_system_number}/{booking_system_number}", WorkOrderController.VoidBooking)
-	router.Post("/booking/submit/{work_order_system_number}", WorkOrderController.SubmitBooking)
-	router.Patch("/booking/close/{work_order_system_number}/{booking_system_number}", WorkOrderController.CloseBooking)
 
 	//add trx affiliate
 	router.Get("/affiliated", WorkOrderController.GetAllAffiliated)
-	router.Get("/affiliated/{work_order_system_number}", WorkOrderController.GetAffiliatedById)
+	router.Get("/affiliated/{work_order_system_number}/{service_request_system_number}", WorkOrderController.GetAffiliatedById)
 	router.Post("/affiliated", WorkOrderController.NewAffiliated)
 	router.Put("/affiliated/{work_order_system_number}", WorkOrderController.SaveAffiliated)
-	router.Delete("/affiliated/{work_order_system_number}", WorkOrderController.VoidAffiliated)
-	router.Patch("/affiliated/{work_order_system_number}/close", WorkOrderController.CloseAffiliated)
 
 	//add post trx sub
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
@@ -1229,6 +1273,9 @@ func WorkOrderRouter(
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 
+	router.Put("/change-bill-to/{work_order_system_number}", WorkOrderController.ChangeBillTo)
+	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
+	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)
 	return router
 }
 
@@ -1294,7 +1341,7 @@ func WorkOrderAllocationRouter(
 	router.Get("/{service_date}/{foreman_id}/{company_id}", WorkOrderAllocationController.GetAll)
 	router.Get("/header-data/{company_id}/{foreman_id}/{service_date}/{brand_id}", WorkOrderAllocationController.GetWorkOrderAllocationHeaderData)
 
-	router.Get("/allocate/{service_date}/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
+	router.Get("/allocate/{brand_id}/{work_order_system_number}", WorkOrderAllocationController.GetAllocate)
 	router.Get("/allocate-detail", WorkOrderAllocationController.GetAllocateDetail)
 	router.Post("/allocate-detail", WorkOrderAllocationController.SaveAllocateDetail)
 
@@ -1373,6 +1420,7 @@ func SettingTechnicianRouter(
 
 	router.Get("/", SettingTechnicianController.GetAllSettingTechnician)
 	router.Get("/{setting_technician_system_number}", SettingTechnicianController.GetSettingTechnicianById)
+	router.Get("/{company_id}/{effective_date}", SettingTechnicianController.GetSettingTechnicianByCompanyDate)
 
 	router.Get("/detail", SettingTechnicianController.GetAllSettingTechinicianDetail)
 	router.Get("/detail/{setting_technician_detail_system_number}", SettingTechnicianController.GetSettingTechnicianDetailById)
@@ -1395,6 +1443,24 @@ func TechnicianAttendanceRouter(
 	router.Get("/", TechnicianAttendanceController.GetAllTechnicianAttendance)
 	router.Post("/", TechnicianAttendanceController.SaveTechnicianAttendance)
 	router.Patch("/{technician_attendance_id}", TechnicianAttendanceController.ChangeStatusTechnicianAttendance)
+
+	return router
+}
+
+func JobAllocationRouter(
+	JobAllocationController transactionjpcbcontroller.JobAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", JobAllocationController.GetAllJobAllocation)
+	router.Get("/{technician_allocation_system_number}", JobAllocationController.GetJobAllocationById)
+	router.Put("/{technician_allocation_system_number}", JobAllocationController.UpdateJobAllocation)
+	router.Delete("/{technician_allocation_system_number}", JobAllocationController.DeleteJobAllocation)
 
 	return router
 }
@@ -1490,9 +1556,17 @@ func LookupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
+	router.Get("/item-opr-code/{linetype_id}/{code}", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_id}/{id}", LookupController.ItemOprCodeByID)
 	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
+	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
+	router.Get("/vehicle-unit-master/by-code/{vehicle_chassis_number}", LookupController.GetVehicleUnitByChassisNumber)
+	router.Get("/new-bill-to", LookupController.CustomerByTypeAndAddress)
+	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
+	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
+	router.Get("/work-order-service", LookupController.WorkOrderService)
 
 	return router
 }

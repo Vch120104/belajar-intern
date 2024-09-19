@@ -78,13 +78,13 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination, from, to)
+	result,page,limit, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination, from, to)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit,pagination.Page, int64(limit), page)
 }
 
 // @Summary Get Item Substitute By Id

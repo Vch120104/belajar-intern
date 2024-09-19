@@ -10,6 +10,7 @@ import (
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	"after-sales/api/utils"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -77,7 +78,7 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 		}
 
 		//Fetch data Color from vehicle master then unit color
-		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master-by-chassis-number/" + strconv.Itoa(vehicleId)
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(vehicleId)
 		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
 		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
 		if errFetchVehicle != nil {
@@ -103,7 +104,7 @@ func (*CarWashImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition,
 			WorkOrderDocumentNumber:    carWashPayload.WorkOrderDocumentNumber,
 			Model:                      getModelResponse.ModelName,
 			Color:                      getColourResponse.VariantColourName,
-			Tnkb:                       "", //TODO Fetch tnkb, from vehicle_master get by vehicle_id, currently api return error
+			Tnkb:                       getVehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
 			PromiseTime:                carWashPayload.PromiseTime,
 			PromiseDate:                carWashPayload.PromiseDate,
 			CarWashBayId:               carWashPayload.CarWashBayId,
@@ -306,12 +307,6 @@ func (r *CarWashImpl) DeleteCarWash(tx *gorm.DB, workOrderSystemNumber int) (boo
 }
 
 func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {
-	const (
-		qcPass         = 6
-		statusDraft    = 1
-		priorityNormal = 2
-	)
-
 	var workOrderEntity transactionworkshopentities.WorkOrder
 	var workOrderResponse transactionjpcbpayloads.CarWashWorkOrder
 
@@ -323,21 +318,23 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 	//Fetch data Model from external services
 	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-detail/" + strconv.Itoa(workOrderResponse.CompanyId)
 	var getCompanyResponse transactionjpcbpayloads.CarWashCompanyResponse
+	test := true
 	errFetchCompany := utils.Get(CompanyURL, &getCompanyResponse, nil)
 	if errFetchCompany != nil {
 		return transactionjpcbpayloads.CarWashPostResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch Company Data from external service",
-			Err:        err,
+			Err:        errFetchCompany,
 		}
 	}
 
+	getCompanyResponse.CompanyReference.UseJPCB = &test
 	if getCompanyResponse.CompanyReference.UseJPCB == nil {
 		return errorHelperBadRequest()
 	}
 
 	if *getCompanyResponse.CompanyReference.UseJPCB {
-		if workOrderResponse.WorkOrderStatusId == qcPass {
+		if workOrderResponse.WorkOrderStatusId == utils.WoStatQC {
 			if workOrderResponse.CarWash {
 				var workOrder int
 				result := tx.Model(&transactionjpcbentities.CarWash{}).Select("work_order_system_number").
@@ -349,8 +346,8 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 					newCarWash := transactionjpcbentities.CarWash{
 						CompanyId:             workOrderResponse.CompanyId,
 						WorkOrderSystemNumber: workOrderSystemNumber,
-						StatusId:              statusDraft,
-						PriorityId:            priorityNormal,
+						StatusId:              utils.CarWashStatDraft,
+						PriorityId:            utils.CarWashPriorityNormal,
 						CarWashDate:           time.Now(),
 						BayId:                 nil,
 					}
@@ -409,8 +406,8 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 							newCarWash := transactionjpcbentities.CarWash{
 								CompanyId:             workOrderResponse.CompanyId,
 								WorkOrderSystemNumber: workOrderSystemNumber,
-								StatusId:              statusDraft,
-								PriorityId:            priorityNormal,
+								StatusId:              utils.CarWashStatDraft,
+								PriorityId:            utils.CarWashPriorityNormal,
 								CarWashDate:           time.Now(),
 								BayId:                 nil,
 							}
@@ -469,6 +466,446 @@ func (r *CarWashImpl) PostCarWash(tx *gorm.DB, workOrderSystemNumber int) (trans
 	}
 
 	return errorHelperBadRequest()
+}
+
+func (*CarWashImpl) GetAllCarWashScreen(tx *gorm.DB, companyId int) ([]transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var responses []transactionjpcbpayloads.CarWashScreenGetAllResponse
+
+	keyAttributes := []string{
+		"trx_car_wash.work_order_system_number", "trx_car_wash.car_wash_bay_id", "mtr_car_wash_bay.order_number", "trx_car_wash.car_wash_status_id",
+		"mtr_car_wash_status.car_wash_status_description", "trx_work_order.model_id", "trx_work_order.vehicle_id",
+	}
+
+	rows, err := tx.Model(&transactionjpcbentities.CarWash{}).Select(keyAttributes).
+		Order("trx_car_wash.car_wash_status_id desc, trx_car_wash.car_wash_bay_id desc, trx_car_wash.car_wash_priority_id desc").
+		Order("trx_work_order.promise_date desc, trx_work_order.promise_time asc").
+		Where("trx_work_order.company_id = ? AND trx_work_order.car_wash = ? AND trx_car_wash.car_wash_status_id <> ?", companyId, 1, utils.CarWashStatStop).
+		Joins("LEFT JOIN mtr_car_wash_bay on mtr_car_wash_bay.car_wash_bay_id = trx_car_wash.car_wash_bay_id AND mtr_car_wash_bay.company_id =  trx_car_wash.company_id").
+		Joins("LEFT JOIN mtr_car_wash_status on mtr_car_wash_status.car_wash_status_id = trx_car_wash.car_wash_status_id").
+		Joins("LEFT JOIN trx_work_order on trx_work_order.work_order_system_number = trx_car_wash.work_order_system_number").
+		Rows()
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        nil,
+		}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var workOrderSystemNumber, carWashStatusId, modelId, vehicleId int
+		var carWashBayId, orderNumber *int
+		var carWashStatusDescription string
+
+		err := rows.Scan(
+			&workOrderSystemNumber, &carWashBayId, &orderNumber, &carWashStatusId,
+			&carWashStatusDescription, &modelId, &vehicleId,
+		)
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		//Fetch data Model from external services
+		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(modelId)
+		var getModelResponse transactionjpcbpayloads.CarWashModelResponse
+		errFetchModel := utils.Get(ModelURL, &getModelResponse, nil)
+		if errFetchModel != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch brand data from external service",
+				Err:        err,
+			}
+		}
+
+		//Fetch data Color from vehicle master then unit color
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(vehicleId)
+		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		if errFetchVehicle != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch vehicle data from external service",
+				Err:        err,
+			}
+		}
+
+		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		if errFetchColour != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch colour data from external service",
+			}
+		}
+
+		carWashScreen := transactionjpcbpayloads.CarWashScreenGetAllResponse{
+			WorkOrderSystemNumber:    workOrderSystemNumber,
+			CarWashBayId:             carWashBayId,
+			OrderNumber:              orderNumber,
+			CarWashStatusId:          carWashStatusId,
+			CarWashStatusDescription: carWashStatusDescription,
+			ModelId:                  modelId,
+			ModelDescription:         getModelResponse.ModelName,
+			VehicleId:                vehicleId,
+			ColourCommercialName:     getColourResponse.VariantColourName,
+		}
+
+		fmt.Print(carWashScreen)
+		responses = append(responses, carWashScreen)
+	}
+
+	return responses, nil
+}
+
+func (r *CarWashImpl) GetCarWashScreenDataByWorkOrderSystemNumber(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var response transactionjpcbpayloads.CarWashScreenGetAllResponse
+
+	keyAttributes := []string{
+		"trx_car_wash.work_order_system_number", "trx_car_wash.car_wash_bay_id", "mtr_car_wash_bay.order_number", "trx_car_wash.car_wash_status_id",
+		"mtr_car_wash_status.car_wash_status_description", "trx_work_order.model_id", "trx_work_order.vehicle_id",
+	}
+
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Select(keyAttributes).
+		Where("trx_car_wash.work_order_system_number", workOrderSystemNumber).
+		Joins("LEFT JOIN mtr_car_wash_bay on mtr_car_wash_bay.car_wash_bay_id = trx_car_wash.car_wash_bay_id AND mtr_car_wash_bay.company_id =  trx_car_wash.company_id").
+		Joins("LEFT JOIN mtr_car_wash_status on mtr_car_wash_status.car_wash_status_id = trx_car_wash.car_wash_status_id").
+		Joins("LEFT JOIN trx_work_order on trx_work_order.work_order_system_number = trx_car_wash.work_order_system_number").
+		First(&response).Error
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+func (r *CarWashImpl) UpdateBayNumberCarWashScreen(tx *gorm.DB, bayNumber int, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var carWashBay int
+	err := tx.Model(&transactionjpcbentities.BayMaster{}).Select("car_wash_bay_id").Where(&transactionjpcbentities.BayMaster{
+		CarWashBayId: bayNumber,
+	}).First(&carWashBay).Error
+
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+			Message:    "Car wash bay doesn't exist",
+		}
+	}
+
+	err = tx.Model(&transactionjpcbentities.CarWash{}).Where("work_order_system_number = ?", workOrderSystemNumber).Update("car_wash_bay_id", bayNumber).Error
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response, getCarWashDataError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
+	if getCarWashDataError != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, getCarWashDataError
+	}
+
+	return response, nil
+}
+
+func (r *CarWashImpl) StartCarWash(tx *gorm.DB, workOrderSystemNumber, carWashBayId int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var carWashStatusId int
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Select("car_wash_status_id").Where("work_order_system_number = ? AND car_wash_bay_id = ?", workOrderSystemNumber, carWashBayId).Scan(&carWashStatusId).Error
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	if carWashStatusId == 0 {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        fmt.Errorf("bad request"),
+			Message:    "please check if bay is correct",
+		}
+	}
+
+	if carWashStatusId != utils.CarWashStatStart {
+		mainTable := "trx_car_wash"
+		mainAlias := "carwash"
+
+		joinTables := []utils.JoinTable{
+			{Table: "mtr_car_wash_bay", Alias: "bay", ForeignKey: mainAlias + ".car_wash_bay_id", ReferenceKey: "bay.car_wash_bay_id"},
+		}
+
+		joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+
+		type carWashModel struct {
+			CarWashBayId int `json:"car_wash_bay_id"`
+			CompanyId    int `json:"company_id"`
+		}
+		var carWash carWashModel
+		err := joinQuery.Select("bay.car_wash_bay_id", "carwash.company_id").Where(transactionjpcbentities.CarWash{
+			WorkOrderSystemNumber: workOrderSystemNumber,
+		}).Scan(&carWash).Error
+		if err != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		if carWash.CarWashBayId == 0 {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusUnprocessableEntity,
+				Err:        fmt.Errorf("update failed, bay already removed. please refresh page"),
+				Message:    "update failed, bay already removed. please refresh page",
+			}
+		}
+
+		//Fetch data Color from vehicle master then unit color
+		CompanyReferenceURL := config.EnvConfigs.GeneralServiceUrl + "company-reference/" + strconv.Itoa(carWash.CompanyId) + " "
+		fmt.Print(CompanyReferenceURL)
+		var getCompanyReferenceResponse transactionjpcbpayloads.CarWashCompanyReference
+		errFetchCompanyReference := utils.Get(CompanyReferenceURL, &getCompanyReferenceResponse, nil)
+		if errFetchCompanyReference != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "Failed to fetch company reference data from external service",
+			}
+		}
+
+		err = tx.Model(&transactionjpcbentities.CarWash{}).Where(transactionjpcbentities.CarWash{
+			WorkOrderSystemNumber: workOrderSystemNumber,
+		}).Updates(&transactionjpcbpayloads.StartCarWashUpdates{
+			CarWashStatusId: utils.CarWashStatStart,
+			CarWashDate:     time.Now(),
+			CarWashBayId:    carWash.CarWashBayId,
+			StartTime:       createCurrentTime(getCompanyReferenceResponse.TimeDifference),
+		}).Error
+		if err != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		result, getCarWashDataError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
+		if getCarWashDataError != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, getCarWashDataError
+		}
+
+		//Fetch data Model from external services
+		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(result.ModelId)
+		var getModelResponse transactionjpcbpayloads.CarWashModelResponse
+		errFetchModel := utils.Get(ModelURL, &getModelResponse, nil)
+		if errFetchModel != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch brand data from external service",
+				Err:        err,
+			}
+		}
+
+		//Fetch data Color from vehicle master then unit color
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
+		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		if errFetchVehicle != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch vehicle data from external service",
+				Err:        err,
+			}
+		}
+
+		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		if errFetchColour != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch colour data from external service",
+			}
+		}
+
+		// TODO Exec uspg_wtWorkOrderLog_Insert
+
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{
+			WorkOrderSystemNumber:    result.WorkOrderSystemNumber,
+			CarWashBayId:             result.CarWashBayId,
+			OrderNumber:              result.OrderNumber,
+			CarWashStatusId:          result.CarWashStatusId,
+			CarWashStatusDescription: result.CarWashStatusDescription,
+			ModelId:                  result.ModelId,
+			ModelDescription:         getModelResponse.ModelName,
+			VehicleId:                result.VehicleId,
+			ColourCommercialName:     getColourResponse.VariantColourName,
+		}, nil
+	}
+	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Err:        fmt.Errorf("carwash already started"),
+		Message:    "Work Order carwash already started",
+	}
+}
+
+func (r *CarWashImpl) StopCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var carWashStatus int
+
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Select("car_wash_status_id").Where(&transactionjpcbentities.CarWash{
+		WorkOrderSystemNumber: workOrderSystemNumber,
+	}).First(&carWashStatus).Error
+
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+		}
+	}
+
+	if carWashStatus == utils.CarWashStatStart {
+		var startTime float32
+		err := tx.Model(&transactionjpcbentities.CarWash{}).Select("start_time").Where(&transactionjpcbentities.CarWash{
+			WorkOrderSystemNumber: workOrderSystemNumber,
+		}).First(&startTime).Error
+		if err != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		err = tx.Table("trx_car_wash").
+			Where("trx_car_wash.work_order_system_number = ?", workOrderSystemNumber).
+			Updates(transactionjpcbentities.CarWash{
+				StatusId:   utils.CarWashStatStop,
+				EndTime:    createCurrentTime(0),
+				ActualTime: createCurrentTime(0) - startTime,
+			}).Error
+		if err != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		result, getCarWashDataError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
+		if getCarWashDataError != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, getCarWashDataError
+		}
+
+		//Fetch data Model from external services
+		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(result.ModelId)
+		var getModelResponse transactionjpcbpayloads.CarWashModelResponse
+		errFetchModel := utils.Get(ModelURL, &getModelResponse, nil)
+		if errFetchModel != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch brand data from external service",
+				Err:        err,
+			}
+		}
+
+		//Fetch data Color from vehicle master then unit color
+		VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
+		var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+		errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+		if errFetchVehicle != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch vehicle data from external service",
+				Err:        err,
+			}
+		}
+
+		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+		var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+		errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+		if errFetchColour != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch colour data from external service",
+			}
+		}
+
+		//TODO uspg_wtWorkOrderLog_Insert
+
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{
+			WorkOrderSystemNumber:    result.WorkOrderSystemNumber,
+			CarWashBayId:             result.CarWashBayId,
+			OrderNumber:              result.OrderNumber,
+			CarWashStatusId:          result.CarWashStatusId,
+			CarWashStatusDescription: result.CarWashStatusDescription,
+			ModelId:                  result.ModelId,
+			ModelDescription:         getModelResponse.ModelName,
+			VehicleId:                result.VehicleId,
+			ColourCommercialName:     getColourResponse.VariantColourName,
+		}, nil
+	}
+
+	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Err:        fmt.Errorf("work order carwash has not started"),
+		Message:    "Work order carwash has not started",
+	}
+}
+
+func (r *CarWashImpl) CancelCarWash(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashScreenGetAllResponse, *exceptions.BaseErrorResponse) {
+	var carWashStatus int
+
+	err := tx.Model(&transactionjpcbentities.CarWash{}).Select("car_wash_status_id").Where(&transactionjpcbentities.CarWash{
+		WorkOrderSystemNumber: workOrderSystemNumber,
+	}).First(&carWashStatus).Error
+	if err != nil {
+		return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+	fmt.Print(carWashStatus)
+
+	if carWashStatus != utils.CarWashStatStart {
+		err := tx.Model(&transactionjpcbentities.CarWash{}).Where(&transactionjpcbentities.CarWash{
+			WorkOrderSystemNumber: workOrderSystemNumber,
+		}).Update("car_wash_bay_id", nil).Error
+		if err != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		result, getCarWashError := r.GetCarWashScreenDataByWorkOrderSystemNumber(tx, workOrderSystemNumber)
+		if getCarWashError != nil {
+			return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		return result, nil
+	}
+
+	return transactionjpcbpayloads.CarWashScreenGetAllResponse{}, &exceptions.BaseErrorResponse{
+		StatusCode: http.StatusBadRequest,
+		Err:        fmt.Errorf("already start"),
+		Message:    "Work order carwash already started",
+	}
+}
+
+func createCurrentTime(timeDiff float32) float32 {
+	hours := math.Floor(float64(timeDiff))
+	minutes := (float64(timeDiff) - hours) * 100
+
+	duration := time.Duration(hours)*time.Hour + time.Duration(minutes)*time.Minute
+	currentTime := time.Now()
+
+	newTime := currentTime.Add(duration)
+
+	return float32(newTime.Hour()) + float32(newTime.Minute())/60
 }
 
 func errorHelperDataAlreadyExist() (transactionjpcbpayloads.CarWashPostResponse, *exceptions.BaseErrorResponse) {

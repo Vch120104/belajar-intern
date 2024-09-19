@@ -7,13 +7,14 @@ import (
 )
 
 // WO and Service Status
-var SrvStatDraft int = 1    // 0 Draft
-var SrvStatStart int = 2    // 10 Start
-var SrvStatPending int = 3  // 15 Pending
-var SrvStatStop int = 4     // 20 Stop
-var SrvStatTransfer int = 5 // 25 Transfer
-var SrvStatQcPass int = 6   // 30 QC Pass
-var SrvStatReOrder int = 7  // 35 Re-Order
+var SrvStatDraft int = 1       // 0 Draft
+var SrvStatStart int = 2       // 10 Start
+var SrvStatPending int = 3     // 15 Pending
+var SrvStatStop int = 4        // 20 Stop
+var SrvStatTransfer int = 5    // 25 Transfer
+var SrvStatQcPass int = 6      // 30 QC Pass
+var SrvStatReOrder int = 7     // 35 Re-Order
+var SrvStatAutoRelease int = 8 // 40 Auto Release
 
 var WoStatDraft int = 1   // 0 Draft
 var WoStatNew int = 2     // 10 New
@@ -35,6 +36,40 @@ var LinetypeAccesories int = 6         // 6 Accesories
 var LinetypeConsumableMaterial int = 7 // 7 Consumable Material
 var LineTypeSublet int = 8             // 8 Sublet
 var LinetypeSouvenir int = 9           // 9 Souvenir
+
+// Transaction Type Bill Code SO WO
+var TrxTypeWoInternal string = "I"        // TRXTYPE_WO_INTERNAL
+var TrxTypeWoNoCharge string = "N"        // TRXTYPE_WO_NOCHARGE
+var TrxTypeWoCentralize string = "C"      // TRXTYPE_WO_CENTRALIZE
+var TrxTypeWoDeCentralize string = "D"    // TRXTYPE_WO_DECENTRALIZE
+var TrxTypeWoCampaign string = "G"        // TRXTYPE_WO_CAMPAIGN
+var TrxTypeWoContractService string = "S" // TRXTYPE_WO_CONTRACT_SERVICE
+var TrxTypeWoExternal string = "E"        // TRXTYPE_WO_EXTERNAL
+var TrxTypeWoFreeService string = "F"     // TRXTYPE_WO_FREE_SERVICE
+var TrxTypeWoInsurance string = "U"       // TRXTYPE_WO_INSURANCE
+var TrxTypeWoWarranty string = "W"        // TRXTYPE_WO_WARRANTY
+
+var TrxTypeSoDirect string = "SU01"       // TRXTYPE_SO_DIRECT
+var TrxTypeSoChannel string = "SU02"      // TRXTYPE_SO_CHANNEL
+var TrxTypeSoGSO string = "SU03"          // TRXTYPE_SO_GSO
+var TrxTypeSoInternal string = "SU05"     // TRXTYPE_SO_INTERNAL
+var TrxTypeSoCentralize string = "SU06"   // TRXTYPE_SO_CENTRALIZE
+var TrxTypeSoDeCentralize string = "SU07" // TRXTYPE_SO_DECENTRALIZED
+var TrxTypeSoExport string = "SU08"       // TRXTYPE_SO_EXPORT
+
+var ItemTypeService string = "S"    // ITEMTYPE_SERVICE Services
+var EstWoOrderTypeId int = 1        // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
+var EstWoOrderType string = "E"     // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
+var EstWoDiscSelectionId int = 1    // EST_WO_DISC_SELECTION Discount Selection for Estimation and WO
+var EstWoDiscSelection string = "D" // EST_WO_DISC_SELECTION Discount Selection for Estimation and WO
+
+// CarWash
+var CarWashStatDraft int = 1
+var CarWashStatStart int = 2
+var CarWashStatStop int = 3
+
+var CarWashPriorityHigh int = 1
+var CarWashPriorityNormal int = 2
 
 // Status
 

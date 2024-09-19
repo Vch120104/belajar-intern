@@ -9,6 +9,8 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"errors"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -58,14 +60,14 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, 
 	return results, nil
 }
 
-func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionworkshoppayloads.BookingEstimationRequest) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
 	// Menggunakan "=" untuk menginisialisasi tx dengan transaksi yang dimulai
-	_, err := s.structBookingEstimationRepo.Save(tx, request)
+	post, err := s.structBookingEstimationRepo.Post(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.BookingEstimation{}, err
 	}
-	return true, nil
+	return post, nil
 }
 
 func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool,*exceptions.BaseErrorResponse) {
@@ -78,7 +80,8 @@ func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool,*except
 	return result,nil
 }
 
-func (s *BookingEstimationServiceImpl) Void(tx *gorm.DB, id int) (bool,*exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) Void(id int) (bool,*exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
 	result,err := s.structBookingEstimationRepo.Void(tx, id)
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil {
@@ -96,13 +99,13 @@ func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptio
 	return nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (int, *exceptions.BaseErrorResponse){
+func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshoppayloads.BookEstimRemarkRequest, id int) (transactionworkshopentities.BookingEstimationRequest, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
 	
 	result,err := s.structBookingEstimationRepo.SaveBookEstimReq(tx,req,id)
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
-		return 0,err
+		return transactionworkshopentities.BookingEstimationRequest{},err
 	}
 	return result,nil
 }
@@ -158,25 +161,95 @@ func (s *BookingEstimationServiceImpl) SaveDetailBookEstim(req transactionworksh
 	if err != nil{
 		return 0,err
 	}
-	return result,nil
-}
-
-func (s *BookingEstimationServiceImpl) AddPackage(id int, packId int) (int, *exceptions.BaseErrorResponse){
-	tx := s.DB.Begin()
-	result,err := s.structBookingEstimationRepo.AddPackage(tx,id,packId)
-	defer helper.CommitOrRollback(tx,err)
-	if err !=nil{
-		return 0,err
+	_,err2:= s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx,req.EstimationSystemNumber,req.LineTypeID)
+	if err2 !=nil{
+		return 0,err2
 	}
 	return result,nil
 }
 
-func (s *BookingEstimationServiceImpl) AddContractService(id int, contractserviceid int) (int, *exceptions.BaseErrorResponse){
+func (s *BookingEstimationServiceImpl) AddPackage(id int, packId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	result,err := s.structBookingEstimationRepo.AddPackage(tx,id,packId)
+	defer helper.CommitOrRollback(tx,err)
+	if err !=nil{
+		return nil,err
+	}
+	for _,detail := range result{
+		estimationSystemNumberFloat, ok1 := detail["estimation_system_number"].(float64)
+		lineTypeIDFloat, ok2 := detail["line_type_id"].(float64)
+
+		if !ok1 || !ok2 {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("invalid type assertion for map values"),
+			}
+    }
+
+    // Convert float64 to int
+		estimationSystemNumber := int(estimationSystemNumberFloat)
+		lineTypeID := int(lineTypeIDFloat)
+		_,err:= s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx,estimationSystemNumber,lineTypeID)
+		if err != nil{
+			return nil,err
+		}
+	}
+	return result,nil
+}
+
+func (s *BookingEstimationServiceImpl) AddContractService(id int, contractserviceid int) ([]map[string]interface{}, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
 	result,err := s.structBookingEstimationRepo.AddContractService(tx,id,contractserviceid)
 	defer helper.CommitOrRollback(tx,err)
 	if err !=nil{
-		return 0,err
+		return nil,err
+	}
+	for _,detail := range result{
+		estimationSystemNumberFloat, ok1 := detail["estimation_system_number"].(float64)
+		lineTypeIDFloat, ok2 := detail["line_type_id"].(float64)
+
+		if !ok1 || !ok2 {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("invalid type assertion for map values"),
+			}
+    }
+
+    // Convert float64 to int
+		estimationSystemNumber := int(estimationSystemNumberFloat)
+		lineTypeID := int(lineTypeIDFloat)
+		_,err:= s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx,estimationSystemNumber,lineTypeID)
+		if err != nil{
+			return nil,err
+		}
+	}
+	return result,nil
+}
+
+func (s *BookingEstimationServiceImpl) CopyFromHistory(id int)([]map[string]interface{},*exceptions.BaseErrorResponse){
+	tx := s.DB.Begin()
+	result,err := s.structBookingEstimationRepo.CopyFromHistory(tx,id)
+	if err != nil{
+		return nil,err
+	}
+	for _,detail := range result{
+		estimationSystemNumberFloat, ok1 := detail["estimation_system_number"].(float64)
+		lineTypeIDFloat, ok2 := detail["line_type_id"].(float64)
+
+		if !ok1 || !ok2 {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("invalid type assertion for map values"),
+			}
+    }
+
+    // Convert float64 to int
+		estimationSystemNumber := int(estimationSystemNumberFloat)
+		lineTypeID := int(lineTypeIDFloat)
+		_,err:= s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx,estimationSystemNumber,lineTypeID)
+		if err != nil{
+			return nil,err
+		}
 	}
 	return result,nil
 }
@@ -221,15 +294,7 @@ func (s *BookingEstimationServiceImpl) PostBookingEstimationCalculation(id int)(
 	return result,nil
 }
 
-func (s *BookingEstimationServiceImpl) PutBookingEstimationCalculation (id int, linetypeid int, req transactionworkshoppayloads.BookingEstimationCalculationPayloads)(int,*exceptions.BaseErrorResponse){
-	tx := s.DB.Begin()
-	result,err := s.structBookingEstimationRepo.PutBookingEstimationCalculation(tx,id,linetypeid,req)
-	defer helper.CommitOrRollback(tx,err)
-	if err != nil{
-		return 0,err
-	}
-	return result,nil
-}
+
 
 func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromPDI( id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
@@ -247,6 +312,15 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromServiceRequest(i
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
 		return transactionworkshopentities.BookingEstimation{},err
+	}
+	return result,nil
+}
+
+func (s *BookingEstimationServiceImpl) SaveBookingEstimationAllocation(id int,req transactionworkshoppayloads.BookEstimationAllocation)(transactionworkshopentities.BookingEstimationAllocation,*exceptions.BaseErrorResponse){
+	tx :=s.DB.Begin()
+	result,err := s.structBookingEstimationRepo.SaveBookingEstimationAllocation(tx,id,req)
+	if err != nil{
+		return transactionworkshopentities.BookingEstimationAllocation{},err
 	}
 	return result,nil
 }

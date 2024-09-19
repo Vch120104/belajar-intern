@@ -2,13 +2,14 @@ package migration
 
 import (
 	"after-sales/api/config"
+	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 
-	masterentities "after-sales/api/entities/master"
+	// masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
-	masteritementities "after-sales/api/entities/master/item"
-	masteroperationentities "after-sales/api/entities/master/operation"
+	// masteritementities "after-sales/api/entities/master/item"
+	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
 	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
@@ -67,41 +68,41 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-		&masterentities.ItemOperation{},
-		&masteroperationentities.OperationModelMapping{},
-		//&masteroperationentities.OperationLevel{},
-		//&masteroperationentities.OperationFrt{},
-		//&masteroperationentities.OperationGroup{},
-		//&masteroperationentities.OperationSection{},
-		//&masteroperationentities.OperationKey{},
-		//&masteroperationentities.OperationEntries{},
-		//&masteroperationentities.OperationCode{},
-		////
-		//&masterwarehouseentities.WarehouseGroup{},
-		//&masterwarehouseentities.WarehouseMaster{},
-		//&masterwarehouseentities.WarehouseLocation{},
-		//&masterwarehouseentities.WarehouseLocationDefinition{},
-		//&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
-		//
-		//&masteritementities.LandedCost{},
-		//&masteritementities.PurchasePrice{},
-		//&masteritementities.PurchasePriceDetail{},
-		//&masteritementities.UomType{},
-		//&masteritementities.Uom{},
-		//&masteritementities.UomItem{},
-		//&masteritementities.MarkupRate{},
-		//&masteritementities.PrincipleBrandParent{},
-		//&masteritementities.MarkupMaster{},
-		//&masteritementities.ItemLevel{},
-		//&masteritementities.PriceList{},
-		//&masteritementities.ItemSubstituteDetail{},
-		//&masteritementities.ItemSubstitute{},
-		//&masteritementities.ItemPackage{},
-		//&masteritementities.ItemPackageDetail{},
-		//&masteritementities.ItemImport{},
-		//&masteritementities.ItemDetail{},
-		//&masteritementities.ItemLocationSource{},
-		&masteritementities.Item{},
+	//&masteroperationentities.OperationModelMapping{},
+	//&masteroperationentities.OperationLevel{},
+	//&masteroperationentities.OperationFrt{},
+	//&masteroperationentities.OperationGroup{},
+	//&masteroperationentities.OperationSection{},
+	//&masteroperationentities.OperationKey{},
+	//&masteroperationentities.OperationEntries{},
+	//&masteroperationentities.OperationCode{},
+	////
+	//&masterwarehouseentities.WarehouseGroup{},
+	//&masterwarehouseentities.WarehouseMaster{},
+	//&masterwarehouseentities.WarehouseLocation{},
+	//&masterwarehouseentities.WarehouseLocationDefinition{},
+	//&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+	//
+	//&masteritementities.LandedCost{},
+	//&masteritementities.PurchasePrice{},
+	//&masteritementities.PurchasePriceDetail{},
+	//&masteritementities.UomType{},
+	//&masteritementities.Uom{},
+	//&masteritementities.UomItem{},
+	//&masteritementities.MarkupRate{},
+	//&masteritementities.PrincipleBrandParent{},
+	//&masteritementities.MarkupMaster{},
+	//&masteritementities.ItemLevel{},
+	//&masteritementities.PriceList{},
+	//&masteritementities.ItemSubstituteDetail{},
+	//&masteritementities.ItemSubstitute{},
+	//&masteritementities.ItemPackage{},
+	//&masteritementities.ItemPackageDetail{},
+	//&masteritementities.ItemImport{},
+	//&masteritementities.ItemDetail{},
+	//&masteritementities.ItemLocationSource{},
+	// &masteritementities.Item{},
+
 	//&masteritementities.ItemLocation{},
 	//&masteritementities.ItemLocationDetail{},
 	//&masteritementities.ItemClass{},
@@ -110,6 +111,8 @@ func Migrate() {
 	//&masteritementities.Discount{},
 	//&masteritementities.DiscountPercent{},
 	//
+	//&masterentities.ItemOperation{},
+	//&masterentities.PackageMasterDetail{},
 	//&masterentities.ForecastMaster{},
 	//&masterentities.MovingCode{},
 	//&masterentities.IncentiveGroup{},
@@ -130,7 +133,8 @@ func Migrate() {
 	//&masterentities.AgreementDiscount{},
 	//&masterentities.AgreementDiscountGroupDetail{},
 	//&masterentities.AgreementItemDetail{},
-
+	//&masterentities.CampaignMaster{},
+	// &masterentities.CampaignMasterDetail{},
 	//
 	//&masterentities.FieldAction{},
 	//&masterentities.FieldActionEligibleVehicleItem{},
@@ -139,10 +143,10 @@ func Migrate() {
 	//&masterentities.AgreementDiscount{},
 	//&masterentities.AgreementDiscountGroupDetail{},
 	//&masterentities.AgreementItemDetail{},
-	//
-	//&mastercampaignmasterentities.CampaignMaster{},
-	//&mastercampaignmasterentities.CampaignMasterDetailItem{},
-	//&mastercampaignmasterentities.CampaignMasterOperationDetail{},
+	//&masterentities.LocationStock{},
+	//&masterentities.WarehouseGroupMappingEntities{},
+	//&masterentities.ItemCycle{},
+	//&masterentities.MovingItemCode{},
 	//
 	//&transactionjpcbentities.SettingTechnician{},
 	//&transactionjpcbentities.SettingTechnicianDetail{},
@@ -185,18 +189,21 @@ func Migrate() {
 	//&transactionworkshopentities.BookingEstimationRequest{},
 	//&transactionworkshopentities.BookingEstimationServiceReminder{},
 	//&transactionworkshopentities.BookingEstimationServiceDiscount{},
-	////&transactionworkshopentities.BookingEstimationDetail{},
+	//&transactionworkshopentities.BookingEstimationDetail{},
 	//
 	//&transactionsparepartentities.PurchaseRequestEntities{},
 	//&transactionsparepartentities.PurchaseRequestDetail{},
 	//
-	//&masterentities.ItemCycle{},
-	//&masterentities.MovingItemCode{},
-	//&transactionsparepartentities.PurchaseRequestReferenceType{},
-	//&masterentities.LocationStock{},
-	// &masterentities.WarehouseGroupMappingEntities{},
-	)
 
+	//&transactionsparepartentities.PurchaseRequestReferenceType{},
+	//&transactionsparepartentities.PurchaseOrderEntities{},
+	//&transactionsparepartentities.PurchaseOrderDetailEntities{},
+	//&transactionsparepartentities.PurchaseOrderDetailChangedItem{},
+	//
+	//&transactionsparepartentities.BinningStock{},
+	//&transactionsparepartentities.BinningStockDetail{},
+	//&transactionsparepartentities.PurchaseOrderLimit{},
+	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)
 		panic(err)

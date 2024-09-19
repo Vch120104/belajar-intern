@@ -15,13 +15,14 @@ type SettingTechnicianGetAllResponse struct {
 }
 
 type SettingTechnicianGetAllDetailPayload struct {
-	SettingTechnicianDetailSystemNumber int  `json:"setting_technician_detail_system_number"`
-	SettingTechnicianSystemNumber       int  `json:"setting_technician_system_number"`
-	TechnicianNumber                    int  `json:"technician_number"`
-	TechnicianEmployeeNumberId          int  `json:"technician_employee_number_id"`
-	GroupExpress                        int  `json:"group_express"`
-	ShiftGroupId                        int  `json:"shift_group_id"`
-	IsBooking                           bool `json:"is_booking"`
+	SettingTechnicianDetailSystemNumber int    `json:"setting_technician_detail_system_number"`
+	SettingTechnicianSystemNumber       int    `json:"setting_technician_system_number"`
+	TechnicianNumber                    int    `json:"technician_number"`
+	TechnicianEmployeeNumberId          int    `json:"technician_employee_number_id"`
+	GroupExpress                        int    `json:"group_express"`
+	ShiftGroupId                        int    `json:"shift_group_id"`
+	ShiftGroup                          string `json:"shift_group"`
+	IsBooking                           bool   `json:"is_booking"`
 }
 
 type SettingTechnicianGetAllDetailResponse struct {
@@ -32,6 +33,7 @@ type SettingTechnicianGetAllDetailResponse struct {
 	EmployeeName                        string `json:"technician_employee_name"`
 	GroupExpress                        int    `json:"group_express"`
 	ShiftGroupId                        int    `json:"shift_group_id"`
+	ShiftGroup                          string `json:"shift_group"`
 	IsBooking                           bool   `json:"is_booking"`
 }
 
@@ -49,6 +51,7 @@ type SettingTechnicianGetByIdResponse struct {
 
 type SettingTechnicianDetailGetByIdResponse struct {
 	SettingTechnicianDetailSystemNumber int  `json:"setting_technician_detail_system_number"`
+	TechnicianEmployeeNumberId          int  `json:"technician_employee_number_id"`
 	ShiftGroupId                        int  `json:"shift_group_id"`
 	IsBooking                           bool `json:"is_booking"`
 	TechnicianNumber                    int  `json:"technician_number"`

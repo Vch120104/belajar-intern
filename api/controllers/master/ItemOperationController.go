@@ -9,7 +9,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
-	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -76,18 +75,7 @@ func (r *ItemOperationControllerImpl) GetByIdItemOperation(writer http.ResponseW
 
 func (r *ItemOperationControllerImpl) PostItemOperation(writer http.ResponseWriter, request *http.Request){
 	var formRequest masterpayloads.ItemOperationPost
-	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
-
-	if err != nil {
-		exceptions.NewEntityException(writer, request, err)
-		return
-	}
-	err = validation.ValidationForm(writer, request, formRequest)
-	if err != nil {
-		exceptions.NewBadRequestException(writer, request, err)
-		return
-	}
-
+	helper.ReadFromRequestBody(request, &formRequest)
 	create, err := r.ItemOperationService.PostItemOperation(formRequest)
 
 	if err != nil {

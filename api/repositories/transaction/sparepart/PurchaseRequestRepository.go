@@ -20,7 +20,7 @@ type PurchaseRequestRepository interface {
 	SavePurchaseRequestHeader(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, int) (transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, *exceptions.BaseErrorResponse)
 	SavePurchaseRequestDetail(*gorm.DB, transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse)
 	VoidPurchaseRequest(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
-	InsertPurchaseRequestHeader(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse)
+	SubmitPurchaseRequest(*gorm.DB, transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse)
 	InsertPurchaseRequestDetail(*gorm.DB, transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, int) (transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads, *exceptions.BaseErrorResponse)
 	GetAllItemTypePrRequest(*gorm.DB, []utils.FilterCondition, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdPurchaseRequestItemPr(*gorm.DB, int, int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse)

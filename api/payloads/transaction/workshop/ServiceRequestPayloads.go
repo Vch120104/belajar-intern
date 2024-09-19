@@ -214,7 +214,7 @@ type UomItemServiceRequestDetail struct {
 }
 
 type CompanyResponse struct {
-	CompanyId   string `json:"company_id"`
+	CompanyId   int    `json:"company_id"`
 	CompanyName string `json:"company_name"`
 	BizCategory string `json:"biz_category"`
 }
@@ -225,6 +225,22 @@ type ServiceRequestStatusResponse struct {
 	ServiceRequestStatusName string `json:"service_request_status_description"`
 }
 
+type ServiceRequestBookingEstimation struct {
+	ProfitCenterId               int    `json:"profit_center_id"`
+	CompanyId                    int    `json:"company_id"`
+	VehicleId                    int    `json:"vehicle_id"`
+	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
+	ContractServiceSystemNumber  int    `json:"contract_service_system_number"`
+}
+
+type ServiceRequestDetailBookingPayloads struct {
+	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
+	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
+	ReferenceDocumentNumber    string  `json:"reference_document_number"`
+	LineTypeId                 int     `json:"line_type_id"`
+	OperationItemId            int     `json:"operation_item_id"`
+	FrtQuantity                float64 `json:"frt_quantity"`
+}
 type ProfitCenter struct {
 	ProfitCenterId   int    `json:"profit_center_id"`
 	ProfitCenterCode string `json:"profit_center_code"`
