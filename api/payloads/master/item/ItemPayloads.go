@@ -306,8 +306,8 @@ type ItemListTransLookUp struct {
 	ItemName    string `json:"item_name"`
 	ItemClassId int    `json:"item_class_id"`
 	ItemType    string `json:"item_type"`
-	ItemLevel1  string `json:"item_level_1"`
-	ItemLevel2  string `json:"item_level_2"`
-	ItemLevel3  string `json:"item_level_3"`
-	ItemLevel4  string `json:"item_level_4"`
+	ItemLevel_1 string `json:"item_level_1"`
+	ItemLevel_2 string `json:"item_level_2"`
+	ItemLevel_3 string `json:"item_level_3"`
+	ItemLevel_4 string `json:"item_level_4"`
 }

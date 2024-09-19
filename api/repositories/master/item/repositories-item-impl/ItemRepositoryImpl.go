@@ -94,7 +94,7 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_level_4`).
 		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id")
 
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
 
 	err := whereQuery.Scopes(pagination.Paginate(&entites, &pages, whereQuery)).Scan(&response).Error
 
