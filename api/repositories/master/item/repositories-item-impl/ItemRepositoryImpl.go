@@ -77,6 +77,54 @@ func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloa
 	return responses, nil
 }
 
+func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	entites := masteritementities.Item{}
+	response := []masteritempayloads.ItemListTransLookUp{}
+
+	baseModelQuery := tx.Model(&entites).
+		Select(`
+			mtr_item.item_code,
+			mtr_item.item_name,
+			mtr_item.item_class_id,
+			mtr_item.item_type,
+			mtr_item.item_level_1,
+			mtr_item.item_level_2,
+			mtr_item.item_level_3,
+			mtr_item.item_level_4`).
+		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id")
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&entites, &pages, whereQuery)).Scan(&response).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	
+	var mapResponses []map[string]interface{}
+	for _, res := range response { 
+		responseMap := map[string]interface{}{
+			"item_code":     res.ItemCode,
+			"item_name":     res.ItemName,
+			"item_class_id": res.ItemClassId,
+			"item_type":     res.ItemType,
+			"item_level_1":  res.ItemLevel1, 
+			"item_level_2":  res.ItemLevel2,
+			"item_level_3":  res.ItemLevel3,
+			"item_level_4":  res.ItemLevel4,
+		}
+		mapResponses = append(mapResponses, responseMap)
+	}
+
+	pages.Rows = mapResponses
+
+	return pages, nil
+}
+
 func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	tableStruct := masteritempayloads.ItemSearch{}

@@ -37,6 +37,8 @@ type ItemController interface {
 	GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request)
 	AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
+	GetCatalogCode(writer http.ResponseWriter, request *http.Request)
+	GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
@@ -194,6 +196,46 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"item_code":     queryValues.Get("item_code"),
+		"item_name":     queryValues.Get("item_name"),
+		"item_class_id": queryValues.Get("item_class_id"),
+		"item_type":     queryValues.Get("item_type"),
+		"item_level_1":  queryValues.Get("item_level_1"),
+		"item_level_2":  queryValues.Get("item_level_2"),
+		"item_level_3":  queryValues.Get("item_level_3"),
+		"item_level_4":  queryValues.Get("item_level_4"),
+	}
+
+	for key, value := range queryParams {
+		if value == "" {
+			delete(queryParams, key)
+		}
+	}
+
+	fmt.Printf("Query parameters: %+v\n", queryParams)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	data, err := r.itemservice.GetAllItemListTransLookup(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
 }
 
 // @Summary Get All Item Lookup
@@ -553,4 +595,18 @@ func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, re
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "success", 200)
+}
+
+func (r *ItemControllerImpl) GetCatalogCode(writer http.ResponseWriter, request *http.Request) {
+	catalogCode, err := strconv.Atoi(chi.URLParam(request, "gmm_catalog_code"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+	get, errResp := r.itemservice.GetCatalogCode(catalogCode)
+	if errResp != nil {
+		helper.ReturnError(writer, request, errResp)
+		return
+	}
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
 }

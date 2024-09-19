@@ -29,4 +29,5 @@ type ItemService interface {
 	GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	CheckItemCodeExist(itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse)
 	GetCatalogCode(gmmCatalogCode int) (masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse)
+	GetAllItemListTransLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }
