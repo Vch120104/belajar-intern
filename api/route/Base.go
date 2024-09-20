@@ -210,6 +210,9 @@ func ItemRouter(
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
+	router.Get("/catalog-code-drop-down", itemController.GetCatalogCode)
+	router.Get("/brand-parent-by-code/{catalogue_code}", itemController.GetPrincipleBrandParent)
+	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
 
 	return router
 }

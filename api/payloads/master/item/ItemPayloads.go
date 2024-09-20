@@ -174,6 +174,10 @@ type ItemDetailResponse struct {
 	ReturnEvery  float64 `json:"return_every"`
 }
 
+type GetCatalogCode struct {
+	CatalogueCode int `json:"catalogue_code"`
+}
+
 type ItemDetailRequest struct {
 	ItemDetailId int     `json:"item_detail_id" parent_entity:"mtr_item_detail" main_table:"mtr_item_detail"`
 	ItemId       int     `json:"item_id" parent_entity:"mtr_item_detail"`
@@ -265,14 +269,14 @@ type ItemDetailUpdateRequest struct {
 }
 
 type PrincipleBrandDropdownResponse struct {
-	IsActive           bool   `json:"is_active"`
-	PrincipleBrandId   int    `json:"principle_brand_id"`
-	PrincipleBrandCode string `json:"principle_brand_code"`
+	IsActive                 bool   `json:"is_active"`
+	PrincipalBrandParentId   int    `json:"principle_brand_parent_id"`
+	PrincipalBrandParentCode string `json:"principle_brand_parent_code"`
 }
 
 type PrincipleBrandDropdownDescription struct {
-	PrincipleBrandId          int    `json:"principle_brand_id"`
-	PrincipleBrandDescription string `json:"principle_brand_description"`
+	PrincipalBrandParentId          int    `json:"principle_brand_parent_id"`
+	PrincipalBrandParentDescription string `json:"principle_brand_parent_description"`
 }
 
 type BrandModelVariantResponse struct {
@@ -295,4 +299,15 @@ type ItemSearch struct {
 	ItemGroupId int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
 	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
 	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
+}
+
+type ItemListTransLookUp struct {
+	ItemCode    string `json:"item_code"`
+	ItemName    string `json:"item_name"`
+	ItemClassId int    `json:"item_class_id"`
+	ItemType    string `json:"item_type"`
+	ItemLevel_1 string `json:"item_level_1"`
+	ItemLevel_2 string `json:"item_level_2"`
+	ItemLevel_3 string `json:"item_level_3"`
+	ItemLevel_4 string `json:"item_level_4"`
 }

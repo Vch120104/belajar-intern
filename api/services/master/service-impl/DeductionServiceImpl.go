@@ -116,6 +116,7 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interfa
 func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.DeductionDetailUpdate) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.deductionrepo.UpdateDeductionDetail(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.DeductionDetail{}, err
 	}
