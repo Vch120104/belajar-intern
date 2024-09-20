@@ -139,12 +139,12 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryValues := request.URL.Query()
 
 	filter := map[string]string{
-		"mtr_item_level.item_level":        queryValues.Get("item_level"),
-		"mtr_item_class.item_class_code":   queryValues.Get("item_class_code"),
-		"mtr_item_level.item_level_parent": queryValues.Get("item_level_parent"),
-		"mtr_item_level.item_level_code":   queryValues.Get("item_level_code"),
-		"mtr_item_level.item_level_name":   queryValues.Get("item_level_name"),
-		"mtr_item_level.is_active":         queryValues.Get("is_active"),
+		"mtr_item_level.item_level":      queryValues.Get("item_level"),
+		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
+		"mil.item_level_code":            queryValues.Get("item_level_parent"),
+		"mtr_item_level.item_level_code": queryValues.Get("item_level_code"),
+		"mtr_item_level.item_level_name": queryValues.Get("item_level_name"),
+		"mtr_item_level.is_active":       queryValues.Get("is_active"),
 	}
 
 	paginate := pagination.Pagination{
