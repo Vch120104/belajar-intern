@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -2157,4 +2158,158 @@ func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByCode(tx *gorm.DB, custo
 	}
 
 	return customerMasters, totalPages, int(totalRows), nil
+}
+
+// FctGetBillCode retrieves the bill code based on companyCode, supcusCode, and supcusType
+func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supcusCode, supcusType string) (string, *exceptions.BaseErrorResponse) {
+	var (
+		billCode       string
+		npwpSupcus     string
+		npwpCompany    string
+		typeMap        string
+		supplierExists bool
+		customerExists bool
+	)
+
+	// Hardcoded bill code values
+	billcodeInternal := "I"
+	billcodeExternal := "E"
+	billcodeCentralize := "C"
+	billcodeDecentralize := "D"
+	billcodeRelatedParties := "R"
+	supcusDealer := "00"
+	supcusImsi := "51"
+	supcusAtpm := "61"
+	supcusSalim := "71"
+	supcusMaintained := "81"
+
+	// If supcusType is 'F'
+	if strings.ToUpper(supcusType) == "F" {
+		if supcusCode == strconv.Itoa(companyCode) {
+			billCode = billcodeInternal
+		} else {
+			// Check if supcusCode exists in gmSupplier0
+			if err := tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
+				Select("1").
+				Where("supplier_code = ?", supcusCode).
+				Find(&supplierExists).Error; err != nil {
+				return "", &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check supplier existence",
+					Err:        err,
+				}
+			}
+
+			if !supplierExists {
+				// Check if supcusCode exists in gmCust0
+				if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+					Select("1").
+					Where("customer_code = ?", supcusCode).
+					Find(&customerExists).Error; err != nil {
+					return "", &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to check customer existence",
+						Err:        err,
+					}
+				}
+
+				if !customerExists {
+					billCode = ""
+				} else {
+					// Handle customer logic
+					if err := tx.Raw("SELECT COALESCE((SELECT company_type FROM gmCompTypeMap WHERE company_from = ? AND company_to = ?), (SELECT customer_type FROM gmCust0 WHERE customer_code = ?))",
+						companyCode, supcusCode, supcusCode).Scan(&typeMap).Error; err != nil {
+						return "", &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to get customer type",
+							Err:        err,
+						}
+					}
+
+					// Assign billCode based on customer type
+					switch typeMap {
+					case supcusDealer:
+						// Get VAT_REG_NO for company and supcus
+						if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
+							return "", err
+						}
+
+						if npwpCompany == npwpSupcus {
+							billCode = billcodeCentralize
+						} else {
+							billCode = billcodeDecentralize
+						}
+					case supcusImsi:
+						billCode = billcodeDecentralize
+					case supcusAtpm, supcusSalim, supcusMaintained:
+						billCode = billcodeRelatedParties
+					default:
+						billCode = billcodeExternal
+					}
+				}
+			} else {
+				// Handle supplier logic
+				if err := tx.Raw("SELECT COALESCE((SELECT company_type FROM gmCompTypeMap WHERE company_from = ? AND company_to = ?), (SELECT supplier_type FROM gmSupplier0 WHERE supplier_code = ?))",
+					supcusCode, companyCode, supcusCode).Scan(&typeMap).Error; err != nil {
+					return "", &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get supplier type",
+						Err:        err,
+					}
+				}
+
+				// Assign billCode based on supplier type
+				switch typeMap {
+				case supcusDealer:
+					if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
+						return "", err
+					}
+
+					if npwpCompany == npwpSupcus {
+						billCode = billcodeCentralize
+					} else {
+						billCode = billcodeDecentralize
+					}
+				case supcusImsi:
+					billCode = billcodeDecentralize
+				case supcusAtpm, supcusSalim, supcusMaintained:
+					billCode = billcodeRelatedParties
+				default:
+					billCode = billcodeExternal
+				}
+			}
+		}
+	}
+
+	// Additional logic for other supcusType cases ('S', 'P', 'C', 'W') can be added here.
+
+	return billCode, nil
+}
+
+// Helper function to get VAT_REG_NO for company and supcus
+func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusCode string, npwpCompany, npwpSupcus *string) *exceptions.BaseErrorResponse {
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_tax_data ON mtr_customer.tax_customer_id = mtr_tax_data.tax_id").
+		Select("npwp_no").
+		Where("mtr_customer.company_id = ?", companyCode).Scan(npwpCompany).Error; err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get company VAT_REG_NO",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_tax_data ON mtr_customer.tax_customer_id = mtr_tax_data.tax_id").
+		Select("npwp_no").
+		Where("company_id = ?", supcusCode).
+		Scan(npwpSupcus).Error; err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get supplier/customer VAT_REG_NO",
+			Err:        err,
+		}
+	}
+
+	return nil
 }

@@ -1077,3 +1077,22 @@ type WorkOrderTransactionType struct {
 	TransactionTypeCode string `json:"work_order_transaction_type_code"`
 	TransactionTypeName string `json:"work_order_transaction_type_description"`
 }
+
+type DeleteCampaignPayload struct {
+	TotalPackage            float64 `json:"total_package"`
+	TotalOpr                float64 `json:"total_opr"`
+	TotalPart               float64 `json:"total_part"`
+	TotalOil                float64 `json:"total_oil"`
+	TotalMaterial           float64 `json:"total_material"`
+	TotalConsumableMaterial float64 `json:"total_consumable_material"`
+	TotalSublet             float64 `json:"total_sublet"`
+	TotalAccs               float64 `json:"total_accs"`
+	TotalDisc               float64 `json:"total_disc"`
+	TotalAfterDisc          float64 `json:"total_after_disc"`
+	TotalNonVat             float64 `json:"total_non_vat"`
+	TotalVat                float64 `json:"total_vat"`
+	TotalAfterVat           float64 `json:"total_after_vat"`
+	AddDiscStat             string  `json:"add_disc_stat"`
+	WorkOrderSystemNumber   int     `json:"work_order_system_number"`
+	CampaignId              int     `json:"campaign_id"`
+}

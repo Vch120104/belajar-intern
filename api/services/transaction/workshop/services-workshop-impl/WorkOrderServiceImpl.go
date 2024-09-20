@@ -235,14 +235,14 @@ func (s *WorkOrderServiceImpl) GetById(id int, pages pagination.Pagination) (tra
 	return results, nil
 }
 
-func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	save, err := s.structWorkOrderRepo.Save(tx, request, workOrderId)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrder{}, err
 	}
 
 	return save, nil
@@ -726,6 +726,16 @@ func (s *WorkOrderServiceImpl) DeleteTrxTypeSo(id int) (bool, *exceptions.BaseEr
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
+	}
+	return delete, nil
+}
+
+func (s *WorkOrderServiceImpl) DeleteCampaign(workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	delete, err := s.structWorkOrderRepo.DeleteCampaign(tx, workOrderId)
+	if err != nil {
+		return transactionworkshoppayloads.DeleteCampaignPayload{}, err
 	}
 	return delete, nil
 }

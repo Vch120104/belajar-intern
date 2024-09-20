@@ -1283,6 +1283,7 @@ func WorkOrderRouter(
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 
+	router.Delete("/delete-campaign/{work_order_system_number}", WorkOrderController.DeleteCampaign)
 	router.Put("/change-bill-to/{work_order_system_number}", WorkOrderController.ChangeBillTo)
 	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
 	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)

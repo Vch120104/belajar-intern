@@ -90,6 +90,7 @@ type WorkOrderController interface {
 	NewAffiliated(writer http.ResponseWriter, request *http.Request)
 	SaveAffiliated(writer http.ResponseWriter, request *http.Request)
 
+	DeleteCampaign(writer http.ResponseWriter, request *http.Request)
 	ChangeBillTo(writer http.ResponseWriter, request *http.Request)
 	ChangePhoneNo(writer http.ResponseWriter, request *http.Request)
 	ConfirmPrice(writer http.ResponseWriter, request *http.Request)
@@ -1133,11 +1134,7 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 		return
 	}
 
-	if success {
-		payloads.NewHandleSuccess(writer, success, "Work order saved successfully", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Failed to save work order", http.StatusInternalServerError)
-	}
+	payloads.NewHandleSuccess(writer, success, "Work order saved successfully", http.StatusOK)
 
 }
 
@@ -2138,4 +2135,32 @@ func (r *WorkOrderControllerImpl) DeleteTrxTypeSo(writer http.ResponseWriter, re
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// DeleteCampaign deletes a campaign from a work order
+// @Summary Delete Work Order Campaign
+// @Description Delete a campaign from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order Campaign ID"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/delete-campaign/{work_order_system_number} [delete]
+func (r *WorkOrderControllerImpl) DeleteCampaign(writer http.ResponseWriter, request *http.Request) {
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	success, serviceErr := r.WorkOrderService.DeleteCampaign(workOrderId)
+	if serviceErr != nil {
+		exceptions.NewAppException(writer, request, serviceErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Campaign deleted successfully", http.StatusOK)
+
 }

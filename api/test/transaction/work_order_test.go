@@ -162,9 +162,9 @@ func (m *MockWorkOrderService) GetById(id int, pages pagination.Pagination) (tra
 	return args.Get(0).(transactionworkshoppayloads.WorkOrderResponseDetail), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) Save(request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) Save(request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
 	args := m.Called(request, workOrderId)
-	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshopentities.WorkOrder), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) Submit(Id int) (bool, string, *exceptions.BaseErrorResponse) {
@@ -330,6 +330,11 @@ func (m *MockWorkOrderService) ChangePhoneNo(workOrderId int, request transactio
 func (m *MockWorkOrderService) ConfirmPrice(workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId, idwos)
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) DeleteCampaign(workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
+	args := m.Called(workOrderId)
+	return args.Get(0).(transactionworkshoppayloads.DeleteCampaignPayload), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Get All Normal Work Order
