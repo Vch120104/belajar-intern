@@ -2313,3 +2313,101 @@ func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusC
 
 	return nil
 }
+
+func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (int, *exceptions.BaseErrorResponse) {
+	var (
+		lineType         int
+		itemGrp          string
+		itemType         string
+		itemCls          string
+		itmClsSublet     = "SB" // Assuming these are constants in your utils
+		lineTypeSublet   = utils.LineTypeSublet
+		itemClsFee       = "WF"
+		itemTypeService  = "S"
+		itemGrpInventory = "IN"
+		itemClsAccs      = "AC"
+		itemClsSv        = "SV"
+	)
+
+	// Retrieve item details
+	var itemDetails struct {
+		ItemGroupId string
+		ItemType    string
+		ItemClassId string
+	}
+
+	if err := tx.Model(&masteritementities.Item{}).
+		Select("item_group_id, item_type, item_class_id").
+		Where("item_code = ? AND record_status = ?", itemCode, "A"). // Add record status check
+		Scan(&itemDetails).Error; err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get item details",
+			Err:        err,
+		}
+	}
+
+	itemGrp = itemDetails.ItemGroupId
+	itemType = itemDetails.ItemType
+	itemCls = itemDetails.ItemClassId
+
+	// Determine line type based on the item details
+	if itemGrp == itemGrpInventory {
+		if itemType == "G" {
+			switch itemCls {
+			case "SP":
+				lineType = utils.LinetypeSparepart
+			case "OL":
+				lineType = utils.LinetypeOil
+			case "MT", itmClsSublet:
+				lineType = utils.LinetypeMaterial
+			case "CM":
+				lineType = utils.LinetypeConsumableMaterial
+			case itemClsAccs:
+				lineType = utils.LinetypeAccesories
+			case itemClsSv:
+				lineType = utils.LineTypeSublet
+			default:
+				lineType = utils.LinetypeAccesories
+			}
+		} else if itemCls == itemClsFee {
+			lineType = lineTypeSublet
+		} else if itemCls == itemClsAccs && itemType == itemTypeService {
+			lineType = utils.LinetypeOperation
+		}
+	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemType == itemTypeService && itemCls == itemClsFee) {
+		lineType = lineTypeSublet
+	}
+
+	// Check if the item exists
+	var itemExists int64
+	if err := tx.Model(&masteritementities.Item{}).
+		Where("item_code = ? ", itemCode).
+		Count(&itemExists).Error; err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count item",
+			Err:        err,
+		}
+	}
+
+	if itemExists == 0 {
+		var packageExists int64
+		if err := tx.Model(&masterentities.PackageMaster{}).
+			Where("package_code = ? ", itemCode).
+			Count(&packageExists).Error; err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to count package",
+				Err:        err,
+			}
+		}
+		if packageExists > 0 {
+			lineType = utils.LinetypePackage
+		} else {
+			lineType = utils.LinetypeOperation
+		}
+	}
+
+	return lineType, nil
+}

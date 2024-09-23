@@ -688,6 +688,48 @@ func (s *WorkOrderServiceImpl) DeleteTrxType(id int) (bool, *exceptions.BaseErro
 	return delete, nil
 }
 
+func (s *WorkOrderServiceImpl) NewLineType() ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	bills, err := s.structWorkOrderRepo.NewLineType(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return nil, err
+	}
+	return bills, nil
+}
+
+func (s *WorkOrderServiceImpl) AddLineType(request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	save, err := s.structWorkOrderRepo.AddLineType(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateLineType(id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	update, err := s.structWorkOrderRepo.UpdateLineType(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+
+}
+
+func (s *WorkOrderServiceImpl) DeleteLineType(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	delete, err := s.structWorkOrderRepo.DeleteLineType(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
 func (s *WorkOrderServiceImpl) NewTrxTypeSo() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
@@ -738,4 +780,14 @@ func (s *WorkOrderServiceImpl) DeleteCampaign(workOrderId int) (transactionworks
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, err
 	}
 	return delete, nil
+}
+
+func (s *WorkOrderServiceImpl) AddContractService(workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshoppayloads.WorkOrderContractServiceResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	save, err := s.structWorkOrderRepo.AddContractService(tx, workOrderId, request)
+	if err != nil {
+		return transactionworkshoppayloads.WorkOrderContractServiceResponse{}, err
+	}
+	return save, nil
 }

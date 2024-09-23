@@ -16,6 +16,7 @@ type LookupController interface {
 	ItemOprCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByID(writer http.ResponseWriter, request *http.Request)
+	GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request)
 	CampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
@@ -461,4 +462,33 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.Respon
 	}
 
 	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+// GetLineTypeByItemCode godoc
+// @Summary Get Line Type By Item Code
+// @Description Get Line Type By Item Code
+// @Tags Master
+// @Accept json
+// @Produce json
+// @Param item_code path string true "Item Code"
+// @Success 200 {object} ItemOprCodeResponse
+// @Router /master/lookup/line-type/{item_code} [get]
+func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request) {
+	itemCode := chi.URLParam(request, "item_code")
+	if itemCode == "" {
+		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
+		return
+	}
+
+	lookup, baseErr := r.LookupService.GetLineTypeByItemCode(itemCode)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
 }

@@ -5,6 +5,7 @@ import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
+	masteroperationentities "after-sales/api/entities/master/operation"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -523,6 +524,10 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	// Fetch workorder details with pagination
 	var workorderDetails []transactionworkshoppayloads.WorkOrderDetailResponse
 	query := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("trx_work_order_detail.work_order_detail_id, trx_work_order_detail.work_order_system_number, trx_work_order_detail.line_type_id,lt.line_type_code, trx_work_order_detail.transaction_type_id, tt.transaction_type_code AS transaction_type_code, trx_work_order_detail.job_type_id, tc.job_type_code AS job_type_code, trx_work_order_detail.warehouse_id, trx_work_order_detail.item_id, trx_work_order_detail.frt_quantity, trx_work_order_detail.supply_quantity, trx_work_order_detail.operation_item_price, trx_work_order_detail.operation_item_discount_amount, trx_work_order_detail.operation_item_discount_request_amount").
+		Joins("INNER JOIN mtr_work_order_line_type AS lt ON lt.line_type_code = trx_work_order_detail.line_type_id").
+		Joins("INNER JOIN mtr_work_order_transaction_type AS tt ON tt.transaction_type_id = trx_work_order_detail.transaction_type_id").
+		Joins("INNER JOIN mtr_work_order_job_type AS tc ON tc.job_type_id = trx_work_order_detail.job_type_id").
 		Where("work_order_system_number = ?", Id).
 		Offset(pagination.GetOffset()).
 		Limit(pagination.GetLimit())
@@ -533,6 +538,17 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 			Message:    "Failed to retrieve work order details from the database",
 			Err:        errWorkOrderDetails,
 		}
+	}
+	// Debug output for retrieved details
+	fmt.Println("Retrieved work order details:", workorderDetails)
+
+	// Check if the workorderDetails slice is populated
+	if len(workorderDetails) > 0 {
+		fmt.Println("Work order detail ID:", workorderDetails[0].WorkOrderDetailId)
+		fmt.Println("Transaction Type Code:", workorderDetails[0].TransactionTypeCode)
+		fmt.Println("Job Type Code:", workorderDetails[0].JobTypeCode)
+	} else {
+		fmt.Println("No work order details found.")
 	}
 
 	// Fetch work order services
@@ -1063,7 +1079,10 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 
 	// Check if there is still DP payment that has not been settled
 	var dpPaymentAllocated float64
-	err = tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", Id).Select("COALESCE(downpayment_payment_allocated, 0) as downpayment_payment_allocated").Scan(&dpPaymentAllocated).Error
+	err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("work_order_system_number = ?", Id).
+		Select("COALESCE(downpayment_payment_allocated, 0) as downpayment_payment_allocated").
+		Scan(&dpPaymentAllocated).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1308,8 +1327,7 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 // uspg_wtWorkOrder1_Insert
 // IF @Option = 0
 // --USE FOR : * INSERT NEW DATA
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func (r *WorkOrderRepositoryImpl) GetAllRequest(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.WorkOrderService
 	// Query to retrieve all work order service entities based on the request
@@ -3702,6 +3720,75 @@ func (r *WorkOrderRepositoryImpl) DeleteType(tx *gorm.DB, id int) (bool, *except
 	return true, nil
 }
 
+func (r *WorkOrderRepositoryImpl) NewLineType(tx *gorm.DB) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
+	var types []transactionworkshopentities.WorkOrderMasterLineType
+
+	if err := tx.Find(&types).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order line type from the database"}
+	}
+
+	var getBillables []transactionworkshoppayloads.Linetype
+	for _, t := range types {
+		getBillables = append(getBillables, transactionworkshoppayloads.Linetype{
+			LineTypeId:   t.WorkOrderLineTypeId,
+			LineTypeCode: t.WorkOrderLineTypeCode,
+			LineTypeName: t.WorkOrderLineTypeDescription,
+		})
+	}
+
+	return getBillables, nil
+}
+
+func (r *WorkOrderRepositoryImpl) AddLineType(tx *gorm.DB, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterLineType{
+		WorkOrderLineTypeCode:        request.LineTypeCode,
+		WorkOrderLineTypeDescription: request.LineTypeName,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateLineType(tx *gorm.DB, id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterLineType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterLineType{}).Where("billable_to_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	entity.WorkOrderLineTypeCode = request.LineTypeCode
+	entity.WorkOrderLineTypeDescription = request.LineTypeName
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteLineType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterLineType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterLineType{}).Where("line_type_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve linetype data from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete linetype data"}
+	}
+
+	return true, nil
+}
+
 func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterBillAbleto
 
@@ -3781,6 +3868,7 @@ func (r *WorkOrderRepositoryImpl) NewTrxType(tx *gorm.DB) ([]transactionworkshop
 	var payloadTypes []transactionworkshoppayloads.WorkOrderTransactionType
 	for _, t := range types {
 		payloadTypes = append(payloadTypes, transactionworkshoppayloads.WorkOrderTransactionType{
+			TransactionTypeId:   t.WorkOrderTrxTypeId,
 			TransactionTypeCode: t.WorkOrderTrxTypeCode,
 			TransactionTypeName: t.WorkOrderTrxTypeDescription,
 		})
@@ -3849,6 +3937,7 @@ func (r *WorkOrderRepositoryImpl) NewTrxTypeSo(tx *gorm.DB) ([]transactionworksh
 	var payloadTypes []transactionworkshoppayloads.WorkOrderTransactionType
 	for _, t := range types {
 		payloadTypes = append(payloadTypes, transactionworkshoppayloads.WorkOrderTransactionType{
+			TransactionTypeId:   t.WorkOrderTrxTypeSoId,
 			TransactionTypeCode: t.WorkOrderTrxTypeSoCode,
 			TransactionTypeName: t.WorkOrderTrxTypeSoDescription,
 		})
@@ -4584,7 +4673,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									err = tx.Create(&transactionworkshopentities.WorkOrderDetail{
 										WorkOrderSystemNumber:      workOrderId,
 										WorkOrderOperationItemLine: nextLineNumber,
-										LineType:                   "Substitute",
+										LineTypeId:                 detailentity.LineTypeId,
 										WorkorderStatusId:          detailentity.WorkorderStatusId,
 										OperationItemCode:          detailentity.OperationItemCode,
 										OperationItemPrice:         oprItemPrice,
@@ -4948,16 +5037,16 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 // uspg_wtWorkOrder0_Update
 // IF @Option = 7
 func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
-
-	// scan campaign data from work order
+	// Scan campaign data from work order
 	var campaignId int
 	if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
 		Select("ISNULL(campaign_id, 0) AS campaign_id").
 		Where("work_order_system_number = ?", workOrderId).
 		Scan(&campaignId).Error; err != nil {
+
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to scan campaign data from work order",
+			Message:    "Failed to check campaign data from work order, campaign is empty",
 			Err:        err,
 		}
 	}
@@ -4966,36 +5055,51 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 	var exists bool
 	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("1").
-		Where("work_order_system_number = ?  AND (line_type_id = ? OR line_type_id = ?) AND transaction_type_id = ? AND ISNULL(service_status_id, '') <> ''", workOrderId, utils.LinetypeOperation, utils.LinetypePackage, 5).
+		Where("work_order_system_number = ? AND (line_type_id = ? OR line_type_id = ?) AND transaction_type_id = ? AND ISNULL(service_status_id, '') <> ''", workOrderId, utils.LinetypeOperation, utils.LinetypePackage, 5).
 		Scan(&exists).Error; err != nil {
+
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to check operation allocation",
 			Err:        err,
 		}
 	}
+
 	if exists {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "Operation already allocated",
+			Err:        errors.New("operation already allocated"),
 		}
 	}
 
 	// Check if SUPPLY_QTY is valid
+	var supplyQuantity float64
 	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("ISNULL(supply_quantity, 0) AS supply_quantity").
 		Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeOperation).
-		Scan(&exists).Error; err != nil {
-		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{Message: "Failed to check supply quantity", Err: err}
+		Scan(&supplyQuantity).Error; err != nil {
+
+		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check supply quantity",
+			Err:        err,
+		}
 	}
 
-	if exists {
-		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{Message: "SUPPLY QTY is not Valid"}
+	if supplyQuantity <= 0 {
+		fmt.Println("Invalid supply quantity:", supplyQuantity) // Tambahkan log
+		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "SUPPLY QTY is not Valid",
+			Err:        errors.New("supply qty is not Valid"),
+		}
 	}
 
 	// Delete work order lines
 	if err := tx.Where("work_order_system_number = ? AND transaction_type_id = ?", workOrderId, 5).
 		Delete(&transactionworkshopentities.WorkOrderDetail{}).Error; err != nil {
+
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to delete work order lines",
@@ -5003,18 +5107,16 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	// Recalculate totals
+	// Declare totals
 	var totalPackage, totalOpr, totalPart, totalOil, totalMaterial, totalConsumableMaterial, totalSublet, totalAccs, totalDisc, totalAfterDisc, totalNonVat, totalVat, totalAfterVat float64
-	var total float64
 
 	substituteTypeItem := "S"
 
-	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total package
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypePackage).
-		Scan(&totalPackage).Error
-
-	if err != nil {
+		Scan(&totalPackage).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total package",
@@ -5022,12 +5124,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total operation
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeOperation).
-		Scan(&totalOpr).Error
-
-	if err != nil {
+		Scan(&totalOpr).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total operation",
@@ -5035,12 +5136,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total sparepart
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ? AND subtitute_type_id <> ?", workOrderId, utils.LinetypeSparepart, substituteTypeItem).
-		Scan(&totalPart).Error
-
-	if err != nil {
+		Scan(&totalPart).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total sparepart",
@@ -5048,12 +5148,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total oil
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ? AND subtitute_type_id <> ?", workOrderId, utils.LinetypeOil, substituteTypeItem).
-		Scan(&totalOil).Error
-
-	if err != nil {
+		Scan(&totalOil).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total oil",
@@ -5061,12 +5160,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total material
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ? AND subtitute_type_id <> ?", workOrderId, utils.LinetypeMaterial, substituteTypeItem).
-		Scan(&totalMaterial).Error
-
-	if err != nil {
+		Scan(&totalMaterial).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total material",
@@ -5074,12 +5172,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total consumable material
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ? AND subtitute_type_id <> ?", workOrderId, utils.LinetypeConsumableMaterial, substituteTypeItem).
-		Scan(&totalConsumableMaterial).Error
-
-	if err != nil {
+		Scan(&totalConsumableMaterial).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total consumable material",
@@ -5087,12 +5184,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total sublet
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ? AND subtitute_type_id <> ?", workOrderId, utils.LineTypeSublet, substituteTypeItem).
-		Scan(&totalSublet).Error
-
-	if err != nil {
+		Scan(&totalSublet).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total sublet",
@@ -5100,12 +5196,11 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+	// Calculate total accessories
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
 		Where("work_order_system_number = ? AND line_type_id = ? AND subtitute_type_id <> ?", workOrderId, utils.LinetypeAccesories, substituteTypeItem).
-		Scan(&totalAccs).Error
-
-	if err != nil {
+		Scan(&totalAccs).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total accessories",
@@ -5113,29 +5208,14 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
-		Where("work_order_system_number = ? AND line_type_id IN (?, ?, ?, ?, ?, ?, ?)",
-			workOrderId, utils.LinetypePackage, utils.LinetypeOperation, utils.LinetypeSparepart, utils.LinetypeOil, utils.LinetypeMaterial, utils.LinetypeConsumableMaterial, utils.LineTypeSublet).
-		Scan(&total).Error
+	// Calculate overall total
+	total := totalPackage + totalOpr + totalPart + totalOil + totalMaterial + totalConsumableMaterial + totalSublet + totalAccs
 
-	if err != nil {
-		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to calculate total",
-			Err:        err,
-		}
-	}
-
-	// Calculate discounts and total after discount
-	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Select(`
-			SUM(CASE WHEN line_type_id = ? THEN ISNULL(operation_item_discount_amount, 0) ELSE ISNULL(operation_item_discount_amount, 0) * ISNULL(frt_quantity, 0) END)
-		`, utils.LinetypePackage).
+	// Calculate total discount
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("SUM(CASE WHEN line_type_id = ? THEN ISNULL(operation_item_discount_amount, 0) ELSE ISNULL(operation_item_discount_amount, 0) * ISNULL(frt_quantity, 0) END)", utils.LinetypePackage).
 		Where("work_order_system_number = ?", workOrderId).
-		Scan(&totalDisc).Error
-
-	if err != nil {
+		Scan(&totalDisc).Error; err != nil {
 		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to calculate total discount",
@@ -5143,6 +5223,37 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		}
 	}
 
+	// Calculate total after discount
+	totalAfterDisc = total - totalDisc
+
+	// Calculate total non-VAT
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0), 0, 0))").
+		Where("work_order_system_number = ? AND line_type_id NOT IN (?, ?)", workOrderId, utils.LinetypePackage, utils.LinetypeOperation).
+		Scan(&totalNonVat).Error; err != nil {
+		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to calculate total non-VAT",
+			Err:        err,
+		}
+	}
+
+	// Calculate total VAT
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("SUM(ROUND(ISNULL(operation_item_price, 0) * ISNULL(frt_quantity, 0) * ISNULL(vat_rate, 0) / 100, 0, 0))").
+		Where("work_order_system_number = ?", workOrderId).
+		Scan(&totalVat).Error; err != nil {
+		return transactionworkshoppayloads.DeleteCampaignPayload{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to calculate total VAT",
+			Err:        err,
+		}
+	}
+
+	// Calculate total after VAT
+	totalAfterVat = totalAfterDisc + totalVat
+
+	// Create payload
 	payload := transactionworkshoppayloads.DeleteCampaignPayload{
 		TotalPackage:            totalPackage,
 		TotalOpr:                totalOpr,
@@ -5157,10 +5268,194 @@ func (s *WorkOrderRepositoryImpl) DeleteCampaign(tx *gorm.DB, workOrderId int) (
 		TotalNonVat:             totalNonVat,
 		TotalVat:                totalVat,
 		TotalAfterVat:           totalAfterVat,
-		AddDiscStat:             "APPROVED", // assuming you compute this somewhere in the logic
+		AddDiscStat:             "APPROVED",
 		WorkOrderSystemNumber:   workOrderId,
 		CampaignId:              campaignId,
 	}
 
 	return payload, nil
+}
+
+// uspg_wtWorkOrder2_Insert
+// IF @Option = 1
+// --USE FOR : * INSERT NEW DATA FROM PACKAGE IN CONTRACT SERVICE
+func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshoppayloads.WorkOrderContractServiceResponse, *exceptions.BaseErrorResponse) {
+	// Declare variables
+	type ContractServiceData struct {
+		ContractServSysNo float64 `gorm:"column:contract_service_system_number"`
+		AddDiscStat       int     `gorm:"column:additional_discount_status_approval_id"`
+		WhsGroup          float64 `gorm:"column:whs_group"`
+		TaxFree           int     `gorm:"column:tax_free"`
+	}
+
+	var response transactionworkshoppayloads.WorkOrderContractServiceResponse
+	var contractServiceData ContractServiceData
+
+	// Initialize variables
+	var (
+		csrOprItemCode, csrDescription, pphTaxCode, itemType                         string
+		csrFrtQty, csrPrice, csrDiscPercent, newFrtQty, supplyQty, oprItemDiscAmount float64
+		wcfTypeMoney, woOprItemLine, csrLineType, atpmWcfType                        int
+	)
+
+	// Set default WCF type
+	wcfTypeMoney = 1 // or whatever this corresponds to
+
+	// Fetch contract service data
+	if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Select("contract_service_system_number, additional_discount_status_approval_id, whs_group, tax_free").
+		Where("work_order_system_number = ?", workOrderId).
+		Scan(&contractServiceData).Error; err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch contract service data",
+			Err:        err,
+		}
+	}
+
+	// Initialize new freight quantity
+	newFrtQty = 0
+
+	// Fetch contract service items
+	type ContractServiceItem struct {
+		LineType       int     `gorm:"column:line_type_id"`
+		OprItemCode    string  `gorm:"column:opr_item_code"`
+		Description    string  `gorm:"column:description"`
+		FrtQty         float64 `gorm:"column:frt_qty"`
+		OprItemPrice   float64 `gorm:"column:opr_item_price"`
+		OprItemDiscPct float64 `gorm:"column:opr_item_disc_percent"`
+	}
+
+	var contractServiceItems []ContractServiceItem
+	if err := tx.Model(&transactionworkshopentities.ContractServiceOperationDetail{}).
+		Select("line_type_id, opr_item_code, description, frt_qty, opr_item_price, opr_item_disc_percent").
+		Where("contract_serv_sys_no = ? AND package_code = ?", contractServiceData.ContractServSysNo, request.PackageCodeId).
+		Find(&contractServiceItems).Error; err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch contract service items",
+			Err:        err,
+		}
+	}
+
+	// Process each contract service item
+	for _, item := range contractServiceItems {
+		csrLineType = item.LineType
+		csrOprItemCode = item.OprItemCode
+		csrDescription = item.Description
+		csrFrtQty = item.FrtQty
+		csrPrice = item.OprItemPrice
+		csrDiscPercent = item.OprItemDiscPct
+
+		// Get the next available work order operation item line
+		if err := tx.Raw("SELECT IFNULL(MAX(work_order_operation_item_line), 0) + 1 FROM trx_work_order_detail WHERE work_order_detail_system_number = ?", workOrderId).
+			Scan(&woOprItemLine).Error; err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch max wo_opr_item_line",
+				Err:        err,
+			}
+		}
+
+		// Set Atpm_Wcf_Type based on conditions
+		if err := tx.Model(&masteritementities.Item{}).
+			Select("atpm_warranty_claim_type_id").
+			Where("item_code = ?", csrOprItemCode).
+			Scan(&atpmWcfType).Error; err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Atpm Wcf Type",
+				Err:        err,
+			}
+		}
+
+		// If Atpm_Wcf_Type is empty, set it to wcfTypeMoney
+		if atpmWcfType == 0 {
+			atpmWcfType = wcfTypeMoney
+		}
+
+		// Handle logic based on LineType
+		switch csrLineType {
+		case utils.LinetypePackage:
+			csrFrtQty = 1
+			supplyQty = 1
+			atpmWcfType = 0 // Clear Atpm_Wcf_Type for Package
+		case utils.LinetypeOperation:
+			// Fetch PPH tax code for operations
+			if err := tx.Model(&masteroperationentities.OperationModelMapping{}).
+				Select("tax_code").
+				Where("operation_id = ?", csrOprItemCode).
+				Scan(&pphTaxCode).Error; err != nil {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch PPH tax code",
+					Err:        err,
+				}
+			}
+			supplyQty = csrFrtQty
+			atpmWcfType = 0 // Clear Atpm_Wcf_Type for Operation
+		default:
+			// Fetch item UOM and type for other items
+			type ItemUOMType struct {
+				ItemUom  string `gorm:"column:unit_of_measurement_selling_id"`
+				ItemType string `gorm:"column:item_type"`
+			}
+
+			var itemDetails ItemUOMType
+
+			if err := tx.Model(&masteritementities.Item{}).
+				Select("unit_of_measurement_selling_id, item_type").
+				Where("item_code = ?", csrOprItemCode).
+				Scan(&itemDetails).Error; err != nil {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch item UOM and type",
+					Err:        err,
+				}
+			}
+
+			// Now you can access itemUom and itemType from itemDetails
+			itemType = itemDetails.ItemType
+
+			supplyQty = 0
+			if itemType == "Service" {
+				supplyQty = csrFrtQty
+			}
+		}
+
+		// Calculate discount amount
+		oprItemDiscAmount = math.Round(csrPrice * csrDiscPercent / 100)
+
+		// Create work order line entry
+		workOrderLine := transactionworkshopentities.WorkOrderDetail{
+			WorkOrderSystemNumber:        workOrderId,
+			WorkOrderOperationItemLine:   woOprItemLine,
+			LineTypeId:                   csrLineType,
+			OperationItemCode:            csrOprItemCode,
+			Description:                  csrDescription,
+			FrtQuantity:                  csrFrtQty,
+			OperationItemPrice:           csrPrice,
+			OperationItemDiscountAmount:  oprItemDiscAmount,
+			OperationItemDiscountPercent: csrDiscPercent,
+			SupplyQuantity:               supplyQty,
+			WarehouseId:                  int(contractServiceData.WhsGroup), // Casting if needed
+			WarrantyClaimTypeId:          atpmWcfType,
+		}
+
+		// Insert into work order line table
+		if err := tx.Create(&workOrderLine).Error; err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to insert work order line",
+				Err:        err,
+			}
+		}
+
+		// Update new freight quantity if LineType is "Operation" or "Package"
+		if csrLineType == utils.LinetypeOperation || csrLineType == utils.LinetypePackage {
+			newFrtQty += csrFrtQty
+		}
+	}
+
+	return response, nil
 }

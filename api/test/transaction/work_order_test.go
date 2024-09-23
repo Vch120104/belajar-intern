@@ -65,6 +65,26 @@ func (m *MockWorkOrderService) DeleteType(id int) (bool, *exceptions.BaseErrorRe
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
+func (m *MockWorkOrderService) NewLineType() ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
+	args := m.Called()
+	return args.Get(0).([]transactionworkshoppayloads.Linetype), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) AddLineType(request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
+	args := m.Called(request)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) UpdateLineType(id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
+	args := m.Called(id, request)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) DeleteLineType(id int) (bool, *exceptions.BaseErrorResponse) {
+	args := m.Called(id)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
 func (m *MockWorkOrderService) NewBill() ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
 	args := m.Called()
 	return args.Get(0).([]transactionworkshoppayloads.WorkOrderBillable), args.Get(1).(*exceptions.BaseErrorResponse)
@@ -335,6 +355,11 @@ func (m *MockWorkOrderService) ConfirmPrice(workOrderId int, idwos []int) (bool,
 func (m *MockWorkOrderService) DeleteCampaign(workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId)
 	return args.Get(0).(transactionworkshoppayloads.DeleteCampaignPayload), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) AddContractService(workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshoppayloads.WorkOrderContractServiceResponse, *exceptions.BaseErrorResponse) {
+	args := m.Called(workOrderId, request)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderContractServiceResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 // Get All Normal Work Order

@@ -10,7 +10,6 @@ const TableNameWorkOrderDetail = "trx_work_order_detail"
 type WorkOrderDetail struct {
 	WorkOrderDetailId                   int                                           `gorm:"column:work_order_detail_id;size:30;primaryKey" json:"work_order_detail_id"`
 	WorkOrderSystemNumber               int                                           `gorm:"column:work_order_system_number;size:30;" json:"work_order_system_number"`
-	LineType                            string                                        `gorm:"column:line_type;size:50;" json:"line_type"`
 	OperationId                         int                                           `gorm:"column:operation_id;size:30;" json:"operation_id"`
 	ItemId                              int                                           `gorm:"column:item_id;size:30;" json:"item_id"`
 	OperationItemCode                   string                                        `gorm:"column:operation_item_code;size:50;" json:"operation_item_code"`

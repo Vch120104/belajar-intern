@@ -971,8 +971,11 @@ type WorkOrderDetailResponse struct {
 	WorkOrderDetailId                  int     `json:"work_order_detail_id"`
 	WorkOrderSystemNumber              int     `json:"work_order_system_number"`
 	LineTypeId                         int     `json:"line_type_id"`
+	LineTypeCode                       string  `json:"line_type_code"`
 	TransactionTypeId                  int     `json:"transaction_type_id"`
+	TransactionTypeCode                string  `json:"transaction_type_code"`
 	JobTypeId                          int     `json:"job_type_id"`
+	JobTypeCode                        string  `json:"job_type_code"`
 	WarehouseId                        int     `json:"warehouse_id"`
 	ItemId                             int     `json:"item_id"`
 	FrtQuantity                        float64 `json:"frt_quantity"`
@@ -1095,4 +1098,15 @@ type DeleteCampaignPayload struct {
 	AddDiscStat             string  `json:"add_disc_stat"`
 	WorkOrderSystemNumber   int     `json:"work_order_system_number"`
 	CampaignId              int     `json:"campaign_id"`
+}
+
+type WorkOrderContractServiceRequest struct {
+	ContractServiceSystemNumber int `json:"contract_service_system_number"`
+	CompanyId                   int `json:"company_id"`
+	PackageCodeId               int `json:"package_code_id"`
+}
+
+type WorkOrderContractServiceResponse struct {
+	ContractServiceSystemNumber int `json:"contract_service_system_number"`
+	CompanyId                   int `json:"company_id"`
 }
