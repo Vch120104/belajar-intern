@@ -302,12 +302,14 @@ type ItemSearch struct {
 }
 
 type ItemListTransLookUp struct {
-	ItemCode    string `json:"item_code"`
-	ItemName    string `json:"item_name"`
-	ItemClassId int    `json:"item_class_id"`
-	ItemType    string `json:"item_type"`
-	ItemLevel_1 string `json:"item_level_1"`
-	ItemLevel_2 string `json:"item_level_2"`
-	ItemLevel_3 string `json:"item_level_3"`
-	ItemLevel_4 string `json:"item_level_4"`
+	ItemId        int    `json:"item_id"`
+	ItemCode      string `json:"item_code"`
+	ItemName      string `json:"item_name"`
+	ItemClassId   int    `json:"item_class_id"`
+	ItemClassName string `json:"item_class_name"`
+	ItemType      string `json:"item_type"`
+	ItemLevel_1   string `json:"item_level_1"`
+	ItemLevel_2   string `json:"item_level_2"`
+	ItemLevel_3   string `json:"item_level_3"`
+	ItemLevel_4   string `json:"item_level_4"`
 }

@@ -84,9 +84,11 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 
 	baseModelQuery := tx.Model(&entites).
 		Select(`
+			mtr_item.item_id,
 			mtr_item.item_code,
 			mtr_item.item_name,
 			mtr_item.item_class_id,
+			ic.item_class_name,
 			mtr_item.item_type,
 			mtr_item.item_level_1,
 			mtr_item.item_level_2,
