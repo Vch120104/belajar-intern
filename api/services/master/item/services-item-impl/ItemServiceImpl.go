@@ -85,6 +85,16 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 
 }
 
+func (s *ItemServiceImpl) GetAllItemListTransLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	pages, err := s.itemRepo.GetAllItemListTransLookup(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return pages, err
+	}
+	return pages, nil
+}
+
 func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemRepo.GetAllItemLookup(tx, filter)
@@ -98,6 +108,16 @@ func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any,
 func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.itemRepo.GetItemById(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *ItemServiceImpl) GetCatalogCode() ([]masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.itemRepo.GetCatalogCode(tx)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
