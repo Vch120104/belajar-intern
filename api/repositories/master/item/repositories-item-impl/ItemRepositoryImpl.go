@@ -211,8 +211,6 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
 }
 
-
-
 func (r *ItemRepositoryImpl) GetAllItemLookup(tx *gorm.DB, filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
 
 	panic("unimplemented")
