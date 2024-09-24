@@ -140,14 +140,19 @@ type AtpmOrderTypeResponse struct {
 }
 
 type ItemLookup struct {
-	IsActive    bool   `json:"is_active" parent_entity:"mtr_item"`
-	ItemId      int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
-	ItemCode    string `json:"item_code" parent_entity:"mtr_item"`
-	ItemName    string `json:"item_name" parent_entity:"mtr_item"`
-	ItemType    string `json:"item_type" parent_entity:"mtr_item"`
-	ItemGroupId int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
-	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
-	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
+	IsActive      bool   `json:"is_active" parent_entity:"mtr_item"`
+	ItemId        int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
+	ItemCode      string `json:"item_code" parent_entity:"mtr_item"`
+	ItemName      string `json:"item_name" parent_entity:"mtr_item"`
+	ItemType      string `json:"item_type" parent_entity:"mtr_item"`
+	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
+	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
+	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"`
+	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"`
+	ItemLevel_1   string `json:"item_level_1" parent_entity:"mtr_item"`
+	ItemLevel_2   string `json:"item_level_2" parent_entity:"mtr_item"`
+	ItemLevel_3   string `json:"item_level_3" parent_entity:"mtr_item"`
+	ItemLevel_4   string `json:"item_level_4" parent_entity:"mtr_item"`
 }
 
 type UomTypeDropdownResponse struct {
