@@ -78,11 +78,11 @@ func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionD
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) GetDeductionById(Id int) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
+func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagination) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
-	result, dbErr := s.deductionrepo.GetDeductionById(tx, Id)
+	result, dbErr := s.deductionrepo.GetDeductionById(tx, Id, paginate)
 	defer helper.CommitOrRollback(tx, dbErr)
 	if dbErr != nil {
 		// Handle error
@@ -105,12 +105,6 @@ func (s *DeductionServiceImpl) GetAllDeductionDetail(Id int, pages pagination.Pa
 func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	_, err := s.deductionrepo.GetDeductionById(tx, Id)
-
-	if err != nil {
-		return nil, err
-	}
-
 	results, err := s.deductionrepo.ChangeStatusDeduction(tx, Id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
@@ -122,6 +116,7 @@ func (s *DeductionServiceImpl) ChangeStatusDeduction(Id int) (map[string]interfa
 func (s *DeductionServiceImpl) UpdateDeductionDetail(id int, req masterpayloads.DeductionDetailUpdate) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.deductionrepo.UpdateDeductionDetail(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.DeductionDetail{}, err
 	}

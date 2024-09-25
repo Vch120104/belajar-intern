@@ -210,6 +210,9 @@ func ItemRouter(
 	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
+	router.Get("/catalog-code-drop-down", itemController.GetCatalogCode)
+	router.Get("/brand-parent-by-code/{catalogue_code}", itemController.GetPrincipleBrandParent)
+	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
 
 	return router
 }
@@ -1153,7 +1156,7 @@ func DeductionRouter(
 	router.Get("/{deduction_id}", DeductionController.GetAllDeductionDetail)
 	router.Get("/by-detail-id/{id}", DeductionController.GetByIdDeductionDetail)
 	router.Get("/by-header-id/{id}", DeductionController.GetDeductionById)
-	router.Post("/detail", DeductionController.SaveDeductionDetail)
+	router.Post("/detail/{deduction_id}", DeductionController.SaveDeductionDetail)
 	router.Post("/", DeductionController.SaveDeductionList)
 	router.Patch("/{id}", DeductionController.ChangeStatusDeduction)
 	router.Put("/{id}", DeductionController.UpdateDeductionDetail)
