@@ -646,7 +646,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 
@@ -851,7 +851,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 
@@ -1058,7 +1058,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 
@@ -1419,7 +1419,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 		PurchaseTypeServices := "S"
@@ -2321,7 +2321,7 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 		itemType         string
 		itemCls          string
 		itmClsSublet     = "SB" // Assuming these are constants in your utils
-		lineTypeSublet   = utils.LineTypeSublet
+		lineTypeSublet   = utils.LinetypeSublet
 		itemClsFee       = "WF"
 		itemTypeService  = "S"
 		itemGrpInventory = "IN"
@@ -2338,7 +2338,7 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 
 	if err := tx.Model(&masteritementities.Item{}).
 		Select("item_group_id, item_type, item_class_id").
-		Where("item_code = ? AND record_status = ?", itemCode, "A"). // Add record status check
+		Where("item_code = ? ", itemCode). // Add record status check
 		Scan(&itemDetails).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2366,7 +2366,7 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 			case itemClsAccs:
 				lineType = utils.LinetypeAccesories
 			case itemClsSv:
-				lineType = utils.LineTypeSublet
+				lineType = utils.LinetypeSublet
 			default:
 				lineType = utils.LinetypeAccesories
 			}
@@ -2410,4 +2410,25 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	}
 
 	return lineType, nil
+}
+
+func (r *LookupRepositoryImpl) GetWhsGroup(tx *gorm.DB, companyCode int) (string, *exceptions.BaseErrorResponse) {
+	var (
+		whsGroup string
+		err      error
+	)
+
+	// Execute the GORM query
+	if err = tx.Table("dms_microservices_aftersales_dev.dbo.mtr_warehouse_group_mapping").
+		Select("warehouse_group_type_code").
+		Where("company_id = ?", companyCode).
+		Scan(&whsGroup).Error; err != nil {
+		return "", &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get warehouse group",
+			Err:        err,
+		}
+	}
+
+	return whsGroup, nil
 }

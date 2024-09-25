@@ -623,24 +623,25 @@ func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transaction
 	return change, nil
 }
 
-func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	change, err := s.structWorkOrderRepo.ChangePhoneNo(tx, workOrderId, request)
+
+	updatedPayload, err := s.structWorkOrderRepo.ChangePhoneNo(tx, workOrderId, request)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	return change, nil
+	return updatedPayload, nil
 }
 
-func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	confirm, err := s.structWorkOrderRepo.ConfirmPrice(tx, workOrderId, idwos)
+	confirm, err := s.structWorkOrderRepo.ConfirmPrice(tx, workOrderId, idwos, request)
 	if err != nil {
-		return false, err
+		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
 
 	return confirm, nil
@@ -782,12 +783,32 @@ func (s *WorkOrderServiceImpl) DeleteCampaign(workOrderId int) (transactionworks
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) AddContractService(workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshoppayloads.WorkOrderContractServiceResponse, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) AddContractService(workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.AddContractService(tx, workOrderId, request)
 	if err != nil {
-		return transactionworkshoppayloads.WorkOrderContractServiceResponse{}, err
+		return transactionworkshopentities.WorkOrderDetail{}, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) AddGeneralRepairPackage(workOrderId int, request transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	save, err := s.structWorkOrderRepo.AddGeneralRepairPackage(tx, workOrderId, request)
+	if err != nil {
+		return transactionworkshopentities.WorkOrderDetail{}, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) AddFieldAction(workOrderId int, request transactionworkshoppayloads.WorkOrderFieldActionRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	save, err := s.structWorkOrderRepo.AddFieldAction(tx, workOrderId, request)
+	if err != nil {
+		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
 	return save, nil
 }

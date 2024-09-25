@@ -1292,6 +1292,8 @@ func WorkOrderRouter(
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 
 	router.Post("/add-contract-service/{work_order_system_number}", WorkOrderController.AddContractService)
+	router.Post("/add-general-repair-package/{work_order_system_number}", WorkOrderController.AddGeneralRepairPackage)
+	router.Post("/add-field-action/{work_order_system_number}", WorkOrderController.AddFieldAction)
 	router.Put("/change-bill-to/{work_order_system_number}", WorkOrderController.ChangeBillTo)
 	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
 	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)

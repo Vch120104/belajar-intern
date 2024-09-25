@@ -97,6 +97,8 @@ type WorkOrderController interface {
 
 	DeleteCampaign(writer http.ResponseWriter, request *http.Request)
 	AddContractService(writer http.ResponseWriter, request *http.Request)
+	AddGeneralRepairPackage(writer http.ResponseWriter, request *http.Request)
+	AddFieldAction(writer http.ResponseWriter, request *http.Request)
 	ChangeBillTo(writer http.ResponseWriter, request *http.Request)
 	ChangePhoneNo(writer http.ResponseWriter, request *http.Request)
 	ConfirmPrice(writer http.ResponseWriter, request *http.Request)
@@ -1977,13 +1979,13 @@ func (r *WorkOrderControllerImpl) ChangePhoneNo(writer http.ResponseWriter, requ
 	var workOrderRequest transactionworkshoppayloads.ChangePhoneNoRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
 
-	result, baseErr := r.WorkOrderService.ChangePhoneNo(workOrderId, workOrderRequest)
+	updatedPayload, baseErr := r.WorkOrderService.ChangePhoneNo(workOrderId, workOrderRequest)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Phone number changed successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, updatedPayload, "Phone number changed successfully", http.StatusOK)
 }
 
 // ConfirmPriceList confirms the price list of a work order
@@ -2024,13 +2026,16 @@ func (r *WorkOrderControllerImpl) ConfirmPrice(writer http.ResponseWriter, reque
 		intIds = append(intIds, num)
 	}
 
-	result, baseErr := r.WorkOrderService.ConfirmPrice(workOrderId, intIds)
+	var confirmPriceRequest transactionworkshoppayloads.WorkOrderConfirmPriceRequest
+	helper.ReadFromRequestBody(request, &confirmPriceRequest)
+
+	result, baseErr := r.WorkOrderService.ConfirmPrice(workOrderId, intIds, confirmPriceRequest)
 	if baseErr != nil {
 		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Price list confirmed successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, result, "Confirm Price list confirmed successfully", http.StatusOK)
 }
 
 // NewTrxType gets the Trx Type of new work orders
@@ -2309,4 +2314,64 @@ func (r *WorkOrderControllerImpl) AddContractService(writer http.ResponseWriter,
 	}
 
 	payloads.NewHandleSuccess(writer, success, "Contract service added successfully", http.StatusCreated)
+}
+
+// AddGeneralRepairPackage adds a new general repair package to a work order
+// @Summary Add Work Order General Repair Package
+// @Description Add a new general repair package to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest true "Work Order Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/general-repair-package/{work_order_system_number} [post]
+func (r *WorkOrderControllerImpl) AddGeneralRepairPackage(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	var workOrderRequest transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	success, serviceErr := r.WorkOrderService.AddGeneralRepairPackage(workOrderId, workOrderRequest)
+	if serviceErr != nil {
+		exceptions.NewAppException(writer, request, serviceErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "General repair package added successfully", http.StatusCreated)
+}
+
+// AddFieldAction adds a new field action to a work order
+// @Summary Add Work Order Field Action
+// @Description Add a new field action to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderFieldActionRequest true "Work Order Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/field-action/{work_order_system_number} [post]
+func (r *WorkOrderControllerImpl) AddFieldAction(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	var workOrderRequest transactionworkshoppayloads.WorkOrderFieldActionRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+
+	success, serviceErr := r.WorkOrderService.AddFieldAction(workOrderId, workOrderRequest)
+	if serviceErr != nil {
+		exceptions.NewAppException(writer, request, serviceErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Field action added successfully", http.StatusCreated)
 }

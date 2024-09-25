@@ -1110,3 +1110,19 @@ type WorkOrderContractServiceResponse struct {
 	ContractServiceSystemNumber int `json:"contract_service_system_number"`
 	CompanyId                   int `json:"company_id"`
 }
+
+type WorkOrderGeneralRepairPackageRequest struct {
+	CompanyId   int `json:"company_id"`
+	CPCCode     int `json:"cpc_code"`
+	AgreementId int `json:"agreement_id"`
+}
+
+type WorkOrderFieldActionRequest struct {
+	WorkOrderSystemNumber int    `json:"work_order_system_number"`
+	FieldAction           string `json:"field_action"`
+}
+
+type WorkOrderConfirmPriceRequest struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	CompanyId             int `json:"company_id"`
+}
