@@ -84,9 +84,11 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 
 	baseModelQuery := tx.Model(&entites).
 		Select(`
+			mtr_item.item_id,
 			mtr_item.item_code,
 			mtr_item.item_name,
 			mtr_item.item_class_id,
+			ic.item_class_name,
 			mtr_item.item_type,
 			mtr_item.item_level_1,
 			mtr_item.item_level_2,
@@ -189,14 +191,19 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 
 	for _, response := range responses {
 		responseMap := map[string]interface{}{
-			"is_active":     response.IsActive,
-			"item_id":       response.ItemId,
-			"item_code":     response.ItemCode,
-			"item_name":     response.ItemName,
-			"item_group_id": response.ItemGroupId,
-			"item_class_id": response.ItemClassId,
-			"item_type":     response.ItemType,
-			"supplier_id":   response.SupplierId,
+			"is_active":       response.IsActive,
+			"item_id":         response.ItemId,
+			"item_code":       response.ItemCode,
+			"item_name":       response.ItemName,
+			"item_group_id":   response.ItemGroupId,
+			"item_class_id":   response.ItemClassId,
+			"item_type":       response.ItemType,
+			"supplier_id":     response.SupplierId,
+			"item_class_name": response.ItemClassName,
+			"item_level_1":    response.ItemLevel_1,
+			"item_level_2":    response.ItemLevel_2,
+			"item_level_3":    response.ItemLevel_3,
+			"item_level_4":    response.ItemLevel_4,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
