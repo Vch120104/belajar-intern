@@ -157,7 +157,6 @@ type ReminderServicePost struct {
 type BookEstimDetailReq struct {
 	EstimationLineID               int        `json:"estimation_line_id"`
 	EstimationLineCode             int        `json:"estimation_line_code"`
-	EstimationSystemNumber         int        `json:"estimation_system_number"`
 	BillID                         int        `json:"bill_id"`
 	EstimationLineDiscountApproval int        `json:"estimation_line_discount_approval_status"`
 	ItemOperationID                int        `json:"item_operation_id"`
@@ -358,4 +357,53 @@ type BookEstimationAllocation struct {
 	BookingServiceDate    *time.Time `json:"booking_service_date"`
 	BookingServiceTime    float32    `json:"booking_service_time"`
 	BookingEstimationTime float32    `json:"booking_estimation_time"`
+}
+
+type BookingEstimationFirstContractService struct {
+	ContractServiceSystemNumber int    `json:"contract_service_system_number"`
+	EstimationDiscountStatus    string `json:"estimation_disount_status"`
+	BookingSystemNumber         int    `json:"booking_system_number"`
+	EstimationDocumentNumber    string `json:"estimation_document_number"`
+	BrandId                     string `json:"brand_id"`
+	ProfitCenterId              string `json:"profit_center_id"`
+	ModelId                     string `json:"model_id"`
+	CompanyId                   int    `json:"company_id"`
+	EstimationSystemNumber      int    `json:"estimation_system_number"`
+}
+
+type ContractService struct {
+	ItemOperationId     int     `json:"item_operation_id"`
+	LineTypeId          int     `json:"line_type_id"`
+	Description         string  `json:"description"`
+	FrtQuantity         int     `json:"frt_quantity"`
+	ItemPrice           float64 `json:"item_price"`
+	ItemDiscountPercent float64 `json:"item_discount_percent"`
+}
+
+type PackageForDetail struct {
+	ItemOperationId     int     `json:"item_operation_id"`
+	LineTypeId          int     `json:"line_type_id"`
+	ItemOrOperationName string  `json:"item_or_operation_name"` // This will be populated based on the CASE statement
+	FrtQuantity         float64 `json:"frt_qty"`
+	CurrencyId          int     `json:"currency_id"`
+	JobTypeId           int     `json:"job_type_id"`
+	TransactionTypeId   int     `json:"transacion_type_id"`
+	BillId              int     `json:"bill_id"`
+}
+
+type CompanyReference struct {
+	CurrencyId                int     `json:"currency_id"`
+	CoaGroupId                int     `json:"coa_group_id"`
+	OperationDiscountOuterKpp float64 `json:"operation_discount_outer_kpp"`
+	MarginOuterKpp            float64 `json:"margin_outer_kpp"`
+	AdjustmentReasonId        int     `json:"adjustment_reason_id"`
+	LeadTimeUnitEtd           int     `json:"lead_time_unit_etd"`
+	BankAccReceiveCompanyId   int     `json:"bank_acc_receive_company_id"`
+	UnitWarehouseId           int     `json:"unit_warehouse_id"`
+	TimeDifference            float64 `json:"time_difference"`
+	UseDms                    bool    `json:"use_dms"`
+	UseJpcb                   bool    `json:"use_jpcb"`
+	CheckMonthEnd             bool    `json:"check_month_end"`
+	IsDistributor             bool    `json:"is_distributor"`
+	WithVat                   bool    `json:"with_vat"`
 }
