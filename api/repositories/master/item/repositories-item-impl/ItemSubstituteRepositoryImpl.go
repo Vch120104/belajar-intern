@@ -122,17 +122,18 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int
 		}
 	}
 	result := map[string]interface{}{
-		"effectve_date":       joinedData1[0]["EffectiveDate"],
-		"is_active":           joinedData1[0]["IsActive"],
-		"item_class_code":     joinedData1[0]["ItemClassCode"],
-		"item_class_id":       joinedData1[0]["ItemClassId"],
-		"item_code":           joinedData1[0]["ItemCode"],
-		"item_group_id":       joinedData1[0]["ItemgroupId"],
-		"item_id":             joinedData1[0]["ItemId"],
-		"item_name":           joinedData1[0]["ItemName"],
-		"item_substitute_id":  joinedData1[0]["ItemSubstituteId"],
-		"substitute_type_id":  joinedData1[0]["SubstituteTypeId"],
-		"sustitute_type_name": joinedData1[0]["SubstituteTypeName"],
+		"effectve_date":        joinedData1[0]["EffectiveDate"],
+		"is_active":            joinedData1[0]["IsActive"],
+		"item_class_code":      joinedData1[0]["ItemClassCode"],
+		"item_class_id":        joinedData1[0]["ItemClassId"],
+		"item_code":            joinedData1[0]["ItemCode"],
+		"item_group_id":        joinedData1[0]["ItemGroupId"],
+		"item_id":              joinedData1[0]["ItemId"],
+		"item_name":            joinedData1[0]["ItemName"],
+		"item_substitute_id":   joinedData1[0]["ItemSubstituteId"],
+		"description":          joinedData1[0]["Description"],
+		"substitute_type_id":   joinedData1[0]["SubstituteTypeId"],
+		"substitute_type_name": joinedData1[0]["SubstituteTypeNames"],
 	}
 	return result, nil
 }

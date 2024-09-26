@@ -6,7 +6,8 @@ type ItemSubstitutePayloads struct {
 	ItemSubstituteId int    `json:"item_substitute_id" parent_entity:"mtr_item_substitute" main_table:"mtr_item_substitute"`
 	EffectiveDate    string `json:"effective_date" parent_entity:"mtr_item_substitute"`
 	SubstituteTypeId int    `json:"substitute_type_id" parent_entity:"mtr_item"`
-	ItemGroupId      int    `json:"item_group_id" parent_entity:"mtr_item_substitute"`
+	Description      string `json:"description" parent_entity:"mtr_item_substitute"`
+	ItemGroupId      int    `json:"item_group_id" parent_entity:"mtr_item"`
 	ItemId           int    `json:"item_id" parent_entity:"mtr_item" references:"mtr_item"`
 	ItemCode         string `json:"item_code" parent_entity:"mtr_item"`
 	ItemName         string `json:"item_name" parent_entity:"mtr_item"`
