@@ -42,6 +42,6 @@ type Itemforfilter struct {
 }
 
 type ItemSubstituteCode struct {
-	SubstituteTypeId  int    `json:"substitute_type_id"`
-	SustituteTypeName string `json:"substitute_type_name"`
+	SubstituteTypeId    int    `json:"substitute_type_id"`
+	SubstituteTypeNames string `json:"substitute_type_name"`
 }

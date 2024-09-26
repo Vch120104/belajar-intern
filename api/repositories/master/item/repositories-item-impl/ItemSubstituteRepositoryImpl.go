@@ -49,49 +49,44 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 		}
 	}
 
-	if len(payloads) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+	result := []map[string]interface{}{}
+	totalPages := 0
+	totalRows := 0
+
+	if len(payloads) > 0 {
+		errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-type", &typepayloads, nil)
+		if errUrlSubstituteType != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errUrlSubstituteType,
+			}
+		}
+
+		joinedData1 := utils.DataFrameLeftJoin(payloads, typepayloads, "SubstituteTypeId")
+
+		paginatedata, pages, rows := pagination.NewDataFramePaginate(joinedData1, &pages)
+		totalPages = pages
+		totalRows = rows
+
+		for _, res := range paginatedata {
+			data := map[string]interface{}{
+				"effective_date":       res["EffectiveDate"],
+				"is_active":            res["IsActive"],
+				"item_class_code":      res["ItemClassCode"],
+				"item_class_id":        res["ItemClassId"],
+				"item_code":            res["ItemCode"],
+				"item_group_id":        res["ItemgroupId"],
+				"item_id":              res["ItemId"],
+				"item_name":            res["ItemName"],
+				"item_substitute_id":   res["ItemSubstituteId"],
+				"substitute_type_id":   res["SubstituteTypeId"],
+				"substitute_type_name": res["SubstituteTypeNames"],
+			}
+			result = append(result, data)
 		}
 	}
 
-	errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-type", &typepayloads, nil)
-	if errUrlSubstituteType != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlSubstituteType,
-		}
-	}
-
-	joinedData1, err2 := utils.DataFrameInnerJoin(payloads, typepayloads, "SubstituteTypeId")
-	if err2 != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err2,
-		}
-	}
-
-	paginatedata, totalPages, totalrows := pagination.NewDataFramePaginate(joinedData1, &pages)
-	var result []map[string]interface{}
-	for _,res  := range paginatedata{
-		data := map[string]interface{}{
-			"effective_date":       res["EffectiveDate"],
-			"is_active":            res["IsActive"],
-			"item_class_code":      res["ItemClassCode"],
-			"item_class_id":        res["ItemClassId"],
-			"item_code":            res["ItemCode"],
-			"item_group_id":        res["ItemgroupId"],
-			"item_id":              res["ItemId"],
-			"item_name":            res["ItemName"],
-			"item_substitute_id":   res["ItemSubstituteId"],
-			"substitute_type_id":   res["SubstituteTypeId"],
-			"substitute_type_name": res["SubstituteTypeName"],
-		}
-		
-		result = append(result, data)
-	}
-	return result, totalPages, totalrows, nil
+	return result, totalPages, totalRows, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
@@ -187,10 +182,10 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 
 	entities := masteritementities.ItemSubstitute{
 		SubstituteTypeId: req.SubstituteTypeId,
-		ItemSubstituteId:     req.ItemSubstituteId,
-		EffectiveDate:        req.EffectiveDate,
-		ItemId:               req.ItemId,
-		Description: req.Description,
+		ItemSubstituteId: req.ItemSubstituteId,
+		EffectiveDate:    req.EffectiveDate,
+		ItemId:           req.ItemId,
+		Description:      req.Description,
 	}
 	err := tx.Save(&entities).Error
 
