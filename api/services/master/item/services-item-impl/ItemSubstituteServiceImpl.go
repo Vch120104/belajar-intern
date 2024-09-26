@@ -1,6 +1,7 @@
 package masteritemserviceimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -69,7 +70,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteri
 	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) (masteritementities.ItemSubstitute, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.SaveItemSubstitute(tx, req)
