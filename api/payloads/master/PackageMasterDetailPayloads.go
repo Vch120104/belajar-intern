@@ -1,6 +1,6 @@
 package masterpayloads
 
-type PackageMasterDetailItem struct {
+type PackageMasterDetailItemOperation struct {
 	IsActive                   bool    `json:"is_active" parent_entity:"mtr_package_master_detail"`
 	PackageDetailId            int     `json:"package_detail_id" parent_entity:"mtr_package_master_detail"`
 	PackageId                  int     `json:"package_id" parent_entity:"mtr_package_master_detail"`
@@ -8,19 +8,6 @@ type PackageMasterDetailItem struct {
 	ItemOperationId            int     `json:"item_operation_id" parent_entity:"mtr_package_master_detail"`
 	ItemCode                   string  `json:"item_code" parent_entity:"mtr_item"`
 	ItemName                   string  `json:"item_name" parent_entity:"mtr_item"`
-	FrtQuantity                float64 `json:"frt_quantity" parent_entity:"mtr_package_master_detail"`
-	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id" parent_entity:"mtr_package_master_detail"`
-	JobTypeId                  int     `json:"job_type_id" parent_entity:"mtr_package_master_detail"`
-}
-
-type PackageMasterDetailOperation struct {
-	IsActive                   bool    `json:"is_active" parent_entity:"mtr_package_master_detail"`
-	PackageDetailId            int     `json:"package_detail_id" parent_entity:"mtr_package_master_detail"`
-	PackageId                  int     `json:"package_id" parent_entity:"mtr_package_master_detail"`
-	LineTypeId                 int     `json:"line_type_id" parent_entity:"mtr_package_master_detail"`
-	ItemOperationId            int     `json:"item_operation_id" parent_entity:"mtr_package_master_detail"`
-	OperationName              string  `json:"operation_name" parent_entity:"mtr_operation_code"`
-	OperationCode              string  `json:"operation_code" parent_entity:"mtr_operation_code"`
 	FrtQuantity                float64 `json:"frt_quantity" parent_entity:"mtr_package_master_detail"`
 	WorkorderTransactionTypeId int     `json:"workorder_transaction_type_id" parent_entity:"mtr_package_master_detail"`
 	JobTypeId                  int     `json:"job_type_id" parent_entity:"mtr_package_master_detail"`
@@ -106,4 +93,10 @@ type PackageMasterDetailItemCampaign struct {
 type Operation struct {
 	OperationCode string `json:"operation_code"`
 	OperationName string `json:"operation_name"`
+}
+
+type PriceCodeName struct {
+	Price float64 `json:"price"`
+	Code  string  `json:"code"`
+	Name  string  `json:"name"`
 }
