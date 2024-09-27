@@ -1184,9 +1184,9 @@ func BookingEstimationRouter(
 	router.Post("/request/{booking_system_number}", BookingEstimationController.SaveBookEstimReq)
 	router.Put("/request/{booking_system_number}", BookingEstimationController.UpdateBookEstimReq)
 	router.Get("/request/{booking_system_number}", BookingEstimationController.GetByIdBookEstimReq)
-	router.Get("/request/all/{book_estim_id}", BookingEstimationController.GetAllBookEstimReq)
+	router.Get("/request/all/{booking_system_number}", BookingEstimationController.GetAllBookEstimReq)
 	router.Post("/reminder-service/{booking_estimation_id}", BookingEstimationController.SaveBookEstimReminderServ)
-	router.Post("/booking-estimation", BookingEstimationController.SaveDetailBookEstim)
+	router.Post("/detail/{estimation_system_number}", BookingEstimationController.SaveDetailBookEstim)
 	router.Post("/package/{booking_estimation_id}/{package_id}", BookingEstimationController.AddPackage)
 	router.Post("/contract-service/{booking_estimation_id}/{contract_service_id}", BookingEstimationController.AddContractService)
 	router.Put("/input-discount/{booking_estimation_id}", BookingEstimationController.InputDiscount)
@@ -1196,6 +1196,7 @@ func BookingEstimationRouter(
 	router.Post("/book-estim-pdi/{pdi_system_number}", BookingEstimationController.SaveBookingEstimationFromPDI)
 	router.Post("/book-estim-service-request/{service_request_system_number}", BookingEstimationController.SaveBookingEstimationFromServiceRequest)
 	router.Post("/allocation/{batch_system_number}", BookingEstimationController.SaveBookingEstimationAllocation)
+	router.Post("/copy/{batch_system_number}", BookingEstimationController.CopyFromHistory)
 	return router
 }
 
