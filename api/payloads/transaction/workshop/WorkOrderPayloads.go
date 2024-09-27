@@ -959,9 +959,8 @@ type WorkOrderDetailRequest struct {
 	FrtQuantity           float64 `json:"frt_quantity" parent_entity:"trx_work_order_detail"`
 	SupplyQuantity        float64 `json:"supply_quantity" parent_entity:"trx_work_order_detail"`
 	PriceListId           int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
-	WarehouseId           int     `json:"warehouse_id" parent_entity:"trx_work_order_detail"`
-	ItemId                int     `json:"item_id" parent_entity:"trx_work_order_detail"`
-	OperationId           int     `json:"operation_id" parent_entity:"trx_work_order_detail"`
+	WarehouseGroupId      int     `json:"warehouse_gorup_id" parent_entity:"trx_work_order_detail"`
+	OperationItemId       int     `json:"operation_item_id" parent_entity:"trx_work_order_detail"`
 	OperationItemCode     string  `json:"operation_item_code" parent_entity:"trx_work_order_detail"`
 	ProposedPrice         float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
 	OperationItemPrice    float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
@@ -976,8 +975,8 @@ type WorkOrderDetailResponse struct {
 	TransactionTypeCode                string  `json:"transaction_type_code"`
 	JobTypeId                          int     `json:"job_type_id"`
 	JobTypeCode                        string  `json:"job_type_code"`
-	WarehouseId                        int     `json:"warehouse_id"`
-	ItemId                             int     `json:"item_id"`
+	WarehouseGroupId                   int     `json:"warehouse_group_id"`
+	OperationItemId                    int     `json:"operation_item_id"`
 	FrtQuantity                        float64 `json:"frt_quantity"`
 	SupplyQuantity                     float64 `json:"supply_quantity"`
 	OperationItemPrice                 float64 `json:"operation_item_price"`
@@ -1115,6 +1114,8 @@ type WorkOrderGeneralRepairPackageRequest struct {
 	CompanyId   int `json:"company_id"`
 	CPCCode     int `json:"cpc_code"`
 	AgreementId int `json:"agreement_id"`
+	VehicleId   int `json:"vehicle_id"`
+	BrandId     int `json:"brand_id"`
 }
 
 type WorkOrderFieldActionRequest struct {

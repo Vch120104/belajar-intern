@@ -6,6 +6,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -75,12 +76,14 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 		payloads.NewHandleError(writer, "Invalid Line Type ID", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("linetypeId", linetypeId)
 
 	itemCode := chi.URLParam(request, "item_code")
 	if itemCode == "" {
 		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("itemCode", itemCode)
 
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{}

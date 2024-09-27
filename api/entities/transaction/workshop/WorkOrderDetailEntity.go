@@ -10,8 +10,7 @@ const TableNameWorkOrderDetail = "trx_work_order_detail"
 type WorkOrderDetail struct {
 	WorkOrderDetailId                   int                                           `gorm:"column:work_order_detail_id;size:30;primaryKey" json:"work_order_detail_id"`
 	WorkOrderSystemNumber               int                                           `gorm:"column:work_order_system_number;size:30;" json:"work_order_system_number"`
-	OperationId                         int                                           `gorm:"column:operation_id;size:30;" json:"operation_id"`
-	ItemId                              int                                           `gorm:"column:item_id;size:30;" json:"item_id"`
+	OperationItemId                     int                                           `gorm:"column:operation_item_id;size:30;" json:"operation_item_id"`
 	OperationItemCode                   string                                        `gorm:"column:operation_item_code;size:50;" json:"operation_item_code"`
 	WorkOrderOperationItemLine          int                                           `gorm:"column:work_order_operation_item_line;size:30;" json:"work_order_operation_item_line"`
 	WorkorderStatusId                   int                                           `gorm:"column:work_order_status_id;size:30;" json:"workorder_status_id"`
@@ -40,7 +39,7 @@ type WorkOrderDetail struct {
 	SupplyQuantity                      float64                                       `gorm:"column:supply_quantity" json:"supply_quantity"`
 	SubstituteId                        int                                           `gorm:"column:substitute_id;size:30;" json:"substitute_id"`
 	SubstrituteItemCode                 string                                        `gorm:"column:substritute_item_code;size:50;" json:"substritute_item_code"`
-	WarehouseId                         int                                           `gorm:"column:warehouse_id;size:30;" json:"warehouse_id"`
+	WarehouseGroupId                    int                                           `gorm:"column:warehouse_group_id;size:30;" json:"warehouse_group_id"`
 	AtpmClaimNumber                     string                                        `gorm:"column:atpm_claim_number;size:50;" json:"atpm_claim_number"`
 	AtpmClaimDate                       time.Time                                     `gorm:"column:atpm_claim_date;" json:"atpm_claim_date"`
 	WarrantyClaimTypeId                 int                                           `gorm:"column:warranty_claim_type_id;size:30;" json:"warranty_claim_type_id"`

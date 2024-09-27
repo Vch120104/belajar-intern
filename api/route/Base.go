@@ -1580,8 +1580,8 @@ func LookupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
-	router.Get("/item-opr-code/{linetype_id}/{code}", LookupController.ItemOprCodeByCode)
-	router.Get("/item-opr-code/{linetype_id}/{id}", LookupController.ItemOprCodeByID)
+	router.Get("/item-opr-code/{linetype_id}/{item_code}", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_id}/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
