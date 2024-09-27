@@ -48,6 +48,7 @@ func NewItemSubstituteController(itemSubstituteService masteritemservice.ItemSub
 // @Tags Master : Item Substitute
 // @Param page query string true "page"
 // @Param limit query string true "limit"
+// @Param substitute_type_id query string false "substitute_type_id"
 // @Param substitute_type_code query string false "substitute_type_code"
 // @Param item_id query string false "item_id"
 // @Param effective_date query string false "effective_date"
@@ -62,8 +63,9 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 
 	queryParams := map[string]string{
 		"is_active":            queryValues.Get("is_active"),
+		"substitute_type_id":   queryValues.Get("substitute_type_id"),
 		"substitute_type_code": queryValues.Get("substitute_type_code"),
-		"mtr_item.item_id":     queryValues.Get("item_id"),
+		"Item.item_id":         queryValues.Get("item_id"),
 	}
 
 	from, _ := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("from"))
@@ -78,13 +80,13 @@ func (r *ItemSubstituteControllerImpl) GetAllItemSubstitute(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result,page,limit, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination, from, to)
+	result, page, limit, err := r.ItemSubstituteService.GetAllItemSubstitute(filterCondition, pagination, from, to)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit,pagination.Page, int64(limit), page)
+	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(limit), page)
 }
 
 // @Summary Get Item Substitute By Id
@@ -342,18 +344,18 @@ func (r *ItemSubstituteControllerImpl) DeactivateItemSubstituteDetail(writer htt
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
 }
 
-func (r *ItemSubstituteControllerImpl)GetallItemForFilter(writer http.ResponseWriter, request *http.Request){
+func (r *ItemSubstituteControllerImpl) GetallItemForFilter(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"item_code":            queryValues.Get("item_code"),
-		"item_name": queryValues.Get("item_name"),
-		"item_class":     queryValues.Get("item-class"),
-		"item_type": queryValues.Get("item_get"),
-		"item_level_1":queryValues.Get("item_level_1"),
-		"item_level_2":queryValues.Get("item_level_2"),
-		"item_level_3":queryValues.Get("item_level_3"),
-		"item_level_4":queryValues.Get("item_level_4"),
+		"item_code":    queryValues.Get("item_code"),
+		"item_name":    queryValues.Get("item_name"),
+		"item_class":   queryValues.Get("item-class"),
+		"item_type":    queryValues.Get("item_get"),
+		"item_level_1": queryValues.Get("item_level_1"),
+		"item_level_2": queryValues.Get("item_level_2"),
+		"item_level_3": queryValues.Get("item_level_3"),
+		"item_level_4": queryValues.Get("item_level_4"),
 	}
 
 	pagination := pagination.Pagination{
