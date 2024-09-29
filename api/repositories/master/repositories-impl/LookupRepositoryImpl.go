@@ -6,6 +6,7 @@ import (
 	masteroperationentities "after-sales/api/entities/master/operation"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
@@ -13,6 +14,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -645,7 +647,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 
@@ -732,20 +734,30 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	if paginate.Limit <= 0 {
 		paginate.Limit = 10
 	}
-
+	fmt.Println("oprItemCode :", oprItemCode)
+	if oprItemCode == "" {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "oprItemCode cannot be empty",
+		}
+	}
 	baseQuery := tx.Table("")
 
-	filterStrings := []string{}
-	filterValues := []interface{}{}
-	for _, filter := range filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
-		filterValues = append(filterValues, filter.ColumnValue)
-	}
-	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filters) > 0 {
+		filterStrings := []string{}
+		filterValues := []interface{}{}
+		for _, filter := range filters {
+			if filter.ColumnField != "" && filter.ColumnValue != "" {
+				filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+				filterValues = append(filterValues, filter.ColumnValue)
+			}
+		}
+		filterQuery := strings.Join(filterStrings, " AND ")
+		baseQuery = baseQuery.Where(filterQuery, filterValues...)
 
-	switch linetypeId {
-	case utils.LinetypePackage:
-		combinedDetailsSubQuery := `
+		switch linetypeId {
+		case utils.LinetypePackage:
+			combinedDetailsSubQuery := `
 				(
 					SELECT package_id, frt_quantity, is_active 
 					FROM mtr_package_master_detail_item
@@ -757,8 +769,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				) AS CombinedDetails
 			`
 
-		baseQuery = baseQuery.Table("mtr_package A").
-			Select(`
+			baseQuery = baseQuery.Table("mtr_package A").
+				Select(`
+				A.package_id AS package_id,
 				A.package_code AS package_code, 
 				A.package_name AS package_name, 
 				SUM(CombinedDetails.frt_quantity) AS frt, 
@@ -767,17 +780,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				C.model_description AS description, 
 				A.package_price AS price
 			`).
-			Joins("LEFT JOIN "+combinedDetailsSubQuery+" ON A.package_id = CombinedDetails.package_id").
-			Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
-			Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
-			Where("A.is_active = ?", 1).
-			Where("A.package_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...).
-			Group("A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
+				Joins("LEFT JOIN "+combinedDetailsSubQuery+" ON A.package_id = CombinedDetails.package_id").
+				Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_profit_center B ON A.profit_center_id = B.profit_center_id").
+				Joins("LEFT JOIN dms_microservices_sales_dev.dbo.mtr_unit_model C ON A.model_id = C.model_id").
+				Where("A.is_active = ?", 1).
+				Where("A.package_code = ?", oprItemCode).
+				Group("A.package_code, A.package_name, B.profit_center_id, C.model_code, C.model_description, A.package_price")
 
-	case utils.LinetypeOperation:
-		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
-			Select(`
+		case utils.LinetypeOperation:
+			baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
+				Select(`
+		oc.operation_id AS OPERATION_ID,	
         oc.operation_code AS OPERATION_CODE, 
         oc.operation_name AS OPERATION_NAME, 
         ofrt.frt_hour AS FRT_HOUR, 
@@ -786,18 +799,18 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
         ok.operation_key_code AS OPERATION_KEY_CODE, 
         ok.operation_key_description AS OPERATION_KEY_DESCRIPTION
     `).
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
-			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
-			Where("oc.is_active = ? ", 1).
-			Where("oc.operation_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...)
+				Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
+				Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
+				Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_model_mapping AS omm ON oc.operation_id = omm.operation_id").
+				Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_frt AS ofrt ON omm.operation_model_mapping_id = ofrt.operation_model_mapping_id").
+				Where("oc.is_active = ? ", 1).
+				Where("oc.operation_code = ?", oprItemCode)
 
-	case utils.LinetypeSparepart:
-		ItmCls = "1"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
+		case utils.LinetypeSparepart:
+			ItmCls = "1"
+			baseQuery = baseQuery.Table("mtr_item A").
+				Select(`
+				A.item_id AS item_id, 
 				A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
@@ -808,14 +821,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				A.item_level_3 AS item_level_3, 
 				A.item_level_4 AS item_level_4
 			`, year, month, companyCode).
-			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where("A.item_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...)
+				Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+				Where("A.item_code = ?", oprItemCode)
 
-	case utils.LinetypeOil:
-		ItmCls = "2"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
+		case utils.LinetypeOil:
+			ItmCls = "2"
+			baseQuery = baseQuery.Table("mtr_item A").
+				Select(`
+				A.item_id AS item_id, 
 				A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
@@ -826,16 +839,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				A.item_level_3 AS item_level_3, 
 				A.item_level_4 AS item_level_4
 			`, year, month, companyCode).
-			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
-			Where("A.item_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...)
+				Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+				Where("A.item_code = ?", oprItemCode)
 
-	case utils.LinetypeMaterial:
-		ItmCls = "3"
-		ItmClsSublet := "2"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				DISTINCT A.item_code AS item_code, 
+		case utils.LinetypeMaterial:
+			ItmCls = "3"
+			ItmClsSublet := "2"
+			baseQuery = baseQuery.Table("mtr_item A").
+				Select(`
+				DISTINCT A.item_id AS item_id, A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
@@ -845,18 +857,17 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				A.item_level_3 AS item_level_3, 
 				A.item_level_4 AS item_level_4
 			`, year, month, companyCode).
-			Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
-			Where("A.item_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+				Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
+				Where("A.item_code = ?", oprItemCode).
+				Order("A.item_code")
 
-	case utils.LineTypeFee:
-		ItmCls = "4"
-		ItmGrpOutsideJob := 4
+		case utils.LinetypeFee:
+			ItmCls = "4"
+			ItmGrpOutsideJob := 4
 
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				DISTINCT A.item_code AS item_code, 
+			baseQuery = baseQuery.Table("mtr_item A").
+				Select(`
+				DISTINCT A.item_id AS item_id, A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
@@ -866,16 +877,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				A.item_level_3 AS item_level_3, 
 				A.item_level_4 AS item_level_4
 			`, year, month, companyCode).
-			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
-			Where("A.item_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+				Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
+				Where("A.item_code = ?", oprItemCode).
+				Order("A.item_code")
 
-	case utils.LinetypeAccesories:
-		ItmCls = "5"
-		baseQuery = baseQuery.Table("mtr_item A").
-			Select(`
-				DISTINCT A.item_code AS item_code, 
+		case utils.LinetypeAccesories:
+			ItmCls = "5"
+			baseQuery = baseQuery.Table("mtr_item A").
+				Select(`
+				DISTINCT A.item_id AS item_id, A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
@@ -885,16 +895,16 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				A.item_level_3 AS item_level_3, 
 				A.item_level_4 AS item_level_4
 			`, year, month, companyCode).
-			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
-			Where("A.item_code = ?", oprItemCode).
-			Where(filterQuery, filterValues...).
-			Order("A.item_code")
+				Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
+				Where("A.item_code = ?", oprItemCode).
+				Order("A.item_code")
 
-	default:
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Invalid linetype ID",
-			Err:        errors.New("invalid linetype ID"),
+		default:
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Invalid linetype ID",
+				Err:        errors.New("invalid linetype ID"),
+			}
 		}
 	}
 
@@ -1057,7 +1067,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 
@@ -1418,7 +1428,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LineTypeFee:
+	case utils.LinetypeFee:
 		ItmCls = "4"
 		ItmGrpOutsideJob := 4
 		PurchaseTypeServices := "S"
@@ -2157,4 +2167,299 @@ func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByCode(tx *gorm.DB, custo
 	}
 
 	return customerMasters, totalPages, int(totalRows), nil
+}
+
+// FctGetBillCode retrieves the bill code based on companyCode, supcusCode, and supcusType
+func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supcusCode, supcusType string) (string, *exceptions.BaseErrorResponse) {
+	var (
+		billCode       string
+		npwpSupcus     string
+		npwpCompany    string
+		typeMap        string
+		supplierExists bool
+		customerExists bool
+	)
+
+	// Hardcoded bill code values
+	billcodeInternal := "I"
+	billcodeExternal := "E"
+	billcodeCentralize := "C"
+	billcodeDecentralize := "D"
+	billcodeRelatedParties := "R"
+	supcusDealer := "00"
+	supcusImsi := "51"
+	supcusAtpm := "61"
+	supcusSalim := "71"
+	supcusMaintained := "81"
+
+	// If supcusType is 'F'
+	if strings.ToUpper(supcusType) == "F" {
+		if supcusCode == strconv.Itoa(companyCode) {
+			billCode = billcodeInternal
+		} else {
+			// Check if supcusCode exists in gmSupplier0
+			if err := tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
+				Select("1").
+				Where("supplier_code = ?", supcusCode).
+				Find(&supplierExists).Error; err != nil {
+				return "", &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check supplier existence",
+					Err:        err,
+				}
+			}
+
+			if !supplierExists {
+				// Check if supcusCode exists in gmCust0
+				if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+					Select("1").
+					Where("customer_code = ?", supcusCode).
+					Find(&customerExists).Error; err != nil {
+					return "", &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to check customer existence",
+						Err:        err,
+					}
+				}
+
+				if !customerExists {
+					billCode = ""
+				} else {
+					// Handle customer logic
+					if err := tx.Raw("SELECT COALESCE((SELECT company_type FROM gmCompTypeMap WHERE company_from = ? AND company_to = ?), (SELECT customer_type FROM gmCust0 WHERE customer_code = ?))",
+						companyCode, supcusCode, supcusCode).Scan(&typeMap).Error; err != nil {
+						return "", &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to get customer type",
+							Err:        err,
+						}
+					}
+
+					// Assign billCode based on customer type
+					switch typeMap {
+					case supcusDealer:
+						// Get VAT_REG_NO for company and supcus
+						if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
+							return "", err
+						}
+
+						if npwpCompany == npwpSupcus {
+							billCode = billcodeCentralize
+						} else {
+							billCode = billcodeDecentralize
+						}
+					case supcusImsi:
+						billCode = billcodeDecentralize
+					case supcusAtpm, supcusSalim, supcusMaintained:
+						billCode = billcodeRelatedParties
+					default:
+						billCode = billcodeExternal
+					}
+				}
+			} else {
+				// Handle supplier logic
+				if err := tx.Raw("SELECT COALESCE((SELECT company_type FROM gmCompTypeMap WHERE company_from = ? AND company_to = ?), (SELECT supplier_type FROM gmSupplier0 WHERE supplier_code = ?))",
+					supcusCode, companyCode, supcusCode).Scan(&typeMap).Error; err != nil {
+					return "", &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get supplier type",
+						Err:        err,
+					}
+				}
+
+				// Assign billCode based on supplier type
+				switch typeMap {
+				case supcusDealer:
+					if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
+						return "", err
+					}
+
+					if npwpCompany == npwpSupcus {
+						billCode = billcodeCentralize
+					} else {
+						billCode = billcodeDecentralize
+					}
+				case supcusImsi:
+					billCode = billcodeDecentralize
+				case supcusAtpm, supcusSalim, supcusMaintained:
+					billCode = billcodeRelatedParties
+				default:
+					billCode = billcodeExternal
+				}
+			}
+		}
+	}
+
+	// Additional logic for other supcusType cases ('S', 'P', 'C', 'W') can be added here.
+
+	return billCode, nil
+}
+
+// Helper function to get VAT_REG_NO for company and supcus
+func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusCode string, npwpCompany, npwpSupcus *string) *exceptions.BaseErrorResponse {
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_tax_data ON mtr_customer.tax_customer_id = mtr_tax_data.tax_id").
+		Select("npwp_no").
+		Where("mtr_customer.company_id = ?", companyCode).Scan(npwpCompany).Error; err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get company VAT_REG_NO",
+			Err:        err,
+		}
+	}
+
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_tax_data ON mtr_customer.tax_customer_id = mtr_tax_data.tax_id").
+		Select("npwp_no").
+		Where("company_id = ?", supcusCode).
+		Scan(npwpSupcus).Error; err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get supplier/customer VAT_REG_NO",
+			Err:        err,
+		}
+	}
+
+	return nil
+}
+
+func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (int, *exceptions.BaseErrorResponse) {
+	var (
+		lineType         int
+		itemGrp          string
+		itemType         string
+		itemCls          string
+		itmClsSublet     = "SB" // Assuming these are constants in your utils
+		lineTypeSublet   = utils.LinetypeSublet
+		itemClsFee       = "WF"
+		itemTypeService  = "S"
+		itemGrpInventory = "IN"
+		itemClsAccs      = "AC"
+		itemClsSv        = "SV"
+	)
+
+	// Retrieve item details
+	var itemDetails struct {
+		ItemGroupId string
+		ItemType    string
+		ItemClassId string
+	}
+
+	if err := tx.Model(&masteritementities.Item{}).
+		Select("item_group_id, item_type, item_class_id").
+		Where("item_code = ? ", itemCode). // Add record status check
+		Scan(&itemDetails).Error; err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get item details",
+			Err:        err,
+		}
+	}
+
+	itemGrp = itemDetails.ItemGroupId
+	itemType = itemDetails.ItemType
+	itemCls = itemDetails.ItemClassId
+
+	// Determine line type based on the item details
+	if itemGrp == itemGrpInventory {
+		if itemType == "G" {
+			switch itemCls {
+			case "SP":
+				lineType = utils.LinetypeSparepart
+			case "OL":
+				lineType = utils.LinetypeOil
+			case "MT", itmClsSublet:
+				lineType = utils.LinetypeMaterial
+			case "CM":
+				lineType = utils.LinetypeConsumableMaterial
+			case itemClsAccs:
+				lineType = utils.LinetypeAccesories
+			case itemClsSv:
+				lineType = utils.LinetypeSublet
+			default:
+				lineType = utils.LinetypeAccesories
+			}
+		} else if itemCls == itemClsFee {
+			lineType = lineTypeSublet
+		} else if itemCls == itemClsAccs && itemType == itemTypeService {
+			lineType = utils.LinetypeOperation
+		}
+	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemType == itemTypeService && itemCls == itemClsFee) {
+		lineType = lineTypeSublet
+	}
+
+	// Check if the item exists
+	var itemExists int64
+	if err := tx.Model(&masteritementities.Item{}).
+		Where("item_code = ? ", itemCode).
+		Count(&itemExists).Error; err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count item",
+			Err:        err,
+		}
+	}
+
+	if itemExists == 0 {
+		var packageExists int64
+		if err := tx.Model(&masterentities.PackageMaster{}).
+			Where("package_code = ? ", itemCode).
+			Count(&packageExists).Error; err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to count package",
+				Err:        err,
+			}
+		}
+		if packageExists > 0 {
+			lineType = utils.LinetypePackage
+		} else {
+			lineType = utils.LinetypeOperation
+		}
+	}
+
+	return lineType, nil
+}
+
+func (r *LookupRepositoryImpl) GetWhsGroup(tx *gorm.DB, companyCode int) (string, *exceptions.BaseErrorResponse) {
+	var (
+		whsGroup string
+		err      error
+	)
+
+	// Execute the GORM query
+	if err = tx.Table("dms_microservices_aftersales_dev.dbo.mtr_warehouse_group_mapping").
+		Select("warehouse_group_type_code").
+		Where("company_id = ?", companyCode).
+		Scan(&whsGroup).Error; err != nil {
+		return "", &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get warehouse group",
+			Err:        err,
+		}
+	}
+
+	return whsGroup, nil
+}
+
+func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int, linetypeId int, oprItemCode string, frtQty float64, markupAmount float64, markupPercentage float64, millage float64) (masterpayloads.CampaignDiscount, *exceptions.BaseErrorResponse) {
+	var (
+		campaignDiscount masterpayloads.CampaignDiscount
+		err              error
+	)
+
+	// Execute the GORM query
+	if err = tx.Model(&masterentities.CampaignMaster{}).
+		Select("campaign_id, line_type_id, operation_item_code, from_qty, markup_amount, markup_percentage, millage").
+		Where("campaign_id = ? AND line_type_id = ? AND operation_item_code = ? AND from_qty = ? AND markup_amount = ? AND markup_percentage = ? AND millage = ?",
+			campaignId, linetypeId, oprItemCode, frtQty, markupAmount, markupPercentage, millage).
+		Scan(&campaignDiscount).Error; err != nil {
+		return masterpayloads.CampaignDiscount{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get campaign discount",
+			Err:        err,
+		}
+	}
+
+	return campaignDiscount, nil
 }

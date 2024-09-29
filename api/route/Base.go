@@ -1268,18 +1268,38 @@ func WorkOrderRouter(
 	router.Put("/dropdown-type/{type_id}", WorkOrderController.UpdateType)
 	router.Delete("/dropdown-type/{type_id}", WorkOrderController.DeleteType)
 
+	router.Get("/dropdown-line-type", WorkOrderController.NewLineType)
+	router.Post("/dropdown-line-type", WorkOrderController.AddLineType)
+	router.Put("/dropdown-line-type/{line_type_id}", WorkOrderController.UpdateLineType)
+	router.Delete("/dropdown-billline-type/{line_type_id}", WorkOrderController.DeleteLineType)
+
 	router.Get("/dropdown-bill", WorkOrderController.NewBill)
 	router.Post("/dropdown-bill", WorkOrderController.AddBill)
 	router.Put("/dropdown-bill/{bill_id}", WorkOrderController.UpdateBill)
 	router.Delete("/dropdown-bill/{bill_id}", WorkOrderController.DeleteBill)
 
+	router.Get("/dropdown-transaction-type", WorkOrderController.NewTrxType)
+	router.Post("/dropdown-transaction-type", WorkOrderController.AddTrxType)
+	router.Put("/dropdown-transaction-type/{work_order_transaction_type_id}", WorkOrderController.UpdateTrxType)
+	router.Delete("/dropdown-transaction-type/{work_order_transaction_type_id}", WorkOrderController.DeleteTrxType)
+
+	router.Get("/dropdown-transaction-type-so", WorkOrderController.NewTrxTypeSo)
+	router.Post("/dropdown-transaction-type-so", WorkOrderController.AddTrxTypeSo)
+	router.Put("/dropdown-transaction-type-so/{work_order_transaction_type_id}", WorkOrderController.UpdateTrxTypeSo)
+	router.Delete("/dropdown-transaction-type-so/{work_order_transaction_type_id}", WorkOrderController.DeleteTrxTypeSo)
+
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
 	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
 
+	router.Post("/add-contract-service/{work_order_system_number}", WorkOrderController.AddContractService)
+	router.Post("/add-general-repair-package/{work_order_system_number}", WorkOrderController.AddGeneralRepairPackage)
+	router.Post("/add-field-action/{work_order_system_number}", WorkOrderController.AddFieldAction)
 	router.Put("/change-bill-to/{work_order_system_number}", WorkOrderController.ChangeBillTo)
 	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
 	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)
+	router.Delete("/delete-campaign/{work_order_system_number}", WorkOrderController.DeleteCampaign)
+
 	return router
 }
 
@@ -1560,8 +1580,9 @@ func LookupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/item-opr-code/{linetype_id}", LookupController.ItemOprCode)
-	router.Get("/item-opr-code/{linetype_id}/{code}", LookupController.ItemOprCodeByCode)
-	router.Get("/item-opr-code/{linetype_id}/{id}", LookupController.ItemOprCodeByID)
+	router.Get("/item-opr-code/{linetype_id}/{item_code}", LookupController.ItemOprCodeByCode)
+	router.Get("/item-opr-code/{linetype_id}/{item_id}", LookupController.ItemOprCodeByID)
+	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
 	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
