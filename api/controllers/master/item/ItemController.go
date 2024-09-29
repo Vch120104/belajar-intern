@@ -62,6 +62,10 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item.is_active":             queryValues.Get("is_active"),
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
+		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
+		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
+		"mtr_item.item_id":               queryValues.Get("item_id"),
+		"mtr_supplier.supplier_id":       queryValues.Get("supplier_id"),
 	}
 
 	// Handle multi_id and supplier_id as multiple parameters
