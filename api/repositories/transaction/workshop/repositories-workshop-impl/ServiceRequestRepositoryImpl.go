@@ -1342,18 +1342,20 @@ func (s *ServiceRequestRepositoryImpl) DeleteServiceDetail(tx *gorm.DB, Id int, 
 // IF @Option = 0
 // --USE IN MODUL :
 func (s *ServiceRequestRepositoryImpl) DeleteServiceDetailMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.ServiceRequestDetail
-	err := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).Where("service_request_system_number = ? AND service_request_detail_id IN (?)", Id, DetailIds).First(&entity).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Message: "Data not found"}
+	if err := tx.Where("service_request_system_number = ? AND service_request_detail_id IN (?)", Id, DetailIds).
+		Delete(&transactionworkshopentities.ServiceRequestDetail{}).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete the service request detail",
+			Err:        err,
 		}
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
 	}
 
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Err: err}
+	if tx.RowsAffected == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No records found to delete",
+		}
 	}
 
 	return true, nil
