@@ -350,6 +350,11 @@ func StartRouting(db *gorm.DB) {
 	JobAllocationService := transactionjpcbserviceimpl.StartJobAllocationService(JobAllocationRepository, db, rdb)
 	JobAllocationController := transactionjpcbcontroller.NewJobAllocationController(JobAllocationService)
 
+	//Outstanding Job Allocation
+	OutstandingJobAllocationRepository := transactionjpcbrepositoryimpl.StartOutStandingJobAllocationRepository()
+	OutstandingJobAllocationService := transactionjpcbserviceimpl.StartOutstandingJobAllocationService(OutstandingJobAllocationRepository, operationCodeRepository, db, rdb)
+	OutstandingJobAllocationController := transactionjpcbcontroller.NewOutstandingJobAllocationController(OutstandingJobAllocationService)
+
 	//Car Wash Bay
 	CarWashBayRepository := transactionjpcbrepositoryimpl.NewCarWashBayRepositoryImpl()
 	CarWashBayService := transactionjpcbserviceimpl.NewCarWashBayServiceImpl(CarWashBayRepository, db, rdb)
@@ -443,6 +448,7 @@ func StartRouting(db *gorm.DB) {
 	CarWashRouter := CarWashRouter(CarWashController)
 	TechnicianAttendanceRouter := TechnicianAttendanceRouter(TechnicianAttendanceController)
 	JobAllocationRouter := JobAllocationRouter(JobAllocationController)
+	OutstandingJobAllocationRouter := OutstandingJobAllocationRouter(OutstandingJobAllocationController)
 	QualityControlRouter := QualityControlRouter(QualityControlController)
 	QualityControlBodyshopRouter := QualityControlBodyshopRouter(QualityControlBodyshopController)
 	ServiceWorkshopRouter := ServiceWorkshopRouter(ServiceWorkshopController)
@@ -519,6 +525,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/setting-technician", SettingTechnicianRouter)
 		r.Mount("/technician-attendance", TechnicianAttendanceRouter)
 		r.Mount("/job-allocation", JobAllocationRouter)
+		r.Mount("/outstanding-job-allocation", OutstandingJobAllocationRouter)
 		r.Mount("/car-wash", CarWashRouter)
 
 		/* Transaction Workshop */

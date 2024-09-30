@@ -151,3 +151,14 @@ func SafeConvertDateStrFormat(dateStr string) string {
 	}
 	return date
 }
+
+// Convert time.Time into time value. For example, converts '2024-01-01 15:34:45' into '15.579167'
+func TimeValue(t time.Time) float64 {
+	hour := t.Hour()
+	minute := t.Minute()
+	second := t.Second()
+
+	timeValue := float64(hour) + (float64(minute)+float64(second)/60)/60
+
+	return timeValue
+}
