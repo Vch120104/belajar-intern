@@ -19,6 +19,7 @@ require (
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.3
 	github.com/xuri/excelize/v2 v2.8.1
+	github.com/zeebo/assert v1.3.1
 	golang.org/x/crypto v0.22.0
 	gorm.io/driver/postgres v1.5.3
 	gorm.io/driver/sqlserver v1.5.2

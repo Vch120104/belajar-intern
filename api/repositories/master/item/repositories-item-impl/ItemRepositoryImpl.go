@@ -115,6 +115,7 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	tableStruct := masteritempayloads.ItemSearch{}
+	getItemClassResponse := masteritempayloads.ItemClassDetailResponse{}
 
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
@@ -148,20 +149,52 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	var mapResponses []map[string]interface{}
 	for _, response := range responses {
+		// Panggil API eksternal untuk mengambil Supplier data
+		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
+		var getSupplierResponse masteritempayloads.SupplierMasterResponse
+		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
+		getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
+		errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
+		if err := utils.Get(itemGroupUrl, &getItemGroupResponses, nil); errUrlItemPackage != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		// var ItemGroup transactionsparepartpayloads.PurchaseOrderItemGroupResponse
+		// ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(payloads.ItemGroupId)
+		// if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
+		// 	return false, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch Item Group data from external service",
+		// 		Err:        err,
+		// 	}
+		// }
+
+		// Build response map dengan data dari supplier
 		responseMap := map[string]interface{}{
-			"is_active":     response.IsActive,
-			"item_id":       response.ItemId,
-			"item_code":     response.ItemCode,
-			"item_name":     response.ItemName,
-			"item_group_id": response.ItemGroupId,
-			"item_class_id": response.ItemClassId,
-			"item_type":     response.ItemType,
-			"supplier_id":   response.SupplierId,
+			"is_active":       response.IsActive,
+			"item_id":         response.ItemId,
+			"item_code":       response.ItemCode,
+			"item_name":       response.ItemName,
+			"item_group_id":   response.ItemGroupId,
+			"item_class_id":   response.ItemClassId,
+			"item_type":       response.ItemType,
+			"supplier_id":     response.SupplierId,
+			"item_class_code": getItemClassResponse.ItemClassCode,
+			"item_group_code": getItemGroupResponses.ItemGroupCode,
+			"supplier_name":   getSupplierResponse.SupplierName,
+			"supplier_code":   getSupplierResponse.SupplierCode,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
 	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
-
 }
 
 func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

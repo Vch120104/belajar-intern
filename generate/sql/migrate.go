@@ -2,7 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
-	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -193,7 +193,7 @@ func Migrate() {
 	//&transactionworkshopentities.BookingEstimationRequest{},
 	//&transactionworkshopentities.BookingEstimationServiceReminder{},
 	//&transactionworkshopentities.BookingEstimationServiceDiscount{},
-	&transactionworkshopentities.BookingEstimationDetail{},
+	//&transactionworkshopentities.BookingEstimationDetail{},
 	//
 	//&transactionsparepartentities.PurchaseRequestEntities{},
 	//&transactionsparepartentities.PurchaseRequestDetail{},

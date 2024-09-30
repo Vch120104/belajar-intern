@@ -31,10 +31,10 @@ var LinetypeOperation int = 1          // 1 Operation
 var LinetypeSparepart int = 2          // 2 Sparepart
 var LinetypeOil int = 3                // 3 Oil
 var LinetypeMaterial int = 4           // 4 Material
-var LineTypeFee int = 5                // 5 Fee
+var LinetypeFee int = 5                // 5 Fee
 var LinetypeAccesories int = 6         // 6 Accesories
 var LinetypeConsumableMaterial int = 7 // 7 Consumable Material
-var LineTypeSublet int = 8             // 8 Sublet
+var LinetypeSublet int = 8             // 8 Sublet
 var LinetypeSouvenir int = 9           // 9 Souvenir
 
 // Transaction Type Bill Code SO WO

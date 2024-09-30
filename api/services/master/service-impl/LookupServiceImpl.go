@@ -181,3 +181,15 @@ func (s *LookupServiceImpl) GetOprItemPrice(linetypeId int, companyId int, oprIt
 
 	return price, nil
 }
+
+func (s *LookupServiceImpl) GetLineTypeByItemCode(itemCode string) (int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lineType, baseErr := s.LookupRepo.GetLineTypeByItemCode(tx, itemCode)
+	if baseErr != nil {
+		return 0, baseErr
+	}
+
+	return lineType, nil
+}
