@@ -17,6 +17,7 @@ type ItemSubstitutePayloads struct {
 }
 
 type ItemSubstitutePostPayloads struct {
+	IsActive         bool      `json:"is_active"`
 	SubstituteTypeId int       `json:"substitute_type_id"`
 	ItemSubstituteId int       `json:"item_substitute_id"`
 	EffectiveDate    time.Time `json:"effective_date"`
