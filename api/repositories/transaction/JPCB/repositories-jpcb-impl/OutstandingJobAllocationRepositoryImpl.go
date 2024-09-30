@@ -378,12 +378,12 @@ func (r *OutstandingJobAllocationRepositoryImpl) GetByTypeIdOutstandingJobAlloca
 
 // uspg_atWoTechAlloc_Insert
 // IF @Option = 2
-func (r *OutstandingJobAllocationRepositoryImpl) SaveOutstandingJobAllocation(tx *gorm.DB, referenceDocumentType string, referenceSystemNumber int, req transactionjpcbpayloads.OutstandingJobAllocationSaveRequest, operationCodeResult masteroperationpayloads.OperationCodeResponse) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, transactionjpcbpayloads.OutstandingJobAllocationUpdateRequest, *exceptions.BaseErrorResponse) {
+func (r *OutstandingJobAllocationRepositoryImpl) SaveOutstandingJobAllocation(tx *gorm.DB, referenceDocumentType string, referenceSystemNumber int, req transactionjpcbpayloads.OutstandingJobAllocationSaveRequest, operationCodeResult masteroperationpayloads.OperationCodeResponse) (transactionworkshopentities.WorkOrderAllocation, transactionjpcbpayloads.OutstandingJobAllocationUpdateRequest, *exceptions.BaseErrorResponse) {
 	entitiesWorkOrderAllocation := transactionworkshopentities.WorkOrderAllocation{}
 	entitiesWorkOrder := transactionworkshopentities.WorkOrder{}
 	entitiesBookingEstimation := transactionworkshopentities.BookingEstimation{}
 	entitiesOperationModelMapping := masteroperationentities.OperationModelMapping{}
-	response := transactionjpcbpayloads.SettingTechnicianGetByIdResponse{}
+	response := transactionworkshopentities.WorkOrderAllocation{}
 	responseUpdate := transactionjpcbpayloads.OutstandingJobAllocationUpdateRequest{}
 
 	factorX := 1.0
@@ -779,6 +779,8 @@ func (r *OutstandingJobAllocationRepositoryImpl) SaveOutstandingJobAllocation(tx
 			ServiceDate:           req.ServiceDate,
 		}
 	}
+
+	response = entitiesWorkOrderAllocation
 
 	return response, responseUpdate, nil
 }

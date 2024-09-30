@@ -1,6 +1,7 @@
 package transactionjpcbserviceimpl
 
 import (
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -50,9 +51,9 @@ func (s *OutstandingJobAllocationServiceImpl) GetByTypeIdOutstandingJobAllocatio
 	return result, nil
 }
 
-func (s *OutstandingJobAllocationServiceImpl) SaveOutstandingJobAllocation(referenceDocumentType string, referenceSystemNumber int, req transactionjpcbpayloads.OutstandingJobAllocationSaveRequest) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
+func (s *OutstandingJobAllocationServiceImpl) SaveOutstandingJobAllocation(referenceDocumentType string, referenceSystemNumber int, req transactionjpcbpayloads.OutstandingJobAllocationSaveRequest) (transactionworkshopentities.WorkOrderAllocation, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result := transactionjpcbpayloads.SettingTechnicianGetByIdResponse{}
+	result := transactionworkshopentities.WorkOrderAllocation{}
 
 	operationCodeResult, err := s.OptionCodeRepository.GetOperationCodeById(tx, req.OperationId)
 	defer helper.CommitOrRollback(tx, err)

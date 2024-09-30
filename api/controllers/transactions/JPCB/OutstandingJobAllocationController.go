@@ -93,5 +93,5 @@ func (r *OutstandingJobAllocationControllerImpl) SaveOutstandingJobAllocation(wr
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, update, "Create Data Successfully!", http.StatusCreated)
 }
