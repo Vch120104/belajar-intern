@@ -6,6 +6,8 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type ItemLocationService interface {
@@ -22,4 +24,5 @@ type ItemLocationService interface {
 	GetByIdItemLoc(id int) (masteritempayloads.ItemLocationGetByIdResponse, *exceptions.BaseErrorResponse)
 	SaveItemLoc(req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse)
 	DeleteItemLoc(ids []int) (bool, *exceptions.BaseErrorResponse)
+	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
 }

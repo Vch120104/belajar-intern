@@ -9,8 +9,11 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
 
@@ -137,4 +140,79 @@ func (s *ItemLocationServiceImpl) DeleteItemLoc(ids []int) (bool, *exceptions.Ba
 		return false, err
 	}
 	return result, nil
+}
+
+func (s *ItemLocationServiceImpl) GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse) {
+	f := excelize.NewFile()
+	sheetName := "ItemLocationMaster"
+	defer func() {
+		f.DeleteSheet("Sheet1")
+		if err := f.Close(); err != nil {
+			return
+		}
+	}()
+
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		return f, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	f.SetCellValue(sheetName, "A1", "Warehouse_Code")
+	f.SetCellValue(sheetName, "B1", "Warehouse_Location_Code")
+	f.SetCellValue(sheetName, "C1", "Item_Code")
+	f.SetColWidth(sheetName, "A", "C", 25.0)
+
+	style, err := f.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{Horizontal: "left"},
+		Font: &excelize.Font{
+			Bold: true,
+		},
+		Border: []excelize.Border{
+			{
+				Type:  "left",
+				Color: "000000",
+				Style: 1,
+			},
+			{
+				Type:  "top",
+				Color: "000000",
+				Style: 1,
+			},
+			{
+				Type:  "bottom",
+				Color: "000000",
+				Style: 1,
+			},
+			{
+				Type:  "right",
+				Color: "000000",
+				Style: 1,
+			},
+		},
+	})
+	if err != nil {
+		return f, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	for col := 'A'; col <= 'C'; col++ {
+		cell := string(col) + "1"
+		f.SetCellStyle(sheetName, cell, cell, style)
+	}
+
+	sampleData := 3
+	for i := 0; i < sampleData; i++ {
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), fmt.Sprintf("WH00%d", i+1))
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), fmt.Sprintf("WH-G%d", i+1))
+		f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), fmt.Sprintf("1/02/RB/BGN/00%d", i+1))
+	}
+
+	f.SetActiveSheet(index)
+
+	return f, nil
 }

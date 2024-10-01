@@ -239,6 +239,9 @@ func ItemLocationRouter(
 	router.Post("/", ItemLocationController.SaveItemLoc)
 	router.Delete("/{item_location_id}", ItemLocationController.DeleteItemLoc)
 
+	// file
+	router.Get("/download-template", ItemLocationController.DownloadTemplate)
+
 	return router
 }
 

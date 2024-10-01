@@ -8,9 +8,11 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"bytes"
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -27,6 +29,7 @@ type ItemLocationController interface {
 	GetByIdItemLoc(writer http.ResponseWriter, request *http.Request)
 	SaveItemLoc(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLoc(writer http.ResponseWriter, request *http.Request)
+	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLocationControllerImpl struct {
@@ -369,4 +372,28 @@ func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, r
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
 	}
+}
+
+func (r *ItemLocationControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
+	f, errorGenerate := r.ItemLocationService.GenerateTemplateFile()
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
+		return
+	}
+
+	var b bytes.Buffer
+	err := f.Write(&b)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("Template-Upload-ItemLocationMaster.xlsx")
+
+	writer.Header().Set("Content-Description", "File Transfer")
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+
+	writer.Write(b.Bytes())
 }
