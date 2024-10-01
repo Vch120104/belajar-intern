@@ -303,7 +303,8 @@ type ItemSearch struct {
 	ItemType      string `json:"item_type" parent_entity:"mtr_item"`
 	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
 	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
-	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
+	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"`
+	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"` //fk luar mtr_supplier, supplier_code dan supplier_name
 	// ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item"`
 	// ItemGroupCode string `json:"item_group_code" parent_entity:"mtr_item"`
 }
@@ -313,6 +314,7 @@ type ItemListTransLookUp struct {
 	ItemCode      string `json:"item_code"`
 	ItemName      string `json:"item_name"`
 	ItemClassId   int    `json:"item_class_id"`
+	ItemClassCode string `json:"item_class_code"`
 	ItemClassName string `json:"item_class_name"`
 	ItemType      string `json:"item_type"`
 	ItemLevel_1   string `json:"item_level_1"`

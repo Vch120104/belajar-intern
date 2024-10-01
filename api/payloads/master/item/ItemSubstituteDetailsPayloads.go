@@ -12,6 +12,7 @@ type ItemSubstituteDetailPayloads struct {
 }
 
 type ItemSubstituteDetailPostPayloads struct {
+	IsActive               bool    `json:"is_active"`
 	ItemSubstituteDetailId int     `json:"item_substitute_detail_id"`
 	ItemId                 int     `json:"item_id"`
 	Quantity               float64 `json:"quantity"`
