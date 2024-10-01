@@ -290,11 +290,12 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
-		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
-		"warehouse_code":       queryValues.Get("warehouse_code"),
-		"warehouse_name":       queryValues.Get("warehouse_name"),
-		"item_id":              queryValues.Get("item_id"),
+		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
+		"mtr_warehouse_group.warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"mtr_warehouse_master.warehouse_id":        queryValues.Get("warehouse_id"),
+		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
+		"mtr_warehouse_master.warehouse_name":      queryValues.Get("warehouse_name"),
+		"mtr_item.item_id":                         queryValues.Get("item_id"),
 	}
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -308,11 +309,12 @@ func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, r
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	if len(result) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+
+	if len(result) == 0 {
+		payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
+		return
 	}
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
 }
 
 func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
