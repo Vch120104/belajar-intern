@@ -182,6 +182,7 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 	// parseEffectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", req.EffectiveDate)
 
 	entities := masteritementities.ItemSubstitute{
+		IsActive:         req.IsActive,
 		SubstituteTypeId: req.SubstituteTypeId,
 		ItemSubstituteId: req.ItemSubstituteId,
 		EffectiveDate:    req.EffectiveDate,
@@ -202,6 +203,7 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 
 func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemSubstituteDetail{
+		IsActive:               req.IsActive,
 		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
 		ItemId:                 req.ItemId,
 		ItemSubstituteId:       id,

@@ -1489,6 +1489,23 @@ func JobAllocationRouter(
 	return router
 }
 
+func OutstandingJobAllocationRouter(
+	OutstandingJobAllocationController transactionjpcbcontroller.OutstandingJobAllocationController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", OutstandingJobAllocationController.GetAllOutstandingJobAllocation)
+	router.Get("/{reference_document_type}/{reference_system_number}", OutstandingJobAllocationController.GetByTypeIdOutstandingJobAllocation)
+	router.Post("/{reference_document_type}/{reference_system_number}", OutstandingJobAllocationController.SaveOutstandingJobAllocation)
+
+	return router
+}
+
 func ServiceWorkshopRouter(
 	ServiceWorkshopController transactionworkshopcontroller.ServiceWorkshopController,
 ) chi.Router {

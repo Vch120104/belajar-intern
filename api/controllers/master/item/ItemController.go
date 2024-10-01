@@ -209,6 +209,7 @@ func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWrite
 		"item_code":       queryValues.Get("item_code"),
 		"item_name":       queryValues.Get("item_name"),
 		"item_class_id":   queryValues.Get("item_class_id"),
+		"item_class_code": queryValues.Get("item_class_code"),
 		"item_class_name": queryValues.Get("item_class_name"),
 		"item_type":       queryValues.Get("item_type"),
 		"item_level_1":    queryValues.Get("item_level_1"),
@@ -236,7 +237,8 @@ func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWrite
 
 	data, err := r.itemservice.GetAllItemListTransLookup(criteria, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
+
 		return
 	}
 
