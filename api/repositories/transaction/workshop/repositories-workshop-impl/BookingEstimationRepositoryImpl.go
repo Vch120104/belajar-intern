@@ -1133,29 +1133,32 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id 
 
 func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
 	var pdipayload transactionunitpayloads.PdiRequest
-	var pdidetailpayloads transactionunitpayloads.PdiRequestDetail
+	var pdidetailpayloads []transactionunitpayloads.PdiRequestDetail
 	var agreement masterpayloads.AgreementResponse
 	var agreementdocno string
 	var lastprice float64
 	var operationtotal float64
+	var linetype masterpayloads.LineTypeCode
+	var vehicle transactionworkshoppayloads.VehicleTnkb	
+	var workordertransaction transactionworkshoppayloads.WorkorderTransactionType
 	var profitcenter transactionunitpayloads.ProfitCenterResponse
 	var approvalstatus transactionunitpayloads.ApprovalStatus
 	var contractservice transactionunitpayloads.ContractService
-	errUrlPdiRequest := utils.Get(config.EnvConfigs.SalesServiceUrl+"pdi-request/"+strconv.Itoa(id), pdipayload, nil)
+	errUrlPdiRequest := utils.Get(config.EnvConfigs.SalesServiceUrl+"pdi-request/"+strconv.Itoa(id), &pdipayload, nil)
 	if errUrlPdiRequest != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlPdiRequest,
 		}
 	}
-	errUrlPdiDetailrequest := utils.Get(config.EnvConfigs.SalesServiceUrl+"pdi-request-full/"+strconv.Itoa(id), pdidetailpayloads, nil)
+	errUrlPdiDetailrequest := utils.Get(config.EnvConfigs.SalesServiceUrl+"pdi-env-full/"+strconv.Itoa(id), &pdidetailpayloads, nil)
 	if errUrlPdiDetailrequest != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlPdiDetailrequest,
 		}
 	}
-	errUrlProfitCenter := utils.Get(config.EnvConfigs.GeneralServiceUrl+"cost-profit-map?page=0&limit=1000000&profit_center_code=profit_center_gr", profitcenter, nil)
+	errUrlProfitCenter := utils.Get(config.EnvConfigs.GeneralServiceUrl+"cost-profit-map?page=0&limit=1000000&profit_center_code=profit_center_gr", &profitcenter, nil)
 	if errUrlProfitCenter != nil {
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -1192,8 +1195,15 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 		Where("trx_contract_service.contract_service_status_id=?", approvalstatus.ApprovalStatusId).
 		Where("trx_contract_service.contract_service_from < ?", time.Now()).
 		Where(time.Now(), "?<trx_contract_service.contract_service_to").
-		Where("trx_contract_service.vehicle_id=?", pdidetailpayloads.VehicleId).Scan(contractservice).Error
+		Where("trx_contract_service.vehicle_id=?", pdidetailpayloads[0].VehicleId).Scan(contractservice).Error
 	if errcontractservice != nil {
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errcontractservice,
+		}
+	}
+	errUrlVehicle := utils.Get(config.EnvConfigs.SalesServiceUrl+"vehicle-master/"+strconv.Itoa(pdidetailpayloads[0].VehicleId),vehicle,nil)
+	if errUrlVehicle != nil{
 		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errcontractservice,
@@ -1203,7 +1213,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 		BrandId:                        pdipayload.BrandID,
 		ModelId:                        pdipayload.ModelID,
 		VariantId:                      pdipayload.VariantID,
-		VehicleId:                      pdidetailpayloads.VehicleId,
+		VehicleId:                      pdidetailpayloads[0].VehicleId,
 		ContractSystemNumber:           contractservice.ContractServiceId,
 		CompanyId:                      pdipayload.CompanyID,
 		BookingSystemNumber:            0,
@@ -1222,7 +1232,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 		ProfitCenterId:                 profitcenter.ProfitCenterId,
 		IsUnregistered:                 false,
 		BookingEstimationBatchDate:     time.Now(),
-		BookingEstimationVehicleNumber: pdidetailpayloads.VehicleRegistrationCertificateTnkb,
+		BookingEstimationVehicleNumber: vehicle.Tnkb,
 	}
 	err := tx.Save(entities).Error
 	if err != nil {
@@ -1298,14 +1308,36 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 			Err:        err3,
 		}
 	}
-	entities3 := transactionworkshopentities.BookingEstimationDetail{
+	errUrlLineType:= utils.Get(config.EnvConfigs.GeneralServiceUrl+"line-type-by-name/operation",&linetype,nil)
+	if errUrlLineType != nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlLineType,
+		}
+	}
+	errUrlApprovalStatus := utils.Get(config.EnvConfigs.GeneralServiceUrl+"approval-status-description/draft",&approvalstatus,nil)
+	if errUrlApprovalStatus != nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlLineType,
+		}
+	}
+	errUrlWorkorderTransactionType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"work-order-transaction-type-by-code/external",&workordertransaction,nil)
+	if errUrlWorkorderTransactionType!=nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlLineType,
+		}
+	}
+	for _,detail := range pdidetailpayloads{
+		entities3 := transactionworkshopentities.BookingEstimationDetail{
 		EstimationSystemNumber:         entities2.EstimationSystemNumber,
-		BillID:                         1, //transaction type workorder external
-		EstimationLineDiscountApproval: 1, //status draft
-		ItemOperationID:                pdidetailpayloads.OperationNumberId,
-		LineTypeID:                     1, //line type id where line type description = operation
+		BillID:                         workordertransaction.WorkOrderTransactionTypeId, //transaction type workorder external
+		EstimationLineDiscountApproval: approvalstatus.ApprovalStatusId, //status draft
+		ItemOperationID:                detail.OperationNumberId,
+		LineTypeID:                     linetype.LineTypeId, //line type id where line type description = operation
 		RequestDescription:             "",
-		FRTQuantity:                    pdidetailpayloads.Frt,
+		FRTQuantity:                    detail.Frt,
 		ItemOperationPrice:             lastprice,
 		DiscountItemOperationAmount:    0,
 		DiscountItemOperationPercent:   0,
@@ -1326,6 +1358,8 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, id int
 			Err:        err4,
 		}
 	}
+	}
+	
 	return entities, nil
 }
 
@@ -1333,6 +1367,10 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 	var initialpayloads transactionworkshoppayloads.ServiceRequestBookingEstimation
 	var vehiclepayloads transactionworkshoppayloads.VehicleTnkb
 	var lastprice float64
+	var linetype int
+	var approvalstatus transactionunitpayloads.ApprovalStatus
+	var documentstatus transactionworkshoppayloads.DocumentStatus
+	var workordertransaction transactionworkshoppayloads.WorkorderTransactionType
 	var servicerequestdetail []transactionworkshoppayloads.ServiceRequestDetailBookingPayloads
 	time := time.Now()
 	err := tx.Select("trx_service_request.profit_center_id,trx_service_request.company_id,trx_service_request.vehicle_id,trx_service_request.service_request_document_number,trx_contraxt_service.contract_service_system_number").
@@ -1383,9 +1421,36 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 			Err:        err1,
 		}
 	}
-
+	errUrlLineType:= utils.Get(config.EnvConfigs.GeneralServiceUrl+"line-type-by-name/operation",&linetype,nil)
+	if errUrlLineType != nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlLineType,
+		}
+	}
+	errUrlApprovalStatus := utils.Get(config.EnvConfigs.GeneralServiceUrl+"approval-status-description/draft",&approvalstatus,nil)
+	if errUrlApprovalStatus != nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlLineType,
+		}
+	}
+	errUrlWorkorderTransactionType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"work-order-transaction-type-by-code/external",&workordertransaction,nil)
+	if errUrlWorkorderTransactionType!=nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlLineType,
+		}
+	}
+	errUrlDocumentStatus := utils.Get(config.EnvConfigs.GeneralServiceUrl+"document-status-by-description/New%20Document",&documentstatus,nil)
+	if errUrlDocumentStatus != nil{
+		return transactionworkshopentities.BookingEstimation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        errUrlDocumentStatus,
+		}
+	}
 	entities8 := transactionworkshopentities.BookingEstimationAllocation{
-		DocumentStatusID:      15, //document status new
+		DocumentStatusID:      documentstatus.DocumentStatusId, //document status new
 		BatchSystemNumber:     entity.BatchSystemNumber,
 		CompanyID:             initialpayloads.CompanyId,
 		PdiSystemNumber:       id,
@@ -1407,8 +1472,8 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 
 	entities := transactionworkshopentities.BookingEstimationServiceDiscount{
 		BatchSystemNumber:                entity.BatchSystemNumber,
-		DocumentStatusID:                 10,
-		EstimationDiscountApprovalStatus: 10,
+		DocumentStatusID:                 documentstatus.DocumentStatusId,
+		EstimationDiscountApprovalStatus: approvalstatus.ApprovalStatusId,
 		CompanyID:                        entity.CompanyId,
 		ApprovalRequestNumber:            0,
 		EstimationDate:                   &time,
@@ -1445,8 +1510,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 			Err:        err4,
 		}
 	}
-	for _, detail := range servicerequestdetail {
-		err3 := tx.Select("mtr_labour_selling_price_detail.selling_price").
+	err3 := tx.Select("mtr_labour_selling_price_detail.selling_price").
 			Table("mtr_labour_selling_price_detail").
 			Joins("Join mtr_labour_selling_price on mtr_labour_selling_price.labour_selling_price_id = mtr_labour_selling_price_detail.labour_selling_price_id").
 			Where("mtr_labour_selling_price.brand_id =?", vehiclepayloads.VehicleBrandId).
@@ -1459,10 +1523,11 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 				Err:        err3,
 			}
 		}
+	for _, detail := range servicerequestdetail {
 		entities3 := transactionworkshopentities.BookingEstimationDetail{
 			EstimationSystemNumber:         entities.EstimationSystemNumber,
-			BillID:                         1, //transaction type workorder external
-			EstimationLineDiscountApproval: 1, //status draft
+			BillID:                         workordertransaction.WorkOrderTransactionTypeId, //transaction type workorder external
+			EstimationLineDiscountApproval: approvalstatus.ApprovalStatusId, //status draft
 			ItemOperationID:                detail.OperationItemId,
 			LineTypeID:                     detail.LineTypeId, //line type id where line type description = operation
 			RequestDescription:             "",
@@ -1479,6 +1544,10 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 				StatusCode: http.StatusConflict,
 				Err:        err4,
 			}
+		}
+		_,errs:= r.PutBookingEstimationCalculation(tx,entity.BatchSystemNumber)
+		if errs != nil{
+			return transactionworkshopentities.BookingEstimation{},errs
 		}
 	}
 	return entity, nil
