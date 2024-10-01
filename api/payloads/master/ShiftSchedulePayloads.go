@@ -52,3 +52,13 @@ type ShiftScheduleDropDownResponse struct {
 	ShiftScheduleId int    `json:"shift_schedule_id"`
 	ShiftCode       string `json:"shift_code"`
 }
+
+type ShiftScheduleOutstandingJAResponse struct {
+	ShiftScheduleId int       `json:"shift_schedule_id"`
+	EffectiveDate   time.Time `json:"effective_date"`
+	StartTime       float64   `json:"start_time"`
+	EndTime         float64   `json:"end_time"`
+	RestStartTime   float64   `json:"rest_start_time"`
+	RestEndTime     float64   `json:"rest_end_time"`
+	ManpowerBooking float64   `json:"manpower_booking"`
+}

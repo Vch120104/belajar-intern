@@ -88,6 +88,7 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_code,
 			mtr_item.item_name,
 			mtr_item.item_class_id,
+			ic.item_class_code,
 			ic.item_class_name,
 			mtr_item.item_type,
 			mtr_item.item_level_1,
@@ -96,7 +97,7 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_level_4`).
 		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id")
 
-	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilterSearch(baseModelQuery, filterCondition)
 
 	err := whereQuery.Scopes(pagination.Paginate(&entites, &pages, whereQuery)).Scan(&response).Error
 
@@ -115,7 +116,6 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	tableStruct := masteritempayloads.ItemSearch{}
-	getItemClassResponse := masteritempayloads.ItemClassDetailResponse{}
 
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
@@ -187,7 +187,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			"item_class_id":   response.ItemClassId,
 			"item_type":       response.ItemType,
 			"supplier_id":     response.SupplierId,
-			"item_class_code": getItemClassResponse.ItemClassCode,
+			"item_class_code": response.ItemClassCode,
 			"item_group_code": getItemGroupResponses.ItemGroupCode,
 			"supplier_name":   getSupplierResponse.SupplierName,
 			"supplier_code":   getSupplierResponse.SupplierCode,
