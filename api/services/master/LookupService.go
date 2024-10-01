@@ -2,6 +2,7 @@ package masterservice
 
 import (
 	exceptions "after-sales/api/exceptions"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
 )
@@ -21,4 +22,5 @@ type LookupService interface {
 	CustomerByTypeAndAddressByID(customerId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	CustomerByTypeAndAddressByCode(customerCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	WorkOrderService(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetItemLocationWarehouse(companyId int) ([]masterpayloads.WarehouseMasterForItemLookupResponse, *exceptions.BaseErrorResponse)
 }

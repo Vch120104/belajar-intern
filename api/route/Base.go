@@ -1609,6 +1609,7 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
+	router.Get("/item-location-warehouse/{company_id}", LookupController.GetItemLocationWarehouse)
 
 	return router
 }
