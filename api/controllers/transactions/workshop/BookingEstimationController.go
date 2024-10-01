@@ -384,8 +384,11 @@ func (r *BookingEstimationControllerImpl) PostBookingEstimationCalculation(write
 }
 
 func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request) {
+	var formrequest transactionworkshoppayloads.PdiServiceRequest
+	helper.ReadFromRequestBody(request, &formrequest)
 	pdisystemnumber, _ := strconv.Atoi(chi.URLParam(request, "pdi_system_number"))
-	save, err := r.bookingEstimationService.SaveBookingEstimationFromPDI(pdisystemnumber)
+
+	save, err := r.bookingEstimationService.SaveBookingEstimationFromPDI(pdisystemnumber,formrequest)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -394,8 +397,10 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromPDI(writer ht
 }
 
 func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request) {
+	var formrequest transactionworkshoppayloads.PdiServiceRequest
+	helper.ReadFromRequestBody(request, &formrequest)
 	serviceRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "service_request_system_number"))
-	save, err := r.bookingEstimationService.SaveBookingEstimationFromServiceRequest(serviceRequestSystemNumber)
+	save, err := r.bookingEstimationService.SaveBookingEstimationFromServiceRequest(serviceRequestSystemNumber,formrequest)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return

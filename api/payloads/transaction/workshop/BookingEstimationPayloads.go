@@ -426,3 +426,10 @@ type ApprovalStatus struct{
 	ApprovalStatusId int `json:"approval_status_id"`
 	ApprovalStatusCode string `json:"approval_status_code"`
 }
+
+type PdiServiceRequest struct{
+	ContactPersonName string `json:"contact_person_name"`
+	ContactPersonPhone string `json:"contact_person_phone"`
+	ContactPersonMobile string `json:"contact_person_mobile"`
+	ContactPersonViaId int `json:"contact_person_via_id"`
+}

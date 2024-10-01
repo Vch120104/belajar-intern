@@ -237,22 +237,22 @@ func (s *BookingEstimationServiceImpl) PostBookingEstimationCalculation(id int) 
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromPDI(id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromPDI(id int, req transactionworkshoppayloads.PdiServiceRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.structBookingEstimationRepo.SaveBookingEstimationFromPDI(tx, id)
+	result, err := s.structBookingEstimationRepo.SaveBookingEstimationFromPDI(tx, id,req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return transactionworkshopentities.BookingEstimation{}, err
+		return false, err
 	}
 	return result, nil
 }
 
-func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromServiceRequest(id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse) {
+func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromServiceRequest(id int, req transactionworkshoppayloads.PdiServiceRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.structBookingEstimationRepo.SaveBookingEstimationFromServiceRequest(tx, id)
+	result, err := s.structBookingEstimationRepo.SaveBookingEstimationFromServiceRequest(tx, id,req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return transactionworkshopentities.BookingEstimation{}, err
+		return false, err
 	}
 	return result, nil
 }
