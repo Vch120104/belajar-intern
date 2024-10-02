@@ -17,6 +17,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/xuri/excelize/v2"
 )
 
 type MockItemLocationService struct {
@@ -76,6 +77,11 @@ func (m *MockItemLocationService) SaveItemLoc(req masteritempayloads.SaveItemloc
 func (m *MockItemLocationService) DeleteItemLoc(ids []int) (bool, *exceptions.BaseErrorResponse) {
 	args := m.Called(ids)
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockItemLocationService) GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse) {
+	args := m.Called()
+	return args.Get(0).(*excelize.File), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func TestSaveItemLocation_Success(t *testing.T) {
@@ -317,4 +323,21 @@ func TestDeleteItemLocation_Success(t *testing.T) {
 	fmt.Println("Response:", response)
 
 	assert.Equal(t, "Item location deleted successfully", response["message"], "Message should match expected")
+}
+
+func TestGenerateTemplateFile_Success(t *testing.T) {
+	f := excelize.NewFile()
+	req, _ := http.NewRequest("GET", "http://localhost:8000/v1/item-location/download-template", nil)
+	rr := httptest.NewRecorder()
+
+	mockService := new(MockItemLocationService)
+	mockService.On("GenerateTemplateFile").
+		Return(f, (*exceptions.BaseErrorResponse)(nil))
+
+	controller := masteritemcontroller.NewItemLocationController(mockService)
+	controller.DownloadTemplate(rr, req)
+
+	statusCode := rr.Code
+	fmt.Println("Status code:", statusCode)
+	assert.Equal(t, http.StatusOK, statusCode, "Status code should be 200")
 }
