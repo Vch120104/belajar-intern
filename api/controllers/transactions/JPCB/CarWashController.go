@@ -255,5 +255,5 @@ func (r *CarWashControllerImpl) GetCarWashByWorkOrderSystemNumber(writer http.Re
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, data, "Data deleted successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, data, "Successfully retrieve data", http.StatusOK)
 }
