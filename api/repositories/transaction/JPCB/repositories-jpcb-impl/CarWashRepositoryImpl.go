@@ -896,6 +896,104 @@ func (r *CarWashImpl) CancelCarWash(tx *gorm.DB, workOrderSystemNumber int) (tra
 	}
 }
 
+func (*CarWashImpl) GetCarWashByWorkOrderSystemNumber(tx *gorm.DB, workOrderSystemNumber int) (transactionjpcbpayloads.CarWashGetAllResponse, *exceptions.BaseErrorResponse) {
+	carWashPayload := transactionjpcbpayloads.CarWashGetAllResponse{}
+	type selectCarWashResponse struct {
+		WorkOrderSystemNumber      int
+		WorkOrderDocumentNumber    string
+		ModelId                    int
+		VehicleId                  int
+		PromiseTime                time.Time
+		PromiseDate                time.Time
+		CarWashBayId               int
+		CarWashBayDescription      string
+		CarWashStatusId            int
+		CarWashStatusDescription   string
+		StartTime                  float32
+		EndTime                    float32
+		CarWashPriorityId          int
+		CarWashPriorityDescription string
+	}
+	var result selectCarWashResponse
+
+	selectAttributes := []string{
+		"trx_work_order.work_order_system_number", "trx_work_order.work_order_document_number",
+		"trx_work_order.model_id", "trx_work_order.vehicle_id",
+		"trx_work_order.promise_time", "trx_work_order.promise_date",
+		"trx_car_wash.car_wash_bay_id", "mtr_car_wash_bay.car_wash_bay_description",
+		"trx_car_wash.car_wash_status_id", "mtr_car_wash_status.car_wash_status_description",
+		"trx_car_wash.start_time", "trx_car_wash.end_time",
+		"trx_car_wash.car_wash_priority_id", "mtr_car_wash_priority.car_wash_priority_description",
+	}
+	query := tx.Model(&transactionjpcbentities.CarWash{}).Where("trx_work_order.work_order_system_number = ?", workOrderSystemNumber).
+		Select(selectAttributes).
+		Joins("LEFT JOIN trx_work_order ON trx_car_wash.work_order_system_number = trx_work_order.work_order_system_number AND trx_car_wash.company_id = trx_work_order.company_id").
+		Joins("LEFT JOIN mtr_car_wash_priority ON trx_car_wash.car_wash_priority_id = mtr_car_wash_priority.car_wash_priority_id").
+		Joins("LEFT JOIN mtr_car_wash_status ON trx_car_wash.car_wash_status_id = mtr_car_wash_status.car_wash_status_id").
+		Joins("LEFT JOIN mtr_car_wash_bay ON trx_car_wash.car_wash_bay_id = mtr_car_wash_bay.car_wash_bay_id").Scan(&result).Error
+
+	if query != nil {
+		return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        query,
+		}
+	}
+
+	//Fetch data Model from external services
+	ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(result.ModelId)
+	var getModelResponse transactionjpcbpayloads.CarWashModelResponse
+	errFetchModel := utils.Get(ModelURL, &getModelResponse, nil)
+	if errFetchModel != nil {
+		return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch brand data from external service",
+			Err:        errFetchModel,
+		}
+	}
+
+	//Fetch data Color from vehicle master then unit color
+	VehicleURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(result.VehicleId)
+	var getVehicleResponse transactionjpcbpayloads.CarWashVehicleResponse
+	errFetchVehicle := utils.Get(VehicleURL, &getVehicleResponse, nil)
+	if errFetchVehicle != nil {
+		return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch vehicle data from external service",
+			Err:        errFetchVehicle,
+		}
+	}
+
+	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-colour/" + strconv.Itoa(getVehicleResponse.VehicleColourId)
+	var getColourResponse transactionjpcbpayloads.CarWashColourResponse
+	errFetchColour := utils.Get(ColourUrl, &getColourResponse, nil)
+	if errFetchColour != nil {
+		return transactionjpcbpayloads.CarWashGetAllResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch colour data from external service",
+		}
+	}
+
+	carWashPayload = transactionjpcbpayloads.CarWashGetAllResponse{
+		WorkOrderSystemNumber:      result.WorkOrderSystemNumber,
+		WorkOrderDocumentNumber:    result.WorkOrderDocumentNumber,
+		Model:                      getModelResponse.ModelName,
+		Color:                      getColourResponse.VariantColourName,
+		Tnkb:                       "",
+		PromiseTime:                &result.PromiseTime,
+		PromiseDate:                &result.PromiseDate,
+		CarWashBayId:               &result.CarWashBayId,
+		CarWashBayDescription:      &result.CarWashBayDescription,
+		CarWashStatusId:            result.CarWashStatusId,
+		CarWashStatusDescription:   result.CarWashStatusDescription,
+		StartTime:                  result.StartTime,
+		EndTime:                    result.EndTime,
+		CarWashPriorityId:          result.CarWashPriorityId,
+		CarWashPriorityDescription: result.CarWashPriorityDescription,
+	}
+
+	return carWashPayload, nil
+}
+
 func createCurrentTime(timeDiff float32) float32 {
 	hours := math.Floor(float64(timeDiff))
 	minutes := (float64(timeDiff) - hours) * 100
