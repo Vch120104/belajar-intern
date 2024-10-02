@@ -830,6 +830,7 @@ func WarehouseLocationRouter(
 
 	router.Get("/", warehouseLocationController.GetAll)
 	router.Get("/{warehouse_location_id}", warehouseLocationController.GetById)
+	router.Get("/by-code/{warehouse_location_code}", warehouseLocationController.GetByCode)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
 	router.Get("/download-template", warehouseLocationController.DownloadTemplate)
