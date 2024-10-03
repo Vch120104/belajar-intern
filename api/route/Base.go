@@ -243,6 +243,7 @@ func ItemLocationRouter(
 	// file
 	router.Get("/download-template", ItemLocationController.DownloadTemplate)
 	router.Post("/upload-template", ItemLocationController.UploadTemplate)
+	router.Post("/process-template", ItemLocationController.ProcessUploadData)
 
 	return router
 }

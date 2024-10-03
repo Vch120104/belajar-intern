@@ -287,3 +287,53 @@ func (s *ItemLocationServiceImpl) UploadPreviewFile(rows [][]string) ([]masterit
 	return response, nil
 }
 
+func (s *ItemLocationServiceImpl) UploadProcessFile(uploadPreview []masteritempayloads.UploadItemLocationResponse) ([]masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	response := []masteritementities.ItemLocation{}
+	var err *exceptions.BaseErrorResponse
+	defer helper.CommitOrRollback(tx, err)
+
+	for _, data := range uploadPreview {
+		warehouseData, warehouseErr := s.WarehouseMasterRepo.GetWarehouseMasterByCode(tx, data.WarehouseCode)
+		if warehouseErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    warehouseErr.Message,
+				Err:        warehouseErr.Err,
+			}
+		}
+
+		warehouseLocData, warehouseLocErr := s.WarehouseLocationRepo.GetByCode(tx, data.WarehouseLocationCode)
+		if warehouseLocErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    warehouseLocErr.Message,
+				Err:        warehouseLocErr.Err,
+			}
+		}
+
+		itemData, itemErr := s.ItemRepo.GetItemCode(tx, data.ItemCode)
+		if itemErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    itemErr.Message,
+				Err:        itemErr.Err,
+			}
+		}
+
+		req := masteritempayloads.SaveItemlocation{
+			WarehouseGroupId:    warehouseData.WarehouseGroupId,
+			ItemId:              itemData.ItemId,
+			WarehouseId:         warehouseData.WarehouseId,
+			WarehouseLocationId: warehouseLocData.WarehouseLocationId,
+		}
+
+		result, err := s.ItemLocationRepo.SaveItemLoc(tx, req)
+		if err != nil {
+			return response, err
+		}
+		response = append(response, result)
+	}
+
+	return response, nil
+}

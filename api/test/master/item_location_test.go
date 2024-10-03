@@ -89,6 +89,11 @@ func (m *MockItemLocationService) UploadPreviewFile(rows [][]string) ([]masterit
 	return args.Get(0).([]masteritempayloads.UploadItemLocationResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
+func (m *MockItemLocationService) UploadProcessFile(uploadPreview []masteritempayloads.UploadItemLocationResponse) ([]masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
+	args := m.Called(uploadPreview)
+	return args.Get(0).([]masteritementities.ItemLocation), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
 func TestSaveItemLocation_Success(t *testing.T) {
 	payload := masteritempayloads.ItemLocationRequest{
 		// Sesuaikan payload dengan data yang sesuai

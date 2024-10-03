@@ -26,4 +26,5 @@ type ItemLocationService interface {
 	DeleteItemLoc(ids []int) (bool, *exceptions.BaseErrorResponse)
 	GenerateTemplateFile() (*excelize.File, *exceptions.BaseErrorResponse)
 	UploadPreviewFile(rows [][]string) ([]masteritempayloads.UploadItemLocationResponse, *exceptions.BaseErrorResponse)
+	UploadProcessFile(uploadPreview []masteritempayloads.UploadItemLocationResponse) ([]masteritementities.ItemLocation, *exceptions.BaseErrorResponse)
 }

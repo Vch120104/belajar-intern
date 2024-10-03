@@ -10,7 +10,7 @@ type ItemLocation struct {
 	ItemId              int  `gorm:"column:item_id;size:30;not null" json:"item_id"`
 	WarehouseId         int  `gorm:"column:warehouse_id;size:30;not null " json:"warehouse_id"`
 	WarehouseLocationId int  `gorm:"column:warehouse_location_id;size:30;not null" json:"warehouse_location_id"`
-	StockOpname         bool `gorm:"column:stock_opname;default:true" json:"stock_opname"`
+	StockOpname         bool `gorm:"column:stock_opname;default:false" json:"stock_opname"`
 }
 
 func (*ItemLocation) TableName() string {
