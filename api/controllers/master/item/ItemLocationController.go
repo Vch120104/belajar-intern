@@ -12,9 +12,11 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xuri/excelize/v2"
 )
 
 type ItemLocationController interface {
@@ -30,6 +32,7 @@ type ItemLocationController interface {
 	SaveItemLoc(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLoc(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+	UploadTemplate(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLocationControllerImpl struct {
@@ -396,4 +399,63 @@ func (r *ItemLocationControllerImpl) DownloadTemplate(writer http.ResponseWriter
 	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
 
 	writer.Write(b.Bytes())
+}
+
+func (r *ItemLocationControllerImpl) UploadTemplate(writer http.ResponseWriter, request *http.Request) {
+	err := request.ParseMultipartForm(10 << 20)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "file size max 10MB",
+			Err:        err,
+		})
+		return
+	}
+
+	file, handler, err := request.FormFile("file")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Key name must be 'file'",
+			Err:        err,
+		})
+		return
+	}
+
+	if !strings.HasSuffix(handler.Filename, ".xlsx") {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "File must be in xlsx format",
+		})
+		return
+	}
+
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
+
+	rows, err := f.GetRows("ItemLocationMaster")
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Pease check the sheet name must be ItemLocationMaster",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
+
+	previewData, errorPreview := r.ItemLocationService.UploadPreviewFile(rows)
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
 }

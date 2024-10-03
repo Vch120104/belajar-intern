@@ -7,8 +7,10 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
+	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,16 +20,29 @@ import (
 )
 
 type ItemLocationServiceImpl struct {
-	ItemLocationRepo masteritemrepository.ItemLocationRepository
-	DB               *gorm.DB
-	RedisClient      *redis.Client // Redis client
+	ItemLocationRepo      masteritemrepository.ItemLocationRepository
+	WarehouseMasterRepo   masterwarehouserepository.WarehouseMasterRepository
+	WarehouseLocationRepo masterwarehouserepository.WarehouseLocationRepository
+	ItemRepo              masteritemrepository.ItemRepository
+	DB                    *gorm.DB
+	RedisClient           *redis.Client // Redis client
 }
 
-func StartItemLocationService(ItemLocationRepo masteritemrepository.ItemLocationRepository, db *gorm.DB, redisClient *redis.Client) masteritemservice.ItemLocationService {
+func StartItemLocationService(
+	ItemLocationRepo masteritemrepository.ItemLocationRepository,
+	WarehouseMasterRepo masterwarehouserepository.WarehouseMasterRepository,
+	WarehouseLocationRepo masterwarehouserepository.WarehouseLocationRepository,
+	ItemRepo masteritemrepository.ItemRepository,
+	db *gorm.DB,
+	redisClient *redis.Client,
+) masteritemservice.ItemLocationService {
 	return &ItemLocationServiceImpl{
-		ItemLocationRepo: ItemLocationRepo,
-		DB:               db,
-		RedisClient:      redisClient,
+		ItemLocationRepo:      ItemLocationRepo,
+		WarehouseMasterRepo:   WarehouseMasterRepo,
+		WarehouseLocationRepo: WarehouseLocationRepo,
+		ItemRepo:              ItemRepo,
+		DB:                    db,
+		RedisClient:           redisClient,
 	}
 }
 
@@ -216,3 +231,59 @@ func (s *ItemLocationServiceImpl) GenerateTemplateFile() (*excelize.File, *excep
 
 	return f, nil
 }
+
+func (s *ItemLocationServiceImpl) UploadPreviewFile(rows [][]string) ([]masteritempayloads.UploadItemLocationResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer helper.CommitOrRollback(tx, err)
+	response := []masteritempayloads.UploadItemLocationResponse{}
+
+	for index, value := range rows {
+		data := masteritempayloads.UploadItemLocationResponse{}
+		if index > 0 {
+			validation := ""
+			data.WarehouseCode = value[0]
+			data.WarehouseLocationCode = value[1]
+			data.ItemCode = value[2]
+
+			_, warehouseErr := s.WarehouseMasterRepo.GetWarehouseMasterByCode(tx, data.WarehouseCode)
+			if warehouseErr != nil {
+				validation += "Warehouse Master"
+			}
+
+			_, warehouseLocErr := s.WarehouseLocationRepo.GetByCode(tx, data.WarehouseLocationCode)
+			if warehouseLocErr != nil {
+				if validation != "" {
+					validation += ", "
+				}
+				validation += "Warehouse Location"
+			}
+
+			_, itemErr := s.ItemRepo.GetItemCode(tx, data.ItemCode)
+			if itemErr != nil {
+				if validation != "" {
+					validation += ", "
+				}
+				validation += "Item"
+			}
+
+			if validation != "" {
+				validation = "Data not found in " + validation + "."
+			}
+
+			data.Validation = validation
+
+			response = append(response, data)
+		} else {
+			if value[0] != "Warehouse_Code" || value[1] != "Warehouse_Location_Code" || value[2] != "Item_Code" && len(value) == 3 {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("make sure header is correct"),
+				}
+			}
+		}
+	}
+
+	return response, nil
+}
+

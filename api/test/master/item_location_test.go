@@ -84,6 +84,11 @@ func (m *MockItemLocationService) GenerateTemplateFile() (*excelize.File, *excep
 	return args.Get(0).(*excelize.File), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
+func (m *MockItemLocationService) UploadPreviewFile(rows [][]string) ([]masteritempayloads.UploadItemLocationResponse, *exceptions.BaseErrorResponse) {
+	args := m.Called(rows)
+	return args.Get(0).([]masteritempayloads.UploadItemLocationResponse), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
 func TestSaveItemLocation_Success(t *testing.T) {
 	payload := masteritempayloads.ItemLocationRequest{
 		// Sesuaikan payload dengan data yang sesuai
