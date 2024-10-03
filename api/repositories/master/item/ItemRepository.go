@@ -15,7 +15,7 @@ type ItemRepository interface {
 	GetItemById(tx *gorm.DB, Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(tx *gorm.DB, MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemCode(*gorm.DB, string) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
-	SaveItem(*gorm.DB, masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse)
+	SaveItem(*gorm.DB, masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 	GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse)
 	GetUomDropDown(tx *gorm.DB, uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse)

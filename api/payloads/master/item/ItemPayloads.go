@@ -72,6 +72,7 @@ type UserDetailResponse struct {
 }
 
 type ItemRequest struct {
+	IsActive                     bool    `json:"is_active"`
 	ItemId                       int     `json:"item_id"`
 	ItemCode                     string  `json:"item_code"`
 	ItemClassId                  int     `json:"item_class_id"`
@@ -131,6 +132,18 @@ type ItemRequest struct {
 	TargetConvertion             float32 `json:"target_convertion"`
 	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
 	IsSellable                   bool    `json:"is_sellable"`
+}
+
+type ItemSaveResponse struct {
+	IsActive   bool   `json:"is_active"`
+	ItemId     int    `json:"item_id"`
+	ItemCode   string `json:"item_code"`
+	ItemName   string `json:"item_name"`
+	ItemType   string `json:"item_type"`
+	ItemLevel1 string `json:"item_level_1"`
+	ItemLevel2 string `json:"item_level_2"`
+	ItemLevel3 string `json:"item_level_3"`
+	ItemLevel4 string `json:"item_level_4"`
 }
 
 type AtpmOrderTypeResponse struct {
