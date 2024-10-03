@@ -78,11 +78,6 @@ func StartRouting(db *gorm.DB) {
 	itemClassService := masteritemserviceimpl.StartItemClassService(itemClassRepository, db, rdb)
 	itemClassController := masteritemcontroller.NewItemClassController(itemClassService)
 
-	// Item Location
-	ItemLocationRepository := masteritemrepositoryimpl.StartItemLocationRepositoryImpl()
-	ItemLocationService := masteritemserviceimpl.StartItemLocationService(ItemLocationRepository, db, rdb)
-	ItemLocationController := masteritemcontroller.NewItemLocationController(ItemLocationService)
-
 	// Item Substitute
 	itemSubstituteRepository := masteritemrepositoryimpl.StartItemSubstituteRepositoryImpl()
 	itemSubstituteService := masteritemserviceimpl.StartItemSubstituteService(itemSubstituteRepository, db, rdb)
@@ -225,6 +220,11 @@ func StartRouting(db *gorm.DB) {
 	warehouseLocationRepository := masterwarehouserepositoryimpl.OpenWarehouseLocationImpl()
 	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, warehouseMasterService, db, rdb)
 	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
+
+	// Item Location
+	ItemLocationRepository := masteritemrepositoryimpl.StartItemLocationRepositoryImpl()
+	ItemLocationService := masteritemserviceimpl.StartItemLocationService(ItemLocationRepository, warehouseMasterRepository, warehouseLocationRepository, itemRepository, db, rdb)
+	ItemLocationController := masteritemcontroller.NewItemLocationController(ItemLocationService)
 
 	//location stock master
 	LocationStockRepository := masterwarehouserepository.NewLocationStockRepositoryImpl()

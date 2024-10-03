@@ -245,6 +245,17 @@ func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterw
 	return get, nil
 }
 
+func (s *WarehouseLocationServiceImpl) GetByCode(warehouseLocationCode string) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	get, err := s.warehouseLocationRepo.GetByCode(tx, warehouseLocationCode)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}
+
 func (s *WarehouseLocationServiceImpl) GetAll(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseLocationRepo.GetAll(tx, filter, pages)

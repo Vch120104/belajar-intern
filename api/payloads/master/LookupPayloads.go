@@ -12,3 +12,11 @@ type CampaignDiscount struct {
 	OprItemDiscAmount  float64 `gorm:"column:operation_item_discount_amount" json:"operation_item_discount_amount"`
 	TrxTypeId          int     `gorm:"column:transaction_type_id" json:"transaction_type_id"`
 }
+
+type WarehouseMasterForItemLookupResponse struct {
+	WarehouseId        int    `json:"warehouse_id"`
+	WarehouseGroupCode string `json:"warehouse_group_code"`
+	WarehouseGroupName string `json:"warehouse_group_name"`
+	WarehouseCode      string `json:"warehouse_code"`
+	WarehouseName      string `json:"warehouse_name"`
+}
