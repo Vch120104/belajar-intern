@@ -370,13 +370,6 @@ func (r *ItemLocationRepositoryImpl) GetAllItemLoc(tx *gorm.DB, filtercondition 
 		}
 	}
 
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
-		}
-	}
-
 	var mapResponses []map[string]interface{}
 
 	// Iterate over responses and convert them to maps

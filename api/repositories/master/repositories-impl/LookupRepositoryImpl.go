@@ -2463,3 +2463,30 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 
 	return campaignDiscount, nil
 }
+
+func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseMasterForItemLookupResponse, *exceptions.BaseErrorResponse) {
+	response := []masterpayloads.WarehouseMasterForItemLookupResponse{}
+	entities := masteritementities.ItemLocation{}
+
+	err := tx.Model(&entities).
+		Select(`
+			DISTINCT mtr_location_item.warehouse_id,
+			mwg.warehouse_group_code,
+			mwg.warehouse_group_name,
+			mwm.warehouse_code,
+			mwm.warehouse_name
+		`).
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
+		Joins("INNER JOIN mtr_warehouse_group mwg ON mwg.warehouse_group_id = mwm.warehouse_group_id").
+		Where("mwm.company_id = ?", companyId).
+		Scan(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}

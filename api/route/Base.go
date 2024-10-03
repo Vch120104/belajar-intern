@@ -240,6 +240,11 @@ func ItemLocationRouter(
 	router.Post("/", ItemLocationController.SaveItemLoc)
 	router.Delete("/{item_location_id}", ItemLocationController.DeleteItemLoc)
 
+	// file
+	router.Get("/download-template", ItemLocationController.DownloadTemplate)
+	router.Post("/upload-template", ItemLocationController.UploadTemplate)
+	router.Post("/process-template", ItemLocationController.ProcessUploadData)
+
 	return router
 }
 
@@ -828,6 +833,7 @@ func WarehouseLocationRouter(
 
 	router.Get("/", warehouseLocationController.GetAll)
 	router.Get("/{warehouse_location_id}", warehouseLocationController.GetById)
+	router.Get("/by-code/{warehouse_location_code}", warehouseLocationController.GetByCode)
 	router.Post("/", warehouseLocationController.Save)
 	router.Patch("/{warehouse_location_id}", warehouseLocationController.ChangeStatus)
 	router.Get("/download-template", warehouseLocationController.DownloadTemplate)
@@ -1610,6 +1616,7 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
+	router.Get("/item-location-warehouse/{company_id}", LookupController.GetItemLocationWarehouse)
 
 	return router
 }

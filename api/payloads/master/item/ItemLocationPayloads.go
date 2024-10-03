@@ -99,3 +99,14 @@ type SaveItemlocation struct {
 	WarehouseId         int `json:"warehouse_id"`
 	WarehouseLocationId int `json:"warehouse_location_id"`
 }
+
+type UploadItemLocationResponse struct {
+	WarehouseCode         string `json:"warehouse_code"`
+	WarehouseLocationCode string `json:"warehouse_location_code"`
+	ItemCode              string `json:"item_code"`
+	Validation            string `json:"validation"`
+}
+
+type ItemLocationUploadResponse struct {
+	Validation string `json:"validation"`
+}

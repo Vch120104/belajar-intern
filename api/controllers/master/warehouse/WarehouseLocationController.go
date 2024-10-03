@@ -36,6 +36,7 @@ type WarehouseLocationControllerImpl struct {
 type WarehouseLocationController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
+	GetByCode(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
@@ -240,6 +241,17 @@ func (r *WarehouseLocationControllerImpl) GetById(writer http.ResponseWriter, re
 	}
 	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 
+}
+
+func (r *WarehouseLocationControllerImpl) GetByCode(writer http.ResponseWriter, request *http.Request) {
+	warehouseLocationCode := chi.URLParam(request, "warehouse_location_code")
+
+	get, err := r.WarehouseLocationService.GetByCode(warehouseLocationCode)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Warehouse Location
