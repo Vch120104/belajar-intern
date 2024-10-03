@@ -3,6 +3,7 @@ package masterserviceimpl
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
@@ -192,4 +193,16 @@ func (s *LookupServiceImpl) GetLineTypeByItemCode(itemCode string) (int, *except
 	}
 
 	return lineType, nil
+}
+
+func (s *LookupServiceImpl) GetItemLocationWarehouse(companyId int) ([]masterpayloads.WarehouseMasterForItemLookupResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	warehouse, baseErr := s.LookupRepo.GetItemLocationWarehouse(tx, companyId)
+	if baseErr != nil {
+		return warehouse, baseErr
+	}
+
+	return warehouse, nil
 }

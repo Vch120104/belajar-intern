@@ -27,6 +27,7 @@ type LookupController interface {
 	CustomerByTypeAndAddressByID(writer http.ResponseWriter, request *http.Request)
 	CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request)
 	WorkOrderService(writer http.ResponseWriter, request *http.Request)
+	GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -494,4 +495,20 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 	}
 
 	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
+}
+
+func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request) {
+	companyIdstr := chi.URLParam(request, "company_id")
+	if companyIdstr == "" {
+		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
+	}
+
+	companyId, _ := strconv.Atoi(companyIdstr)
+
+	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
 }

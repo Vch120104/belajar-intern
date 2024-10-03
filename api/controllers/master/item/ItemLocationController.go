@@ -8,11 +8,15 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"bytes"
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/xuri/excelize/v2"
 )
 
 type ItemLocationController interface {
@@ -27,6 +31,9 @@ type ItemLocationController interface {
 	GetByIdItemLoc(writer http.ResponseWriter, request *http.Request)
 	SaveItemLoc(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLoc(writer http.ResponseWriter, request *http.Request)
+	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
+	UploadTemplate(writer http.ResponseWriter, request *http.Request)
+	ProcessUploadData(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemLocationControllerImpl struct {
@@ -290,11 +297,12 @@ func (r *ItemLocationControllerImpl) DeleteItemLocation(writer http.ResponseWrit
 func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
-		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
-		"warehouse_code":       queryValues.Get("warehouse_code"),
-		"warehouse_name":       queryValues.Get("warehouse_name"),
-		"item_id":              queryValues.Get("item_id"),
+		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
+		"mtr_warehouse_group.warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"mtr_warehouse_master.warehouse_id":        queryValues.Get("warehouse_id"),
+		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
+		"mtr_warehouse_master.warehouse_name":      queryValues.Get("warehouse_name"),
+		"mtr_item.item_id":                         queryValues.Get("item_id"),
 	}
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -308,11 +316,12 @@ func (r *ItemLocationControllerImpl) GetAllItemLoc(writer http.ResponseWriter, r
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	if len(result) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+
+	if len(result) == 0 {
+		payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
+		return
 	}
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalrows), totalpage)
 }
 
 func (r *ItemLocationControllerImpl) GetByIdItemLoc(writer http.ResponseWriter, request *http.Request) {
@@ -367,4 +376,152 @@ func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, r
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
 	}
+}
+
+func (r *ItemLocationControllerImpl) DownloadTemplate(writer http.ResponseWriter, request *http.Request) {
+	f, errorGenerate := r.ItemLocationService.GenerateTemplateFile()
+
+	if errorGenerate != nil {
+		helper.ReturnError(writer, request, errorGenerate)
+		return
+	}
+
+	var b bytes.Buffer
+	err := f.Write(&b)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{StatusCode: 500, Err: errors.New("failed to write file to bytes")})
+		return
+	}
+
+	downloadName := time.Now().UTC().Format("Template-Upload-ItemLocationMaster.xlsx")
+
+	writer.Header().Set("Content-Description", "File Transfer")
+
+	writer.Header().Set("Content-Disposition", "attachment; filename="+downloadName)
+
+	writer.Write(b.Bytes())
+}
+
+func (r *ItemLocationControllerImpl) UploadTemplate(writer http.ResponseWriter, request *http.Request) {
+	err := request.ParseMultipartForm(10 << 20)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "file size max 10MB",
+			Err:        err,
+		})
+		return
+	}
+
+	file, handler, err := request.FormFile("file")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Key name must be 'file'",
+			Err:        err,
+		})
+		return
+	}
+
+	if !strings.HasSuffix(handler.Filename, ".xlsx") {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "File must be in xlsx format",
+		})
+		return
+	}
+
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
+
+	rows, err := f.GetRows("ItemLocationMaster")
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Pease check the sheet name must be ItemLocationMaster",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
+
+	previewData, errorPreview := r.ItemLocationService.UploadPreviewFile(rows)
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, previewData, "Preview Data Successfully!", http.StatusOK)
+}
+
+func (r *ItemLocationControllerImpl) ProcessUploadData(writer http.ResponseWriter, request *http.Request) {
+	err := request.ParseMultipartForm(10 << 20)
+	if err != nil {
+		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "File size max 10MB",
+			Err:        err,
+		})
+		return
+	}
+
+	file, handler, err := request.FormFile("file")
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Key name must be 'file'",
+			Err:        err,
+		})
+		return
+	}
+
+	if !strings.HasSuffix(handler.Filename, ".xlsx") {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "File must be in xlsx format",
+		})
+		return
+	}
+
+	f, err := excelize.OpenReader(file)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error reading Excel file",
+			Err:        err,
+		})
+		return
+	}
+
+	rows, err := f.GetRows("ItemLocationMaster")
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Pease check the sheet name must be ItemLocationMaster",
+			Err:        err,
+		})
+		return
+	}
+	defer file.Close()
+
+	previewData, errorPreview := r.ItemLocationService.UploadPreviewFile(rows)
+	if errorPreview != nil {
+		helper.ReturnError(writer, request, errorPreview)
+		return
+	}
+
+	result, resultErr := r.ItemLocationService.UploadProcessFile(previewData)
+	if resultErr != nil {
+		exceptions.NewBadRequestException(writer, request, resultErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Process Data Successfully!", http.StatusOK)
 }
