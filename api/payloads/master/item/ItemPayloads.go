@@ -53,7 +53,7 @@ type ItemResponse struct {
 	AutoPickWms                  string  `json:"auto_pick_wms"`
 	GmmCatalogCode               int     `json:"gmm_catalog_code"`
 	PrincipalBrandParentId       int     `json:"principal_brand_parent_id"`
-	ProportionalSupplyWms        string  `json:"proportional_supply_WMS"`
+	ProportionalSupplyWms        string  `json:"proportional_supply_wms"`
 	Remark2                      string  `json:"remark2"`
 	Remark3                      string  `json:"remark3"`
 	SourceTypeId                 int     `json:"source_type_id"`
