@@ -27,6 +27,7 @@ type CarWashController interface {
 	StartCarWash(writer http.ResponseWriter, request *http.Request)
 	StopCarWash(writer http.ResponseWriter, request *http.Request)
 	CancelCarWash(writer http.ResponseWriter, request *http.Request)
+	GetCarWashByWorkOrderSystemNumber(writer http.ResponseWriter, request *http.Request)
 }
 
 type CarWashControllerImpl struct {
@@ -242,4 +243,17 @@ func (r *CarWashControllerImpl) CancelCarWash(writer http.ResponseWriter, reques
 		return
 	}
 	payloads.NewHandleSuccess(writer, data, "Successfully start carwash", http.StatusOK)
+}
+
+// GetCarWashByWorkOrderSystemNumber implements CarWashController.
+func (r *CarWashControllerImpl) GetCarWashByWorkOrderSystemNumber(writer http.ResponseWriter, request *http.Request) {
+	workOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+
+	data, err := r.CarWashService.GetCarWashByWorkOrderSystemNumber(workOrderSystemNumber)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, data, "Successfully retrieve data", http.StatusOK)
 }

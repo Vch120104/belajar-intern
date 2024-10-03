@@ -27,6 +27,7 @@ func CarWashRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", carWashController.GetAllCarWash)
+	router.Get("/{work_order_system_number}", carWashController.GetCarWashByWorkOrderSystemNumber)
 	router.Put("/update-priority", carWashController.UpdatePriority)
 	router.Get("/priority/dropdown", carWashController.GetAllCarWashPriorityDropDown)
 	router.Delete("/{work_order_system_number}", carWashController.DeleteCarWash)
