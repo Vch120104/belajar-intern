@@ -14,5 +14,5 @@ type OperationCodeService interface {
 	SaveOperationCode(masteroperationpayloads.OperationCodeSave) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationCode(int) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse)
 	GetOperationCodeByCode(string) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse)
-	UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate)(masteroperationentities.OperationCode,*exceptions.BaseErrorResponse)
+	UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate)(bool,*exceptions.BaseErrorResponse)
 }

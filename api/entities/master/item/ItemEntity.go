@@ -57,7 +57,7 @@ type Item struct {
 	AutoPickWms                  string            `gorm:"column:auto_pick_wms;type:char(1);null"        json:"auto_pick_wms"`
 	GmmCatalogCode               int               `gorm:"column:gmm_catalog_code;type:int;size:30;null"        json:"gmm_catalog_code"`
 	PrincipalBrandParentId       int               `gorm:"column:principal_brand_parent_id;type:int;size:30;not null" json:"principal_brand_parent_id"`
-	ProportionalSupplyWms        string            `gorm:"column:proportional_supply_WMS;type:char(1);null"        json:"proportional_supply_WMS"`
+	ProportionalSupplyWms        string            `gorm:"column:proportional_supply_wms;type:char(1);null"        json:"proportional_supply_wms"`
 	Remark2                      string            `gorm:"column:remark2;size:512;null"        json:"remark2"`
 	Remark3                      string            `gorm:"column:remark3;size:512;null"        json:"remark3"`
 	SourceTypeId                 int               `gorm:"column:source_type_id;type:int;size:30;null"        json:"source_type_id"`
