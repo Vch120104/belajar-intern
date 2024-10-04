@@ -4,6 +4,7 @@ import (
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -2479,6 +2480,28 @@ func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId i
 		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
 		Joins("INNER JOIN mtr_warehouse_group mwg ON mwg.warehouse_group_id = mwm.warehouse_group_id").
 		Where("mwm.company_id = ?", companyId).
+		Scan(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
+// IF @strEntity = 'WarehouseGroupByCompany'
+func (r *LookupRepositoryImpl) GetWarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseMaster{}
+	response := []masterpayloads.WarehouseGroupByCompanyResponse{}
+
+	err := tx.Model(&entities).
+		Select("DISTINCT mwg.warehouse_group_id, mwg.warehouse_group_code + ' - ' + mwg.warehouse_group_name AS warehouse_group_code_name").
+		Joins("INNER JOIN mtr_warehouse_group mwg ON mtr_warehouse_master.warehouse_group_id = mwg.warehouse_group_id").
+		Where("mtr_warehouse_master.is_active = ?", true).
+		Where("mtr_warehouse_master.company_id = ?", companyId).
 		Scan(&response).Error
 
 	if err != nil {

@@ -206,3 +206,15 @@ func (s *LookupServiceImpl) GetItemLocationWarehouse(companyId int) ([]masterpay
 
 	return warehouse, nil
 }
+
+func (s *LookupServiceImpl) GetWarehouseGroupByCompany(companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	warehouse, baseErr := s.LookupRepo.GetWarehouseGroupByCompany(tx, companyId)
+	if baseErr != nil {
+		return warehouse, baseErr
+	}
+
+	return warehouse, nil
+}

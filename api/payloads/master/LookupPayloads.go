@@ -20,3 +20,8 @@ type WarehouseMasterForItemLookupResponse struct {
 	WarehouseCode      string `json:"warehouse_code"`
 	WarehouseName      string `json:"warehouse_name"`
 }
+
+type WarehouseGroupByCompanyResponse struct {
+	WarehouseGroupId       int    `json:"warehouse_group_id"`
+	WarehouseGroupCodeName string `json:"warehouse_group_code_name"`
+}
