@@ -79,12 +79,12 @@ func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (masteroper
 	return result, nil
 }
 
-func (s *OperationCodeServiceImpl) UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate)(masteroperationentities.OperationCode,*exceptions.BaseErrorResponse){
+func (s *OperationCodeServiceImpl) UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate)(bool,*exceptions.BaseErrorResponse){
 	tx := s.DB.Begin()
 	result,err := s.operationCodeRepo.UpdateItemCode(tx,id,req)
 	defer helper.CommitOrRollback(tx,err)
 	if err != nil{
-		return result,err
+		return false,err
 	}
 	return result,nil
 }
