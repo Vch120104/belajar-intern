@@ -19,7 +19,6 @@ type OperationCodeSave struct {
 	OperationCode           string `json:"operation_code"`
 	OperationName           string `json:"operation_name"`
 	IsActive                bool   `json:"is_active"`
-	OperationId             int    `json:"operation_id"`
 	OperationUsingIncentive bool   `json:"operation_using_incentive"`
 	OperationUsingActual    bool   `json:"operation_using_actual"`
 }
