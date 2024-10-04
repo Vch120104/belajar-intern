@@ -499,19 +499,36 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 }
 
 func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request) {
-	companyIdstr := chi.URLParam(request, "company_id")
-	if companyIdstr == "" {
-		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
+	queryValues := request.URL.Query()
+
+	companyId, convErr := strconv.Atoi(queryValues.Get("company_id"))
+	if convErr != nil {
+		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusInternalServerError)
+		return
 	}
 
-	companyId, _ := strconv.Atoi(companyIdstr)
+	queryParams := map[string]string{
+		"warehouse_code":       queryValues.Get("warehouse_code"),
+		"warehouse_name":       queryValues.Get("warehouse_name"),
+		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+	}
 
-	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId)
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId, criteria, paginate)
 	if baseErr != nil {
 		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
 	}
-	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
+	payloads.NewHandleSuccessPagination(writer, warehouse.Rows, "Get Data Successfully!", http.StatusOK, warehouse.Limit, warehouse.Page, warehouse.TotalRows, warehouse.TotalPages)
 }
 
 func (r *LookupControllerImpl) GetWarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request) {
