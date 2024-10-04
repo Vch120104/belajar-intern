@@ -8,7 +8,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
-	"fmt"
 
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -146,22 +145,21 @@ func (s *ItemServiceImpl) GetItemCode(code string) (masteritempayloads.ItemRespo
 	return results, nil
 }
 
-func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	fmt.Print("sini?")
+	result := masteritempayloads.ItemSaveResponse{}
 
 	if req.ItemId != 0 {
 		_, err := s.itemRepo.GetItemById(tx, req.ItemId)
 		if err != nil {
-			return false, err
-
+			return result, err
 		}
 	}
 
 	results, err := s.itemRepo.SaveItem(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return false, err
+		return result, err
 	}
 	return results, nil
 }
