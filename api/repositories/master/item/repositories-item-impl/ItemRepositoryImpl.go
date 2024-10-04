@@ -363,8 +363,10 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 }
 
-func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	response := masteritempayloads.ItemSaveResponse{}
 	entities := masteritementities.Item{
+		IsActive:                     req.IsActive,
 		ItemId:                       req.ItemId,
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
@@ -427,7 +429,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -438,7 +440,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err = tx.Model(&model).Where(masteritementities.Item{ItemCode: req.ItemCode}).First(&model).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -449,7 +451,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
 
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -460,7 +462,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err = tx.Model(&uomTypeModel).Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).First(&uomTypeModel).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -479,13 +481,25 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err = tx.Save(&uomItemEntities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	result := masteritempayloads.ItemSaveResponse{
+		IsActive:   entities.IsActive,
+		ItemId:     entities.ItemId,
+		ItemName:   entities.ItemName,
+		ItemCode:   entities.ItemCode,
+		ItemType:   entities.ItemType,
+		ItemLevel1: entities.ItemLevel1,
+		ItemLevel2: entities.ItemLevel2,
+		ItemLevel3: entities.ItemLevel3,
+		ItemLevel4: entities.ItemLevel4,
+	}
+
+	return result, nil
 }
 
 func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
@@ -677,8 +691,32 @@ func (r *ItemRepositoryImpl) GetItemDetailById(tx *gorm.DB, ItemId, ItemDetailId
 	return response, nil
 }
 
-func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse {
-	entities := masteritementities.ItemDetail{
+func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.ItemDetail
+
+	// Cek apakah detail item sudah ada untuk kombinasi ItemId, BrandId, ModelId, VariantId
+	err := tx.Where("item_id = ? AND brand_id = ? AND model_id = ? AND variant_id = ?", ItemId, req.BrandId, req.ModelId, req.VariantId).First(&entities).Error
+	if err == nil {
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Item detail already exists",
+			Err:        errors.New("item detail already exists"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error checking existing item detail",
+			Err:        err,
+		}
+	}
+
+	// Jika IsActive adalah false, set MileageEvery dan ReturnEvery ke 0
+	if !req.IsActive {
+		req.MileageEvery = 0
+		req.ReturnEvery = 0
+	}
+
+	entities = masteritementities.ItemDetail{
 		ItemId:       ItemId,
 		BrandId:      req.BrandId,
 		ModelId:      req.ModelId,
@@ -688,33 +726,34 @@ func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masterit
 		IsActive:     req.IsActive,
 	}
 
-	err := tx.Save(&entities).Error
-
+	err = tx.Save(&entities).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save item detail",
 			Err:        err,
 		}
 	}
 
-	return nil
+	return entities, nil
 }
 
-func (r *ItemRepositoryImpl) DeleteItemDetail(tx *gorm.DB, ItemId int, ItemDetailId int) *exceptions.BaseErrorResponse {
+func (r *ItemRepositoryImpl) DeleteItemDetails(tx *gorm.DB, ItemId int, itemDetailIDs []int) (masteritempayloads.DeleteItemResponse, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemDetail
 
 	result := tx.Model(&entities).
-		Where("item_id = ? AND item_detail_id = ?", ItemId, ItemDetailId).
+		Where("item_id = ? AND item_detail_id IN (?)", ItemId, itemDetailIDs).
 		Delete(&entities)
 
 	if result.Error != nil {
-		return &exceptions.BaseErrorResponse{
+		return masteritempayloads.DeleteItemResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete item details",
 			Err:        result.Error,
 		}
 	}
 
-	return nil
+	return masteritempayloads.DeleteItemResponse{}, nil
 }
 
 func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -749,17 +788,29 @@ func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritemp
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, Id int, itemDetailId int, req masteritempayloads.ItemDetailUpdateRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemDetail
 
-	result := tx.Model(&entities).Where("Item_detail_id=?", ItemId).Updates(req)
+	// Fetch the existing record to update
+	err := tx.Where("item_detail_id = ? AND item_id = ?", itemDetailId, Id).First(&entities).Error
+	if err != nil {
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Item detail not found",
+			Err:        err,
+		}
+	}
+
+	result := tx.Model(&entities).Where("item_detail_id = ? AND item_id = ?", itemDetailId, Id).Updates(req)
 	if result.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
+			Message:    "Failed to update item detail",
 			Err:        result.Error,
 		}
 	}
-	return true, nil
+
+	return entities, nil
 }
 
 func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
