@@ -1,6 +1,7 @@
 package masteritemservice
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -17,12 +18,12 @@ type ItemService interface {
 	ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorResponse)
 	GetAllItemDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetItemDetailById(int, int) (masteritempayloads.ItemDetailRequest, *exceptions.BaseErrorResponse)
-	AddItemDetail(int, masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse
-	DeleteItemDetail(int, int) *exceptions.BaseErrorResponse
+	AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse)
+	DeleteItemDetails(id int, itemDetailIDs []int) (masteritempayloads.DeleteItemResponse, *exceptions.BaseErrorResponse)
 	GetUomTypeDropDown() ([]masteritempayloads.UomTypeDropdownResponse, *exceptions.BaseErrorResponse)
 	GetUomDropDown(uomTypeId int) ([]masteritempayloads.UomDropdownResponse, *exceptions.BaseErrorResponse)
 	UpdateItem(int, masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse)
-	UpdateItemDetail(int, masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateItemDetail(id int, itemDetail int, req masteritempayloads.ItemDetailUpdateRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse)
 	GetPrincipleBrandDropdown() ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse)
 	AddItemDetailByBrand(id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse)

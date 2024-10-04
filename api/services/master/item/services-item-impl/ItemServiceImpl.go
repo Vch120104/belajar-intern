@@ -1,6 +1,7 @@
 package masteritemserviceimpl
 
 import (
+	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
@@ -204,24 +205,25 @@ func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masterite
 	return result, nil
 }
 
-func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse {
+func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetailRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.itemRepo.AddItemDetail(tx, id, req)
+	entities, err := s.itemRepo.AddItemDetail(tx, id, req)
 	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
-		return err
+		return masteritementities.ItemDetail{}, err
 	}
-	return nil
+	return entities, nil
 }
 
-func (s *ItemServiceImpl) DeleteItemDetail(id int, itemDetailID int) *exceptions.BaseErrorResponse {
+func (s *ItemServiceImpl) DeleteItemDetails(id int, itemDetailIDs []int) (masteritempayloads.DeleteItemResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.itemRepo.DeleteItemDetail(tx, id, itemDetailID)
+	resp, err := s.itemRepo.DeleteItemDetails(tx, id, itemDetailIDs)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return err
+		return masteritempayloads.DeleteItemResponse{}, err
 	}
-	return nil
+	return resp, nil
 }
 
 func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -234,12 +236,12 @@ func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRe
 	return result, nil
 }
 
-func (s *ItemServiceImpl) UpdateItemDetail(id int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) UpdateItemDetail(id int, itemDetail int, req masteritempayloads.ItemDetailUpdateRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.itemRepo.UpdateItemDetail(tx, id, req)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return result, err
+	result, errResp := s.itemRepo.UpdateItemDetail(tx, id, itemDetail, req)
+	defer helper.CommitOrRollback(tx, errResp)
+	if errResp != nil {
+		return masteritementities.ItemDetail{}, errResp
 	}
 	return result, nil
 }
