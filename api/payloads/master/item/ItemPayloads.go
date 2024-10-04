@@ -322,3 +322,8 @@ type ItemListTransLookUp struct {
 	ItemLevel_3   string `json:"item_level_3"`
 	ItemLevel_4   string `json:"item_level_4"`
 }
+
+type DeleteItemResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+}
