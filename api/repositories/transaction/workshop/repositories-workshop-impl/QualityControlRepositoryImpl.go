@@ -118,7 +118,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data customer from external API
-		CustomerUrl := config.EnvConfigs.SalesServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
+		CustomerUrl := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
 		var customerResponses transactionworkshoppayloads.CustomerResponse
 		errCustomer := utils.Get(CustomerUrl, &customerResponses, nil)
 		if errCustomer != nil {

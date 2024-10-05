@@ -38,24 +38,29 @@ var LinetypeSublet int = 8             // 8 Sublet
 var LinetypeSouvenir int = 9           // 9 Souvenir
 
 // Transaction Type Bill Code SO WO
-var TrxTypeWoInternal string = "I"        // TRXTYPE_WO_INTERNAL
-var TrxTypeWoNoCharge string = "N"        // TRXTYPE_WO_NOCHARGE
-var TrxTypeWoCentralize string = "C"      // TRXTYPE_WO_CENTRALIZE
-var TrxTypeWoDeCentralize string = "D"    // TRXTYPE_WO_DECENTRALIZE
-var TrxTypeWoCampaign string = "G"        // TRXTYPE_WO_CAMPAIGN
-var TrxTypeWoContractService string = "S" // TRXTYPE_WO_CONTRACT_SERVICE
-var TrxTypeWoExternal string = "E"        // TRXTYPE_WO_EXTERNAL
-var TrxTypeWoFreeService string = "F"     // TRXTYPE_WO_FREE_SERVICE
-var TrxTypeWoInsurance string = "U"       // TRXTYPE_WO_INSURANCE
-var TrxTypeWoWarranty string = "W"        // TRXTYPE_WO_WARRANTY
+type TrxType struct {
+	Code string
+	ID   int
+}
 
-var TrxTypeSoDirect string = "SU01"       // TRXTYPE_SO_DIRECT
-var TrxTypeSoChannel string = "SU02"      // TRXTYPE_SO_CHANNEL
-var TrxTypeSoGSO string = "SU03"          // TRXTYPE_SO_GSO
-var TrxTypeSoInternal string = "SU05"     // TRXTYPE_SO_INTERNAL
-var TrxTypeSoCentralize string = "SU06"   // TRXTYPE_SO_CENTRALIZE
-var TrxTypeSoDeCentralize string = "SU07" // TRXTYPE_SO_DECENTRALIZED
-var TrxTypeSoExport string = "SU08"       // TRXTYPE_SO_EXPORT
+var TrxTypeWoInternal = TrxType{Code: "I", ID: 1}        // TRXTYPE_WO_INTERNAL
+var TrxTypeWoNoCharge = TrxType{Code: "N", ID: 2}        // TRXTYPE_WO_NOCHARGE
+var TrxTypeWoCentralize = TrxType{Code: "C", ID: 3}      // TRXTYPE_WO_CENTRALIZE
+var TrxTypeWoDeCentralize = TrxType{Code: "D", ID: 4}    // TRXTYPE_WO_DECENTRALIZE
+var TrxTypeWoCampaign = TrxType{Code: "G", ID: 5}        // TRXTYPE_WO_CAMPAIGN
+var TrxTypeWoContractService = TrxType{Code: "S", ID: 6} // TRXTYPE_WO_CONTRACT_SERVICE
+var TrxTypeWoExternal = TrxType{Code: "E", ID: 7}        // TRXTYPE_WO_EXTERNAL
+var TrxTypeWoFreeService = TrxType{Code: "F", ID: 8}     // TRXTYPE_WO_FREE_SERVICE
+var TrxTypeWoInsurance = TrxType{Code: "U", ID: 9}       // TRXTYPE_WO_INSURANCE
+var TrxTypeWoWarranty = TrxType{Code: "W", ID: 10}       // TRXTYPE_WO_WARRANTY
+
+var TrxTypeSoDirect = TrxType{Code: "SU01", ID: 1}       // TRXTYPE_SO_DIRECT
+var TrxTypeSoChannel = TrxType{Code: "SU02", ID: 2}      // TRXTYPE_SO_CHANNEL
+var TrxTypeSoGSO = TrxType{Code: "SU03", ID: 3}          // TRXTYPE_SO_GSO
+var TrxTypeSoInternal = TrxType{Code: "SU05", ID: 4}     // TRXTYPE_SO_INTERNAL
+var TrxTypeSoCentralize = TrxType{Code: "SU06", ID: 5}   // TRXTYPE_SO_CENTRALIZE
+var TrxTypeSoDeCentralize = TrxType{Code: "SU07", ID: 6} // TRXTYPE_SO_DECENTRALIZED
+var TrxTypeSoExport = TrxType{Code: "SU08", ID: 7}       // TRXTYPE_SO_EXPORT
 
 var ItemTypeService string = "S"    // ITEMTYPE_SERVICE Services
 var EstWoOrderTypeId int = 1        // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation

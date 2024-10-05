@@ -320,6 +320,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		ContactPersonContactVia:  request.ContactVia,
 		EraNumber:                request.WorkOrderEraNo,
 		EraExpiredDate:           request.WorkOrderEraExpiredDate,
+		InsuranceCheck:           request.WorkOrderInsuranceCheck,
 		InsurancePolicyNumber:    request.WorkOrderInsurancePolicyNo,
 		InsuranceExpiredDate:     request.WorkOrderInsuranceExpiredDate,
 		InsuranceClaimNumber:     request.WorkOrderInsuranceClaimNo,
@@ -994,9 +995,9 @@ func getTaxPercent(tx *gorm.DB, taxTypeId int, taxServCode int, effDate time.Tim
 	// Subquery for the effective date (EFF_DATE)
 	var effDateSubquery time.Time
 	subquery := tx.Table("dms_microservices_finance_dev.dbo.mtr_tax_fare").
-		Select("effective_date").
-		Where("tax_type_id = ? AND effective_date <= ?", taxTypeId, effDate).
-		Order("effective_date DESC").
+		Select("mtr_tax_fare.effective_date").
+		Where("mtr_tax_fare.tax_type_id = ? AND mtr_tax_fare.effective_date <= ?", taxTypeId, effDate).
+		Order("mtr_tax_fare.effective_date DESC").
 		Limit(1).
 		Find(&effDateSubquery)
 	if subquery.Error != nil {
@@ -1004,9 +1005,10 @@ func getTaxPercent(tx *gorm.DB, taxTypeId int, taxServCode int, effDate time.Tim
 	}
 
 	// Main query to get the tax percent
-	err := tx.Table("dms_microservices_finance_dev.dbo.mtr_tax_fare_detail").
-		Select("CASE WHEN is_use_net = 0 THEN tax_percent ELSE (tax_percent * (COALESCE(net_percent, 0) / 100)) END").
-		Where("tax_type_id = ? AND tax_service_id = ? AND effective_date = ?", taxTypeId, taxServCode, effDateSubquery).
+	err := tx.Table("dms_microservices_finance_dev.dbo.mtr_tax_fare").
+		Select("CASE WHEN mtr_tax_fare_detail.is_use_net = 0 THEN mtr_tax_fare_detail.tax_percent ELSE (mtr_tax_fare_detail.tax_percent * (COALESCE(mtr_tax_fare_detail.net_percent, 0) / 100)) END").
+		Joins("LEFT JOIN dms_microservices_finance_dev.dbo.mtr_tax_fare_detail ON mtr_tax_fare.tax_fare_id = mtr_tax_fare_detail.tax_fare_id").
+		Where("mtr_tax_fare.tax_type_id = ? AND mtr_tax_fare_detail.tax_service_id = ? AND mtr_tax_fare.effective_date = ?", taxTypeId, taxServCode, effDateSubquery).
 		Scan(&taxPercent).Error
 	if err != nil {
 		return 0, err
@@ -1335,11 +1337,13 @@ func (r *WorkOrderRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *except
 // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 func (r *WorkOrderRepositoryImpl) GetAllRequest(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshopentities.WorkOrderService
-	// Query to retrieve all work order service entities based on the request
+
 	query := tx.Model(&transactionworkshopentities.WorkOrderService{})
+
 	if len(filterCondition) > 0 {
-		query = query.Where(filterCondition)
+		query = utils.ApplyFilter(query, filterCondition)
 	}
+
 	err := query.Find(&entities).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order service requests from the database"}
@@ -1353,6 +1357,7 @@ func (r *WorkOrderRepositoryImpl) GetAllRequest(tx *gorm.DB, filterCondition []u
 		workOrderServiceData["work_order_service_id"] = entity.WorkOrderServiceId
 		workOrderServiceData["work_order_system_number"] = entity.WorkOrderSystemNumber
 		workOrderServiceData["work_order_service_remark"] = entity.WorkOrderServiceRemark
+
 		workOrderServiceResponses = append(workOrderServiceResponses, workOrderServiceData)
 	}
 
@@ -1450,16 +1455,19 @@ func (r *WorkOrderRepositoryImpl) GetAllVehicleService(tx *gorm.DB, filterCondit
 	var entities []transactionworkshopentities.WorkOrderServiceVehicle
 
 	query := tx.Model(&transactionworkshopentities.WorkOrderServiceVehicle{})
+
 	if len(filterCondition) > 0 {
-		query = query.Where(filterCondition)
+		query = utils.ApplyFilter(query, filterCondition)
 	}
 
 	if err := query.Find(&entities).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order service vehicle requests from the database", Err: err}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			Message: "Failed to retrieve work order service vehicle requests from the database",
+			Err:     err,
+		}
 	}
 
 	if len(entities) == 0 {
-
 		return []map[string]interface{}{}, 0, 0, nil
 	}
 
@@ -1718,8 +1726,11 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			&workOrderReq.WarehouseGroupId,
 			&workOrderReq.OperationItemId,
 			&workOrderReq.OperationItemCode,
-			&workOrderReq.ProposedPrice,
 			&workOrderReq.OperationItemPrice,
+			&workOrderReq.OperationItemDiscountAmount,
+			&workOrderReq.ProposedPrice,
+			&workOrderReq.OperationItemDiscountPercent,
+			&workOrderReq.OperationItemDiscountRequestPercent,
 		); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -1727,14 +1738,59 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			}
 		}
 
+		// fetch line type from external api
+		lineTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-line-type?line_type_code=" + strconv.Itoa(workOrderReq.LineTypeId)
+		var lineTypeResponse []transactionworkshoppayloads.Linetype
+		err := utils.GetArray(lineTypeUrl, &lineTypeResponse, nil)
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve line type from the external API",
+				Err:        err,
+			}
+		}
+
+		// fetch transaction type from external api
+		transactionTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-transaction-type?transaction_type_id=" + strconv.Itoa(workOrderReq.TransactionTypeId)
+		var transactionTypeResponse []transactionworkshoppayloads.WorkOrderTransactionType
+		err = utils.GetArray(transactionTypeUrl, &transactionTypeResponse, nil)
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve transaction type from the external API",
+				Err:        err,
+			}
+		}
+
+		// fetch job type from external api
+		jobTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-job-type?job_type_id=" + strconv.Itoa(workOrderReq.JobTypeId)
+		var jobTypeResponse []transactionworkshoppayloads.WorkOrderJobType
+		err = utils.GetArray(jobTypeUrl, &jobTypeResponse, nil)
+		if err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to retrieve job type from the external API",
+				Err:        err,
+			}
+		}
+
 		workOrderRes = transactionworkshoppayloads.WorkOrderDetailResponse{
-			WorkOrderDetailId:     workOrderReq.WorkOrderDetailId,
-			WorkOrderSystemNumber: workOrderReq.WorkOrderSystemNumber,
-			LineTypeId:            workOrderReq.LineTypeId,
-			TransactionTypeId:     workOrderReq.TransactionTypeId,
-			JobTypeId:             workOrderReq.JobTypeId,
-			FrtQuantity:           workOrderReq.FrtQuantity,
-			SupplyQuantity:        workOrderReq.SupplyQuantity,
+			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
+			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
+			LineTypeId:                          workOrderReq.LineTypeId,
+			LineTypeCode:                        lineTypeResponse[0].LineTypeCode,
+			TransactionTypeId:                   workOrderReq.TransactionTypeId,
+			TransactionTypeCode:                 transactionTypeResponse[0].TransactionTypeCode,
+			JobTypeId:                           workOrderReq.JobTypeId,
+			JobTypeCode:                         jobTypeResponse[0].JobTypeCode,
+			OperationItemId:                     workOrderReq.OperationItemId,
+			FrtQuantity:                         workOrderReq.FrtQuantity,
+			SupplyQuantity:                      workOrderReq.SupplyQuantity,
+			OperationItemPrice:                  workOrderReq.OperationItemPrice,
+			OperationItemDiscountAmount:         workOrderReq.OperationItemDiscountAmount,
+			OperationItemDiscountRequestAmount:  workOrderReq.ProposedPrice,
+			OperationItemDiscountPercent:        workOrderReq.OperationItemDiscountPercent,
+			OperationItemDiscountRequestPercent: workOrderReq.OperationItemDiscountRequestPercent,
 		}
 
 		convertedResponses = append(convertedResponses, workOrderRes)
@@ -1744,13 +1800,21 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"work_order_detail_id":     response.WorkOrderDetailId,
-			"work_order_system_number": response.WorkOrderSystemNumber,
-			"line_type_id":             response.LineTypeId,
-			"transaction_type_id":      response.TransactionTypeId,
-			"job_type_id":              response.JobTypeId,
-			"frt_quantity":             response.FrtQuantity,
-			"supply_quantity":          response.SupplyQuantity,
+			"work_order_detail_id":                   response.WorkOrderDetailId,
+			"work_order_system_number":               response.WorkOrderSystemNumber,
+			"line_type_id":                           response.LineTypeId,
+			"line_type_code":                         response.LineTypeCode,
+			"transaction_type_id":                    response.TransactionTypeId,
+			"transaction_type_code":                  response.TransactionTypeCode,
+			"job_type_id":                            response.JobTypeId,
+			"job_type_code":                          response.JobTypeCode,
+			"frt_quantity":                           response.FrtQuantity,
+			"supply_quantity":                        response.SupplyQuantity,
+			"operation_item_id":                      response.OperationItemId,
+			"operation_item_price":                   response.OperationItemPrice,
+			"operation_item_discount_amount":         response.OperationItemDiscountAmount,
+			"operation_item_discount_request_amount": response.OperationItemDiscountRequestAmount,
+			"operation_item_discount_percent":        response.OperationItemDiscountPercent,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -3721,23 +3785,29 @@ func (r *WorkOrderRepositoryImpl) DeleteType(tx *gorm.DB, id int) (bool, *except
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewLineType(tx *gorm.DB) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewLineType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterLineType
 
-	if err := tx.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order line type from the database"}
+	query := utils.ApplyFilter(tx, filter)
+
+	if err := query.Find(&types).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order line type from the database",
+			Err:        err,
+		}
 	}
 
-	var getBillables []transactionworkshoppayloads.Linetype
+	var getlinetype []transactionworkshoppayloads.Linetype
 	for _, t := range types {
-		getBillables = append(getBillables, transactionworkshoppayloads.Linetype{
+		getlinetype = append(getlinetype, transactionworkshoppayloads.Linetype{
 			LineTypeId:   t.WorkOrderLineTypeId,
 			LineTypeCode: t.WorkOrderLineTypeCode,
 			LineTypeName: t.WorkOrderLineTypeDescription,
 		})
 	}
 
-	return getBillables, nil
+	return getlinetype, nil
 }
 
 func (r *WorkOrderRepositoryImpl) AddLineType(tx *gorm.DB, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
@@ -3790,10 +3860,12 @@ func (r *WorkOrderRepositoryImpl) DeleteLineType(tx *gorm.DB, id int) (bool, *ex
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterBillAbleto
 
-	if err := tx.Find(&types).Error; err != nil {
+	query := utils.ApplyFilter(tx, filter)
+
+	if err := query.Find(&types).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
 	}
 
@@ -3859,10 +3931,12 @@ func (r *WorkOrderRepositoryImpl) DeleteBill(tx *gorm.DB, id int) (bool, *except
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewTrxType(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewTrxType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterTrxType
 
-	if err := tx.Find(&types).Error; err != nil {
+	query := utils.ApplyFilter(tx, filter)
+
+	if err := query.Find(&types).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
 	}
 
@@ -3928,23 +4002,25 @@ func (r *WorkOrderRepositoryImpl) DeleteTrxType(tx *gorm.DB, id int) (bool, *exc
 	return true, nil
 }
 
-func (r *WorkOrderRepositoryImpl) NewTrxTypeSo(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) NewTrxTypeSo(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	var types []transactionworkshopentities.WorkOrderMasterTrxSoType
 
-	if err := tx.Find(&types).Error; err != nil {
+	query := utils.ApplyFilter(tx, filter)
+
+	if err := query.Find(&types).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
 	}
 
-	var payloadTypes []transactionworkshoppayloads.WorkOrderTransactionType
+	var payloadsoTypes []transactionworkshoppayloads.WorkOrderTransactionType
 	for _, t := range types {
-		payloadTypes = append(payloadTypes, transactionworkshoppayloads.WorkOrderTransactionType{
+		payloadsoTypes = append(payloadsoTypes, transactionworkshoppayloads.WorkOrderTransactionType{
 			TransactionTypeId:   t.WorkOrderTrxTypeSoId,
 			TransactionTypeCode: t.WorkOrderTrxTypeSoCode,
 			TransactionTypeName: t.WorkOrderTrxTypeSoDescription,
 		})
 	}
 
-	return payloadTypes, nil
+	return payloadsoTypes, nil
 
 }
 
@@ -3986,6 +4062,77 @@ func (r *WorkOrderRepositoryImpl) UpdateTrxTypeSo(tx *gorm.DB, id int, request t
 func (r *WorkOrderRepositoryImpl) DeleteTrxTypeSo(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderMasterTrxSoType
 	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxSoType{}).Where("work_order_transaction_type_so_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to delete billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) NewJobType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse) {
+	var types []transactionworkshopentities.WorkOrderMasterJobType
+
+	query := utils.ApplyFilter(tx, filter)
+
+	if err := query.Find(&types).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{Message: "Failed to retrieve work order type from the database"}
+	}
+
+	var payloadJobTypes []transactionworkshoppayloads.WorkOrderJobType
+	for _, t := range types {
+		payloadJobTypes = append(payloadJobTypes, transactionworkshoppayloads.WorkOrderJobType{
+			JobTypeId:   t.WorkOrderJobTypeId,
+			JobTypeCode: t.WorkOrderJobTypeCode,
+			JobTypeName: t.WorkOrderJobTypeDescription,
+		})
+	}
+
+	return payloadJobTypes, nil
+}
+
+func (r *WorkOrderRepositoryImpl) AddJobType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.WorkOrderMasterJobType{
+		WorkOrderJobTypeCode:        request.JobTypeCode,
+		WorkOrderJobTypeDescription: request.JobTypeName,
+	}
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) UpdateJobType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterJobType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterJobType{}).Where("job_type_id = ?", id).First(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
+	}
+
+	entity.WorkOrderJobTypeCode = request.JobTypeCode
+	entity.WorkOrderJobTypeDescription = request.JobTypeName
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{Message: "Failed to update billable data"}
+	}
+
+	return true, nil
+}
+
+func (r *WorkOrderRepositoryImpl) DeleteJobType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.WorkOrderMasterJobType
+	err := tx.Model(&transactionworkshopentities.WorkOrderMasterJobType{}).Where("job_type_id = ?", id).First(&entity).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{Message: "Failed to retrieve billable data from the database"}
 	}
@@ -4222,7 +4369,7 @@ func (s *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idw
 
 	// Fetch line type, invoice system number, etc.
 	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Select("ISNULL(line_type_id, 0) AS LineType, ISNULL(invoice_system_number, 0) AS InvoiceSysNo, ISNULL(warehouse_id, 0) AS WhsGroup").
+		Select("ISNULL(line_type_id, 0) AS LineType, ISNULL(invoice_system_number, 0) AS InvoiceSysNo, ISNULL(warehouse_group_id, 0) AS WhsGroup").
 		Where("work_order_system_number = ? AND work_order_operation_item_line IN (?)", workOrderId, idwos).
 		Scan(&detailResult).Error
 
@@ -4676,7 +4823,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									var oprItemPrice float64
 
 									// Fetch Opr_Item_Price
-									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
+									oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 									// Apply markup to the item price
 									oprItemPrice = oprItemPrice + 10.00 + (oprItemPrice * (5.00 / 100))
@@ -4689,7 +4836,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 										WorkorderStatusId:          detailentity.WorkorderStatusId,
 										OperationItemCode:          detailentity.OperationItemCode,
 										OperationItemPrice:         oprItemPrice,
-										SubstrituteItemCode:        substituteItem.SubsItemCode,
+										SubstituteItemCode:         substituteItem.SubsItemCode,
 										SupplyQuantity:             substituteItem.SupplyQty,
 										WarehouseGroupId:           detailentity.WarehouseGroupId,
 									}).Error
@@ -4729,7 +4876,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 			if detailentity.LineTypeId == utils.LinetypeSublet {
 
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -4740,11 +4887,11 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 				// Fetch Opr_Item_Disc_Percent
-				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, utils.TrxTypeSoDeCentralize, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, "W", utils.EstWoOrderTypeId)
+				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
 
 			} else {
 				// Fetch Opr_Item_Price
-				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, "W", "1")
+				oprItemPrice, _ = s.lookupRepo.GetOprItemPrice(tx, detailentity.LineTypeId, entity.CompanyId, detailentity.OperationItemId, entity.BrandId, entity.ModelId, detailentity.JobTypeId, entity.VariantId, entity.CurrencyId, utils.TrxTypeWoWarranty.ID, "1")
 
 				// Set markup percentage based on company ID
 				if entity.CompanyId == 139 {
@@ -4755,7 +4902,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				oprItemPrice = oprItemPrice + markupAmount + (oprItemPrice * (markupPercentage / 100))
 
 				// Fetch Opr_Item_Disc_Percent
-				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, utils.TrxTypeSoDeCentralize, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, "W", utils.EstWoOrderTypeId)
+				oprItemPriceDisc, _ = s.lookupRepo.GetOprItemDisc(tx, detailentity.LineTypeId, 6, detailentity.OperationItemId, entity.AgreementGeneralRepairId, entity.ProfitCenterId, detailentity.FrtQuantity*detailentity.OperationItemPrice, entity.CompanyId, entity.BrandId, entity.ContractServiceSystemNumber, utils.TrxTypeWoWarranty.ID, utils.EstWoOrderTypeId)
 
 			}
 
@@ -5770,23 +5917,25 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 	var result struct {
 		CompanyCode int
 		WoDocNo     string
+		LinetypeId  int
 		JobTypeId   int
 		AgreementNo int
 		BillCodeExt int
-		WhsGroup    string
 		BrandId     int
-		TaxFree     int
 		CampaignId  int
-		VariantCode int
+		Mileage     int
+		VariantId   int
+		CpcCode     int
 	}
-	var profitCenterGR int = 2
+	const profitCenterGR = 2
 
-	// Fetch data from work order and related tables
-	if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
-		Select("company_id, work_order_document_number, job_type_id, agreement_id, bill_code_ext, brand_id, campaign_id, variant_id").
-		Where("work_order_system_number = ?", workOrderId).
-		Scan(&result).
-		Error; err != nil {
+	// Step 1: Fetch data from work order and related tables
+	if err := tx.Table("trx_work_order AS wo").
+		Select("wo.company_id, wo.work_order_document_number,trx_work_order_detail.line_type_id, trx_work_order_detail.job_type_id, wo.agreement_id, trx_work_order_detail.transaction_type_id, wo.brand_id, wo.campaign_id, wo.variant_id").
+		Joins("INNER JOIN dms_microservices_aftersales_dev.dbo.trx_work_order_detail ON wo.work_order_system_number = trx_work_order_detail.work_order_system_number").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_customer ON wo.customer_id = mtr_customer.customer_id").
+		Where("wo.work_order_system_number = ?", workOrderId).
+		Scan(&result).Error; err != nil {
 		return entity, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch data from work order",
@@ -5796,689 +5945,756 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 
 	fmt.Println("Work Order Data: ", result)
 
-	// Determine job type based on Profit Center GR
-	if profitCenterGR != 0 {
-		if request.CPCCode == profitCenterGR {
-			result.JobTypeId = 9 //"PM" - Job Type For Periodical Maintenance
-			result.AgreementNo = request.AgreementId
-		} else {
-			result.JobTypeId = 13 //"TG" - Job Type For Transfer To General Repair
-			result.AgreementNo = request.AgreementId
-		}
+	// Step 2: Determine job type based on Profit Center GR
+	if request.CPCCode == profitCenterGR {
+		result.JobTypeId = 9 // "PM" - Job Type for Periodical Maintenance
+	} else {
+		result.JobTypeId = 13 // "TG" - Job Type for Transfer to General Repair
 	}
 
-	// Fetch Whs_Group based on company code
+	// Step 3: Fetch Whs_Group based on company code
 	whsGroupValue, err := s.lookupRepo.GetWhsGroup(tx, result.CompanyCode)
 	if err != nil {
 		return entity, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch warehouse group",
+			Err:        errors.New("failed to fetch warehouse group"),
 		}
 	}
 
-	// Apply the logic based on vehicle brand and warehouse group value
-	if result.BrandId == 23 && whsGroupValue != "SP" {
-		result.WhsGroup = "SP"
+	// Step 4: Set WhsGroup if conditions are met
+	var whsGroup int
+	if result.BrandId == 23 && whsGroupValue != 38 {
+		whsGroup = 38
 	}
 
-	// var (
-	// 	csr2LineType    int
-	// 	csr2OprItemCode int
-	// 	csr2FrtQty      float64
-	// 	csr2JobType     int
-	// 	csr2TrxType     int
-	// 	packageCode     int
-	// )
+	// Step 5: Fetch package details from the database
+	var packages []struct {
+		LineTypeId  int
+		OprItemId   int
+		OprItemCode string
+		FrtQty      float64
+		JobTypeId   int
+		TrxTypeId   int
+	}
 
-	// // // 	// First, get the list of items from the package
-	// // // 	// Declare a struct to hold the joined results
-	// // type PackageWithDetails struct {
-	// // 	Package masterentities.PackageMaster
-	// // 	Details []masterentities.PackageMasterDetail
-	// // }
+	if err := tx.Table("mtr_package AS ap").
+		Select("apd.line_type_id, apd.item_operation_id,ap.package_code, COALESCE(apd.frt_quantity, 0) AS frt_qty, apd.job_type_id, apd.workorder_transaction_type_id").
+		Joins("INNER JOIN mtr_package_detail AS apd ON ap.package_id = apd.package_id").
+		Where("ap.package_code = ?", request.PackageId).
+		Scan(&packages).Error; err != nil {
+		return entity, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch package data",
+			Err:        err,
+		}
+	}
 
-	// // // 	// Query to fetch package master and related details
-	// var amPackageItems []masterentities.PackageMasterDetail
+	// Step 6: Process each package and apply business logic
+	for _, pkg := range packages {
+		csrLineTypeId := pkg.LineTypeId
+		csrOprItemId := pkg.OprItemId
+		csrOprItemCode := pkg.OprItemCode
+		csrFrtQty := pkg.FrtQty
+		csrJobTypeId := pkg.JobTypeId
+		csrTrxTypeId := pkg.TrxTypeId
 
-	// // // 	// Fetch package items with join
-	// if err := tx.Table("package_master AS pm").
-	// 	Select("pm.*, pmd.*"). // Select fields from both tables
-	// 	Joins("LEFT JOIN package_master_detail AS pmd ON pm.package_id = pmd.package_id").
-	// 	Where("pm.package_id = ?", packageCode).
-	// 	Scan(&amPackageItems).Error; err != nil {
-	// 	return entity, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to fetch package items with details: " + err.Error(),
-	// 	}
-	// }
+		// Update FRT_QTY if LineType is a package
+		if csrLineTypeId == utils.LinetypePackage {
+			csrFrtQty = 1
+		}
 
-	// for _, item := range amPackageItems {
-	// 	csr2LineType = item.LineTypeId
-	// 	csr2OprItemCode = item.ItemOperationId
-	// 	csr2FrtQty = item.FrtQuantity
-	// 	csr2JobType = item.JobTypeId
-	// 	csr2TrxType = item.WorkorderTransactionTypeId
+		// Update job type and transaction type if present
+		if csrJobTypeId != 0 {
+			result.JobTypeId = csrJobTypeId
+		}
+		if csrTrxTypeId != 0 {
+			result.BillCodeExt = csrTrxTypeId
+		}
 
-	// 	// Handle line type package
-	// 	if csr2LineType == utils.LinetypePackage {
-	// 		csr2FrtQty = 1
-	// 	}
+		// Validation for chassis that have already undergone PDI, FSI, WR
+		if csrJobTypeId == 8 || csrJobTypeId == 15 || csrJobTypeId == 4 {
+			var blockingExists int64
+			if err := tx.Model(&transactionworkshopentities.WorkOrderMasterBlockingChassis{}).
+				Where("vehicle_id = ?", request.VehicleId).
+				Count(&blockingExists).Error; err != nil {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check blocking status",
+					Err:        err,
+				}
+			}
 
-	// 	if csr2JobType != 0 {
-	// 		result.JobTypeId = csr2JobType
-	// 	}
+			if blockingExists > 0 {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "This vehicle has already been blocked for Free service Inspection, PDI Service or Warranty Claim",
+					Err:        errors.New("this vehicle has already been blocked for Free service Inspection, PDI Service or Warranty Claim"),
+				}
+			}
+		}
 
-	// 	if csr2TrxType != 0 {
-	// 		result.BillCodeExt = csr2TrxType
-	// 	}
+		// Ambil markup berdasarkan Company dan Vehicle Brand
+		// OLDSITE
+		// if err := tx.Model(&GmSiteMarkup{}).
+		// 	Where("company_id = ? AND brand_id = ? AND site_code = ? AND trx_type_id = ?", result.CompanyCode, result.BrandId, siteCode, billCodeExt).
+		// 	Select("markup_amount, markup_percentage").
+		// 	Scan(&markupAmount, &markupPercentage).Error; err != nil {
+		// 	return entity, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch markup",
+		// 		Err:        err,
+		// 	}
+		// }
+		// NEW SITE
+		// Fetch markup based on Company and Vehicle Brand
+		markupAmount := 0.0
+		markupPercentage := 0.0
 
-	// 	// 	// Validasi untuk chassis yang sudah pernah PDI, FSI, WR
-	// 	if csr2JobType == 8 || csr2JobType == 15 || csr2JobType == 4 {
-	// 		var blockingExists int64
-	// 		if err := tx.Model(&transactionworkshopentities.WorkOrderMasterBlockingChassis{}).
-	// 			Where("vehicle_id = ?", request.VehicleId).
-	// 			Count(&blockingExists).Error; err != nil {
-	// 			return entity, &exceptions.BaseErrorResponse{
-	// 				StatusCode: http.StatusInternalServerError,
-	// 				Message:    "Failed to check blocking status",
-	// 				Err:        err,
-	// 			}
-	// 		}
+		// Handle GET DISC FOR CAMPAIGN
+		if result.CampaignId != 0 {
+			result.BillCodeExt = utils.TrxTypeWoCampaign.ID // utils.TrxTypeWoCampaign
+		}
 
-	// 		if blockingExists > 0 {
-	// 			return entity, &exceptions.BaseErrorResponse{
-	// 				StatusCode: http.StatusBadRequest,
-	// 				Message:    "This vehicle has already been blocked for Free service Inspection, PDI Service or Warranty Claim",
-	// 			}
-	// 		}
-	// 	}
-	// 	// 	// Ambil markup berdasarkan Company dan Vehicle Brand
-	// 	if err = tx.Model(&GmSiteMarkup{}).
-	// 		Where("company_id = ? AND brand_id = ? AND site_code = ? AND trx_type_id = ?", request.CompanyId, request.BrandId, siteCode, billCodeExt).
-	// 		Select("markup_amount, markup_percentage").
-	// 		Scan(&markupAmount, &markupPercentage).Error; err != nil {
-	// 		return entity, &exceptions.BaseErrorResponse{
-	// 			StatusCode: http.StatusInternalServerError,
-	// 			Message:    "Failed to fetch markup",
-	// 		}
-	// 	}
+		// Fetch operation item price and discount percent
+		oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrLineTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+		if err != nil {
+			return entity, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch operation item price",
+				Err:        errors.New("failed to fetch operation item price"),
+			}
+		}
 
-	// 	// Handle Campaign
-	// 	if result.CampaignId != 0 {
-	// 		result.BillCodeExt = 5 // utils.TrxTypeWoCampaign
-	// 	}
+		// Apply markup and percentage increase
+		oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
-	// 	// Cek apakah ada diskon campaign
-	// 	type CampaignDiscount struct {
-	// 		OprItemPrice       float64
-	// 		OprItemDiscPercent float64
-	// 		OprItemDiscAmount  float64
-	// 	}
+		// Fetch item discount percent (You need to define or fix GetOprItemDiscPercent method)
+		oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, result.LinetypeId, result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*csrFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+		if err != nil {
+			return entity, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch operation item discount percent",
+				Err:        errors.New("failed to fetch operation item discount percent"),
+			}
+		}
 
-	// 	var campaignDisc CampaignDiscount
-	// 	err = tx.Model(&masterentities.CampaignMaster{}).
-	// 		Select(`
-	// 	(CMD.price + ? + (CMD.price * (? / 100))) AS opr_item_price,
-	// 	CMD.discount_percent AS opr_item_disc_percent,
-	// 	ROUND(((CMD.price + ? + (CMD.price * (? / 100))) * (CMD.discount_percent / 100)), 0) AS opr_item_disc_amount,
-	// 	dbo.getVariableValue('TRXTYPE_WO_CAMPAIGN') AS bill_code
-	// `, markupAmount, markupPercentage, markupAmount, markupPercentage).
-	// 		Joins("INNER JOIN mtr_campaign_master_detail CMD ON mtr_campaign.campaign_id = CMD.campaign_id").
-	// 		Where("mtr_campaign.campaign_code = ? AND CMD.line_type_id = ? AND CMD.item_operation_id = ? AND ? >= CMD.quantity", campaignCode, lineType, oprItemCode, frtQty).
-	// 		Where("? >= CASE WHEN dbo.IsNumericEx(COALESCE(NULLIF(RTRIM(mtr_campaign.vat_tax_code), ''), 'ABC')) = 1 THEN ISNULL(mtr_campaign.vat_tax_code, 0) ELSE 0 END", millage).
-	// 		Scan(&campaignDisc).Error
+		// Calculate discount amount
+		oprItemDiscAmount := math.Round((oprItemPrice * oprItemDiscPercent / 100))
 
-	// 	if err != nil {
-	// 		return entity, &exceptions.BaseErrorResponse{
-	// 			StatusCode: http.StatusInternalServerError,
-	// 			Message:    "Failed to fetch campaign discount",
-	// 			Err:        err, // Sertakan kesalahan asli di sini
-	// 		}
-	// 	}
-	// }
+		// Fetch Pph_Tax_Code and ATPM_WCF_Type
+		var pphTaxCode, atpmWcfType int
 
-	// 	if campaignDisc.OprItemPrice > 0 {
-	// 		oprItemPrice = campaignDisc.OprItemPrice
-	// 		oprItemDiscPercent = campaignDisc.OprItemDiscPercent
-	// 		oprItemDiscAmount = campaignDisc.OprItemDiscAmount
-	// 	} else {
-	// 		tx.Raw("SELECT dbo.get_opr_item_price(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	// 			csr2LineType, whsGroup, billCodeExt, companyCode, vehicleBrand, jobType, modelCode, csr2OprItemCode, ccyCode, "", "", 0, variantCode, priceCode).
-	// 			Scan(&oprItemPrice)
-	// 		oprItemPrice += markupAmount + (oprItemPrice * markupPercentage / 100)
-	// 		tx.Raw("SELECT dbo.get_opr_item_disc(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	// 			csr2LineType, billCodeExt, csr2OprItemCode, agreementNo, cpcCode, oprItemPrice*csr2FrtQty, companyCode, vehicleBrand, whsGroup, 0, "").Scan(&oprItemDiscPercent)
-	// 		oprItemDiscAmount = math.Round(oprItemPrice * oprItemDiscPercent / 100)
-	// 	}
+		if err := tx.Model(&masteroperationentities.OperationModelMapping{}).
+			Select("tax_code").
+			Where("operation_id = ?", csrOprItemId).
+			Scan(&pphTaxCode).Error; err != nil {
+			return entity, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Pph_Tax_Code",
+				Err:        err,
+			}
+		}
 
-	// 	// Get ATPM_WCF_TYPE
-	// 	type GmItem struct {
-	// 		atpmWcfType string `gorm:"column:atpm_wcf_type"`
-	// 	}
+		if err := tx.Model(&masteritementities.Item{}).
+			Select("atpm_warranty_claim_type_id").
+			Where("item_id = ?", csrOprItemId).
+			Scan(&atpmWcfType).Error; err != nil {
+			return entity, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch ATPM_WCF_Type",
+				Err:        err,
+			}
+		}
 
-	// 	var gmItem GmItem
-	// 	if err = tx.Model(&GmItem{}).
-	// 		Select("atpm_wcf_type").
-	// 		Where("item_code = ?", csr2OprItemCode).
-	// 		Scan(&gmItem).Error; err != nil {
-	// 		return entity, &exceptions.BaseErrorResponse{
-	// 			StatusCode: http.StatusInternalServerError,
-	// 			Message:    "Failed to fetch ATPM WCF Type",
-	// 		}
-	// 	}
+		// Handle different line types (Operation or Package)
+		if csrLineTypeId == utils.LinetypeOperation || csrLineTypeId == utils.LinetypePackage {
+			// Check if this operation item already exists
+			var workOrder2 transactionworkshopentities.WorkOrderDetail
 
-	// 	// Handle different line types (Operation or Package)
-	// 	if csr2LineType == lineTypeOperation || csr2LineType == lineTypePackage {
-	// 		// Check if this operation item already exists
-	// 		var workOrder2 transactionworkshopentities.WorkOrderDetail
-	// 		if err = tx.Where("wo_sys_no = ? AND opr_item_code = ?", woSysNo, csr2OprItemCode).
-	// 			First(&workOrder2).Error; err != nil {
-	// 			return entity, &exceptions.BaseErrorResponse{
-	// 				StatusCode: http.StatusInternalServerError,
-	// 				Message:    "Failed to check if operation item exists",
-	// 			}
-	// 		}
+			if err := tx.Where("work_order_system_number = ? AND operation_item_id = ?", workOrderId, csrOprItemId).
+				First(&workOrder2).Error; err != nil {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to check if operation item exists",
+					Err:        err,
+				}
+			}
 
-	// 		if workOrder2.WoOprItemLine == 0 {
-	// 			// Insert new item if it doesn't exist
-	// 			// Variabel untuk menyimpan hasil
-	// 			var woOprItemLine int
+			if workOrder2.WorkOrderOperationItemLine == 0 {
+				// Insert new item if it doesn't exist
+				var woOprItemLine int
 
-	// 			if err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).Select("ISNULL(MAX(wo_opr_item_line), 0) + 1").
-	// 				Where("wo_sys_no = ?", woSysNo).
-	// 				Scan(&woOprItemLine).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to get next work order operation item line",
-	// 				}
-	// 			}
+				if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Select("ISNULL(MAX(work_order_operation_item_line), 0) + 1").
+					Where("work_order_system_number = ?", workOrderId).
+					Scan(&woOprItemLine).Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get next work order operation item line",
+						Err:        err,
+					}
+				}
 
-	// 			workOrder2 := transactionworkshopentities.WorkOrderDetail{
-	// 				WoSysNo:            woSysNo,
-	// 				WoDocNo:            woDocNo,
-	// 				WoOprItemLine:      woOprItemLine,
-	// 				WoLineStat:         woStatNew,
-	// 				LineType:           csr2LineType,
-	// 				BillCode:           billCodeExt,
-	// 				JobType:            jobType,
-	// 				WoLineDiscStat:     approvalDraft,
-	// 				OprItemCode:        csr2OprItemCode,
-	// 				Description:        csr2OprItemName, // assuming description is the item name
-	// 				ItemUOM:            "",
-	// 				FrtQty:             csr2FrtQty,
-	// 				OprItemPrice:       oprItemPrice,
-	// 				OprItemDiscAmount:  oprItemDiscAmount,
-	// 				OprItemDiscPercent: oprItemDiscPercent,
-	// 				PphTaxCode:         pphTaxCode,
-	// 				SupplyQty:          csr2FrtQty,
-	// 				WhsGroup:           whsGroup,
-	// 				ATPMWCFType:        atpmWcfType,
-	// 				PriceCode:          priceCode,
-	// 			}
-	// 			if err = tx.Create(&workOrder2).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to insert new operation item",
-	// 				}
-	// 			}
+				workOrder2 := transactionworkshopentities.WorkOrderDetail{
+					WorkOrderSystemNumber:               workOrderId,
+					WorkOrderOperationItemLine:          woOprItemLine,
+					WorkorderStatusId:                   utils.WoStatNew,
+					LineTypeId:                          csrLineTypeId,
+					OperationItemId:                     csrOprItemId,
+					TransactionTypeId:                   csrTrxTypeId,
+					JobTypeId:                           csrJobTypeId,
+					FrtQuantity:                         csrFrtQty,
+					OperationItemPrice:                  oprItemPrice,
+					OperationItemDiscountAmount:         oprItemDiscAmount,
+					OperationItemDiscountPercent:        oprItemDiscPercent,
+					OperationItemDiscountRequestAmount:  0,
+					OperationItemDiscountRequestPercent: 0,
+					PphAmount:                           0,
+					SupplyQuantity:                      csrFrtQty,
+					WarehouseGroupId:                    whsGroup,
+					WarrantyClaimTypeId:                 0,
+				}
 
-	// 			// Update estimation time if needed
-	// 			if estTime == 0 {
+				if err := tx.Create(&workOrder2).Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to insert new operation item",
+						Err:        err,
+					}
+				}
 
-	// 				if err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-	// 					Select("SUM(ISNULL(frt_qty, 0))").
-	// 					Where("wo_sys_no = ?", woSysNo).
-	// 					Scan(&estTime).Error; err != nil {
-	// 					return entity, &exceptions.BaseErrorResponse{
-	// 						StatusCode: http.StatusInternalServerError,
-	// 						Message:    "Failed to calculate estimation time",
-	// 					}
-	// 				}
+				// Update estimation time if needed
+				var estTime float64
+				var timeTolerance float64 = 0.25
 
-	// 			} else {
-	// 				estTime += csr2FrtQty
-	// 			}
-	// 			if err = tx.Model(&wtWorkOrder0{}).
-	// 				Where("wo_sys_no = ?", woSysNo).
-	// 				Updates(map[string]interface{}{
-	// 					"est_time": estTime,
-	// 				}).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to update estimation time",
-	// 				}
-	// 			}
-	// 		}
-	// 	} else {
-	// 		// Handle other line types
-	// 		uomType = "UOM_TYPE_SELL" // get variable value for UOM_TYPE_SELL
-	// 		if csr2LineType != getLineTypeByItemCode(csr2OprItemCode) {
-	// 			errMsg = fmt.Sprintf("Item Code %s does not belong to Line Type %s", csr2OprItemCode, csr2LineType)
-	// 			return fmt.Errorf(errMsg)
-	// 		}
+				// Step 1: Check if estTime is zero
+				if estTime == 0 {
+					// Calculate estimation time using FRT quantities plus the time tolerance
+					if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+						Select("SUM(COALESCE(frt_quantity, 0))").
+						Where("work_order_system_number = ? AND (line_type_id = ? OR line_type_id = ?)", workOrderId, utils.LinetypeOperation, utils.LinetypePackage).
+						Scan(&estTime).Error; err != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to calculate estimation time",
+							Err:        err,
+						}
+					}
+					// Add timeTolerance after summing the frt_quantity
+					estTime += timeTolerance
+				} else {
+					// Step 2: If estTime is not zero, just add csrFrtQty
+					estTime += csrFrtQty
+				}
 
-	// 		// Check and select warehouse group
-	// 		if whsGroup == "" {
-	// 			var whsGroup string
+				if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+					Where("work_order_system_number = ?", workOrderId).
+					Updates(map[string]interface{}{
+						"estimate_time": estTime,
+					}).Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to update estimation time",
+						Err:        err,
+					}
+				}
+			}
 
-	// 			if err = tx.Model(&amLocationItem{}).
-	// 				Select("whs_group").
-	// 				Where("item_code = ? AND company_code = ?", csr2OprItemCode, companyCode).
-	// 				Limit(1). // Mengambil hanya 1 record
-	// 				Scan(&whsGroup).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to fetch warehouse group",
-	// 				}
-	// 			}
+		} else {
+			// Handle other line types
+			uomType := "UOM_TYPE_SELL" // get variable value for UOM_TYPE_SELL
 
-	// 		}
+			// Fetch line type by item code
+			getLineTypeByItemCode, err := s.lookupRepo.GetLineTypeByItemCode(tx, csrOprItemCode)
+			if err != nil {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to fetch line type by item code",
+					Err:        errors.New("failed to fetch line type by item code"),
+				}
+			}
 
-	// 		// Execute the stored procedure
-	// 		tx.Raw("EXEC dbo.uspg_amLocationStockItem_Select ?, ?, ?, ?, ?, ?, ?, ?",
-	// 			1, companyCode, creationDatetime, "", "", csr2OprItemCode, whsGroup, uomType).Scan(&qtyAvail)
+			// Check if the line type matches the one retrieved by item code
+			if csrLineTypeId != getLineTypeByItemCode {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Message:    "Item code does not belong to the provided line type",
+					Err:        errors.New("item code does not belong to line type"),
+				}
+			}
 
-	// 		if qtyAvail > 0 || csr2LineType == lineTypeSublet {
-	// 			var woOprItemLine int
+			// Fetch warehouse group if not provided
+			if whsGroup == 0 {
+				if err := tx.Model(&masteritementities.Item{}).
+					Select("whs_group").
+					Where("item_code = ? AND company_code = ?", csrOprItemId, result.CompanyCode).
+					Limit(1).
+					Scan(&whsGroup).Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to fetch warehouse group",
+						Err:        err,
+					}
+				}
+			}
 
-	// 			// Menggunakan tx.Model untuk mengambil nilai maksimum
-	// 			if err = tx.Model(&wtWorkOrder2{}).
-	// 				Select("ISNULL(MAX(wo_opr_item_line), 0) + 1").
-	// 				Where("wo_sys_no = ?", woSysNo).
-	// 				Scan(&woOprItemLine).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to get next work order operation item line",
-	// 					Err:        err,
-	// 				}
-	// 			}
-	// 			if !existsWorkOrder2(woSysNo, csr2OprItemCode, billCodeExt, jobType) {
-	// 				workOrder2 := wtWorkOrder2{
-	// 					RecordStatus:       recordStatus,
-	// 					WoSysNo:            woSysNo,
-	// 					WoDocNo:            woDocNo,
-	// 					WoOprItemLine:      woOprItemLine,
-	// 					WoLineStat:         woStatNew,
-	// 					LineType:           csr2LineType,
-	// 					BillCode:           billCodeExt,
-	// 					JobType:            jobType,
-	// 					WoLineDiscStat:     approvalDraft,
-	// 					OprItemCode:        csr2OprItemCode,
-	// 					Description:        csr2OprItemName, // assuming description is the item name
-	// 					ItemUOM:            "",
-	// 					FrtQty:             csr2FrtQty,
-	// 					OprItemPrice:       oprItemPrice,
-	// 					OprItemDiscAmount:  oprItemDiscAmount,
-	// 					OprItemDiscPercent: oprItemDiscPercent,
-	// 					PphTaxCode:         pphTaxCode,
-	// 					SupplyQty:          csr2FrtQty,
-	// 					WhsGroup:           whsGroup,
-	// 					ATPMWCFType:        atpmWcfType,
-	// 					PriceCode:          priceCode,
-	// 				}
-	// 				if err = tx.Create(&workOrder2).Error; err != nil {
-	// 					return entity, &exceptions.BaseErrorResponse{
-	// 						StatusCode: http.StatusInternalServerError,
-	// 						Message:    "Failed to insert new operation item",
-	// 					}
-	// 				}
-	// 			} else {
-	// 				// Get current FRT_QTY and WHS_GROUP
-	// 				var results struct {
-	// 					FrtQty   float64 // Atau tipe data yang sesuai
-	// 					WhsGroup string
-	// 				}
+			var currentDate = time.Now()
 
-	// 				// Menggunakan tx.Model untuk mengambil data
-	// 				if err = tx.Model(&wtWorkOrder2{}).
-	// 					Select("ISNULL(FRT_QTY, 0) + ? AS FRT_QTY, ISNULL(WHS_GROUP, '') AS WHS_GROUP", csr2FrtQty).
-	// 					Where("WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND BILL_CODE = ? AND JOB_TYPE = ?", woSysNo, csr2OprItemCode, billCodeExt, jobType).
-	// 					Scan(&results).Error; err != nil {
-	// 					return entity, &exceptions.BaseErrorResponse{
-	// 						StatusCode: http.StatusInternalServerError,
-	// 						Message:    "Failed to fetch current FRT_QTY and WHS_GROUP",
-	// 					}
-	// 				}
+			// Execute the stored procedure `SelectLocationStockItem`
+			qtyAvailable, err := s.lookupRepo.SelectLocationStockItem(tx, 1, result.CompanyCode, currentDate, "", "", csrOprItemId, whsGroup, uomType)
+			if err != nil {
+				return entity, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "Failed to execute stock item location query",
+					Err:        errors.New("failed to execute stock item location query"),
+				}
+			}
 
-	// 				// Get markup amount and percentage
-	// 				var result struct {
-	// 					MarkupAmount     float64 // Sesuaikan dengan tipe data yang sesuai
-	// 					MarkupPercentage float64
-	// 				}
+			// Check if the item is available or the line type is Sublet
+			if qtyAvailable > 0 || csrLineTypeId == utils.LinetypeSublet {
+				// Fetch the next work order operation item line
+				var woOprItemLine int
+				if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Select("COALESCE(MAX(work_order_operation_item_line), 0) + 1").
+					Where("work_order_system_number = ?", workOrderId).
+					Scan(&woOprItemLine).Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get the next work order operation item line",
+						Err:        err,
+					}
+				}
 
-	// 				// Menggunakan tx.Model untuk mengambil data
-	// 				if err = tx.Model(&gmSiteMarkup{}).
-	// 					Select("ISNULL(MARKUP_AMOUNT, 0) AS MARKUP_AMOUNT, ISNULL(MARKUP_PERCENTAGE, 0) AS MARKUP_PERCENTAGE").
-	// 					Where("COMPANY_CODE = ? AND VEHICLE_BRAND = ? AND SITE_CODE = ? AND TRX_TYPE = ?", companyCode, vehicleBrand, siteCode, billCodeExt).
-	// 					Scan(&result).Error; err != nil {
-	// 					return entity, &exceptions.BaseErrorResponse{
-	// 						StatusCode: http.StatusInternalServerError,
-	// 						Message:    "Failed to fetch markup amount and percentage",
-	// 						Err:        err,
-	// 					}
-	// 				}
+				// Check if the work order line exists
+				var exists bool
 
-	// 				// Get operation item price
-	// 				err = tx.Raw(`
-	// 					SELECT dbo.getOprItemPrice(?, ?, ?, WO.COMPANY_CODE, WO.VEHICLE_BRAND, ?, WO.MODEL_CODE, ?, WO.CCY_CODE, '', '', 0, ?, ?)
-	// 					FROM wtWorkOrder0 WO
-	// 					WHERE WO.WO_SYS_NO = ?
-	// 				`, csr2FrtQty, billCodeExt, jobType, variantCode, priceCode, woSysNo).Scan(&oprItemPrice).Error
-	// 				if err != nil {
-	// 					return fmt.Errorf("error retrieving operation item price: %v", err)
-	// 				}
+				// Check if the work order line already exists using Exists
+				if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+					Select("1").
+					Where("work_order_system_number = ? AND work_order_operation_item_line = ?", workOrderId, woOprItemLine).
+					Scan(&exists).Error; err != nil {
+					// Handle error if the query fails
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to check if work order line exists",
+						Err:        err,
+					}
+				}
 
-	// 				// Apply markup
-	// 				oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
+				if !exists {
+					// If the record doesn't exist, proceed with insertion
+					workOrderDetail := transactionworkshopentities.WorkOrderDetail{
+						WorkOrderSystemNumber:        workOrderId,
+						WorkOrderOperationItemLine:   woOprItemLine,
+						LineTypeId:                   csrLineTypeId,
+						OperationItemId:              csrOprItemId,
+						FrtQuantity:                  csrFrtQty,
+						OperationItemPrice:           oprItemPrice,
+						OperationItemDiscountAmount:  oprItemDiscAmount,
+						OperationItemDiscountPercent: oprItemDiscPercent,
+						SupplyQuantity:               csrFrtQty,
+						WarehouseGroupId:             whsGroup,
+						WarrantyClaimTypeId:          atpmWcfType,
+					}
 
-	// 				// Get operation item discount percentage
-	// 				err = tx.Raw(`
-	// 					SELECT dbo.getOprItemDisc(?, ?, ?, ?, WO.CPC_CODE, (?, ?), WO.COMPANY_CODE, WO.VEHICLE_BRAND, ?, 0, '')
-	// 					FROM wtWorkOrder0 WO
-	// 					WHERE WO.WO_SYS_NO = ?
-	// 				`, csr2FrtQty, billCodeExt, csr2OprItemCode, agreementNo, oprItemPrice, frtQty, whsGroup, woSysNo).Scan(&oprItemDiscPercent).Error
-	// 				if err != nil {
-	// 					return fmt.Errorf("error retrieving operation item discount percentage: %v", err)
-	// 				}
+					// Insert the new operation item into the database
+					if err := tx.Create(&workOrderDetail).Error; err != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to insert new operation item",
+							Err:        err,
+						}
+					}
+				} else {
 
-	// 				// Calculate discount amount
-	// 				oprItemDiscAmount = math.Round((oprItemPrice * oprItemDiscPercent / 100), 0)
+					var existingWorkOrderLine transactionworkshopentities.WorkOrderDetail
+					if err := tx.Where("work_order_system_number = ? AND work_order_operation_item_line = ?", workOrderId, woOprItemLine).
+						First(&existingWorkOrderLine).Error; err != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to fetch existing work order line",
+							Err:        err,
+						}
+					}
+					// Update the existing work order line
+					newFrtQty := existingWorkOrderLine.FrtQuantity + csrFrtQty
+					newWhsGroup := existingWorkOrderLine.WarehouseGroupId
 
-	// 				// Update wtWorkOrder2
-	// 				if err = tx.Model(&wtWorkOrder2{}).
-	// 					Where("WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND BILL_CODE = ? AND JOB_TYPE = ?", woSysNo, csr2OprItemCode, billCodeExt, jobType).
-	// 					Updates(map[string]interface{}{
-	// 						"FRT_QTY":               frtQty,
-	// 						"OPR_ITEM_PRICE":        oprItemPrice,
-	// 						"OPR_ITEM_DISC_AMOUNT":  oprItemDiscAmount,
-	// 						"OPR_ITEM_DISC_PERCENT": oprItemDiscPercent,
-	// 						"WO_LINE_DISC_STAT":     approvalDraft,
-	// 					}).Error; err != nil {
-	// 					return entity, &exceptions.BaseErrorResponse{
-	// 						StatusCode: http.StatusInternalServerError,
-	// 						Message:    "Failed to update work order item",
-	// 						Err:        err,
-	// 					}
-	// 				}
-	// 			}
-	// 		} else {
-	// 			type Substitute struct {
-	// 				SubsItemCode string
-	// 				ItemName     string
-	// 				SupplyQty    float64
-	// 				SubsType     string
-	// 			}
+					// Ambil markup berdasarkan Company dan Vehicle Brand
+					// OLDSITE
+					// if err := tx.Model(&GmSiteMarkup{}).
+					// 	Where("company_id = ? AND brand_id = ? AND site_code = ? AND trx_type_id = ?", result.CompanyCode, result.BrandId, siteCode, billCodeExt).
+					// 	Select("markup_amount, markup_percentage").
+					// 	Scan(&markupAmount, &markupPercentage).Error; err != nil {
+					// 	return entity, &exceptions.BaseErrorResponse{
+					// 		StatusCode: http.StatusInternalServerError,
+					// 		Message:    "Failed to fetch markup",
+					// 		Err:        err,
+					// 	}
+					// }
+					// NEW SITE
+					// Fetch markup based on Company and Vehicle Brand
+					markupAmount := 0.0
+					markupPercentage := 0.0
 
-	// 			// Step 1: Buat tabel sementara dengan GORM
-	// 			if err = tx.Exec("CREATE TABLE #SUBSTITUTE2 (SUBS_ITEM_CODE VARCHAR(15), ITEM_NAME VARCHAR(40), SUPPLY_QTY NUMERIC(7,2), SUBS_TYPE CHAR(2))").Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to create temporary table",
-	// 					Err:        err,
-	// 				}
-	// 			}
-	// 			// Step 2: Eksekusi stored procedure untuk mengisi tabel sementara
-	// 			if err = tx.Exec("INSERT INTO #SUBSTITUTE2 EXEC dbo.uspg_smSubstitute0_Select @OPTION = ?, @COMPANY_CODE = ?, @ITEM_CODE = ?, @ITEM_QTY = ?",
-	// 				2, companyCode, csr2OprItemCode, csr2FrtQty).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to execute stored procedure",
-	// 				}
-	// 			}
+					// Fetch operation item price and discount percent
+					oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrLineTypeId, csrTrxTypeId, int(csrFrtQty), newWhsGroup, strconv.Itoa(result.VariantId))
+					if err != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to fetch operation item price",
+							Err:        errors.New("failed to fetch operation item price"),
+						}
+					}
 
-	// 			// Step 3: Ambil data dari tabel sementara
-	// 			var substitutes []Substitute
-	// 			if err = tx.Table("#SUBSTITUTE2").Find(&substitutes).Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to fetch data from temporary table",
-	// 					Err:        err,
-	// 				}
-	// 			}
+					// Apply markup and percentage increase
+					oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
-	// 			// Step 4: Proses substitusi item
-	// 			for _, substitute := range substitutes {
-	// 				if substitute.SubsType != "" {
-	// 					var woOprItemLine int
+					// Fetch item discount percent (You need to define or fix GetOprItemDiscPercent method)
+					oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, result.LinetypeId, result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*newFrtQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+					if err != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to fetch operation item discount percent",
+							Err:        errors.New("failed to fetch operation item discount percent"),
+						}
+					}
 
-	// 					// Cek apakah item sudah ada
-	// 					var existingItemCount int64
-	// 					if err = tx.Model(&WorkOrder{}).
-	// 						Where("WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND BILL_CODE = ? AND SUBSTITUTE_TYPE = ?", woSysNo, csr2OprItemCode, billCode, substitute.SubsType).
-	// 						Count(&existingItemCount).Error; err != nil {
-	// 						return entity, &exceptions.BaseErrorResponse{
-	// 							StatusCode: http.StatusInternalServerError,
-	// 							Message:    "Failed to check if item exists",
-	// 						}
-	// 					}
+					// Calculate discount amount
+					oprItemDiscAmount := math.Round((oprItemPrice * oprItemDiscPercent / 100))
 
-	// 					if existingItemCount == 0 {
-	// 						// Ambil nomor baris berikutnya
-	// 						if err = tx.Raw("SELECT ISNULL(MAX(WO_OPR_ITEM_LINE), 0) + 1 FROM wtWorkOrder2 WHERE WO_SYS_NO = ?", woSysNo).
-	// 							Scan(&woOprItemLine).Error; err != nil {
-	// 							return entity, &exceptions.BaseErrorResponse{
-	// 								StatusCode: http.StatusInternalServerError,
-	// 								Message:    "Failed to get next work order operation item line",
-	// 							}
-	// 						}
+					// Update the work order line
+					if err := tx.Model(&existingWorkOrderLine).
+						Updates(map[string]interface{}{
+							"frt_quantity":                    newFrtQty,
+							"operation_item_price":            oprItemPrice,
+							"operation_item_discount_amount":  oprItemDiscAmount,
+							"operation_item_discount_percent": oprItemDiscPercent,
+							"approval_id":                     10,
+						}).Error; err != nil {
+						return entity, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "Failed to update existing operation item",
+							Err:        err,
+						}
+					}
+				}
 
-	// 						// Step 5: Masukkan data baru ke tabel wtWorkOrder2
-	// 						newWorkOrder := WorkOrder{
-	// 							RecordStatus:      "Active", // Ganti dengan nilai yang sesuai
-	// 							WOSysNo:           woSysNo,
-	// 							WODocNo:           "SomeDocNo", // Ganti dengan nilai yang sesuai
-	// 							WOOpItemLine:      woOprItemLine,
-	// 							WOLineStat:        "New",      // Ganti dengan nilai yang sesuai
-	// 							LineType:          "LineType", // Ganti dengan nilai yang sesuai
-	// 							WOOpStatus:        "",
-	// 							BillCode:          billCode,
-	// 							JobType:           jobType,
-	// 							WOLineDiscStat:    "NoDiscount", // Ganti dengan nilai yang sesuai
-	// 							OpItemCode:        csr2OprItemCode,
-	// 							Description:       substitute.ItemName,
-	// 							ItemUOM:           "UOM", // Ganti dengan nilai yang sesuai
-	// 							FrtQty:            csr2FrtQty,
-	// 							OpItemPrice:       0, // Ganti dengan nilai yang sesuai
-	// 							OpItemDiscAmount:  0, // Ganti dengan nilai yang sesuai
-	// 							OpItemDiscPercent: 0, // Ganti dengan nilai yang sesuai
-	// 							SupplyQty:         substitute.SupplyQty,
-	// 							WhsGroup:          "Group", // Ganti dengan nilai yang sesuai
-	// 							SubstituteType:    substitute.SubsType,
-	// 							AtpmWcfType:       "WCFType", // Ganti dengan nilai yang sesuai
-	// 							ChangeNo:          0,
-	// 							PriceCode:         "PriceCode", // Ganti dengan nilai yang sesuai
-	// 						}
+			} else {
 
-	// 						if err = tx.Create(&newWorkOrder).Error; err != nil {
-	// 							return entity, &exceptions.BaseErrorResponse{
-	// 								StatusCode: http.StatusInternalServerError,
-	// 								Message:    "Failed to insert new operation item",
-	// 								Err:        err,
-	// 							}
-	// 						}
+				type Substitute struct {
+					SubstituteItemCode string  // Substitute item code
+					ItemName           string  // Item name
+					SupplyQty          float64 // Supply quantity
+					SubstituteType     string  // Substitute type
+				}
 
-	// 					}
+				// Step 1: Create a temporary table with GORM
+				if err := tx.Exec("CREATE TABLE #SUBSTITUTE2 (SUBS_ITEM_CODE VARCHAR(15), ITEM_NAME VARCHAR(40), SUPPLY_QTY NUMERIC(7,2), SUBS_TYPE CHAR(2))").Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to create temporary table",
+						Err:        err,
+					}
+				}
 
-	// 					var ccyCode string
-	// 					var markupAmount, markupPercentage float64
+				// Step 2: Execute stored procedure to populate the temporary table
+				// if err := tx.Exec("INSERT INTO #SUBSTITUTE2 EXEC dbo.uspg_smSubstitute0_Select @OPTION = ?, @COMPANY_CODE = ?, @ITEM_CODE = ?, @ITEM_QTY = ?",
+				// 	2, companyCode, csr2OprItemCode, csr2FrtQty).Error; err != nil {
+				// 	return entity, &exceptions.BaseErrorResponse{
+				// 		StatusCode: http.StatusInternalServerError,
+				// 		Message:    "Failed to execute stored procedure",
+				// 		Err:        err,
+				// 	}
+				// }
 
-	// 					// 1. Get the currency code
-	// 					if err = tx.Model(&GMRef{}).
-	// 						Where("COMPANY_CODE = ?", companyCode).
-	// 						Select("CCY_CODE").
-	// 						Scan(&ccyCode).Error; err != nil {
-	// 						return entity, &exceptions.BaseErrorResponse{
-	// 							StatusCode: http.StatusInternalServerError,
-	// 							Message:    "Failed to fetch currency code",
-	// 							Err:        err,
-	// 						}
-	// 					}
+				// Step 3: Fetch data from the temporary table
+				var substitutes []Substitute
+				if err := tx.Table("#SUBSTITUTE2").Find(&substitutes).Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to fetch data from temporary table",
+						Err:        err,
+					}
+				}
 
-	// 					// 2. Get the markup amount and percentage
-	// 					if err = tx.Model(&GMSiteMarkup{}).
-	// 						Where("COMPANY_CODE = ? AND VEHICLE_BRAND = ? AND SITE_CODE = ? AND TRX_TYPE = ?", companyCode, vehicleBrand, siteCode, billCode).
-	// 						Select("MARKUP_AMOUNT, MARKUP_PERCENTAGE").
-	// 						Scan(&markupAmount, &markupPercentage).Error; err != nil {
-	// 						return entity, &exceptions.BaseErrorResponse{
-	// 							StatusCode: http.StatusInternalServerError,
-	// 							Message:    "Failed to fetch markup amount and percentage",
-	// 						}
-	// 					}
+				// Step 4: Process substitution items
+				for _, substitute := range substitutes {
+					if substitute.SubstituteType != "" {
+						var woOprItemLinesub int
 
-	// 					// 3. Get operational item price
-	// 					oprItemPrice := r.GetOperationalItemPrice(csr2LineType, whsGroup, billCodeExt, companyCode, vehicleBrand, jobType, modelCode, csrSubsItemCode, ccyCode, "", "", variantCode, priceCode)
+						// Check if item already exists
+						var existingItemCount int64
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Where("work_order_system_number = ? AND transaction_type_id = ? AND operation_item_id = ? AND substitute_id = ?", workOrderId, csrTrxTypeId, substitute.SubstituteItemCode, substitute.SubstituteType).
+							Count(&existingItemCount).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to check if item exists",
+								Err:        err,
+							}
+						}
 
-	// 					// 4. Calculate the final operational item price
-	// 					oprItemPrice += markupAmount + (oprItemPrice * markupPercentage / 100)
+						if existingItemCount == 0 {
+							// Get the next line number
+							if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+								Select("ISNULL(MAX(work_order_operation_item_line), 0) + 1").
+								Where("work_order_system_number = ?", workOrderId).
+								Scan(&woOprItemLinesub).Error; err != nil {
+								return entity, &exceptions.BaseErrorResponse{
+									StatusCode: http.StatusInternalServerError,
+									Message:    "Failed to get the next work order operation item line",
+									Err:        err,
+								}
+							}
 
-	// 					// 5. Get the next operation item line
-	// 					var woOprItemLine int
-	// 					if err = tx.Model(&wtWorkOrder2{}).
-	// 						Select("ISNULL(MAX(WO_OPR_ITEM_LINE), 0) + 1").
-	// 						Where("WO_SYS_NO = ?", woSysNo).
-	// 						Scan(&woOprItemLine).Error; err != nil {
-	// 						return entity, &exceptions.BaseErrorResponse{
-	// 							StatusCode: http.StatusInternalServerError,
-	// 							Message:    "Failed to get next work order operation item line",
-	// 						}
-	// 					}
+							// Step 5: Insert new data into the work order detail table
+							workOrderDetail := transactionworkshopentities.WorkOrderDetail{
+								WorkOrderSystemNumber:        workOrderId,
+								WorkOrderOperationItemLine:   woOprItemLinesub,
+								LineTypeId:                   csrLineTypeId,
+								FrtQuantity:                  substitute.SupplyQty,
+								OperationItemPrice:           0,
+								OperationItemDiscountAmount:  0,
+								OperationItemDiscountPercent: 0,
+								SupplyQuantity:               substitute.SupplyQty,
+								WarehouseGroupId:             whsGroup,
+								WarrantyClaimTypeId:          0,
+							}
 
-	// 					// 6. Check if WO_OPR_ITEM_LINE exists
-	// 					var exists bool
-	// 					if err = tx.Model(&wtWorkOrder2{}).
-	// 						Where("WO_SYS_NO = ? AND WO_OPR_ITEM_LINE  = ? ", woSysNo, woOprItemLine).
-	// 						Count(&exists).Error; err != nil {
-	// 						return entity, &exceptions.BaseErrorResponse{
-	// 							StatusCode: http.StatusInternalServerError,
-	// 							Message:    "Failed to check if operation item exists",
-	// 							Err:        err,
-	// 						}
-	// 					}
+							if err := tx.Create(&workOrderDetail).Error; err != nil {
+								return entity, &exceptions.BaseErrorResponse{
+									StatusCode: http.StatusInternalServerError,
+									Message:    "Failed to insert new operation item",
+									Err:        err,
+								}
+							}
+						}
 
-	// 					if !exists {
-	// 						// Step 7: Check if a record with the specified criteria exists
-	// 						if err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-	// 							Select("COUNT(*) > 0").
-	// 							Where("WO_SYS_NO = ? AND OPR_ITEM_CODE = ? AND SUBSTITUTE_ITEM_CODE = ? AND BILL_CODE = ?", woSysNo, csr2OprItemCode, substitute.SubsItemCode, billCodeExt).
-	// 							Scan(&exists).Error; err != nil {
-	// 							return entity, &exceptions.BaseErrorResponse{
-	// 								StatusCode: http.StatusInternalServerError,
-	// 								Message:    "Failed to check if operation item exists",
-	// 							}
-	// 						}
-	// 					}
+						// Step 6: Fetch markup based on Company and Vehicle Brand
+						var markupAmount, markupPercentage float64
 
-	// 					if !exists {
-	// 						// Step 8: Set Frt_Qty_Sub based on CSR_SUBS_TYPE
-	// 						var frtQtySub float64
-	// 						if params.CsrSubsType == getVariableValue("SUBTITUTE_INTERCHANGEABLE") {
-	// 							if err = tx.Model(&smSubsStockInterchange1{}).
-	// 								Where("SUBS_ITEM_CODE = ?", substitute.SubsItemCode).
-	// 								Pluck("QTY", &frtQtySub).Error; err != nil {
-	// 								return entity, &exceptions.BaseErrorResponse{
-	// 									StatusCode: http.StatusInternalServerError,
-	// 									Message:    "Failed to fetch quantity",
-	// 								}
-	// 							}
-	// 						} else {
-	// 							frtQtySub = params.FrtQty
-	// 						}
+						// Fetch operation item price and discount percent
+						oprItemPrice, err := s.lookupRepo.GetOprItemPrice(tx, result.CompanyCode, result.BrandId, csrOprItemId, result.AgreementNo, result.JobTypeId, csrLineTypeId, csrTrxTypeId, int(csrFrtQty), whsGroup, strconv.Itoa(result.VariantId))
+						if err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to fetch operation item price",
+								Err:        errors.New("failed to fetch operation item price"),
+							}
+						}
 
-	// 						// Step 9: Determine Supply_Qty based on conditions
-	// 						var supplyQty float64
-	// 						var itemExists bool
-	// 						if err = tx.Model(&gmItem0{}).
-	// 							Where("ITEM_GROUP <> ? AND ITEM_CODE = ? AND ITEM_TYPE = ?", params.ItemGrpOJ, params.OprItemCode, params.ItemTypeService).
-	// 							Select("COUNT(*) > 0").
-	// 							Scan(&itemExists).Error; err != nil {
-	// 							return entity, &exceptions.BaseErrorResponse{
-	// 								StatusCode: http.StatusInternalServerError,
-	// 								Message:    "Failed to check if item exists",
-	// 							}
-	// 						}
+						// Apply markup and percentage increase
+						oprItemPrice += markupAmount + (oprItemPrice * (markupPercentage / 100))
 
-	// 						if itemExists {
-	// 							supplyQty = frtQtySub
-	// 						} else {
-	// 							supplyQty = 0
-	// 						}
+						// Fetch item discount percent
+						oprItemDiscPercent, err := s.lookupRepo.GetOprItemDisc(tx, result.LinetypeId, result.BillCodeExt, csrOprItemId, result.AgreementNo, result.CpcCode, oprItemPrice*substitute.SupplyQty, result.CompanyCode, result.BrandId, 0, whsGroup, 0)
+						if err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to fetch operation item discount percent",
+								Err:        errors.New("failed to fetch operation item discount percent"),
+							}
+						}
 
-	// 						if params.CsrSubsType == "" {
-	// 							params.CsrSupplyQty = params.Csr2FrtQty
-	// 						}
+						// Calculate discount amount
+						oprItemDiscAmount := math.Round((oprItemPrice * oprItemDiscPercent / 100))
 
-	// 						// Step 10: Get Atpm_Wcf_Type
-	// 						var atpmWcfType string
-	// 						if err = tx.Model(&gmItem{}).
-	// 							Where("ITEM_CODE = ?", substitute.SubsItemCode).Where("ITEM_CODE = ?", params.CsrSubsItemCode).
-	// 							Pluck("ATPM_WCF_TYPE", &atpmWcfType).Error; err != nil {
-	// 							return entity, &exceptions.BaseErrorResponse{
-	// 								StatusCode: http.StatusInternalServerError,
-	// 								Message:    "Failed to fetch ATPM WCF Type",
-	// 							}
-	// 						}
+						// Get the next work order operation item line
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(MAX(work_order_operation_item_line), 0) + 1").
+							Where("work_order_system_number = ?", workOrderId).
+							Scan(&woOprItemLinesub).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get the next work order operation item line",
+								Err:        err,
+							}
+						}
 
-	// 						// Step 11: Insert into wtWorkOrder2
-	// 						newWorkOrder := transactionworkshopentities.WorkOrderDetail{
-	// 							// Populate fields as per your struct definition and parameters
-	// 							RecordStatus:          params.RecordStatus,
-	// 							WoSysNo:               params.WoSysNo,
-	// 							WoDocNo:               params.WoDocNo,
-	// 							WoOprItemLine:         woOprItemLine,
-	// 							WoLineStat:            params.WoStatNew,
-	// 							LineType:              params.Csr2LineType,
-	// 							BillCode:              params.BillCodeExt,
-	// 							JobType:               params.JobType,
-	// 							WoLineDiscStat:        params.WoLineDiscStat,
-	// 							OprItemCode:           params.CsrSubsItemCode,
-	// 							Description:           params.CsrItemName,
-	// 							ItemUom:               params.ItemUom,
-	// 							FrtQty:                frtQtySub,
-	// 							OprItemPrice:          params.OprItemPrice,
-	// 							OprItemDiscPercent:    params.OprItemDiscPercent,
-	// 							OprItemDiscAmount:     (params.OprItemPrice * params.OprItemDiscPercent / 100),
-	// 							OprItemDiscReqPercent: params.OprItemDiscReqPercent,
-	// 							OprItemDiscReqAmount:  (params.OprItemPrice * params.OprItemDiscReqPercent / 100),
-	// 							LastApprovalBy:        params.LastApprovalBy,
-	// 							LastApprovalDate:      params.LastApprovalDate,
-	// 							QcStat:                params.QcStat,
-	// 							QcExtraFrt:            params.QcExtraFrt,
-	// 							QcExtraReason:         params.QcExtraReason,
-	// 							SupplyQty:             supplyQty,
-	// 							SubstituteType:        params.CsrSubsType,
-	// 							SubstituteItemCode:    params.Csr2OprItemCode,
-	// 							AtpmClaimNo:           params.AtpmClaimNo,
-	// 							AtpmWcfType:           atpmWcfType,
-	// 							WhsGroup:              params.WhsGroup,
-	// 							ChangeNo:              0,
-	// 							PriceCode:             params.PriceCode,
-	// 							CreationUserId:        params.CreationUserId,
-	// 							CreationDatetime:      params.CreationDatetime,
-	// 							ChangeUserId:          params.ChangeUserId,
-	// 							ChangeDatetime:        params.CreationDatetime,
-	// 						}
+						// Step 7: Process supply quantity based on substitute type
+						var supplyQty float64
+						if substitute.SubstituteType == "I" {
+							// Fetch quantity from smSubsStockInterchange1
+							if err := tx.Model(&masteritementities.Item{}).
+								Select("COALESCE(SUM(COALESCE(qty, 0)), 0)").
+								Where("item_code = ?", substitute.SubstituteItemCode).
+								Scan(&supplyQty).Error; err != nil {
+								return entity, &exceptions.BaseErrorResponse{
+									StatusCode: http.StatusInternalServerError,
+									Message:    "Failed to fetch quantity from smSubsStockInterchange1",
+									Err:        err,
+								}
+							}
+						} else {
+							supplyQty = substitute.SupplyQty
+						}
 
-	// 						if err = tx.Create(&newWorkOrder).Error; err != nil {
-	// 							return entity, &exceptions.BaseErrorResponse{
-	// 								StatusCode: http.StatusInternalServerError,
-	// 								Message:    "Failed to insert new operation item",
-	// 							}
-	// 						}
-	// 					}
+						// Check item existence in item master
+						var itemExists int64
 
-	// 				}
-	// 			}
+						if err := tx.Model(&masteritementities.Item{}).
+							Where("item_code = ? and item_group_id <> ? and item_type = ?", csrOprItemCode, 1, utils.ItemTypeService).
+							Count(&itemExists).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to check if item exists in item master",
+								Err:        err,
+							}
+						}
 
-	// 			if err = tx.Exec("DROP TABLE #SUBSTITUTE2").Error; err != nil {
-	// 				return entity, &exceptions.BaseErrorResponse{
-	// 					StatusCode: http.StatusInternalServerError,
-	// 					Message:    "Failed to drop temporary table",
-	// 				}
-	// 			}
+						if itemExists == 0 {
+							supplyQty = csrFrtQty
+						} else {
+							supplyQty = 0
+						}
 
-	// 		}
-	// 	}
-	// }
+						if substitute.SubstituteType == "" {
+							substitute.SupplyQty = csrFrtQty
+						}
+
+						// Set ATPM warranty claim type ID
+						var atpmWcfTypeId int
+
+						if err := tx.Model(&masteritementities.Item{}).
+							Select("atpm_warranty_claim_type_id").
+							Where("item_code = ?", substitute.SubstituteItemCode).
+							Scan(&atpmWcfTypeId).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to fetch ATPM_WCF_Type",
+								Err:        err,
+							}
+						}
+
+						// Step 8: Insert or update the final operation item
+						finalWorkOrderDetail := transactionworkshopentities.WorkOrderDetail{
+							WorkOrderSystemNumber:        workOrderId,
+							WorkOrderOperationItemLine:   woOprItemLinesub,
+							LineTypeId:                   csrLineTypeId,
+							FrtQuantity:                  supplyQty,
+							OperationItemPrice:           oprItemPrice,
+							OperationItemDiscountAmount:  oprItemDiscAmount,
+							OperationItemDiscountPercent: oprItemDiscPercent,
+							SupplyQuantity:               supplyQty,
+							WarehouseGroupId:             whsGroup,
+							WarrantyClaimTypeId:          atpmWcfTypeId,
+						}
+
+						if err := tx.Create(&finalWorkOrderDetail).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to insert or update operation item",
+								Err:        err,
+							}
+						}
+
+						// Step 9: Calculate totals for various line types and update work order
+						var (
+							totalPart               float64
+							totalOil                float64
+							totalMaterial           float64
+							totalConsumableMaterial float64
+							totalSublet             float64
+							totalAccs               float64
+						)
+
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(SUM(ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0)), 0)").
+							Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeSparepart).
+							Scan(&totalPart).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to calculate total part",
+								Err:        err,
+							}
+						}
+
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(SUM(ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0)), 0)").
+							Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeOil).
+							Scan(&totalOil).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to calculate total oil",
+								Err:        err,
+							}
+						}
+
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(SUM(ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0)), 0)").
+							Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeMaterial).
+							Scan(&totalMaterial).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to calculate total material",
+								Err:        err,
+							}
+						}
+
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(SUM(ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0)), 0)").
+							Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeConsumableMaterial).
+							Scan(&totalConsumableMaterial).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to calculate total consumable material",
+								Err:        err,
+							}
+						}
+
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(SUM(ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0)), 0)").
+							Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeSublet).
+							Scan(&totalSublet).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to calculate total sublet",
+								Err:        err,
+							}
+						}
+
+						if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+							Select("COALESCE(SUM(ROUND(COALESCE(operation_item_price, 0) * COALESCE(frt_quantity, 0), 0)), 0)").
+							Where("work_order_system_number = ? AND line_type_id = ?", workOrderId, utils.LinetypeAccesories).
+							Scan(&totalAccs).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to calculate total accessories",
+								Err:        err,
+							}
+						}
+
+						// Update the work order with the new totals
+						if err := tx.Model(&transactionworkshopentities.WorkOrder{}).
+							Where("work_order_system_number = ?", workOrderId).
+							Updates(map[string]interface{}{
+								"total_part":                totalPart,
+								"total_oil":                 totalOil,
+								"total_material":            totalMaterial,
+								"total_consumable_material": totalConsumableMaterial,
+								"total_sublet":              totalSublet,
+								"total_accessories":         totalAccs,
+							}).Error; err != nil {
+							return entity, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to update work order with new totals",
+								Err:        err,
+							}
+						}
+					}
+				}
+
+				if err := tx.Exec("DROP TABLE #SUBSTITUTE2").Error; err != nil {
+					return entity, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to drop temporary table",
+					}
+				}
+			}
+		}
+	}
 
 	return entity, nil
 }

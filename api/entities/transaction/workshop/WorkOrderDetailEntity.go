@@ -38,7 +38,7 @@ type WorkOrderDetail struct {
 	QualityControlExtraReason           string                                        `gorm:"column:quality_control_extra_reason;size:50;" json:"quality_control_extra_reason"`
 	SupplyQuantity                      float64                                       `gorm:"column:supply_quantity" json:"supply_quantity"`
 	SubstituteId                        int                                           `gorm:"column:substitute_id;size:30;" json:"substitute_id"`
-	SubstrituteItemCode                 string                                        `gorm:"column:substritute_item_code;size:50;" json:"substritute_item_code"`
+	SubstituteItemCode                  string                                        `gorm:"column:substitute_item_code;size:50;" json:"substitute_item_code"`
 	WarehouseGroupId                    int                                           `gorm:"column:warehouse_group_id;size:30;" json:"warehouse_group_id"`
 	AtpmClaimNumber                     string                                        `gorm:"column:atpm_claim_number;size:50;" json:"atpm_claim_number"`
 	AtpmClaimDate                       time.Time                                     `gorm:"column:atpm_claim_date;" json:"atpm_claim_date"`

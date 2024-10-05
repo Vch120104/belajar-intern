@@ -51,14 +51,13 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"customer_name":                         queryValues.Get("customer_name"),
-		"model_code":                            queryValues.Get("model_code"),
-		"varian_code":                           queryValues.Get("varian_code"),
-		"vehicle_chassis_number":                queryValues.Get("vehicle_chassis_number"),
-		"vehicle_registration_certificate_tnkb": queryValues.Get("vehicle_registration_certificate_tnkb"),
-		"work_order_date":                       queryValues.Get("work_order_date"),
-		"work_order_document_number":            queryValues.Get("work_order_document_number"),
-		"work_order_system_number":              queryValues.Get("work_order_system_number"),
+		"mtr_customer.customer_name":         queryValues.Get("customer_name"),
+		"mtr_unit_model.model_code":          queryValues.Get("model_code"),
+		"mtr_unit_variant.varian_code":       queryValues.Get("varian_code"),
+		"mtr_vehicle.vehicle_chassis_number": queryValues.Get("vehicle_chassis_number"),
+		"mtr_vehicle_registration_certificate.vehicle_registration_certificate_tnkb": queryValues.Get("vehicle_registration_certificate_tnkb"),
+		"trx_work_order.work_order_date":                                             queryValues.Get("work_order_date"),
+		"trx_work_order.work_order_system_number":                                    queryValues.Get("work_order_system_number"),
 	}
 
 	paginate := pagination.Pagination{
@@ -106,8 +105,7 @@ func (r *QualityControlControllerImpl) GetById(writer http.ResponseWriter, reque
 	// Convert map to []utils.FilterCondition
 	var filterConditions []utils.FilterCondition
 	for field, value := range map[string]string{
-		"trx_work_order.work_order_system_number":   queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_document_number": queryValues.Get("work_order_document_number"),
+		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
 	} {
 		if value != "" {
 			filterConditions = append(filterConditions, utils.FilterCondition{
@@ -126,11 +124,7 @@ func (r *QualityControlControllerImpl) GetById(writer http.ResponseWriter, reque
 
 	data, baseErr := r.QualityControlService.GetById(id, filterConditions, paginate)
 	if baseErr != nil {
-		if baseErr.StatusCode == http.StatusNotFound {
-			payloads.NewHandleError(writer, "id request not found", http.StatusNotFound)
-		} else {
-			exceptions.NewAppException(writer, request, baseErr)
-		}
+		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
