@@ -191,6 +191,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 		"mtr_warehouse_group.warehouse_group_name":       queryValues.Get("warehouse_group_name"),
 		"mtr_warehouse_master.warehouse_code":            queryValues.Get("warehouse_code"),
 		"mtr_warehouse_master.warehouse_name":            queryValues.Get("warehouse_name"),
+		"mtr_warehouse_location.warehouse_id":            queryValues.Get("warehouse_id"),
 		"mtr_warehouse_location.warehouse_location_code": queryValues.Get("warehouse_location_code"),
 		"mtr_warehouse_location.warehouse_location_name": queryValues.Get("warehouse_location_name"),
 		"mtr_warehouse_location.is_active":               queryValues.Get("is_active"),
@@ -208,7 +209,7 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 	result, err := r.WarehouseLocationService.GetAll(internalCriteria, paginate)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 		return
 	}
 
