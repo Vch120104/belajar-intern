@@ -55,11 +55,11 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 	var Discounts []masteritementities.Discount
 	response := []masterpayloads.DiscountResponse{}
 
-	rows, err := tx.
+	err := tx.
 		Model(&Discounts).
-		Where(masteritementities.Discount{IsActive: true}).
-		Scan(&response).
-		Rows()
+		Select("is_active, discount_code_id, discount_code_value, discount_code_description, CONCAT(discount_code_value, ' - ', discount_code_description) as discount_code_value_description").
+		Where("is_active = ?", true).
+		Scan(&response).Error
 
 	if len(response) == 0 {
 		return response, &exceptions.BaseErrorResponse{
@@ -75,8 +75,6 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	return response, nil
 }
