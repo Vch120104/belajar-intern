@@ -1617,6 +1617,7 @@ func LookupRouter(
 	router.Get("/work-order-service", LookupController.WorkOrderService)
 	router.Get("/item-location-warehouse", LookupController.GetItemLocationWarehouse)
 	router.Get("/warehouse-group/{company_id}", LookupController.GetWarehouseGroupByCompany)
+	router.Get("/item-list", LookupController.GetItemListForPriceList)
 
 	return router
 }
