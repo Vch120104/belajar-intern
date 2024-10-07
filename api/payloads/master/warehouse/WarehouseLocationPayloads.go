@@ -109,6 +109,7 @@ type GetAllWarehouseLocationResponse struct {
 	CompanyId                     int     `json:"company_id"`
 	WarehouseGroupId              int     `json:"warehouse_group_id"`
 	WarehouseGroupName            string  `json:"warehouse_group_name"`
+	WarehouseId                   int     `json:"warehouse_id"`
 	WarehouseCode                 string  `json:"warehouse_code"`
 	WarehouseName                 string  `json:"warehouse_name"`
 	WarehouseLocationCode         string  `json:"warehouse_location_code"`

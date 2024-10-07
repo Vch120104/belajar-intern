@@ -58,7 +58,7 @@ func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(co
 	return isExist
 }
 
-func(s *WarehouseMasterServiceImpl)InTransitWarehouseCodeDropdown(companyID int, warehouseGroupID int)([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse){
+func (s *WarehouseMasterServiceImpl) InTransitWarehouseCodeDropdown(companyID int, warehouseGroupID int) ([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.InTransitWarehouseCodeDropdown(tx, companyID, warehouseGroupID)
 	defer helper.CommitOrRollback(tx, err)
@@ -93,9 +93,9 @@ func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWar
 	return save, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetById(warehouseId int) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetById(warehouseId int, pagination pagination.Pagination) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId)
+	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId, pagination)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
@@ -171,13 +171,15 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwareho
 	return change_status, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.warehouseMasterRepo.GetAuthorizeUser(tx, pages, id)
-	defer helper.CommitOrRollback(tx, err)
+	defer helper.CommitOrRollback(tx, nil)
+
+	result, err := s.warehouseMasterRepo.GetAuthorizeUser(tx, filterCondition, pages, id)
 	if err != nil {
 		return pages, err
 	}
+
 	return result, nil
 }
 

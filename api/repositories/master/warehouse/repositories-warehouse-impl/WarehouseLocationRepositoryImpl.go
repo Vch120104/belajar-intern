@@ -151,6 +151,7 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
 		"mtr_warehouse_location"."warehouse_location_id",
 		mtr_warehouse_master.company_id,
 		"mtr_warehouse_location"."warehouse_group_id",
+		"mtr_warehouse_location"."warehouse_id",
 		"mtr_warehouse_location"."warehouse_location_code",
 		"mtr_warehouse_location"."warehouse_location_name",
 		"mtr_warehouse_location"."warehouse_location_detail_name",
