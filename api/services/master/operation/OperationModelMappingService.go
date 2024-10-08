@@ -24,7 +24,7 @@ type OperationModelMappingService interface {
 	GetAllOperationFrt(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetOperationFrtById(id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse)
 	SaveOperationLevel(request masteroperationpayloads.OperationLevelRequest) (bool, *exceptions.BaseErrorResponse)
-	GetAllOperationLevel(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllOperationLevel(id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetOperationLevelById(id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse)
 	DeactivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse)
 	ActivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse)

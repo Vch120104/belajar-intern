@@ -187,14 +187,14 @@ func (s *OperationModelMappingServiceImpl) SaveOperationLevel(request masteroper
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetAllOperationLevel(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetAllOperationLevel(id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.operationModelMappingRepo.GetAllOperationLevel(tx, id, pages)
+	results, totalPage, totalRow, err := s.operationModelMappingRepo.GetAllOperationLevel(tx, id, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results, err
+		return results, 0, 0, err
 	}
-	return results, nil
+	return results, totalPage, totalRow, nil
 }
 
 func (s *OperationModelMappingServiceImpl) GetOperationLevelById(id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {

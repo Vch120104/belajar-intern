@@ -539,38 +539,62 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationLevel(tx *gorm.DB, re
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	OperationLevelMapping := []masteroperationentities.OperationLevel{}
-	OperationLevelResponse := []masteroperationpayloads.OperationLevelRequest{}
-	// OperationLevelResponse1 := masteroperationpayloads.OperationLevelResponse{}
-	query := tx.
-		Model(masteroperationentities.OperationLevel{}).
-		Where("operation_model_mapping_id = ?", id).
-		Scan(&OperationLevelResponse)
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
-	err := query.
-		Scopes(pagination.Paginate(&OperationLevelMapping, &pages, query)).
-		Scan(&OperationLevelResponse).
-		Error
+	OperationLevelResponse := []masteroperationpayloads.OperationLevelGetAll{}
+	// OperationLevelDetailResponse := []masteroperationpayloads.OperationLevelGetAll{}
+
+	// err := tx.
+	// 	Model(masteroperationentities.OperationLevel{}).
+	// 	Joins("OperationEntries", tx.Select("")).
+	// 	Joins("OperationGroup", tx.Select("")).
+	// 	Joins("OperationKey", tx.Select("")).
+	// 	Joins("OperationSection", tx.Select("")).
+	// 	Where("operation_model_mapping_id = ?", id).
+	// 	Scan(&OperationLevelResponse).Error
+
+	err := tx.Model(masteroperationentities.OperationLevel{}).
+		Select("mtr_operation_level.*,mtr_operation_group.operation_group_code,mtr_operation_section.operation_section_code,mtr_operation_key.operation_key_code").
+		Joins("join mtr_operation_entries on mtr_operation_entries.operation_entries_id=mtr_operation_level.operation_entries_id").
+		Joins("join mtr_operation_group on mtr_operation_group.operation_group_id=mtr_operation_entries.operation_group_id").
+		Joins("join mtr_operation_key on mtr_operation_key.operation_key_id=mtr_operation_entries.operation_key_id").
+		Joins("join mtr_operation_section on mtr_operation_section.operation_section_id=mtr_operation_entries.operation_section_id").
+		Where("operation_model_mapping_id = ?", id).
+		Scan(&OperationLevelResponse).Error
 
 	if len(OperationLevelResponse) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	// defer row.Close()
-	pages.Rows = OperationLevelResponse
 
-	return pages, nil
+	// for _, x := range OperationLevelResponse {
+	// 	detailQuery := tx.
+	// 		Model(masteroperationentities.OperationEntries{}).
+	// 		Where("operation_entries_id = ?", x.OperationEntriesId).
+	// 		Scan(&OperationLevelDetailResponse).Error
+
+	// 	if detailQuery != nil {
+	// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	// 			StatusCode: http.StatusInternalServerError,
+	// 			Err:        detailQuery,
+	// 		}
+	// 	}
+	// }
+
+	// defer row.Close()
+	// pages.Rows = OperationLevelDetailResponse
+	result, totalPage, totalRow := pagination.NewDataFramePaginate(&OperationLevelResponse, &pages)
+
+	return result, totalPage, totalRow, nil
 }
 
 func (r *OperationModelMappingRepositoryImpl) GetOperationLevelById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {

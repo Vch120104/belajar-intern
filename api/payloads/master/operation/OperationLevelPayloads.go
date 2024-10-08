@@ -14,8 +14,12 @@ type OperationLevelGetAll struct {
 }
 
 type OperationLevelRequest struct {
-	IsActive                bool `json:"is_active"`
-	OperationLevelId        int  `json:"operation_level_id"`
 	OperationModelMappingId int  `json:"operation_model_mapping_id"`
 	OperationEntriesId      int  `json:"operation_entries_id"`
+	IsActive                bool `json:"is_active"`
+	OperationLevelId        int  `json:"operation_level_id"`
+	// OperationEntriesCode    string `json:"operation_entries_code"`
+	// OperationKeyCode        string `json:"operation_key_code"`
+	// OperationGroupCode      string `json:"operation_group_code"`
+	// OperationSectionCode    string `json:"operation_section_code"`
 }
