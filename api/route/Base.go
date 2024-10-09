@@ -714,6 +714,7 @@ func OperationCodeRouter(
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 	router.Put("/{operation_id}", operationCodeController.UpdateOperationCode)
+	router.Get("/drop-down", operationCodeController.GetAllOperationCodeDropDown)
 
 	return router
 }
