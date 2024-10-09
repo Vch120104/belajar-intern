@@ -19,7 +19,7 @@ type LookupController interface {
 	ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByID(writer http.ResponseWriter, request *http.Request)
 	GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request)
-	CampaignMaster(writer http.ResponseWriter, request *http.Request)
+	GetCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
 	GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request)
@@ -272,7 +272,7 @@ func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, req
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.VehicleUnitMaster(brandId, modelId, paginate, criteria)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.GetVehicleUnitMaster(brandId, modelId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -341,7 +341,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.Respons
 	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
-func (r *LookupControllerImpl) CampaignMaster(writer http.ResponseWriter, request *http.Request) {
+func (r *LookupControllerImpl) GetCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	companyStrId := chi.URLParam(request, "company_id")
 	companyId, err := strconv.Atoi(companyStrId)
 	if err != nil {
@@ -358,7 +358,7 @@ func (r *LookupControllerImpl) CampaignMaster(writer http.ResponseWriter, reques
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.CampaignMaster(companyId, paginate, criteria)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.GetCampaignMaster(companyId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)

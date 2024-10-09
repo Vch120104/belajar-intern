@@ -1612,7 +1612,7 @@ func LookupRouter(
 	router.Get("/item-opr-code/{linetype_id}/{item_code}", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
-	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
+	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)

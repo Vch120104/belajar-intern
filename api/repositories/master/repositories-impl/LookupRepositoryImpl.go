@@ -528,8 +528,10 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 	)
 
 	var (
-		ItmCls                   string
-		year, month, companyCode = 2024, 8, 1
+		ItmCls      string
+		companyCode = 1
+		currentTime = time.Now()
+		year, month = currentTime.Year(), int(currentTime.Month())
 	)
 
 	if paginate.Limit <= 0 {
@@ -749,8 +751,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	)
 
 	var (
-		ItmCls                   string
-		year, month, companyCode = 2024, 8, 1
+		ItmCls      string
+		companyCode = 1
+		currentTime = time.Now()
+		year, month = currentTime.Year(), int(currentTime.Month())
 	)
 
 	if paginate.Limit <= 0 {
@@ -762,6 +766,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "oprItemCode cannot be empty",
+			Err:        nil,
 		}
 	}
 
@@ -944,6 +949,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "No records found for the given item code",
+			Err:        nil,
 		}
 	}
 
@@ -971,8 +977,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	)
 
 	var (
-		ItmCls                   string
-		year, month, companyCode = 2024, 8, 1
+		ItmCls      string
+		companyCode = 1
+		currentTime = time.Now()
+		year, month = currentTime.Year(), int(currentTime.Month())
 	)
 
 	if paginate.Limit <= 0 {
@@ -1185,11 +1193,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	const (
 		ItmGrpInventory   = 1 // "IN"
 		PurchaseTypeGoods = "G"
-		ItemService       = "S"
-		BillCodeNoCharge  = "N"
-		BillCodeC         = "C"
-		BillCodeInt       = "I"
-		defaultPriceCode  = "A"
 	)
 
 	type Period struct {
@@ -1198,13 +1201,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	}
 
 	var (
-		ItmCls       string
-		year, month  string
-		period       Period
-		companyCode  = 151
-		closingModul = 10
-		yearNow      = time.Now().Format("2006")
-		monthNow     = time.Now().Format("01")
+		defaultPriceCode = "A"
+		ItmCls           string
+		year, month      string
+		period           Period
+		companyCode      = 151
+		closingModul     = 10
+		yearNow          = time.Now().Format("2006")
+		monthNow         = time.Now().Format("01")
 	)
 
 	result := tx.Table("dms_microservices_finance_dev.dbo.mtr_closing_period_company").
@@ -1346,8 +1350,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 						ORDER BY effective_date DESC)
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, BillCodeC, BillCodeInt, BillCodeNoCharge, // Parameters for CASE statement
-				ItemService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
+				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode). // Parameters for the final ELSE condition.
 			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
@@ -1402,8 +1406,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 						ORDER BY effective_date DESC)
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, BillCodeC, BillCodeInt, BillCodeNoCharge, // Parameters for CASE statement
-				ItemService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
+				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
@@ -1459,8 +1463,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 						ORDER BY effective_date DESC)
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, BillCodeC, BillCodeInt, BillCodeNoCharge, // Parameters for CASE statement
-				ItemService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
+				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
@@ -1518,8 +1522,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 						ORDER BY effective_date DESC)
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, BillCodeC, BillCodeInt, BillCodeNoCharge, // Parameters for CASE statement
-				ItemService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
+				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
@@ -1575,8 +1579,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 						ORDER BY effective_date DESC)
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
-				billCode, BillCodeC, BillCodeInt, BillCodeNoCharge, // Parameters for CASE statement
-				ItemService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
+				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
@@ -1620,7 +1624,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 // usp_comLookUp
 // IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
-func (r *LookupRepositoryImpl) VehicleUnitMaster(tx *gorm.DB, brandId int, modelId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, modelId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var (
 		vehicleMasters []map[string]interface{}
 		totalRows      int64
@@ -1847,7 +1851,7 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassi
 
 // usp_comLookUp
 // IF @strEntity = 'CampaignMaster'--CAMPAIGN MASTER
-func (r *LookupRepositoryImpl) CampaignMaster(tx *gorm.DB, companyId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) GetCampaignMaster(tx *gorm.DB, companyId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	var (
 		campaignMasters []map[string]interface{}
@@ -2220,10 +2224,7 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 	)
 
 	// Hardcoded bill code values
-	billcodeInternal := "I"
-	billcodeExternal := "E"
-	billcodeCentralize := "C"
-	billcodeDecentralize := "D"
+
 	billcodeRelatedParties := "R"
 	supcusDealer := "00"
 	supcusImsi := "51"
@@ -2234,7 +2235,7 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 	// If supcusType is 'F'
 	if strings.ToUpper(supcusType) == "F" {
 		if supcusCode == strconv.Itoa(companyCode) {
-			billCode = billcodeInternal
+			billCode = utils.TrxTypeWoInternal.Code
 		} else {
 			// Check if supcusCode exists in gmSupplier0
 			if err := tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
@@ -2283,16 +2284,16 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 						}
 
 						if npwpCompany == npwpSupcus {
-							billCode = billcodeCentralize
+							billCode = utils.TrxTypeWoCentralize.Code
 						} else {
-							billCode = billcodeDecentralize
+							billCode = utils.TrxTypeWoDeCentralize.Code
 						}
 					case supcusImsi:
-						billCode = billcodeDecentralize
+						billCode = utils.TrxTypeWoDeCentralize.Code
 					case supcusAtpm, supcusSalim, supcusMaintained:
 						billCode = billcodeRelatedParties
 					default:
-						billCode = billcodeExternal
+						billCode = utils.TrxTypeWoExternal.Code
 					}
 				}
 			} else {
@@ -2314,16 +2315,16 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					}
 
 					if npwpCompany == npwpSupcus {
-						billCode = billcodeCentralize
+						billCode = utils.TrxTypeWoCentralize.Code
 					} else {
-						billCode = billcodeDecentralize
+						billCode = utils.TrxTypeWoDeCentralize.Code
 					}
 				case supcusImsi:
-					billCode = billcodeDecentralize
+					billCode = utils.TrxTypeWoDeCentralize.Code
 				case supcusAtpm, supcusSalim, supcusMaintained:
 					billCode = billcodeRelatedParties
 				default:
-					billCode = billcodeExternal
+					billCode = utils.TrxTypeWoExternal.Code
 				}
 			}
 		}
@@ -2628,8 +2629,8 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 	var qtyTemp float64
 	var periodYear, periodMonth string
 
-	moduleCode := "MODULE_SP"                  // Should be fetched from your configuration logic
-	periodStatusClose := "PERIOD_STATUS_CLOSE" // Should be fetched dynamically
+	moduleCode := "MODULE_SP"
+	periodStatusClose := "PERIOD_STATUS_CLOSE"
 
 	// Validate Item Code
 	var itemCount int64
@@ -2647,6 +2648,7 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Item not found",
+			Err:        errors.New("item not found"),
 		}
 	}
 
@@ -2687,7 +2689,6 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 
 	switch option {
 	case 1:
-		// Get the on hand quantity
 		if err := query.Select("SUM(stock_qty)").Scan(&qtyTemp).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -2696,7 +2697,6 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 			}
 		}
 	case 2:
-		// Get the available quantity
 		if err := query.
 			Where("module_code = ?", moduleCode).
 			Select("SUM(stock_qty)").Scan(&qtyTemp).Error; err != nil {
@@ -2714,7 +2714,6 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 		}
 	}
 
-	// Final quantity conversion (if applicable)
 	qtyResult = qtyTemp
 
 	return qtyResult, nil
@@ -2723,14 +2722,14 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId int, modelId int, variantId int, vehicleChassisNo string) (float64, *exceptions.BaseErrorResponse) {
 	var frt float64
 
-	// Check if vehicleBrand, oprItemCode, and modelCode are provided
 	if brandId != 0 && oprItemId != 0 && modelId != 0 {
 		// Check if the variant code exists in amOperation2
 		var variantExists bool
-		if err := tx.Table("amOperation2").
+		if err := tx.Table("mtr_operation_model_mapping").
+			Joins("INNER JOIN mtr_operation_frt ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_frt.operation_model_mapping_id").
 			Select("1").
-			Where("brand_id = ? AND model_id = ? AND operation_id = ? ", brandId, modelId, oprItemId).
-			Where("variant_id = ?", variantId).
+			Where("mtr_operation_model_mapping.brand_id = ? AND mtr_operation_model_mapping.model_id = ? AND mtr_operation_model_mapping.operation_id = ? ", brandId, modelId, oprItemId).
+			Where("mtr_operation_frt.variant_id = ?", variantId).
 			Scan(&variantExists).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -2740,9 +2739,10 @@ func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId
 		}
 
 		// Fetch FRT Hour value
-		if err := tx.Table("amOperation2").
-			Select("frt_hour").
-			Where("brand_id = ? AND model_id = ? AND variant_id = ? AND operation_id = ?",
+		if err := tx.Table("mtr_operation_model_mapping").
+			Joins("INNER JOIN mtr_operation_frt ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_frt.operation_model_mapping_id").
+			Select("mtr_operation_frt.frt_hour").
+			Where("mtr_operation_model_mapping.brand_id = ? AND mtr_operation_model_mapping.model_id = ? AND mtr_operation_frt.variant_id = ? AND mtr_operation_model_mapping.operation_id = ?",
 				brandId, modelId, variantId, oprItemId).
 			Row().Scan(&frt); err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -2759,8 +2759,8 @@ func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId
 			brandId   int
 			modelId   int
 		}
-		if err := tx.Table("umVehicle0").
-			Select("variant_id, brand_id, model_id").
+		if err := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").
+			Select("vehicle_variant_id, vehicle_brand_id, vehicle_model_id").
 			Where("vehicle_chassis_number = ?", vehicleChassisNo).
 			Row().Scan(&vehicle.variantId, &vehicle.brandId, &vehicle.modelId); err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -2772,10 +2772,11 @@ func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId
 
 		// Check if the variant code exists in amOperation2
 		var variantExists bool
-		if err := tx.Table("amOperation2").
+		if err := tx.Table("mtr_operation_model_mapping").
+			Joins("INNER JOIN mtr_operation_frt ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_frt.operation_model_mapping_id").
 			Select("1").
-			Where("brand_id = ? AND model_id = ? AND operation_id = ?", vehicle.brandId, vehicle.modelId, oprItemId).
-			Where("variant_code = ?", vehicle.variantId).
+			Where("mtr_operation_model_mapping.brand_id = ? AND mtr_operation_model_mapping.model_id = ? AND mtr_operation_model_mapping.operation_id = ?", vehicle.brandId, vehicle.modelId, oprItemId).
+			Where("mtr_operation_frt.variant_id = ?", vehicle.variantId).
 			Scan(&variantExists).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -2785,9 +2786,10 @@ func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId
 		}
 
 		// Fetch FRT Hour value
-		if err := tx.Table("amOperation2").
-			Select("frt_hour").
-			Where("brand_id = ? AND model_id = ? AND variant_id = ? AND operation_id = ?",
+		if err := tx.Table("mtr_operation_model_mapping").
+			Joins("INNER JOIN mtr_operation_frt ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_frt.operation_model_mapping_id").
+			Select("mtr_operation_frt.frt_hour").
+			Where("mtr_operation_model_mapping.brand_id = ? AND mtr_operation_model_mapping.model_id = ? AND mtr_operation_frt.variant_id = ? AND mtr_operation_model_mapping.operation_id = ?",
 				vehicle.brandId, vehicle.modelId, vehicle.variantId, oprItemId).
 			Row().Scan(&frt); err != nil {
 			return 0, &exceptions.BaseErrorResponse{
