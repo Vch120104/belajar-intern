@@ -62,6 +62,29 @@ var TrxTypeSoCentralize = TrxType{Code: "SU06", ID: 5}   // TRXTYPE_SO_CENTRALIZ
 var TrxTypeSoDeCentralize = TrxType{Code: "SU07", ID: 6} // TRXTYPE_SO_DECENTRALIZED
 var TrxTypeSoExport = TrxType{Code: "SU08", ID: 7}       // TRXTYPE_SO_EXPORT
 
+// Job Type
+type JobType struct {
+	Code string
+	ID   int
+}
+
+var JobTypeBodyRepair = JobType{Code: "BR", ID: 1}             // JOBTYPE_BODYREPAIR
+var JobTypeCampaign = JobType{Code: "CP", ID: 2}               // JOBTYPE_CAMPAIGN
+var JobTypeContractService = JobType{Code: "CS", ID: 3}        // JOBTYPE_CONTRACTSERVICE
+var JobTypeFreeServiceInspection = JobType{Code: "FSI", ID: 4} // JOBTYPE_FREESERVICEINSPECTION
+var JobTypeGeneralRepair = JobType{Code: "GR", ID: 5}          // JOBTYPE_GENERALREPAIR
+var JobTypeJPAccessories = JobType{Code: "JPA", ID: 6}         // JOBTYPE_JPACCESSORIES
+var JobTypeMarketing = JobType{Code: "M", ID: 7}               // JOBTYPE_MARKETING
+var JobTypePDI = JobType{Code: "PDI", ID: 8}                   // JOBTYPE_PDI
+var JobTypePeriodicalMaintenance = JobType{Code: "PM", ID: 9}  // JOBTYPE_PERIODICALMAINTENANCE
+var JobTypePurchasing = JobType{Code: "P", ID: 10}             // JOBTYPE_PURCHASING
+var JobTypeRobbing = JobType{Code: "RJ", ID: 11}               // JOBTYPE_ROBBING
+var JobTypeTB = JobType{Code: "TB", ID: 12}                    // JOBTYPE_TRANSFERTOBODYREPAIR
+var JobTypeTG = JobType{Code: "TG", ID: 13}                    // JOBTYPE_TRANSFERTOGENERALREPAIR
+var JobTypeWarehouse = JobType{Code: "W", ID: 14}              // JOBTYPE_WAREHOUSE
+var JobTypeWarranty = JobType{Code: "W", ID: 15}               // JOBTYPE_WARRANTY
+
+var UomTypeService string = "S"     // UOMTYPE_SERVICE Services
 var ItemTypeService string = "S"    // ITEMTYPE_SERVICE Services
 var EstWoOrderTypeId int = 1        // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
 var EstWoOrderType string = "E"     // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation

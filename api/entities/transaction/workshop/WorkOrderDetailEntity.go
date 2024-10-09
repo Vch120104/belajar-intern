@@ -37,12 +37,12 @@ type WorkOrderDetail struct {
 	QualityControlExtraFrt              float64                                       `gorm:"column:quality_control_extra_frt" json:"quality_control_extra_frt"`
 	QualityControlExtraReason           string                                        `gorm:"column:quality_control_extra_reason;size:50;" json:"quality_control_extra_reason"`
 	SupplyQuantity                      float64                                       `gorm:"column:supply_quantity" json:"supply_quantity"`
-	SubstituteId                        int                                           `gorm:"column:substitute_id;size:30;" json:"substitute_id"`
+	SubstituteTypeId                    int                                           `gorm:"column:substitute_type_id;size:30;" json:"substitute_type_id"`
 	SubstituteItemCode                  string                                        `gorm:"column:substitute_item_code;size:50;" json:"substitute_item_code"`
 	WarehouseGroupId                    int                                           `gorm:"column:warehouse_group_id;size:30;" json:"warehouse_group_id"`
 	AtpmClaimNumber                     string                                        `gorm:"column:atpm_claim_number;size:50;" json:"atpm_claim_number"`
 	AtpmClaimDate                       time.Time                                     `gorm:"column:atpm_claim_date;" json:"atpm_claim_date"`
-	WarrantyClaimTypeId                 int                                           `gorm:"column:warranty_claim_type_id;size:30;" json:"warranty_claim_type_id"`
+	AtpmWCFTypeId                       int                                           `gorm:"column:warranty_claim_type_id;size:30;" json:"warranty_claim_type_id"`
 	PurchaseRequestSystemNumber         int                                           `gorm:"column:purchase_request_system_number;size:30;" json:"purchase_request_system_number"`
 	PurchaseRequestDetailId             int                                           `gorm:"column:purchase_request_detail_id;size:30;" json:"purchase_request_detail_id"`
 	PurchaseOrderSystemNumber           int                                           `gorm:"column:purchase_order_system_number;size:30;" json:"purchase_order_system_number"`
@@ -56,7 +56,7 @@ type WorkOrderDetail struct {
 	Bypass                              bool                                          `gorm:"column:bypass" json:"bypass"`
 	TechnicianId                        int                                           `gorm:"column:technician_id;size:30;" json:"technician_id"`
 	UserEmployeeId                      int                                           `gorm:"column:user_employee_id;size:30;" json:"user_employee_id"`
-	FieldActionSystemNumber             int                                           `gorm:"column:field_action_system_number;size:30;" json:"field_action_system_number"`
+	RecSystemNumber                     int                                           `gorm:"column:recall_system_number;size:30;" json:"recall_system_number"`
 	Request                             string                                        `gorm:"column:request;size:50;" json:"request"`
 	FrtQuantityExpress                  float64                                       `gorm:"column:frt_quantity_express" json:"frt_quantity_express"`
 	PriceListId                         int                                           `gorm:"column:price_list_id;size:30;" json:"price_list_id"`

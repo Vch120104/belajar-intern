@@ -1127,8 +1127,9 @@ type WorkOrderGeneralRepairPackageRequest struct {
 }
 
 type WorkOrderFieldActionRequest struct {
-	WorkOrderSystemNumber int    `json:"work_order_system_number"`
-	FieldAction           string `json:"field_action"`
+	WorkOrderSystemNumber   int `json:"work_order_system_number"`
+	FieldActionSystemNumber int `json:"field_action_system_number"`
+	RecallNo                int `json:"recall_system_number"`
 }
 
 type WorkOrderConfirmPriceRequest struct {

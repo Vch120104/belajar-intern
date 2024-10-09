@@ -2642,3 +2642,84 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 
 	return qtyResult, nil
 }
+
+func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId int, modelId int, variantId int, vehicleChassisNo string) (float64, *exceptions.BaseErrorResponse) {
+	var frt float64
+
+	// Check if vehicleBrand, oprItemCode, and modelCode are provided
+	if brandId != 0 && oprItemId != 0 && modelId != 0 {
+		// Check if the variant code exists in amOperation2
+		var variantExists bool
+		if err := tx.Table("amOperation2").
+			Select("1").
+			Where("brand_id = ? AND model_id = ? AND operation_id = ? ", brandId, modelId, oprItemId).
+			Where("variant_id = ?", variantId).
+			Scan(&variantExists).Error; err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error checking variant code",
+				Err:        err,
+			}
+		}
+
+		// Fetch FRT Hour value
+		if err := tx.Table("amOperation2").
+			Select("frt_hour").
+			Where("brand_id = ? AND model_id = ? AND variant_id = ? AND operation_id = ?",
+				brandId, modelId, variantId, oprItemId).
+			Row().Scan(&frt); err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching FRT hour",
+				Err:        err,
+			}
+		}
+
+	} else if vehicleChassisNo != "" && oprItemId != 0 {
+		// Get vehicle details from umVehicle0 using chassis number
+		var vehicle struct {
+			variantId int
+			brandId   int
+			modelId   int
+		}
+		if err := tx.Table("umVehicle0").
+			Select("variant_id, brand_id, model_id").
+			Where("vehicle_chassis_number = ?", vehicleChassisNo).
+			Row().Scan(&vehicle.variantId, &vehicle.brandId, &vehicle.modelId); err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching vehicle details",
+				Err:        err,
+			}
+		}
+
+		// Check if the variant code exists in amOperation2
+		var variantExists bool
+		if err := tx.Table("amOperation2").
+			Select("1").
+			Where("brand_id = ? AND model_id = ? AND operation_id = ?", vehicle.brandId, vehicle.modelId, oprItemId).
+			Where("variant_code = ?", vehicle.variantId).
+			Scan(&variantExists).Error; err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error checking variant code",
+				Err:        err,
+			}
+		}
+
+		// Fetch FRT Hour value
+		if err := tx.Table("amOperation2").
+			Select("frt_hour").
+			Where("brand_id = ? AND model_id = ? AND variant_id = ? AND operation_id = ?",
+				vehicle.brandId, vehicle.modelId, vehicle.variantId, oprItemId).
+			Row().Scan(&frt); err != nil {
+			return 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching FRT hour",
+				Err:        err,
+			}
+		}
+	}
+
+	return frt, nil
+}
