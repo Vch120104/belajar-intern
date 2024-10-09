@@ -2,7 +2,6 @@ package masteroperationrepositoryimpl
 
 import (
 	"after-sales/api/config"
-	// masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	"errors"
@@ -275,15 +274,6 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 			Err:        err,
 		}
 	}
-
-	// if len(OperationFrtResponse) > 0 {
-	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusNoContent,
-	// 		Err:        err,
-	// 	}
-	// }
-
-	// for _, res := range OperationFrtResponse {
 	urlVariant := config.EnvConfigs.SalesServiceUrl + "unit-variant?page=0&limit=10000"
 	errUrlVariant := utils.Get(urlVariant, &VariantPayloads, nil)
 	if errUrlVariant != nil {
@@ -300,10 +290,7 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 		}
 	}
 
-	// }
 	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
-	// totalPages = pages
-	// totalRows = rows
 
 	return results, totalPages, totalRows, nil
 }
@@ -407,7 +394,6 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationFrt(tx *gorm.DB, 
 func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	OperationDocumentRequirementMapping := []masteroperationentities.OperationDocumentRequirement{}
 	OperationDocumentRequirementResponse := []masteroperationpayloads.OperationModelMappingDocumentRequirementRequest{}
-	// OperationDocumentRequirementResponse1 := masteroperationpayloads.OperationDocumentRequirementResponse{}
 	query := tx.
 		Model(masteroperationentities.OperationDocumentRequirement{}).
 		Where("operation_model_mapping_id = ?", id).
@@ -415,7 +401,6 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement
 
 	err := query.
 		Scopes(pagination.Paginate(&OperationDocumentRequirementMapping, &pages, query)).
-		// Order("approval.name").
 		Scan(&OperationDocumentRequirementResponse).
 		Error
 
@@ -433,7 +418,6 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement
 			Err:        err,
 		}
 	}
-	// defer row.Close()
 	pages.Rows = OperationDocumentRequirementResponse
 
 	return pages, nil
@@ -695,35 +679,3 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationLevel(tx *gorm.DB
 
 	return true, nil
 }
-
-// func (r *OperationModelMappingRepositoryImpl) GetOperationLevel(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-// 	// OperationLevelEtity := []masteroperationentities.OperationLevel{}
-// 	OperationEntries := []masteroperationentities.OperationEntries{}
-// 	OperationLevelPayloads := []masteroperationpayloads.OperationLevelGetAll{}
-
-// 	_, err := tx.Model(&OperationEntries).
-// 		Joins("Inner Join mtr_operation_group On mtr_operation_entries.operation_group_id=mtr_operation_group.operation_group_id").
-// 		Joins("Inner Join mtr_operation_section On mtr_operation_section.operation_section_id=mtr_operation_entries.operation_section_id").
-// 		Joins("Inner Join mtr_operation_key on mtr_operation_key.operation_key_id=mtr_operation_entries.operation_key_id").
-// 		Group("mtr_operation_entries.operation_entries_code,mtr_operation_entries.operation_entries_description,mtr_operation_group.operation_group_code,mtr_operation_group.operation_group_description,mtr_operation_section.operation_section_code,mtr_operation_section.operation_section_description,mtr_operation_key.operation_key_code,mtr_operation_key.operation_key_code,mtr_operation_code_entries.is_active").
-// 		Scan(&OperationLevelPayloads).Rows()
-// 	if err != nil {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
-// 	if len(OperationLevelPayloads) == 0 {
-// 		return pages, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
-// 	// defer query.close{}
-// 	pages.Rows = OperationLevelPayloads
-// 	return pages, nil
-// }
-
-// func (r *OperationModelMappingRepositoryImpl) DeleteOperationLevel(tx *gorm.DB, ids string)(bool,*exceptions.BaseErrorResponse){
-// 	err:=tx.Model(masteroperationentities.OperationModelMapping).Delete()
-// }
