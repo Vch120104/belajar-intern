@@ -398,6 +398,57 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	return response, nil
 }
 
+func (r *CampaignMasterRepositoryImpl) GetByCodeCampaignMaster(tx *gorm.DB, code string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	entities := masterentities.CampaignMaster{}
+	payloads := masterpayloads.CampaignMasterResponse{}
+	var modelresponse masterpayloads.GetModelResponse
+	var brandresponse masterpayloads.GetBrandResponse
+	err := tx.Model(&entities).Where(masterentities.CampaignMaster{
+		CampaignCode: code,
+	}).First(&payloads).Error
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	brandIdUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payloads.BrandId)
+	errUrlBrandId := utils.Get(brandIdUrl, &brandresponse, nil)
+	if errUrlBrandId != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlBrandId,
+		}
+	}
+	BrandJoinData, errdf := utils.DataFrameInnerJoin([]masterpayloads.CampaignMasterResponse{payloads}, []masterpayloads.GetBrandResponse{brandresponse}, "BrandId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	modelIdUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payloads.ModelId)
+	errUrlModelId := utils.Get(modelIdUrl, &modelresponse, nil)
+	if errUrlModelId != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlModelId,
+		}
+	}
+	ModelIdJoinData, errdf := utils.DataFrameInnerJoin(BrandJoinData, []masterpayloads.GetModelResponse{modelresponse}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	return ModelIdJoinData[0], nil
+}
+
 func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	CampaignMasterMapping := []masterentities.CampaignMaster{}
 	CampaignMasterResponse := []masterpayloads.GetHistory{}

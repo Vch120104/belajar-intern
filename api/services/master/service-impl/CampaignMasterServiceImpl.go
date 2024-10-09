@@ -35,9 +35,9 @@ func (s *CampaignMasterServiceImpl) PostCampaignMaster(req masterpayloads.Campai
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads,id int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) PostCampaignDetailMaster(req masterpayloads.CampaignMasterDetailPayloads, id int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req,id)
+	result, err := s.CampaignMasterRepo.PostCampaignDetailMaster(tx, req, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masterentities.CampaignMasterDetail{}, err
@@ -105,6 +105,16 @@ func (s *CampaignMasterServiceImpl) GetByIdCampaignMasterDetail(id int) (map[str
 	return result, nil
 }
 
+func (s *CampaignMasterServiceImpl) GetByCodeCampaignMaster(code string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.CampaignMasterRepo.GetByCodeCampaignMaster(tx, code)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.CampaignMasterRepo.GetAllCampaignMasterCodeAndName(tx, pages)
@@ -115,14 +125,14 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagina
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{},int,int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,totalpages,totalrows, err := s.CampaignMasterRepo.GetAllCampaignMaster(tx, filtercondition, pages)
+	result, totalpages, totalrows, err := s.CampaignMasterRepo.GetAllCampaignMaster(tx, filtercondition, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return result,0,0, err
+		return result, 0, 0, err
 	}
-	return result,totalpages,totalrows, nil
+	return result, totalpages, totalrows, nil
 }
 
 func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

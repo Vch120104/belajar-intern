@@ -24,6 +24,7 @@ type CampaignMasterController interface {
 	DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
 	GetByIdCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	GetByIdCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
+	GetByCodeCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	GetAllCampaignMasterCodeAndName(writer http.ResponseWriter, request *http.Request)
 	GetAllCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
@@ -166,6 +167,22 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMasterDetail(writer http.R
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+}
+
+func (r *CampaignMasterControllerImpl) GetByCodeCampaignMaster(writer http.ResponseWriter, request *http.Request) {
+	campaignCode := chi.URLParam(request, "campaign_code")
+	if campaignCode == "" {
+		payloads.NewHandleError(writer, "campaign_code cannot be empty", http.StatusNotFound)
+		return
+	}
+
+	result, err := r.CampaignMasterService.GetByCodeCampaignMaster(campaignCode)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", http.StatusOK)
 }
 
 func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.ResponseWriter, request *http.Request) {
