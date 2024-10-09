@@ -4,6 +4,7 @@ import (
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
+	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	masterpayloads "after-sales/api/payloads/master"
@@ -2464,21 +2465,47 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 	return campaignDiscount, nil
 }
 
-func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseMasterForItemLookupResponse, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	response := []masterpayloads.WarehouseMasterForItemLookupResponse{}
-	entities := masteritementities.ItemLocation{}
+	entities := masterwarehouseentities.WarehouseMaster{}
 
-	err := tx.Model(&entities).
+	baseModelQuery := tx.Model(&entities).
 		Select(`
-			DISTINCT mtr_location_item.warehouse_id,
+			mli.warehouse_id,
 			mwg.warehouse_group_code,
 			mwg.warehouse_group_name,
-			mwm.warehouse_code,
-			mwm.warehouse_name
+			mtr_warehouse_master.warehouse_code,
+			mtr_warehouse_master.warehouse_name
 		`).
-		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
-		Joins("INNER JOIN mtr_warehouse_group mwg ON mwg.warehouse_group_id = mwm.warehouse_group_id").
-		Where("mwm.company_id = ?", companyId).
+		Joins("INNER JOIN mtr_location_item mli ON mtr_warehouse_master.warehouse_id = mli.warehouse_id").
+		Joins("INNER JOIN mtr_warehouse_group mwg ON mwg.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
+		Where("mtr_warehouse_master.company_id = ?", companyId)
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&response).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.Rows = response
+
+	return pages, nil
+}
+
+// IF @strEntity = 'WarehouseGroupByCompany'
+func (r *LookupRepositoryImpl) GetWarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseMaster{}
+	response := []masterpayloads.WarehouseGroupByCompanyResponse{}
+
+	err := tx.Model(&entities).
+		Select("DISTINCT mwg.warehouse_group_id, mwg.warehouse_group_code + ' - ' + mwg.warehouse_group_name AS warehouse_group_code_name").
+		Joins("INNER JOIN mtr_warehouse_group mwg ON mtr_warehouse_master.warehouse_group_id = mwg.warehouse_group_id").
+		Where("mtr_warehouse_master.is_active = ?", true).
+		Where("mtr_warehouse_master.company_id = ?", companyId).
 		Scan(&response).Error
 
 	if err != nil {
@@ -2489,4 +2516,54 @@ func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId i
 	}
 
 	return response, nil
+}
+
+// usp_comLookUp IF @strEntity = 'ItemListTransPL'
+func (r *LookupRepositoryImpl) GetItemListForPriceList(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Item{}
+	responses := []masterpayloads.ItemListForPriceList{}
+
+	baseModelQuery := tx.Model(&entities).
+		Select("DISTINCT mtr_item.*, mic.item_class_code").
+		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mid.item_id").
+		Where("mtr_item.is_active = ?", true).
+		Where("mtr_item.price_list_item = 'Y'")
+
+	baseModelQuery2 := tx.Model(&entities).
+		Select("COUNT(DISTINCT mtr_item.item_id) AS total_rows").
+		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mid.item_id").
+		Where("mtr_item.is_active = ?", true).
+		Where("mtr_item.price_list_item = 'Y'")
+
+	if companyId == 0 {
+		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
+		baseModelQuery2 = baseModelQuery2.Where("mtr_item.common_pricelist = ?", true)
+	}
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Offset(pages.Page * pages.Limit).Limit(pages.Limit).Order("mtr_item.item_id").Scan(&responses).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	var totalRows int
+	err = utils.ApplyFilter(baseModelQuery2, filterCondition).Pluck("total_rows", &totalRows).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.TotalRows = int64(totalRows)
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+	pages.Rows = responses
+
+	return pages, nil
 }

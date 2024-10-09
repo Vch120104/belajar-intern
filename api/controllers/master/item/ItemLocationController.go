@@ -362,17 +362,22 @@ func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, req
 
 func (r *ItemLocationControllerImpl) DeleteItemLoc(writer http.ResponseWriter, request *http.Request) {
 	itemlocationids := chi.URLParam(request, "item_location_id")
-	itemlocationidint, err := strconv.Atoi(itemlocationids)
-	if err != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
-			Err: errors.New("invalid item_location_id"),
-		})
-		return
+	itemlocationids = strings.Trim(itemlocationids, "[]")
+	elements := strings.Split(itemlocationids, ",")
+
+	itemLocIDs := []int{}
+	for _, element := range elements {
+		num, convErr := strconv.Atoi(strings.TrimSpace(element))
+		if convErr != nil {
+			payloads.NewHandleError(writer, "Failed to convert ID string", http.StatusInternalServerError)
+			return
+		}
+		itemLocIDs = append(itemLocIDs, num)
 	}
-	if deleted, err := r.ItemLocationService.DeleteItemLoc([]int{itemlocationidint}); err != nil {
+	if deleted, err := r.ItemLocationService.DeleteItemLoc(itemLocIDs); err != nil {
 		exceptions.NewAppException(writer, request, err)
 	} else if deleted {
-		payloads.NewHandleSuccess(writer, nil, "Delete Data Successfully!", http.StatusOK)
+		payloads.NewHandleSuccess(writer, deleted, "Delete Data Successfully!", http.StatusOK)
 	} else {
 		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
 	}
