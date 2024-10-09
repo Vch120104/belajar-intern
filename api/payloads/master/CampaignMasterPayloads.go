@@ -30,6 +30,7 @@ type CampaignMasterResponse struct {
 	Total              float64 `json:"total"`
 	TotalVat           float64 `json:"total_vat"`
 	TotalAfterVat      float64 `json:"total_after_vat"`
+	CompanyId          int     `json:"company_id"`
 }
 
 type CampaignMasterListReponse struct {
@@ -49,7 +50,7 @@ type GetModelResponse struct {
 type GetBrandResponse struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`
-	Brandname string `json:"brand_name"`
+	BrandName string `json:"brand_name"`
 }
 type GetHistory struct {
 	CampaignId   string `json:"campaign_id"`
