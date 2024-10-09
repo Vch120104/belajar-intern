@@ -504,13 +504,13 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationLevel(writer http.R
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, totalPage, totalRow, err := r.operationmodelmappingservice.GetAllOperationLevel(headerId, paginate)
+	results, err := r.operationmodelmappingservice.GetAllOperationLevel(headerId, paginate)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRow), totalPage)
+	payloads.NewHandleSuccessPagination(writer, results.Rows, "Get Data Successfully!", 200, paginate.Limit, paginate.Page, results.TotalRows, results.TotalPages)
 }
 
 func (r *OperationModelMappingControllerImpl) GetOperationLevelById(writer http.ResponseWriter, request *http.Request) {

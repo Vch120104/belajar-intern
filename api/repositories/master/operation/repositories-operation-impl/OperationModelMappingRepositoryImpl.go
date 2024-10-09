@@ -539,62 +539,54 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationLevel(tx *gorm.DB, re
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	OperationLevelResponse := []masteroperationpayloads.OperationLevelGetAll{}
-	// OperationLevelDetailResponse := []masteroperationpayloads.OperationLevelGetAll{}
 
-	// err := tx.
-	// 	Model(masteroperationentities.OperationLevel{}).
-	// 	Joins("OperationEntries", tx.Select("")).
-	// 	Joins("OperationGroup", tx.Select("")).
-	// 	Joins("OperationKey", tx.Select("")).
-	// 	Joins("OperationSection", tx.Select("")).
-	// 	Where("operation_model_mapping_id = ?", id).
-	// 	Scan(&OperationLevelResponse).Error
-
-	err := tx.Model(masteroperationentities.OperationLevel{}).
-		Select("mtr_operation_level.*,mtr_operation_group.operation_group_code,mtr_operation_section.operation_section_code,mtr_operation_key.operation_key_code").
-		Joins("join mtr_operation_entries on mtr_operation_entries.operation_entries_id=mtr_operation_level.operation_entries_id").
-		Joins("join mtr_operation_group on mtr_operation_group.operation_group_id=mtr_operation_entries.operation_group_id").
-		Joins("join mtr_operation_key on mtr_operation_key.operation_key_id=mtr_operation_entries.operation_key_id").
-		Joins("join mtr_operation_section on mtr_operation_section.operation_section_id=mtr_operation_entries.operation_section_id").
-		Where("operation_model_mapping_id = ?", id).
-		Scan(&OperationLevelResponse).Error
+	err := tx.Raw(`
+		SELECT
+			mtr_operation_level.operation_level_id,
+			mtr_operation_group.operation_group_id,
+			mtr_operation_group.operation_group_code,
+			mtr_operation_group.operation_group_description,
+			mtr_operation_section.operation_section_id,
+			mtr_operation_section.operation_section_code,
+			mtr_operation_section.operation_section_description,
+			mtr_operation_key.operation_key_id,
+			mtr_operation_key.operation_key_code,
+			mtr_operation_key.operation_key_description,
+			mtr_operation_entries.operation_entries_id,
+			mtr_operation_entries.operation_entries_code,
+			mtr_operation_entries.operation_entries_description
+		FROM dbo.mtr_operation_level
+		JOIN dbo.mtr_operation_entries
+			ON mtr_operation_entries.operation_entries_id = mtr_operation_level.operation_entries_id
+		JOIN dbo.mtr_operation_group
+			ON mtr_operation_group.operation_group_id = mtr_operation_entries.operation_group_id
+		JOIN dbo.mtr_operation_key
+			ON mtr_operation_key.operation_key_id = mtr_operation_entries.operation_key_id
+		JOIN dbo.mtr_operation_section
+			ON mtr_operation_section.operation_section_id = mtr_operation_entries.operation_section_id
+		WHERE mtr_operation_level.operation_model_mapping_id = ?
+	`, id).Scan(&OperationLevelResponse).Error
 
 	if len(OperationLevelResponse) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	// for _, x := range OperationLevelResponse {
-	// 	detailQuery := tx.
-	// 		Model(masteroperationentities.OperationEntries{}).
-	// 		Where("operation_entries_id = ?", x.OperationEntriesId).
-	// 		Scan(&OperationLevelDetailResponse).Error
+	pages.Rows = OperationLevelResponse
 
-	// 	if detailQuery != nil {
-	// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-	// 			StatusCode: http.StatusInternalServerError,
-	// 			Err:        detailQuery,
-	// 		}
-	// 	}
-	// }
-
-	// defer row.Close()
-	// pages.Rows = OperationLevelDetailResponse
-	result, totalPage, totalRow := pagination.NewDataFramePaginate(&OperationLevelResponse, &pages)
-
-	return result, totalPage, totalRow, nil
+	return pages, nil
 }
 
 func (r *OperationModelMappingRepositoryImpl) GetOperationLevelById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {
