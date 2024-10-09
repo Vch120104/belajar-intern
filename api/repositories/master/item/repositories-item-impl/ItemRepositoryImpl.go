@@ -469,6 +469,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	uomItemEntities := masteritementities.UomItem{
+		IsActive:          req.IsActive,
 		ItemId:            model.ItemId,
 		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
 		UomTypeCode:       uomTypeModel.UomTypeCode,
