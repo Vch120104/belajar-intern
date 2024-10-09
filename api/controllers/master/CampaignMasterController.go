@@ -59,9 +59,9 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	helper.ReadFromRequestBody(request, &formRequest)
-	campaignId,_:=strconv.Atoi(chi.URLParam(request,"campaign_id"))
+	campaignId, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
 
-	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest,campaignId)
+	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest, campaignId)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
 		return
@@ -172,13 +172,13 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"is_active":     queryValues.Get("is_active"),
-		"campaign_code": queryValues.Get("campaign_code"),
-		"campaign_name": queryValues.Get("campaign_name"),
-		"model_name":    queryValues.Get("model_name"),
-		"model_code":    queryValues.Get("model_code"),
-		"period_from":   queryValues.Get("period_from"),
-		"period_to":     queryValues.Get("period_to"),
+		"is_active":            queryValues.Get("is_active"),
+		"campaign_code":        queryValues.Get("campaign_code"),
+		"campaign_name":        queryValues.Get("campaign_name"),
+		"model_code":           queryValues.Get("model_code"),
+		"model_description":    queryValues.Get("model_description"),
+		"campaign_period_from": queryValues.Get("campaign_period_from"),
+		"campaign_period_to":   queryValues.Get("campaign_period_to"),
 	}
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -192,8 +192,9 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 	result, totalpages, totalrows, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
+		result = []map[string]interface{}{}
+		totalpages = 0
+		totalrows = 0
 	}
 	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
 }
