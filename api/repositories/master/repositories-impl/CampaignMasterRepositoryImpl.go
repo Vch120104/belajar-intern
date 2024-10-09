@@ -29,7 +29,7 @@ func StartCampaignMasterRepositoryImpl() masterrepository.CampaignMasterReposito
 func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse) {
 	var entities masterentities.CampaignMaster
 
-	result, _ := tx.Model(&entities).Where("campaign_code =?", req.CampaignCode).First(&entities).Rows()
+	result, _ := tx.Model(&entities).Where("campaign_code = ? AND campaign_id != ?", req.CampaignCode, req.CampaignId).First(&entities).Rows()
 	if result != nil {
 		return masterentities.CampaignMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
@@ -38,6 +38,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req maste
 	}
 
 	entity := &masterentities.CampaignMaster{
+		CampaignId:         req.CampaignId,
 		CampaignCode:       req.CampaignCode,
 		CampaignName:       req.CampaignName,
 		BrandId:            req.BrandId,

@@ -46,7 +46,8 @@ func NewCampaignMasterController(campaignmasterservice masterservice.CampaignMas
 func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterPost
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
+	var message string
+	var status int
 
 	create, err := r.CampaignMasterService.PostCampaignMaster(formRequest)
 	if err != nil {
@@ -54,7 +55,15 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+	if formRequest.CampaignId == 0 {
+		message = "Created Data Successfully!"
+		status = http.StatusCreated
+	} else {
+		message = "Updated Data Successfully!"
+		status = http.StatusOK
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, status)
 }
 
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {

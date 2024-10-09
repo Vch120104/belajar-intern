@@ -3,6 +3,7 @@ package masterpayloads
 import "time"
 
 type CampaignMasterPost struct {
+	CampaignId         int       `json:"campaign_id"`
 	CampaignCode       string    `json:"campaign_code"`
 	CampaignName       string    `json:"campaign_name"`
 	BrandId            int       `json:"brand_id"`
