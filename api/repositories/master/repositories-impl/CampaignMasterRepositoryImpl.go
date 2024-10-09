@@ -346,7 +346,11 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	var payloads masterpayloads.CampaignMasterDetailGetPayloads
 	var item masteritempayloads.BomItemNameResponse
 	var operation masterpayloads.Operation
-	err := tx.Model(&entities).Where("campaign_detail_id = ?", id).Scan(&payloads).Error
+	err := tx.Model(&entities).
+		Select("mtr_campaign_master_detail.*, mc.total").
+		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
+		Where("campaign_detail_id = ?", id).
+		First(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -379,13 +383,17 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	}
 
 	response := map[string]interface{}{
-		"is_active":         payloads.IsActive,
-		"line_type_id":      payloads.LineTypeId,
-		"item_operation_id": payloads.ItemOperationId,
-		"frt_quantity":      payloads.Quantity,
-		"price":             payloads.Price,
-		"discount_percent":  payloads.DiscountPercent,
-		"share_percent":     payloads.SharePercent,
+		"is_active":          payloads.IsActive,
+		"campaign_detail_id": payloads.CampaignDetailId,
+		"campaign_id":        payloads.CampaignId,
+		"line_type_id":       payloads.LineTypeId,
+		"item_operation_id":  payloads.ItemOperationId,
+		"frt_quantity":       payloads.Quantity,
+		"price":              payloads.Price,
+		"discount_percent":   payloads.DiscountPercent,
+		"share_percent":      payloads.SharePercent,
+		"share_bill_to":      payloads.ShareBillTo,
+		"total":              payloads.Total,
 	}
 
 	if entities.LineTypeId != 9 && entities.LineTypeId != 1 {
