@@ -28,7 +28,9 @@ type LookupRepository interface {
 	WorkOrderService(tx *gorm.DB, paginate pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetWhsGroup(tx *gorm.DB, companyCode int) (int, *exceptions.BaseErrorResponse)
 	GetCampaignDiscForWO(tx *gorm.DB, campaignId int, linetypeId int, oprItemId int, frtQty float64, markupAmount float64, markupPercentage float64, millage float64) (masterpayloads.CampaignDiscount, *exceptions.BaseErrorResponse)
-	GetItemLocationWarehouse(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseMasterForItemLookupResponse, *exceptions.BaseErrorResponse)
+	GetItemLocationWarehouse(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetWarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse)
+	GetItemListForPriceList(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SelectLocationStockItem(tx *gorm.DB, option int, companyId int, periodDate time.Time, whsCode string, locCode string, itemId int, whsGroup int, uomType string) (float64, *exceptions.BaseErrorResponse)
 	GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId int, modelId int, variantId int, vehicleChassisNo string) (float64, *exceptions.BaseErrorResponse)
 }

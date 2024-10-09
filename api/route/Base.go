@@ -714,6 +714,7 @@ func OperationCodeRouter(
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 	router.Put("/{operation_id}", operationCodeController.UpdateOperationCode)
+	router.Get("/drop-down", operationCodeController.GetAllOperationCodeDropDown)
 
 	return router
 }
@@ -813,7 +814,7 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
-	router.Get("/authorize-user/{warehouse_id}", warehouseMasterController.GetAuthorizeUser)
+	router.Get("/{warehouse_id}/authorize-user", warehouseMasterController.GetAuthorizeUser)
 	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
 	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	router.Get("/drop-down/in-transit/{company_id}/{warehouse_group_id}", warehouseMasterController.InTransitWarehouseCodeDropdown)
@@ -1620,7 +1621,9 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
-	router.Get("/item-location-warehouse/{company_id}", LookupController.GetItemLocationWarehouse)
+	router.Get("/item-location-warehouse", LookupController.GetItemLocationWarehouse)
+	router.Get("/warehouse-group/{company_id}", LookupController.GetWarehouseGroupByCompany)
+	router.Get("/item-list", LookupController.GetItemListForPriceList)
 
 	return router
 }

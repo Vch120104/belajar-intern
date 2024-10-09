@@ -195,14 +195,38 @@ func (s *LookupServiceImpl) GetLineTypeByItemCode(itemCode string) (int, *except
 	return lineType, nil
 }
 
-func (s *LookupServiceImpl) GetItemLocationWarehouse(companyId int) ([]masterpayloads.WarehouseMasterForItemLookupResponse, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetItemLocationWarehouse(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	warehouse, baseErr := s.LookupRepo.GetItemLocationWarehouse(tx, companyId)
+	warehouse, baseErr := s.LookupRepo.GetItemLocationWarehouse(tx, companyId, filterCondition, pages)
 	if baseErr != nil {
 		return warehouse, baseErr
 	}
 
 	return warehouse, nil
+}
+
+func (s *LookupServiceImpl) GetWarehouseGroupByCompany(companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	warehouse, baseErr := s.LookupRepo.GetWarehouseGroupByCompany(tx, companyId)
+	if baseErr != nil {
+		return warehouse, baseErr
+	}
+
+	return warehouse, nil
+}
+
+func (s *LookupServiceImpl) GetItemListForPriceList(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	item, baseErr := s.LookupRepo.GetItemListForPriceList(tx, companyId, filterCondition, pages)
+	if baseErr != nil {
+		return item, baseErr
+	}
+
+	return item, nil
 }

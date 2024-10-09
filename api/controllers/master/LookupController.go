@@ -29,6 +29,8 @@ type LookupController interface {
 	CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request)
 	WorkOrderService(writer http.ResponseWriter, request *http.Request)
 	GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request)
+	GetItemListForPriceList(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -506,6 +508,39 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 }
 
 func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	companyId, convErr := strconv.Atoi(queryValues.Get("company_id"))
+	if convErr != nil {
+		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusInternalServerError)
+		return
+	}
+
+	queryParams := map[string]string{
+		"warehouse_code":       queryValues.Get("warehouse_code"),
+		"warehouse_name":       queryValues.Get("warehouse_name"),
+		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId, criteria, paginate)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, warehouse.Rows, "Get Data Successfully!", http.StatusOK, warehouse.Limit, warehouse.Page, warehouse.TotalRows, warehouse.TotalPages)
+}
+
+func (r *LookupControllerImpl) GetWarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request) {
 	companyIdstr := chi.URLParam(request, "company_id")
 	if companyIdstr == "" {
 		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
@@ -513,10 +548,59 @@ func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWrit
 
 	companyId, _ := strconv.Atoi(companyIdstr)
 
-	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId)
+	warehouse, baseErr := r.LookupService.GetWarehouseGroupByCompany(companyId)
 	if baseErr != nil {
 		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
 	}
 	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
+}
+
+func (r *LookupControllerImpl) GetItemListForPriceList(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	companyIdstr := queryValues.Get("company_id")
+	if companyIdstr == "" {
+		companyIdstr = "0"
+	}
+
+	companyId, _ := strconv.Atoi(companyIdstr)
+
+	queryParams := map[string]string{
+		"mid.brand_id":           queryValues.Get("brand_id"),
+		"mtr_item.item_group_id": queryValues.Get("item_group_id"),
+		"mtr_item.item_code":     queryValues.Get("item_code"),
+		"mtr_item.item_name":     queryValues.Get("item_name"),
+		"mic.item_class_code":    queryValues.Get("item_class_code"),
+		"mtr_item.item_type":     queryValues.Get("item_type"),
+		"mtr_item.item_level_1":  queryValues.Get("item_level_1"),
+		"mtr_item.item_level_2":  queryValues.Get("item_level_2"),
+		"mtr_item.item_level_3":  queryValues.Get("item_level_3"),
+	}
+
+	if queryParams["mid.brand_id"] == "" {
+		payloads.NewHandleError(writer, "brand_id is required", http.StatusBadRequest)
+		return
+	}
+
+	if queryParams["mtr_item.item_group_id"] == "" {
+		payloads.NewHandleError(writer, "item_group_id is required", http.StatusBadRequest)
+		return
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	item, baseErr := r.LookupService.GetItemListForPriceList(companyId, criteria, paginate)
+	if baseErr != nil {
+		item.Rows = []interface{}{}
+		item.TotalRows = 0
+		item.TotalPages = 0
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }
