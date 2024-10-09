@@ -247,7 +247,7 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.Re
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, rows, pages, int64(rows), pages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(rows), pages)
 
 }
 

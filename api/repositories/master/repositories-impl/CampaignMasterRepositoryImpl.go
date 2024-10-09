@@ -612,9 +612,12 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 	var packagecode string
 	combinedPayloads := make([]map[string]interface{}, 0)
 
-	err := tx.Model(&entities).Where(masterentities.CampaignMasterDetail{
-		CampaignId: id,
-	}).Scan(&responsedetail).Error
+	err := tx.Model(&entities).
+		Select("mtr_campaign_master_detail.*, mc.total").
+		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
+		Where(masterentities.CampaignMasterDetail{
+			CampaignId: id,
+		}).Scan(&responsedetail).Error
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -656,15 +659,18 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 		}
 
 		response := map[string]interface{}{
-			"is_active":         op.IsActive,
-			"package_code":      packagecode,
-			"package_id":        op.PackageId,
-			"line_type_id":      op.LineTypeId,
-			"item_operation_id": op.ItemOperationId,
-			"frt_quantity":      op.Quantity,
-			"price":             op.Price,
-			"discount_percent":  op.DiscountPercent,
-			"share_percent":     op.SharePercent,
+			"is_active":          op.IsActive,
+			"campaign_id":        op.CampaignId,
+			"campaign_detail_id": op.CampaignDetailId,
+			"package_code":       packagecode,
+			"package_id":         op.PackageId,
+			"line_type_id":       op.LineTypeId,
+			"item_operation_id":  op.ItemOperationId,
+			"frt_quantity":       op.Quantity,
+			"price":              op.Price,
+			"discount_percent":   op.DiscountPercent,
+			"share_percent":      op.SharePercent,
+			"total":              op.Total,
 		}
 
 		if op.LineTypeId != 9 && op.LineTypeId != 1 {

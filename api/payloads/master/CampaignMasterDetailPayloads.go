@@ -27,4 +27,5 @@ type CampaignMasterDetailGetPayloads struct {
 	Price            float64 `json:"price"`
 	DiscountPercent  float64 `json:"discount_percent"`
 	SharePercent     float64 `json:"share_percent"`
+	Total            float64 `json:"total"`
 }
