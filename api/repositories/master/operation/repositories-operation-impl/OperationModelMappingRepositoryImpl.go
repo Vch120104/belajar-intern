@@ -259,38 +259,53 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	OperationFrtMapping := []masteroperationentities.OperationFrt{}
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	// OperationFrtMapping := []masteroperationentities.OperationFrt{}
 	OperationFrtResponse := []masteroperationpayloads.OperationModelMappingFrtRequest{}
+	VariantPayloads := []masteroperationpayloads.VariantResponse{}
 
-	query := tx.
+	err := tx.
 		Model(masteroperationentities.OperationFrt{}).
 		Where("operation_model_mapping_id = ?", id).
-		Scan(&OperationFrtResponse)
-
-	err := query.
-		Scopes(pagination.Paginate(&OperationFrtMapping, &pages, query)).
-		Scan(&OperationFrtResponse).
-		Error
-
-	if len(OperationFrtResponse) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+		Scan(&OperationFrtResponse).Error
 
 	if err != nil {
-
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	// defer row.Close()
-	pages.Rows = OperationFrtResponse
 
-	return pages, nil
+	// if len(OperationFrtResponse) > 0 {
+	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusNoContent,
+	// 		Err:        err,
+	// 	}
+	// }
+
+	// for _, res := range OperationFrtResponse {
+	urlVariant := config.EnvConfigs.SalesServiceUrl + "unit-variant?page=0&limit=10000"
+	errUrlVariant := utils.Get(urlVariant, &VariantPayloads, nil)
+	if errUrlVariant != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlVariant,
+		}
+	}
+	joinedData1, err := utils.DataFrameInnerJoin(OperationFrtResponse, VariantPayloads, "VariantId")
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// }
+	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
+	// totalPages = pages
+	// totalRows = rows
+
+	return results, totalPages, totalRows, nil
 }
 
 func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse) {
