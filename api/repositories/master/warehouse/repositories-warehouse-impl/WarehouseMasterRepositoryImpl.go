@@ -199,6 +199,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 		WarehouseName:                 entities.WarehouseName,
 		WarehouseDetailName:           entities.WarehouseDetailName,
 		WarehouseTransitDefault:       entities.WarehouseTransitDefault,
+		WarehouseGroupId:              entities.WarehouseGroupId,
 		WarehousePhoneNumber:          entities.WarehousePhoneNumber,
 		WarehouseFaxNumber:            entities.WarehouseFaxNumber,
 	}
@@ -514,37 +515,45 @@ func (r *WarehouseMasterImpl) ChangeStatus(tx *gorm.DB, warehouseId int) (master
 	return warehouseMasterPayloads, nil
 }
 
-func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []masterwarehouseentities.WarehouseAuthorize
-	var response []masterwarehousepayloads.AuthorizedUserResponse
+	var response []map[string]interface{}
 
-	query := tx.Model(&masterwarehouseentities.WarehouseAuthorize{}).
-		Select("mtr_warehouse_authorize.*, mtr_user_details.employee_name").
-		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id").
-		Where("mtr_warehouse_authorize.warehouse_id = ?", id)
+	query := tx.Model(&entities).
+		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.id_number").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id")
 
-	if len(filterCondition) > 0 {
-		query = utils.ApplyFilter(query, filterCondition)
+	whereQuery := utils.ApplyFilter(query, filterCondition)
+
+	var totalRows int64
+	if err := whereQuery.Count(&totalRows).Error; err != nil {
+		return response, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count authorized user records",
+			Err:        err,
+		}
 	}
 
-	err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Error
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
+	if totalRows == 0 {
+		return response, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No authorized users found",
+			Err:        errors.New("no authorized users found"),
+		}
+	}
+
+	whereQuery = whereQuery.Offset(pages.GetOffset()).Limit(pages.GetLimit())
+	if err := whereQuery.Find(&response).Error; err != nil {
+		return response, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve authorized users from the database",
 			Err:        err,
 		}
 	}
 
-	if len(response) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "No authorized users found for the given warehouse ID",
-		}
-	}
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
 
-	pages.Rows = response
-	return pages, nil
+	return response, int(totalRows), totalPages, nil
 }
 
 func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB, req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {

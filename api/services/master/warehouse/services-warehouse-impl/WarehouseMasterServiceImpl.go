@@ -171,16 +171,17 @@ func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwareho
 	return change_status, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(filterCondition []utils.FilterCondition, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetAuthorizeUser(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	result, err := s.warehouseMasterRepo.GetAuthorizeUser(tx, filterCondition, pages, id)
-	if err != nil {
-		return pages, err
+	results, totalPages, totalRows, repoErr := s.warehouseMasterRepo.GetAuthorizeUser(tx, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
 	}
 
-	return result, nil
+	return results, totalPages, totalRows, nil
+
 }
 
 func (s *WarehouseMasterServiceImpl) PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {

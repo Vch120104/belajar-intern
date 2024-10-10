@@ -1287,13 +1287,18 @@ func WorkOrderRouter(
 
 	router.Get("/dropdown-transaction-type", WorkOrderController.NewTrxType)
 	router.Post("/dropdown-transaction-type", WorkOrderController.AddTrxType)
-	router.Put("/dropdown-transaction-type/{work_order_transaction_type_id}", WorkOrderController.UpdateTrxType)
-	router.Delete("/dropdown-transaction-type/{work_order_transaction_type_id}", WorkOrderController.DeleteTrxType)
+	router.Put("/dropdown-transaction-type/{transaction_type_id}", WorkOrderController.UpdateTrxType)
+	router.Delete("/dropdown-transaction-type/{transaction_type_id}", WorkOrderController.DeleteTrxType)
 
 	router.Get("/dropdown-transaction-type-so", WorkOrderController.NewTrxTypeSo)
 	router.Post("/dropdown-transaction-type-so", WorkOrderController.AddTrxTypeSo)
-	router.Put("/dropdown-transaction-type-so/{work_order_transaction_type_id}", WorkOrderController.UpdateTrxTypeSo)
-	router.Delete("/dropdown-transaction-type-so/{work_order_transaction_type_id}", WorkOrderController.DeleteTrxTypeSo)
+	router.Put("/dropdown-transaction-type-so/{transaction_type_id}", WorkOrderController.UpdateTrxTypeSo)
+	router.Delete("/dropdown-transaction-type-so/{transaction_type_id}", WorkOrderController.DeleteTrxTypeSo)
+
+	router.Get("/dropdown-job-type", WorkOrderController.NewJobType)
+	router.Post("/dropdown-job-type", WorkOrderController.AddJobType)
+	router.Put("/dropdown-job-type/{job_type_id}", WorkOrderController.UpdateJobType)
+	router.Delete("/dropdown-job-type/job_type_id}", WorkOrderController.DeleteJobType)
 
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
@@ -1607,7 +1612,7 @@ func LookupRouter(
 	router.Get("/item-opr-code/{linetype_id}/{item_code}", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
-	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
+	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)

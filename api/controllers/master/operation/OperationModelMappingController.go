@@ -354,13 +354,13 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.Res
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, err := r.operationmodelmappingservice.GetAllOperationFrt(headerId, paginate)
+	results, totalPages, totalRows, err := r.operationmodelmappingservice.GetAllOperationFrt(headerId, paginate)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, results, "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Operation Document Requirement By ID
@@ -504,13 +504,13 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationLevel(writer http.R
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	result, err := r.operationmodelmappingservice.GetAllOperationLevel(headerId, paginate)
+	results, err := r.operationmodelmappingservice.GetAllOperationLevel(headerId, paginate)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, results.Rows, "Get Data Successfully!", 200, paginate.Limit, paginate.Page, results.TotalRows, results.TotalPages)
 }
 
 func (r *OperationModelMappingControllerImpl) GetOperationLevelById(writer http.ResponseWriter, request *http.Request) {

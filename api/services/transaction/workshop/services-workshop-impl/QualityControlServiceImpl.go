@@ -28,7 +28,6 @@ func OpenQualityControlServiceImpl(QualityControlRepo transactionworkshopreposit
 }
 
 func (s *QualityControlServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
@@ -40,7 +39,6 @@ func (s *QualityControlServiceImpl) GetAll(filterCondition []utils.FilterConditi
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(results, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
-
 }
 
 func (s *QualityControlServiceImpl) GetById(id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionworkshoppayloads.QualityControlIdResponse, *exceptions.BaseErrorResponse) {

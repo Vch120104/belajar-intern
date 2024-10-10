@@ -204,13 +204,15 @@ type AuthorizedUserDetailsResponse struct {
 }
 
 type AuthorizedUserResponse struct {
-	EmployeeId   int    `json:"user_employee_id"`
-	EmployeeName string `json:"employee_name"`
-	EmployeeNik  int    `json:"id_number"`
+	WarehouseAuthorizedId int    `json:"warehouse_authorized_id"`
+	EmployeeId            int    `json:"user_employee_id"`
+	EmployeeName          string `json:"employee_name"`
+	EmployeeNik           int    `json:"id_number"`
 }
 
 type WarehouseAuthorize struct {
-	EmployeeId  int `json:"employee_id"`
-	CompanyId   int `json:"company_id"`
-	WarehouseId int `json:"warehouse_id"`
+	WarehouseAuthorizedId int `json:"warehouse_authorized_id"`
+	EmployeeId            int `json:"employee_id"`
+	CompanyId             int `json:"company_id"`
+	WarehouseId           int `json:"warehouse_id"`
 }
