@@ -26,6 +26,8 @@ type QualityControlRequest struct {
 	VariantId             int `json:"variant_id" parent_entity:"trx_work_order"`
 	VehicleId             int `json:"vehicle_id" parent_entity:"trx_work_order"`
 	CustomerId            int `json:"customer_id" parent_entity:"trx_work_order"`
+	ForemanId             int `json:"foreman_id" parent_entity:"trx_work_order"`
+	ServiceAdvisorId      int `json:"service_advisor_id" parent_entity:"trx_work_order"`
 }
 
 type QualityControlRequestId struct {
@@ -92,4 +94,20 @@ type QualityControlUpdateResponse struct {
 type QualityControlReorder struct {
 	ExtraTime float64 `json:"quality_control_extra_frt"`
 	Reason    string  `json:"quality_control_extra_reason"`
+}
+
+type QualityControlForemanResponse struct {
+	ForemanId   int    `json:"user_employee_id"`
+	ForemanName string `json:"employee_name"`
+}
+
+type QualityControlServiceAdvisorResponse struct {
+	ServiceAdvisorId   int    `json:"user_employee_id"`
+	ServiceAdvisorName string `json:"employee_name"`
+}
+
+type QualityControlTechnicianResponse struct {
+	TechnicianId   int    `json:"user_employee_id"`
+	TechnicianName string `json:"employee_name"`
+	TechnicianCode string `json:"id_number"`
 }

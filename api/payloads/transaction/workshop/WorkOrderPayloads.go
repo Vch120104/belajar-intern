@@ -51,6 +51,16 @@ type WorkOrderResponse struct {
 	WorkOrderInsurancePic         string    `json:"insurance_pic"`
 	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
 	WorkOrderInsuranceOwnRisk     float64   `json:"insurance_own_risk"`
+	EstimationDuration            float64   `json:"estimation_duration"`
+	CustomerExpress               bool      `json:"customer_express"`
+	LeaveCar                      bool      `json:"leave_car"`
+	CarWash                       bool      `json:"car_wash"`
+	PromiseDate                   time.Time `json:"promise_date"`
+	PromiseTime                   time.Time `json:"promise_time"`
+	FSCouponNo                    string    `json:"fs_coupon_no"`
+	Notes                         string    `json:"notes"`
+	Suggestion                    string    `json:"suggestion"`
+	DownpaymentAmount             float64   `json:"dp_amount"`
 }
 
 type WorkOrderRequest struct {
