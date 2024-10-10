@@ -118,7 +118,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data customer from external API
-		CustomerUrl := config.EnvConfigs.SalesServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
+		CustomerUrl := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
 		var customerResponses transactionworkshoppayloads.CustomerResponse
 		errCustomer := utils.Get(CustomerUrl, &customerResponses, nil)
 		if errCustomer != nil {
@@ -233,14 +233,34 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	}
 
 	// Fetch data vehicle from external API
-	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-	var vehicleResponses transactionworkshoppayloads.VehicleResponse
-	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
+	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(entity.VehicleId)
+	var vehicleResponses []transactionworkshoppayloads.VehicleResponse
+	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
 			Err:        errVehicle,
+		}
+	}
+
+	if len(vehicleResponses) == 0 {
+		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No vehicle data found",
+			Err:        errVehicle,
+		}
+	}
+
+	// Fetch data colour from external API
+	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
+	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
+	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
+	if errColour != nil || len(colourResponses) == 0 {
+		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve colour data from the external API",
+			Err:        errColour,
 		}
 	}
 
@@ -253,6 +273,96 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve customer data from the external API",
 			Err:        errCustomer,
+		}
+	}
+
+	// Fetch foreman data from external API
+	ForemanUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entity.ForemanId)
+	var foremanResponses transactionworkshoppayloads.QualityControlForemanResponse
+	errForeman := utils.Get(ForemanUrl, &foremanResponses, nil)
+	if errForeman != nil {
+		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve foreman data from the external API",
+			Err:        errForeman,
+		}
+	}
+
+	// fetch service advisor data from external API
+	ServiceAdvisorUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(entity.ServiceAdvisorId)
+	var serviceAdvisorResponses transactionworkshoppayloads.QualityControlServiceAdvisorResponse
+	errServiceAdvisor := utils.Get(ServiceAdvisorUrl, &serviceAdvisorResponses, nil)
+	if errServiceAdvisor != nil {
+		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve service advisor data from the external API",
+			Err:        errServiceAdvisor,
+		}
+	}
+
+	// Fetch work order users
+	var workorderUsers []transactionworkshoppayloads.WorkOrderCurrentUserResponse
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer AS c").
+		Select(`
+		c.customer_id AS customer_id,
+		c.customer_name AS customer_name,
+		c.customer_code AS customer_code,
+		c.id_address_id AS address_id,
+		a.address_street_1 AS address_street_1,
+		a.address_street_2 AS address_street_2,
+		a.address_street_3 AS address_street_3,
+		a.village_id AS village_id,
+		v.village_name AS village_name,
+		v.district_id AS district_id,
+		d.district_name AS district_name,
+		d.city_id AS city_id,
+		ct.city_name AS city_name,
+		ct.province_id AS province_id,
+		p.province_name AS province_name,
+		v.village_zip_code AS zip_code,
+		td.npwp_no AS current_user_npwp
+	`).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_address AS a ON c.id_address_id = a.address_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_village AS v ON a.village_id = v.village_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_district AS d ON v.district_id = d.district_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_city AS ct ON d.city_id = ct.city_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_province AS p ON ct.province_id = p.province_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_tax_data AS td ON c.tax_customer_id = td.tax_id").
+		Where("c.customer_id = ?", entity.CustomerId).
+		Find(&workorderUsers).Error; err != nil {
+		fmt.Println("Error executing query:", err)
+		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order users from the database",
+			Err:        err,
+		}
+	}
+
+	// Fetch work order detail vehicles
+	var workorderVehicleDetails []transactionworkshoppayloads.WorkOrderVehicleDetailResponse
+	if err := tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle AS v").
+		Select(`
+		v.vehicle_id AS vehicle_id,
+        v.vehicle_chassis_number AS vehicle_chassis_number,
+		vrc.vehicle_registration_certificate_tnkb AS vehicle_registration_certificate_tnkb,
+		vrc.vehicle_registration_certificate_owner_name AS vehicle_registration_certificate_owner_name,
+		v.vehicle_production_year AS vehicle_production_year,
+		CONCAT(vv.variant_code , ' - ', vv.variant_description) AS vehicle_variant,
+		v.option_id AS vehicle_option,
+		CONCAT(vm.colour_code , ' - ', vm.colour_commercial_name) AS vehicle_colour,
+		v.vehicle_sj_date AS vehicle_sj_date,
+        v.vehicle_last_service_date AS vehicle_last_service_date,
+        v.vehicle_last_km AS vehicle_last_km
+		`).
+		Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_vehicle_registration_certificate AS vrc ON v.vehicle_id = vrc.vehicle_id").
+		Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_unit_variant AS vv ON v.vehicle_variant_id = vv.variant_id").
+		Joins("INNER JOIN dms_microservices_sales_dev.dbo.mtr_colour AS vm ON v.vehicle_colour_id = vm.colour_id").
+		Where("v.vehicle_id = ? AND v.vehicle_brand_id = ? and v.vehicle_variant_id = ?", entity.VehicleId, entity.BrandId, entity.VariantId).
+		Find(&workorderVehicleDetails).Error; err != nil {
+		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve work order vehicles from the database",
+			Err:        err,
 		}
 	}
 
@@ -283,7 +393,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 
 	// Fetch paginated qc details
 	query := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Joins("INNER JOIN mtr_item AS WTA ON trx_work_order_detail.item_id = WTA.item_id").
+		Joins("INNER JOIN mtr_item AS WTA ON trx_work_order_detail.operation_item_id = WTA.item_id").
 		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_service_status AS MSS ON trx_work_order_detail.service_status_id = MSS.service_status_id").
 		Select("WTA.item_code as operation_item_code, WTA.item_name as operation_item_name, trx_work_order_detail.frt_quantity as frt, trx_work_order_detail.service_status_id, MSS.service_status_description as service_status_name").
 		Where("trx_work_order_detail.work_order_system_number = ?", id).
@@ -303,6 +413,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Quality control details not found",
+			Err:        errors.New("quality control details not found"),
 		}
 	}
 
@@ -316,6 +427,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 			return transactionworkshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Operation Status is not valid",
+				Err:        errors.New("operation status is not valid"),
 			}
 		}
 	}
@@ -323,11 +435,23 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	response := transactionworkshoppayloads.QualityControlIdResponse{
 		WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 		WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
+		BrandName:               brandResponses.BrandName,
 		ModelName:               modelResponses.ModelName,
 		VariantName:             variantResponses.VariantName,
-		VehicleCode:             vehicleResponses.VehicleCode,
-		VehicleTnkb:             vehicleResponses.VehicleTnkb,
-		CustomerName:            customerResponses.CustomerName,
+		ColourName:              colourResponses[0].VariantColourName,
+		VehicleCode:             vehicleResponses[0].VehicleCode,
+		VehicleTnkb:             vehicleResponses[0].VehicleTnkb,
+		CustomerName:            workorderUsers[0].CustomerName,
+		Address0:                workorderUsers[0].Address_Street_1,
+		Address1:                workorderUsers[0].Address_Street_2,
+		Address2:                workorderUsers[0].Address_Street_3,
+		LastMilage:              workorderVehicleDetails[0].VehicleLastKm,
+		CurrentMilage:           workOrderResponses.WorkOrderCurrentMileage,
+		Phone:                   workOrderResponses.PhoneCust,
+		ForemanName:             foremanResponses.ForemanName,
+		ServiceAdvisorName:      serviceAdvisorResponses.ServiceAdvisorName,
+		OrderDateTime:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
+		EstimatedFinished:       workOrderResponses.PromiseTime.Format("15:04:05"),
 		QualityControlDetails: transactionworkshoppayloads.QualityControlDetailsResponse{
 			Page:       pages.GetPage(),
 			Limit:      pages.GetLimit(),
@@ -344,28 +468,36 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 // IF @Option = 2
 // USE IN MODUL : AWS - 006  UPDATE DATA BY KEY (QC PASS) - GENERAL REPAIR
 func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (transactionworkshoppayloads.QualityControlUpdateResponse, *exceptions.BaseErrorResponse) {
-	// Define variables
 	var (
 		currentStatus     int
 		techAllocSysNo    int
-		lineTypeOperation = 1
+		lineTypeOperation = utils.LinetypeOperation
 	)
 
+	var maxWoOprItemLine int
+	if err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("COALESCE(MAX(work_order_operation_item_line), 0)").
+		Where("work_order_system_number = ?", id).
+		Scan(&maxWoOprItemLine).Error; err != nil {
+		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve maximum work order operation item line",
+			Err:        err,
+		}
+	}
 	// Check the current WO_OPR_STATUS
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Select("work_order_status_id").
-		Where("work_order_system_number = ? AND work_order_operation_item_line = ?", id, lineTypeOperation).
+		Select("service_status_id").
+		Where("work_order_system_number = ? AND work_order_operation_item_line = ?", id, maxWoOprItemLine).
 		First(&currentStatus).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-
 			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Operation Status is not valid",
 				Err:        err,
 			}
 		}
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch operation status",
@@ -374,11 +506,11 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	}
 
 	// Validate the status
-	if currentStatus != utils.WoStatStop {
-
+	if currentStatus != utils.SrvStatStop {
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "The current status of the work order is not valid",
+			Err:        errors.New("the current status of the work order is not valid"),
 		}
 	}
 
@@ -397,7 +529,6 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Where("trx_work_order_detail.work_order_system_number = ? AND trx_work_order_detail.work_order_operation_item_line = ?", id, lineTypeOperation).
 		Scan(&details).Error
 	if err != nil {
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order details",
@@ -410,7 +541,6 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	var vehicleResponses transactionworkshoppayloads.VehicleResponse
 	errVehicle := utils.Get(vehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
@@ -428,7 +558,6 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Where("operation_code = ?", details.OprItemCode).
 		Scan(&techAllocSysNo).Error
 	if err != nil {
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch the latest TechAllocSystemNumber",
@@ -439,10 +568,9 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 	// Update WorkOrderDetail
 	err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Where("work_order_system_number = ? AND work_order_operation_item_line = ? and work_order_detail_id = ?", id, lineTypeOperation, iddet).
-		Update("service_status_id", utils.WoStatQC).
+		Update("service_status_id", utils.SrvStatQcPass).
 		Error
 	if err != nil {
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update WorkOrderDetail",
@@ -456,7 +584,6 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Update("service_status_id", utils.SrvStatQcPass).
 		Error
 	if err != nil {
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to update WorkOrderAllocation",
@@ -470,7 +597,6 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Where("work_order_system_number = ? AND service_status_id != ?", id, utils.SrvStatQcPass).
 		Count(&statusCount).Error
 	if err != nil {
-
 		return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to count non-QC pass items",
@@ -485,21 +611,6 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 			Update("work_order_status_id", utils.WoStatQC).
 			Error
 		if err != nil {
-
-			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to update WorkOrder",
-				Err:        err,
-			}
-		}
-
-		// Update WorkOrder Detail
-		err = tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-			Where("work_order_system_number = ?", id).
-			Update("work_order_status_id", utils.WoStatQC).
-			Error
-		if err != nil {
-
 			return transactionworkshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to update WorkOrder",

@@ -72,8 +72,12 @@ type WorkOrderController interface {
 	UpdateTrxTypeSo(writer http.ResponseWriter, request *http.Request)
 	DeleteTrxTypeSo(writer http.ResponseWriter, request *http.Request)
 
-	NewDropPoint(writer http.ResponseWriter, request *http.Request)
+	NewJobType(writer http.ResponseWriter, request *http.Request)
+	AddJobType(writer http.ResponseWriter, request *http.Request)
+	UpdateJobType(writer http.ResponseWriter, request *http.Request)
+	DeleteJobType(writer http.ResponseWriter, request *http.Request)
 
+	NewDropPoint(writer http.ResponseWriter, request *http.Request)
 	NewVehicleBrand(writer http.ResponseWriter, request *http.Request)
 	NewVehicleModel(writer http.ResponseWriter, request *http.Request)
 	GenerateDocumentNumber(writer http.ResponseWriter, request *http.Request)
@@ -336,13 +340,24 @@ func (r *WorkOrderControllerImpl) DeleteStatus(writer http.ResponseWriter, reque
 // @Router /v1/work-order/dropdown-line-type [get]
 func (r *WorkOrderControllerImpl) NewLineType(writer http.ResponseWriter, request *http.Request) {
 
-	statuses, err := r.WorkOrderService.NewLineType()
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	statuses, err := r.WorkOrderService.NewLineType(filters)
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
-
 	if len(statuses) > 0 {
 		payloads.NewHandleSuccess(writer, statuses, "List of work order line type", http.StatusOK)
 	} else {
@@ -446,7 +461,19 @@ func (r *WorkOrderControllerImpl) DeleteLineType(writer http.ResponseWriter, req
 // @Router /v1/work-order/dropdown-bill [get]
 func (r *WorkOrderControllerImpl) NewBill(writer http.ResponseWriter, request *http.Request) {
 
-	statuses, err := r.WorkOrderService.NewBill()
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	statuses, err := r.WorkOrderService.NewBill(filters)
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -774,13 +801,17 @@ func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, requ
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	queryParams := map[string]string{
-		"trx_work_order_service.work_order_system_number": chi.URLParam(request, "work_order_system_number"),
+	filterConditions := make([]utils.FilterCondition, 0)
+	for key, values := range queryValues {
+		if len(values) > 0 {
+			filterConditions = append(filterConditions, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: values[0],
+			})
+		}
 	}
 
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllRequest(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllRequest(filterConditions, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -991,13 +1022,17 @@ func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWrite
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	queryParams := map[string]string{
-		"trx_work_order_vehicle_service.work_order_system_number": chi.URLParam(request, "work_order_system_number"),
+	filterConditions := make([]utils.FilterCondition, 0)
+	for key, values := range queryValues {
+		if len(values) > 0 {
+			filterConditions = append(filterConditions, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: values[0],
+			})
+		}
 	}
 
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllVehicleService(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAllVehicleService(filterConditions, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -2049,7 +2084,19 @@ func (r *WorkOrderControllerImpl) ConfirmPrice(writer http.ResponseWriter, reque
 // @Router /v1/work-order/dropdown-transaction-type [get]
 func (r *WorkOrderControllerImpl) NewTrxType(writer http.ResponseWriter, request *http.Request) {
 
-	statuses, err := r.WorkOrderService.NewTrxType()
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	statuses, err := r.WorkOrderService.NewTrxType(filters)
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -2159,7 +2206,19 @@ func (r *WorkOrderControllerImpl) DeleteTrxType(writer http.ResponseWriter, requ
 // @Router /v1/work-order/dropdown-transaction-type-so [get]
 func (r *WorkOrderControllerImpl) NewTrxTypeSo(writer http.ResponseWriter, request *http.Request) {
 
-	statuses, err := r.WorkOrderService.NewTrxTypeSo()
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	statuses, err := r.WorkOrderService.NewTrxTypeSo(filters)
 	if err != nil {
 
 		exceptions.NewAppException(writer, request, err)
@@ -2374,4 +2433,126 @@ func (r *WorkOrderControllerImpl) AddFieldAction(writer http.ResponseWriter, req
 	}
 
 	payloads.NewHandleSuccess(writer, success, "Field action added successfully", http.StatusCreated)
+}
+
+// NewJobType gets the Job Type of new work orders
+// @Summary Get Work Order Job Type
+// @Description Retrieve all work order Job Type
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-job-type [get]
+func (r *WorkOrderControllerImpl) NewJobType(writer http.ResponseWriter, request *http.Request) {
+
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	statuses, err := r.WorkOrderService.NewJobType(filters)
+	if err != nil {
+
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if len(statuses) > 0 {
+		payloads.NewHandleSuccess(writer, statuses, "List of work order Job Type", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// AddJobType adds a new  Job Type to a work order
+// @Summary Add Work Order  Job Type
+// @Description Add a new  Job Type to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param reqBody body transactionworkshoppayloads.WorkOrderTransactionType true "Work Order Transaction Type Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-job-type [post]
+func (r *WorkOrderControllerImpl) AddJobType(writer http.ResponseWriter, request *http.Request) {
+	var jobTypeRequest transactionworkshoppayloads.WorkOrderJobType
+	helper.ReadFromRequestBody(request, &jobTypeRequest)
+
+	success, err := r.WorkOrderService.AddJobType(jobTypeRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Job Type added successfully", http.StatusCreated)
+}
+
+// UpdateJobType updates a Job Type of a work order
+// @Summary Update Work Order Job Type
+// @Description Update a Job Type of a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_transaction_type_id path string true "Work Order Bill ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderBillableRequest true "Work Order Bill Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-transaction-type/{work_order_transaction_type_id} [put]
+func (r *WorkOrderControllerImpl) UpdateJobType(writer http.ResponseWriter, request *http.Request) {
+	// Update a Trx Type of a work order
+	jobTypeId, err := strconv.Atoi(chi.URLParam(request, "job_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order Job Type ID", http.StatusBadRequest)
+		return
+	}
+
+	var jobTypeRequest transactionworkshoppayloads.WorkOrderJobType
+	helper.ReadFromRequestBody(request, &jobTypeRequest)
+
+	success, serviceErr := r.WorkOrderService.UpdateJobType(jobTypeId, jobTypeRequest)
+	if serviceErr != nil {
+		exceptions.NewAppException(writer, request, serviceErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, success, "Trx Type updated successfully", http.StatusOK)
+}
+
+// DeleteJobType deletes a Job Type from a work order
+// @Summary Delete Work Order Job Type
+// @Description Delete a Job Type from a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_transaction_type_id path string true "Work Order Job Type ID"
+// @Success 204 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/dropdown-job-type/{work_order_transaction_type_id} [delete]
+func (r *WorkOrderControllerImpl) DeleteJobType(writer http.ResponseWriter, request *http.Request) {
+
+	jobTypeId, err := strconv.Atoi(chi.URLParam(request, "job_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order Job Type ID", http.StatusBadRequest)
+		return
+	}
+
+	success, serviceErr := r.WorkOrderService.DeleteJobType(jobTypeId)
+	if serviceErr != nil {
+		exceptions.NewAppException(writer, request, serviceErr)
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Trx Type deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
 }

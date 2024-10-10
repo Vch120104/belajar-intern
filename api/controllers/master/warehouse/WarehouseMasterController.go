@@ -291,19 +291,14 @@ func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter,
 }
 
 func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
-	warehouseIdStr := chi.URLParam(request, "warehouse_id")
-	warehouseId, err := strconv.Atoi(warehouseIdStr)
-
-	if err != nil || warehouseId <= 0 {
-		payloads.NewHandleError(writer, "Invalid warehouse ID, please check your input.", http.StatusBadRequest)
-		return
-	}
-
 	queryValues := request.URL.Query()
 
-	queryParams := map[string]string{
-		"user_employee_id": queryValues.Get("user_employee_id"),
-		"employee_name":    queryValues.Get("employee_name"),
+	filter := map[string]string{
+		"mtr_warehouse_authorize.warehouse_authorize_id": queryValues.Get("warehouse_authorize_id"),
+		"mtr_warehouse_authorize.employee_id":            queryValues.Get("employee_id"),
+		"mtr_user_details.employee_name":                 queryValues.Get("employee_name"),
+		"mtr_warehouse_authorize.company_id":             queryValues.Get("company_id"),
+		"mtr_warehouse_authorize.warehouse_id":           queryValues.Get("warehouse_id"),
 	}
 
 	pagination := pagination.Pagination{
@@ -313,20 +308,15 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	criteria := utils.BuildFilterCondition(queryParams)
+	filterCondition := utils.BuildFilterCondition(filter)
 
-	result, baseErrResp := r.WarehouseMasterService.GetAuthorizeUser(criteria, pagination, warehouseId)
-	if baseErrResp != nil {
-		switch baseErrResp.StatusCode {
-		case http.StatusNotFound:
-			exceptions.NewNotFoundException(writer, request, baseErrResp)
-		default:
-			exceptions.NewAppException(writer, request, baseErrResp)
-		}
+	get, totalPages, totalRows, err := r.WarehouseMasterService.GetAuthorizeUser(filterCondition, pagination)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, get, "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 }
 
 func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {

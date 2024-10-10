@@ -51,6 +51,16 @@ type WorkOrderResponse struct {
 	WorkOrderInsurancePic         string    `json:"insurance_pic"`
 	WorkOrderInsuranceWONumber    string    `json:"insurance_workorder_number"`
 	WorkOrderInsuranceOwnRisk     float64   `json:"insurance_own_risk"`
+	EstimationDuration            float64   `json:"estimation_duration"`
+	CustomerExpress               bool      `json:"customer_express"`
+	LeaveCar                      bool      `json:"leave_car"`
+	CarWash                       bool      `json:"car_wash"`
+	PromiseDate                   time.Time `json:"promise_date"`
+	PromiseTime                   time.Time `json:"promise_time"`
+	FSCouponNo                    string    `json:"fs_coupon_no"`
+	Notes                         string    `json:"notes"`
+	Suggestion                    string    `json:"suggestion"`
+	DownpaymentAmount             float64   `json:"dp_amount"`
 }
 
 type WorkOrderRequest struct {
@@ -839,6 +849,7 @@ type WorkOrderVehicleDetailResponse struct {
 	VehicleId              int       `json:"vehicle_id"`
 	VehicleChassisNumber   string    `json:"vehicle_chassis_number"`
 	VehicleProductionYear  string    `json:"vehicle_production_year"`
+	VehicleEngineNumber    string    `json:"vehicle_engine_number"`
 	VehicleVariant         string    `json:"vehicle_variant"`
 	VehicleOption          string    `json:"vehicle_option"`
 	VehicleColour          string    `json:"vehicle_colour"`
@@ -951,37 +962,42 @@ type WorkOrderAddRequest struct {
 }
 
 type WorkOrderDetailRequest struct {
-	WorkOrderDetailId     int     `json:"work_order_detail_id" parent_entity:"trx_work_order_detail" main_table:"trx_work_order_detail"`
-	WorkOrderSystemNumber int     `json:"work_order_system_number" parent_entity:"trx_work_order_detail"`
-	LineTypeId            int     `json:"line_type_id" parent_entity:"trx_work_order_detail"`
-	TransactionTypeId     int     `json:"transaction_type_id" parent_entity:"trx_work_order_detail" `
-	JobTypeId             int     `json:"job_type_id" parent_entity:"trx_work_order_detail"`
-	FrtQuantity           float64 `json:"frt_quantity" parent_entity:"trx_work_order_detail"`
-	SupplyQuantity        float64 `json:"supply_quantity" parent_entity:"trx_work_order_detail"`
-	PriceListId           int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
-	WarehouseGroupId      int     `json:"warehouse_gorup_id" parent_entity:"trx_work_order_detail"`
-	OperationItemId       int     `json:"operation_item_id" parent_entity:"trx_work_order_detail"`
-	OperationItemCode     string  `json:"operation_item_code" parent_entity:"trx_work_order_detail"`
-	ProposedPrice         float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
-	OperationItemPrice    float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
+	WorkOrderDetailId                   int     `json:"work_order_detail_id" parent_entity:"trx_work_order_detail" main_table:"trx_work_order_detail"`
+	WorkOrderSystemNumber               int     `json:"work_order_system_number" parent_entity:"trx_work_order_detail"`
+	LineTypeId                          int     `json:"line_type_id" parent_entity:"trx_work_order_detail"`
+	TransactionTypeId                   int     `json:"transaction_type_id" parent_entity:"trx_work_order_detail" `
+	JobTypeId                           int     `json:"job_type_id" parent_entity:"trx_work_order_detail"`
+	FrtQuantity                         float64 `json:"frt_quantity" parent_entity:"trx_work_order_detail"`
+	SupplyQuantity                      float64 `json:"supply_quantity" parent_entity:"trx_work_order_detail"`
+	PriceListId                         int     `json:"price_list_id" parent_entity:"trx_work_order_detail"`
+	WarehouseGroupId                    int     `json:"warehouse_group_id" parent_entity:"trx_work_order_detail"`
+	OperationItemId                     int     `json:"operation_item_id" parent_entity:"trx_work_order_detail"`
+	OperationItemCode                   string  `json:"operation_item_code" parent_entity:"trx_work_order_detail"`
+	OperationItemPrice                  float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountAmount         float64 `json:"operation_item_discount_amount" parent_entity:"trx_work_order_detail"`
+	ProposedPrice                       float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountPercent        float64 `json:"operation_item_discount_percent" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountRequestPercent float64 `json:"operation_item_discount_request_percent" parent_entity:"trx_work_order_detail"`
 }
 
 type WorkOrderDetailResponse struct {
-	WorkOrderDetailId                  int     `json:"work_order_detail_id"`
-	WorkOrderSystemNumber              int     `json:"work_order_system_number"`
-	LineTypeId                         int     `json:"line_type_id"`
-	LineTypeCode                       string  `json:"line_type_code"`
-	TransactionTypeId                  int     `json:"transaction_type_id"`
-	TransactionTypeCode                string  `json:"transaction_type_code"`
-	JobTypeId                          int     `json:"job_type_id"`
-	JobTypeCode                        string  `json:"job_type_code"`
-	WarehouseGroupId                   int     `json:"warehouse_group_id"`
-	OperationItemId                    int     `json:"operation_item_id"`
-	FrtQuantity                        float64 `json:"frt_quantity"`
-	SupplyQuantity                     float64 `json:"supply_quantity"`
-	OperationItemPrice                 float64 `json:"operation_item_price"`
-	OperationItemDiscountAmount        float64 `json:"operation_item_discount_amount"`
-	OperationItemDiscountRequestAmount float64 `json:"operation_item_discount_request_amount"`
+	WorkOrderDetailId                   int     `json:"work_order_detail_id"`
+	WorkOrderSystemNumber               int     `json:"work_order_system_number"`
+	LineTypeId                          int     `json:"line_type_id"`
+	LineTypeCode                        string  `json:"line_type_code"`
+	TransactionTypeId                   int     `json:"transaction_type_id"`
+	TransactionTypeCode                 string  `json:"transaction_type_code"`
+	JobTypeId                           int     `json:"job_type_id"`
+	JobTypeCode                         string  `json:"job_type_code"`
+	WarehouseGroupId                    int     `json:"warehouse_group_id"`
+	OperationItemId                     int     `json:"operation_item_id"`
+	FrtQuantity                         float64 `json:"frt_quantity"`
+	SupplyQuantity                      float64 `json:"supply_quantity"`
+	OperationItemPrice                  float64 `json:"operation_item_price"`
+	OperationItemDiscountAmount         float64 `json:"operation_item_discount_amount"`
+	OperationItemDiscountRequestAmount  float64 `json:"operation_item_discount_request_amount"`
+	OperationItemDiscountPercent        float64 `json:"operation_item_discount_percent"`
+	OperationItemDiscountRequestPercent float64 `json:"operation_item_discount_request_percent"`
 }
 
 type WorkOrderAffiliate struct {
@@ -1057,6 +1073,7 @@ type BrandDocResponse struct {
 type VehicleResponse struct {
 	VehicleId           int             `json:"vehicle_id"`
 	VehicleCode         string          `json:"vehicle_chassis_number"`
+	VehicleEngineNumber string          `json:"vehicle_engine_number"`
 	VehicleTnkb         string          `json:"vehicle_registration_certificate_tnkb"`
 	VehicleProduction   json.RawMessage `json:"vehicle_production_year"`
 	VehicleLastKm       json.RawMessage `json:"vehicle_last_km"`
@@ -1075,9 +1092,9 @@ type Linetype struct {
 }
 
 type WorkOrderTransactionType struct {
-	TransactionTypeId   int    `json:"work_order_transaction_type_id"`
-	TransactionTypeCode string `json:"work_order_transaction_type_code"`
-	TransactionTypeName string `json:"work_order_transaction_type_description"`
+	TransactionTypeId   int    `json:"transaction_type_id"`
+	TransactionTypeCode string `json:"transaction_type_code"`
+	TransactionTypeName string `json:"transaction_type_description"`
 }
 
 type DeleteCampaignPayload struct {
@@ -1116,14 +1133,22 @@ type WorkOrderGeneralRepairPackageRequest struct {
 	AgreementId int `json:"agreement_id"`
 	VehicleId   int `json:"vehicle_id"`
 	BrandId     int `json:"brand_id"`
+	PackageId   int `json:"package_id"`
 }
 
 type WorkOrderFieldActionRequest struct {
-	WorkOrderSystemNumber int    `json:"work_order_system_number"`
-	FieldAction           string `json:"field_action"`
+	WorkOrderSystemNumber   int `json:"work_order_system_number"`
+	FieldActionSystemNumber int `json:"field_action_system_number"`
+	RecallNo                int `json:"recall_system_number"`
 }
 
 type WorkOrderConfirmPriceRequest struct {
 	WorkOrderSystemNumber int `json:"work_order_system_number"`
 	CompanyId             int `json:"company_id"`
+}
+
+type WorkOrderJobType struct {
+	JobTypeId   int    `json:"job_type_id"`
+	JobTypeCode string `json:"job_type_code"`
+	JobTypeName string `json:"job_type_name"`
 }
