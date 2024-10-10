@@ -69,25 +69,30 @@ type WorkOrderService interface {
 	UpdateType(id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse)
 	DeleteType(id int) (bool, *exceptions.BaseErrorResponse)
 
-	NewLineType() ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse)
+	NewLineType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse)
 	AddLineType(request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse)
 	UpdateLineType(id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse)
 	DeleteLineType(id int) (bool, *exceptions.BaseErrorResponse)
 
-	NewBill() ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse)
+	NewBill(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse)
 	AddBill(request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse)
 	UpdateBill(id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse)
 	DeleteBill(id int) (bool, *exceptions.BaseErrorResponse)
 
-	NewTrxType() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse)
+	NewTrxType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse)
 	AddTrxType(request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
 	UpdateTrxType(id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
 	DeleteTrxType(id int) (bool, *exceptions.BaseErrorResponse)
 
-	NewTrxTypeSo() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse)
+	NewTrxTypeSo(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse)
 	AddTrxTypeSo(request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
 	UpdateTrxTypeSo(id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
 	DeleteTrxTypeSo(id int) (bool, *exceptions.BaseErrorResponse)
+
+	NewJobType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse)
+	AddJobType(request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse)
+	UpdateJobType(id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse)
+	DeleteJobType(id int) (bool, *exceptions.BaseErrorResponse)
 
 	NewDropPoint() ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse)
 	NewVehicleBrand() ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse)

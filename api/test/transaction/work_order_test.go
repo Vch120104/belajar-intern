@@ -65,8 +65,8 @@ func (m *MockWorkOrderService) DeleteType(id int) (bool, *exceptions.BaseErrorRe
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) NewLineType() ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
-	args := m.Called()
+func (m *MockWorkOrderService) NewLineType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
+	args := m.Called(filter)
 	return args.Get(0).([]transactionworkshoppayloads.Linetype), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
@@ -85,8 +85,8 @@ func (m *MockWorkOrderService) DeleteLineType(id int) (bool, *exceptions.BaseErr
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) NewBill() ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
-	args := m.Called()
+func (m *MockWorkOrderService) NewBill(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+	args := m.Called(filter)
 	return args.Get(0).([]transactionworkshoppayloads.WorkOrderBillable), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
@@ -105,8 +105,8 @@ func (m *MockWorkOrderService) DeleteBill(id int) (bool, *exceptions.BaseErrorRe
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) NewTrxType() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
-	args := m.Called()
+func (m *MockWorkOrderService) NewTrxType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+	args := m.Called(filter)
 	return args.Get(0).([]transactionworkshoppayloads.WorkOrderTransactionType), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
@@ -125,8 +125,8 @@ func (m *MockWorkOrderService) DeleteTrxType(id int) (bool, *exceptions.BaseErro
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) NewTrxTypeSo() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
-	args := m.Called()
+func (m *MockWorkOrderService) NewTrxTypeSo(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+	args := m.Called(filter)
 	return args.Get(0).([]transactionworkshoppayloads.WorkOrderTransactionType), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
@@ -141,6 +141,26 @@ func (m *MockWorkOrderService) UpdateTrxTypeSo(id int, request transactionworksh
 }
 
 func (m *MockWorkOrderService) DeleteTrxTypeSo(id int) (bool, *exceptions.BaseErrorResponse) {
+	args := m.Called(id)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) NewJobType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse) {
+	args := m.Called(filter)
+	return args.Get(0).([]transactionworkshoppayloads.WorkOrderJobType), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) AddJobType(request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
+	args := m.Called(request)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) UpdateJobType(id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
+	args := m.Called(id, request)
+	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) DeleteJobType(id int) (bool, *exceptions.BaseErrorResponse) {
 	args := m.Called(id)
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }

@@ -38,25 +38,53 @@ var LinetypeSublet int = 8             // 8 Sublet
 var LinetypeSouvenir int = 9           // 9 Souvenir
 
 // Transaction Type Bill Code SO WO
-var TrxTypeWoInternal string = "I"        // TRXTYPE_WO_INTERNAL
-var TrxTypeWoNoCharge string = "N"        // TRXTYPE_WO_NOCHARGE
-var TrxTypeWoCentralize string = "C"      // TRXTYPE_WO_CENTRALIZE
-var TrxTypeWoDeCentralize string = "D"    // TRXTYPE_WO_DECENTRALIZE
-var TrxTypeWoCampaign string = "G"        // TRXTYPE_WO_CAMPAIGN
-var TrxTypeWoContractService string = "S" // TRXTYPE_WO_CONTRACT_SERVICE
-var TrxTypeWoExternal string = "E"        // TRXTYPE_WO_EXTERNAL
-var TrxTypeWoFreeService string = "F"     // TRXTYPE_WO_FREE_SERVICE
-var TrxTypeWoInsurance string = "U"       // TRXTYPE_WO_INSURANCE
-var TrxTypeWoWarranty string = "W"        // TRXTYPE_WO_WARRANTY
+type TrxType struct {
+	Code string
+	ID   int
+}
 
-var TrxTypeSoDirect string = "SU01"       // TRXTYPE_SO_DIRECT
-var TrxTypeSoChannel string = "SU02"      // TRXTYPE_SO_CHANNEL
-var TrxTypeSoGSO string = "SU03"          // TRXTYPE_SO_GSO
-var TrxTypeSoInternal string = "SU05"     // TRXTYPE_SO_INTERNAL
-var TrxTypeSoCentralize string = "SU06"   // TRXTYPE_SO_CENTRALIZE
-var TrxTypeSoDeCentralize string = "SU07" // TRXTYPE_SO_DECENTRALIZED
-var TrxTypeSoExport string = "SU08"       // TRXTYPE_SO_EXPORT
+var TrxTypeWoInternal = TrxType{Code: "I", ID: 1}        // TRXTYPE_WO_INTERNAL
+var TrxTypeWoNoCharge = TrxType{Code: "N", ID: 2}        // TRXTYPE_WO_NOCHARGE
+var TrxTypeWoCentralize = TrxType{Code: "C", ID: 3}      // TRXTYPE_WO_CENTRALIZE
+var TrxTypeWoDeCentralize = TrxType{Code: "D", ID: 4}    // TRXTYPE_WO_DECENTRALIZE
+var TrxTypeWoCampaign = TrxType{Code: "G", ID: 5}        // TRXTYPE_WO_CAMPAIGN
+var TrxTypeWoContractService = TrxType{Code: "S", ID: 6} // TRXTYPE_WO_CONTRACT_SERVICE
+var TrxTypeWoExternal = TrxType{Code: "E", ID: 7}        // TRXTYPE_WO_EXTERNAL
+var TrxTypeWoFreeService = TrxType{Code: "F", ID: 8}     // TRXTYPE_WO_FREE_SERVICE
+var TrxTypeWoInsurance = TrxType{Code: "U", ID: 9}       // TRXTYPE_WO_INSURANCE
+var TrxTypeWoWarranty = TrxType{Code: "W", ID: 10}       // TRXTYPE_WO_WARRANTY
 
+var TrxTypeSoDirect = TrxType{Code: "SU01", ID: 1}       // TRXTYPE_SO_DIRECT
+var TrxTypeSoChannel = TrxType{Code: "SU02", ID: 2}      // TRXTYPE_SO_CHANNEL
+var TrxTypeSoGSO = TrxType{Code: "SU03", ID: 3}          // TRXTYPE_SO_GSO
+var TrxTypeSoInternal = TrxType{Code: "SU05", ID: 4}     // TRXTYPE_SO_INTERNAL
+var TrxTypeSoCentralize = TrxType{Code: "SU06", ID: 5}   // TRXTYPE_SO_CENTRALIZE
+var TrxTypeSoDeCentralize = TrxType{Code: "SU07", ID: 6} // TRXTYPE_SO_DECENTRALIZED
+var TrxTypeSoExport = TrxType{Code: "SU08", ID: 7}       // TRXTYPE_SO_EXPORT
+
+// Job Type
+type JobType struct {
+	Code string
+	ID   int
+}
+
+var JobTypeBodyRepair = JobType{Code: "BR", ID: 1}             // JOBTYPE_BODYREPAIR
+var JobTypeCampaign = JobType{Code: "CP", ID: 2}               // JOBTYPE_CAMPAIGN
+var JobTypeContractService = JobType{Code: "CS", ID: 3}        // JOBTYPE_CONTRACTSERVICE
+var JobTypeFreeServiceInspection = JobType{Code: "FSI", ID: 4} // JOBTYPE_FREESERVICEINSPECTION
+var JobTypeGeneralRepair = JobType{Code: "GR", ID: 5}          // JOBTYPE_GENERALREPAIR
+var JobTypeJPAccessories = JobType{Code: "JPA", ID: 6}         // JOBTYPE_JPACCESSORIES
+var JobTypeMarketing = JobType{Code: "M", ID: 7}               // JOBTYPE_MARKETING
+var JobTypePDI = JobType{Code: "PDI", ID: 8}                   // JOBTYPE_PDI
+var JobTypePeriodicalMaintenance = JobType{Code: "PM", ID: 9}  // JOBTYPE_PERIODICALMAINTENANCE
+var JobTypePurchasing = JobType{Code: "P", ID: 10}             // JOBTYPE_PURCHASING
+var JobTypeRobbing = JobType{Code: "RJ", ID: 11}               // JOBTYPE_ROBBING
+var JobTypeTB = JobType{Code: "TB", ID: 12}                    // JOBTYPE_TRANSFERTOBODYREPAIR
+var JobTypeTG = JobType{Code: "TG", ID: 13}                    // JOBTYPE_TRANSFERTOGENERALREPAIR
+var JobTypeWarehouse = JobType{Code: "W", ID: 14}              // JOBTYPE_WAREHOUSE
+var JobTypeWarranty = JobType{Code: "W", ID: 15}               // JOBTYPE_WARRANTY
+
+var UomTypeService string = "S"     // UOMTYPE_SERVICE Services
 var ItemTypeService string = "S"    // ITEMTYPE_SERVICE Services
 var EstWoOrderTypeId int = 1        // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
 var EstWoOrderType string = "E"     // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
