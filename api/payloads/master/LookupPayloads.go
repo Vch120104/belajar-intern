@@ -1,5 +1,7 @@
 package masterpayloads
 
+import "time"
+
 type ItemOprCodeResponse struct {
 	ItemOprCodeId int    `json:"item_opr_code_id"`
 	ItemOprCode   string `json:"item_opr_code"`
@@ -36,4 +38,17 @@ type ItemListForPriceList struct {
 	ItemLevel2    string `gorm:"column:item_level_2" json:"item_level_2"`
 	ItemLevel3    string `gorm:"column:item_level_3" json:"item_level_3"`
 	ItemLevel4    string `gorm:"column:item_level_4" json:"item_level_4"`
+}
+
+type GetPriceListCodeResponse struct {
+	IsActive          bool   `json:"is_active"`
+	PriceListCodeId   int    `json:"price_list_code_id"`
+	PriceListCodeName string `json:"price_list_code_name"`
+	PriceListCode     string `json:"price_list_code"`
+}
+
+type GetCurrentPeriodResponse struct {
+	PeriodYear        string    `json:"period_year"`
+	PeriodMonth       string    `json:"period_month"`
+	CurrentPeriodDate time.Time `json:"current_period_date"`
 }
