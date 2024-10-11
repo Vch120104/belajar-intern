@@ -11,7 +11,6 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -269,7 +268,6 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 		}
 
 		for _, data := range responsePackageDetail {
-			fmt.Println("hello")
 			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, data.LineTypeId, req.CompanyId, data.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
 			if err != nil {
 				return response, &exceptions.BaseErrorResponse{
