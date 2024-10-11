@@ -63,3 +63,27 @@ type CampaignMasterTaxAndTotal struct {
 	TaxId float64 `json:"tax_id"`
 	Total int     `json:"total"`
 }
+
+type CampaignMasterJobTypeResponse struct {
+	IsActive    bool   `json:"is_active"`
+	JobTypeId   int    `json:"job_type_id"`
+	JobTypeCode string `json:"job_type_code"`
+	JobTypeName string `json:"job_type_name"`
+}
+
+type CampaignMasterCompanyResponse struct {
+	CompanyId    int `json:"company_id"`
+	CompanyName  int `json:"company_name"`
+	VatCompanyId int `json:"vat_company_id"`
+}
+
+type CampaignMasterCompanyReferenceResponse struct {
+	CurrencyId int `json:"currency_id"`
+}
+
+type CampaignMasterWOTransactionResponse struct {
+	IsActive                     bool   `json:"is_active"`
+	WorkOrderTransactionTypeId   int    `json:"work_order_transaction_type_id"`
+	WorkOrderTransactionTypeName string `json:"work_order_transaction_type_name"`
+	WorkOrderTransactionTypeCode string `json:"work_order_transaction_type_code"`
+}

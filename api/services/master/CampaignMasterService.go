@@ -12,6 +12,7 @@ type CampaignMasterService interface {
 	PostCampaignMaster(masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse)
 	PostCampaignDetailMaster(masterpayloads.CampaignMasterDetailPayloads, int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse)
 	PostCampaignMasterDetailFromHistory(int, int) (int, *exceptions.BaseErrorResponse)
+	PostCampaignMasterDetailFromPackage(masterpayloads.CampaignMasterDetailPostFromPackageRequest) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusCampaignMaster(int) (bool, *exceptions.BaseErrorResponse)
 	ActivateCampaignMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse)
 	DeactivateCampaignMasterDetail(ids string) (bool, *exceptions.BaseErrorResponse)

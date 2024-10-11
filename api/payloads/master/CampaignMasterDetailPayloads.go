@@ -30,3 +30,11 @@ type CampaignMasterDetailGetPayloads struct {
 	Total            float64 `json:"total"`
 	ShareBillTo      string  `json:"share_bill_to"`
 }
+
+type CampaignMasterDetailPostFromPackageRequest struct {
+	CampaignId int `json:"campaign_id"`
+	CompanyId  int `json:"company_id"`
+	BrandId    int `json:"brand_id"`
+	ModelId    int `json:"model_id"`
+	PackageId  int `json:"package_id"`
+}

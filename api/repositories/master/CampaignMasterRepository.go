@@ -14,6 +14,7 @@ type CampaignMasterRepository interface {
 	PostCampaignMaster(*gorm.DB, masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse)
 	PostCampaignDetailMaster(*gorm.DB, masterpayloads.CampaignMasterDetailPayloads, int) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse)
 	PostCampaignMasterDetailFromHistory(*gorm.DB, int, int) (int, *exceptions.BaseErrorResponse)
+	PostCampaignMasterDetailFromPackage(*gorm.DB, masterpayloads.CampaignMasterDetailPostFromPackageRequest) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusCampaignMaster(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 	ActivateCampaignMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)
 	DeactivateCampaignMasterDetail(*gorm.DB, string) (bool, *exceptions.BaseErrorResponse)

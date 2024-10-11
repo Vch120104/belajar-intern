@@ -19,6 +19,7 @@ type CampaignMasterController interface {
 	SaveCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	SaveCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
 	SaveCampaignMasterDetailFromHistory(writer http.ResponseWriter, request *http.Request)
+	SaveCampaignMasterDetailFromPackage(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ActivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
 	DeactivateCampaignMasterDetail(writer http.ResponseWriter, request *http.Request)
@@ -101,6 +102,18 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 	message = "Create Data Successfully!"
 
 	payloads.NewHandleSuccess(writer, response, message, http.StatusOK)
+}
+
+func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromPackage(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masterpayloads.CampaignMasterDetailPostFromPackageRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+
+	response, err := r.CampaignMasterService.PostCampaignMasterDetailFromPackage(formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Create Data Successfully!", http.StatusCreated)
 }
 
 func (r *CampaignMasterControllerImpl) ChangeStatusCampaignMaster(writer http.ResponseWriter, request *http.Request) {

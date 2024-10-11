@@ -55,6 +55,16 @@ func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromHistory(id int, 
 	return result, nil
 }
 
+func (s *CampaignMasterServiceImpl) PostCampaignMasterDetailFromPackage(req masterpayloads.CampaignMasterDetailPostFromPackageRequest) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.CampaignMasterRepo.PostCampaignMasterDetailFromPackage(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 func (s *CampaignMasterServiceImpl) ChangeStatusCampaignMaster(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.CampaignMasterRepo.ChangeStatusCampaignMaster(tx, id)

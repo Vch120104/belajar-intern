@@ -11,6 +11,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,10 +21,14 @@ import (
 )
 
 type CampaignMasterRepositoryImpl struct {
+	lookupRepo masterrepository.LookupRepository
 }
 
 func StartCampaignMasterRepositoryImpl() masterrepository.CampaignMasterRepository {
-	return &CampaignMasterRepositoryImpl{}
+	lookupRepo := StartLookupRepositoryImpl()
+	return &CampaignMasterRepositoryImpl{
+		lookupRepo: lookupRepo,
+	}
 }
 
 func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse) {
@@ -182,6 +187,152 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 		}
 	}
 	return *entities, nil
+}
+
+func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *gorm.DB, req masterpayloads.CampaignMasterDetailPostFromPackageRequest) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
+	campaignDetailEntities := masterentities.CampaignMasterDetail{}
+	response := masterentities.CampaignMasterDetail{}
+
+	companyReferenceUrl := config.EnvConfigs.GeneralServiceUrl + "company-reference/" + strconv.Itoa(req.CompanyId)
+	companyReferencePayloads := masterpayloads.CampaignMasterCompanyReferenceResponse{}
+	if err := utils.Get(companyReferenceUrl, &companyReferencePayloads, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching company reference",
+			Err:        err,
+		}
+	}
+	currencyId := companyReferencePayloads.CurrencyId
+
+	jobTypeUrl := config.EnvConfigs.GeneralServiceUrl + "job-type-by-code/CP"
+	jobTypePayloads := masterpayloads.CampaignMasterJobTypeResponse{}
+	if err := utils.Get(jobTypeUrl, &jobTypePayloads, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching job type campaign",
+			Err:        err,
+		}
+	}
+	jobTypeCampaignId := jobTypePayloads.JobTypeId
+
+	WOTransactionTypeUrl := config.EnvConfigs.GeneralServiceUrl + "work-order-transaction-type-by-code/Campaign"
+	WOTransactionTypePayloads := masterpayloads.CampaignMasterWOTransactionResponse{}
+	if err := utils.Get(WOTransactionTypeUrl, &WOTransactionTypePayloads, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching work order transaction",
+			Err:        err,
+		}
+	}
+	billCode := WOTransactionTypePayloads.WorkOrderTransactionTypeId
+
+	var totalRows int
+	err := tx.Model(&campaignDetailEntities).
+		Select("COUNT(*) total_rows").
+		Where("campaign_id = ?", req.CampaignId).
+		Where("package_id = ?", req.PackageId).
+		Pluck("total_rows", &totalRows).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if totalRows == 0 {
+		responsePackageDetail := []masterentities.PackageMasterDetail{}
+
+		err = tx.Model(&masterentities.PackageMasterDetail{}).
+			Where("package_id = ?", req.PackageId).
+			Where("is_active = ?", true).
+			Scan(&responsePackageDetail).Error
+
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		var warehouseGroup string
+		err = tx.Model(&masterentities.WarehouseGroupMappingEntities{}).
+			Select("warehouse_group_mapping_description").
+			Where("warehouse_group_type_code = 'WHS_GRP_CAMPAIGN'").
+			First(&warehouseGroup).Error
+
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, data := range responsePackageDetail {
+			fmt.Println("hello")
+			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, data.LineTypeId, req.CompanyId, data.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+			if err != nil {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err.Err,
+				}
+			}
+			if itemPriceCode == 0 {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Err:        errors.New("operation item price not found, please set the price first"),
+				}
+			}
+		}
+
+		packageMasterDetailResponse := masterentities.PackageMasterDetail{}
+		err = tx.Model(&masterentities.PackageMasterDetail{}).
+			Where(masterentities.PackageMasterDetail{
+				PackageId: req.PackageId,
+				IsActive:  true,
+			}).First(&packageMasterDetailResponse).Error
+
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		itemPriceCode, itemPriceErr := r.lookupRepo.GetOprItemPrice(tx, packageMasterDetailResponse.LineTypeId, req.CompanyId, packageMasterDetailResponse.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+
+		if itemPriceErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        itemPriceErr.Err,
+			}
+		}
+
+		campaignDetailEntities = masterentities.CampaignMasterDetail{
+			IsActive:        true,
+			CampaignId:      req.CampaignId,
+			LineTypeId:      packageMasterDetailResponse.LineTypeId,
+			ItemOperationId: packageMasterDetailResponse.ItemOperationId,
+			Quantity:        packageMasterDetailResponse.FrtQuantity,
+			ShareBillTo:     "",
+			DiscountPercent: 0,
+			SharePercent:    0,
+			PackageId:       req.PackageId,
+			Price:           itemPriceCode,
+		}
+
+		err = tx.Save(&campaignDetailEntities).Error
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		response = campaignDetailEntities
+	}
+
+	return response, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
