@@ -814,7 +814,7 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
-	router.Get("/{warehouse_id}/authorize-user", warehouseMasterController.GetAuthorizeUser)
+	router.Get("/authorize-user", warehouseMasterController.GetAuthorizeUser)
 	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
 	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	router.Get("/drop-down/in-transit/{company_id}/{warehouse_group_id}", warehouseMasterController.InTransitWarehouseCodeDropdown)
