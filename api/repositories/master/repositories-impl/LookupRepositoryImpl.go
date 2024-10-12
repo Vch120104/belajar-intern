@@ -1,6 +1,7 @@
 package masterrepositoryimpl
 
 import (
+	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
@@ -298,12 +299,23 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		markupPercentage    float64
 		companyCodePrice    int
 		commonPriceList     bool
-		defaultPriceCode    = "A"
+		defaultPriceCodeId  int
 		useDiscDecentralize string
 		itemService         string
 		priceCount          int64
-		priceCode           string
+		priceCodeId         int
 	)
+
+	priceListCodeUrl := config.EnvConfigs.GeneralServiceUrl + "price-list-code-by-code/A"
+	preiceListCodePayloads := masterpayloads.GetPriceListCodeResponse{}
+	if err := utils.Get(priceListCodeUrl, &preiceListCodePayloads, nil); err != nil || preiceListCodePayloads.PriceListCodeId == 0 {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching price list code: A",
+			Err:        errors.New("error fetching default price list code"),
+		}
+	}
+	defaultPriceCodeId = preiceListCodePayloads.PriceListCodeId
 
 	// Set markup percentage based on company ID
 	markupPercentage = 0
@@ -313,7 +325,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 	if err := tx.Model(&masteritementities.Item{}).
 		Where("item_id = ?", oprItemCode).
-		Select("common_pricelist").
+		Select("ISNULL(common_pricelist, ?)", false).
 		Scan(&commonPriceList).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -366,8 +378,8 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 	default:
 		if err := tx.Model(&masteritementities.PriceList{}).
-			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
-				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCode).Count(&priceCount).Error; err != nil {
+			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
+				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).Count(&priceCount).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to check price list existence",
@@ -376,7 +388,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 
 		if priceCount == 0 {
-			priceCode = defaultPriceCode
+			priceCodeId = defaultPriceCodeId
 		}
 
 		// Handling based on bill code
@@ -386,37 +398,31 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 			month := effDate.Format("01")
 			year := effDate.Format("2006")
 
-			// Get MODULE_SP and PERIOD_STATUS_OPEN
+			// Get MODULE_SP
 			moduleSP := "SP"
-			periodStatusOpen := "O"
 
-			var result struct {
-				PeriodYear  *string `gorm:"column:period_year"`
-				PeriodMonth *string `gorm:"column:period_month"`
-			}
-
-			if err := tx.Table("dms_microservices_finance_dev.dbo.mtr_closing_period_company").
-				Where("company_id = ? AND module_code = ? AND period_year <= ? AND period_month <= ? AND period_status = ?",
-					companyId, moduleSP, year, month, periodStatusOpen).
-				Order("period_year DESC, period_month DESC").
-				Limit(1).
-				Select("period_year, period_month").
-				Scan(&result).Error; err != nil {
+			currentPeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(companyId) + "&closing_module_detail_code" + moduleSP
+			currentPeriodPayloads := masterpayloads.GetCurrentPeriodResponse{}
+			if err := utils.Get(currentPeriodUrl, &currentPeriodPayloads, nil); err != nil {
 				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
-					Message:    "Failed to get period details",
-					Err:        err,
+					Err:        errors.New("failed to get period details"),
 				}
 			}
+			// Add additional validation for period month and period year
+			if !(currentPeriodPayloads.PeriodMonth <= month && currentPeriodPayloads.PeriodYear <= year) {
+				currentPeriodPayloads.PeriodMonth = ""
+				currentPeriodPayloads.PeriodYear = ""
+			}
 
-			if result.PeriodYear != nil {
-				periodYear = *result.PeriodYear
+			if currentPeriodPayloads.PeriodYear != "" {
+				periodYear = currentPeriodPayloads.PeriodYear
 			} else {
 				periodYear = "0000"
 			}
 
-			if result.PeriodMonth != nil {
-				periodMonth = *result.PeriodMonth
+			if currentPeriodPayloads.PeriodMonth != "" {
+				periodMonth = currentPeriodPayloads.PeriodMonth
 			} else {
 				periodMonth = "00"
 			}
@@ -424,7 +430,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 			// Check item type
 			itemTypeExists := false
 			if err := tx.Model(&masteritementities.Item{}).
-				Where("item_code = ? AND item_type = ?", oprItemCode, itemService).
+				Where("item_id = ? AND item_type = ?", oprItemCode, itemService).
 				Select("item_type").
 				Scan(&itemTypeExists).Error; err != nil {
 				return 0, &exceptions.BaseErrorResponse{
@@ -438,7 +444,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				// Get price from gmPriceList for items
 				if err := tx.Model(&masteritementities.PriceList{}).
 					Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
-						brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCode).
+						brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 					Order("effective_date DESC").
 					Limit(1).
 					Pluck("price_list_amount", &price).Error; err != nil {
@@ -451,7 +457,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 			} else {
 				// Get price from amGroupStock for other items
 				if err := tx.Model(&masterentities.GroupStock{}).
-					Where("period_year = ? AND period_month = ? AND item_code = ? AND company_code = ? AND whs_group = ?",
+					Where("period_year = ? AND period_month = ? AND item_code = ? AND company_id = ? AND whs_group = ?",
 						periodYear, periodMonth, oprItemCode, companyId, whsGroup).
 					Select("CASE ISNULL(price_current, 0) WHEN 0 THEN price_begin ELSE price_current END AS hpp").
 					Pluck("hpp", &price).Error; err != nil {
@@ -465,8 +471,8 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 			if billCode != utils.TrxTypeWoInternal.ID && billCode != utils.TrxTypeSoExport.ID && billCode != utils.TrxTypeSoInternal.ID {
 				if err := tx.Model(&masteritementities.Item{}).
-					Where("item_code = ?", oprItemCode).
-					Pluck("use_disc_decentralize", &useDiscDecentralize).Error; err != nil {
+					Where("item_id = ?", oprItemCode).
+					Pluck("ISNULL(use_disc_decentralize, '')", &useDiscDecentralize).Error; err != nil {
 					return 0, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
 						Message:    "Failed to get useDiscDecentralize value",
@@ -474,14 +480,14 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 					}
 				}
 
-				if useDiscDecentralize == "" {
+				if useDiscDecentralize == "" || useDiscDecentralize == " " {
 					useDiscDecentralize = "Y"
 				}
 
 				if useDiscDecentralize == "N" {
 					if err := tx.Model(&masteritementities.PriceList{}).
-						Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_code = ?",
-							brandId, effDate, oprItemCode, currencyId, companyId, defaultPriceCode).
+						Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
+							brandId, effDate, oprItemCode, currencyId, companyId, defaultPriceCodeId).
 						Pluck("price_list_amount", &price).Error; err != nil {
 						return 0, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
@@ -494,7 +500,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		} else {
 			if err := tx.Model(&masteritementities.PriceList{}).
 				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
-					brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCode).
+					brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 				Order("effective_date DESC").
 				Limit(1).
 				Pluck("price_list_amount", &price).Error; err != nil {
@@ -2526,7 +2532,7 @@ func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId i
 	entities := masterwarehouseentities.WarehouseMaster{}
 
 	baseModelQuery := tx.Model(&entities).
-		Select(`
+		Distinct(`
 			mli.warehouse_id,
 			mwg.warehouse_group_code,
 			mwg.warehouse_group_name,

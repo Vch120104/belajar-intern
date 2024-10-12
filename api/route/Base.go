@@ -814,7 +814,7 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
-	router.Get("/{warehouse_id}/authorize-user", warehouseMasterController.GetAuthorizeUser)
+	router.Get("/authorize-user", warehouseMasterController.GetAuthorizeUser)
 	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
 	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	router.Get("/drop-down/in-transit/{company_id}/{warehouse_group_id}", warehouseMasterController.InTransitWarehouseCodeDropdown)
@@ -1111,6 +1111,7 @@ func CampaignMasterRouter(
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
+	router.Get("/by-code/{campaign_code}", campaignmastercontroller.GetByCodeCampaignMaster)
 	router.Get("/history", campaignmastercontroller.GetAllCampaignMasterCodeAndName)
 	router.Post("/", campaignmastercontroller.SaveCampaignMaster)
 	router.Patch("/{campaign_id}", campaignmastercontroller.ChangeStatusCampaignMaster)
@@ -1120,6 +1121,8 @@ func CampaignMasterRouter(
 	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
 	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
+	router.Post("/detail/save-from-package", campaignmastercontroller.SaveCampaignMasterDetailFromPackage)
+
 	router.Patch("/detail/deactivate/{campaign_detail_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
 	router.Patch("/detail/activate/{campaign_detail_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
 	router.Put("/detail/update/{campaign_detail_id}", campaignmastercontroller.UpdateCampaignMasterDetail)

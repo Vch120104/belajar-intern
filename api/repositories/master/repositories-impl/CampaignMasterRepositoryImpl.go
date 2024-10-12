@@ -20,16 +20,20 @@ import (
 )
 
 type CampaignMasterRepositoryImpl struct {
+	lookupRepo masterrepository.LookupRepository
 }
 
 func StartCampaignMasterRepositoryImpl() masterrepository.CampaignMasterRepository {
-	return &CampaignMasterRepositoryImpl{}
+	lookupRepo := StartLookupRepositoryImpl()
+	return &CampaignMasterRepositoryImpl{
+		lookupRepo: lookupRepo,
+	}
 }
 
 func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req masterpayloads.CampaignMasterPost) (masterentities.CampaignMaster, *exceptions.BaseErrorResponse) {
 	var entities masterentities.CampaignMaster
 
-	result, _ := tx.Model(&entities).Where("campaign_code =?", req.CampaignCode).First(&entities).Rows()
+	result, _ := tx.Model(&entities).Where("campaign_code = ? AND campaign_id != ?", req.CampaignCode, req.CampaignId).First(&entities).Rows()
 	if result != nil {
 		return masterentities.CampaignMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
@@ -38,6 +42,7 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMaster(tx *gorm.DB, req maste
 	}
 
 	entity := &masterentities.CampaignMaster{
+		CampaignId:         req.CampaignId,
 		CampaignCode:       req.CampaignCode,
 		CampaignName:       req.CampaignName,
 		BrandId:            req.BrandId,
@@ -181,6 +186,151 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignDetailMaster(tx *gorm.DB, req
 		}
 	}
 	return *entities, nil
+}
+
+func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *gorm.DB, req masterpayloads.CampaignMasterDetailPostFromPackageRequest) (masterentities.CampaignMasterDetail, *exceptions.BaseErrorResponse) {
+	campaignDetailEntities := masterentities.CampaignMasterDetail{}
+	response := masterentities.CampaignMasterDetail{}
+
+	companyReferenceUrl := config.EnvConfigs.GeneralServiceUrl + "company-reference/" + strconv.Itoa(req.CompanyId)
+	companyReferencePayloads := masterpayloads.CampaignMasterCompanyReferenceResponse{}
+	if err := utils.Get(companyReferenceUrl, &companyReferencePayloads, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching company reference",
+			Err:        err,
+		}
+	}
+	currencyId := companyReferencePayloads.CurrencyId
+
+	jobTypeUrl := config.EnvConfigs.GeneralServiceUrl + "job-type-by-code/CP"
+	jobTypePayloads := masterpayloads.CampaignMasterJobTypeResponse{}
+	if err := utils.Get(jobTypeUrl, &jobTypePayloads, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching job type campaign",
+			Err:        err,
+		}
+	}
+	jobTypeCampaignId := jobTypePayloads.JobTypeId
+
+	WOTransactionTypeUrl := config.EnvConfigs.GeneralServiceUrl + "work-order-transaction-type-by-code/Campaign"
+	WOTransactionTypePayloads := masterpayloads.CampaignMasterWOTransactionResponse{}
+	if err := utils.Get(WOTransactionTypeUrl, &WOTransactionTypePayloads, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching work order transaction",
+			Err:        err,
+		}
+	}
+	billCode := WOTransactionTypePayloads.WorkOrderTransactionTypeId
+
+	var totalRows int
+	err := tx.Model(&campaignDetailEntities).
+		Select("COUNT(*) total_rows").
+		Where("campaign_id = ?", req.CampaignId).
+		Where("package_id = ?", req.PackageId).
+		Pluck("total_rows", &totalRows).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if totalRows == 0 {
+		responsePackageDetail := []masterentities.PackageMasterDetail{}
+
+		err = tx.Model(&masterentities.PackageMasterDetail{}).
+			Where("package_id = ?", req.PackageId).
+			Where("is_active = ?", true).
+			Scan(&responsePackageDetail).Error
+
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		var warehouseGroup string
+		err = tx.Model(&masterentities.WarehouseGroupMappingEntities{}).
+			Select("warehouse_group_mapping_description").
+			Where("warehouse_group_type_code = 'WHS_GRP_CAMPAIGN'").
+			First(&warehouseGroup).Error
+
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, data := range responsePackageDetail {
+			itemPriceCode, err := r.lookupRepo.GetOprItemPrice(tx, data.LineTypeId, req.CompanyId, data.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+			if err != nil {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err.Err,
+				}
+			}
+			if itemPriceCode == 0 {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNotFound,
+					Err:        errors.New("operation item price not found, please set the price first"),
+				}
+			}
+		}
+
+		packageMasterDetailResponse := masterentities.PackageMasterDetail{}
+		err = tx.Model(&masterentities.PackageMasterDetail{}).
+			Where(masterentities.PackageMasterDetail{
+				PackageId: req.PackageId,
+				IsActive:  true,
+			}).First(&packageMasterDetailResponse).Error
+
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		itemPriceCode, itemPriceErr := r.lookupRepo.GetOprItemPrice(tx, packageMasterDetailResponse.LineTypeId, req.CompanyId, packageMasterDetailResponse.ItemOperationId, req.BrandId, req.ModelId, jobTypeCampaignId, 0, currencyId, billCode, warehouseGroup)
+
+		if itemPriceErr != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        itemPriceErr.Err,
+			}
+		}
+
+		campaignDetailEntities = masterentities.CampaignMasterDetail{
+			IsActive:        true,
+			CampaignId:      req.CampaignId,
+			LineTypeId:      packageMasterDetailResponse.LineTypeId,
+			ItemOperationId: packageMasterDetailResponse.ItemOperationId,
+			Quantity:        packageMasterDetailResponse.FrtQuantity,
+			ShareBillTo:     "",
+			DiscountPercent: 0,
+			SharePercent:    0,
+			PackageId:       req.PackageId,
+			Price:           itemPriceCode,
+		}
+
+		err = tx.Save(&campaignDetailEntities).Error
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		response = campaignDetailEntities
+	}
+
+	return response, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
@@ -345,7 +495,11 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	var payloads masterpayloads.CampaignMasterDetailGetPayloads
 	var item masteritempayloads.BomItemNameResponse
 	var operation masterpayloads.Operation
-	err := tx.Model(&entities).Where("campaign_detail_id = ?", id).Scan(&payloads).Error
+	err := tx.Model(&entities).
+		Select("mtr_campaign_master_detail.*, mc.total").
+		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
+		Where("campaign_detail_id = ?", id).
+		First(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -378,13 +532,17 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	}
 
 	response := map[string]interface{}{
-		"is_active":         payloads.IsActive,
-		"line_type_id":      payloads.LineTypeId,
-		"item_operation_id": payloads.ItemOperationId,
-		"frt_quantity":      payloads.Quantity,
-		"price":             payloads.Price,
-		"discount_percent":  payloads.DiscountPercent,
-		"share_percent":     payloads.SharePercent,
+		"is_active":          payloads.IsActive,
+		"campaign_detail_id": payloads.CampaignDetailId,
+		"campaign_id":        payloads.CampaignId,
+		"line_type_id":       payloads.LineTypeId,
+		"item_operation_id":  payloads.ItemOperationId,
+		"frt_quantity":       payloads.Quantity,
+		"price":              payloads.Price,
+		"discount_percent":   payloads.DiscountPercent,
+		"share_percent":      payloads.SharePercent,
+		"share_bill_to":      payloads.ShareBillTo,
+		"total":              payloads.Total,
 	}
 
 	if entities.LineTypeId != 9 && entities.LineTypeId != 1 {
@@ -396,6 +554,57 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	}
 
 	return response, nil
+}
+
+func (r *CampaignMasterRepositoryImpl) GetByCodeCampaignMaster(tx *gorm.DB, code string) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	entities := masterentities.CampaignMaster{}
+	payloads := masterpayloads.CampaignMasterResponse{}
+	var modelresponse masterpayloads.GetModelResponse
+	var brandresponse masterpayloads.GetBrandResponse
+	err := tx.Model(&entities).Where(masterentities.CampaignMaster{
+		CampaignCode: code,
+	}).First(&payloads).Error
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	brandIdUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payloads.BrandId)
+	errUrlBrandId := utils.Get(brandIdUrl, &brandresponse, nil)
+	if errUrlBrandId != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlBrandId,
+		}
+	}
+	BrandJoinData, errdf := utils.DataFrameInnerJoin([]masterpayloads.CampaignMasterResponse{payloads}, []masterpayloads.GetBrandResponse{brandresponse}, "BrandId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	modelIdUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payloads.ModelId)
+	errUrlModelId := utils.Get(modelIdUrl, &modelresponse, nil)
+	if errUrlModelId != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrlModelId,
+		}
+	}
+	ModelIdJoinData, errdf := utils.DataFrameInnerJoin(BrandJoinData, []masterpayloads.GetModelResponse{modelresponse}, "ModelId")
+
+	if errdf != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errdf,
+		}
+	}
+
+	return ModelIdJoinData[0], nil
 }
 
 func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
@@ -425,19 +634,85 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	model := []masterpayloads.GetModelResponse{}
 	entities := masterentities.CampaignMaster{}
 	payloads := []masterpayloads.CampaignMasterResponse{}
-	baseModelQuery := tx.Model(&entities).Scan(&payloads)
 	var mapResponses []map[string]interface{}
 
-	Wherequery := utils.ApplyFilter(baseModelQuery, filterCondition)
-
-	_, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, Wherequery)).Scan(&payloads).Rows()
-
-	if len(payloads) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
+	var modelDescription string
+	var modelCode string
+	var campaignPeriodFrom string
+	var campaignPeriodTo string
+	var newFilterCondition []utils.FilterCondition
+	for _, filter := range filterCondition {
+		if filter.ColumnField == "model_description" && filter.ColumnValue != "" {
+			modelDescription = filter.ColumnValue
+			continue
 		}
+		if filter.ColumnField == "model_code" && filter.ColumnValue != "" {
+			modelCode = filter.ColumnValue
+			continue
+		}
+		if filter.ColumnField == "campaign_period_from" && filter.ColumnValue != "" {
+			campaignPeriodFrom = filter.ColumnValue
+			continue
+		}
+		if filter.ColumnField == "campaign_period_to" && filter.ColumnValue != "" {
+			campaignPeriodTo = filter.ColumnValue
+			continue
+		}
+		newFilterCondition = append(newFilterCondition, filter)
 	}
+
+	baseModelQuery := tx.Model(&entities)
+
+	if modelDescription != "" {
+		modelIds := []int{}
+		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_description=" + modelDescription
+		modelPayloads := []masterpayloads.GetModelResponse{}
+		if err := utils.GetArray(modelUrl, &modelPayloads, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		if len(modelPayloads) > 0 {
+			for _, model := range modelPayloads {
+				modelIds = append(modelIds, model.ModelId)
+			}
+		} else {
+			modelIds = append(modelIds, -1)
+		}
+		baseModelQuery = baseModelQuery.Where("model_id IN ?", modelIds)
+	}
+
+	if modelCode != "" {
+		modelIds := []int{}
+		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_code=" + modelCode
+		modelPayloads := []masterpayloads.GetModelResponse{}
+		if err := utils.GetArray(modelUrl, &modelPayloads, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		if len(modelPayloads) > 0 {
+			for _, model := range modelPayloads {
+				modelIds = append(modelIds, model.ModelId)
+			}
+		} else {
+			modelIds = append(modelIds, -1)
+		}
+		baseModelQuery = baseModelQuery.Where("model_id IN ?", modelIds)
+	}
+
+	if campaignPeriodFrom != "" {
+		baseModelQuery.Where("FORMAT(campaign_period_from, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodFrom+"%")
+	}
+
+	if campaignPeriodTo != "" {
+		baseModelQuery.Where("FORMAT(campaign_period_to, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodTo+"%")
+	}
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, newFilterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -460,6 +735,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			Err:        errdf,
 		}
 	}
+
 	for _, response := range joineddata1 {
 		responseMap := map[string]interface{}{
 			"appointment_only":     response["AppointmentOnly"],
@@ -468,7 +744,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			"campaign_id":          response["CampaignId"],
 			"campaign_name":        response["CampaignName"],
 			"campaign_period_from": response["CampaignPeriodFrom"],
-			"camapign_period_to":   response["CampaignPeriodTo"],
+			"campaign_period_to":   response["CampaignPeriodTo"],
 			"is_active":            response["IsActive"],
 			"model_code":           response["ModelCode"],
 			"model_description":    response["ModelDescription"],
@@ -493,9 +769,12 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 	var packagecode string
 	combinedPayloads := make([]map[string]interface{}, 0)
 
-	err := tx.Model(&entities).Where(masterentities.CampaignMasterDetail{
-		CampaignId: id,
-	}).Scan(&responsedetail).Error
+	err := tx.Model(&entities).
+		Select("mtr_campaign_master_detail.*, mc.total").
+		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
+		Where(masterentities.CampaignMasterDetail{
+			CampaignId: id,
+		}).Scan(&responsedetail).Error
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -505,10 +784,10 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 	}
 
 	for _, op := range responsedetail {
-		if op.PackageId != 0{
-			err := tx.Select("mtr_package.package_code").Table("mtr_package").Where("mtr_package.package_id=?",op.PackageId).Scan(packagecode).Error
-			if err != nil{
-				return nil,0,0,&exceptions.BaseErrorResponse{
+		if op.PackageId != 0 {
+			err := tx.Select("mtr_package.package_code").Table("mtr_package").Where("mtr_package.package_id=?", op.PackageId).Scan(packagecode).Error
+			if err != nil {
+				return nil, 0, 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
 				}
 			}
@@ -537,17 +816,20 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 		}
 
 		response := map[string]interface{}{
-			"is_active":         op.IsActive,
-			"package_code":      packagecode,
-			"package_id":        op.PackageId,
-			"line_type_id":      op.LineTypeId,
-			"item_operation_id": op.ItemOperationId,
-			"frt_quantity":      op.Quantity,
-			"price":             op.Price,
-			"discount_percent":  op.DiscountPercent,
-			"share_percent":     op.SharePercent,
+			"is_active":          op.IsActive,
+			"campaign_id":        op.CampaignId,
+			"campaign_detail_id": op.CampaignDetailId,
+			"package_code":       packagecode,
+			"package_id":         op.PackageId,
+			"line_type_id":       op.LineTypeId,
+			"item_operation_id":  op.ItemOperationId,
+			"frt_quantity":       op.Quantity,
+			"price":              op.Price,
+			"discount_percent":   op.DiscountPercent,
+			"share_percent":      op.SharePercent,
+			"total":              op.Total,
 		}
-	
+
 		if op.LineTypeId != 9 && op.LineTypeId != 1 {
 			response["item_name"] = item.ItemName
 			response["item_code"] = item.ItemCode
