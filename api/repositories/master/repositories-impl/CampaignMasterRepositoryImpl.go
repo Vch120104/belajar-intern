@@ -496,9 +496,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	var item masteritempayloads.BomItemNameResponse
 	var operation masterpayloads.Operation
 	err := tx.Model(&entities).
-		Select("mtr_campaign_master_detail.*, mc.total").
-		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
-		Where("campaign_detail_id = ?", id).
+		Where(masterentities.CampaignMasterDetail{CampaignDetailId: id}).
 		First(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -531,6 +529,12 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 		}
 	}
 
+	beforeDisc := payloads.Price * payloads.Quantity
+	afterDisc := beforeDisc
+	if payloads.DiscountPercent > 0 {
+		afterDisc = beforeDisc - (beforeDisc * payloads.DiscountPercent / 100)
+	}
+
 	response := map[string]interface{}{
 		"is_active":          payloads.IsActive,
 		"campaign_detail_id": payloads.CampaignDetailId,
@@ -542,7 +546,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 		"discount_percent":   payloads.DiscountPercent,
 		"share_percent":      payloads.SharePercent,
 		"share_bill_to":      payloads.ShareBillTo,
-		"total":              payloads.Total,
+		"total":              afterDisc,
 	}
 
 	if entities.LineTypeId != 9 && entities.LineTypeId != 1 {
@@ -770,8 +774,6 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 	combinedPayloads := make([]map[string]interface{}, 0)
 
 	err := tx.Model(&entities).
-		Select("mtr_campaign_master_detail.*, mc.total").
-		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
 		Where(masterentities.CampaignMasterDetail{
 			CampaignId: id,
 		}).Scan(&responsedetail).Error
@@ -815,6 +817,12 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 			}
 		}
 
+		beforeDisc := op.Price * op.Quantity
+		afterDisc := beforeDisc
+		if op.DiscountPercent > 0 {
+			afterDisc = beforeDisc - (beforeDisc * op.DiscountPercent / 100)
+		}
+
 		response := map[string]interface{}{
 			"is_active":          op.IsActive,
 			"campaign_id":        op.CampaignId,
@@ -827,7 +835,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 			"price":              op.Price,
 			"discount_percent":   op.DiscountPercent,
 			"share_percent":      op.SharePercent,
-			"total":              op.Total,
+			"total":              afterDisc,
 		}
 
 		if op.LineTypeId != 9 && op.LineTypeId != 1 {
