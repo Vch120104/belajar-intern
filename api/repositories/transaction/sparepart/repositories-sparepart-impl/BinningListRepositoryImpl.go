@@ -7,21 +7,89 @@ import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
 	generalservicepayloads "after-sales/api/payloads/crossservice/generalservice"
+	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	"context"
 	"errors"
+	"fmt"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+	"time"
 )
 
-type BinningListRepositoryImpl struct{}
+type BinningListRepositoryImpl struct {
+}
 
 func NewbinningListRepositoryImpl() transactionsparepartrepository.BinningListRepository {
 	return &BinningListRepositoryImpl{}
 }
+func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB, rdb *redis.Client, filter []utils.FilterCondition, paginations pagination.Pagination, ctx context.Context) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var binningEntities []transactionsparepartentities.BinningStock
+	var BinningResponses []transactionsparepartpayloads.BinningListGetPaginationResponse
+	joinTable := db.Model(&binningEntities)
+	WhereQuery := utils.ApplyFilter(joinTable, filter)
+	err := WhereQuery.Scopes(pagination.Paginate(&binningEntities, &paginations, WhereQuery)).Order("binning_system_number").Scan(&binningEntities).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return paginations, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("failed To Get Paginate Binning List"),
+		}
+	}
+	if len(binningEntities) == 0 {
+		paginations.Rows = []string{}
+		return paginations, nil
+	}
 
+	for _, binningEntity := range binningEntities {
+		var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
+		SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(binningEntity.SupplierId)
+		if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
+			return paginations, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to fetch Supplier data from external service" + err.Error(),
+				Err:        err,
+			}
+		}
+		//rdb.FlushDB(ctx).Err()
+		exists, _ := rdb.Exists(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId)).Result()
+
+		if exists == 0 {
+			fmt.Println("Failed To Get Status on redis... queue for external service")
+			var DocResponse generalservicepayloads.DocumentStatusPayloads
+			DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(binningEntity.BinningDocumentStatusId)
+			if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+				return paginations, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        errors.New("failed To fetch Document Status From External Service"),
+				}
+			}
+
+			rdb.Set(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId), DocResponse.DocumentStatusCode, 1*time.Hour)
+		}
+		StatusCode, _ := rdb.Get(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId)).Result()
+
+		//return DocResponse.ApprovalStatusId
+		BinningResponse := transactionsparepartpayloads.BinningListGetPaginationResponse{
+			BinningSystemNumber:         binningEntity.BinningSystemNumber,
+			BinningDocumentStatusId:     binningEntity.BinningDocumentStatusId,
+			BinningDocumentNumber:       binningEntity.BinningDocumentNumber,
+			BinningDocumentDate:         binningEntity.BinningDocumentDate,
+			ReferenceDocumentNumber:     binningEntity.ReferenceDocumentNumber,
+			SupplierInvoiceNumber:       binningEntity.SupplierInvoiceNumber,
+			SupplierName:                SupplierData.SupplierName,
+			SupplierCaseNumber:          binningEntity.SupplierCaseNumber,
+			Status:                      StatusCode,
+			SupplierDeliveryOrderNumber: binningEntity.SupplierDeliveryOrderNumber,
+		}
+		BinningResponses = append(BinningResponses, BinningResponse)
+	}
+	paginations.Rows = BinningResponses
+	return paginations, nil
+}
 func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStockId int) (transactionsparepartpayloads.BinningListGetByIdResponse, *exceptions.BaseErrorResponse) {
 	BinningStockEntities := transactionsparepartentities.BinningStock{}
 	Response := transactionsparepartpayloads.BinningListGetByIdResponse{}
@@ -101,7 +169,7 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 	if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
 		return Response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Supplier data from external service",
+			Message:    "Failed to fetch Supplier data from external service" + err.Error(),
 			Err:        err,
 		}
 	}
@@ -110,7 +178,9 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 	//Item Group Name
 	ItemGroupName := ""
 	err = db.Table("trx_item_purchase_order A").Select("B.item_group_name").
-		Joins("JOIN mtr_item_group B ON A.item_group_id = B.item_group_id").Scan(&ItemGroupName).Error
+		Joins("JOIN mtr_item_group B ON A.item_group_id = B.item_group_id").
+		Where("A.purchase_order_system_number = ?", BinningStockEntities.ReferenceSystemNumber).
+		Scan(&ItemGroupName).Error
 	if err != nil && !(errors.Is(err, gorm.ErrRecordNotFound)) {
 		return Response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

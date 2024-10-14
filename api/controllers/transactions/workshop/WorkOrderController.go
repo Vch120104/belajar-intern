@@ -400,7 +400,6 @@ func (r *WorkOrderControllerImpl) AddLineType(writer http.ResponseWriter, reques
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Param line_type_id path string true "Work Order LineType ID"
-// @Param reqBody body transactionworkshoppayloads.WorkOrderLinetypeRequest true "Work Order Bill Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-line-type/{line_type_id} [put]
@@ -2030,7 +2029,6 @@ func (r *WorkOrderControllerImpl) ChangePhoneNo(writer http.ResponseWriter, requ
 // @Produce json
 // @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path string true "Work Order ID"
-// @Param reqBody body transactionworkshoppayloads.ConfirmPriceListRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/confirm-price/{work_order_system_number}/{multi_id} [put]

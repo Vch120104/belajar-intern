@@ -7,46 +7,46 @@ type SupplierAddress struct {
 	VillageId      int    `json:"village_id"`
 }
 type VatSupplier struct {
-	NpwpNo             string      `json:"npwp_no"`
-	NpwpDate           string      `json:"npwp_date"`
-	PkpType            interface{} `json:"pkp_type"`
-	PkpNo              string      `json:"pkp_no"`
-	PkpDate            string      `json:"pkp_date"`
-	TaxTransactionId   interface{} `json:"tax_transaction_id"`
-	TaxBranchCode      interface{} `json:"tax_branch_code"`
-	Reserve            interface{} `json:"reserve"`
-	Name               string      `json:"name"`
-	AddressStreet1     string      `json:"address_street_1"`
-	AddressStreet2     string      `json:"address_street_2"`
-	AddressStreet3     string      `json:"address_street_3"`
-	VillageId          int         `json:"village_id"`
-	TaxServiceOfficeId interface{} `json:"tax_service_office_id"`
+	NpwpNo             string `json:"npwp_no"`
+	NpwpDate           string `json:"npwp_date"`
+	PkpType            string `json:"pkp_type"`
+	PkpNo              string `json:"pkp_no"`
+	PkpDate            string `json:"pkp_date"`
+	TaxTransactionId   int    `json:"tax_transaction_id"`
+	TaxBranchCode      string `json:"tax_branch_code"`
+	Reserve            string `json:"reserve"`
+	Name               string `json:"name"`
+	AddressStreet1     string `json:"address_street_1"`
+	AddressStreet2     string `json:"address_street_2"`
+	AddressStreet3     string `json:"address_street_3"`
+	VillageId          int    `json:"village_id"`
+	TaxServiceOfficeId int    `json:"tax_service_office_id"`
 }
 type TaxSupplier struct {
-	NpwpNo             string      `json:"npwp_no"`
-	NpwpDate           string      `json:"npwp_date"`
-	PkpType            interface{} `json:"pkp_type"`
-	PkpNo              string      `json:"pkp_no"`
-	PkpDate            string      `json:"pkp_date"`
-	TaxTransactionId   interface{} `json:"tax_transaction_id"`
-	TaxBranchCode      interface{} `json:"tax_branch_code"`
-	Reserve            interface{} `json:"reserve"`
-	Name               string      `json:"name"`
-	AddressStreet1     string      `json:"address_street_1"`
-	AddressStreet2     string      `json:"address_street_2"`
-	AddressStreet3     string      `json:"address_street_3"`
-	VillageId          int         `json:"village_id"`
-	TaxServiceOfficeId interface{} `json:"tax_service_office_id"`
+	NpwpNo             string `json:"npwp_no"`
+	NpwpDate           string `json:"npwp_date"`
+	PkpType            string `json:"pkp_type"`
+	PkpNo              string `json:"pkp_no"`
+	PkpDate            string `json:"pkp_date"`
+	TaxTransactionId   int    `json:"tax_transaction_id"`
+	TaxBranchCode      string `json:"tax_branch_code"`
+	Reserve            string `json:"reserve"`
+	Name               string `json:"name"`
+	AddressStreet1     string `json:"address_street_1"`
+	AddressStreet2     string `json:"address_street_2"`
+	AddressStreet3     string `json:"address_street_3"`
+	VillageId          int    `json:"village_id"`
+	TaxServiceOfficeId int    `json:"tax_service_office_id"`
 }
 type SupplierContactData struct {
-	ClientContactId int         `json:"client_contact_id"`
-	ContactName     string      `json:"contact_name"`
-	DivisionName    string      `json:"division_name"`
-	JobTitleName    string      `json:"job_title_name"`
-	PhoneNumber     string      `json:"phone_number"`
-	GenderId        int         `json:"gender_id"`
-	EmailAddress    interface{} `json:"email_address"`
-	IsActive        bool        `json:"is_active"`
+	ClientContactId int    `json:"client_contact_id"`
+	ContactName     string `json:"contact_name"`
+	DivisionName    string `json:"division_name"`
+	JobTitleName    string `json:"job_title_name"`
+	PhoneNumber     string `json:"phone_number"`
+	GenderId        int    `json:"gender_id"`
+	EmailAddress    string `json:"email_address"`
+	IsActive        bool   `json:"is_active"`
 }
 type SupplierContact struct {
 	Page      int                   `json:"page"`
@@ -99,7 +99,7 @@ type SupplierMasterCrossServicePayloads struct {
 	MinimumDownPayment    int                `json:"minimum_down_payment"`
 	BehaviourId           int                `json:"behaviour_id"`
 	SupplierCategoryId    int                `json:"supplier_category_id"`
-	TaxIndustry           int                `json:"tax_industry"`
+	TaxIndustry           *float64           `json:"tax_industry"`
 	SupplierStatusId      int                `json:"supplier_status_id"`
 	SupplierStatus        string             `json:"supplier_status"`
 	VatSupplierId         int                `json:"vat_supplier_id"`

@@ -485,7 +485,7 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.Respon
 // @Accept json
 // @Produce json
 // @Param item_code path string true "Item Code"
-// @Success 200 {object} ItemOprCodeResponse
+
 // @Router /master/lookup/line-type/{item_code} [get]
 func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request) {
 	itemCode := chi.URLParam(request, "item_code")

@@ -10,7 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -535,6 +535,16 @@ func LocationStockRouter(
 	return router
 }
 
+func BinningListRouter(BinningList transactionsparepartcontroller.BinningListController) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/by-id/{binning_stock_system_number}", BinningList.GetBinningListById)
+	router.Get("/", BinningList.GetAllBinningListWithPagination)
+	return router
+}
 func PurchaseOrderRouter(
 	PurchaseOrder transactionsparepartcontroller.PurchaseOrderController,
 ) chi.Router {

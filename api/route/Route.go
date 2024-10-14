@@ -325,6 +325,11 @@ func StartRouting(db *gorm.DB) {
 	PurchaseOrderService := transactionsparepartserviceimpl.NewPurchaseOrderService(PurchaseOrderRepository, db, rdb)
 	PurchaseOrderController := transactionsparepartcontroller.NewPurchaseOrderControllerImpl(PurchaseOrderService)
 
+	//binning list
+	BinningListRepository := transactionsparepartrepositoryimpl.NewbinningListRepositoryImpl()
+	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
+	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
+
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -455,6 +460,7 @@ func StartRouting(db *gorm.DB) {
 	ServiceBodyshopRouter := ServiceBodyshopRouter(ServiceBodyshopController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
+	BinningListRouter := BinningListRouter(BinningListController)
 	LookupRouter := LookupRouter(LookupController)
 
 	r := chi.NewRouter()
@@ -549,7 +555,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 		r.Mount("/purchase-order", PurchaseOrderRouter)
-
+		r.Mount("/binning-list", BinningListRouter)
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
 	})

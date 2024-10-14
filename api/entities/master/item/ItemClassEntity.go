@@ -7,7 +7,7 @@ type ItemClass struct {
 	ItemClassId   int       `gorm:"column:item_class_id;size:30;primaryKey"  json:"item_class_id"`
 	ItemClassCode string    `gorm:"column:item_class_code;index:idx_item_class_code;unique;type:varchar(10)" json:"item_class_code"`
 	ItemGroupID   int       `gorm:"column:item_group_id;size:30;not null;" json:"item_group_id"` //FK with mtr_item_group common-general service
-	LineTypeID    int       `gorm:"column:line_type_id;size:30;not null" json:"line_type_id"`    //FK with mtr_line_type common-general service
+	LineTypeID    int       `gorm:"column:line_type_id;size:30" json:"line_type_id"`             //FK with mtr_line_type common-general service
 	ItemClassName string    `gorm:"column:item_class_name;not null"  json:"item_class_name"`
 	Item          Item      `gorm:"foreignKey:ItemClassId;references:ItemClassId"`
 	PriceList     PriceList `gorm:"foreignKey:ItemClassId;references:ItemClassId"`

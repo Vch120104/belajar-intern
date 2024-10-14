@@ -28,3 +28,16 @@ type BinningListGetByIdResponse struct {
 	UpdatedDate                 *time.Time `json:"updated_date"`
 	ChangeNo                    int        `json:"change_no"`
 }
+
+type BinningListGetPaginationResponse struct {
+	BinningSystemNumber         int        `json:"binning_system_number"`
+	BinningDocumentStatusId     int        `json:"binning_document_status_id"`
+	BinningDocumentNumber       string     `json:"binning_document_number"`
+	BinningDocumentDate         *time.Time `json:"binning_document_date"`
+	ReferenceDocumentNumber     string     `json:"reference_document_number"`
+	SupplierInvoiceNumber       string     `json:"supplier_invoice_number"`
+	SupplierName                string     `json:"supplier_name"`
+	SupplierCaseNumber          string     `json:"supplier_case_number"`
+	Status                      string     `json:"status"`
+	SupplierDeliveryOrderNumber string     `json:"supplier_delivery_order_number"`
+}

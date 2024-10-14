@@ -133,7 +133,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	return page, nil
 }
 func GetApprovalStatusId(code string) int {
-	var DocResponse transactionsparepartpayloads.PurchaseOrderApprovalStatusResponses
+	var DocResponse generalservicepayloads.ApprovalStatusResponses
 
 	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
 	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
