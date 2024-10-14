@@ -183,6 +183,30 @@ func ItemLevelRouter(
 	return router
 }
 
+func ItemPriceCodeRouter(
+	itemPriceCodeController masteritemcontroller.ItemPriceCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemPriceCodeController.GetAllItemPriceCode)
+	router.Get("/{item_price_code_id}", itemPriceCodeController.GetItemPriceCodeById)
+	router.Get("/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
+
+	router.Post("/", itemPriceCodeController.SaveItemPriceCode)
+
+	router.Delete("/", itemPriceCodeController.DeleteItemPriceCode)
+
+	router.Put("/", itemPriceCodeController.UpdateItemPriceCode)
+
+	router.Patch("/", itemPriceCodeController.ChangeStatusItemPriceCode)
+	return router
+}
+
 func ItemRouter(
 	itemController masteritemcontroller.ItemController,
 ) chi.Router {
