@@ -3,6 +3,7 @@ package masterpayloads
 import "time"
 
 type CampaignMasterPost struct {
+	CampaignId         int       `json:"campaign_id"`
 	CampaignCode       string    `json:"campaign_code"`
 	CampaignName       string    `json:"campaign_name"`
 	BrandId            int       `json:"brand_id"`
@@ -30,6 +31,7 @@ type CampaignMasterResponse struct {
 	Total              float64 `json:"total"`
 	TotalVat           float64 `json:"total_vat"`
 	TotalAfterVat      float64 `json:"total_after_vat"`
+	CompanyId          int     `json:"company_id"`
 }
 
 type CampaignMasterListReponse struct {
@@ -49,7 +51,7 @@ type GetModelResponse struct {
 type GetBrandResponse struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`
-	Brandname string `json:"brand_name"`
+	BrandName string `json:"brand_name"`
 }
 type GetHistory struct {
 	CampaignId   string `json:"campaign_id"`
@@ -60,4 +62,28 @@ type GetHistory struct {
 type CampaignMasterTaxAndTotal struct {
 	TaxId float64 `json:"tax_id"`
 	Total int     `json:"total"`
+}
+
+type CampaignMasterJobTypeResponse struct {
+	IsActive    bool   `json:"is_active"`
+	JobTypeId   int    `json:"job_type_id"`
+	JobTypeCode string `json:"job_type_code"`
+	JobTypeName string `json:"job_type_name"`
+}
+
+type CampaignMasterCompanyResponse struct {
+	CompanyId    int `json:"company_id"`
+	CompanyName  int `json:"company_name"`
+	VatCompanyId int `json:"vat_company_id"`
+}
+
+type CampaignMasterCompanyReferenceResponse struct {
+	CurrencyId int `json:"currency_id"`
+}
+
+type CampaignMasterWOTransactionResponse struct {
+	IsActive                     bool   `json:"is_active"`
+	WorkOrderTransactionTypeId   int    `json:"work_order_transaction_type_id"`
+	WorkOrderTransactionTypeName string `json:"work_order_transaction_type_name"`
+	WorkOrderTransactionTypeCode string `json:"work_order_transaction_type_code"`
 }
