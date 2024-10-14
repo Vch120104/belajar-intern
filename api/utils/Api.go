@@ -42,7 +42,7 @@ func Get(url string, data interface{}, body interface{}) error {
 	}
 
 	var responseBody APIResponse
-
+	print("url: " + url)
 	newRequest, err := http.NewRequest("GET", url, &buf)
 
 	if err != nil {
