@@ -755,8 +755,8 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			"model_id":             response["ModelId"],
 			"remark":               response["Remark"],
 			"total":                response["Total"],
-			"total_after_vat":      response["TotalAfterVAT"],
-			"total_vat":            response["TotalVAT"],
+			"total_after_vat":      response["TotalAfterVat"],
+			"total_vat":            response["TotalVat"],
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -865,6 +865,7 @@ func (r *CampaignMasterRepositoryImpl) UpdateCampaignMasterDetail(tx *gorm.DB, i
 }
 
 func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id int) bool {
+	var headerentity masterentities.CampaignMaster
 	var detailentity []masterentities.CampaignMasterDetail
 	var totalValue float64
 
@@ -877,10 +878,40 @@ func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id
 	}
 	for _, detail := range detailentity {
 		if detail.IsActive {
-			totalValue += detail.Quantity * detail.Price * (1 - (detail.DiscountPercent / 100))
+			if detail.DiscountPercent > 0 {
+				totalValue += detail.Quantity * detail.Price * (1 - (detail.DiscountPercent / 100))
+			} else {
+				totalValue += detail.Quantity * detail.Price
+			}
 		}
 	}
-	return true
+
+	currentTime := time.Now().Truncate(24 * time.Hour)
+	convertedCurrentTime := utils.FormatRFC3339(currentTime)
+	date, time, err := utils.ConvertDateTimeFormat(convertedCurrentTime)
+	if err != nil {
+		return false
+	}
+	taxRateUrl := config.EnvConfigs.FinanceServiceUrl + "tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date=" + date + "T" + time + "Z"
+	taxRatePayloads := masterpayloads.TaxFarePercentResponse{}
+	if err := utils.Get(taxRateUrl, &taxRatePayloads, nil); err != nil {
+		return false
+	}
+	vatRate := taxRatePayloads.TaxPercent
+	totalVat := vatRate / 100 * totalValue
+	totalAfterVat := totalValue + totalVat
+
+	err = tx.Model(&headerentity).Where(masterentities.CampaignMaster{CampaignId: id}).First(&headerentity).Error
+	if err != nil {
+		return false
+	}
+	headerentity.Total = totalValue
+	headerentity.TotalVat = totalVat
+	headerentity.TotalAfterVat = totalAfterVat
+
+	err = tx.Save(&headerentity).Error
+
+	return err == nil
 }
 
 func (r *CampaignMasterRepositoryImpl) GetAllPackageMasterToCopy(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {

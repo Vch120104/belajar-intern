@@ -37,3 +37,7 @@ type CampaignMasterDetailPostFromPackageRequest struct {
 	ModelId    int `json:"model_id"`
 	PackageId  int `json:"package_id"`
 }
+
+type TaxFarePercentResponse struct {
+	TaxPercent float64 `json:"tax_percent"`
+}
