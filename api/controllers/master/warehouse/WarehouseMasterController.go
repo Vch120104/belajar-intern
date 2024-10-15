@@ -187,7 +187,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		}
 		return
 	}
-	fmt.print("test : "+getbyid)
+	fmt.Print("test : ",getbyid)
 	payloads.NewHandleSuccess(writer, getbyid, "Get Data Successfully!", http.StatusOK)
 }
 
