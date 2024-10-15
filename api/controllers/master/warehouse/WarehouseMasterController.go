@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"fmt"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -186,7 +187,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		}
 		return
 	}
-
+	fmt.print("test : "+getbyid)
 	payloads.NewHandleSuccess(writer, getbyid, "Get Data Successfully!", http.StatusOK)
 }
 
