@@ -2593,19 +2593,11 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		Where("mtr_item.is_active = ?", true).
 		Where("mtr_item.price_list_item = 'Y'")
 
-	baseModelQuery2 := tx.Model(&entities).
-		Select("COUNT(DISTINCT mtr_item.item_id) AS total_rows").
-		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
-		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mid.item_id").
-		Where("mtr_item.is_active = ?", true).
-		Where("mtr_item.price_list_item = 'Y'")
-
 	if companyId == 0 {
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
-		baseModelQuery2 = baseModelQuery2.Where("mtr_item.common_pricelist = ?", true)
 	}
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Offset(pages.Page * pages.Limit).Limit(pages.Limit).Order("mtr_item.item_id").Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.PaginateDistinct(&entities, &pages, whereQuery, "mtr_item.item_id")).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -2614,18 +2606,6 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		}
 	}
 
-	var totalRows int
-	err = utils.ApplyFilter(baseModelQuery2, filterCondition).Pluck("total_rows", &totalRows).Error
-
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	pages.TotalRows = int64(totalRows)
-	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
 	pages.Rows = responses
 
 	return pages, nil
