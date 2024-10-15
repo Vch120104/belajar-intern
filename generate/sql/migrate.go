@@ -9,7 +9,7 @@ import (
 
 	// masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
-	// masteritementities "after-sales/api/entities/master/item"
+	masteritementities "after-sales/api/entities/master/item"
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
@@ -69,41 +69,41 @@ func Migrate() {
 
 	// AutoMigrate models
 	err = db.AutoMigrate( // according to foreign key order
-	//&masteroperationentities.OperationModelMapping{},
-	//&masteroperationentities.OperationLevel{},
-	//&masteroperationentities.OperationFrt{},
-	//&masteroperationentities.OperationGroup{},
-	//&masteroperationentities.OperationSection{},
-	//&masteroperationentities.OperationKey{},
-	//&masteroperationentities.OperationEntries{},
-	//&masteroperationentities.OperationCode{},
-	////
-	//&masterwarehouseentities.WarehouseGroup{},
-	//&masterwarehouseentities.WarehouseMaster{},
-	//&masterwarehouseentities.WarehouseLocation{},
-	//&masterwarehouseentities.WarehouseLocationDefinition{},
-	//&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
-	//
-	//&masteritementities.LandedCost{},
-	//&masteritementities.PurchasePrice{},
-	//&masteritementities.PurchasePriceDetail{},
-	//&masteritementities.UomType{},
-	//&masteritementities.Uom{},
-	//&masteritementities.UomItem{},
-	//&masteritementities.MarkupRate{},
-	//&masteritementities.PrincipleBrandParent{},
-	//&masteritementities.MarkupMaster{},
-	//&masteritementities.ItemLevel{},
-	//&masteritementities.PriceList{},
-	//&masteritementities.ItemSubstituteDetail{},
-	//&masteritementities.ItemSubstitute{},
-	//&masteritementities.ItemPackage{},
-	//&masteritementities.ItemPackageDetail{},
-	//&masteritementities.ItemImport{},
-	//&masteritementities.ItemDetail{},
-	//&masteritementities.ItemLocationSource{},
-	// &masteritementities.Item{},
-	// &masteritementities.ItemPriceCode{},
+		//&masteroperationentities.OperationModelMapping{},
+		//&masteroperationentities.OperationLevel{},
+		//&masteroperationentities.OperationFrt{},
+		//&masteroperationentities.OperationGroup{},
+		//&masteroperationentities.OperationSection{},
+		//&masteroperationentities.OperationKey{},
+		//&masteroperationentities.OperationEntries{},
+		//&masteroperationentities.OperationCode{},
+		////
+		//&masterwarehouseentities.WarehouseGroup{},
+		//&masterwarehouseentities.WarehouseMaster{},
+		//&masterwarehouseentities.WarehouseLocation{},
+		//&masterwarehouseentities.WarehouseLocationDefinition{},
+		//&masterwarehouseentities.WarehouseLocationDefinitionLevel{},
+		//
+		//&masteritementities.LandedCost{},
+		//&masteritementities.PurchasePrice{},
+		//&masteritementities.PurchasePriceDetail{},
+		//&masteritementities.UomType{},
+		//&masteritementities.Uom{},
+		//&masteritementities.UomItem{},
+		//&masteritementities.MarkupRate{},
+		//&masteritementities.PrincipleBrandParent{},
+		//&masteritementities.MarkupMaster{},
+		//&masteritementities.ItemLevel{},
+		//&masteritementities.PriceList{},
+		//&masteritementities.ItemSubstituteDetail{},
+		//&masteritementities.ItemSubstitute{},
+		//&masteritementities.ItemPackage{},
+		//&masteritementities.ItemPackageDetail{},
+		//&masteritementities.ItemImport{},
+		//&masteritementities.ItemDetail{},
+		//&masteritementities.ItemLocationSource{},
+		// &masteritementities.Item{},
+		&masteritementities.ItemPriceCode{},
 
 	//&masteritementities.ItemLocation{},
 	//&masteritementities.ItemLocationDetail{},

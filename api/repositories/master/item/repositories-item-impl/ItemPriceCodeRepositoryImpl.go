@@ -21,7 +21,6 @@ func StartItemPriceCodeImpl() masteritemlevelrepo.ItemPriceCodeRepository {
 	return &ItemPriceCodeRepositoryImpl{}
 }
 
-// GetAllItemPriceCode implements masteritemrepository.ItemPriceCodeRespository.
 func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var results []masteritempayloads.SaveItemPriceCode
 	var totalItems int64
@@ -29,10 +28,8 @@ func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCon
 	tableStruct := masteritementities.ItemPriceCode{}
 	baseModelQuery := tx.Model(&tableStruct)
 
-	// Apply filters
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Get the total number of items
 	err := whereQuery.Count(&totalItems).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -41,7 +38,6 @@ func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCon
 		}
 	}
 
-	// Use GetOffset and GetLimit for pagination
 	err = whereQuery.Limit(pages.GetLimit()).Offset(pages.GetOffset()).Find(&results).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -50,7 +46,6 @@ func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCon
 		}
 	}
 
-	// Convert results to map
 	mapResults := make([]map[string]interface{}, len(results))
 	for i, result := range results {
 		mapResults[i] = map[string]interface{}{
@@ -64,12 +59,10 @@ func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCon
 	return mapResults, int(totalItems), pages.Limit, nil
 }
 
-// GetByIdItemPriceCode retrieves an item price code by ID
 func (r *ItemPriceCodeRepositoryImpl) GetByIdItemPriceCode(tx *gorm.DB, id int) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse) {
 	var result masteritempayloads.SaveItemPriceCode
 	var itemPriceCode masteritementities.ItemPriceCode
 
-	// Query to find the ItemPriceCode by ID
 	err := tx.Model(&itemPriceCode).Where("item_price_code_id = ?", id).First(&itemPriceCode).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -84,7 +77,6 @@ func (r *ItemPriceCodeRepositoryImpl) GetByIdItemPriceCode(tx *gorm.DB, id int) 
 		}
 	}
 
-	// Map the entity to the response payload
 	result.ItemPriceCodeId = itemPriceCode.ItemPriceCodeId
 	result.IsActive = itemPriceCode.IsActive
 	result.ItemPriceCode = itemPriceCode.ItemPriceCode
@@ -97,7 +89,6 @@ func (r *ItemPriceCodeRepositoryImpl) GetByCodeItemPriceCode(tx *gorm.DB, itemPr
 	var result masteritempayloads.SaveItemPriceCode
 	var itemPriceCodeEntity masteritementities.ItemPriceCode
 
-	// Query to find the ItemPriceCode by its code
 	err := tx.Model(&itemPriceCodeEntity).Where("item_price_code = ?", itemPriceCode).First(&itemPriceCodeEntity).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -112,7 +103,6 @@ func (r *ItemPriceCodeRepositoryImpl) GetByCodeItemPriceCode(tx *gorm.DB, itemPr
 		}
 	}
 
-	// Map the entity to the response payload
 	result.ItemPriceCodeId = itemPriceCodeEntity.ItemPriceCodeId
 	result.IsActive = itemPriceCodeEntity.IsActive
 	result.ItemPriceCode = itemPriceCodeEntity.ItemPriceCode
@@ -121,7 +111,6 @@ func (r *ItemPriceCodeRepositoryImpl) GetByCodeItemPriceCode(tx *gorm.DB, itemPr
 	return result, nil
 }
 
-// SaveItemPriceCode saves a new item price code to the database
 func (r *ItemPriceCodeRepositoryImpl) SaveItemPriceCode(tx *gorm.DB, request masteritempayloads.SaveItemPriceCode) (masteritementities.ItemPriceCode, *exceptions.BaseErrorResponse) {
 	newItemPriceCode := masteritementities.ItemPriceCode{
 		ItemPriceCode:     request.ItemPriceCode,
@@ -129,7 +118,6 @@ func (r *ItemPriceCodeRepositoryImpl) SaveItemPriceCode(tx *gorm.DB, request mas
 		IsActive:          request.IsActive,
 	}
 
-	// Save the new ItemPriceCode
 	err := tx.Model(&masteritementities.ItemPriceCode{}).Create(&newItemPriceCode).Error
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
@@ -147,11 +135,9 @@ func (r *ItemPriceCodeRepositoryImpl) SaveItemPriceCode(tx *gorm.DB, request mas
 	return newItemPriceCode, nil
 }
 
-// DeleteItemPriceCode deletes an item price code by its ID
 func (r *ItemPriceCodeRepositoryImpl) DeleteItemPriceCode(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	var itemPriceCode masteritementities.ItemPriceCode
 
-	// Attempt to delete the ItemPriceCode
 	err := tx.Model(&itemPriceCode).Where("item_price_code_id = ?", id).Delete(&itemPriceCode).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -163,11 +149,9 @@ func (r *ItemPriceCodeRepositoryImpl) DeleteItemPriceCode(tx *gorm.DB, id string
 	return true, nil
 }
 
-// UpdateItemPriceCode updates an existing item price code
 func (r *ItemPriceCodeRepositoryImpl) UpdateItemPriceCode(tx *gorm.DB, itemPriceId int, req masteritempayloads.UpdateItemPriceCode) (bool, *exceptions.BaseErrorResponse) {
 	var existingItemPriceCode masteritementities.ItemPriceCode
 
-	// Find the existing item price code by ID
 	err := tx.Model(&existingItemPriceCode).Where("item_price_code_id = ?", itemPriceId).First(&existingItemPriceCode).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -182,11 +166,9 @@ func (r *ItemPriceCodeRepositoryImpl) UpdateItemPriceCode(tx *gorm.DB, itemPrice
 		}
 	}
 
-	// Update the fields
 	existingItemPriceCode.ItemPriceCode = req.ItemPriceCode
 	existingItemPriceCode.ItemPriceCodeName = req.ItemPriceCodeName
 
-	// Save the updated entity
 	err = tx.Save(&existingItemPriceCode).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -198,11 +180,9 @@ func (r *ItemPriceCodeRepositoryImpl) UpdateItemPriceCode(tx *gorm.DB, itemPrice
 	return true, nil
 }
 
-// ChangeStatusItemPriceCode toggles the active status of an item price code
 func (r *ItemPriceCodeRepositoryImpl) ChangeStatusItemPriceCode(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var existingItemPriceCode masteritementities.ItemPriceCode
 
-	// Find the item price code by ID
 	err := tx.Model(&existingItemPriceCode).Where("item_price_code_id = ?", id).First(&existingItemPriceCode).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -217,10 +197,8 @@ func (r *ItemPriceCodeRepositoryImpl) ChangeStatusItemPriceCode(tx *gorm.DB, id 
 		}
 	}
 
-	// Toggle the active status
 	existingItemPriceCode.IsActive = !existingItemPriceCode.IsActive
 
-	// Save the changes
 	err = tx.Save(&existingItemPriceCode).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{

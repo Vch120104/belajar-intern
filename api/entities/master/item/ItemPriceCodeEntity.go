@@ -8,3 +8,7 @@ type ItemPriceCode struct {
 	ItemPriceCode     string `gorm:"column:item_price_code;not null;unique;size:20"        json:"item_price_code"`
 	ItemPriceCodeName string `gorm:"column:item_price_code_name;not null;size:256"        json:"item_price_code_name"`
 }
+
+func (*ItemPriceCode) TableName() string {
+	return CreateItemPriceCodeTable
+}

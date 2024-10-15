@@ -35,7 +35,6 @@ func NewItemPriceCodeController(itemPriceCodeService masteritemservice.ItemPrice
 	}
 }
 
-// GetAllItemPriceCode retrieves all ItemPriceCode with pagination
 func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
@@ -63,7 +62,6 @@ func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWr
 	payloads.NewHandleSuccessPagination(writer, results, "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 }
 
-// GetItemPriceCodeById retrieves a single ItemPriceCode by its ID
 func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {
@@ -83,7 +81,6 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeById(writer http.ResponseW
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// GetItemPriceCodeByCode retrieves a single ItemPriceCode by its code
 func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCode := chi.URLParam(request, "item_price_code")
 
@@ -96,7 +93,6 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.Respons
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
-// SaveItemPriceCode saves a new ItemPriceCode
 func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.SaveItemPriceCode
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -111,7 +107,6 @@ func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWrit
 	payloads.NewHandleSuccess(writer, result, message, http.StatusOK)
 }
 
-// DeleteItemPriceCode deletes an ItemPriceCode by ID
 func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCodeId := chi.URLParam(request, "item_price_code_id")
 
@@ -124,7 +119,6 @@ func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, result, "Item Price Code deleted successfully!", http.StatusOK)
 }
 
-// UpdateItemPriceCode updates an existing ItemPriceCode
 func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.UpdateItemPriceCode
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -147,7 +141,6 @@ func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, result, "Item Price Code updated successfully!", http.StatusOK)
 }
 
-// ChangeStatusItemPriceCode toggles the status (active/inactive) of an ItemPriceCode
 func (r *ItemPriceCodeControllerImpl) ChangeStatusItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {

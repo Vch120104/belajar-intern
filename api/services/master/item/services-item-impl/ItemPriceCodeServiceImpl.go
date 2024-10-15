@@ -28,7 +28,6 @@ func StartItemPriceCodeService(ItemPriceCodeRepo masteritemrepository.ItemPriceC
 	}
 }
 
-// GetAllItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) GetAllItemPriceCode(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, totalPages, totalRows, err := s.ItemPriceCodeRepo.GetAllItemPriceCode(tx, filterCondition, pages)
@@ -39,7 +38,6 @@ func (s *ItemPriceCodeServiceImpl) GetAllItemPriceCode(filterCondition []utils.F
 	return results, totalPages, totalRows, nil
 }
 
-// GetByIdItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) GetByIdItemPriceCode(id int) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.GetByIdItemPriceCode(tx, id)
@@ -50,7 +48,6 @@ func (s *ItemPriceCodeServiceImpl) GetByIdItemPriceCode(id int) (masteritempaylo
 	return result, nil
 }
 
-// GetByCodeItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) GetByCodeItemPriceCode(itemPriceCode string) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.GetByCodeItemPriceCode(tx, itemPriceCode)
@@ -61,7 +58,6 @@ func (s *ItemPriceCodeServiceImpl) GetByCodeItemPriceCode(itemPriceCode string) 
 	return result, nil
 }
 
-// SaveItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) SaveItemPriceCode(req masteritempayloads.SaveItemPriceCode) (masteritementities.ItemPriceCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.SaveItemPriceCode(tx, req)
@@ -72,7 +68,6 @@ func (s *ItemPriceCodeServiceImpl) SaveItemPriceCode(req masteritempayloads.Save
 	return result, nil
 }
 
-// DeleteItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) DeleteItemPriceCode(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.DeleteItemPriceCode(tx, id)
@@ -83,7 +78,6 @@ func (s *ItemPriceCodeServiceImpl) DeleteItemPriceCode(id string) (bool, *except
 	return result, nil
 }
 
-// UpdateItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) UpdateItemPriceCode(itemPriceId int, req masteritempayloads.UpdateItemPriceCode) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.UpdateItemPriceCode(tx, itemPriceId, req)
@@ -94,7 +88,6 @@ func (s *ItemPriceCodeServiceImpl) UpdateItemPriceCode(itemPriceId int, req mast
 	return result, nil
 }
 
-// ChangeStatusItemPriceCode implements masteritemservice.ItemPriceCodeService
 func (s *ItemPriceCodeServiceImpl) ChangeStatusItemPriceCode(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.ChangeStatusItemPriceCode(tx, id)
