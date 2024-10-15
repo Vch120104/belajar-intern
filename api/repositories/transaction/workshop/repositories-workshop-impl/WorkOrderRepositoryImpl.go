@@ -5090,7 +5090,7 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 				}
 			}
 
-			//-- By default price of all items will be replaced with the price from PriceList
+			//-- By default price of all items will be replaced with the price from ItemPriceList
 			//-- Exclude Fee from the replacing process
 			var oprItemPrice, oprItemPriceDisc, discountPercent float64
 			var markupAmount, markupPercentage float64

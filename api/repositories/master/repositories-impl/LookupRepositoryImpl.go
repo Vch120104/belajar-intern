@@ -377,7 +377,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 
 	default:
-		if err := tx.Model(&masteritementities.PriceList{}).
+		if err := tx.Model(&masteritementities.ItemPriceList{}).
 			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).Count(&priceCount).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -442,7 +442,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 			if itemTypeExists {
 				// Get price from gmPriceList for items
-				if err := tx.Model(&masteritementities.PriceList{}).
+				if err := tx.Model(&masteritementities.ItemPriceList{}).
 					Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 						brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 					Order("effective_date DESC").
@@ -485,7 +485,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 
 				if useDiscDecentralize == "N" {
-					if err := tx.Model(&masteritementities.PriceList{}).
+					if err := tx.Model(&masteritementities.ItemPriceList{}).
 						Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 							brandId, effDate, oprItemCode, currencyId, companyId, defaultPriceCodeId).
 						Pluck("price_list_amount", &price).Error; err != nil {
@@ -498,7 +498,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 			}
 		} else {
-			if err := tx.Model(&masteritementities.PriceList{}).
+			if err := tx.Model(&masteritementities.ItemPriceList{}).
 				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 					brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 				Order("effective_date DESC").

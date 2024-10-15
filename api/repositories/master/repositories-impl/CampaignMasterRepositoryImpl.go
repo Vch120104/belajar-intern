@@ -946,7 +946,7 @@ func (r *CampaignMasterRepositoryImpl) SelectFromPackageMaster(tx *gorm.DB, id i
 	var lastprice float64
 	var operationpayloads masterpayloads.CampaignMasterDetailGetPayloads
 	var entity masterentities.CampaignMaster
-	var itemprice masteritementities.PriceList
+	var itemprice masteritementities.ItemPriceList
 
 	err := tx.Model(&packagedetail).Where("Package_id=?", id).Scan(packagedetail).Error
 	if err != nil {
