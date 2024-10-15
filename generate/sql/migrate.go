@@ -9,7 +9,7 @@ import (
 
 	// masterentities "after-sales/api/entities/master"
 	// mastercampaignmasterentities "after-sales/api/entities/master/campaign_master"
-	masteritementities "after-sales/api/entities/master/item"
+	// masteritementities "after-sales/api/entities/master/item"
 	// masteroperationentities "after-sales/api/entities/master/operation"
 	// masterwarehouseentities "after-sales/api/entities/master/warehouse"
 
@@ -103,7 +103,7 @@ func Migrate() {
 		//&masteritementities.ItemDetail{},
 		//&masteritementities.ItemLocationSource{},
 		// &masteritementities.Item{},
-		&masteritementities.ItemPriceCode{},
+		// &masteritementities.ItemPriceCode{},
 
 	//&masteritementities.ItemLocation{},
 	//&masteritementities.ItemLocationDetail{},
