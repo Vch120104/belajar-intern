@@ -246,12 +246,12 @@ func (s *ItemLocationServiceImpl) UploadPreviewFile(rows [][]string) ([]masterit
 			data.WarehouseLocationCode = value[1]
 			data.ItemCode = value[2]
 
-			_, warehouseErr := s.WarehouseMasterRepo.GetWarehouseMasterByCode(tx, data.WarehouseCode)
+			warehouseData, warehouseErr := s.WarehouseMasterRepo.GetWarehouseMasterByCode(tx, data.WarehouseCode)
 			if warehouseErr != nil {
 				validation += "Warehouse Master"
 			}
 
-			_, warehouseLocErr := s.WarehouseLocationRepo.GetByCode(tx, data.WarehouseLocationCode)
+			warehouseLocData, warehouseLocErr := s.WarehouseLocationRepo.GetByCode(tx, data.WarehouseLocationCode)
 			if warehouseLocErr != nil {
 				if validation != "" {
 					validation += ", "
@@ -259,7 +259,7 @@ func (s *ItemLocationServiceImpl) UploadPreviewFile(rows [][]string) ([]masterit
 				validation += "Warehouse Location"
 			}
 
-			_, itemErr := s.ItemRepo.GetItemCode(tx, data.ItemCode)
+			itemData, itemErr := s.ItemRepo.GetItemCode(tx, data.ItemCode)
 			if itemErr != nil {
 				if validation != "" {
 					validation += ", "
@@ -267,8 +267,19 @@ func (s *ItemLocationServiceImpl) UploadPreviewFile(rows [][]string) ([]masterit
 				validation += "Item"
 			}
 
+			check, err := s.ItemLocationRepo.IsDuplicateItemLoc(tx, warehouseData.WarehouseId, warehouseLocData.WarehouseLocationId, itemData.ItemId)
+			if err != nil {
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        err,
+				}
+			}
+
 			if validation != "" {
 				validation = "Data not found in " + validation + "."
+			}
+			if check {
+				validation = "Location already used by other item!"
 			}
 
 			data.Validation = validation
