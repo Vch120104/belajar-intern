@@ -68,7 +68,7 @@ func (s *ItemPriceCodeServiceImpl) SaveItemPriceCode(req masteritempayloads.Save
 	return result, nil
 }
 
-func (s *ItemPriceCodeServiceImpl) DeleteItemPriceCode(id string) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemPriceCodeServiceImpl) DeleteItemPriceCode(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemPriceCodeRepo.DeleteItemPriceCode(tx, id)
 	defer helper.CommitOrRollback(tx, err)

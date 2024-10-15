@@ -39,8 +39,8 @@ func (r *ItemPriceCodeControllerImpl) GetAllItemPriceCode(writer http.ResponseWr
 	queryValues := request.URL.Query()
 
 	filterParams := map[string]string{
-		"mtr_item_price_code.is_active":         queryValues.Get("is_active"),
-		"mtr_item_price_code.item_price_code":   queryValues.Get("item_price_code"),
+		"mtr_item_price_code.is_active":          queryValues.Get("is_active"),
+		"mtr_item_price_code.item_price_code":    queryValues.Get("item_price_code"),
 		"mtr_item_price_code.item_price_code_id": queryValues.Get("item_price_code_id"),
 	}
 
@@ -108,11 +108,18 @@ func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWrit
 }
 
 func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWriter, request *http.Request) {
-	itemPriceCodeId := chi.URLParam(request, "item_price_code_id")
-
-	result, err := r.ItemPriceCodeService.DeleteItemPriceCode(itemPriceCodeId)
+	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("invalid item_price_code_id"),
+		})
+		return
+	}
+
+	result, errResult := r.ItemPriceCodeService.DeleteItemPriceCode(itemPriceCodeId)
+	if errResult != nil {
+		helper.ReturnError(writer, request, errResult)
 		return
 	}
 

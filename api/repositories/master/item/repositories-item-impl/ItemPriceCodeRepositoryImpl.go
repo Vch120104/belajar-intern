@@ -135,7 +135,7 @@ func (r *ItemPriceCodeRepositoryImpl) SaveItemPriceCode(tx *gorm.DB, request mas
 	return newItemPriceCode, nil
 }
 
-func (r *ItemPriceCodeRepositoryImpl) DeleteItemPriceCode(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemPriceCodeRepositoryImpl) DeleteItemPriceCode(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var itemPriceCode masteritementities.ItemPriceCode
 
 	err := tx.Model(&itemPriceCode).Where("item_price_code_id = ?", id).Delete(&itemPriceCode).Error

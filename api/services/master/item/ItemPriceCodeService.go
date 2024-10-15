@@ -13,7 +13,7 @@ type ItemPriceCodeService interface {
 	GetByIdItemPriceCode(id int) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse)
 	GetByCodeItemPriceCode(ItemPriceCode string) (masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse)
 	SaveItemPriceCode(request masteritempayloads.SaveItemPriceCode) (masteritementities.ItemPriceCode, *exceptions.BaseErrorResponse)
-	DeleteItemPriceCode(Id string) (bool, *exceptions.BaseErrorResponse)
-	UpdateItemPriceCode(ItemPriceId int, req masteritempayloads.UpdateItemPriceCode) (bool, *exceptions.BaseErrorResponse)
+	DeleteItemPriceCode(id int) (bool, *exceptions.BaseErrorResponse)
+	UpdateItemPriceCode(itemPriceId int, req masteritempayloads.UpdateItemPriceCode) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPriceCode(Id int) (bool, *exceptions.BaseErrorResponse)
 }

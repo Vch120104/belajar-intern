@@ -195,15 +195,15 @@ func ItemPriceCodeRouter(
 
 	router.Get("/", itemPriceCodeController.GetAllItemPriceCode)
 	router.Get("/{item_price_code_id}", itemPriceCodeController.GetItemPriceCodeById)
-	router.Get("/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
+	router.Get("/by-code/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
 
 	router.Post("/", itemPriceCodeController.SaveItemPriceCode)
 
-	router.Delete("/", itemPriceCodeController.DeleteItemPriceCode)
+	router.Delete("/{item_price_code_id}", itemPriceCodeController.DeleteItemPriceCode)
 
-	router.Put("/", itemPriceCodeController.UpdateItemPriceCode)
+	router.Put("/{item_price_code_id}", itemPriceCodeController.UpdateItemPriceCode)
 
-	router.Patch("/", itemPriceCodeController.ChangeStatusItemPriceCode)
+	router.Patch("/{item_price_code_id}", itemPriceCodeController.ChangeStatusItemPriceCode)
 	return router
 }
 
