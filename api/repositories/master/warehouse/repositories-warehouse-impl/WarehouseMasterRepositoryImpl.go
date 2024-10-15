@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"fmt"
 
 	// masterwarehousegroupservice "after-sales/api/services/master/warehouse"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
@@ -307,7 +308,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	warehouseMasterResponse.UserDetails = getUserResponse
 	warehouseMasterResponse.JobPositionDetails = getJobPositionResponse
 	warehouseMasterResponse.VillageDetails = getVillageResponse
-
+	fmt.Printf("Warehouse Master Response: %+v\n", warehouseMasterResponse)
 	return warehouseMasterResponse, nil
 }
 
