@@ -355,24 +355,26 @@ func (r *ItemClassRepositoryImpl) SaveItemClass(tx *gorm.DB, request masteritemp
 		}
 	}
 
-	//CHECK LINE TYPE ID
+	//CHECK LINE TYPE ID IF ITEM GROUP IS 'INVENTORY'
+	if getItemGroupResponse.ItemGroupName == "Inventory" || getItemGroupResponse.ItemGroupCode == "IN" {
+		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(request.LineTypeId)
+		errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
 
-	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(request.LineTypeId)
-
-	errUrlLineType := utils.Get(lineTypeUrl, &getLineTypeResponse, nil)
-
-	if errUrlLineType != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlLineType,
+		if errUrlLineType != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errUrlLineType,
+			}
 		}
-	}
 
-	if getLineTypeResponse == (masteritempayloads.LineTypeResponse{}) {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("line type not found"),
+		if getLineTypeResponse == (masteritempayloads.LineTypeResponse{}) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errors.New("line type not found"),
+			}
 		}
+	} else {
+		request.LineTypeId = 0
 	}
 
 	entities := masteritementities.ItemClass{
