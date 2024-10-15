@@ -195,11 +195,11 @@ func (s *LookupServiceImpl) GetLineTypeByItemCode(itemCode string) (int, *except
 	return lineType, nil
 }
 
-func (s *LookupServiceImpl) GetItemLocationWarehouse(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ListItemLocation(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	warehouse, baseErr := s.LookupRepo.GetItemLocationWarehouse(tx, companyId, filterCondition, pages)
+	warehouse, baseErr := s.LookupRepo.ListItemLocation(tx, companyId, filterCondition, pages)
 	if baseErr != nil {
 		return warehouse, baseErr
 	}
@@ -207,11 +207,11 @@ func (s *LookupServiceImpl) GetItemLocationWarehouse(companyId int, filterCondit
 	return warehouse, nil
 }
 
-func (s *LookupServiceImpl) GetWarehouseGroupByCompany(companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) WarehouseGroupByCompany(companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	warehouse, baseErr := s.LookupRepo.GetWarehouseGroupByCompany(tx, companyId)
+	warehouse, baseErr := s.LookupRepo.WarehouseGroupByCompany(tx, companyId)
 	if baseErr != nil {
 		return warehouse, baseErr
 	}
@@ -219,11 +219,11 @@ func (s *LookupServiceImpl) GetWarehouseGroupByCompany(companyId int) ([]masterp
 	return warehouse, nil
 }
 
-func (s *LookupServiceImpl) GetItemListForPriceList(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemListTransPL(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	item, baseErr := s.LookupRepo.GetItemListForPriceList(tx, companyId, filterCondition, pages)
+	item, baseErr := s.LookupRepo.ItemListTransPL(tx, companyId, filterCondition, pages)
 	if baseErr != nil {
 		return item, baseErr
 	}

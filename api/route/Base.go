@@ -1624,9 +1624,9 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
-	router.Get("/item-location-warehouse", LookupController.GetItemLocationWarehouse)
-	router.Get("/warehouse-group/{company_id}", LookupController.GetWarehouseGroupByCompany)
-	router.Get("/item-list", LookupController.GetItemListForPriceList)
+	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
+	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
+	router.Get("/item-list", LookupController.ItemListTransPL)
 
 	return router
 }

@@ -2527,7 +2527,8 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 	return campaignDiscount, nil
 }
 
-func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+// usp_comLookUp IF @strEntity = 'ListItemLocation'
+func (r *LookupRepositoryImpl) ListItemLocation(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	response := []masterpayloads.WarehouseMasterForItemLookupResponse{}
 	entities := masterwarehouseentities.WarehouseMaster{}
 
@@ -2559,7 +2560,7 @@ func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId i
 }
 
 // IF @strEntity = 'WarehouseGroupByCompany'
-func (r *LookupRepositoryImpl) GetWarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) WarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
 	response := []masterpayloads.WarehouseGroupByCompanyResponse{}
 
@@ -2581,7 +2582,7 @@ func (r *LookupRepositoryImpl) GetWarehouseGroupByCompany(tx *gorm.DB, companyId
 }
 
 // usp_comLookUp IF @strEntity = 'ItemListTransPL'
-func (r *LookupRepositoryImpl) GetItemListForPriceList(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{}
 	responses := []masterpayloads.ItemListForPriceList{}
 
