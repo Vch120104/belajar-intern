@@ -496,9 +496,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 	var item masteritempayloads.BomItemNameResponse
 	var operation masterpayloads.Operation
 	err := tx.Model(&entities).
-		Select("mtr_campaign_master_detail.*, mc.total").
-		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
-		Where("campaign_detail_id = ?", id).
+		Where(masterentities.CampaignMasterDetail{CampaignDetailId: id}).
 		First(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -531,6 +529,12 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 		}
 	}
 
+	beforeDisc := payloads.Price * payloads.Quantity
+	afterDisc := beforeDisc
+	if payloads.DiscountPercent > 0 {
+		afterDisc = beforeDisc - (beforeDisc * payloads.DiscountPercent / 100)
+	}
+
 	response := map[string]interface{}{
 		"is_active":          payloads.IsActive,
 		"campaign_detail_id": payloads.CampaignDetailId,
@@ -542,7 +546,7 @@ func (r *CampaignMasterRepositoryImpl) GetByIdCampaignMasterDetail(tx *gorm.DB, 
 		"discount_percent":   payloads.DiscountPercent,
 		"share_percent":      payloads.SharePercent,
 		"share_bill_to":      payloads.ShareBillTo,
-		"total":              payloads.Total,
+		"total":              afterDisc,
 	}
 
 	if entities.LineTypeId != 9 && entities.LineTypeId != 1 {
@@ -751,8 +755,8 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 			"model_id":             response["ModelId"],
 			"remark":               response["Remark"],
 			"total":                response["Total"],
-			"total_after_vat":      response["TotalAfterVAT"],
-			"total_vat":            response["TotalVAT"],
+			"total_after_vat":      response["TotalAfterVat"],
+			"total_vat":            response["TotalVat"],
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
@@ -770,8 +774,6 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 	combinedPayloads := make([]map[string]interface{}, 0)
 
 	err := tx.Model(&entities).
-		Select("mtr_campaign_master_detail.*, mc.total").
-		Joins("INNER JOIN mtr_campaign mc ON mc.campaign_id = mtr_campaign_master_detail.campaign_id").
 		Where(masterentities.CampaignMasterDetail{
 			CampaignId: id,
 		}).Scan(&responsedetail).Error
@@ -815,6 +817,12 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 			}
 		}
 
+		beforeDisc := op.Price * op.Quantity
+		afterDisc := beforeDisc
+		if op.DiscountPercent > 0 {
+			afterDisc = beforeDisc - (beforeDisc * op.DiscountPercent / 100)
+		}
+
 		response := map[string]interface{}{
 			"is_active":          op.IsActive,
 			"campaign_id":        op.CampaignId,
@@ -827,7 +835,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 			"price":              op.Price,
 			"discount_percent":   op.DiscountPercent,
 			"share_percent":      op.SharePercent,
-			"total":              op.Total,
+			"total":              afterDisc,
 		}
 
 		if op.LineTypeId != 9 && op.LineTypeId != 1 {
@@ -857,6 +865,7 @@ func (r *CampaignMasterRepositoryImpl) UpdateCampaignMasterDetail(tx *gorm.DB, i
 }
 
 func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id int) bool {
+	var headerentity masterentities.CampaignMaster
 	var detailentity []masterentities.CampaignMasterDetail
 	var totalValue float64
 
@@ -869,10 +878,40 @@ func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id
 	}
 	for _, detail := range detailentity {
 		if detail.IsActive {
-			totalValue += detail.Quantity * detail.Price * (1 - (detail.DiscountPercent / 100))
+			if detail.DiscountPercent > 0 {
+				totalValue += detail.Quantity * detail.Price * (1 - (detail.DiscountPercent / 100))
+			} else {
+				totalValue += detail.Quantity * detail.Price
+			}
 		}
 	}
-	return true
+
+	currentTime := time.Now().Truncate(24 * time.Hour)
+	convertedCurrentTime := utils.FormatRFC3339(currentTime)
+	date, time, err := utils.ConvertDateTimeFormat(convertedCurrentTime)
+	if err != nil {
+		return false
+	}
+	taxRateUrl := config.EnvConfigs.FinanceServiceUrl + "tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date=" + date + "T" + time + "Z"
+	taxRatePayloads := masterpayloads.TaxFarePercentResponse{}
+	if err := utils.Get(taxRateUrl, &taxRatePayloads, nil); err != nil {
+		return false
+	}
+	vatRate := taxRatePayloads.TaxPercent
+	totalVat := vatRate / 100 * totalValue
+	totalAfterVat := totalValue + totalVat
+
+	err = tx.Model(&headerentity).Where(masterentities.CampaignMaster{CampaignId: id}).First(&headerentity).Error
+	if err != nil {
+		return false
+	}
+	headerentity.Total = totalValue
+	headerentity.TotalVat = totalVat
+	headerentity.TotalAfterVat = totalAfterVat
+
+	err = tx.Save(&headerentity).Error
+
+	return err == nil
 }
 
 func (r *CampaignMasterRepositoryImpl) GetAllPackageMasterToCopy(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
