@@ -215,13 +215,6 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 		}
 	}
 
-	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New("no contents"),
-		}
-	}
-
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -260,23 +253,9 @@ func (r *ItemClassRepositoryImpl) GetAllItemClass(tx *gorm.DB, internalFilter []
 
 	wg.Wait()
 
-	joinedData, errdf := utils.DataFrameInnerJoin(responses, getItemGroupResponse, "ItemGroupId")
+	joinedData := utils.DataFrameLeftJoin(responses, getItemGroupResponse, "ItemGroupId")
 
-	if errdf != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	joinedDataSecond, errdf := utils.DataFrameInnerJoin(joinedData, getLineTypeResponse, "LineTypeId")
-
-	if errdf != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
+	joinedDataSecond := utils.DataFrameLeftJoin(joinedData, getLineTypeResponse, "LineTypeId")
 
 	pages.Rows = joinedDataSecond
 
