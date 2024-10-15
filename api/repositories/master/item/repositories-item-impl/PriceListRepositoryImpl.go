@@ -31,10 +31,10 @@ func (r *PriceListRepositoryImpl) Duplicate(tx *gorm.DB, itemGroupId int, brandI
 
 	result := []masteritempayloads.PriceListItemResponses{}
 
-	if err := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id").
-		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
+	if err := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_item_price_list.price_list_amount,mtr_item_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id").
+		Joins("LEFT JOIN mtr_item ON mtr_item_price_list.item_id = mtr_item.item_id").
 		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
-		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date).
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date).
 		Scan(&result).Error; err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -51,10 +51,10 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 
 	result := []masteritempayloads.PriceListItemResponses{}
 
-	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id,mtr_price_list.price_list_id").
-		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
+	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_item_price_list.price_list_amount,mtr_item_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id,mtr_item_price_list.price_list_id").
+		Joins("LEFT JOIN mtr_item ON mtr_item_price_list.item_id = mtr_item.item_id").
 		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
-		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date)
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date)
 
 	if err := query.Scopes(pagination.Paginate(model, &pages, query)).Scan(&result).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -73,8 +73,8 @@ func (r *PriceListRepositoryImpl) CheckPriceListExist(tx *gorm.DB, itemId int, b
 	model := masteritementities.PriceList{}
 
 	if err := tx.Model(model).Where(masteritementities.PriceList{BrandId: brandId, ItemId: itemId}).
-		Where("mtr_price_list.company_id = ?", companyId).
-		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
+		Where("mtr_item_price_list.company_id = ?", companyId).
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -233,9 +233,9 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	itemgrouppayloads := masteritempayloads.ItemGroupResponse{}
 	currencypayloads := masteritempayloads.CurrencyResponse{}
 
-	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_price_list.*").
-		Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id").
+	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
 		Where(masteritementities.PriceList{PriceListId: Id}).
 		First(&response).Error
 
@@ -311,7 +311,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 			PriceListModifiable: true,
 		}
 
-		err := tx.Save(&entities).Where(entities).Select("mtr_price_list.price_list_id").First(&PriceListId).Error
+		err := tx.Save(&entities).Where(entities).Select("mtr_item_price_list.price_list_id").First(&PriceListId).Error
 
 		if err != nil {
 			return PriceListId, &exceptions.BaseErrorResponse{
@@ -379,11 +379,11 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 	model := masteritementities.PriceList{}
 
 	query := tx.Model(model).
-		Select("mtr_item.*,mtr_item_class.*,mtr_price_list.*").
-		Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id")
+		Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id")
 
-		//apply where query
+	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)
 	//apply pagination and execute
 	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&payloads).Error

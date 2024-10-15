@@ -2,7 +2,7 @@ package masteritementities
 
 import "time"
 
-var CreatePriceListTable = "mtr_price_list"
+var CreatePriceListTable = "mtr_item_price_list"
 
 type PriceList struct {
 	IsActive            bool      `gorm:"column:is_active;not null;default:true"        json:"is_active"`
