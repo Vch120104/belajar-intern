@@ -2,9 +2,9 @@ package masteritementities
 
 import "time"
 
-var CreatePriceListTable = "mtr_price_list"
+var CreatePriceListTable = "mtr_item_price_list"
 
-type PriceList struct {
+type ItemPriceList struct {
 	IsActive            bool      `gorm:"column:is_active;not null;default:true"        json:"is_active"`
 	PriceListId         int       `gorm:"column:price_list_id;not null;primaryKey;size:30"        json:"price_list_id"`
 	PriceListCodeId     int       `gorm:"column:price_list_code_id;size:30;null"        json:"price_list_code_id"`
@@ -22,6 +22,6 @@ type PriceList struct {
 	AtpmSyncronizeTime  time.Time `gorm:"column:atpm_syncronize_time;null"        json:"atpm_syncronize_time"`
 }
 
-func (*PriceList) TableName() string {
+func (*ItemPriceList) TableName() string {
 	return CreatePriceListTable
 }

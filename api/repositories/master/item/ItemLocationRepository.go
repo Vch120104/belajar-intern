@@ -23,4 +23,5 @@ type ItemLocationRepository interface {
 	GetByIdItemLoc(tx *gorm.DB, id int) (masteritempayloads.ItemLocationGetByIdResponse, *exceptions.BaseErrorResponse)
 	SaveItemLoc(tx *gorm.DB, req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse)
 	DeleteItemLoc(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse)
+	IsDuplicateItemLoc(tx *gorm.DB, warehouseId int, warehouseLocationId int, itemId int) (bool, error)
 }

@@ -10,7 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
+	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -180,6 +180,30 @@ func ItemLevelRouter(
 	router.Post("/", itemLevelController.Save)
 	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
 
+	return router
+}
+
+func ItemPriceCodeRouter(
+	itemPriceCodeController masteritemcontroller.ItemPriceCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemPriceCodeController.GetAllItemPriceCode)
+	router.Get("/{item_price_code_id}", itemPriceCodeController.GetItemPriceCodeById)
+	router.Get("/by-code/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
+
+	router.Post("/", itemPriceCodeController.SaveItemPriceCode)
+
+	router.Delete("/{item_price_code_id}", itemPriceCodeController.DeleteItemPriceCode)
+
+	router.Put("/{item_price_code_id}", itemPriceCodeController.UpdateItemPriceCode)
+
+	router.Patch("/{item_price_code_id}", itemPriceCodeController.ChangeStatusItemPriceCode)
 	return router
 }
 
@@ -1624,9 +1648,9 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
-	router.Get("/item-location-warehouse", LookupController.GetItemLocationWarehouse)
-	router.Get("/warehouse-group/{company_id}", LookupController.GetWarehouseGroupByCompany)
-	router.Get("/item-list", LookupController.GetItemListForPriceList)
+	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
+	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
+	router.Get("/item-list", LookupController.ItemListTransPL)
 
 	return router
 }

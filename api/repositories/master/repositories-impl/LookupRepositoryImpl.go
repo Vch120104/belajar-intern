@@ -241,7 +241,7 @@ func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billC
 				}
 
 				// Get Price List
-				err = tx.Table("dms_microservices_sales_dev.dbo.mtr_price_list").
+				err = tx.Table("dms_microservices_sales_dev.dbo.mtr_item_price_list").
 					Where("is_active = 1 AND brand_id = ? AND effective_date <= GETDATE() AND item_code = ? AND currency_id = ? AND company_id = ?", brandId, oprItemCode, ccy, companyCodePrice).
 					Order("effective_date DESC").
 					Limit(1).
@@ -377,7 +377,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 
 	default:
-		if err := tx.Model(&masteritementities.PriceList{}).
+		if err := tx.Model(&masteritementities.ItemPriceList{}).
 			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).Count(&priceCount).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -442,7 +442,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 			if itemTypeExists {
 				// Get price from gmPriceList for items
-				if err := tx.Model(&masteritementities.PriceList{}).
+				if err := tx.Model(&masteritementities.ItemPriceList{}).
 					Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 						brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 					Order("effective_date DESC").
@@ -485,7 +485,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 
 				if useDiscDecentralize == "N" {
-					if err := tx.Model(&masteritementities.PriceList{}).
+					if err := tx.Model(&masteritementities.ItemPriceList{}).
 						Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 							brandId, effDate, oprItemCode, currencyId, companyId, defaultPriceCodeId).
 						Pluck("price_list_amount", &price).Error; err != nil {
@@ -498,7 +498,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 			}
 		} else {
-			if err := tx.Model(&masteritementities.PriceList{}).
+			if err := tx.Model(&masteritementities.ItemPriceList{}).
 				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 					brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 				Order("effective_date DESC").
@@ -1324,7 +1324,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1345,7 +1345,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1380,7 +1380,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1401,7 +1401,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1437,7 +1437,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1458,7 +1458,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1496,7 +1496,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1517,7 +1517,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1553,7 +1553,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1574,7 +1574,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -2527,7 +2527,8 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 	return campaignDiscount, nil
 }
 
-func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+// usp_comLookUp IF @strEntity = 'ListItemLocation'
+func (r *LookupRepositoryImpl) ListItemLocation(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	response := []masterpayloads.WarehouseMasterForItemLookupResponse{}
 	entities := masterwarehouseentities.WarehouseMaster{}
 
@@ -2559,7 +2560,7 @@ func (r *LookupRepositoryImpl) GetItemLocationWarehouse(tx *gorm.DB, companyId i
 }
 
 // IF @strEntity = 'WarehouseGroupByCompany'
-func (r *LookupRepositoryImpl) GetWarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) WarehouseGroupByCompany(tx *gorm.DB, companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
 	response := []masterpayloads.WarehouseGroupByCompanyResponse{}
 
@@ -2581,7 +2582,7 @@ func (r *LookupRepositoryImpl) GetWarehouseGroupByCompany(tx *gorm.DB, companyId
 }
 
 // usp_comLookUp IF @strEntity = 'ItemListTransPL'
-func (r *LookupRepositoryImpl) GetItemListForPriceList(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{}
 	responses := []masterpayloads.ItemListForPriceList{}
 
@@ -2592,19 +2593,11 @@ func (r *LookupRepositoryImpl) GetItemListForPriceList(tx *gorm.DB, companyId in
 		Where("mtr_item.is_active = ?", true).
 		Where("mtr_item.price_list_item = 'Y'")
 
-	baseModelQuery2 := tx.Model(&entities).
-		Select("COUNT(DISTINCT mtr_item.item_id) AS total_rows").
-		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
-		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mid.item_id").
-		Where("mtr_item.is_active = ?", true).
-		Where("mtr_item.price_list_item = 'Y'")
-
 	if companyId == 0 {
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
-		baseModelQuery2 = baseModelQuery2.Where("mtr_item.common_pricelist = ?", true)
 	}
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Offset(pages.Page * pages.Limit).Limit(pages.Limit).Order("mtr_item.item_id").Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.PaginateDistinct(&entities, &pages, whereQuery, "mtr_item.item_id")).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -2613,18 +2606,6 @@ func (r *LookupRepositoryImpl) GetItemListForPriceList(tx *gorm.DB, companyId in
 		}
 	}
 
-	var totalRows int
-	err = utils.ApplyFilter(baseModelQuery2, filterCondition).Pluck("total_rows", &totalRows).Error
-
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	pages.TotalRows = int64(totalRows)
-	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
 	pages.Rows = responses
 
 	return pages, nil

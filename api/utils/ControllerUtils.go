@@ -26,7 +26,7 @@ func ModifyKeysInResponse(data interface{}) interface{} {
 
 		return newData
 	case reflect.Slice:
-		var newData []interface{}
+		newData := []interface{}{}
 
 		for i := 0; i < v.Len(); i++ {
 			newData = append(newData, ModifyKeysInResponse(v.Index(i).Interface()))
