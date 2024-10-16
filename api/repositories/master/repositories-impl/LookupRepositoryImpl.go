@@ -241,7 +241,7 @@ func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billC
 				}
 
 				// Get Price List
-				err = tx.Table("dms_microservices_sales_dev.dbo.mtr_price_list").
+				err = tx.Table("dms_microservices_sales_dev.dbo.mtr_item_price_list").
 					Where("is_active = 1 AND brand_id = ? AND effective_date <= GETDATE() AND item_code = ? AND currency_id = ? AND company_id = ?", brandId, oprItemCode, ccy, companyCodePrice).
 					Order("effective_date DESC").
 					Limit(1).
@@ -377,7 +377,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		}
 
 	default:
-		if err := tx.Model(&masteritementities.PriceList{}).
+		if err := tx.Model(&masteritementities.ItemPriceList{}).
 			Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 				brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).Count(&priceCount).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
@@ -442,7 +442,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 
 			if itemTypeExists {
 				// Get price from gmPriceList for items
-				if err := tx.Model(&masteritementities.PriceList{}).
+				if err := tx.Model(&masteritementities.ItemPriceList{}).
 					Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 						brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 					Order("effective_date DESC").
@@ -485,7 +485,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 
 				if useDiscDecentralize == "N" {
-					if err := tx.Model(&masteritementities.PriceList{}).
+					if err := tx.Model(&masteritementities.ItemPriceList{}).
 						Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_id = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 							brandId, effDate, oprItemCode, currencyId, companyId, defaultPriceCodeId).
 						Pluck("price_list_amount", &price).Error; err != nil {
@@ -498,7 +498,7 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 				}
 			}
 		} else {
-			if err := tx.Model(&masteritementities.PriceList{}).
+			if err := tx.Model(&masteritementities.ItemPriceList{}).
 				Where("is_active = 1 AND brand_id = ? AND effective_date <= ? AND item_code = ? AND currency_id = ? AND company_id = ? AND price_list_code_id = ?",
 					brandId, effDate, oprItemCode, currencyId, companyCodePrice, priceCodeId).
 				Order("effective_date DESC").
@@ -1324,7 +1324,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1345,7 +1345,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1380,7 +1380,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1401,7 +1401,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1437,7 +1437,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1458,7 +1458,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1496,7 +1496,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1517,7 +1517,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
@@ -1553,7 +1553,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
 							WHEN ? THEN
-								(SELECT TOP 1 price_list_amount FROM mtr_price_list
+								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
 								AND brand_id = B.brand_id 
 								AND effective_date <= GETDATE()
@@ -1574,7 +1574,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 								AND whs_group = ?)
 						END
 					ELSE
-						(SELECT TOP 1 price_list_amount FROM mtr_price_list
+						(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 						WHERE is_active = 1 
 						AND brand_id = B.brand_id 
 						AND effective_date <= GETDATE()
