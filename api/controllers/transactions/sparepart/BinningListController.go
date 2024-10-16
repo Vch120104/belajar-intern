@@ -4,6 +4,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"github.com/go-chi/chi/v5"
@@ -14,7 +15,12 @@ import (
 type BinningListController interface {
 	GetBinningListById(writer http.ResponseWriter, request *http.Request)
 	GetAllBinningListWithPagination(writer http.ResponseWriter, request *http.Request)
+	InsertBinningListHeader(writer http.ResponseWriter, request *http.Request)
+	UpdateBinningListHeader(writer http.ResponseWriter, request *http.Request)
+	GetBinningDetailById(writer http.ResponseWriter, request *http.Request)
+	GetBinningListDetailWithPagination(writer http.ResponseWriter, request *http.Request)
 }
+
 type BinningListControllerImpl struct {
 	service transactionsparepartservice.BinningListService
 }
@@ -94,4 +100,107 @@ func (controller *BinningListControllerImpl) GetAllBinningListWithPagination(wri
 	}
 	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
 	return
+}
+
+// InsertBinningListHeader
+//
+//	@Summary		Create New Binning List
+//	@Description	Create a new Binning List
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Binning List
+//	@Param			reqBody					body		transactionsparepartpayloads.BinningListInsertPayloads	true	"Purchase Request Header Data"
+//	@Success		201						{object}	payloads.Response
+//	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/binning-list/ [post]
+func (controller *BinningListControllerImpl) InsertBinningListHeader(writer http.ResponseWriter, request *http.Request) {
+	var BinningHeader transactionsparepartpayloads.BinningListInsertPayloads
+	helper.ReadFromRequestBody(request, &BinningHeader)
+	res, err := controller.service.InsertBinningListHeader(BinningHeader)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Header", http.StatusOK)
+}
+
+// UpdateBinningListHeader
+//
+//	@Summary		Update Binning List Header
+//	@Description	Update Binning List Header
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Binning List
+//	@Param			reqBody					body		transactionsparepartpayloads.BinningListSavePayload	true	"Purchase Request Header Data"
+//	@Success		201						{object}	payloads.Response
+//	@Failure		500,400,401,404,403,422	{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/binning-list [patch]
+func (controller *BinningListControllerImpl) UpdateBinningListHeader(writer http.ResponseWriter, request *http.Request) {
+	var BinningHeaderSavePayloads transactionsparepartpayloads.BinningListSavePayload
+	helper.ReadFromRequestBody(request, &BinningHeaderSavePayloads)
+	res, err := controller.service.UpdateBinningListHeader(BinningHeaderSavePayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Header", http.StatusOK)
+
+}
+
+// GetBinningDetailById
+//
+//	@Summary		Get By Id Binning List Detail
+//	@Description	REST API Get By Id Binning List Detail
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Binning List
+//	@Param			binning_stock_detail_system_number		path		string	false	"binning_stock_detail_system_number"
+//	@Success		200									{object}	transactionsparepartpayloads.BinningListGetByIdResponses
+//	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/binning-list/detail/by-id/{binning_stock_detail_system_number} [get]
+func (controller *BinningListControllerImpl) GetBinningDetailById(writer http.ResponseWriter, request *http.Request) {
+	BinningStockDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "binning_stock_detail_system_number"))
+	result, err := controller.service.GetBinningListDetailById(BinningStockDetailSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Successfully Get Data Detail Binning Stock!", http.StatusOK)
+
+}
+
+// GetBinningListDetailWithPagination
+//
+//	@Summary		Get All Binning List Detail By Id
+//	@Description	REST API Get All Binning List Detail By Id
+//	@Accept			json
+//	@Produce		json
+//	@Tags			Transaction : Binning List
+//	@Param			page								query		string	true	"page"
+//	@Param			limit								query		string	true	"limit"
+//	@Param			binning_system_number				path		int	true	"binning_system_number"
+//	@Param			sort_by								query		string	false	"sort_by"
+//	@Param			sort_of								query		string	false	"sort_of"
+//	@Success		200									{object}	[]transactionsparepartpayloads.BinningListGetByIdResponses
+//	@Failure		500,400,401,404,403,422				{object}	exceptions.BaseErrorResponse
+//	@Router			/v1/binning-list/detail/{binning_system_number} [get]
+func (controller *BinningListControllerImpl) GetBinningListDetailWithPagination(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	BinningStockSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "binning_system_number"))
+	queryParams := map[string]string{
+		//"A.binning_system_number": queryValues.Get("binning_system_number"),
+	}
+	paginations := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	filter := utils.BuildFilterCondition(queryParams)
+	res, err := controller.service.GetAllBinningListDetailWithPagination(filter, paginations, BinningStockSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, res.Rows, "Get Binning Detail Scucess", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
 }

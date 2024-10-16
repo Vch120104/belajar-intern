@@ -543,6 +543,10 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 
 	router.Get("/by-id/{binning_stock_system_number}", BinningList.GetBinningListById)
 	router.Get("/", BinningList.GetAllBinningListWithPagination)
+	router.Post("/", BinningList.InsertBinningListHeader)
+	router.Patch("/", BinningList.UpdateBinningListHeader)
+	router.Get("/detail/by-id/{binning_stock_detail_system_number}", BinningList.GetBinningDetailById)
+	router.Get("/detail/{binning_system_number}", BinningList.GetBinningListDetailWithPagination)
 	return router
 }
 func PurchaseOrderRouter(

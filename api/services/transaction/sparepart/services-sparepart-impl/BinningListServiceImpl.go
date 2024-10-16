@@ -1,6 +1,7 @@
 package transactionsparepartserviceimpl
 
 import (
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -29,9 +30,6 @@ func NewBinningListServiceImpl(repository transactionsparepartrepository.Binning
 
 func (service *BinningListServiceImpl) GetBinningListById(BinningStockId int) (transactionsparepartpayloads.BinningListGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := service.DB.Begin()
-	//rdbb := service.redis
-	//errs := rdbb.Set(nil, "dasa", "123", 0)
-	//data := rdbb.Get("dasa")
 	result, err := service.repository.GetBinningListById(tx, BinningStockId)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
@@ -43,6 +41,43 @@ func (service *BinningListServiceImpl) GetAllBinningListWithPagination(filter []
 	tx := service.DB.Begin()
 	rdb := service.redis
 	result, err := service.repository.GetAllBinningListWithPagination(tx, rdb, filter, pagination, ctx)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *BinningListServiceImpl) InsertBinningListHeader(payloads transactionsparepartpayloads.BinningListInsertPayloads) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.InsertBinningListHeader(tx, payloads)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (service *BinningListServiceImpl) UpdateBinningListHeader(payloads transactionsparepartpayloads.BinningListSavePayload) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.UpdateBinningListHeader(tx, payloads)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *BinningListServiceImpl) GetBinningListDetailById(BinningDetailSystemNumber int) (transactionsparepartpayloads.BinningListGetByIdResponses, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.GetBinningListDetailById(tx, BinningDetailSystemNumber)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *BinningListServiceImpl) GetAllBinningListDetailWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination, binningListId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.GetAllBinningListDetailWithPagination(tx, filter, pagination, binningListId)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err
