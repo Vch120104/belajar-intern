@@ -183,6 +183,30 @@ func ItemLevelRouter(
 	return router
 }
 
+func ItemPriceCodeRouter(
+	itemPriceCodeController masteritemcontroller.ItemPriceCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemPriceCodeController.GetAllItemPriceCode)
+	router.Get("/{item_price_code_id}", itemPriceCodeController.GetItemPriceCodeById)
+	router.Get("/by-code/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
+
+	router.Post("/", itemPriceCodeController.SaveItemPriceCode)
+
+	router.Delete("/{item_price_code_id}", itemPriceCodeController.DeleteItemPriceCode)
+
+	router.Put("/{item_price_code_id}", itemPriceCodeController.UpdateItemPriceCode)
+
+	router.Patch("/{item_price_code_id}", itemPriceCodeController.ChangeStatusItemPriceCode)
+	return router
+}
+
 func ItemRouter(
 	itemController masteritemcontroller.ItemController,
 ) chi.Router {
@@ -1638,9 +1662,9 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
-	router.Get("/item-location-warehouse", LookupController.GetItemLocationWarehouse)
-	router.Get("/warehouse-group/{company_id}", LookupController.GetWarehouseGroupByCompany)
-	router.Get("/item-list", LookupController.GetItemListForPriceList)
+	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
+	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
+	router.Get("/item-list", LookupController.ItemListTransPL)
 
 	return router
 }

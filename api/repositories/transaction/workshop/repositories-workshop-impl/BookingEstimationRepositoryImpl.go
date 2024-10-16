@@ -26,8 +26,7 @@ type BookingEstimationImpl struct {
 }
 
 func OpenBookingEstimationRepositoryImpl() transactionworkshoprepository.BookingEstimationRepository {
-	return &BookingEstimationImpl{
-	}
+	return &BookingEstimationImpl{}
 }
 
 func (r *BookingEstimationImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -470,8 +469,8 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transaction
 	}
 
 	if req.LineTypeID != 9 && req.LineTypeID != 0 {
-		err := tx.Select("mtr_price_list.price_list_amount").Table("mtr_price_list").
-			Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+		err := tx.Select("mtr_item_price_list.price_list_amount").Table("mtr_item_price_list").
+			Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
 			Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
 			Where("item_operation_id=?", req.ItemOperationID).
 			Scan(&lastprice).Error
@@ -622,7 +621,7 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, batchid int) ([]map
 		payload := map[string]interface{}{
 			"estimation_line_id":   item.EstimationLineID,
 			"estimation_line_code": item.EstimationLineCode,
-			"item_operation_id":   item.ItemOperationID,
+			"item_operation_id":    item.ItemOperationID,
 			"line_type_id":         item.LineTypeID,
 			"package_id":           item.PackageID,
 			"job_type_id":          item.JobTypeID,
@@ -634,9 +633,9 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, batchid int) ([]map
 		}
 		payloads = append(payloads, payload)
 	}
-	_,err3:= r.PutBookingEstimationCalculation(tx,batchid)
-	if err3 != nil{
-		return nil,err3
+	_, err3 := r.PutBookingEstimationCalculation(tx, batchid)
+	if err3 != nil {
+		return nil, err3
 	}
 	return payloads, nil
 }
@@ -669,8 +668,8 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, batchid int) ([]map
 // 	}
 // 	for _, item := range detailpayloads {
 // 		if item.LineTypeId != 9 && item.LineTypeId != 0 {
-// 			err := tx.Select("mtr_price_list.price_list_amount,mtr_item.item_name,mtr_item.item_code").Table("mtr_price_list").
-// 				Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+// 			err := tx.Select("mtr_item_price_list.price_list_amount,mtr_item.item_name,mtr_item.item_code").Table("mtr_item_price_list").
+// 				Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
 // 				Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
 // 				Where("item_operation_id=?", item.ItemOperationId).
 // 				Scan(&pricename).Error
@@ -1508,8 +1507,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationAllocation(tx *gorm.DB, id 
 	return entities, nil
 }
 
-
-func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB,idheader int, Idcontract int)(bool,*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, idheader int, Idcontract int) (bool, *exceptions.BaseErrorResponse) {
 	var firststruct transactionworkshoppayloads.BookingEstimationFirstContractService
 	var contractservice transactionworkshoppayloads.ContractService
 	var taxfare float64
@@ -1523,102 +1521,102 @@ func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB,idheader int, Idc
 		WHERE BE.batch_system_number = ?
 	`, idheader).Scan(&firststruct).Error
 	if err != nil {
-		return false,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err: err,
-		}
-	}
-
-	errUrlGetTax:= utils.Get(config.EnvConfigs.FinanceServiceUrl+"tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date="+time.Now().String(), taxfare, nil)
-	if errUrlGetTax != nil {
-		return false,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errUrlGetTax,
-		}
-	}
-	entities := transactionworkshopentities.BookingEstimationServiceDiscount{
-		DocumentStatusID: 10,//status new
-		BatchSystemNumber: idheader,
-		EstimationDate: &now,
-		EstimationDiscountApprovalStatus: 10,//status draft
-		CompanyID: firststruct.CompanyId,
-		VATTaxRate: taxfare,
-	}
-	err3:=tx.Save(&entities).Error
-	if err3 != nil{
-		return false,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err: err3,
-		}
-	}
-
-	err4:= tx.Select("trx_booking_estimation_detail.estimation_line_code").Table("trx_booking_estimation_detail").Where("estimation_system_number=?",entities.EstimationSystemNumber).Count(&count).Error
-	if err4 != nil{
-		return false,&exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err: err4,
-		}
-	}
-	err5:= tx.Select("CSD.line_type_id,CSD.item_operation_id,CSD.description,CSD.frt_quantity,CSD.item_price,CSD.item_discount_percent").
-	Table("trx_contract_service CS").
-	Joins("Join trx_contract_service_detail CSD on CSD.contract_service_system_number = CS.contract_service_system_number").
-	Where("CS.contract_service_system_number=?",Idcontract).Scan(&contractservice).Error
-	if err5 != nil{
-		return false,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err: err5,
-		}
-	}
-
-	entities2:= transactionworkshopentities.BookingEstimationDetail{
-		EstimationSystemNumber: entities.EstimationSystemNumber,
-		EstimationLineCode: int(count)+1,
-		LineTypeID: contractservice.LineTypeId,
-		BillID: 1,//id of TRXTYPE_WO_CONTRACT_SERVICE
-		EstimationLineDiscountApproval: 10,//id of approval status draft
-		ItemOperationID: contractservice.ItemOperationId,
-		RequestDescription: contractservice.Description,
-		FRTQuantity: float64(contractservice.FrtQuantity),
-		ItemOperationPrice: contractservice.ItemPrice,
-		DiscountItemOperationAmount: math.Round(contractservice.ItemPrice*contractservice.ItemDiscountPercent/100),
-		DiscountRequestAmount: 0,
-		DiscountRequestPercent:0,
-		DiscountItemOperationPercent:  contractservice.ItemDiscountPercent,
-		DiscountApprovalBy: "",
-		DiscountApprovalDate: nil,
-	}
-	err6:= tx.Save(&entities2).Error
-	if err6 != nil{
-			return false,&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err: err6,
-		}
-	}
-	_,err7:= r.PutBookingEstimationCalculation(tx,idheader)
-	if err7 != nil{
-		return false,err7
-	}
-	if contractservice.LineTypeId == 0{
-		entities3:= transactionworkshopentities.BookingEstimationAllocation{
-			BookingStall: "",
-			BookingServiceTime: float32(entities2.FRTQuantity),
-			BookingServiceDate: entities.EstimationDate,
-		}
-		err := tx.Where("booking_system_number = ?", entities3.BookingSystemNumber).
-          Updates(&entities3).Error
-
-		if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
 
+	errUrlGetTax := utils.Get(config.EnvConfigs.FinanceServiceUrl+"tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date="+time.Now().String(), taxfare, nil)
+	if errUrlGetTax != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errUrlGetTax,
+		}
 	}
-	return true,nil
+	entities := transactionworkshopentities.BookingEstimationServiceDiscount{
+		DocumentStatusID:                 10, //status new
+		BatchSystemNumber:                idheader,
+		EstimationDate:                   &now,
+		EstimationDiscountApprovalStatus: 10, //status draft
+		CompanyID:                        firststruct.CompanyId,
+		VATTaxRate:                       taxfare,
+	}
+	err3 := tx.Save(&entities).Error
+	if err3 != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err3,
+		}
+	}
+
+	err4 := tx.Select("trx_booking_estimation_detail.estimation_line_code").Table("trx_booking_estimation_detail").Where("estimation_system_number=?", entities.EstimationSystemNumber).Count(&count).Error
+	if err4 != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err4,
+		}
+	}
+	err5 := tx.Select("CSD.line_type_id,CSD.item_operation_id,CSD.description,CSD.frt_quantity,CSD.item_price,CSD.item_discount_percent").
+		Table("trx_contract_service CS").
+		Joins("Join trx_contract_service_detail CSD on CSD.contract_service_system_number = CS.contract_service_system_number").
+		Where("CS.contract_service_system_number=?", Idcontract).Scan(&contractservice).Error
+	if err5 != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err5,
+		}
+	}
+
+	entities2 := transactionworkshopentities.BookingEstimationDetail{
+		EstimationSystemNumber:         entities.EstimationSystemNumber,
+		EstimationLineCode:             int(count) + 1,
+		LineTypeID:                     contractservice.LineTypeId,
+		BillID:                         1,  //id of TRXTYPE_WO_CONTRACT_SERVICE
+		EstimationLineDiscountApproval: 10, //id of approval status draft
+		ItemOperationID:                contractservice.ItemOperationId,
+		RequestDescription:             contractservice.Description,
+		FRTQuantity:                    float64(contractservice.FrtQuantity),
+		ItemOperationPrice:             contractservice.ItemPrice,
+		DiscountItemOperationAmount:    math.Round(contractservice.ItemPrice * contractservice.ItemDiscountPercent / 100),
+		DiscountRequestAmount:          0,
+		DiscountRequestPercent:         0,
+		DiscountItemOperationPercent:   contractservice.ItemDiscountPercent,
+		DiscountApprovalBy:             "",
+		DiscountApprovalDate:           nil,
+	}
+	err6 := tx.Save(&entities2).Error
+	if err6 != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err6,
+		}
+	}
+	_, err7 := r.PutBookingEstimationCalculation(tx, idheader)
+	if err7 != nil {
+		return false, err7
+	}
+	if contractservice.LineTypeId == 0 {
+		entities3 := transactionworkshopentities.BookingEstimationAllocation{
+			BookingStall:       "",
+			BookingServiceTime: float32(entities2.FRTQuantity),
+			BookingServiceDate: entities.EstimationDate,
+		}
+		err := tx.Where("booking_system_number = ?", entities3.BookingSystemNumber).
+			Updates(&entities3).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        err,
+			}
+		}
+
+	}
+	return true, nil
 }
 
-func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, idhead int, idpackage int)(bool,*exceptions.BaseErrorResponse){
+func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, idhead int, idpackage int) (bool, *exceptions.BaseErrorResponse) {
 	var headerdata transactionworkshoppayloads.BookingEstimationFirstContractService
 	var taxfare float64
 	var count int64
@@ -1636,45 +1634,45 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, idhead int, idpackage in
 		WHERE BE.batch_system_number = ?
 	`, idhead).Scan(&headerdata).Error
 	if err != nil {
-		return false,&exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err,
+			Err:        err,
 		}
 	}
 
-	errUrlGetTax:= utils.Get(config.EnvConfigs.FinanceServiceUrl+"tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date="+time.String(), taxfare, nil)
+	errUrlGetTax := utils.Get(config.EnvConfigs.FinanceServiceUrl+"tax-fare/detail/tax-percent?tax_service_code=PPN&tax_type_code=PPN&effective_date="+time.String(), taxfare, nil)
 	if errUrlGetTax != nil {
-		return false,&exceptions.BaseErrorResponse{
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errUrlGetTax,
 		}
 	}
 
 	entities := transactionworkshopentities.BookingEstimationServiceDiscount{
-		EstimationDocumentNumber: headerdata.EstimationDocumentNumber,
-		EstimationDate: &time,
-		DocumentStatusID: 5,//status new
-		EstimationDiscountApprovalStatus: 10,//approval draft
-		BatchSystemNumber: idhead,
-		CompanyID: headerdata.CompanyId,
-		VATTaxRate:  taxfare,
+		EstimationDocumentNumber:         headerdata.EstimationDocumentNumber,
+		EstimationDate:                   &time,
+		DocumentStatusID:                 5,  //status new
+		EstimationDiscountApprovalStatus: 10, //approval draft
+		BatchSystemNumber:                idhead,
+		CompanyID:                        headerdata.CompanyId,
+		VATTaxRate:                       taxfare,
 	}
-	err3:=tx.Save(&entities).Error
-	if err3 != nil{
-		return false,&exceptions.BaseErrorResponse{
+	err3 := tx.Save(&entities).Error
+	if err3 != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err3,
+			Err:        err3,
 		}
 	}
 
 	err4 := tx.Table("trx_booking_estimation_detail AS tb").
-    Select("tb.estimation_line_id").
-    Where("tb.estimation_system_number = ?", entities.EstimationSystemNumber).
-    Count(&count).Error	
-	if err4 != nil{
-		return false,&exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err: err4,
+		Select("tb.estimation_line_id").
+		Where("tb.estimation_system_number = ?", entities.EstimationSystemNumber).
+		Count(&count).Error
+	if err4 != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err4,
 		}
 	}
 	err5 := tx.Select(`
@@ -1690,81 +1688,81 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, idhead int, idpackage in
         ELSE it.item_name 
     END AS item_or_operation_name
 `).
-	Table("mtr_package p0").
-	Joins("JOIN mtr_package_master_detail p1 ON p0.package_id = p1.package_id").
-	Joins("LEFT JOIN mtr_item_operation io ON io.item_operation_id = p1.item_operation_id").
-	Joins(`LEFT JOIN mtr_operation_model_mapping opr 
+		Table("mtr_package p0").
+		Joins("JOIN mtr_package_master_detail p1 ON p0.package_id = p1.package_id").
+		Joins("LEFT JOIN mtr_item_operation io ON io.item_operation_id = p1.item_operation_id").
+		Joins(`LEFT JOIN mtr_operation_model_mapping opr 
 		ON opr.brand_id = p0.brand_id 
 		AND opr.model_id = p0.model_id 
 		AND opr.operation_id = CASE WHEN p1.line_type_id = 9 THEN io.item_operation_model_mapping_id ELSE NULL END`).
-	Joins(`LEFT JOIN mtr_operation_code op 
+		Joins(`LEFT JOIN mtr_operation_code op 
 		ON op.operation_id = CASE WHEN p1.line_type_id = 9 THEN io.item_operation_model_mapping_id ELSE NULL END`).
-	Joins(`LEFT JOIN mtr_item it 
+		Joins(`LEFT JOIN mtr_item it 
 		ON it.item_id = CASE WHEN p1.line_type_id != 9 THEN io.item_operation_model_mapping_id ELSE NULL END`).
-	Where("p0.package_id = ?", idpackage).
-	Scan(&data).Error
-	if err5 != nil{
-		return false,&exceptions.BaseErrorResponse{
+		Where("p0.package_id = ?", idpackage).
+		Scan(&data).Error
+	if err5 != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err5,
+			Err:        err5,
 		}
 	}
-	err6 := tx.Select("mtr_item.unit_of_measurement_type_id").Table("mtr_item").Where("mtr_item.item_name=?",data.ItemOrOperationName).Scan(&uom).Error
-	if err6 != nil{
-		return false,&exceptions.BaseErrorResponse{
+	err6 := tx.Select("mtr_item.unit_of_measurement_type_id").Table("mtr_item").Where("mtr_item.item_name=?", data.ItemOrOperationName).Scan(&uom).Error
+	if err6 != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err6,
+			Err:        err6,
 		}
 	}
-	err7:= tx.Select("mtr_price_list.price_list_amount").Table("mtr_price_list").
-	Joins("join mtr_item on mtr_price_list.price_list_id = mtr_item.price_list_item").
-	Joins("join mtr_item_operation on mtr_item_operation.item_operation_model_mapping_id=mtr_item.item_id").Where("mtr_item_operation.item_operation_id=?",data.ItemOperationId).
-	Scan(&price).Error
-	if err7 != nil{
-		return false,&exceptions.BaseErrorResponse{
+	err7 := tx.Select("mtr_item_price_list.price_list_amount").Table("mtr_item_price_list").
+		Joins("join mtr_item on mtr_item_price_list.price_list_id = mtr_item.price_list_item").
+		Joins("join mtr_item_operation on mtr_item_operation.item_operation_model_mapping_id=mtr_item.item_id").Where("mtr_item_operation.item_operation_id=?", data.ItemOperationId).
+		Scan(&price).Error
+	if err7 != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err7,
+			Err:        err7,
 		}
 	}
-	err8:= tx.Select("trx_contract_service_detail.item_discount_percent").
-	Table("trx_contract_service_detail").
-	Joins("Join trx_contract_service on trx_contract_service.contract_service_system_number=trx_contract_service_detail.contract_service_system_number").
-	Where("trx_contract_service.contract_service_system_number=0").
-	Where("trx_contract_service_detail.item_operation_id=?",data.ItemOperationId).
-	Where("trx_contract_service_detail.line_type_id=?",data.LineTypeId).Scan(&discpercent).Error
-	if err8 != nil{
-		return false,&exceptions.BaseErrorResponse{
+	err8 := tx.Select("trx_contract_service_detail.item_discount_percent").
+		Table("trx_contract_service_detail").
+		Joins("Join trx_contract_service on trx_contract_service.contract_service_system_number=trx_contract_service_detail.contract_service_system_number").
+		Where("trx_contract_service.contract_service_system_number=0").
+		Where("trx_contract_service_detail.item_operation_id=?", data.ItemOperationId).
+		Where("trx_contract_service_detail.line_type_id=?", data.LineTypeId).Scan(&discpercent).Error
+	if err8 != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err8,
+			Err:        err8,
 		}
 	}
-	operationdiscount:=math.Round(price*data.FrtQuantity*discpercent/100)
+	operationdiscount := math.Round(price * data.FrtQuantity * discpercent / 100)
 	entities2 := transactionworkshopentities.BookingEstimationDetail{
-		EstimationSystemNumber: entities.EstimationSystemNumber,
-		EstimationLineCode: int(count+1),
-		LineTypeID: data.LineTypeId,
-		JobTypeID: data.JobTypeId,
-		BillID: data.BillId,
-		EstimationLineDiscountApproval: 10,//approval draft id
-		ItemOperationID: data.ItemOperationId,
-		RequestDescription: data.ItemOrOperationName,
-		PackageID: idpackage,
-		UOMID: uom,
-		FRTQuantity: data.FrtQuantity,
-		ItemOperationPrice: price,
-		DiscountItemOperationAmount: operationdiscount,
-		DiscountItemOperationPercent: discpercent,
+		EstimationSystemNumber:         entities.EstimationSystemNumber,
+		EstimationLineCode:             int(count + 1),
+		LineTypeID:                     data.LineTypeId,
+		JobTypeID:                      data.JobTypeId,
+		BillID:                         data.BillId,
+		EstimationLineDiscountApproval: 10, //approval draft id
+		ItemOperationID:                data.ItemOperationId,
+		RequestDescription:             data.ItemOrOperationName,
+		PackageID:                      idpackage,
+		UOMID:                          uom,
+		FRTQuantity:                    data.FrtQuantity,
+		ItemOperationPrice:             price,
+		DiscountItemOperationAmount:    operationdiscount,
+		DiscountItemOperationPercent:   discpercent,
 	}
 	err9 := tx.Save(&entities2).Error
-	if err9 != nil{
-		return false,&exceptions.BaseErrorResponse{
+	if err9 != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
-			Err: err9,
+			Err:        err9,
 		}
 	}
-	_,err0:=r.PutBookingEstimationCalculation(tx,idhead)
-	if err0 != nil{
-		return false,err0
+	_, err0 := r.PutBookingEstimationCalculation(tx, idhead)
+	if err0 != nil {
+		return false, err0
 	}
-	return true,nil
+	return true, nil
 }

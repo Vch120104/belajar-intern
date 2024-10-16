@@ -516,13 +516,13 @@ func (r *PriceListControllerImpl) GetAllPriceListNew(writer http.ResponseWriter,
 	}
 
 	queryParams := map[string]string{
-		"brand_id":                     queryValues.Get("brand_id"),
-		"mtr_price_list.item_group_id": queryValues.Get("item_group_id"),
-		"price_list_code_id":           queryValues.Get("price_list_code_id"),
-		"mtr_price_list.item_class_id": queryValues.Get("item_class_id"),
-		"currency_id":                  queryValues.Get("currency_id"),
-		"effective_date":               queryValues.Get("effective_date"),
-		"company_id":                   queryValues.Get("company_id"),
+		"brand_id":                          queryValues.Get("brand_id"),
+		"mtr_item_price_list.item_group_id": queryValues.Get("item_group_id"),
+		"price_list_code_id":                queryValues.Get("price_list_code_id"),
+		"mtr_item_price_list.item_class_id": queryValues.Get("item_class_id"),
+		"currency_id":                       queryValues.Get("currency_id"),
+		"effective_date":                    queryValues.Get("effective_date"),
+		"company_id":                        queryValues.Get("company_id"),
 	}
 
 	paginate := pagination.Pagination{
