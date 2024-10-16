@@ -28,9 +28,9 @@ type LookupController interface {
 	CustomerByTypeAndAddressByID(writer http.ResponseWriter, request *http.Request)
 	CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request)
 	WorkOrderService(writer http.ResponseWriter, request *http.Request)
-	GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request)
-	GetWarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request)
-	GetItemListForPriceList(writer http.ResponseWriter, request *http.Request)
+	ListItemLocation(writer http.ResponseWriter, request *http.Request)
+	WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request)
+	ItemListTransPL(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -507,7 +507,7 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
 }
 
-func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request) {
+func (r *LookupControllerImpl) ListItemLocation(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
 	companyId, convErr := strconv.Atoi(queryValues.Get("company_id"))
@@ -532,7 +532,7 @@ func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWrit
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId, criteria, paginate)
+	warehouse, baseErr := r.LookupService.ListItemLocation(companyId, criteria, paginate)
 	if baseErr != nil {
 		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
@@ -540,7 +540,7 @@ func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWrit
 	payloads.NewHandleSuccessPagination(writer, warehouse.Rows, "Get Data Successfully!", http.StatusOK, warehouse.Limit, warehouse.Page, warehouse.TotalRows, warehouse.TotalPages)
 }
 
-func (r *LookupControllerImpl) GetWarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request) {
+func (r *LookupControllerImpl) WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request) {
 	companyIdstr := chi.URLParam(request, "company_id")
 	if companyIdstr == "" {
 		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
@@ -548,7 +548,7 @@ func (r *LookupControllerImpl) GetWarehouseGroupByCompany(writer http.ResponseWr
 
 	companyId, _ := strconv.Atoi(companyIdstr)
 
-	warehouse, baseErr := r.LookupService.GetWarehouseGroupByCompany(companyId)
+	warehouse, baseErr := r.LookupService.WarehouseGroupByCompany(companyId)
 	if baseErr != nil {
 		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
@@ -556,7 +556,7 @@ func (r *LookupControllerImpl) GetWarehouseGroupByCompany(writer http.ResponseWr
 	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
 }
 
-func (r *LookupControllerImpl) GetItemListForPriceList(writer http.ResponseWriter, request *http.Request) {
+func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	companyIdstr := queryValues.Get("company_id")
 	if companyIdstr == "" {
@@ -596,7 +596,7 @@ func (r *LookupControllerImpl) GetItemListForPriceList(writer http.ResponseWrite
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	item, baseErr := r.LookupService.GetItemListForPriceList(companyId, criteria, paginate)
+	item, baseErr := r.LookupService.ItemListTransPL(companyId, criteria, paginate)
 	if baseErr != nil {
 		item.Rows = []interface{}{}
 		item.TotalRows = 0
