@@ -19,6 +19,8 @@ type BinningListController interface {
 	UpdateBinningListHeader(writer http.ResponseWriter, request *http.Request)
 	GetBinningDetailById(writer http.ResponseWriter, request *http.Request)
 	GetBinningListDetailWithPagination(writer http.ResponseWriter, request *http.Request)
+	InsertBinningListDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateBinningListDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type BinningListControllerImpl struct {
@@ -203,4 +205,28 @@ func (controller *BinningListControllerImpl) GetBinningListDetailWithPagination(
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, res.Rows, "Get Binning Detail Scucess", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
+}
+
+// InsertBinningListDetail route binning-list/detail [post]
+func (controller *BinningListControllerImpl) InsertBinningListDetail(writer http.ResponseWriter, request *http.Request) {
+	var BinningListSavePayloads transactionsparepartpayloads.BinningListDetailPayloads
+	helper.ReadFromRequestBody(request, &BinningListSavePayloads)
+	res, err := controller.service.InsertBinningListDetail(BinningListSavePayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Detail", http.StatusCreated)
+}
+
+// route binning-list/detail [patch]
+func (controller *BinningListControllerImpl) UpdateBinningListDetail(writer http.ResponseWriter, request *http.Request) {
+	var BinningListSavePayloads transactionsparepartpayloads.BinningListDetailUpdatePayloads
+	helper.ReadFromRequestBody(request, &BinningListSavePayloads)
+	res, err := controller.service.UpdateBinningListDetail(BinningListSavePayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Updated Binning List Detail", http.StatusOK)
 }

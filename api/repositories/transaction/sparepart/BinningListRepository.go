@@ -18,5 +18,6 @@ type BinningListRepository interface {
 	UpdateBinningListHeader(db *gorm.DB, payloads transactionsparepartpayloads.BinningListSavePayload) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse)
 	GetBinningListDetailById(db *gorm.DB, BinningDetailId int) (transactionsparepartpayloads.BinningListGetByIdResponses, *exceptions.BaseErrorResponse)
 	GetAllBinningListDetailWithPagination(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination, binningListId int) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	InsertBinningListDetail(db *gorm.DB, payloads transactionsparepartpayloads.BinningListDetailInsertPayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
+	InsertBinningListDetail(db *gorm.DB, payloads transactionsparepartpayloads.BinningListDetailPayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
+	UpdateBinningListDetail(db *gorm.DB, payloads transactionsparepartpayloads.BinningListDetailUpdatePayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
 }

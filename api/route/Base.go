@@ -571,6 +571,9 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Patch("/", BinningList.UpdateBinningListHeader)
 	router.Get("/detail/by-id/{binning_stock_detail_system_number}", BinningList.GetBinningDetailById)
 	router.Get("/detail/{binning_system_number}", BinningList.GetBinningListDetailWithPagination)
+	router.Post("/detail", BinningList.InsertBinningListDetail)
+	router.Patch("/detail", BinningList.UpdateBinningListDetail)
+
 	return router
 }
 func PurchaseOrderRouter(
