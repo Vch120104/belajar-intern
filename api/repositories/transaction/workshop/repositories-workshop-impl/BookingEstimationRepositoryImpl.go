@@ -1063,28 +1063,26 @@ func (r *BookingEstimationImpl) PutBookingEstimationCalculation(tx *gorm.DB, id 
 	var result Result
 
 	// Calculate totals for each line type
-	err := tx.Raw(`
-		SELECT
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_package,
+	err := tx.Model(&transactionworkshopentities.BookingEstimationServiceDiscount{}).
+		Select(`SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_package,
 			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_operation,
 			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_spare_part,
 			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_oil,
 			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_material,
 			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_accessories,
 			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_price_consumable_material,
-			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_sublet
-		FROM trx_booking_estimation_service_discount
-		JOIN trx_booking_estimation_detail on trx_booking_estimation_detail.estimation_system_number = trx_booking_estimation_service_discount.estimation_system_number 
-		WHERE batch_system_number = ?`,
-		LineTypePackage,
-		LineTypeOperation,
-		LineTypeSparePart,
-		LineTypeOil,
-		LineTypeMaterial,
-		LineTypeAccessories,
-		LineTypeConsumableMaterial,
-		LineTypeSublet,
-		id).Scan(&result).Error
+			SUM(CASE WHEN line_type_id = ? THEN ROUND(ISNULL(trx_booking_estimation_detail.operation_item_price, 0) * ISNULL(trx_booking_estimation_detail.frt_quantity, 0), 0) ELSE 0 END) AS total_sublet`,
+			LineTypePackage,
+			LineTypeOperation,
+			LineTypeSparePart,
+			LineTypeOil,
+			LineTypeMaterial,
+			LineTypeAccessories,
+			LineTypeConsumableMaterial,
+			LineTypeSublet).
+		Joins("JOIN trx_booking_estimation_detail ON trx_booking_estimation_detail.estimation_system_number = trx_booking_estimation_service_discount.estimation_system_number").
+		Where("batch_system_number = ?", id).
+		Scan(&result).Error
 
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to calculate totals: %v", err)}
@@ -1513,13 +1511,12 @@ func (r *BookingEstimationImpl) AddContractService(tx *gorm.DB, idheader int, Id
 	var taxfare float64
 	now := time.Now()
 	var count int64
-	err := tx.Raw(`
-		SELECT BE.contract_service_system_number, BE2.estimation_discount_approval_status, BE.booking_system_number, BE.estimation_system_number, 
-		       BE.brand_id, BE.profit_center_id, BE.model_id, BE.Company_id
-		FROM trx_booking_estimation BE
-		LEFT JOIN trx_booking_estimation_service_discount BE2 ON BE.batch_system_number = BE2.batch_system_number
-		WHERE BE.batch_system_number = ?
-	`, idheader).Scan(&firststruct).Error
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
+		Select(`BE.contract_system_number, BE2.estimation_discount_approval_status, BE.booking_system_number, 
+			BE.estimation_system_number, BE.brand_id, BE.profit_center_id, BE.model_id, BE.company_id`).
+		Joins(`LEFT JOIN trx_booking_estimation_service_discount BE2 ON BE.batch_system_number = BE2.batch_system_number`).
+		Where(`BE.batch_system_number = ?`, idheader).
+		Scan(&firststruct).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -1626,13 +1623,12 @@ func (r *BookingEstimationImpl) AddPackage(tx *gorm.DB, idhead int, idpackage in
 	var data transactionworkshoppayloads.PackageForDetail
 	time := time.Now()
 
-	err := tx.Raw(`
-		SELECT BE.contract_service_system_number, BE2.estimation_discount_approval_status, BE.booking_system_number, BE.estimation_system_number, 
-		       BE.brand_id, BE.profit_center_id, BE.model_id, BE.Company_id
-		FROM trx_booking_estimation BE
-		LEFT JOIN trx_booking_estimation_service_discount BE2 ON BE.batch_system_number = BE2.batch_system_number
-		WHERE BE.batch_system_number = ?
-	`, idhead).Scan(&headerdata).Error
+	err := tx.Model(&transactionworkshopentities.BookingEstimation{}).
+		Select(`BE.contract_system_number, BE2.estimation_discount_approval_status, BE.booking_system_number, 
+			BE.estimation_system_number, BE.brand_id, BE.profit_center_id, BE.model_id, BE.company_id`).
+		Joins(`LEFT JOIN trx_booking_estimation_service_discount BE2 ON BE.batch_system_number = BE2.batch_system_number`).
+		Where(`BE.batch_system_number = ?`, idhead).
+		Scan(&headerdata).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,

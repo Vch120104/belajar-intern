@@ -228,19 +228,24 @@ func (m *MockWorkOrderService) GetAllRequest(filterCondition []utils.FilterCondi
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos)
-	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos, request)
-	return args.Get(0).(transactionworkshopentities.WorkOrderRequestDescription), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshopentities.WorkOrderService), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
 	args := m.Called(id, request)
-	return args.Get(0).(transactionworkshopentities.WorkOrderRequestDescription), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshopentities.WorkOrderService), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) AddRequestMultiId(id int, request []transactionworkshoppayloads.WorkOrderServiceRequest) ([]transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
+	args := m.Called(id, request)
+	return args.Get(0).([]transactionworkshopentities.WorkOrderService), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) DeleteRequest(idwosn int, idwos int) (bool, *exceptions.BaseErrorResponse) {

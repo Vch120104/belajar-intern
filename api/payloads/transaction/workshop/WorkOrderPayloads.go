@@ -930,7 +930,6 @@ type WorkOrderStatusResponse struct {
 }
 
 type WorkOrderServiceRequest struct {
-	WorkOrderServiceId     int    `json:"work_order_service_id"`
 	WorkOrderSystemNumber  int    `json:"work_order_system_number"`
 	WorkOrderServiceRemark string `json:"work_order_service_remark"`
 }

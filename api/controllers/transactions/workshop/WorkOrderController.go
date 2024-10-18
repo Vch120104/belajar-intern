@@ -24,6 +24,7 @@ type WorkOrderController interface {
 	GetRequestById(writer http.ResponseWriter, request *http.Request)
 	UpdateRequest(writer http.ResponseWriter, request *http.Request)
 	AddRequest(writer http.ResponseWriter, request *http.Request)
+	AddRequestMultiId(writer http.ResponseWriter, request *http.Request)
 	DeleteRequest(writer http.ResponseWriter, request *http.Request)
 	DeleteRequestMultiId(writer http.ResponseWriter, request *http.Request)
 
@@ -140,7 +141,8 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryParams := map[string]string{
 		"trx_work_order.work_order_document_number":        queryValues.Get("work_order_document_number"),
 		"trx_work_order.work_order_system_number":          queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_date":                   queryValues.Get("work_order_date"),
+		"trx_work_order.work_order_date_from":              queryValues.Get("work_order_date_from"),
+		"trx_work_order.work_order_date_to":                queryValues.Get("work_order_date_to"),
 		"trx_work_order.work_order_type_id":                queryValues.Get("work_order_type_id"),
 		"trx_work_order.work_order_type_description":       queryValues.Get("work_order_type_description"),
 		"trx_work_order.brand_id":                          queryValues.Get("brand_id"),
@@ -153,6 +155,9 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 		"trx_work_order.work_order_status_id":              queryValues.Get("work_order_status_id"),
 		"trx_work_order.work_order_status_name":            queryValues.Get("work_order_status_name"),
 		"trx_work_order.work_order_repeated_system_number": queryValues.Get("work_order_repeated_system_number"),
+		"trx_work_order.variant_id":                        queryValues.Get("variant_id"),
+		"trx_work_order.foreman_id":                        queryValues.Get("foreman_id"),
+		"trx_work_order.service_advisor_id":                queryValues.Get("service_advisor_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -791,7 +796,6 @@ func (r *WorkOrderControllerImpl) NewVehicleModel(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/requestservice [get]
 func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, request *http.Request) {
-	// Get all services of a work order
 	queryValues := request.URL.Query()
 
 	paginate := pagination.Pagination{
@@ -801,9 +805,16 @@ func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, requ
 		SortBy: queryValues.Get("sort_by"),
 	}
 
+	excludeParams := map[string]bool{
+		"page":    true,
+		"limit":   true,
+		"sort_of": true,
+		"sort_by": true,
+	}
+
 	filterConditions := make([]utils.FilterCondition, 0)
 	for key, values := range queryValues {
-		if len(values) > 0 {
+		if len(values) > 0 && !excludeParams[key] {
 			filterConditions = append(filterConditions, utils.FilterCondition{
 				ColumnField: key,
 				ColumnValue: values[0],
@@ -903,11 +914,42 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 		return
 	}
 
-	if success.WorkOrderRequestId > 0 {
+	if success.WorkOrderServiceId > 0 {
 		payloads.NewHandleSuccess(writer, success, "Request added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// AddRequest Multi adds multiple request to a work order
+// @Summary Add Multiple Request to Work Order
+// @Description Add multiple request to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Detail
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/requestservicemulti [post]
+func (r *WorkOrderControllerImpl) AddRequestMultiId(writer http.ResponseWriter, request *http.Request) {
+	// Add request to work order
+	workorderID, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order system number", http.StatusBadRequest)
+		return
+	}
+
+	var groupRequests []transactionworkshoppayloads.WorkOrderServiceRequest
+	helper.ReadFromRequestBody(request, &groupRequests)
+
+	entities, baseErr := r.WorkOrderService.AddRequestMultiId(workorderID, groupRequests) // Call the modified service method
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, entities, "Requests added successfully", http.StatusCreated)
 }
 
 // DeleteRequest deletes a request from a work order
