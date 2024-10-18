@@ -10,7 +10,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -379,28 +378,20 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 	model := masteritementities.ItemPriceList{}
 
 	query := tx.Model(model).
-		Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
+		Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*,mtr_item_price_code.item_price_code").
 		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id")
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Joins("LEFT JOIN mtr_item_price_code on mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id")
 
 	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)
 	//apply pagination and execute
 	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&payloads).Error
 
-	fmt.Println(payloads)
-
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-		}
-	}
-
-	if len(payloads) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("price list not found"),
 		}
 	}
 
