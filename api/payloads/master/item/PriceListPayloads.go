@@ -116,6 +116,7 @@ type PriceListGetAllResponse struct {
 	ItemGroupId         int     `json:"item_group_id" parent_entity:"mtr_item_group"`
 	ItemClassId         int     `json:"item_class_id" parent_entity:"mtr_item_class"`
 	ItemClassName       string  `json:"item_class_name" parent_entity:"mtr_item_class"`
+	ItemPriceCode       string  `json:"item_price_code" parent_entity:"mtr_item_price_code"`
 	PriceListAmount     float64 `json:"price_list_amount" parent_entity:"mtr_item_price_list"`
 	PriceListModifiable string  `json:"price_list_modifiable" parent_entity:"mtr_item_price_list"`
 	AtpmSyncronize      string  `json:"atpm_syncronize" parent_entity:"mtr_item_price_list"`
