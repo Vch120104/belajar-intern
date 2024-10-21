@@ -2625,7 +2625,7 @@ func (r *WorkOrderRepositoryImpl) AddDetailWorkOrder(tx *gorm.DB, id int, reques
 	// }
 
 	// var workOrderItems []transactionworkshopentities.WorkOrderDetail
-	// result := tx.Raw(`
+	// result := tx.Model(`
 	// 	SELECT WO_OPR_ITEM_LINE, OPR_ITEM_CODE, WHS_GROUP, ISNULL(FRT_QTY, 0) AS FRT_QTY
 	// 	FROM dbo.wtWorkOrder2
 	// 	WHERE WO_SYS_NO = ? AND LINE_TYPE <> ? AND LINE_TYPE <> ?
@@ -5208,10 +5208,9 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 
 				if supplyQty == 0 {
 					var qtyAvail float64
-					err = tx.Raw("EXEC dbo.uspg_amLocationStockItem_Select @Option = 1, @Company_Code = ?, @Period_Date = ?, @Whs_Code = '', @Loc_Code = '', @Item_Code = ?, @Whs_Group = ?, @UoM_Type = ?, @QtyResult = ? OUTPUT",
-						entity.CompanyId, time.Now(), detailentity.OperationItemCode, detailentity.WarehouseGroupId, "S", &qtyAvail).Error
 
-					if err != nil {
+					qtyAvail, errResponse := s.lookupRepo.SelectLocationStockItem(tx, 1, entity.CompanyId, time.Now(), 0, "", detailentity.OperationItemId, detailentity.WarehouseGroupId, "S")
+					if errResponse != nil {
 						return false, &exceptions.BaseErrorResponse{
 							StatusCode: http.StatusInternalServerError,
 							Message:    "Failed to check quantity available",
@@ -5252,9 +5251,15 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 
 						// Step 3: Check if the original item is in the substitution table
 						var exists bool
-						err = tx.Raw(`
-							SELECT CASE WHEN EXISTS (SELECT 1 FROM #SUBS WHERE SUBS_ITEM_CODE = ?) THEN 1 ELSE 0 END
-						`, detailentity.OperationItemCode).Scan(&exists).Error
+
+						type Substitution struct {
+							SubsItemCode string `gorm:"column:SUBS_ITEM_CODE"`
+						}
+
+						err := tx.Model(&Substitution{}).
+							Select("CASE WHEN EXISTS (SELECT 1 FROM #SUBS WHERE SUBS_ITEM_CODE = ?) THEN 1 ELSE 0 END", detailentity.OperationItemCode).
+							Scan(&exists).Error
+
 						if err != nil {
 							return false, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -5265,9 +5270,18 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 
 						if !exists {
 							// Step 4: Fetch the substitute items from the temporary table
-							rows, err := tx.Raw(`
-								SELECT SUBS_ITEM_CODE, ITEM_NAME, SUPPLY_QTY, SUBS_TYPE FROM #SUBS
-							`).Rows()
+							type SubstituteItem struct {
+								SubsItemCode string  `gorm:"column:SUBS_ITEM_CODE"`
+								ItemName     string  `gorm:"column:ITEM_NAME"`
+								SupplyQty    float64 `gorm:"column:SUPPLY_QTY"`
+								SubsType     string  `gorm:"column:SUBS_TYPE"`
+							}
+
+							var substituteItems []SubstituteItem
+
+							err := tx.Table("#SUBS").
+								Select("SUBS_ITEM_CODE, ITEM_NAME, SUPPLY_QTY, SUBS_TYPE").
+								Find(&substituteItems).Error
 							if err != nil {
 								return false, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,
@@ -5275,24 +5289,9 @@ func (s *WorkOrderRepositoryImpl) CheckDetail(tx *gorm.DB, workOrderId int, idwo
 									Err:        err,
 								}
 							}
-							defer rows.Close()
 
 							// Step 5: Process each substitute item
-							for rows.Next() {
-								var substituteItem struct {
-									SubsItemCode string
-									ItemName     string
-									SupplyQty    float64
-									SubsType     string
-								}
-								err := rows.Scan(&substituteItem.SubsItemCode, &substituteItem.ItemName, &substituteItem.SupplyQty, &substituteItem.SubsType)
-								if err != nil {
-									return false, &exceptions.BaseErrorResponse{
-										StatusCode: http.StatusInternalServerError,
-										Message:    "Failed to process substitute items",
-										Err:        err,
-									}
-								}
+							for _, substituteItem := range substituteItems {
 
 								// Step 6: Check and update the original item if not substituted
 								if substituteItem.SubsType != "" {
@@ -6784,7 +6783,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 			var currentDate = time.Now()
 
 			// Execute the stored procedure `SelectLocationStockItem`
-			qtyAvailable, err := s.lookupRepo.SelectLocationStockItem(tx, 1, result.CompanyCode, currentDate, "", "", csrOprItemId, whsGroup, uomType)
+			qtyAvailable, err := s.lookupRepo.SelectLocationStockItem(tx, 1, result.CompanyCode, currentDate, 0, "", csrOprItemId, whsGroup, uomType)
 			if err != nil {
 				return entity, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -7805,29 +7804,12 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 				UomType := utils.UomTypeService
 
 				var qtyAvail float64
-				if err := tx.Raw(`
-				EXEC dbo.uspg_amLocationStockItem_Select 
-				@Option = 1, 
-				@Company_Code = ?, 
-				@Period_Date = ?, 
-				@Whs_Code = '', 
-				@Loc_Code = '', 
-				@Item_Code = ?, 
-				@Whs_Group = ?, 
-				@UoM_Type = ?, 
-				@QtyResult = ? OUTPUT`,
-					companyCode,
-					time.Now(),
-					recallRecord.OprItemCode,
-					WhsGroup,
-					UomType,
-					&qtyAvail).Error; err != nil {
-
-					// Return an error response if execution fails
+				qtyAvail, errResponse := s.lookupRepo.SelectLocationStockItem(tx, 1, companyCode, time.Now(), 0, "", recallRecord.OprItemId, WhsGroup, UomType)
+				if errResponse != nil {
 					return entity, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
-						Message:    "Error fetching Quantity Available",
-						Err:        err,
+						Message:    "Failed to check quantity available",
+						Err:        errResponse.Err,
 					}
 				}
 

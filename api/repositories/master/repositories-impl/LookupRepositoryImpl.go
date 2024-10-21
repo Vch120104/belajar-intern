@@ -2663,13 +2663,13 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 	return pages, nil
 }
 
-func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, companyId int, periodDate time.Time, whsCode string, locCode string, itemId int, whsGroup int, uomType string) (float64, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, companyId int, periodDate time.Time, whsCode int, locCode string, itemId int, whsGroup int, uomType string) (float64, *exceptions.BaseErrorResponse) {
 	var qtyResult float64
 	var qtyTemp float64
 	var periodYear, periodMonth string
 
 	moduleCode := "MODULE_SP"
-	periodStatusClose := "PERIOD_STATUS_CLOSE"
+	periodStatusClose := 3
 
 	// Validate Item Code
 	var itemCount int64
@@ -2701,11 +2701,11 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 	periodMonth = periodDate.Format("01")
 
 	// Check if the period is closed
-	var periodStatus string
-	if err := tx.Table("mtr_period").
-		Select("period_status").
+	var periodStatusId int
+	if err := tx.Table("dms_microservices_finance_dev.dbo.mtr_period_audit").
+		Select("period_status_id").
 		Where("company_id = ? AND period_year = ? AND period_month = ?", companyId, periodYear, periodMonth).
-		Scan(&periodStatus).Error; err != nil {
+		Scan(&periodStatusId).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get period status",
@@ -2713,7 +2713,7 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 		}
 	}
 
-	if periodStatus == periodStatusClose {
+	if periodStatusId == periodStatusClose {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "Period is closed",
@@ -2721,14 +2721,14 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 		}
 	}
 
-	// Build the query based on the @Option value: ON HAND QTY & AVAILABLE QTY
-	query := tx.Table("mtr_stock").
-		Where("company_id = ? AND period_year = ? AND period_month = ? AND whs_code = ? AND loc_code = ? AND item_id = ? AND whs_group = ? AND uom_type = ?",
-			companyId, periodYear, periodMonth, whsCode, locCode, itemId, whsGroup, uomType)
+	// Build the query based on the option: ON HAND QTY & AVAILABLE QTY
+	query := tx.Model(&masterentities.LocationStock{}).
+		Where("company_id = ? AND period_year = ? AND period_month = ? AND warehouse_id = ? AND location_id = ? AND item_id = ? AND warehouse_group = ?",
+			companyId, periodYear, periodMonth, whsCode, locCode, itemId, whsGroup)
 
 	switch option {
 	case 1:
-		if err := query.Select("SUM(stock_qty)").Scan(&qtyTemp).Error; err != nil {
+		if err := query.Select("SUM(quantity_ending)").Scan(&qtyTemp).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to get on hand quantity for item",
@@ -2738,7 +2738,7 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 	case 2:
 		if err := query.
 			Where("module_code = ?", moduleCode).
-			Select("SUM(stock_qty)").Scan(&qtyTemp).Error; err != nil {
+			Select("SUM(quantity_available)").Scan(&qtyTemp).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to get available quantity for item",
