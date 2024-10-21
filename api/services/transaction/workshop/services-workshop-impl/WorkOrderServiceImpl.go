@@ -352,7 +352,7 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) GetVehicleServiceById(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetVehicleServiceById(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderServiceVehicleResponse, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
@@ -621,19 +621,19 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrderMultiId(workOrderId int, id 
 	return deletemultiid, nil
 }
 
-func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	change, err := s.structWorkOrderRepo.ChangeBillTo(tx, workOrderId, request)
 	if err != nil {
-		return false, err
+		return transactionworkshoppayloads.ChangeBillToResponse{}, err
 	}
 
 	return change, nil
 }
 
-func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 

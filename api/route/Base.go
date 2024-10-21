@@ -1272,6 +1272,7 @@ func WorkOrderRouter(
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
 	router.Get("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.GetRequestById)
 	router.Post("/normal/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
+	router.Post("/normal/{work_order_system_number}/requestservice/multi", WorkOrderController.AddRequestMultiId)
 	router.Put("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.UpdateRequest)
 	router.Delete("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
 	router.Delete("/normal/{work_order_system_number}/requestservice/{multi_id}", WorkOrderController.DeleteRequestMultiId)

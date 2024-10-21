@@ -264,9 +264,9 @@ func (m *MockWorkOrderService) GetAllVehicleService(filterCondition []utils.Filt
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos)
-	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceVehicleRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceVehicleResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
@@ -362,14 +362,14 @@ func (m *MockWorkOrderService) SaveAffiliated(workOrderId int, id int, request t
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId, request)
-	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.ChangeBillToResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId, request)
-	return args.Get(0).(*transactionworkshoppayloads.ChangePhoneNoRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(*transactionworkshoppayloads.ChangePhoneNoResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) ConfirmPrice(workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {

@@ -1054,7 +1054,6 @@ func (r *WorkOrderControllerImpl) DeleteRequestMultiId(writer http.ResponseWrite
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/vehicleservice [get]
 func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWriter, request *http.Request) {
-	// Get all vehicle services of a work order
 	queryValues := request.URL.Query()
 
 	paginate := pagination.Pagination{
@@ -1064,9 +1063,16 @@ func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWrite
 		SortBy: queryValues.Get("sort_by"),
 	}
 
+	excludeParams := map[string]bool{
+		"page":    true,
+		"limit":   true,
+		"sort_of": true,
+		"sort_by": true,
+	}
+
 	filterConditions := make([]utils.FilterCondition, 0)
 	for key, values := range queryValues {
-		if len(values) > 0 {
+		if len(values) > 0 && !excludeParams[key] {
 			filterConditions = append(filterConditions, utils.FilterCondition{
 				ColumnField: key,
 				ColumnValue: values[0],
