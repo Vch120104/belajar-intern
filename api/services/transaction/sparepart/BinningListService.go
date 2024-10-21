@@ -18,4 +18,5 @@ type BinningListService interface {
 	GetAllBinningListDetailWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination, binningListId int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	InsertBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailPayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
 	UpdateBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailUpdatePayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
+	SubmitBinningList(BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse)
 }

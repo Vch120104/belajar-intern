@@ -35,12 +35,17 @@ type ItemClaim struct {
 	Warehouse                  *masterwarehouseentities.WarehouseMaster
 	ItemGroupId                int `gorm:"column:item_group_id;null;size:30" json:"item_group_id"`
 	ItemGroup                  *masteritementities.ItemGroup
-	ViaBinning                 bool      `gorm:"column:via_binning;null" json:"via_binning"`
-	CurrencyId                 int       `gorm:"column:currency_id;null;size:30" json:"currency_id"`
-	CurrencyExchangeRateDate   time.Time `gorm:"column:currency_exchange_rate_date;null" json:"currency_exchange_rate_date"`
-	CurrencyExchangeRate       float64   `gorm:"column:currency_exchange_rate;null" json:"currency_exchange_rate"`
-	CurrencyRateType           string    `gorm:"column:currency_rate_type;null;size:25" json:"currency_rate_type"`
-	PrintingNumber             int       `gorm:"column:printing_number;null;size:30" json:"printing_number"`
-	LastPrintedBy              string    `gorm:"column:last_printed_by;null;size:10" json:"last_printed_by"`
-	JournalSystemNumber        int       `gorm:"column:journal_system_number;not null;size:30" json:"journal_system_number"`
+	ViaBinning                 bool              `gorm:"column:via_binning;null" json:"via_binning"`
+	CurrencyId                 int               `gorm:"column:currency_id;null;size:30" json:"currency_id"`
+	CurrencyExchangeRateDate   time.Time         `gorm:"column:currency_exchange_rate_date;null" json:"currency_exchange_rate_date"`
+	CurrencyExchangeRate       float64           `gorm:"column:currency_exchange_rate;null" json:"currency_exchange_rate"`
+	CurrencyRateType           string            `gorm:"column:currency_rate_type;null;size:25" json:"currency_rate_type"`
+	PrintingNumber             int               `gorm:"column:printing_number;null;size:30" json:"printing_number"`
+	LastPrintedBy              string            `gorm:"column:last_printed_by;null;size:10" json:"last_printed_by"`
+	JournalSystemNumber        int               `gorm:"column:journal_system_number;not null;size:30" json:"journal_system_number"`
+	ItemClaimDetail            []ItemClaimDetail `gorm:"foreignKey:ClaimSystemNumber;references:ClaimSystemNumber"`
+}
+
+func (*ItemClaim) TableName() string {
+	return TableNameItemClaim
 }

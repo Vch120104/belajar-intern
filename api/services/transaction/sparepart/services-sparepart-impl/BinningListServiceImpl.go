@@ -103,3 +103,13 @@ func (service *BinningListServiceImpl) UpdateBinningListDetail(payloads transact
 	}
 	return result, nil
 }
+
+func (service *BinningListServiceImpl) SubmitBinningList(BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.SubmitBinningList(tx, BinningId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

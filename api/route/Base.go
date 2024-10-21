@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-	_ "after-sales/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -573,7 +572,7 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Get("/detail/{binning_system_number}", BinningList.GetBinningListDetailWithPagination)
 	router.Post("/detail", BinningList.InsertBinningListDetail)
 	router.Patch("/detail", BinningList.UpdateBinningListDetail)
-
+	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
 	return router
 }
 func PurchaseOrderRouter(

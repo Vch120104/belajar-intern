@@ -21,6 +21,7 @@ type BinningListController interface {
 	GetBinningListDetailWithPagination(writer http.ResponseWriter, request *http.Request)
 	InsertBinningListDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateBinningListDetail(writer http.ResponseWriter, request *http.Request)
+	SubmitBinningList(writer http.ResponseWriter, request *http.Request)
 }
 
 type BinningListControllerImpl struct {
@@ -229,4 +230,16 @@ func (controller *BinningListControllerImpl) UpdateBinningListDetail(writer http
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "Successfully Updated Binning List Detail", http.StatusOK)
+}
+
+// router binning-list/submit/{binning_system_number}
+func (controller *BinningListControllerImpl) SubmitBinningList(writer http.ResponseWriter, request *http.Request) {
+	BinningStockSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "binning_system_number"))
+	res, err := controller.service.SubmitBinningList(BinningStockSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Submit Binning List Detail", http.StatusOK)
+
 }

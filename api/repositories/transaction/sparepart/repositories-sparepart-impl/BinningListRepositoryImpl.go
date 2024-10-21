@@ -71,6 +71,15 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 	paginations.Rows = Responses
 	return paginations, nil
 }
+func GetApprovalStatusId(code string) int {
+	var DocResponse generalservicepayloads.ApprovalStatusResponses
+
+	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
+	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+		return 0
+	}
+	return DocResponse.ApprovalStatusId
+}
 
 func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB, rdb *redis.Client, filter []utils.FilterCondition, paginations pagination.Pagination, ctx context.Context) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var binningEntities []transactionsparepartentities.BinningStock
@@ -163,7 +172,6 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			BinningReferenceTypeEntities.BinningReferenceTypeCode = ""
-
 		} else {
 			return Response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
@@ -497,7 +505,10 @@ func (b *BinningListRepositoryImpl) InsertBinningListDetail(db *gorm.DB, payload
 		//UPDATE atItemClaim1
 		//SET QTY_BINNING = ISNULL(QTY_BINNING,0) + @Do_Qty
 		//WHERE CLAIM_SYS_NO = @Ref_Sys_No AND CLAIM_LINE_NO = @Ref_Line
-
+		err = db.Model(&transactionsparepartentities.ItemClaimDetail{}).
+			Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: payloads.ReferenceDetailSystemNumber}).
+			Update("binning_quantity", gorm.Expr("COALESCE(binning_quantity, 0) ?", payloads.DeliveryOrderQuantity)).
+			Error
 	}
 	if BinningRefTypeCode == "WC" {
 		//UPDATE wtWorkOrder2
@@ -610,7 +621,10 @@ func (b *BinningListRepositoryImpl) UpdateBinningListDetail(db *gorm.DB, payload
 		}
 	}
 	if BinningRefTypeCode == "CL" {
-
+		err = db.Model(&transactionsparepartentities.ItemClaimDetail{}).
+			Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: payloads.ReferenceDetailSystemNumber}).
+			Update("binning_quantity", gorm.Expr("COALESCE(binning_quantity, 0) - ? + ?", LastDoQty, payloads.DeliveryOrderQuantity)).
+			Error
 	}
 	if BinningRefTypeCode == "WC" {
 		err = db.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -620,11 +634,480 @@ func (b *BinningListRepositoryImpl) UpdateBinningListDetail(db *gorm.DB, payload
 		if err != nil {
 			return BinningDetailEntities, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Faild Update Work Order Detail Dataa",
+				Message:    "Failed Update Work Order Detail Data",
 				Err:        err,
 			}
 		}
 	}
 	return BinningDetailEntities, nil
+}
 
+// atbinningstock0_update
+// option 1
+func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	BinningEntities := transactionsparepartentities.BinningStock{}
+	var BinningDetailEntities []transactionsparepartentities.BinningStockDetail
+	//get data first
+	err := db.Model(&BinningEntities).
+		Where("binning_system_number = ?", BinningId).
+		Scan(&BinningEntities).
+		Error
+	if err != nil {
+		return transactionsparepartentities.BinningStock{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("binning Not Found Please Check Input"),
+		}
+	}
+	//get detail data
+	err = db.Model(&BinningDetailEntities).
+		Where(transactionsparepartentities.BinningStockDetail{BinningSystemNumber: BinningId}).
+		Scan(&BinningDetailEntities).
+		Error
+	if err != nil {
+		return transactionsparepartentities.BinningStock{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    err.Error(),
+		}
+	}
+	//if not exists (select * from atBinningStock1 where BIN_SYS_NO = @Bin_Sys_No)
+	//	begin
+	//	raiserror('please add detail first',16,1)
+	//	return 0
+	//	end
+	if len(BinningDetailEntities) == 0 {
+		return transactionsparepartentities.BinningStock{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("please add detail first"),
+		}
+	}
+	//get validation draft doc
+	var DocResponse generalservicepayloads.DocumentStatusPayloads
+	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(BinningEntities.BinningDocumentStatusId)
+	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed To fetch Document Status From External Service"),
+		}
+	}
+	if DocResponse.DocumentStatusCode != "10" { //draft {
+		return transactionsparepartentities.BinningStock{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("document Is Not Draft"),
+		}
+	}
+	//https://testing-backendims.indomobil.co.id/general-service/v1/source-document-type-code/SPBN
+	//IF @Src_Code IS NULL
+	//BEGIN
+	//RAISERROR('Document Source Is Not Define at Table comGenVariable',16,1)
+	//RETURN 0
+	//END
+	var SourceDocType generalservicepayloads.SourceDocumentTypeMasterResponse
+	SourceDocTypeUrl := config.EnvConfigs.GeneralServiceUrl + "source-document-type-code/SPBN"
+	if err := utils.Get(SourceDocTypeUrl, &SourceDocType, nil); err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed To fetch source document Status From External Service"),
+		}
+	}
+	if SourceDocType == (generalservicepayloads.SourceDocumentTypeMasterResponse{}) {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Document Source Is Not Define at Table",
+		}
+	}
+	var count int64
+	err = db.Model(&transactionsparepartentities.BinningStockDetail{}).
+		Where("binning_system_number = ?", BinningId).
+		Where("COALESCE(delivery_order_quantity, 0) > COALESCE(purchase_order_quantity, 0)"). // ISNULL in SQL is equivalent to COALESCE in GORM
+		Count(&count).Error
+	if err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("failed to check binning stock condition"),
+		}
+	}
+	// If any record matches the condition, raise the error
+
+	//del comment
+	if count > 0 {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("binning Qty is bigger than PO Qty"),
+		}
+	}
+	//get company code
+	CompanyData, errs := utils.GetCompanyDataById(BinningEntities.CompanyId)
+	if errs != false {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed To Fetch Company Data From Cross service"),
+		}
+	}
+
+	//if @Company_Code = '3125098'
+	//and (SELECT ISNULL(WHS_GROUP,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'PG'
+	//and (SELECT ISNULL(WHS_CODE,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'WPG01'
+	//and exists (select 1
+	//	--A.item_code,B.loc_Code
+	//	from atbinningstock1 A
+	//	left join amlocationitem B on B.company_code = '3125098'
+	//	and B.whs_code = 'WPG01'
+	//	and B.whs_group = 'PG'
+	//	and A.item_code = B.item_code
+	//	where bin_sys_no = @Bin_Sys_No
+	//	and ISNULL(B.loc_code ,'') = '')
+	//
+	//	begin
+	//	raiserror('There is Item Code without Master > Item Location. Please register first!',16,1)
+	//	return 0
+	//	end
+	//select the sub query first
+	//sementara hard code karna belum ada tabel comgen dan di SP masi hardcode
+	var defaultWarehouseGroup = "PG"
+	var defaultWarehouse = ""
+	if CompanyData.CompanyCode == "1516098" { //KIA
+		defaultWarehouse = "WKG01"
+	} else if CompanyData.CompanyCode == "1518098" { //CITROEN
+		defaultWarehouse = "WCG01"
+	} else if CompanyData.CompanyCode == "140000" { //yadea
+		defaultWarehouse = "WYG01"
+	} else if CompanyData.CompanyCode == "3125098" { //nmdi
+		defaultWarehouse = "WPG01"
+	} else {
+		defaultWarehouse = "WPG01"
+	}
+	defaultWarehouseGroupId := 0
+	defaultWarehouseId := 0
+
+	//get warehouse group id for validation
+	err = db.Model(&masterwarehouseentities.WarehouseGroup{}).
+		Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupCode: defaultWarehouseGroup}).
+		Select("warehouse_group_id").Scan(&defaultWarehouseGroupId).Error
+	if err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get warehouse group",
+		}
+	}
+	//get warehouse group id
+	err = db.Model(masterwarehouseentities.WarehouseMaster{}).
+		Where(masterwarehouseentities.WarehouseMaster{WarehouseCode: defaultWarehouse}).
+		Select("warehouse_id").Scan(&defaultWarehouseId).Error
+	if err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get warehouse",
+		}
+	}
+	var result int
+	//validation for nmdi
+	if CompanyData.CompanyCode == "3125098" &&
+		BinningEntities.WarehouseGroupId == defaultWarehouseGroupId &&
+		BinningEntities.WarehouseId == defaultWarehouseId {
+
+		var IsLocExist bool = false
+		err = db.Table("trx_binning_list_stock_detail A").
+			Joins(`LEFT JOIN mtr_location_item B ON
+						AND B.warehouse_id = ?
+						AND B.warehouse_group_id = ?
+						AND A.item_id = B.item_id
+					`, defaultWarehouseId, defaultWarehouseGroupId).
+			Select("1").
+			Where("A.binning_system_number = ?", BinningId).
+			Scan(&IsLocExist).
+			Error
+		if err != nil {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to get warehouse location item",
+			}
+		}
+		if !IsLocExist {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("there is Item Code without Master > Item Location. Please register first"),
+			}
+		}
+		//AND EXISTS (SELECT TOP 1 1 FROM atBinningStock1 where BIN_SYS_NO = @Bin_Sys_No GROUP BY ITEM_CODE HAVING COUNT(*) > 1)
+		err = db.Model(&BinningDetailEntities).
+			Select("1").Where("binning_system_number = ?", BinningId).
+			Group("item_id").
+			Having("count (*) > 1").
+			Limit(1).
+			Scan(&result).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed To Check Double Item",
+			}
+		}
+
+		//IF @Company_Code = '1516098'
+		//AND (SELECT ISNULL(WHS_GROUP,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'PG'
+		//AND (SELECT ISNULL(WHS_CODE,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'WKG01'
+		//AND EXISTS (SELECT TOP 1 1 FROM atBinningStock1 where BIN_SYS_NO = @Bin_Sys_No GROUP BY ITEM_CODE HAVING COUNT(*) > 1)
+		//begin
+		//SET @doubleItem = (SELECT TOP 1 ITEM_CODE FROM atBinningStock1 where BIN_SYS_NO = @Bin_Sys_No GROUP BY ITEM_CODE HAVING COUNT(*) > 1)
+		//raiserror('Item %s multiple line! Please split Binning document!',16,1,@doubleItem)
+		//return 0
+		//end
+		if result == 1 {
+			var doubleItem string
+			err = db.Table("trx_binning_list_stock_detail A").
+				Joins("mtr_item B ON A.item_id = B.item_id").
+				Select("B.item_code").
+				Where("binning_system_number = ?", BinningId).
+				Group("A.item_id").
+				Having("COUNT(A.item_id) > ?", 1).
+				Limit(1).
+				Scan(&doubleItem).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return BinningEntities, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to Check Double Item",
+				}
+			}
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        fmt.Errorf("item %s multiple line! Please split Binning document", doubleItem),
+			}
+		}
+		//IF @Company_Code = '3125098'
+		//AND (SELECT ISNULL(WHS_GROUP,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'PG'
+		//AND (SELECT ISNULL(WHS_CODE,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'WPG01'
+		//AND ISNULL((SELECT SUPPLIER_INV_NO FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No),'') = ''
+		//begin
+		//raiserror('Invoice No is empty! Please type Invoice No then hit the Save button!',16,1)
+		//retur
+		//SupplierInvNo := ""
+		//err = db.Model("")"
+		if BinningEntities.SupplierInvoiceNumber == "" {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("invoice No is empty! Please type Invoice No then hit the Save button"),
+			}
+		}
+		//AND (SELECT COUNT(DISTINCT REF_SYS_NO) FROM atBinningStock1 where BIN_SYS_NO = @Bin_Sys_No) > 1
+		//begin
+		//raiserror('Binning Reference Detail More Than 1 Purchase Order! Please contact your system administrator.',16,1)
+		//return 0
+		//end
+		result := 0
+		err = db.Model(&BinningDetailEntities).
+			Where("binning_system_number = ?", BinningId).
+			Select("COUNT(distinct reference_system_number)").
+			Scan(&result).
+			Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed To Check Reference Number",
+			}
+		}
+		if result > 1 {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("binning Reference Detail More Than 1 Purchase Order! Please contact your system administrator"),
+			}
+		}
+		//IF @Company_Code = '3125098'
+		//AND (SELECT ISNULL(WHS_GROUP,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'PG'
+		//AND (SELECT ISNULL(WHS_CODE,'') FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No) = 'WPG01'
+		//AND ISNULL((SELECT TRX_TYPE FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No),'') = 'I'
+		//AND NOT EXISTS (SELECT TOP 1 1 FROM atSupplierInvoice0 WHERE COMPANY_CODE = @Company_Code AND SUPP_INV_STATUS = '20' AND SUPP_INV_DOC_NO = (SELECT SUPPLIER_INV_NO FROM atBinningStock0 WHERE BIN_SYS_NO = @Bin_Sys_No))
+		//begin
+		//raiserror('Supplier Invoice status not Approved!',16,1)
+		//return 0
+	}
+
+	if CompanyData.CompanyCode == "1516098" && BinningEntities.WarehouseGroupId == defaultWarehouseGroupId &&
+		BinningEntities.WarehouseId == defaultWarehouseId {
+		result = 0
+		err = db.Model(&BinningDetailEntities).
+			Select("1").Where("binning_system_number = ?", BinningId).
+			Group("item_id").
+			Having("count (*) > 1").
+			Limit(1).
+			Scan(&result).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed To Check Double Item",
+			}
+		}
+		if result == 1 {
+			var doubleItem string
+			err = db.Table("trx_binning_list_stock_detail A").
+				Joins("mtr_item B ON A.item_id = B.item_id").
+				Select("B.item_code").
+				Where("binning_system_number = ?", BinningId).
+				Group("A.item_id").
+				Having("COUNT(A.item_id) > ?", 1).
+				Limit(1).
+				Scan(&doubleItem).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				return BinningEntities, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to Check Double Item",
+				}
+			}
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        fmt.Errorf("item %s multiple line! Please split Binning document", doubleItem),
+			}
+		}
+		result = 0
+		err = db.Model(&BinningDetailEntities).
+			Where("binning_system_number = ?", BinningId).
+			Select("COUNT(distinct reference_system_number)").
+			Scan(&result).
+			Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed To Check Reference Number",
+			}
+		}
+		if result > 1 {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("binning Reference Detail More Than 1 Purchase Order! Please contact your system administrator"),
+			}
+		}
+	}
+	if BinningEntities.WarehouseGroupId == 0 || BinningEntities.WarehouseId == defaultWarehouseId {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("warehouse Group / warehouse Code empty! Please check your Binning Document"),
+		}
+	}
+	var BinningRefTypeCode string
+	err = db.Model(masterentities.BinningReferenceTypeMaster{}).
+		Select("binning_reference_type_code").
+		Where(masterentities.BinningReferenceTypeMaster{BinningReferenceTypeId: BinningEntities.BinningReferenceTypeId}).
+		Scan(&BinningRefTypeCode).
+		Error
+	if err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get bining reference type code",
+		}
+	}
+	var vehicleBrandId int
+	if BinningRefTypeCode == "PO" {
+		err = db.Model(&transactionsparepartentities.PurchaseOrderEntities{}).
+			Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: BinningEntities.ReferenceSystemNumber}).
+			Select("brand_id").Scan(&vehicleBrandId).Error
+		if err != nil {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to get Brand Id From Purchase Order",
+			}
+		}
+	}
+	if BinningRefTypeCode == "CL" {
+		err = db.Model(&transactionsparepartentities.ItemClaim{}).
+			Where(transactionsparepartentities.ItemClaim{ClaimSystemNumber: BinningEntities.ReferenceSystemNumber}).
+			Select("vehicle_brand_id").Scan(&vehicleBrandId).Error
+		if err != nil {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to get Brand Id From item claim",
+			}
+		}
+	}
+	if BinningRefTypeCode == "WC" {
+		err = db.Model(&transactionworkshopentities.WorkOrder{}).
+			Where(transactionworkshopentities.WorkOrder{WorkOrderSystemNumber: BinningEntities.ReferenceSystemNumber}).
+			Select("brand_id").
+			Scan(&vehicleBrandId).Error
+		if err != nil {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to get Brand Id Work Order",
+			}
+		}
+	}
+	//endpoint not ready
+	//EXEC uspg_gmSrcDoc1_Update
+	//@Option = 0 ,
+	//@COMPANY_CODE = @Company_Code ,
+	//@SOURCE_CODE = @Src_Code ,
+	//@VEHICLE_BRAND = @VEHICLE_BRAND, --'' ,
+	//@PROFIT_CENTER_CODE = '' ,
+	//@TRANSACTION_CODE = '' ,
+	//@BANK_ACC_CODE = '' ,
+	//@TRANSACTION_DATE = @Bin_Doc_Date ,
+	//@Last_Doc_No = @Bin_Doc_No OUTPUT
+	//dummy for gmsercdoc 1 update
+
+	//UPDATE atBinningStock0 SET
+	//SUPPLIER_DLVR_PERSON = @Supplier_Dlvr_Person,
+	//	CHANGE_USER_ID = @Change_User_Id ,
+	//	CHANGE_DATETIME = @Change_Datetime
+	//WHERE BIN_SYS_NO = @Bin_Sys_No AND TRX_TYPE = 'I'
+
+	//UPDATE atBinningStock0 SET
+	//WHS_GROUP = 'PG',
+	//	WHS_CODE = 'WKG01'
+	//WHERE BIN_SYS_NO = @Bin_Sys_No AND TRX_TYPE = 'I' AND COMPANY_CODE = 1516098 AND ISNULL(WHS_GROUP,'') = '' AND ISNULL(WHS_CODE,'') = ''
+
+	//BinningEntities
+	//get ready id
+	DocumentStatusUrl = config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/20"
+	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("failed To fetch Document Status From External Service"),
+		}
+	}
+
+	//get bining reference type id first "T"
+	binningTypeIdImport := 0
+	err = db.Model(&masterentities.BinningTypeMaster{}).
+		Where(masterentities.BinningTypeMaster{BinningTypeCode: "I"}).
+		Select("binning_type_id").Scan(&binningTypeIdImport).Error
+	if err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get Binning Type Id",
+		}
+	}
+	//UPDATE atBinningStock0 SET
+	//BIN_STATUS = dbo.GetVariableValue('DOC_STATUS_READY') ,
+	//	BIN_DOC_NO = @Bin_Doc_No ,
+	//	CHANGE_NO = CHANGE_NO + 1 ,
+	//	CHANGE_USER_ID = @Change_User_Id ,
+	//	CHANGE_DATETIME = @Change_Datetime
+	//WHERE BIN_SYS_NO = @Bin_Sys_No
+	BinningEntities.BinningDocumentStatusId = DocResponse.DocumentStatusId
+	BinningEntities.ChangeNo += 1
+	BinningEntities.BinningDocumentNumber = "dummy doc number waiting for gmsrcdoc1_update"
+	*BinningEntities.CreatedDate = time.Now()
+
+	err = db.Save(&BinningEntities).Error
+	if err != nil {
+		return BinningEntities, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save Binning Document",
+		}
+	}
+	if (CompanyData.CompanyCode == "1516098" || //kia
+		CompanyData.CompanyCode == "1518098" || //citroen
+		CompanyData.CompanyCode == "140000") && //yadea
+		BinningEntities.WarehouseId == 0 &&
+		BinningEntities.WarehouseGroupId == 0 &&
+		BinningEntities.BinningTypeId == binningTypeIdImport {
+
+		BinningEntities.WarehouseId = defaultWarehouseId
+		BinningEntities.WarehouseGroupId = defaultWarehouseGroupId
+		err = db.Save(&BinningEntities).Error
+		if err != nil {
+			return BinningEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to save Binning Document",
+			}
+		}
+	}
+	return BinningEntities, nil
 }
