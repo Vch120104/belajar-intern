@@ -65,8 +65,7 @@ func InitDB() *gorm.DB {
 func InitRedis() *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     EnvConfigs.ClientRedis + ":" + EnvConfigs.PortRedis,
-		Password: "OOg6hZ7KvrU4aAIhmhq2cNfhgUjMYlif",
-		Username: "default",
+		Password: "",
 		DB:       0,
 	})
 
