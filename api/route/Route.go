@@ -390,6 +390,11 @@ func StartRouting(db *gorm.DB) {
 	ServiceBodyshopService := transactionbodyshopserviceimpl.OpenServiceBodyshopServiceImpl(ServiceBodyshopRepository, db, rdb)
 	ServiceBodyshopController := transactionbodyshopcontroller.NewServiceBodyshopController(ServiceBodyshopService)
 
+	//Contract Service
+	ContractServiceRepository := transactionworkshoprepositoryimpl.OpenContractServicelRepositoryImpl()
+	ContractServiceService := transactionworkshopserviceimpl.OpenContractServiceServiceImpl(ContractServiceRepository, db, rdb)
+	ContractServiceController := transactionworkshopcontroller.NewContractServiceController(ContractServiceService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -462,6 +467,7 @@ func StartRouting(db *gorm.DB) {
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	LookupRouter := LookupRouter(LookupController)
+	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -545,6 +551,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/work-order-bypass", WorkOrderBypassRouter)
 		r.Mount("/quality-control", QualityControlRouter)
 		r.Mount("/service-workshop", ServiceWorkshopRouter)
+		r.Mount("/contract-service", ContractServiceRouter)
 
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
