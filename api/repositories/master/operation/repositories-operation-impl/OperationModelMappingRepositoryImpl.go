@@ -542,8 +542,8 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, 
 
 	OperationLevelResponse := []masteroperationpayloads.OperationLevelGetAll{}
 
-	err := tx.Raw(`
-		SELECT
+	err := tx.Model(&masteroperationentities.OperationLevel{}).
+		Select(`
 			mtr_operation_level.operation_level_id,
 			mtr_operation_group.operation_group_id,
 			mtr_operation_group.operation_group_code,
@@ -556,18 +556,13 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, 
 			mtr_operation_key.operation_key_description,
 			mtr_operation_entries.operation_entries_id,
 			mtr_operation_entries.operation_entries_code,
-			mtr_operation_entries.operation_entries_description
-		FROM dbo.mtr_operation_level
-		JOIN dbo.mtr_operation_entries
-			ON mtr_operation_entries.operation_entries_id = mtr_operation_level.operation_entries_id
-		JOIN dbo.mtr_operation_group
-			ON mtr_operation_group.operation_group_id = mtr_operation_entries.operation_group_id
-		JOIN dbo.mtr_operation_key
-			ON mtr_operation_key.operation_key_id = mtr_operation_entries.operation_key_id
-		JOIN dbo.mtr_operation_section
-			ON mtr_operation_section.operation_section_id = mtr_operation_entries.operation_section_id
-		WHERE mtr_operation_level.operation_model_mapping_id = ?
-	`, id).Scan(&OperationLevelResponse).Error
+			mtr_operation_entries.operation_entries_description`).
+		Joins("JOIN mtr_operation_entries ON mtr_operation_entries.operation_entries_id = mtr_operation_level.operation_entries_id").
+		Joins("JOIN mtr_operation_group ON mtr_operation_group.operation_group_id = mtr_operation_entries.operation_group_id").
+		Joins("JOIN mtr_operation_key ON mtr_operation_key.operation_key_id = mtr_operation_entries.operation_key_id").
+		Joins("JOIN mtr_operation_section ON mtr_operation_section.operation_section_id = mtr_operation_entries.operation_section_id").
+		Where("mtr_operation_level.operation_model_mapping_id = ?", id).
+		Scan(&OperationLevelResponse).Error
 
 	if len(OperationLevelResponse) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
@@ -591,43 +586,46 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, 
 func (r *OperationModelMappingRepositoryImpl) GetOperationLevelById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {
 	response := masteroperationpayloads.OperationLevelByIdResponse{}
 
-	err := tx.Raw(`
-    SELECT TOP 1
-        mtr_operation_level.operation_level_id,
-        mtr_operation_level.is_active,
-		mtr_operation_model_mapping.operation_model_mapping_id,
-        mtr_operation_entries.operation_entries_id,
-        mtr_operation_entries.operation_entries_code,
-        mtr_operation_entries.operation_entries_description,
-        mtr_operation_group.operation_group_code,
-        mtr_operation_group.operation_group_description,
-        mtr_operation_section.operation_section_code,
-        mtr_operation_section.operation_section_description,
-        mtr_operation_key.operation_key_code,
-        mtr_operation_key.operation_key_description
-    FROM dbo.mtr_operation_level
-	JOIN dbo.mtr_operation_model_mapping AS mtr_operation_model_mapping 
-        ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_level.operation_model_mapping_id
-    JOIN dbo.mtr_operation_entries AS mtr_operation_entries 
-        ON mtr_operation_entries.operation_entries_id = mtr_operation_level.operation_entries_id
-    JOIN dbo.mtr_operation_key AS mtr_operation_key 
-        ON mtr_operation_key.operation_key_id = mtr_operation_entries.operation_key_id
-    JOIN dbo.mtr_operation_group AS mtr_operation_group 
-        ON mtr_operation_group.operation_group_id = mtr_operation_entries.operation_group_id
-    JOIN dbo.mtr_operation_section AS mtr_operation_section 
-        ON mtr_operation_section.operation_section_id = mtr_operation_entries.operation_section_id
-    WHERE mtr_operation_level.operation_level_id = ?
-`, Id).Scan(&response).Error
+	err := tx.Model(&masteroperationentities.OperationLevel{}).
+		Select(`
+			mtr_operation_level.operation_level_id,
+			mtr_operation_level.is_active,
+			mtr_operation_model_mapping.operation_model_mapping_id,
+			mtr_operation_entries.operation_entries_id,
+			mtr_operation_entries.operation_entries_code,
+			mtr_operation_entries.operation_entries_description,
+			mtr_operation_group.operation_group_code,
+			mtr_operation_group.operation_group_description,
+			mtr_operation_section.operation_section_code,
+			mtr_operation_section.operation_section_description,
+			mtr_operation_key.operation_key_code,
+			mtr_operation_key.operation_key_description`).
+		Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_operation_level.operation_model_mapping_id").
+		Joins("JOIN mtr_operation_entries ON mtr_operation_entries.operation_entries_id = mtr_operation_level.operation_entries_id").
+		Joins("JOIN mtr_operation_key ON mtr_operation_key.operation_key_id = mtr_operation_entries.operation_key_id").
+		Joins("JOIN mtr_operation_group ON mtr_operation_group.operation_group_id = mtr_operation_entries.operation_group_id").
+		Joins("JOIN mtr_operation_section ON mtr_operation_section.operation_section_id = mtr_operation_entries.operation_section_id").
+		Where("mtr_operation_level.operation_level_id = ?", Id).
+		First(&response).Error
 
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Operation Level not found",
+				Err:        err,
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Error retrieving Operation Level",
 			Err:        err,
 		}
 	}
 
 	return response, nil
 }
+
 func (r *OperationModelMappingRepositoryImpl) DeactivateOperationLevel(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 
