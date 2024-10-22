@@ -10,6 +10,7 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -389,8 +390,11 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromPDI(writer ht
 	pdisystemnumber, _ := strconv.Atoi(chi.URLParam(request, "pdi_system_number"))
 
 	save, err := r.bookingEstimationService.SaveBookingEstimationFromPDI(pdisystemnumber,formrequest)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	if err != nil ||!save{
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err: errors.New("data not found"),
+		})
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
@@ -401,12 +405,15 @@ func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromServiceReques
 	helper.ReadFromRequestBody(request, &formrequest)
 	serviceRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "service_request_system_number"))
 	save, err := r.bookingEstimationService.SaveBookingEstimationFromServiceRequest(serviceRequestSystemNumber,formrequest)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	if err != nil || !save {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err: errors.New("data not found"),
+		})
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
-}
+}	
 
 func (r *BookingEstimationControllerImpl) CopyFromHistory(writer http.ResponseWriter, request *http.Request) {
 	BatchSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))
