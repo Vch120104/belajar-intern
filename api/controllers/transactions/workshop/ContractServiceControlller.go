@@ -8,6 +8,9 @@ import (
 	"after-sales/api/utils"
 	"fmt"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type ContractServiceControllerImpl struct {
@@ -16,7 +19,7 @@ type ContractServiceControllerImpl struct {
 
 type ContractServiceController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
-	// GetById(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
 	// Qcpass(writer http.ResponseWriter, request *http.Request)
 	// Reorder(writer http.ResponseWriter, request *http.Request)
 }
@@ -71,4 +74,44 @@ func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, reque
 		// Jika data tidak ditemukan
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// GetById implements ContractServiceController.
+func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
+	idstr := chi.URLParam(request, "contract_service_system_number")
+	id, err := strconv.Atoi(idstr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid request ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+
+	// Convert map to []utils.FilterCondition
+	var filterConditions []utils.FilterCondition
+	for field, value := range map[string]string{
+		"trx_contract_service.contract_service_system_number": queryValues.Get("contract_service_system_number"),
+	} {
+		if value != "" {
+			filterConditions = append(filterConditions, utils.FilterCondition{
+				ColumnField: field,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	data, baseErr := r.ContractServiceService.GetById(id, filterConditions, paginate)
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
 }

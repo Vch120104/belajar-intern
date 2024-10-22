@@ -1446,6 +1446,7 @@ func ContractServiceRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", ContractServiceController.GetAll)
+	router.Get("/by-id/{contract_service_system_number}", ContractServiceController.GetById)
 
 	return router
 }

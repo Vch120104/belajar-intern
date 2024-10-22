@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -127,4 +128,90 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
+}
+
+// GetById implements transactionworkshoprepository.ContractServiceRepository.
+func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionworkshoppayloads.ContractServiceResponseId, *exceptions.BaseErrorResponse) {
+
+	var entity transactionworkshopentities.ContractService
+	// Fetch Contract Service by Id
+	err := tx.Model(&transactionworkshopentities.ContractService{}).
+		Where("contract_service_system_number = ?", Id).
+		First(&entity).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Contract service not found",
+			}
+		}
+		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Fetch data brand from external API
+	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
+	var brandResponse transactionworkshoppayloads.ContractServiceBrand
+	errBrand := utils.Get(BrandUrl, &brandResponse, nil)
+	if errBrand != nil {
+		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve brand data from external API",
+			Err:        errBrand,
+		}
+	}
+
+	// Fetch data model from external API
+	ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
+	var modelResponse transactionworkshoppayloads.ContractServiceModel
+	errModel := utils.Get(ModelUrl, &modelResponse, nil)
+	if errModel != nil {
+		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve model data from external API",
+			Err:        errModel,
+		}
+	}
+
+	// Fetch data vehicle from external API
+	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(entity.VehicleId)
+	var vehicleResponses []transactionworkshoppayloads.ContractServiceVehicleResponse
+	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
+	if errVehicle != nil {
+		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve vehicle data from external API",
+			Err:        errVehicle,
+		}
+	}
+
+	// Handle case where vehicle data is not found
+	var vehicleTnkb string
+	if len(vehicleResponses) > 0 {
+		vehicleTnkb = vehicleResponses[0].VehicleTnkb
+	} else {
+		vehicleTnkb = "Unknown"
+	}
+
+	// Prepare the response payload
+	payload := transactionworkshoppayloads.ContractServiceResponseId{
+		CompanyId:                     entity.CompanyId,
+		ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
+		ContractServiceDocumentNumber: entity.ContractSevriceDocumentNumber,
+		ContractServiceFrom:           entity.ContractServiceFrom,
+		ContractServiceTo:             entity.ContractServiceTo,
+		BrandId:                       entity.BrandId,
+		BrandName:                     brandResponse.BrandName,
+		ModelId:                       entity.ModelId,
+		ModelName:                     modelResponse.ModelName,
+		VehicleId:                     entity.VehicleId,
+		VehicleTnkb:                   vehicleTnkb,
+		// VehicleOwner:                  vehicleOwner,
+		ContractServiceStatusId: entity.ContractServiceStatusId,
+	}
+
+	return payload, nil
 }
