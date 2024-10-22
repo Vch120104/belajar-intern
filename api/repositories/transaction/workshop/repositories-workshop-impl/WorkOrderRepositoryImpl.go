@@ -7,6 +7,7 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
@@ -58,6 +59,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Message:    "Failed to retrieve work order data from the database",
 			Err:        err,
 		}
 	}
@@ -524,17 +526,30 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		}
 	}
 
+	// Fetch workorder details without pagination to get total count
+	var totalRows int64
+	errCount := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ?", Id).
+		Count(&totalRows).Error
+	if errCount != nil {
+		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count work order details",
+			Err:        errCount,
+		}
+	}
+
 	// Fetch workorder details with pagination
 	var workorderDetails []transactionworkshoppayloads.WorkOrderDetailResponse
-	query := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
-		Select("trx_work_order_detail.work_order_detail_id, trx_work_order_detail.work_order_system_number, trx_work_order_detail.line_type_id,lt.line_type_code, trx_work_order_detail.transaction_type_id, tt.transaction_type_code AS transaction_type_code, trx_work_order_detail.job_type_id, tc.job_type_code AS job_type_code, trx_work_order_detail.warehouse_group_id, trx_work_order_detail.frt_quantity, trx_work_order_detail.supply_quantity, trx_work_order_detail.operation_item_price, trx_work_order_detail.operation_item_discount_amount, trx_work_order_detail.operation_item_discount_request_amount").
+	errWorkOrderDetails := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Select("trx_work_order_detail.work_order_detail_id, trx_work_order_detail.work_order_system_number, trx_work_order_detail.line_type_id, lt.line_type_code, trx_work_order_detail.transaction_type_id, tt.transaction_type_code AS transaction_type_code, trx_work_order_detail.job_type_id, tc.job_type_code AS job_type_code, trx_work_order_detail.warehouse_group_id, trx_work_order_detail.frt_quantity, trx_work_order_detail.supply_quantity, trx_work_order_detail.operation_item_price, trx_work_order_detail.operation_item_discount_amount, trx_work_order_detail.operation_item_discount_request_amount").
 		Joins("INNER JOIN mtr_work_order_line_type AS lt ON lt.line_type_code = trx_work_order_detail.line_type_id").
 		Joins("INNER JOIN mtr_work_order_transaction_type AS tt ON tt.transaction_type_id = trx_work_order_detail.transaction_type_id").
 		Joins("INNER JOIN mtr_work_order_job_type AS tc ON tc.job_type_id = trx_work_order_detail.job_type_id").
 		Where("work_order_system_number = ?", Id).
 		Offset(pagination.GetOffset()).
-		Limit(pagination.GetLimit())
-	errWorkOrderDetails := query.Find(&workorderDetails).Error
+		Limit(pagination.GetLimit()).
+		Find(&workorderDetails).Error
 	if errWorkOrderDetails != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -542,6 +557,10 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 			Err:        errWorkOrderDetails,
 		}
 	}
+
+	// Calculate total pages
+	pagination.TotalRows = totalRows
+	pagination.TotalPages = int(math.Ceil(float64(totalRows) / float64(pagination.GetLimit())))
 
 	// Fetch work order services
 	var workorderServices []transactionworkshoppayloads.WorkOrderServiceResponse
@@ -8530,4 +8549,367 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 	}
 
 	return entity, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetServiceRequestByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	// Initialize the service request structure with the entity
+	var tableStruct transactionworkshopentities.ServiceRequest
+
+	// Create base query to apply filters and conditions
+	query := tx.Model(&tableStruct).Where("work_order_system_number = ? AND work_order_system_number != 0", workOrderId)
+
+	// Apply filters to the query
+	query = utils.ApplyFilterSearch(query, filterCondition)
+
+	// Get total rows for pagination
+	var totalRows int64
+	if err := query.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count service requests",
+			Err:        err,
+		}
+	}
+
+	// Apply pagination
+	paginatedQuery := pagination.Paginate(&tableStruct, &pages, query)
+
+	// Execute the query
+	var results []transactionworkshopentities.ServiceRequest
+	if err := paginatedQuery(tx).Find(&results).Error; err != nil { // Call paginatedQuery with tx
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve service requests",
+			Err:        err,
+		}
+	}
+
+	// Prepare the response data
+	response := make([]map[string]interface{}, len(results))
+	for i, request := range results {
+		response[i] = map[string]interface{}{
+			"service_request_system_number":   request.ServiceRequestSystemNumber,
+			"service_request_document_number": request.ServiceRequestDocumentNumber,
+			"work_order_system_number":        request.WorkOrderSystemNumber,
+		}
+	}
+
+	// Set pagination metadata
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
+
+	return response, pages.TotalPages, int(totalRows), nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetClaimByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+
+	entities := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
+		Where("work_order_system_number = ? AND work_order_system_number != 0 AND line_type_id IN ('0','1') AND work_order_status_id != ?", workOrderId, utils.WoStatOngoing)
+
+	entities = utils.ApplyFilter(entities, filterCondition)
+
+	var totalRows int64
+	if err := entities.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count filtered claims",
+			Err:        err,
+		}
+	}
+
+	var results []transactionworkshopentities.WorkOrderDetail
+
+	if err := entities.Order("work_order_detail_id").Offset(pages.GetOffset()).Limit(pages.GetLimit()).Find(&results).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve filtered claims",
+			Err:        err,
+		}
+	}
+
+	response := make([]map[string]interface{}, len(results))
+	for i, claim := range results {
+		response[i] = map[string]interface{}{
+			"work_order_system_number": claim.WorkOrderSystemNumber,
+		}
+	}
+
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+
+	return response, pages.TotalPages, int(totalRows), nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetClaimItemByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	entities := tx.Table("trx_work_order_detail").
+		Joins("INNER JOIN mtr_item ON trx_work_order_detail.operation_item_id = mtr_item.item_id").
+		Where("trx_work_order_detail.work_order_system_number = ? AND trx_work_order_detail.work_order_system_number != 0", workOrderId).
+		Where("trx_work_order_detail.work_order_status_id = ?", utils.WoStatOngoing).
+		Where("trx_work_order_detail.supply_quantity > 0 AND trx_work_order_detail.invoice_system_number = 0").
+		Where("trx_work_order_detail.warranty_claim_type_id IN (?, ?)", 3, "")
+
+	entities = utils.ApplyFilter(entities, filterCondition)
+
+	var totalRows int64
+	if err := entities.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count filtered claims",
+			Err:        err,
+		}
+	}
+
+	if totalRows == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No claims found for the given work order.",
+			Err:        nil,
+		}
+	}
+
+	var results []transactionworkshopentities.WorkOrderDetail
+	paginatedQuery := pagination.Paginate(&transactionworkshopentities.WorkOrderDetail{}, &pages, entities)
+
+	if err := paginatedQuery(tx).Find(&results).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve filtered claims",
+			Err:        err,
+		}
+	}
+
+	response := []map[string]interface{}{
+		{
+			"work_order_system_number": results[0].WorkOrderSystemNumber,
+		},
+	}
+
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+
+	return response, pages.TotalPages, int(totalRows), nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetWOByBillCode(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	query := tx.Table("trx_work_order_detail").
+		Where("trx_work_order_detail.work_order_system_number = ? AND trx_work_order_detail.work_order_system_number != 0", workOrderId).
+		Where("trx_work_order_detail.frt_quantity > trx_work_order_detail.supply_quantity AND trx_work_order_detail.invoice_system_number = 0").
+		Where("trx_work_order_detail.line_type_id NOT IN ('0', '1')")
+
+	query = utils.ApplyFilter(query, filterCondition)
+
+	var totalRows int64
+	if err := query.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count filtered work orders",
+			Err:        err,
+		}
+	}
+
+	if totalRows == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No work orders found for the given work order ID.",
+			Err:        nil,
+		}
+	}
+
+	paginatedQuery := pagination.Paginate(&transactionworkshopentities.WorkOrderDetail{}, &pages, query)
+
+	var results []transactionworkshopentities.WorkOrderDetail
+	if err := paginatedQuery(tx).Find(&results).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve filtered work orders",
+			Err:        err,
+		}
+	}
+
+	response := []map[string]interface{}{
+		{
+			"work_order_system_number": results[0].WorkOrderSystemNumber,
+		},
+	}
+
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+
+	return response, pages.TotalPages, int(totalRows), nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetDetailWOByClaimBillCode(tx *gorm.DB, workOrderId int, transactionTypeId int, atpmClaimNumber string, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	var responsePayload []transactionworkshoppayloads.GetClaimResponsePayload
+
+	query := tx.Table("trx_work_order_detail AS A").
+		Joins("INNER JOIN trx_work_order AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT JOIN mtr_item AS C ON C.item_id = A.operation_item_id").
+		Where("A.work_order_system_number = ? AND A.transaction_type_id = ? AND A.invoice_system_number = 0", workOrderId, transactionTypeId).
+		Where("A.atpm_claim_number != ''").
+		Where("A.warranty_claim_type_id = (CASE WHEN A.line_type_id = '1' THEN A.warranty_claim_type_id WHEN A.line_type_id = '0' THEN A.warranty_claim_type_id ELSE 'PM' END)").
+		Where("A.atpm_claim_number = ?", atpmClaimNumber).
+		Where("A.work_order_status_id = (CASE WHEN A.line_type_id = '1' THEN ? WHEN A.line_type_id = '0' THEN ? ELSE 0 END)", utils.WoStatOngoing, utils.WoStatOngoing).
+		Where("A.supply_quantity = A.frt_quantity")
+
+	err := query.Select(
+		"A.work_order_system_number, B.work_order_document_number, A.work_order_operation_item_line, B.vehicle_chassis_number, B.brand_id, B.model_id, B.variant_id, " +
+			"C.item_group_id, A.line_type_id, A.operation_item_code, A.frt_quantity, A.supply_quantity, A.approval_id, A.operation_item_price, " +
+			"A.operation_item_discount_request_percent, A.operation_item_discount_percent, A.total_cost_of_goods_sold, A.job_type_id, " +
+			"A.purchase_order_system_number, A.purchase_order_line, A.description").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset()).
+		Find(&responsePayload).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch claim details",
+			Err:        err,
+		}
+	}
+
+	// Check if responsePayload is empty and return a Not Found error if so
+	if len(responsePayload) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No claim details found for the specified work order.",
+			Err:        nil,
+		}
+	}
+
+	return responsePayload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetDetailWOByBillCode(tx *gorm.DB, workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+
+	var responsePayload []transactionworkshoppayloads.GetClaimResponsePayload
+
+	query := tx.Table("trx_work_order_detail AS A").
+		Joins("INNER JOIN trx_work_order AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT JOIN mtr_item AS C ON C.item_id = A.operation_item_id").
+		Where("A.work_order_system_number = ? AND A.transaction_type_id = ? AND A.invoice_system_number = 0", workOrderId, transactionTypeId).
+		Where("A.work_order_status_id = CASE WHEN A.line_type_id = '1' THEN ? WHEN A.line_type_id = '0' THEN ? ELSE 0 END", utils.WoStatOngoing, utils.WoStatOngoing).
+		Where("A.supply_quantity = A.frt_quantity")
+
+	err := query.Select(
+		"A.work_order_system_number, B.work_order_document_number, A.work_order_operation_item_line, B.vehicle_chassis_number, B.brand_id, B.model_id, B.variant_id, " +
+			"C.item_group_id, A.line_type_id, A.operation_item_code, A.frt_quantity, A.supply_quantity, A.approval_id, A.operation_item_price, " +
+			"A.operation_item_discount_request_percent, A.operation_item_discount_percent, A.total_cost_of_goods_sold, A.job_type_id, " +
+			"A.purchase_order_system_number, A.purchase_order_line, A.description").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset()).
+		Find(&responsePayload).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch claim details",
+			Err:        err,
+		}
+	}
+
+	// Check if responsePayload is empty and return a Not Found error if so
+	if len(responsePayload) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No claim details found for the specified work order.",
+			Err:        nil,
+		}
+	}
+
+	return responsePayload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetDetailWOByATPMBillCode(tx *gorm.DB, workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+
+	var responsePayload []transactionworkshoppayloads.GetClaimResponsePayload
+
+	query := tx.Table("trx_work_order_detail AS A").
+		Joins("INNER JOIN trx_work_order AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT JOIN mtr_item AS C ON C.item_id = A.operation_item_id").
+		Where("A.work_order_system_number = ? AND A.transaction_type_id = ? AND A.invoice_system_number = 0", workOrderId, transactionTypeId).
+		Where("A.warranty_claim_type_id = CASE WHEN A.line_type_id = '1' THEN A.warranty_claim_type_id WHEN A.line_type_id = '0' THEN A.warranty_claim_type_id ELSE 'PM' END").
+		Where("A.work_order_status_id = CASE WHEN A.line_type_id = '1' THEN ? WHEN A.line_type_id = '0' THEN ? ELSE 0 END", utils.WoStatOngoing, utils.WoStatOngoing).
+		Where("A.supply_quantity = A.frt_quantity")
+
+	err := query.Select(
+		"A.work_order_system_number, B.work_order_document_number, A.work_order_operation_item_line, B.vehicle_chassis_number, B.brand_id, B.model_id, B.variant_id, " +
+			"C.item_group_id, A.line_type_id, A.operation_item_code, A.frt_quantity, A.supply_quantity, A.approval_id, A.operation_item_price, " +
+			"A.operation_item_discount_request_percent, A.operation_item_discount_percent, A.total_cost_of_goods_sold, A.job_type_id, " +
+			"A.purchase_order_system_number, A.purchase_order_line, A.description").
+		Limit(pages.GetLimit()).
+		Offset(pages.GetOffset()).
+		Find(&responsePayload).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch claim details",
+			Err:        err,
+		}
+	}
+
+	// Check if responsePayload is empty and return a Not Found error if so
+	if len(responsePayload) == 0 {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No claim details found for the specified work order.",
+			Err:        nil,
+		}
+	}
+
+	return responsePayload, nil
+}
+
+func (r *WorkOrderRepositoryImpl) GetSupplyByWO(tx *gorm.DB, workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	query := tx.Table("trx_supply_slip AS ss0").
+		Joins("INNER JOIN trx_supply_slip_return_detail AS ss1 ON ss1.supply_system_number = ss0.supply_system_number").
+		Joins("LEFT OUTER JOIN trx_work_order_detail AS w2 ON w2.work_order_system_number = ss1.work_order_system_number AND w2.operation_item_code = ss1.item_code").
+		Where("ss0.work_order_system_number = ? AND ss0.supply_type = 'B'", workOrderId).
+		Where("(ss1.quantity_supply - ss1.quantity_return) > 0").
+		Where("ISNULL(w2.work_order_system_number, 0) = 0")
+
+	query = utils.ApplyFilter(query, filterCondition)
+
+	var totalRows int64
+	if err := query.Count(&totalRows).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count filtered supply orders",
+			Err:        err,
+		}
+	}
+
+	if totalRows == 0 {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "No supply orders found for the given work order ID.",
+			Err:        nil,
+		}
+	}
+
+	paginatedQuery := pagination.Paginate(&transactionsparepartentities.SupplySlip{}, &pages, query)
+
+	var results []transactionsparepartentities.SupplySlip
+	if err := paginatedQuery(tx).Find(&results).Error; err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve filtered supply orders",
+			Err:        err,
+		}
+	}
+
+	response := []map[string]interface{}{}
+	for _, result := range results {
+		response = append(response, map[string]interface{}{
+			"supply_system_number":   result.SupplySystemNumber,
+			"supply_document_number": result.SupplyDocumentNumber,
+			// Add more fields as required
+		})
+	}
+
+	pages.TotalRows = totalRows
+	pages.TotalPages = int(math.Ceil(float64(totalRows) / float64(pages.GetLimit())))
+
+	return response, pages.TotalPages, int(totalRows), nil
 }

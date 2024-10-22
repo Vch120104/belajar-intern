@@ -860,3 +860,99 @@ func (s *WorkOrderServiceImpl) AddFieldAction(workOrderId int, request transacti
 	}
 	return save, nil
 }
+
+func (s *WorkOrderServiceImpl) GetServiceRequestByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetServiceRequestByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetClaimByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetClaimByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetClaimItemByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetClaimItemByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetWOByBillCode(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetWOByBillCode(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailWOByClaimBillCode(workOrderId int, transactionTypeId int, atpmClaimNumber string, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, repoErr := s.structWorkOrderRepo.GetDetailWOByClaimBillCode(tx, workOrderId, transactionTypeId, atpmClaimNumber, pages)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailWOByBillCode(workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, repoErr := s.structWorkOrderRepo.GetDetailWOByBillCode(tx, workOrderId, transactionTypeId, pages)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailWOByATPMBillCode(workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, repoErr := s.structWorkOrderRepo.GetDetailWOByATPMBillCode(tx, workOrderId, transactionTypeId, pages)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetSupplyByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetSupplyByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}

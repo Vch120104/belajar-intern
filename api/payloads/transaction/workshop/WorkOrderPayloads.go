@@ -1180,3 +1180,39 @@ type WorkOrderJobType struct {
 	JobTypeCode string `json:"job_type_code"`
 	JobTypeName string `json:"job_type_name"`
 }
+
+type GetClaimRequestPayload struct {
+	WorkOrderSystemNumber int    `json:"work_order_system_number"`
+	TransactionTypeId     int    `json:"transaction_type_id"`
+	ATPMClaimNumber       string `json:"atpm_claim_number"`
+}
+
+type GetBillCodeRequestPayload struct {
+	WorkOrderSystemNumber int `json:"work_order_system_number"`
+	TransactionTypeId     int `json:"transaction_type_id"`
+}
+
+type GetClaimResponsePayload struct {
+	WorkOrderSystemNumber                 int     `json:"work_order_system_number"`
+	WorkOrderDocumentNumber               string  `json:"work_order_document_number"`
+	WorkOrderOperationItemLine            int     `json:"work_order_operation_item_line"`
+	VehicleChassisNumber                  string  `json:"vehicle_chassis_number"`
+	BrandID                               int     `json:"brand_id"`
+	ModelID                               int     `json:"model_id"`
+	VariantID                             int     `json:"variant_id"`
+	ItemGroupID                           int     `json:"item_group_id"`
+	LineTypeID                            int     `json:"line_type_id"`
+	OperationalItemID                     int     `json:"operational_item_id"`
+	OperationalItemCode                   string  `json:"operational_item_code"`
+	FrtQuantity                           float64 `json:"frt_quantity"`
+	SupplyQuantity                        float64 `json:"supply_quantity"`
+	WorkOrderLineDiscountStatus           string  `json:"work_order_line_discount_status,omitempty"`
+	OperationalItemPrice                  float64 `json:"operational_item_price"`
+	OperationalItemRequestDiscountPercent float64 `json:"operational_item_request_discount_percent"`
+	OperationalItemDiscountPercent        float64 `json:"operational_item_discount_percent"`
+	TotalCostOfGoodsSold                  float64 `json:"total_cost_of_goods_sold"`
+	JobTypeID                             int     `json:"job_type_id"`
+	PurchaseOrderSystemNumber             string  `json:"purchase_order_system_number"`
+	PurchaseOrderDetailSystemNumber       string  `json:"purchase_order_detail_system_number,omitempty"`
+	Description                           string  `json:"description,omitempty"`
+}
