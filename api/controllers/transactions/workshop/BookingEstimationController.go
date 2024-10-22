@@ -10,6 +10,7 @@ import (
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -384,24 +385,35 @@ func (r *BookingEstimationControllerImpl) PostBookingEstimationCalculation(write
 }
 
 func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromPDI(writer http.ResponseWriter, request *http.Request) {
+	var formrequest transactionworkshoppayloads.PdiServiceRequest
+	helper.ReadFromRequestBody(request, &formrequest)
 	pdisystemnumber, _ := strconv.Atoi(chi.URLParam(request, "pdi_system_number"))
-	save, err := r.bookingEstimationService.SaveBookingEstimationFromPDI(pdisystemnumber)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+
+	save, err := r.bookingEstimationService.SaveBookingEstimationFromPDI(pdisystemnumber,formrequest)
+	if err != nil ||!save{
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err: errors.New("data not found"),
+		})
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
 }
 
 func (r *BookingEstimationControllerImpl) SaveBookingEstimationFromServiceRequest(writer http.ResponseWriter, request *http.Request) {
+	var formrequest transactionworkshoppayloads.PdiServiceRequest
+	helper.ReadFromRequestBody(request, &formrequest)
 	serviceRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "service_request_system_number"))
-	save, err := r.bookingEstimationService.SaveBookingEstimationFromServiceRequest(serviceRequestSystemNumber)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+	save, err := r.bookingEstimationService.SaveBookingEstimationFromServiceRequest(serviceRequestSystemNumber,formrequest)
+	if err != nil || !save {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err: errors.New("data not found"),
+		})
 		return
 	}
 	payloads.NewHandleSuccess(writer, save, "Save Data Successfully!", http.StatusOK)
-}
+}	
 
 func (r *BookingEstimationControllerImpl) CopyFromHistory(writer http.ResponseWriter, request *http.Request) {
 	BatchSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "batch_system_number"))

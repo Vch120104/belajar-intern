@@ -664,6 +664,7 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 	if errurlmodel != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Err: errurlmodel,
 		}
 	}
 	joineddata2, errdf := utils.DataFrameInnerJoin(Joineddata1, modelpayloads, "ModelId")
@@ -679,6 +680,7 @@ func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []uti
 	if errurlvariant != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
+			Err: errurlvariant,
 		}
 	}
 	joineddata3, errdf := utils.DataFrameInnerJoin(joineddata2, variantpayloads, "VariantId")
