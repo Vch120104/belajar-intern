@@ -2597,7 +2597,7 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
 	}
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.PaginateDistinct(&entities, &pages, whereQuery, "mtr_item.item_id")).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
