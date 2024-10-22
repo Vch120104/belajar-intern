@@ -27,4 +27,17 @@ type CampaignMasterDetailGetPayloads struct {
 	Price            float64 `json:"price"`
 	DiscountPercent  float64 `json:"discount_percent"`
 	SharePercent     float64 `json:"share_percent"`
+	ShareBillTo      string  `json:"share_bill_to"`
+}
+
+type CampaignMasterDetailPostFromPackageRequest struct {
+	CampaignId int `json:"campaign_id"`
+	CompanyId  int `json:"company_id"`
+	BrandId    int `json:"brand_id"`
+	ModelId    int `json:"model_id"`
+	PackageId  int `json:"package_id"`
+}
+
+type TaxFarePercentResponse struct {
+	TaxPercent float64 `json:"tax_percent"`
 }

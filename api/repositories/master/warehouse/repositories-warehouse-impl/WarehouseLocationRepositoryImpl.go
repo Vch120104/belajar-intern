@@ -106,6 +106,42 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 	return warehouseLocationResponse, nil
 }
 
+func (r *WarehouseLocationImpl) GetByCode(tx *gorm.DB, warehouseLocationCode string) (masterwarehousepayloads.GetAllWarehouseLocationResponse, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocation{}
+	response := masterwarehousepayloads.GetAllWarehouseLocationResponse{}
+
+	err := tx.Model(&entities).
+		Select(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_master.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mtr_warehouse_location.warehouse_location_detail_name,
+			mtr_warehouse_location.warehouse_location_pick_sequence,
+			mtr_warehouse_location.warehouse_location_capacity_in_m3,
+			mtr_warehouse_group.warehouse_group_id,
+			mtr_warehouse_group.warehouse_group_name,
+			mtr_warehouse_group.warehouse_group_code,
+			mtr_warehouse_master.warehouse_code,
+			mtr_warehouse_master.warehouse_name
+		`).
+		Joins("INNER JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
+		Joins("INNER JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
+		Where("mtr_warehouse_location.warehouse_location_code = ?", warehouseLocationCode).
+		First(&response).Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return response, nil
+}
+
 func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities masterwarehouseentities.WarehouseLocation
 	var responses []masterwarehousepayloads.GetAllWarehouseLocationResponse
@@ -115,6 +151,7 @@ func (r *WarehouseLocationImpl) GetAll(tx *gorm.DB, filter []utils.FilterConditi
 		"mtr_warehouse_location"."warehouse_location_id",
 		mtr_warehouse_master.company_id,
 		"mtr_warehouse_location"."warehouse_group_id",
+		"mtr_warehouse_location"."warehouse_id",
 		"mtr_warehouse_location"."warehouse_location_code",
 		"mtr_warehouse_location"."warehouse_location_name",
 		"mtr_warehouse_location"."warehouse_location_detail_name",

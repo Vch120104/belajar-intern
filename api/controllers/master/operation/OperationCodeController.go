@@ -18,6 +18,7 @@ import (
 
 type OperationCodeController interface {
 	GetAllOperationCode(writer http.ResponseWriter, request *http.Request)
+	GetAllOperationCodeDropDown(writer http.ResponseWriter, request *http.Request)
 	GetByIdOperationCode(writer http.ResponseWriter, request *http.Request)
 	GetByCodeOperationCode(writer http.ResponseWriter, request *http.Request)
 	SaveOperationCode(writer http.ResponseWriter, request *http.Request)
@@ -70,7 +71,7 @@ func (r *OperationCodeControllerImpl) GetAllOperationCode(writer http.ResponseWr
 	result, err := r.operationCodeService.GetAllOperationCode(filterCondition, pagination)
 
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
@@ -104,14 +105,9 @@ func (r *OperationCodeControllerImpl) GetByIdOperationCode(writer http.ResponseW
 }
 
 func (r *OperationCodeControllerImpl) GetByCodeOperationCode(writer http.ResponseWriter, request *http.Request) {
-	OperationCodeStr, errA := strconv.Atoi(chi.URLParam(request, "operation_code"))
+	OperationCodeStr := chi.URLParam(request, "operation_code")
 
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
-	result, err := r.operationCodeService.GetOperationCodeById(OperationCodeStr)
+	result, err := r.operationCodeService.GetOperationCodeByCode(OperationCodeStr)
 
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)
@@ -198,4 +194,13 @@ func (r *OperationCodeControllerImpl) UpdateOperationCode(writer http.ResponseWr
 	}
 
 	payloads.NewHandleSuccess(writer, update, "Create Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationCodeControllerImpl) GetAllOperationCodeDropDown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.operationCodeService.GetAllOperationCodeDropDown()
+	if err != nil {
+		payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }

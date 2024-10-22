@@ -469,8 +469,8 @@ func (r *BookingEstimationImpl) SaveDetailBookEstim(tx *gorm.DB, req transaction
 	}
 
 	if req.LineTypeID != 9 && req.LineTypeID != 0 {
-		err := tx.Select("mtr_price_list.price_list_amount").Table("mtr_price_list").
-			Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+		err := tx.Select("mtr_item_price_list.price_list_amount").Table("mtr_item_price_list").
+			Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
 			Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
 			Where("item_operation_id=?", req.ItemOperationID).
 			Scan(&lastprice).Error
@@ -668,8 +668,8 @@ func (r *BookingEstimationImpl) CopyFromHistory(tx *gorm.DB, batchid int) ([]map
 // 	}
 // 	for _, item := range detailpayloads {
 // 		if item.LineTypeId != 9 && item.LineTypeId != 0 {
-// 			err := tx.Select("mtr_price_list.price_list_amount,mtr_item.item_name,mtr_item.item_code").Table("mtr_price_list").
-// 				Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
+// 			err := tx.Select("mtr_item_price_list.price_list_amount,mtr_item.item_name,mtr_item.item_code").Table("mtr_item_price_list").
+// 				Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
 // 				Joins("Join mtr_item_operation on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
 // 				Where("item_operation_id=?", item.ItemOperationId).
 // 				Scan(&pricename).Error

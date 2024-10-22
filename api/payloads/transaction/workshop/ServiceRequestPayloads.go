@@ -127,6 +127,7 @@ type ServiceRequestResponse struct {
 	DealerRepresentativeName string `json:"dealer_rep_code_name"`
 	//ProfitCenterId               int                           `json:"profit_center_id"`
 	ProfitCenterName         string `json:"profit_center_name"`
+	ServiceProfitCenterName  string `json:"service_profit_center_name"`
 	WorkOrderSystemNumber    int    `json:"work_order_no"`
 	WorkOrderDocumentNumber  string `json:"work_order_document_number"`
 	BookingSystemNumber      int    `json:"booking_no"`
@@ -137,6 +138,7 @@ type ServiceRequestResponse struct {
 	ReferenceDocId           int    `json:"ref_doc_id"`
 	ReferenceDocNumber       string `json:"ref_doc_no"`
 	ReferenceDocDate         string `json:"ref_doc_date"`
+	ServiceRemark            string `json:"service_remark"`
 	//ReplyId                      int                           `json:"reply_id"`
 	ReplyBy            string                        `json:"reply_by"`
 	ReplyDate          string                        `json:"reply_date"`
@@ -190,7 +192,8 @@ type ServiceRequestDetailsResponse struct {
 type ServiceDetailResponse struct {
 	ServiceRequestDetailId     int     `json:"service_request_detail_id"`
 	ServiceRequestSystemNumber int     `json:"service_request_system_number"`
-	LineTypeId                 int     `json:"type"`
+	LineTypeId                 int     `json:"line_type_id"`
+	LineTypeCode               string  `json:"line_type_code"`
 	OperationItemId            int     `json:"operation_item_id"`
 	OperationItemCode          string  `json:"code"`
 	OperationItemName          string  `json:"description"`
@@ -263,4 +266,10 @@ type ReferenceDoc struct {
 	ReferenceDocNumber       string `json:"reference_doc_number"`
 	ReferenceDocCode         string `json:"reference_doc_code"`
 	ReferenceDocDate         string `json:"reference_doc_date"`
+}
+
+type ServiceType struct {
+	ServiceTypeId   int    `json:"service_profit_center_id"`
+	ServiceTypeCode string `json:"service_profit_center_code"`
+	ServiceTypeName string `json:"service_profit_center_description"`
 }

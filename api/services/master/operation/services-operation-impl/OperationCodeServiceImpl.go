@@ -38,6 +38,16 @@ func (s *OperationCodeServiceImpl) GetAllOperationCode(filterCondition []utils.F
 	return results, nil
 }
 
+func (s *OperationCodeServiceImpl) GetAllOperationCodeDropDown() ([]masteroperationpayloads.OperationCodeGetAll, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationCodeRepo.GetAllOperationCodeDropDown(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
 func (s *OperationCodeServiceImpl) GetOperationCodeById(id int) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationCodeRepo.GetOperationCodeById(tx, id)
@@ -70,21 +80,21 @@ func (s *OperationCodeServiceImpl) SaveOperationCode(req masteroperationpayloads
 
 func (s *OperationCodeServiceImpl) ChangeStatusOperationCode(id int) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Statement.DB.Begin()
-	
+
 	result, err := s.operationCodeRepo.ChangeStatusItemCode(tx, id)
-	defer helper.CommitOrRollback(tx,err)
+	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (s *OperationCodeServiceImpl) UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate)(masteroperationentities.OperationCode,*exceptions.BaseErrorResponse){
+func (s *OperationCodeServiceImpl) UpdateItemCode(id int, req masteroperationpayloads.OperationCodeUpdate) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,err := s.operationCodeRepo.UpdateItemCode(tx,id,req)
-	defer helper.CommitOrRollback(tx,err)
-	if err != nil{
-		return result,err
+	result, err := s.operationCodeRepo.UpdateItemCode(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
 	}
-	return result,nil
+	return result, nil
 }

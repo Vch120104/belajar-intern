@@ -47,6 +47,42 @@ func (r *OperationCodeRepositoryImpl) GetAllOperationCode(tx *gorm.DB, filterCon
 	return pages, nil
 }
 
+func (*OperationCodeRepositoryImpl) GetAllOperationCodeDropDown(tx *gorm.DB) ([]masteroperationpayloads.OperationCodeGetAll, *exceptions.BaseErrorResponse) {
+	baseModelQuery := tx.Model(&masteroperationentities.OperationCode{}).Select("operation_id, operation_code, operation_name, is_active")
+	rows, err := baseModelQuery.Rows()
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	defer rows.Close()
+
+	var responses []masteroperationpayloads.OperationCodeGetAll
+	for rows.Next() {
+		var operationId int
+		var operationCode, operationName string
+		var isActive bool
+
+		err := rows.Scan(&operationId, &operationCode, &operationName, &isActive)
+		if err != nil {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        err,
+			}
+		}
+
+		responseMap := masteroperationpayloads.OperationCodeGetAll{
+			OperationCode: operationCode,
+			OperationName: operationName,
+			IsActive:      isActive,
+		}
+		responses = append(responses, responseMap)
+	}
+
+	return responses, nil
+}
+
 func (r *OperationCodeRepositoryImpl) GetOperationCodeById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationCodeResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{}
 	response := masteroperationpayloads.OperationCodeResponse{}
@@ -73,12 +109,11 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code s
 	entities := masteroperationentities.OperationCode{}
 	response := masteroperationpayloads.OperationCodeResponse{}
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Where(masteroperationentities.OperationCode{
 			OperationCode: code,
 		}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -87,14 +122,12 @@ func (r *OperationCodeRepositoryImpl) GetOperationCodeByCode(tx *gorm.DB, code s
 		}
 	}
 
-	defer rows.Close()
 	return response, nil
 }
 
 func (r *OperationCodeRepositoryImpl) SaveOperationCode(tx *gorm.DB, req masteroperationpayloads.OperationCodeSave) (masteroperationentities.OperationCode, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationCode{
 		IsActive:                req.IsActive,
-		OperationId:             req.OperationId,
 		OperationCode:           req.OperationCode,
 		OperationName:           req.OperationName,
 		OperationUsingIncentive: req.OperationUsingIncentive,
@@ -135,12 +168,12 @@ func (r *OperationCodeRepositoryImpl) ChangeStatusItemCode(tx *gorm.DB, id int) 
 		Where("operation_id = ?", id).
 		First(&entities)
 
-		if result.Error != nil {
-			return masteroperationentities.OperationCode{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        result.Error,
-			}
+	if result.Error != nil {
+		return masteroperationentities.OperationCode{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
 		}
+	}
 
 	if entities.IsActive {
 		entities.IsActive = false
@@ -160,23 +193,19 @@ func (r *OperationCodeRepositoryImpl) ChangeStatusItemCode(tx *gorm.DB, id int) 
 	return entities, nil
 }
 
-func (r *OperationCodeRepositoryImpl) UpdateItemCode(tx *gorm.DB, id int, req masteroperationpayloads.OperationCodeUpdate)(masteroperationentities.OperationCode,*exceptions.BaseErrorResponse){
+func (r *OperationCodeRepositoryImpl) UpdateItemCode(tx *gorm.DB, id int, req masteroperationpayloads.OperationCodeUpdate) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteroperationentities.OperationCode
 
-	err := tx.Model(&entities).Where("operation_id = ?",id).Updates(req).Error
-	if err != nil{
-		return masteroperationentities.OperationCode{},&exceptions.BaseErrorResponse{
+	err := tx.Model(&entities).Where("operation_id = ?", id).Updates(map[string]interface{}{
+		"operation_name":            req.OperationName,
+		"operation_using_actual":    req.OperationUsingActual,
+		"operation_using_incentive": req.OperationUsingIncentive,
+	}).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
-			Err: err,
+			Err:        err,
 		}
 	}
-
-	err2 := tx.Model(&entities).Where("operation_id =?",id).Scan(&entities).Error
-	if err2 != nil{
-		return masteroperationentities.OperationCode{},&exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Err: err2,
-		}
-	}
-	return entities,nil
+	return true, nil
 }

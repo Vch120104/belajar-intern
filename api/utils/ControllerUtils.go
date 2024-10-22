@@ -26,7 +26,7 @@ func ModifyKeysInResponse(data interface{}) interface{} {
 
 		return newData
 	case reflect.Slice:
-		var newData []interface{}
+		newData := []interface{}{}
 
 		for i := 0; i < v.Len(); i++ {
 			newData = append(newData, ModifyKeysInResponse(v.Index(i).Interface()))
@@ -150,4 +150,25 @@ func SafeConvertDateStrFormat(dateStr string) string {
 		return ""
 	}
 	return date
+}
+
+// FormatRFC3339 formats a time.Time object into an RFC 3339 string.
+func FormatRFC3339(t time.Time) string {
+	return t.Format(time.RFC3339)
+}
+
+// ParseRFC3339 parses an RFC 3339 formatted string into a time.Time object.
+func ParseRFC3339(dateTimeStr string) (time.Time, error) {
+	return time.Parse(time.RFC3339, dateTimeStr)
+}
+
+// Convert time.Time into time value. For example, converts '2024-01-01 15:34:45' into '15.579167'
+func TimeValue(t time.Time) float64 {
+	hour := t.Hour()
+	minute := t.Minute()
+	second := t.Second()
+
+	timeValue := float64(hour) + (float64(minute)+float64(second)/60)/60
+
+	return timeValue
 }

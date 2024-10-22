@@ -10,7 +10,6 @@ import (
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,14 +26,14 @@ func StartPriceListRepositoryImpl() masteritemrepository.PriceListRepository {
 
 // Duplicate implements masteritemrepository.PriceListRepository.
 func (r *PriceListRepositoryImpl) Duplicate(tx *gorm.DB, itemGroupId int, brandId int, currencyId int, date string) ([]masteritempayloads.PriceListItemResponses, *exceptions.BaseErrorResponse) {
-	model := masteritementities.PriceList{}
+	model := masteritementities.ItemPriceList{}
 
 	result := []masteritempayloads.PriceListItemResponses{}
 
-	if err := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id").
-		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
-		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
-		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date).
+	if err := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_item_price_list.price_list_amount,mtr_item_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id").
+		Joins("LEFT JOIN mtr_item ON mtr_item_price_list.item_id = mtr_item.item_id").
+		Where(masteritementities.ItemPriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date).
 		Scan(&result).Error; err != nil {
 		return result, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -47,14 +46,14 @@ func (r *PriceListRepositoryImpl) Duplicate(tx *gorm.DB, itemGroupId int, brandI
 
 // CheckPriceListItem implements masteritemrepository.PriceListRepository.
 func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId int, brandId int, currencyId int, date string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	model := masteritementities.PriceList{}
+	model := masteritementities.ItemPriceList{}
 
 	result := []masteritempayloads.PriceListItemResponses{}
 
-	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_price_list.price_list_amount,mtr_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id,mtr_price_list.price_list_id").
-		Joins("LEFT JOIN mtr_item ON mtr_price_list.item_id = mtr_item.item_id").
-		Where(masteritementities.PriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
-		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date)
+	query := tx.Model(model).Select("mtr_item.item_code, mtr_item.item_name,mtr_item_price_list.price_list_amount,mtr_item_price_list.is_active,mtr_item.item_id,mtr_item.item_class_id,mtr_item_price_list.price_list_id").
+		Joins("LEFT JOIN mtr_item ON mtr_item_price_list.item_id = mtr_item.item_id").
+		Where(masteritementities.ItemPriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date)
 
 	if err := query.Scopes(pagination.Paginate(model, &pages, query)).Scan(&result).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -70,11 +69,11 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 
 // CheckPriceListAlreadyExist implements masteritemrepository.PriceListRepository.
 func (r *PriceListRepositoryImpl) CheckPriceListExist(tx *gorm.DB, itemId int, brandId int, currencyId int, date string, companyId int) (bool, *exceptions.BaseErrorResponse) {
-	model := masteritementities.PriceList{}
+	model := masteritementities.ItemPriceList{}
 
-	if err := tx.Model(model).Where(masteritementities.PriceList{BrandId: brandId, ItemId: itemId}).
-		Where("mtr_price_list.company_id = ?", companyId).
-		Where("CONVERT(DATE, mtr_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
+	if err := tx.Model(model).Where(masteritementities.ItemPriceList{BrandId: brandId, ItemId: itemId}).
+		Where("mtr_item_price_list.company_id = ?", companyId).
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -88,7 +87,7 @@ func (r *PriceListRepositoryImpl) GetPriceListLookup(tx *gorm.DB, request master
 	var responses []masteritempayloads.PriceListResponse
 
 	tempRows := tx.
-		Model(&masteritementities.PriceList{})
+		Model(&masteritementities.ItemPriceList{})
 
 	if request.CompanyId != 0 {
 		tempRows = tempRows.Where("company_id = ?", request.CompanyId)
@@ -146,7 +145,7 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 	var idMaps = make(map[string][]string)
 
 	tempRows := tx.
-		Model(&masteritementities.PriceList{})
+		Model(&masteritementities.ItemPriceList{})
 
 	if request.CompanyId != 0 {
 		tempRows = tempRows.Where("company_id = ?", request.CompanyId)
@@ -227,16 +226,16 @@ func (r *PriceListRepositoryImpl) GetPriceList(tx *gorm.DB, request masteritempa
 }
 
 func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PriceList{}
+	entities := masteritementities.ItemPriceList{}
 	response := masteritempayloads.PriceListGetbyId{}
 	brandpayloads := masteritempayloads.UnitBrandResponses{}
 	itemgrouppayloads := masteritempayloads.ItemGroupResponse{}
 	currencypayloads := masteritempayloads.CurrencyResponse{}
 
-	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_price_list.*").
-		Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id").
-		Where(masteritementities.PriceList{PriceListId: Id}).
+	err := tx.Model(&entities).Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Where(masteritementities.ItemPriceList{PriceListId: Id}).
 		First(&response).Error
 
 	if err != nil {
@@ -297,7 +296,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 
 	for _, value := range request.Detail {
 
-		entities := masteritementities.PriceList{
+		entities := masteritementities.ItemPriceList{
 			IsActive:            value.IsActive,
 			PriceListCodeId:     request.PriceListCodeId,
 			CompanyId:           request.CompanyId,
@@ -311,7 +310,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 			PriceListModifiable: true,
 		}
 
-		err := tx.Save(&entities).Where(entities).Select("mtr_price_list.price_list_id").First(&PriceListId).Error
+		err := tx.Save(&entities).Where(entities).Select("mtr_item_price_list.price_list_id").First(&PriceListId).Error
 
 		if err != nil {
 			return PriceListId, &exceptions.BaseErrorResponse{
@@ -325,7 +324,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 }
 
 func (r *PriceListRepositoryImpl) ChangeStatusPriceList(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
-	var entities masteritementities.PriceList
+	var entities masteritementities.ItemPriceList
 
 	result := tx.Model(&entities).
 		Where("price_list_id = ?", Id).
@@ -376,31 +375,23 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 	var itemgrouppayloads []masteritempayloads.ItemGroupResponse
 	var currencypayloads []masteritempayloads.CurrencyResponse
 
-	model := masteritementities.PriceList{}
+	model := masteritementities.ItemPriceList{}
 
 	query := tx.Model(model).
-		Select("mtr_item.*,mtr_item_class.*,mtr_price_list.*").
-		Joins("JOIN mtr_item on mtr_item.item_id=mtr_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_price_list.item_class_id")
+		Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*,mtr_item_price_code.item_price_code").
+		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Joins("LEFT JOIN mtr_item_price_code on mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id")
 
-		//apply where query
+	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)
 	//apply pagination and execute
 	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&payloads).Error
-
-	fmt.Println(payloads)
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
-		}
-	}
-
-	if len(payloads) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("price list not found"),
 		}
 	}
 
@@ -443,7 +434,7 @@ func (r *PriceListRepositoryImpl) DeletePriceList(tx *gorm.DB, id string) (bool,
 	idslice := strings.Split(id, ",")
 
 	for _, ids := range idslice {
-		var entityToUpdate masteritementities.PriceList
+		var entityToUpdate masteritementities.ItemPriceList
 		err := tx.Model(&entityToUpdate).Where("price_list_id = ?", ids).Delete(&entityToUpdate).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -459,7 +450,7 @@ func (r *PriceListRepositoryImpl) ActivatePriceList(tx *gorm.DB, id string) (boo
 	idslice := strings.Split(id, ",")
 
 	for _, ids := range idslice {
-		var entityToUpdate masteritementities.PriceList
+		var entityToUpdate masteritementities.ItemPriceList
 		err := tx.Model(&entityToUpdate).Where("price_list_id = ?", ids).First(&entityToUpdate).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -483,7 +474,7 @@ func (r *PriceListRepositoryImpl) DeactivatePriceList(tx *gorm.DB, id string) (b
 	idslice := strings.Split(id, ",")
 
 	for _, ids := range idslice {
-		var entityToUpdate masteritementities.PriceList
+		var entityToUpdate masteritementities.ItemPriceList
 		err := tx.Model(&entityToUpdate).Where("price_list_id = ?", ids).First(&entityToUpdate).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{

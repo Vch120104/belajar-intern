@@ -3,6 +3,7 @@ package masterserviceimpl
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
@@ -62,7 +63,7 @@ func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages
 	return lookup, totalPages, totalRows, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode string, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
@@ -74,11 +75,11 @@ func (s *LookupServiceImpl) ItemOprCodeWithPrice(linetypeId int, companyId int, 
 	return lookup, totalPages, totalRows, nil
 }
 
-func (s *LookupServiceImpl) VehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetVehicleUnitMaster(brandId int, modelId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.VehicleUnitMaster(tx, brandId, modelId, pages, filterCondition)
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetVehicleUnitMaster(tx, brandId, modelId, pages, filterCondition)
 	if baseErr != nil {
 		return nil, 0, 0, baseErr
 	}
@@ -110,11 +111,11 @@ func (s *LookupServiceImpl) GetVehicleUnitByChassisNumber(chassisNumber string, 
 	return lookup, totalPages, totalRows, nil
 }
 
-func (s *LookupServiceImpl) CampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetCampaignMaster(companyId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
-	lookup, totalPages, totalRows, baseErr := s.LookupRepo.CampaignMaster(tx, companyId, pages, filterCondition)
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.GetCampaignMaster(tx, companyId, pages, filterCondition)
 	if baseErr != nil {
 		return nil, 0, 0, baseErr
 	}
@@ -170,7 +171,7 @@ func (s *LookupServiceImpl) CustomerByTypeAndAddressByCode(customerCode string, 
 	return lookup, totalPages, totalRows, nil
 }
 
-func (s *LookupServiceImpl) GetOprItemPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode string, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) GetOprItemPrice(linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
@@ -180,4 +181,52 @@ func (s *LookupServiceImpl) GetOprItemPrice(linetypeId int, companyId int, oprIt
 	}
 
 	return price, nil
+}
+
+func (s *LookupServiceImpl) GetLineTypeByItemCode(itemCode string) (int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lineType, baseErr := s.LookupRepo.GetLineTypeByItemCode(tx, itemCode)
+	if baseErr != nil {
+		return 0, baseErr
+	}
+
+	return lineType, nil
+}
+
+func (s *LookupServiceImpl) ListItemLocation(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	warehouse, baseErr := s.LookupRepo.ListItemLocation(tx, companyId, filterCondition, pages)
+	if baseErr != nil {
+		return warehouse, baseErr
+	}
+
+	return warehouse, nil
+}
+
+func (s *LookupServiceImpl) WarehouseGroupByCompany(companyId int) ([]masterpayloads.WarehouseGroupByCompanyResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	warehouse, baseErr := s.LookupRepo.WarehouseGroupByCompany(tx, companyId)
+	if baseErr != nil {
+		return warehouse, baseErr
+	}
+
+	return warehouse, nil
+}
+
+func (s *LookupServiceImpl) ItemListTransPL(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	item, baseErr := s.LookupRepo.ItemListTransPL(tx, companyId, filterCondition, pages)
+	if baseErr != nil {
+		return item, baseErr
+	}
+
+	return item, nil
 }

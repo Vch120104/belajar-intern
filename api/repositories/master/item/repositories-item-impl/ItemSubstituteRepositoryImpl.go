@@ -49,49 +49,44 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 		}
 	}
 
-	if len(payloads) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
+	result := []map[string]interface{}{}
+	totalPages := 0
+	totalRows := 0
+
+	if len(payloads) > 0 {
+		errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-type", &typepayloads, nil)
+		if errUrlSubstituteType != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errUrlSubstituteType,
+			}
+		}
+
+		joinedData1 := utils.DataFrameLeftJoin(payloads, typepayloads, "SubstituteTypeId")
+
+		paginatedata, pages, rows := pagination.NewDataFramePaginate(joinedData1, &pages)
+		totalPages = pages
+		totalRows = rows
+
+		for _, res := range paginatedata {
+			data := map[string]interface{}{
+				"effective_date":       res["EffectiveDate"],
+				"is_active":            res["IsActive"],
+				"item_class_code":      res["ItemClassCode"],
+				"item_class_id":        res["ItemClassId"],
+				"item_code":            res["ItemCode"],
+				"item_group_id":        res["ItemgroupId"],
+				"item_id":              res["ItemId"],
+				"item_name":            res["ItemName"],
+				"item_substitute_id":   res["ItemSubstituteId"],
+				"substitute_type_id":   res["SubstituteTypeId"],
+				"substitute_type_name": res["SubstituteTypeNames"],
+			}
+			result = append(result, data)
 		}
 	}
 
-	errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-type", &typepayloads, nil)
-	if errUrlSubstituteType != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlSubstituteType,
-		}
-	}
-
-	joinedData1, err2 := utils.DataFrameInnerJoin(payloads, typepayloads, "SubstituteTypeId")
-	if err2 != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err2,
-		}
-	}
-
-	paginatedata, totalPages, totalrows := pagination.NewDataFramePaginate(joinedData1, &pages)
-	var result []map[string]interface{}
-	for _,res  := range paginatedata{
-		data := map[string]interface{}{
-			"effective_date":       res["EffectiveDate"],
-			"is_active":            res["IsActive"],
-			"item_class_code":      res["ItemClassCode"],
-			"item_class_id":        res["ItemClassId"],
-			"item_code":            res["ItemCode"],
-			"item_group_id":        res["ItemgroupId"],
-			"item_id":              res["ItemId"],
-			"item_name":            res["ItemName"],
-			"item_substitute_id":   res["ItemSubstituteId"],
-			"substitute_type_id":   res["SubstituteTypeId"],
-			"substitute_type_name": res["SubstituteTypeName"],
-		}
-		
-		result = append(result, data)
-	}
-	return result, totalPages, totalrows, nil
+	return result, totalPages, totalRows, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
@@ -127,17 +122,18 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int
 		}
 	}
 	result := map[string]interface{}{
-		"effectve_date":       joinedData1[0]["EffectiveDate"],
-		"is_active":           joinedData1[0]["IsActive"],
-		"item_class_code":     joinedData1[0]["ItemClassCode"],
-		"item_class_id":       joinedData1[0]["ItemClassId"],
-		"item_code":           joinedData1[0]["ItemCode"],
-		"item_group_id":       joinedData1[0]["ItemgroupId"],
-		"item_id":             joinedData1[0]["ItemId"],
-		"item_name":           joinedData1[0]["ItemName"],
-		"item_substitute_id":  joinedData1[0]["ItemSubstituteId"],
-		"substitute_type_id":  joinedData1[0]["SubstituteTypeId"],
-		"sustitute_type_name": joinedData1[0]["SubstituteTypeName"],
+		"effectve_date":        joinedData1[0]["EffectiveDate"],
+		"is_active":            joinedData1[0]["IsActive"],
+		"item_class_code":      joinedData1[0]["ItemClassCode"],
+		"item_class_id":        joinedData1[0]["ItemClassId"],
+		"item_code":            joinedData1[0]["ItemCode"],
+		"item_group_id":        joinedData1[0]["ItemGroupId"],
+		"item_id":              joinedData1[0]["ItemId"],
+		"item_name":            joinedData1[0]["ItemName"],
+		"item_substitute_id":   joinedData1[0]["ItemSubstituteId"],
+		"description":          joinedData1[0]["Description"],
+		"substitute_type_id":   joinedData1[0]["SubstituteTypeId"],
+		"substitute_type_name": joinedData1[0]["SubstituteTypeNames"],
 	}
 	return result, nil
 }
@@ -181,31 +177,33 @@ func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstituteDetail(tx *gorm.DB, 
 	return response, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req masteritempayloads.ItemSubstitutePostPayloads) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req masteritempayloads.ItemSubstitutePostPayloads) (masteritementities.ItemSubstitute, *exceptions.BaseErrorResponse) {
 
 	// parseEffectiveDate, _ := time.Parse("2006-01-02T15:04:05.000Z", req.EffectiveDate)
 
 	entities := masteritementities.ItemSubstitute{
+		IsActive:         req.IsActive,
 		SubstituteTypeId: req.SubstituteTypeId,
-		ItemSubstituteId:     req.ItemSubstituteId,
-		EffectiveDate:        req.EffectiveDate,
-		ItemId:               req.ItemId,
-		Description: req.Description,
+		ItemSubstituteId: req.ItemSubstituteId,
+		EffectiveDate:    req.EffectiveDate,
+		ItemId:           req.ItemId,
+		Description:      req.Description,
 	}
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.ItemSubstituteDetail{
+		IsActive:               req.IsActive,
 		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
 		ItemId:                 req.ItemId,
 		ItemSubstituteId:       id,

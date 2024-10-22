@@ -88,6 +88,7 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_code,
 			mtr_item.item_name,
 			mtr_item.item_class_id,
+			ic.item_class_code,
 			ic.item_class_name,
 			mtr_item.item_type,
 			mtr_item.item_level_1,
@@ -96,7 +97,7 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_level_4`).
 		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id")
 
-	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
+	whereQuery := utils.ApplyFilterSearch(baseModelQuery, filterCondition)
 
 	err := whereQuery.Scopes(pagination.Paginate(&entites, &pages, whereQuery)).Scan(&response).Error
 
@@ -148,20 +149,52 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	var mapResponses []map[string]interface{}
 	for _, response := range responses {
+		// Panggil API eksternal untuk mengambil Supplier data
+		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
+		var getSupplierResponse masteritempayloads.SupplierMasterResponse
+		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
+		getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
+		errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
+		if err := utils.Get(itemGroupUrl, &getItemGroupResponses, nil); errUrlItemPackage != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		// var ItemGroup transactionsparepartpayloads.PurchaseOrderItemGroupResponse
+		// ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(payloads.ItemGroupId)
+		// if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
+		// 	return false, &exceptions.BaseErrorResponse{
+		// 		StatusCode: http.StatusInternalServerError,
+		// 		Message:    "Failed to fetch Item Group data from external service",
+		// 		Err:        err,
+		// 	}
+		// }
+
+		// Build response map dengan data dari supplier
 		responseMap := map[string]interface{}{
-			"is_active":     response.IsActive,
-			"item_id":       response.ItemId,
-			"item_code":     response.ItemCode,
-			"item_name":     response.ItemName,
-			"item_group_id": response.ItemGroupId,
-			"item_class_id": response.ItemClassId,
-			"item_type":     response.ItemType,
-			"supplier_id":   response.SupplierId,
+			"is_active":       response.IsActive,
+			"item_id":         response.ItemId,
+			"item_code":       response.ItemCode,
+			"item_name":       response.ItemName,
+			"item_group_id":   response.ItemGroupId,
+			"item_class_id":   response.ItemClassId,
+			"item_type":       response.ItemType,
+			"supplier_id":     response.SupplierId,
+			"item_class_code": response.ItemClassCode,
+			"item_group_code": getItemGroupResponses.ItemGroupCode,
+			"supplier_name":   getSupplierResponse.SupplierName,
+			"supplier_code":   getSupplierResponse.SupplierCode,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
 	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
-
 }
 
 func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -330,8 +363,10 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 }
 
-func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	response := masteritempayloads.ItemSaveResponse{}
 	entities := masteritementities.Item{
+		IsActive:                     req.IsActive,
 		ItemId:                       req.ItemId,
 		ItemCode:                     req.ItemCode,
 		ItemClassId:                  req.ItemClassId,
@@ -394,7 +429,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -405,7 +440,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err = tx.Model(&model).Where(masteritementities.Item{ItemCode: req.ItemCode}).First(&model).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -416,7 +451,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
 
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -427,13 +462,14 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err = tx.Model(&uomTypeModel).Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).First(&uomTypeModel).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
 	uomItemEntities := masteritementities.UomItem{
+		IsActive:          req.IsActive,
 		ItemId:            model.ItemId,
 		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
 		UomTypeCode:       uomTypeModel.UomTypeCode,
@@ -446,13 +482,25 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err = tx.Save(&uomItemEntities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	result := masteritempayloads.ItemSaveResponse{
+		IsActive:   entities.IsActive,
+		ItemId:     entities.ItemId,
+		ItemName:   entities.ItemName,
+		ItemCode:   entities.ItemCode,
+		ItemType:   entities.ItemType,
+		ItemLevel1: entities.ItemLevel1,
+		ItemLevel2: entities.ItemLevel2,
+		ItemLevel3: entities.ItemLevel3,
+		ItemLevel4: entities.ItemLevel4,
+	}
+
+	return result, nil
 }
 
 func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
@@ -646,8 +694,32 @@ func (r *ItemRepositoryImpl) GetItemDetailById(tx *gorm.DB, ItemId, ItemDetailId
 	return response, nil
 }
 
-func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailRequest) *exceptions.BaseErrorResponse {
-	entities := masteritementities.ItemDetail{
+func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.ItemDetail
+
+	// Cek apakah detail item sudah ada untuk kombinasi ItemId, BrandId, ModelId, VariantId
+	err := tx.Where("item_id = ? AND brand_id = ? AND model_id = ? AND variant_id = ?", ItemId, req.BrandId, req.ModelId, req.VariantId).First(&entities).Error
+	if err == nil {
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Item detail already exists",
+			Err:        errors.New("item detail already exists"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error checking existing item detail",
+			Err:        err,
+		}
+	}
+
+	// Jika IsActive adalah false, set MileageEvery dan ReturnEvery ke 0
+	if !req.IsActive {
+		req.MileageEvery = 0
+		req.ReturnEvery = 0
+	}
+
+	entities = masteritementities.ItemDetail{
 		ItemId:       ItemId,
 		BrandId:      req.BrandId,
 		ModelId:      req.ModelId,
@@ -657,33 +729,34 @@ func (r *ItemRepositoryImpl) AddItemDetail(tx *gorm.DB, ItemId int, req masterit
 		IsActive:     req.IsActive,
 	}
 
-	err := tx.Save(&entities).Error
-
+	err = tx.Save(&entities).Error
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save item detail",
 			Err:        err,
 		}
 	}
 
-	return nil
+	return entities, nil
 }
 
-func (r *ItemRepositoryImpl) DeleteItemDetail(tx *gorm.DB, ItemId int, ItemDetailId int) *exceptions.BaseErrorResponse {
+func (r *ItemRepositoryImpl) DeleteItemDetails(tx *gorm.DB, ItemId int, itemDetailIDs []int) (masteritempayloads.DeleteItemResponse, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemDetail
 
 	result := tx.Model(&entities).
-		Where("item_id = ? AND item_detail_id = ?", ItemId, ItemDetailId).
+		Where("item_id = ? AND item_detail_id IN (?)", ItemId, itemDetailIDs).
 		Delete(&entities)
 
 	if result.Error != nil {
-		return &exceptions.BaseErrorResponse{
+		return masteritempayloads.DeleteItemResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete item details",
 			Err:        result.Error,
 		}
 	}
 
-	return nil
+	return masteritempayloads.DeleteItemResponse{}, nil
 }
 
 func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
@@ -718,17 +791,29 @@ func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritemp
 	return true, nil
 }
 
-func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, ItemId int, req masteritempayloads.ItemDetailUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, Id int, itemDetailId int, req masteritempayloads.ItemDetailUpdateRequest) (masteritementities.ItemDetail, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemDetail
 
-	result := tx.Model(&entities).Where("Item_detail_id=?", ItemId).Updates(req)
+	// Fetch the existing record to update
+	err := tx.Where("item_detail_id = ? AND item_id = ?", itemDetailId, Id).First(&entities).Error
+	if err != nil {
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Item detail not found",
+			Err:        err,
+		}
+	}
+
+	result := tx.Model(&entities).Where("item_detail_id = ? AND item_id = ?", itemDetailId, Id).Updates(req)
 	if result.Error != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masteritementities.ItemDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
+			Message:    "Failed to update item detail",
 			Err:        result.Error,
 		}
 	}
-	return true, nil
+
+	return entities, nil
 }
 
 func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {

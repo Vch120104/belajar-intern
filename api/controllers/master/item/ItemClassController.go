@@ -132,11 +132,14 @@ func (r *ItemClassControllerImpl) GetAllItemClass(writer http.ResponseWriter, re
 
 	result, err := r.ItemClassService.GetAllItemClass(internal, external, pagination)
 
+	response := utils.ModifyKeysInResponse(result.Rows)
+
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
+		response = []interface{}{}
+		result.TotalPages = 0
+		result.TotalRows = 0
 	}
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result.Rows), "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, response, "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, result.TotalRows, result.TotalPages)
 
 }
 

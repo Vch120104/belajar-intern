@@ -5,7 +5,6 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -49,16 +48,19 @@ func NewWarehouseMasterController(WarehouseMasterService masterwarehouseservice.
 // DropdownbyGroupId implements WarehouseMasterController.
 func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseGroupId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
-
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+	warehouseDropDownGroupId, err := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Warehouse Group ID", http.StatusBadRequest)
 		return
 	}
 
-	get, err := r.WarehouseMasterService.DropdownbyGroupId(warehouseGroupId)
-	if err != nil {
-		helper.ReturnError(writer, request, err)
+	get, baseErr := r.WarehouseMasterService.DropdownbyGroupId(warehouseDropDownGroupId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Warehouse Group ID not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
 		return
 	}
 
@@ -85,10 +87,10 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 	queryValues := request.URL.Query()
 
 	filter := map[string]string{
-		"warehouse_name":       queryValues.Get("warehouse_name"),
-		"warehouse_code":       queryValues.Get("warehouse_code"),
-		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
-		"is_active":            queryValues.Get("is_active"),
+		"mtr_warehouse_master.warehouse_name":      queryValues.Get("warehouse_name"),
+		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
+		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
+		"mtr_warehouse_master.is_active":           queryValues.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
@@ -159,19 +161,33 @@ func (r *WarehouseMasterControllerImpl) DropdownWarehouse(writer http.ResponseWr
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/{warehouse_id} [get]
 func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-	warehouseId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
 
-	get, err := r.WarehouseMasterService.GetById(warehouseId)
+	warehouseIdStr := chi.URLParam(request, "warehouse_id")
+	warehouseId, err := strconv.Atoi(warehouseIdStr)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		payloads.NewHandleError(writer, "Invalid Warehouse ID", http.StatusBadRequest)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	getbyid, baseErr := r.WarehouseMasterService.GetById(warehouseId, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Warehouse ID not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, getbyid, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Master By Code
@@ -186,6 +202,11 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, request *http.Request) {
 
 	code := chi.URLParam(request, "warehouse_code")
+
+	if code == "" {
+		payloads.NewHandleError(writer, "Invalid Warehouse Code", http.StatusBadRequest)
+		return
+	}
 
 	get, err := r.WarehouseMasterService.GetWarehouseMasterByCode(code)
 	if err != nil {
@@ -210,15 +231,20 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 
 	warehouse_ids := chi.URLParam(request, "warehouse_ids")
 
-	sliceOfString := strings.Split(warehouse_ids, ",")
+	if warehouse_ids == "" {
+		payloads.NewHandleError(writer, "Warehouse IDs are required", http.StatusBadRequest)
+		return
+	}
 
-	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfString)
+	sliceOfIds := strings.Split(warehouse_ids, ",")
+
+	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfIds)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "success", 200)
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Save Warehouse Master
@@ -232,6 +258,7 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 // @Router /v1/warehouse-master/ [post]
 func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var message string
+	var status int
 
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -244,12 +271,13 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 
 	if formRequest.WarehouseId == 0 {
 		message = "Create Data Successfully!"
+		status = http.StatusCreated
 	} else {
 		message = "Update Data Successfully!"
+		status = http.StatusOK
 	}
 
-	payloads.NewHandleSuccess(writer, save, message, http.StatusOK)
-
+	payloads.NewHandleSuccess(writer, save, message, status)
 }
 
 // @Summary Change Warehouse Master Status By Id
@@ -263,43 +291,53 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 // @Router /v1/warehouse-master/{warehouse_id} [patch]
 func (r *WarehouseMasterControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
 
-	warehouseId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
-
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
-	change_status, err := r.WarehouseMasterService.ChangeStatus(warehouseId)
+	warehouseId, err := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		payloads.NewHandleError(writer, "Invalid Warehouse ID", http.StatusBadRequest)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, change_status, "Updated successfully", http.StatusOK)
+	changeStatus, baseErr := r.WarehouseMasterService.ChangeStatus(warehouseId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Warehouse ID not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, changeStatus, "Change Status Successfully!", http.StatusOK)
 
 }
 
 func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
+
+	filter := map[string]string{
+		"mtr_warehouse_authorize.warehouse_authorize_id": queryValues.Get("warehouse_authorize_id"),
+		"mtr_warehouse_authorize.employee_id":            queryValues.Get("employee_id"),
+		"mtr_user_details.employee_name":                 queryValues.Get("employee_name"),
+		"mtr_warehouse_authorize.company_id":             queryValues.Get("company_id"),
+		"mtr_warehouse_authorize.warehouse_id":           queryValues.Get("warehouse_id"),
+	}
+
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
 		SortOf: queryValues.Get("sort_of"),
 		SortBy: queryValues.Get("sort_by"),
 	}
-	warehouseId, errA := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
 
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	result, err := r.WarehouseMasterService.GetAuthorizeUser(pagination, warehouseId)
+	filterCondition := utils.BuildFilterCondition(filter)
+
+	get, totalPages, totalRows, err := r.WarehouseMasterService.GetAuthorizeUser(filterCondition, pagination)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+
+	payloads.NewHandleSuccessPagination(writer, get, "Get Data Successfully!", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 }
 
 func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
@@ -324,23 +362,19 @@ func (r *WarehouseMasterControllerImpl) DeleteMultiIdAuthorizeUser(writer http.R
 }
 
 func (r *WarehouseMasterControllerImpl) InTransitWarehouseCodeDropdown(writer http.ResponseWriter, request *http.Request) {
-	// Parse query parameters
+
 	companyID, err := strconv.Atoi(chi.URLParam(request, "company_id"))
 	if err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        err,
-		})
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
 		return
 	}
+
 	warehouseGroupId, err := strconv.Atoi(chi.URLParam(request, "warehouse_group_id"))
 	if err != nil {
-		helper.ReturnError(writer, request, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        err,
-		})
+		payloads.NewHandleError(writer, "Invalid Warehouse Group ID", http.StatusBadRequest)
 		return
 	}
+
 	get, errResp := r.WarehouseMasterService.InTransitWarehouseCodeDropdown(companyID, warehouseGroupId)
 	if errResp != nil {
 		helper.ReturnError(writer, request, errResp)

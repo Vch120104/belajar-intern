@@ -21,10 +21,30 @@ type WorkOrderRepository interface {
 	UpdateType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse)
 	DeleteType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 
-	NewBill(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse)
+	NewLineType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse)
+	AddLineType(tx *gorm.DB, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse)
+	UpdateLineType(tx *gorm.DB, id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse)
+	DeleteLineType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+
+	NewBill(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse)
 	AddBill(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse)
 	UpdateBill(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse)
 	DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+
+	NewTrxType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse)
+	AddTrxType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
+	UpdateTrxType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
+	DeleteTrxType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+
+	NewTrxTypeSo(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse)
+	AddTrxTypeSo(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
+	UpdateTrxTypeSo(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse)
+	DeleteTrxTypeSo(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+
+	NewJobType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse)
+	AddJobType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse)
+	UpdateJobType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse)
+	DeleteJobType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 
 	NewDropPoint(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse)
 	NewVehicleBrand(tx *gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse)
@@ -33,7 +53,7 @@ type WorkOrderRepository interface {
 	New(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalRequest) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)
 	GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(tx *gorm.DB, Id int, pages pagination.Pagination) (transactionworkshoppayloads.WorkOrderResponseDetail, *exceptions.BaseErrorResponse)
-	Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (bool, *exceptions.BaseErrorResponse)
+	Save(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse)
 	Submit(tx *gorm.DB, Id int) (bool, string, *exceptions.BaseErrorResponse)
 	Void(tx *gorm.DB, workOrderId int) (bool, *exceptions.BaseErrorResponse)
 	CloseOrder(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
@@ -70,7 +90,11 @@ type WorkOrderRepository interface {
 	SaveAffiliated(*gorm.DB, int, int, transactionworkshoppayloads.WorkOrderAffiliatedRequest) (bool, *exceptions.BaseErrorResponse)
 
 	GenerateDocumentNumber(tx *gorm.DB, workOrderId int) (string, *exceptions.BaseErrorResponse)
+	DeleteCampaign(tx *gorm.DB, workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse)
+	AddContractService(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderContractServiceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
+	AddGeneralRepairPackage(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderGeneralRepairPackageRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
+	AddFieldAction(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.WorkOrderFieldActionRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	ChangeBillTo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse)
-	ChangePhoneNo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (bool, *exceptions.BaseErrorResponse)
-	ConfirmPrice(tx *gorm.DB, workOrderId int, idwos []int) (bool, *exceptions.BaseErrorResponse)
+	ChangePhoneNo(tx *gorm.DB, workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoRequest, *exceptions.BaseErrorResponse)
+	ConfirmPrice(tx *gorm.DB, workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 }

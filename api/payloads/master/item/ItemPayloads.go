@@ -53,7 +53,7 @@ type ItemResponse struct {
 	AutoPickWms                  string  `json:"auto_pick_wms"`
 	GmmCatalogCode               int     `json:"gmm_catalog_code"`
 	PrincipalBrandParentId       int     `json:"principal_brand_parent_id"`
-	ProportionalSupplyWms        string  `json:"proportional_supply_WMS"`
+	ProportionalSupplyWms        string  `json:"proportional_supply_wms"`
 	Remark2                      string  `json:"remark2"`
 	Remark3                      string  `json:"remark3"`
 	SourceTypeId                 int     `json:"source_type_id"`
@@ -72,6 +72,7 @@ type UserDetailResponse struct {
 }
 
 type ItemRequest struct {
+	IsActive                     bool    `json:"is_active"`
 	ItemId                       int     `json:"item_id"`
 	ItemCode                     string  `json:"item_code"`
 	ItemClassId                  int     `json:"item_class_id"`
@@ -131,6 +132,18 @@ type ItemRequest struct {
 	TargetConvertion             float32 `json:"target_convertion"`
 	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
 	IsSellable                   bool    `json:"is_sellable"`
+}
+
+type ItemSaveResponse struct {
+	IsActive   bool   `json:"is_active"`
+	ItemId     int    `json:"item_id"`
+	ItemCode   string `json:"item_code"`
+	ItemName   string `json:"item_name"`
+	ItemType   string `json:"item_type"`
+	ItemLevel1 string `json:"item_level_1"`
+	ItemLevel2 string `json:"item_level_2"`
+	ItemLevel3 string `json:"item_level_3"`
+	ItemLevel4 string `json:"item_level_4"`
 }
 
 type AtpmOrderTypeResponse struct {
@@ -296,14 +309,17 @@ type BrandModelVariantResponse struct {
 	BrandName          string `json:"brand_name"`
 }
 type ItemSearch struct {
-	IsActive    bool   `json:"is_active" parent_entity:"mtr_item"`
-	ItemId      int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
-	ItemCode    string `json:"item_code" parent_entity:"mtr_item"`
-	ItemName    string `json:"item_name" parent_entity:"mtr_item"`
-	ItemType    string `json:"item_type" parent_entity:"mtr_item"`
-	ItemGroupId int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
-	ItemClassId int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
-	SupplierId  int    `json:"supplier_id" parent_entity:"mtr_item"`                                                           //fk luar mtr_supplier, supplier_code dan supplier_name
+	IsActive      bool   `json:"is_active" parent_entity:"mtr_item"`
+	ItemId        int    `json:"item_id" parent_entity:"mtr_item" main_table:"mtr_item"`
+	ItemCode      string `json:"item_code" parent_entity:"mtr_item"`
+	ItemName      string `json:"item_name" parent_entity:"mtr_item"`
+	ItemType      string `json:"item_type" parent_entity:"mtr_item"`
+	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item"`                                                         //fk luar mtr_item_group -> item_group_name                                              // Ambil dari ItemGroupResponse
+	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"` //fk dalam item_class_id -> ItemClassName
+	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class" references:"mtr_item_class" main_table:"mtr_item"`
+	SupplierId    int    `json:"supplier_id" parent_entity:"mtr_item"` //fk luar mtr_supplier, supplier_code dan supplier_name
+	// ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item"`
+	// ItemGroupCode string `json:"item_group_code" parent_entity:"mtr_item"`
 }
 
 type ItemListTransLookUp struct {
@@ -311,10 +327,16 @@ type ItemListTransLookUp struct {
 	ItemCode      string `json:"item_code"`
 	ItemName      string `json:"item_name"`
 	ItemClassId   int    `json:"item_class_id"`
+	ItemClassCode string `json:"item_class_code"`
 	ItemClassName string `json:"item_class_name"`
 	ItemType      string `json:"item_type"`
 	ItemLevel_1   string `json:"item_level_1"`
 	ItemLevel_2   string `json:"item_level_2"`
 	ItemLevel_3   string `json:"item_level_3"`
 	ItemLevel_4   string `json:"item_level_4"`
+}
+
+type DeleteItemResponse struct {
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
 }

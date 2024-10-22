@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"fmt"
 	"strconv"
 
 	"net/http"
@@ -51,15 +52,18 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"customer_name":                         queryValues.Get("customer_name"),
-		"model_code":                            queryValues.Get("model_code"),
-		"varian_code":                           queryValues.Get("varian_code"),
-		"vehicle_chassis_number":                queryValues.Get("vehicle_chassis_number"),
-		"vehicle_registration_certificate_tnkb": queryValues.Get("vehicle_registration_certificate_tnkb"),
-		"work_order_date":                       queryValues.Get("work_order_date"),
-		"work_order_document_number":            queryValues.Get("work_order_document_number"),
-		"work_order_system_number":              queryValues.Get("work_order_system_number"),
+		"trx_work_order.brand_id":            queryValues.Get("brand_id"),
+		"trx_work_order.model_id":            queryValues.Get("model_id"),
+		"trx_work_order.variant_id":          queryValues.Get("variant_id"),
+		"trx_work_order.foreman_id":          queryValues.Get("foreman_id"),
+		"trx_work_order.service_advisor_id":  queryValues.Get("service_advisor_id"),
+		"mtr_vehicle.vehicle_chassis_number": queryValues.Get("vehicle_chassis_number"),
+		"mtr_vehicle_registration_certificate.vehicle_registration_certificate_tnkb": queryValues.Get("vehicle_registration_certificate_tnkb"),
+		"trx_work_order.work_order_date":                                             queryValues.Get("work_order_date"),
+		"trx_work_order.work_order_system_number":                                    queryValues.Get("work_order_system_number"),
 	}
+
+	fmt.Println("Query Params:", queryParams)
 
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
@@ -69,6 +73,7 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
+	fmt.Println("Filter Conditions:", criteria)
 
 	paginatedData, totalPages, totalRows, err := r.QualityControlService.GetAll(criteria, paginate)
 	if err != nil {
@@ -106,8 +111,7 @@ func (r *QualityControlControllerImpl) GetById(writer http.ResponseWriter, reque
 	// Convert map to []utils.FilterCondition
 	var filterConditions []utils.FilterCondition
 	for field, value := range map[string]string{
-		"trx_work_order.work_order_system_number":   queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_document_number": queryValues.Get("work_order_document_number"),
+		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
 	} {
 		if value != "" {
 			filterConditions = append(filterConditions, utils.FilterCondition{
@@ -126,11 +130,7 @@ func (r *QualityControlControllerImpl) GetById(writer http.ResponseWriter, reque
 
 	data, baseErr := r.QualityControlService.GetById(id, filterConditions, paginate)
 	if baseErr != nil {
-		if baseErr.StatusCode == http.StatusNotFound {
-			payloads.NewHandleError(writer, "id request not found", http.StatusNotFound)
-		} else {
-			exceptions.NewAppException(writer, request, baseErr)
-		}
+		exceptions.NewAppException(writer, request, baseErr)
 		return
 	}
 
