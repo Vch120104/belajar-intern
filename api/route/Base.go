@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -195,6 +196,7 @@ func ItemPriceCodeRouter(
 	router.Get("/", itemPriceCodeController.GetAllItemPriceCode)
 	router.Get("/{item_price_code_id}", itemPriceCodeController.GetItemPriceCodeById)
 	router.Get("/by-code/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
+	router.Get("/drop-down", itemPriceCodeController.GetItemPriceCodeDropDown)
 
 	router.Post("/", itemPriceCodeController.SaveItemPriceCode)
 
