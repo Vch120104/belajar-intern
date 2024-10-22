@@ -234,7 +234,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequestDetail(wr
 	//}
 }
 
-// SavePurchaseRequestHeader
+// NewPurchaseRequestHeader
 //
 //	@Summary		Create New Purchase Request
 //	@Description	Create a new SaveHeader
@@ -259,7 +259,7 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestHeader(writer
 
 }
 
-// SavePurchaseRequestDetail
+// NewPurchaseRequestDetail
 //
 //	@Summary		Create New Purchase Request Detail
 //	@Description	Create a new Save Detail
