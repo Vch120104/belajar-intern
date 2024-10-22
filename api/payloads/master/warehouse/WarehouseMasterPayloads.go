@@ -204,10 +204,10 @@ type AuthorizedUserDetailsResponse struct {
 }
 
 type AuthorizedUserResponse struct {
-	WarehouseAuthorizedId int    `json:"warehouse_authorized_id"`
-	EmployeeId            int    `json:"user_employee_id"`
-	EmployeeName          string `json:"employee_name"`
-	EmployeeNik           int    `json:"id_number"`
+	WarehouseAuthorizedId int    `json:"warehouse_authorize_id" gorm:"column:warehouse_authorize_id"`
+	EmployeeId            int    `json:"user_employee_id" gorm:"column:employee_id"`
+	EmployeeName          string `json:"employee_name" gorm:"column:employee_name"`
+	IdNumber              int    `json:"id_number" gorm:"column:id_number"`
 }
 
 type WarehouseAuthorize struct {

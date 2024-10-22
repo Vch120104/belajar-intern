@@ -31,7 +31,7 @@ type BookingEstimationService interface {
 	CopyFromHistory(batchid int)([]map[string]interface{},*exceptions.BaseErrorResponse)
 	GetByIdBookEstimDetail (id int ,LineTypeID int)(map[string]interface{},*exceptions.BaseErrorResponse)
 	PostBookingEstimationCalculation(id int)(int,*exceptions.BaseErrorResponse)
-	SaveBookingEstimationFromPDI( id int) (transactionworkshopentities.BookingEstimation, *exceptions.BaseErrorResponse)
-	SaveBookingEstimationFromServiceRequest(id int)(transactionworkshopentities.BookingEstimation,*exceptions.BaseErrorResponse)
+	SaveBookingEstimationFromPDI( id int,req transactionworkshoppayloads.PdiServiceRequest) (bool, *exceptions.BaseErrorResponse)
+	SaveBookingEstimationFromServiceRequest(id int,req transactionworkshoppayloads.PdiServiceRequest)(bool,*exceptions.BaseErrorResponse)
 	SaveBookingEstimationAllocation(id int,req transactionworkshoppayloads.BookEstimationAllocation)(transactionworkshopentities.BookingEstimationAllocation,*exceptions.BaseErrorResponse)
 }

@@ -97,3 +97,13 @@ func (s *ItemPriceCodeServiceImpl) ChangeStatusItemPriceCode(id int) (bool, *exc
 	}
 	return result, nil
 }
+
+func (s *ItemPriceCodeServiceImpl) GetItemPriceCodeDropDown() ([]masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.ItemPriceCodeRepo.GetItemPriceCodeDropDown(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}

@@ -92,9 +92,6 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 	}
 	fmt.Println("Data inserted into WorkOrderAllocationGrid")
 
-	// Time definitions
-	timeWorkInterval := 15 // in minutes
-
 	// Fetch shift schedule
 	var shiftSchedule masterentities.ShiftSchedule
 	if err := tx.Model(&masterentities.ShiftSchedule{}).
@@ -118,6 +115,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 		startTimeStr, endTimeStr, restStartTimeStr, restEndTimeStr)
 
 	// Define time columns and update values
+	timeWorkInterval := 15 // in minutes
 	startTimeFloat, _ := strconv.ParseFloat(startTimeStr, 64)
 	endTimeFloat, _ := strconv.ParseFloat(endTimeStr, 64)
 	restStartTimeFloat, _ := strconv.ParseFloat(restStartTimeStr, 64)
@@ -138,47 +136,20 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 
 		// Validate if the column name exists
 		if !isValidTimeColumn(timeColumn) {
-			//fmt.Printf("Skipping invalid time column: %s\n", timeColumn)
 			continue
 		}
 
 		// Loop through technicians and update based on availability
 		for _, assignTech := range assignTechnicians {
-			// Initialize updateData map
-			updateData := make(map[string]interface{})
-
 			// Check availability of technicians
 			var countAvail int64
 			dayOfWeek := date.Weekday()
-			var dayQuery int
-			switch dayOfWeek {
-			case time.Sunday:
-				dayQuery = 1
-			case time.Monday:
-				dayQuery = 2
-			case time.Tuesday:
-				dayQuery = 3
-			case time.Wednesday:
-				dayQuery = 4
-			case time.Thursday:
-				dayQuery = 5
-			case time.Friday:
-				dayQuery = 6
-			case time.Saturday:
-				dayQuery = 7
-			}
+			dayQuery := int(dayOfWeek) + 1 // Adjust for SQL Server weekday
 
-			if err := tx.Raw(`
-				SELECT COUNT(*)
-				FROM mtr_shift_schedule
-				WHERE company_id = ? AND shift_code = ? AND start_time <= ? AND end_time > ?
-				  AND effective_date = (
-					SELECT TOP 1 effective_date
-					FROM mtr_shift_schedule
-					WHERE company_id = ? AND shift_code = ? AND DATEPART(WEEKDAY, effective_date) = ? AND effective_date <= ?
-					ORDER BY effective_date DESC
-				  )
-			`, companyCode, assignTech.ShiftCode, currentTime, currentTime, companyCode, assignTech.ShiftCode, dayQuery, date).Count(&countAvail).Error; err != nil {
+			if err := tx.Model(&masterentities.ShiftSchedule{}).
+				Where("company_id = ? AND shift_code = ? AND start_time <= ? AND end_time > ? AND DATEPART(WEEKDAY, effective_date) = ? AND effective_date <= ?",
+					companyCode, assignTech.ShiftCode, currentTime, currentTime, dayQuery, date).
+				Count(&countAvail).Error; err != nil {
 				return nil, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Message:    "Failed to check technician availability",
@@ -191,12 +162,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 			if currentTime >= restStartTimeFloat && currentTime <= restEndTimeFloat {
 				allocate = -2 // Rest time
 			} else if currentTime < startTimeFloat {
-				if countAvail == 0 {
-					// If no availability, set allocate to -1
-					allocate = -1
-				} else {
-					allocate = -1 // Before shift start
-				}
+				allocate = -1 // Before shift start
 			} else if currentTime >= endTimeFloat {
 				allocate = 0 // After shift end
 			} else {
@@ -204,8 +170,7 @@ func (r *WorkOrderAllocationRepositoryImpl) GetAll(tx *gorm.DB, companyCode int,
 			}
 
 			// Update WorkOrderAllocationGrid table
-			updateData[timeColumn] = allocate
-
+			updateData := map[string]interface{}{timeColumn: allocate}
 			if err := tx.Model(&transactionworkshopentities.WorkOrderAllocationGrid{}).
 				Where("technician_id = ? AND shift_code = ?", assignTech.TechnicianId, assignTech.ShiftCode).
 				Updates(updateData).Error; err != nil {
@@ -655,10 +620,9 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 		err                                            *exceptions.BaseErrorResponse
 	)
 
-	cpcCodeDefault := "00002"       //tx.Raw("SELECT dbo.getVariableValue('CPC_CODE')").Scan(&cpcCode)
-	refTypeAvailDefault := "ASSIGN" //tx.Raw("SELECT dbo.getVariableValue('REF_TYPE_AVAIL')").Scan(&refTypeAvail)
+	cpcCodeDefault := "00002"
+	refTypeAvailDefault := "ASSIGN"
 
-	// Get start and end times for the shift
 	startTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, date, false)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err
@@ -669,7 +633,6 @@ func (r *WorkOrderAllocationRepositoryImpl) NewAssignTechnician(tx *gorm.DB, dat
 		return transactionworkshopentities.AssignTechnician{}, err
 	}
 
-	// Get rest start and end times for the shift
 	restStartTime, err = r.getShiftStartTime(tx, request.CompanyId, request.ShiftCode, date, true)
 	if err != nil {
 		return transactionworkshopentities.AssignTechnician{}, err

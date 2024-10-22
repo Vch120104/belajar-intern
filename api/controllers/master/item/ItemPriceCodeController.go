@@ -23,6 +23,7 @@ type ItemPriceCodeController interface {
 	DeleteItemPriceCode(writer http.ResponseWriter, request *http.Request)
 	UpdateItemPriceCode(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemPriceCode(writer http.ResponseWriter, request *http.Request)
+	GetItemPriceCodeDropDown(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemPriceCodeControllerImpl struct {
@@ -165,4 +166,16 @@ func (r *ItemPriceCodeControllerImpl) ChangeStatusItemPriceCode(writer http.Resp
 	}
 
 	payloads.NewHandleSuccess(writer, result, "Item Price Code status changed successfully!", http.StatusOK)
+}
+
+func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeDropDown(writer http.ResponseWriter, request *http.Request) {
+
+	result, err := r.ItemPriceCodeService.GetItemPriceCodeDropDown()
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+
 }
