@@ -40,6 +40,7 @@ type ContractServiceResponseId struct {
 	VehicleEngineNumber           string    `json:"vehicle_engine_number"`
 	VehicleTnkb                   string    `json:"vehicle_registration_certificate_tnkb"`
 	ContractServiceStatusId       int       `json:"contract_service_status_id"`
+	VehicleOwner                  string    `json:"vehicle_registration_certificate_owner_name"`
 }
 
 type ContractServiceRequest struct {
@@ -50,9 +51,8 @@ type ContractServiceRequest struct {
 	ContractServiceTo             time.Time `json:"contract_service_to" parent_entity:"trx_contract_service"`
 	BrandId                       int       `json:"brand_id" parent_entity:"trx_contract_service"`
 	ModelId                       int       `json:"model_id" parent_entity:"trx_contract_service"`
-	// ModelCodeDescription          string    `json:"model_code_description" parent_entity:"trx_contract_service"`
-	VehicleId               int `json:"vehicle_id" parent_entity:"trx_contract_service"`
-	ContractServiceStatusId int `json:"contract_service_status_id" parent_entity:"trx_contract_service"`
+	VehicleId                     int       `json:"vehicle_id" parent_entity:"trx_contract_service"`
+	ContractServiceStatusId       int       `json:"contract_service_status_id" parent_entity:"trx_contract_service"`
 }
 
 type ContractServiceBrand struct {

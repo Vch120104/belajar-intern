@@ -189,11 +189,15 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 	}
 
 	// Handle case where vehicle data is not found
-	var vehicleTnkb string
+	var vehicleTnkb, vehicleCode, vehicleOwner string
 	if len(vehicleResponses) > 0 {
 		vehicleTnkb = vehicleResponses[0].VehicleTnkb
+		vehicleCode = vehicleResponses[0].VehicleCode   // Mengambil VehicleCode dari respons API
+		vehicleOwner = vehicleResponses[0].VehicleOwner // Mengambil VehicleOwner dari respons API
 	} else {
 		vehicleTnkb = "Unknown"
+		vehicleCode = "Unknown"  // Memberikan nilai default jika tidak ditemukan
+		vehicleOwner = "Unknown" // Memberikan nilai default jika tidak ditemukan
 	}
 
 	// Prepare the response payload
@@ -205,12 +209,15 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 		ContractServiceTo:             entity.ContractServiceTo,
 		BrandId:                       entity.BrandId,
 		BrandName:                     brandResponse.BrandName,
+		BrandCode:                     brandResponse.BrandCode,
 		ModelId:                       entity.ModelId,
 		ModelName:                     modelResponse.ModelName,
+		ModelCode:                     modelResponse.ModelCode,
 		VehicleId:                     entity.VehicleId,
 		VehicleTnkb:                   vehicleTnkb,
-		// VehicleOwner:                  vehicleOwner,
-		ContractServiceStatusId: entity.ContractServiceStatusId,
+		VehicleCode:                   vehicleCode,
+		VehicleOwner:                  vehicleOwner,
+		ContractServiceStatusId:       entity.ContractServiceStatusId,
 	}
 
 	return payload, nil
