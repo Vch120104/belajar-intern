@@ -15,11 +15,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
 type BinningListRepositoryImpl struct {
@@ -321,7 +322,7 @@ func (b *BinningListRepositoryImpl) UpdateBinningListHeader(db *gorm.DB, payload
 		}
 		return Entities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("Error On retreiving Data"),
+			Err:        errors.New("error On retreiving Data"),
 		}
 	}
 	Entities.SupplierDeliveryOrderNumber = payloads.SupplierDeliveryOrderNumber
@@ -454,7 +455,7 @@ func (b *BinningListRepositoryImpl) InsertBinningListDetail(db *gorm.DB, payload
 			return BinningDetailEntities, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Item Has Excedeeded Reference Qty",
-				Err:        errors.New("Item Has Excedeeded Reference Qty"),
+				Err:        errors.New("item Has Excedeeded Reference Qty"),
 			}
 		}
 	}
@@ -509,6 +510,13 @@ func (b *BinningListRepositoryImpl) InsertBinningListDetail(db *gorm.DB, payload
 			Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: payloads.ReferenceDetailSystemNumber}).
 			Update("binning_quantity", gorm.Expr("COALESCE(binning_quantity, 0) ?", payloads.DeliveryOrderQuantity)).
 			Error
+		if err != nil {
+			return BinningDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errors.New("failed To Update Claim Data"),
+			}
+		}
+
 	}
 	if BinningRefTypeCode == "WC" {
 		//UPDATE wtWorkOrder2
@@ -519,7 +527,12 @@ func (b *BinningListRepositoryImpl) InsertBinningListDetail(db *gorm.DB, payload
 			Where(transactionworkshopentities.WorkOrderDetail{WorkOrderDetailId: payloads.ReferenceDetailSystemNumber}).
 			UpdateColumn("binning_quantity", gorm.Expr("binning_quantity + ?", payloads.DeliveryOrderQuantity)).
 			Scan(&WorkOrderDetail).Error
-
+		if err != nil {
+			return BinningDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errors.New("work Order Data"),
+			}
+		}
 		//_LINE FROM wtWorkOrder2
 		//WHERE WO_SYS_NO = @Ref_Sys_No
 		//AND WO_OPR_ITEM_LINE = @Ref_Line
@@ -527,7 +540,7 @@ func (b *BinningListRepositoryImpl) InsertBinningListDetail(db *gorm.DB, payload
 		if WorkOrderDetail.BinningQuantity > WorkOrderDetail.FrtQuantity {
 			return BinningDetailEntities, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Err:        errors.New("Binning is bigger than Work Order Qty"),
+				Err:        errors.New("binning is bigger than Work Order Qty"),
 				Message:    "Binning is bigger than Work Order Qty",
 			}
 		}
@@ -625,6 +638,12 @@ func (b *BinningListRepositoryImpl) UpdateBinningListDetail(db *gorm.DB, payload
 			Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: payloads.ReferenceDetailSystemNumber}).
 			Update("binning_quantity", gorm.Expr("COALESCE(binning_quantity, 0) - ? + ?", LastDoQty, payloads.DeliveryOrderQuantity)).
 			Error
+		if err != nil {
+			return BinningDetailEntities, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errors.New("failed To Update Claim Data"),
+			}
+		}
 	}
 	if BinningRefTypeCode == "WC" {
 		err = db.Model(&transactionworkshopentities.WorkOrderDetail{}).
@@ -737,7 +756,7 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 	}
 	//get company code
 	CompanyData, errs := utils.GetCompanyDataById(BinningEntities.CompanyId)
-	if errs != false {
+	if !errs {
 		return BinningEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("failed To Fetch Company Data From Cross service"),
