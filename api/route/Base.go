@@ -607,6 +607,22 @@ func PurchaseOrderRouter(
 
 	return router
 }
+
+func ItemInquiryRouter(
+	ItemInquiryController transactionsparepartcontroller.ItemInquiryController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ItemInquiryController.GetAllItemInquiry)
+
+	return router
+}
+
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {

@@ -335,6 +335,11 @@ func StartRouting(db *gorm.DB) {
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
 	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
 
+	//Item Inquiry
+	ItemInquiryRepository := transactionsparepartrepositoryimpl.StartItemInquiryRepositoryImpl()
+	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
+	ItemInquiryController := transactionsparepartcontroller.NewItemInquiryController(ItemInquiryService)
+
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -467,6 +472,7 @@ func StartRouting(db *gorm.DB) {
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
 	BinningListRouter := BinningListRouter(BinningListController)
+	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	LookupRouter := LookupRouter(LookupController)
 
 	r := chi.NewRouter()
@@ -563,6 +569,8 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/binning-list", BinningListRouter)
+		r.Mount("/item-inquiry", ItemInquiryRouter)
+
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
 	})
