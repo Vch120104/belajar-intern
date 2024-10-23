@@ -55,6 +55,60 @@ type ContractServiceRequest struct {
 	ContractServiceStatusId       int       `json:"contract_service_status_id" parent_entity:"trx_contract_service"`
 }
 
+type ContractServiceInsert struct {
+	CompanyId                     int       `json:"company_id"`
+	ContractServiceSystemNumber   int       `json:"contract_service_system_number"`
+	ContractServiceDocumentNumber string    `json:"contract_service_document_number"`
+	ContractServiceDate           time.Time `json:"contract_service_date"`
+	ContractServiceFrom           time.Time `json:"contract_service_from"`
+	ContractServiceTo             time.Time `json:"contract_service_to"`
+	BrandId                       int       `json:"brand_id"`
+	BrandCode                     string    `json:"brand_code"`
+	BrandName                     string    `json:"brand_name"`
+	ModelId                       int       `json:"model_id"`
+	ModelCode                     string    `json:"model_code"`
+	ModelName                     string    `json:"model_description"`
+	ModelCodeDescription          string    `json:"model_code_description"`
+	VehicleId                     int       `json:"vehicle_id"`
+	VehicleCode                   string    `json:"vehicle_chassis_number"`
+	VehicleEngineNumber           string    `json:"vehicle_engine_number"`
+	VehicleTnkb                   string    `json:"vehicle_registration_certificate_tnkb"`
+	ContractServiceStatusId       int       `json:"contract_service_status_id"`
+	VehicleOwner                  string    `json:"vehicle_registration_certificate_owner_name"`
+	RegisteredMileage             int       `json:"registered_mileage"`
+	Remark                        string    `json:"remark"`
+	Total                         float64   `json:"total" default:"0"`  
+    Vat                           float64   `json:"vat" default:"0"`    
+    GrandTotal                    float64   `json:"grand_total" default:"0"` 
+}
+
+type ContractServiceInsertResponse struct {
+	CompanyId                     int       `json:"company_id"`
+	ContractServiceSystemNumber   int       `json:"contract_service_system_number"`
+	ContractServiceDocumentNumber string    `json:"contract_service_document_number"`
+	ContractServiceDate           time.Time `json:"contract_service_date"`
+	ContractServiceFrom           time.Time `json:"contract_service_from"`
+	ContractServiceTo             time.Time `json:"contract_service_to"`
+	BrandId                       int       `json:"brand_id"`
+	BrandCode                     string    `json:"brand_code"`
+	BrandName                     string    `json:"brand_name"`
+	ModelId                       int       `json:"model_id"`
+	ModelCode                     string    `json:"model_code"`
+	ModelName                     string    `json:"model_description"`
+	ModelCodeDescription          string    `json:"model_code_description"`
+	VehicleId                     int       `json:"vehicle_id"`
+	VehicleCode                   string    `json:"vehicle_chassis_number"`
+	VehicleEngineNumber           string    `json:"vehicle_engine_number"`
+	VehicleTnkb                   string    `json:"vehicle_registration_certificate_tnkb"`
+	ContractServiceStatusId       int       `json:"contract_service_status_id"`
+	VehicleOwner                  string    `json:"vehicle_registration_certificate_owner_name"`
+	RegisteredMileage             int       `json:"registered_mileage"`
+	Remark                        string    `json:"remark"`
+	Total                         float64   `json:"total" default:"0"`  
+    Vat                           float64   `json:"vat" default:"0"`    
+    GrandTotal                    float64   `json:"grand_total" default:"0"` 
+}
+
 type ContractServiceBrand struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`

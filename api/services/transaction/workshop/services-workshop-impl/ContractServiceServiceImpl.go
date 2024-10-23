@@ -111,3 +111,16 @@ func (s *ContractServiceServiceImpl) GetById(Id int, filterCondition []utils.Fil
 	// Kembalikan hasil
 	return result, nil
 }
+
+// Save implements transactionworkshopservice.ContractServiceService.
+func (s *ContractServiceServiceImpl) Save(payload transactionworkshoppayloads.ContractServiceInsert) (transactionworkshoppayloads.ContractServiceInsert, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	result, err := s.ContractServiceRepository.Save(tx, payload)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}

@@ -2,9 +2,12 @@ package transactionworkshopcontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
+
 	"after-sales/api/utils"
 	"fmt"
 	"net/http"
@@ -20,8 +23,7 @@ type ContractServiceControllerImpl struct {
 type ContractServiceController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
-	// Qcpass(writer http.ResponseWriter, request *http.Request)
-	// Reorder(writer http.ResponseWriter, request *http.Request)
+	Save(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewContractServiceController(ContractServiceService transactionworkshopservice.ContractServiceService) ContractServiceController {
@@ -114,4 +116,22 @@ func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, requ
 	}
 
 	payloads.NewHandleSuccess(writer, data, "Get Data Successfully", http.StatusOK)
+}
+
+// Save implements ContractServiceController.
+func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
+	// Membaca request body menjadi struct ContractServiceInsert
+	var contractServiceInsert transactionworkshoppayloads.ContractServiceInsert
+	helper.ReadFromRequestBody(request, &contractServiceInsert)
+
+	// Panggil service untuk menyimpan contract service
+	result, saveErr := r.ContractServiceService.Save(contractServiceInsert)
+	if saveErr != nil {
+		// Jika ada error dari service saat menyimpan, kembalikan error
+		helper.ReturnError(writer, request, saveErr)
+		return
+	}
+
+	// Jika berhasil, kirimkan response success dengan payload result
+	payloads.NewHandleSuccess(writer, result, "Contract Service Saved Successfully", http.StatusOK)
 }

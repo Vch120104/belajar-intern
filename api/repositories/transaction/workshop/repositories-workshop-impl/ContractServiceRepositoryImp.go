@@ -222,3 +222,82 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 
 	return payload, nil
 }
+
+// Save implements transactionworkshoprepository.ContractServiceRepository.
+func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionworkshoppayloads.ContractServiceInsert) (transactionworkshoppayloads.ContractServiceInsert, *exceptions.BaseErrorResponse) {
+	// Fetch data eksternal dari API
+	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payload.BrandId)
+	var brandResponse transactionworkshoppayloads.ContractServiceBrand
+	errBrand := utils.Get(BrandUrl, &brandResponse, nil)
+	if errBrand != nil {
+		return payload, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve brand data from external API",
+			Err:        errBrand,
+		}
+	}
+
+	ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(payload.ModelId)
+	var modelResponse transactionworkshoppayloads.ContractServiceModel
+	errModel := utils.Get(ModelUrl, &modelResponse, nil)
+	if errModel != nil {
+		return payload, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve model data from external API",
+			Err:        errModel,
+		}
+	}
+
+	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(payload.VehicleId)
+	var vehicleResponses transactionworkshoppayloads.ContractServiceVehicleResponse
+	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
+	if errVehicle != nil {
+		return payload, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve vehicle data from external API",
+			Err:        errVehicle,
+		}
+	}
+
+	// Set default nilai total, vat, dan grand_total
+	payload.Total = 0.0
+	payload.Vat = 0.0
+	payload.GrandTotal = 0.0
+
+	// Prepare entity for insertion (only IDs and finance values set to 0 initially)
+	contractService := transactionworkshopentities.ContractService{
+		CompanyId:                     payload.CompanyId,
+		ContractSevriceDocumentNumber: payload.ContractServiceDocumentNumber,
+		ContractServiceDate:           payload.ContractServiceDate,
+		ContractServiceFrom:           payload.ContractServiceFrom,
+		ContractServiceTo:             payload.ContractServiceTo,
+		BrandId:                       payload.BrandId,
+		ModelId:                       payload.ModelId,
+		VehicleId:                     payload.VehicleId,
+		RegisteredMileage:             payload.RegisteredMileage,
+		Remark:                        payload.Remark,
+		ContractServiceStatusId:       payload.ContractServiceStatusId,
+		Total:                         payload.Total,
+		TotalValueAfterTax:            payload.Vat,
+		ValueAfterTaxrate:             payload.GrandTotal,
+	}
+
+	// Simpan ke database
+	err := tx.Create(&contractService).Error
+	if err != nil {
+		return payload, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to insert contract service data",
+			Err:        err,
+		}
+	}
+
+	// Update response payload dengan data dari external API
+	payload.BrandName = brandResponse.BrandName
+	payload.ModelName = modelResponse.ModelName
+	payload.VehicleTnkb = vehicleResponses.VehicleTnkb
+	payload.VehicleOwner = vehicleResponses.VehicleOwner
+
+	// Return updated payload
+	return payload, nil
+}

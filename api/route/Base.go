@@ -1477,6 +1477,8 @@ func ContractServiceRouter(
 	router.Get("/", ContractServiceController.GetAll)
 	router.Get("/by-id/{contract_service_system_number}", ContractServiceController.GetById)
 
+	router.Post("/", ContractServiceController.Save)
+
 	return router
 }
 
