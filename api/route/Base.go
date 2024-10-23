@@ -588,6 +588,18 @@ func PurchaseOrderRouter(
 
 	return router
 }
+func GoodsReceiveRouter(
+	GoodsReceiveController transactionsparepartcontroller.GoodsReceiveController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", GoodsReceiveController.GetAllGoodsReceive)
+	router.Get("/{goods_receive_id}", GoodsReceiveController.GetGoodsReceiveById)
+	return router
+}
 func PurchasePriceRouter(
 	PurchasePriceController masteritemcontroller.PurchasePriceController,
 ) chi.Router {

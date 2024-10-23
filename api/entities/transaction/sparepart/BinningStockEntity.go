@@ -31,8 +31,7 @@ type BinningStock struct {
 	BinningTypeId               int                                      `gorm:"column:binning_type_id ;not null"  json:"binning_type_id "`
 	CurrencyId                  int                                      `gorm:"column:currency_id ;not null"  json:"currency_id "`
 	ExchangeId                  int                                      `gorm:"column:exchange_id ;not null"  json:"exchange_id "`
-	//BinningStockDetail          []BinningStockDetail                     `gorm:"foreignKey:BinningSystemNumber;references:BinningSystemNumber" json:"binning_stock_detail"`
-	BinningStockDetail []BinningStockDetail `gorm:"foreignKey:BinningSystemNumber;references:BinningSystemNumber" json:"binning_stock_detail"`
+	BinningStockDetail          []BinningStockDetail                     `gorm:"foreignKey:BinningSystemNumber;references:BinningSystemNumber" json:"binning_stock_detail"`
 }
 
 func (*BinningStock) TableName() string {

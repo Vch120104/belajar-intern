@@ -330,6 +330,10 @@ func StartRouting(db *gorm.DB) {
 	PurchaseOrderService := transactionsparepartserviceimpl.NewPurchaseOrderService(PurchaseOrderRepository, db, rdb)
 	PurchaseOrderController := transactionsparepartcontroller.NewPurchaseOrderControllerImpl(PurchaseOrderService)
 
+	//goods receive
+	GoodsReceiveRepository := transactionsparepartrepositoryimpl.NewGoodsReceiveRepositoryImpl()
+	GoodsReceiveService := transactionsparepartserviceimpl.NewGoodsReceiveServiceImpl(GoodsReceiveRepository, db, rdb)
+	GoodsReceiveController := transactionsparepartcontroller.NewGoodsReceiveController(GoodsReceiveService)
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -461,6 +465,7 @@ func StartRouting(db *gorm.DB) {
 	ServiceBodyshopRouter := ServiceBodyshopRouter(ServiceBodyshopController)
 	PurchaseRequestRouter := PurchaseRequestRouter(PurchaseRequestController)
 	PurchaseOrderRouter := PurchaseOrderRouter(PurchaseOrderController)
+	GoodsReceiveRouter := GoodsReceiveRouter(GoodsReceiveController)
 	LookupRouter := LookupRouter(LookupController)
 
 	r := chi.NewRouter()
@@ -556,6 +561,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/sales-order", SalesOrderRouter)
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 		r.Mount("/purchase-order", PurchaseOrderRouter)
+		r.Mount("/goods-receive", GoodsReceiveRouter)
 
 		/* Support Func Afs */
 		r.Mount("/lookup", LookupRouter)
