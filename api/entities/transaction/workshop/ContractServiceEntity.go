@@ -7,7 +7,7 @@ const TableNameContractService = "trx_contract_service"
 type ContractService struct {
 	CompanyId                     int       `gorm:"column:company_id;size:30;not null" json:"company_id"`
 	ContractServiceSystemNumber   int       `gorm:"column:contract_service_system_number;size:30;primary key" json:"contract_service_system_number"`
-	ContractSevriceDocumentNumber string    `gorm:"column:contract_Service_document_number;size:256" json:"contract_service_document_number"`
+	ContractSevriceDocumentNumber string    `gorm:"column:contract_service_document_number;size:256" json:"contract_service_document_number"`
 	ContractServiceDate           time.Time `gorm:"column:contract_service_date;not null" json:"contract_service_date"`
 	ContractServiceName           string    `gorm:"column:contract_service_name;size:40;not null" json:"contract_service_name"`
 	ContractServiceFrom           time.Time `gorm:"column:contract_service_from;not null" json:"contract_service_from"`

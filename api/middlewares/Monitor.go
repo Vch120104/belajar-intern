@@ -247,8 +247,11 @@ type responseWriter struct {
 }
 
 func (w *responseWriter) WriteHeader(status int) {
-	w.status = status
-	w.ResponseWriter.WriteHeader(status)
+	// Only write the status if it hasn't been written already
+	if w.status == http.StatusOK {
+		w.status = status
+		w.ResponseWriter.WriteHeader(status)
+	}
 }
 
 func (w *responseWriter) Write(b []byte) (int, error) {

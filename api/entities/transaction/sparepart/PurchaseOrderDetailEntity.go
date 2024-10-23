@@ -24,7 +24,7 @@ type PurchaseOrderDetailEntities struct {
 	ChangedItemPurchaseOrderDetailSystemNumber int                   `gorm:"column:changed_item_purchase_order_detail_system_number;" json:"changed_item_purchase_order_detail_system_number"`
 	ChangedItemPurchaseOrderSystemNumber       int                   `gorm:"column:changed_item_purchase_order_system_number;" json:"changed_item_purchase_order_system_number"`
 	ChangedItemPurchaseOrderLineNumber         int                   `gorm:"column:changed_item_purchase_order_line_number;" json:"changed_item_purchase_order_line_number"`
-	BinningQuantity                            *float64              `gorm:"column:binning_quantity;" json:"binning_quantity"`
+	BinningQuantity                            float64               `gorm:"column:binning_quantity;" json:"binning_quantity"`
 	VehicleId                                  int                   `gorm:"column:vehicle_id;size:30;" json:"vehicle_id"`
 	StockOnHand                                *float64              `gorm:"column:stock_on_hand;" json:"stock_on_hand"`
 	SalesOrderSystemNumber                     int                   `gorm:"column:sales_order_system_number;" json:"sales_order_system_number"`

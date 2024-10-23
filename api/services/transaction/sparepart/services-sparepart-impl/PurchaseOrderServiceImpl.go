@@ -19,11 +19,11 @@ type PurchaseOrderServiceImpl struct {
 	redis             *redis.Client
 }
 
-func NewPurchaseOrderService(PuchaseOrderRepo transactionsparepartrepository.PurchaseOrderRepository, db *gorm.DB, rediscliend *redis.Client) transactionsparepartservice.PurchaseOrderService {
+func NewPurchaseOrderService(PuchaseOrderRepo transactionsparepartrepository.PurchaseOrderRepository, db *gorm.DB, redisclient *redis.Client) transactionsparepartservice.PurchaseOrderService {
 	return &PurchaseOrderServiceImpl{
 		PurchaseOrderRepo: PuchaseOrderRepo,
 		DB:                db,
-		redis:             rediscliend,
+		redis:             redisclient,
 	}
 }
 

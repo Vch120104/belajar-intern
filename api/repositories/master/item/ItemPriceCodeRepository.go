@@ -18,4 +18,5 @@ type ItemPriceCodeRepository interface {
 	DeleteItemPriceCode(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemPriceCode(tx *gorm.DB, itemPriceId int, req masteritempayloads.UpdateItemPriceCode) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPriceCode(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
+	GetItemPriceCodeDropDown(tx *gorm.DB) ([]masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse)
 }

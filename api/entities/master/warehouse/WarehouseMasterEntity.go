@@ -26,7 +26,7 @@ type WarehouseMaster struct {
 	WarehouseTransitDefault       string                          `gorm:"column:warehouse_transit_default;not null;type:varchar(5)" json:"warehouse_transit_default"`
 	WarehousePhoneNumber          string                          `gorm:"column:warehouse_phone_number;not null;size:30;default:'-'" json:"warehouse_phone_number"`
 	WarehouseFaxNumber            string                          `gorm:"column:warehouse_fax_number;size:30" json:"warehouse_fax_number"`
-	WarehouseGroup                WarehouseGroup                  `gorm:"foreignKey:warehouse_group_id;references:warehouse_group_id" json:"warehouse_group"`
+	WarehouseGroup                *WarehouseGroup                 // `gorm:"foreignKey:WarehouseId;references:WarehouseId" json:"warehouse_group"`
 	ItemLocation                  masteritementities.ItemLocation `gorm:"foreignkey:warehouse_id;references:warehouse_id" json:"item_location"`
 	WarehouseAuthorized           WarehouseAuthorize              `gorm:"foreignkey:warehouse_id;references:warehouse_id" json:"warehouse_authorized"`
 }

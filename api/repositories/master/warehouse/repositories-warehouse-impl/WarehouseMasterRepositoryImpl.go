@@ -269,9 +269,9 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 
 	var totalRows int64
 	query := tx.Table("mtr_warehouse_authorize").
-		Select("mtr_warehouse_authorize.*, mtr_user_details.*").
-		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id").
-		Where("warehouse_id = ?", warehouseId)
+		Select("warehouse_authorize_id, mtr_user_details.user_employee_id as employee_id, mtr_user_details.employee_name as employee_name, mtr_user_details.id_number as id_number").
+		Joins("JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id").
+		Where("mtr_warehouse_authorize.warehouse_id = ?", warehouseId)
 	if err := query.Count(&totalRows).Error; err != nil {
 		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
