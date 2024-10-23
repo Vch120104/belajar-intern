@@ -16,4 +16,5 @@ type ItemPriceCodeService interface {
 	DeleteItemPriceCode(id int) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemPriceCode(itemPriceId int, req masteritempayloads.UpdateItemPriceCode) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPriceCode(Id int) (bool, *exceptions.BaseErrorResponse)
+	GetItemPriceCodeDropDown() ([]masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse)
 }

@@ -24,6 +24,7 @@ type WorkOrderController interface {
 	GetRequestById(writer http.ResponseWriter, request *http.Request)
 	UpdateRequest(writer http.ResponseWriter, request *http.Request)
 	AddRequest(writer http.ResponseWriter, request *http.Request)
+	AddRequestMultiId(writer http.ResponseWriter, request *http.Request)
 	DeleteRequest(writer http.ResponseWriter, request *http.Request)
 	DeleteRequestMultiId(writer http.ResponseWriter, request *http.Request)
 
@@ -106,6 +107,14 @@ type WorkOrderController interface {
 	ChangeBillTo(writer http.ResponseWriter, request *http.Request)
 	ChangePhoneNo(writer http.ResponseWriter, request *http.Request)
 	ConfirmPrice(writer http.ResponseWriter, request *http.Request)
+	GetServiceRequestByWO(writer http.ResponseWriter, request *http.Request)
+	GetClaimByWO(writer http.ResponseWriter, request *http.Request)
+	GetClaimItemByWO(writer http.ResponseWriter, request *http.Request)
+	GetWOByBillCode(writer http.ResponseWriter, request *http.Request)
+	GetDetailWOByClaimBillCode(writer http.ResponseWriter, request *http.Request)
+	GetDetailWOByBillCode(writer http.ResponseWriter, request *http.Request)
+	GetDetailWOByATPMBillCode(writer http.ResponseWriter, request *http.Request)
+	GetSupplyByWO(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrderService) WorkOrderController {
@@ -140,7 +149,8 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 	queryParams := map[string]string{
 		"trx_work_order.work_order_document_number":        queryValues.Get("work_order_document_number"),
 		"trx_work_order.work_order_system_number":          queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_date":                   queryValues.Get("work_order_date"),
+		"trx_work_order.work_order_date_from":              queryValues.Get("work_order_date_from"),
+		"trx_work_order.work_order_date_to":                queryValues.Get("work_order_date_to"),
 		"trx_work_order.work_order_type_id":                queryValues.Get("work_order_type_id"),
 		"trx_work_order.work_order_type_description":       queryValues.Get("work_order_type_description"),
 		"trx_work_order.brand_id":                          queryValues.Get("brand_id"),
@@ -153,6 +163,9 @@ func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 		"trx_work_order.work_order_status_id":              queryValues.Get("work_order_status_id"),
 		"trx_work_order.work_order_status_name":            queryValues.Get("work_order_status_name"),
 		"trx_work_order.work_order_repeated_system_number": queryValues.Get("work_order_repeated_system_number"),
+		"trx_work_order.variant_id":                        queryValues.Get("variant_id"),
+		"trx_work_order.foreman_id":                        queryValues.Get("foreman_id"),
+		"trx_work_order.service_advisor_id":                queryValues.Get("service_advisor_id"),
 	}
 
 	paginate := pagination.Pagination{
@@ -400,7 +413,6 @@ func (r *WorkOrderControllerImpl) AddLineType(writer http.ResponseWriter, reques
 // @Produce json
 // @Tags Transaction : Workshop Work Order
 // @Param line_type_id path string true "Work Order LineType ID"
-// @Param reqBody body transactionworkshoppayloads.WorkOrderLinetypeRequest true "Work Order Bill Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/dropdown-line-type/{line_type_id} [put]
@@ -791,7 +803,6 @@ func (r *WorkOrderControllerImpl) NewVehicleModel(writer http.ResponseWriter, re
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/requestservice [get]
 func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, request *http.Request) {
-	// Get all services of a work order
 	queryValues := request.URL.Query()
 
 	paginate := pagination.Pagination{
@@ -801,9 +812,16 @@ func (r *WorkOrderControllerImpl) GetAllRequest(writer http.ResponseWriter, requ
 		SortBy: queryValues.Get("sort_by"),
 	}
 
+	excludeParams := map[string]bool{
+		"page":    true,
+		"limit":   true,
+		"sort_of": true,
+		"sort_by": true,
+	}
+
 	filterConditions := make([]utils.FilterCondition, 0)
 	for key, values := range queryValues {
-		if len(values) > 0 {
+		if len(values) > 0 && !excludeParams[key] {
 			filterConditions = append(filterConditions, utils.FilterCondition{
 				ColumnField: key,
 				ColumnValue: values[0],
@@ -903,11 +921,42 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 		return
 	}
 
-	if success.WorkOrderRequestId > 0 {
+	if success.WorkOrderServiceId > 0 {
 		payloads.NewHandleSuccess(writer, success, "Request added successfully", http.StatusCreated)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// AddRequest Multi adds multiple request to a work order
+// @Summary Add Multiple Request to Work Order
+// @Description Add multiple request to a work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Detail
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param reqBody body transactionworkshoppayloads.WorkOrderServiceRequest true "Work Order Data"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal/{work_order_system_number}/requestservicemulti [post]
+func (r *WorkOrderControllerImpl) AddRequestMultiId(writer http.ResponseWriter, request *http.Request) {
+	// Add request to work order
+	workorderID, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order system number", http.StatusBadRequest)
+		return
+	}
+
+	var groupRequests []transactionworkshoppayloads.WorkOrderServiceRequest
+	helper.ReadFromRequestBody(request, &groupRequests)
+
+	entities, baseErr := r.WorkOrderService.AddRequestMultiId(workorderID, groupRequests) // Call the modified service method
+	if baseErr != nil {
+		exceptions.NewAppException(writer, request, baseErr)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, entities, "Requests added successfully", http.StatusCreated)
 }
 
 // DeleteRequest deletes a request from a work order
@@ -1012,7 +1061,6 @@ func (r *WorkOrderControllerImpl) DeleteRequestMultiId(writer http.ResponseWrite
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/vehicleservice [get]
 func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWriter, request *http.Request) {
-	// Get all vehicle services of a work order
 	queryValues := request.URL.Query()
 
 	paginate := pagination.Pagination{
@@ -1022,9 +1070,16 @@ func (r *WorkOrderControllerImpl) GetAllVehicleService(writer http.ResponseWrite
 		SortBy: queryValues.Get("sort_by"),
 	}
 
+	excludeParams := map[string]bool{
+		"page":    true,
+		"limit":   true,
+		"sort_of": true,
+		"sort_by": true,
+	}
+
 	filterConditions := make([]utils.FilterCondition, 0)
 	for key, values := range queryValues {
-		if len(values) > 0 {
+		if len(values) > 0 && !excludeParams[key] {
 			filterConditions = append(filterConditions, utils.FilterCondition{
 				ColumnField: key,
 				ColumnValue: values[0],
@@ -2030,7 +2085,6 @@ func (r *WorkOrderControllerImpl) ChangePhoneNo(writer http.ResponseWriter, requ
 // @Produce json
 // @Tags Transaction : Workshop Work Order Normal
 // @Param work_order_system_number path string true "Work Order ID"
-// @Param reqBody body transactionworkshoppayloads.ConfirmPriceListRequest true "Work Order Data"
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/work-order/normal/confirm-price/{work_order_system_number}/{multi_id} [put]
@@ -2552,6 +2606,433 @@ func (r *WorkOrderControllerImpl) DeleteJobType(writer http.ResponseWriter, requ
 
 	if success {
 		payloads.NewHandleSuccess(writer, success, "Trx Type deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetServiceRequestByWO gets all service request by work order
+// @Summary Get Service Request By Work Order
+// @Description Retrieve all service request by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/service-request/{work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetServiceRequestByWO(writer http.ResponseWriter, request *http.Request) {
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, baseErr := r.WorkOrderService.GetServiceRequestByWO(workOrderId, criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetClaimByWO gets all claim by work order
+// @Summary Get Claim By Work Order
+// @Description Retrieve all claim by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/claim-service/{work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetClaimByWO(writer http.ResponseWriter, request *http.Request) {
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_work_order_detail.work_order_system_number": queryValues.Get("work_order_system_number"),
+		"trx_work_order_detail.transaction_type_id":      queryValues.Get("transaction_type_id"),
+		"trx_work_order_detail.atpm_claim_number":        queryValues.Get("atpm_claim_number"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	paginatedData, totalPages, totalRows, baseErr := r.WorkOrderService.GetClaimByWO(workOrderId, criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetClaimItemByWO gets all claim item by work order
+// @Summary Get Claim Item By Work Order
+// @Description Retrieve all claim item by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path string true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/claim-item-service/{work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetClaimItemByWO(writer http.ResponseWriter, request *http.Request) {
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	queryParams := map[string]string{
+		"trx_work_order_detail.work_order_system_number": queryValues.Get("work_order_system_number"),
+		"trx_work_order_detail.transaction_type_id":      queryValues.Get("transaction_type_id"),
+		"trx_work_order_detail.atpm_claim_number":        queryValues.Get("atpm_claim_number"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, baseErr := r.WorkOrderService.GetClaimItemByWO(workOrderId, criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetWOByBillCode gets all work order by bill code
+// @Summary Get Work Order By Bill Code
+// @Description Retrieve all work order by bill code
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path int true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/transactiontype-service/{work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetWOByBillCode(writer http.ResponseWriter, request *http.Request) {
+
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	queryParams := map[string]string{
+		"trx_work_order_detail.work_order_system_number": queryValues.Get("work_order_system_number"),
+		"trx_work_order_detail.transaction_type_id":      queryValues.Get("transaction_type_id"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, baseErr := r.WorkOrderService.GetWOByBillCode(workOrderId, criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// GetDetailWOByClaimBillCode gets all claim detail by work order
+// @Summary Get Claim Detail By Work Order
+// @Description Retrieve all claim detail by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path int true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/claim-detail-service/{work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetDetailWOByClaimBillCode(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	transactionTypeId, err := strconv.Atoi(chi.URLParam(request, "transaction_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid transaction type ID", http.StatusBadRequest)
+		return
+	}
+
+	atpmClaimNumber := chi.URLParam(request, "atpm_claim_number")
+	if atpmClaimNumber == "" {
+		payloads.NewHandleError(writer, "Invalid ATPM claim number", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	// Call the service method
+	paginatedData, baseErr := r.WorkOrderService.GetDetailWOByClaimBillCode(workOrderId, transactionTypeId, atpmClaimNumber, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, paginatedData, "Get Data Successfully", http.StatusOK)
+}
+
+// GetDetailWOByBillCode gets all claim bill by work order
+// @Summary Get Claim Bill By Work Order
+// @Description Retrieve all claim bill by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path int true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Param transaction_type_id query string false "Transaction Type ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/claim-bill-service/{work_order_system_number}/{transaction_type_id} [get]
+func (r *WorkOrderControllerImpl) GetDetailWOByBillCode(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	transactionTypeId, err := strconv.Atoi(chi.URLParam(request, "transaction_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid transaction type ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	// Call the service method
+	paginatedData, baseErr := r.WorkOrderService.GetDetailWOByBillCode(workOrderId, transactionTypeId, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, paginatedData, "Get Data Successfully", http.StatusOK)
+}
+
+// GetDetailWOByATPMBillCode gets all claim bill by work order
+// @Summary Get Claim Bill By Work Order
+// @Description Retrieve all claim bill by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path int true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Param transaction_type_id query string false "Transaction Type ID"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/atpm-claim-bill-service/{work_order_system_number}/{transaction_type_id} [get]
+func (r *WorkOrderControllerImpl) GetDetailWOByATPMBillCode(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	transactionTypeId, err := strconv.Atoi(chi.URLParam(request, "transaction_type_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid transaction type ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	// Call the service method
+	paginatedData, baseErr := r.WorkOrderService.GetDetailWOByATPMBillCode(workOrderId, transactionTypeId, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, paginatedData, "Get Data Successfully", http.StatusOK)
+}
+
+// GetSupplyByWO gets all supply by work order
+// @Summary Get Supply By Work Order
+// @Description Retrieve all supply by work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order
+// @Param work_order_system_number path int true "Work Order ID"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/supply-service/{work_order_system_number} [get]
+func (r *WorkOrderControllerImpl) GetSupplyByWO(writer http.ResponseWriter, request *http.Request) {
+	workOrderId, err := strconv.Atoi(chi.URLParam(request, "work_order_system_number"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid work order ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	queryParams := map[string]string{
+		"trx_work_order_detail.work_order_system_number": queryValues.Get("work_order_system_number"),
+		"trx_work_order_detail.transaction_type_id":      queryValues.Get("transaction_type_id"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	// Call the service method
+	paginatedData, totalPages, totalRows, baseErr := r.WorkOrderService.GetSupplyByWO(workOrderId, criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Work order not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}

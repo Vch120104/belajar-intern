@@ -407,3 +407,29 @@ type CompanyReference struct {
 	IsDistributor             bool    `json:"is_distributor"`
 	WithVat                   bool    `json:"with_vat"`
 }
+
+type WorkorderTransactionType struct {
+	WorkOrderTransactionTypeName string `json:"work_order_transaction_type_name"`
+	WorkOrderTransactionTypeId   int    `json:"work_order_transaction_type_id"`
+	IsActive                     bool   `json:"is_active"`
+	WorkOrderTransactionTypeCode string `json:"work_order_transaction_type_code"`
+}
+
+type DocumentStatus struct{
+	IsActive bool `json:"is_active"`
+	DocumentStatusId int `json:"document_status_id"`
+	DocumentStatusCode string `json:"document_status_code"`
+	DocumentStatusDescription string `json:"document_status_description"`
+}
+
+type ApprovalStatus struct{
+	ApprovalStatusId int `json:"approval_status_id"`
+	ApprovalStatusCode string `json:"approval_status_code"`
+}
+
+type PdiServiceRequest struct{
+	ContactPersonName string `json:"contact_person_name"`
+	ContactPersonPhone string `json:"contact_person_phone"`
+	ContactPersonMobile string `json:"contact_person_mobile"`
+	ContactPersonViaId int `json:"contact_person_via_id"`
+}
