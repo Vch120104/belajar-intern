@@ -111,7 +111,7 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 		CompanyId:                     request.CompanyId,
 		IsActive:                      utils.BoolPtr(request.IsActive),
 		WarehouseId:                   request.WarehouseId,
-		WarehouseCostingType:          request.WarehouseCostingType,
+		WarehouseCostingTypeId:        request.WarehouseCostingTypeId,
 		WarehouseKaroseri:             utils.BoolPtr(request.WarehouseKaroseri),
 		WarehouseNegativeStock:        utils.BoolPtr(request.WarehouseNegativeStock),
 		WarehouseReplishmentIndicator: utils.BoolPtr(request.WarehouseReplishmentIndicator),
@@ -184,7 +184,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterResponse{
 		IsActive:                      *entities.IsActive,
 		WarehouseId:                   entities.WarehouseId,
-		WarehouseCostingType:          entities.WarehouseCostingType,
+		WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
 		WarehouseKaroseri:             *entities.WarehouseKaroseri,
 		WarehouseNegativeStock:        *entities.WarehouseNegativeStock,
 		WarehouseReplishmentIndicator: *entities.WarehouseReplishmentIndicator,

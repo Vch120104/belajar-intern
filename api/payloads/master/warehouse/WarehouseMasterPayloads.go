@@ -43,7 +43,7 @@ type GetWarehouseMasterResponse struct {
 	CompanyId                     int    `json:"company_id"`
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        int    `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool   `json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator bool   `json:"warehouse_replishment_indicator"`
@@ -86,7 +86,7 @@ type GetAllWarehouseMasterRequest struct {
 type GetAllWarehouseMasterResponse struct {
 	IsActive                      bool                          `json:"is_active"`
 	WarehouseId                   int                           `json:"warehouse_id"`
-	WarehouseCostingType          string                        `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        int                           `json:"warehouse_costing_type"`
 	WarehouseKaroseri             bool                          `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool                          `json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator bool                          `json:"warehouse_replishment_indicator"`
