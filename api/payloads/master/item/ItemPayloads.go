@@ -182,14 +182,19 @@ type UomDropdownResponse struct {
 }
 
 type ItemDetailResponse struct {
-	ItemDetailId int     `json:"item_detail_id"`
-	IsActive     bool    `gorm:"column:is_active" json:"is_active"`
-	ItemId       int     `json:"item_id"`
-	BrandId      int     `json:"brand_id"`
-	ModelId      int     `json:"model_id"`
-	VariantId    int     `json:"variant_id"`
-	MileageEvery float64 `json:"mileage_every"`
-	ReturnEvery  float64 `json:"return_every"`
+	ItemDetailId       int     `json:"item_detail_id"`
+	IsActive           bool    `gorm:"column:is_active" json:"is_active"`
+	ItemId             int     `json:"item_id"`
+	BrandId            int     `json:"brand_id"`
+	BrandName          string  `json:"brand_name"`
+	ModelId            int     `json:"model_id"`
+	ModelCode          string  `json:"model_code"`
+	ModelDescription   string  `json:"model_description"`
+	VariantId          int     `json:"variant_id"`
+	VariantCode        string  `json:"variant_code"`
+	VariantDescription string  `json:"variant_description"`
+	MileageEvery       float64 `json:"mileage_every"`
+	ReturnEvery        float64 `json:"return_every"`
 }
 
 type GetCatalogCode struct {
@@ -339,4 +344,10 @@ type ItemListTransLookUp struct {
 type DeleteItemResponse struct {
 	Status  bool   `json:"status"`
 	Message string `json:"message"`
+}
+
+type CompanyResponse struct {
+	CompanyId   int    `json:"company_id"`
+	CompanyCode string `json:"company_code"`
+	CompanyName string `json:"company_name"`
 }
