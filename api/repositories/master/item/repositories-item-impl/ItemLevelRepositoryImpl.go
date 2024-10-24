@@ -39,9 +39,9 @@ func (r *ItemLevelImpl) GetItemLevelLookUpbyId(tx *gorm.DB, itemLevelId int) (ma
 	D.item_level_code AS [item_level_4],
 	D.item_level_name AS [item_level_4_name],
 	mtr_item_level.item_level_id AS [item_level_id],
-	mtr_item_level.is_active AS [is_active]`).Joins("LEFT OUTER JOIN mtr_item_level B ON mtr_item_level.item_level_id = B.item_level_parent AND B.item_level = 2").
-		Joins("LEFT OUTER JOIN mtr_item_level C ON B.item_level_id = C.item_level_parent AND C.item_level = 3").
-		Joins("LEFT OUTER JOIN mtr_item_level D ON C.item_level_id = D.item_level_parent AND D.item_level = 4").
+	mtr_item_level.is_active AS [is_active]`).Joins("LEFT OUTER JOIN mtr_item_level B ON mtr_item_level.item_level_code = B.item_level_parent AND B.item_level = 2").
+		Joins("LEFT OUTER JOIN mtr_item_level C ON B.item_level_code = C.item_level_parent AND C.item_level = 3").
+		Joins("LEFT OUTER JOIN mtr_item_level D ON C.item_level_code = D.item_level_parent AND D.item_level = 4").
 		Where(masteritementities.ItemLevel{ItemLevelId: itemLevelId}).Find(&responses).Error
 
 	if err != nil {
@@ -76,9 +76,9 @@ func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCon
 	D.item_level_code AS [item_level_4],
 	D.item_level_name AS [item_level_4_name],
 	mtr_item_level.item_level_id AS [item_level_id],
-	mtr_item_level.is_active AS [is_active]`).Joins("LEFT OUTER JOIN mtr_item_level B ON mtr_item_level.item_level_id = B.item_level_parent AND B.item_level = 2").
-		Joins("LEFT OUTER JOIN mtr_item_level C ON B.item_level_id = C.item_level_parent AND C.item_level = 3").
-		Joins("LEFT OUTER JOIN mtr_item_level D ON C.item_level_id = D.item_level_parent AND D.item_level = 4").
+	mtr_item_level.is_active AS [is_active]`).Joins("LEFT OUTER JOIN mtr_item_level B ON mtr_item_level.item_level_code = B.item_level_parent AND B.item_level = 2").
+		Joins("LEFT OUTER JOIN mtr_item_level C ON B.item_level_code = C.item_level_parent AND C.item_level = 3").
+		Joins("LEFT OUTER JOIN mtr_item_level D ON C.item_level_code = D.item_level_parent AND D.item_level = 4").
 		Where(masteritementities.ItemLevel{ItemClassId: itemClassId})
 
 	queryFilter := utils.ApplyFilter(query, filter)

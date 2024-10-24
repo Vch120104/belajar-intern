@@ -256,7 +256,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	rows, err := tx.Model(&entities).Select("u.*,mtr_item.*").
 		Where(masteritementities.Item{
 			ItemId: Id,
-		}).InnerJoins("Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
+		}).InnerJoins(" Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
 		First(&response).
 		Rows()
 
@@ -427,9 +427,16 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	err := tx.Save(&entities).Error
 
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 
@@ -446,12 +453,19 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
 
-	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
+	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
 
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+		}
+	}
+
+	if atpmResponse == (masteritempayloads.AtpmOrderTypeResponse{}) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("atpm-order-type not found"),
 		}
 	}
 
@@ -466,7 +480,21 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
+	var uomItemId int
+
+	err = tx.Model(masteritementities.UomItem{}).Select("uom_item_id").Where(masteritementities.UomItem{ItemId: model.ItemId}).First(&uomItemId).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+
+	}
+
 	uomItemEntities := masteritementities.UomItem{
+		UomItemId:         uomItemId,
 		ItemId:            model.ItemId,
 		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
 		UomTypeCode:       uomTypeModel.UomTypeCode,
