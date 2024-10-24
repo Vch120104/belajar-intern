@@ -620,6 +620,7 @@ func GoodsReceiveRouter(
 	router.Get("/{goods_receive_id}", GoodsReceiveController.GetGoodsReceiveById)
 	router.Post("/", GoodsReceiveController.InsertGoodsReceive)
 	router.Put("/{goods_receive_id}", GoodsReceiveController.UpdateGoodsReceive)
+	router.Post("/detail", GoodsReceiveController.InsertGoodsReceiveDetail)
 	return router
 }
 func PurchasePriceRouter(

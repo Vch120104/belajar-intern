@@ -59,3 +59,12 @@ func (service *GoodsReceiveServiceImpl) UpdateGoodsReceive(payloads transactions
 	}
 	return result, nil
 }
+func (service *GoodsReceiveServiceImpl) InsertGoodsReceiveDetail(payloads transactionsparepartpayloads.GoodsReceiveDetailInsertPayloads) (transactionsparepartentities.GoodsReceiveDetail, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.InsertGoodsReceiveDetail(tx, payloads)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

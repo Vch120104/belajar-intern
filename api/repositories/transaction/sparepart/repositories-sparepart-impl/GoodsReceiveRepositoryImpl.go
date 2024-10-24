@@ -1,6 +1,7 @@
 package transactionsparepartrepositoryimpl
 
 import (
+	masterentities "after-sales/api/entities/master"
 	masteritementities "after-sales/api/entities/master/item"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -283,30 +284,30 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 	//get the header first
 	GoodsReceiveId := payloads.BinningId
 	var GoodsReceiveEntities transactionsparepartentities.GoodsReceive
-	var Response transactionsparepartentities.GoodsReceiveDetail
+	var GoodsReceiveDetail transactionsparepartentities.GoodsReceiveDetail
 	err := db.Model(&GoodsReceiveEntities).Where(transactionsparepartentities.GoodsReceive{GoodsReceiveSystemNumber: GoodsReceiveId}).
 		First(&GoodsReceiveEntities).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return Response, &exceptions.BaseErrorResponse{
+			return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        errors.New("goods receive header is not found"),
 				Message:    "GoodsReceive Is Not Found",
 			}
 		}
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed To Update GoodsReceiveDetail",
 		}
 	}
 	//get costing type for calidasion warehouse
-	var WarehouseCostingTypeHPPId int
-	err = db.Model(&masterwarehouseentities.WarehouseCostingType{}).Where("warehouse_costing_type_code").
-		Select("warehouse_costing_type_id").
+	var WarehouseCostingTypeHPPId string
+	err = db.Model(&masterwarehouseentities.WarehouseCostingType{}).
+		Select("warehouse_costing_type_code").
 		Where(masterwarehouseentities.WarehouseCostingType{WarehouseCostingTypeCode: "HPP"}).
 		Scan(&WarehouseCostingTypeHPPId).Error
 	if err != nil {
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed To get costing type HPP",
 		}
@@ -324,24 +325,25 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 		First(&locationStockEntities).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return Response, &exceptions.BaseErrorResponse{
+			return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
+				Err:        errors.New("invalid Item location"),
 				Message:    "Invalid Item Location..!!",
 			}
 		}
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed To Get Location Warehouse",
 		}
 	}
 
 	//			IF (@Hpp_wh_Type =(@Hpp_wh_Type_Cmp) OR @Hpp_wh_Type = @Hpp_wh_Type_Normal)
-	WarehouseCostingTypeId := -1
+	WarehouseCostingType := ""
 	err = db.Model(&masterwarehouseentities.WarehouseMaster{}).Where("warehouse_id = ?", GoodsReceiveEntities.WarehouseId).
-		Select("warehouse_costing_type").Scan(&WarehouseCostingTypeId).
+		Select("warehouse_costing_type").Scan(&WarehouseCostingType).
 		Error
-	if err != nil || WarehouseCostingTypeId == -1 {
-		return Response, &exceptions.BaseErrorResponse{
+	if err != nil || WarehouseCostingType == "" {
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed To warehouse master with id = " + strconv.Itoa(GoodsReceiveEntities.WarehouseId),
 		}
@@ -354,8 +356,8 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 	//RETURN 0
 	//END
 	//END
-	if WarehouseCostingTypeId == WarehouseCostingTypeHPPId && payloads.ItemPrice <= 0 {
-		return Response, &exceptions.BaseErrorResponse{
+	if WarehouseCostingType == WarehouseCostingTypeHPPId && payloads.ItemPrice <= 0 {
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("price must be greater then 0"),
 		}
@@ -363,7 +365,7 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 	//IF EXISTS(SELECT LOC_CODE FROM amLocationItem WHERE COMPANY_CODE = @Company_Code AND ITEM_CODE = @Item_Code AND LOC_CODE = @Loc_Code AND STOCK_OPNAME = 1 AND WHS_GROUP = @Whs_Group)
 
 	if locationStockEntities.StockOpname == true && locationStockEntities.WarehouseGroupId == GoodsReceiveEntities.WarehouseGroupId {
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("location is under stock opname"),
 		}
@@ -380,18 +382,18 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 		Scan(&isStockOpaname).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return Response, &exceptions.BaseErrorResponse{
+			return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Invalid Item Location",
 			}
 		}
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed To Get Claim Location Warehouse",
 		}
 	}
 	if isStockOpaname == 1 {
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("location is under stock opname"),
 		}
@@ -401,7 +403,7 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 	err = db.Model(&masteritementities.ItemGroup{}).Select("item_group_id").Scan(&ItemGroupTypeInventoryId).
 		Error
 	if err != nil || ItemGroupTypeInventoryId == 0 {
-		return Response, &exceptions.BaseErrorResponse{
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed To Get Item Group Type Inventory",
 		}
@@ -414,13 +416,118 @@ func (repository *GoodsReceiveRepositoryImpl) InsertGoodsReceiveDetail(db *gorm.
 						WHERE GR1.warehouse_location_id = ? AND gr1.item_id = ? and gr0.item_group_id = ?
 							`, payloads.WarehouseLocationId, payloads.ItemId, ItemGroupTypeInventoryId).
 			Select("1").Scan(&CheckDuplicateItemClaim).Error
-		if err != nil && CheckDuplicateItemClaim == 0 {
-			return Response, &exceptions.BaseErrorResponse{
+		if err != nil && CheckDuplicateItemClaim == 1 {
+			return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Err:        errors.New("selected location claim is already exists in Goods Receipt detail"),
 			}
 		}
-
 	}
-	return Response, nil
+	var GoodsReceiveReferenceEntities masterentities.GoodsReceiveReferenceType
+	err = db.Model(&GoodsReceiveReferenceEntities).First(&GoodsReceiveReferenceEntities).
+		Where("reference_type_good_receive_id = ?", GoodsReceiveEntities.ReferenceTypeGoodReceiveId).
+		Error
+	if err != nil {
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    err.Error(),
+		}
+	}
+	//for ItemPrice Update
+	type ItemGoodsReceiveTemp struct {
+		ItemPrice       float64
+		ItemDiscPercent float64
+		ItemDiscAmount  float64
+	}
+	var ItemGoodsReceive ItemGoodsReceiveTemp
+	if GoodsReceiveReferenceEntities.ReferenceTypeGoodReceiveCode == "PO" {
+		//SELECT
+		//@Item_Price = ISNULL(ITEM_PRICE,0) - ISNULL(ITEM_DISC_AMOUNT,0),
+		//@Item_Disc_Percent = ISNULL(ITEM_DISC_PERCENT,0) ,
+		//@Item_Disc_Amount = ISNULL(ITEM_DISC_AMOUNT,0)
+		//FROM atItemPO1 WHERE PO_SYS_NO = @Ref_Sys_No AND PO_LINE = @Ref_Line_No
+		err = db.Model(&transactionsparepartentities.PurchaseOrderDetailEntities{}).
+			Select(`
+						ISNULL(item_price,0) - ISNULL(item_discount_amount,0) as item_price,
+						ISNULL(item_discount_percentage,0) as item_discount_percentage,
+						ISNULL(item_discount_amount,0) as item_discount_amount
+				`).
+			Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: payloads.ReferenceSystemNumber}).
+			Scan(&ItemGoodsReceive).
+			Error
+		if err != nil {
+			return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed To Get Item Goods Receive from purchase order",
+			}
+		}
+	}
+	if GoodsReceiveReferenceEntities.ReferenceTypeGoodReceiveCode == "CL" {
+		err = db.Model(&transactionsparepartentities.ItemClaimDetail{}).
+			Select(`
+						ISNULL(item_price,0) as item_price,
+						ISNULL(item_discount_percentage,0) as item_discount_percentage,
+						ISNULL(item_discount_amount,0) as item_discount_amount
+				`).
+			Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: payloads.ReferenceSystemNumber}).
+			Scan(&ItemGoodsReceive).Error
+		if err != nil {
+			return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed To Get Item Goods Receive from Item Claim",
+			}
+		}
+	}
+	if GoodsReceiveReferenceEntities.ReferenceTypeGoodReceiveCode == "WC" {
+		ItemGoodsReceive.ItemDiscPercent = 0
+		ItemGoodsReceive.ItemDiscAmount = 0
+		ItemGoodsReceive.ItemPrice = 0
+	}
+	payloads.ItemPrice = ItemGoodsReceive.ItemPrice
+	payloads.ItemDiscountAmount = ItemGoodsReceive.ItemDiscAmount
+	payloads.ItemDiscountPercent = ItemGoodsReceive.ItemDiscPercent
+
+	//search UomRate
+	GoodsReceiveDetail = transactionsparepartentities.GoodsReceiveDetail{
+		GoodsReceiveSystemNumber: payloads.GoodsReceiveSystemNumber,
+		GoodsReceiveLineNumber:   payloads.GoodsReceiveLineNumber,
+		ItemId:                   payloads.ItemId,
+		ItemUnitOfMeasurement:    payloads.ItemUnitOfMeasurement,
+		UnitOfMeasurementRate:    payloads.UnitOfMeasurementRate,
+		ItemPrice:                payloads.ItemPrice,
+		ItemDiscountPercent:      payloads.ItemDiscountPercent,
+		ItemDiscountAmount:       payloads.ItemDiscountAmount,
+		QuantityReference:        payloads.QuantityReference,
+		QuantityDeliveryOrder:    payloads.QuantityDeliveryOrder,
+		QuantityShort:            payloads.QuantityShort,
+		QuantityDamage:           payloads.QuantityDamage,
+		QuantityOver:             payloads.QuantityOver,
+		QuantityWrong:            payloads.QuantityWrong,
+		QuantityGoodsReceive:     payloads.QuantityGoodsReceive,
+		WarehouseLocationId:      payloads.WarehouseLocationId,
+		WarehouseLocationClaimId: payloads.WarehouseLocationClaimId,
+		CaseNumber:               payloads.CaseNumber,
+		BinningId:                payloads.BinningId,
+		BinningDocumentNumber:    payloads.BinningDocumentNumber,
+		BinningLineNumber:        payloads.BinningLineNumber,
+		ReferenceSystemNumber:    payloads.ReferenceSystemNumber,
+		ReferenceLineNumber:      payloads.ReferenceLineNumber,
+		ClaimSystemNumber:        payloads.ClaimSystemNumber,
+		ClaimLineNumber:          payloads.ClaimLineNumber,
+		ItemTotal:                (payloads.QuantityGoodsReceive + payloads.QuantityShort) * payloads.ItemPrice,
+		ItemTotalBaseAmount:      (payloads.QuantityGoodsReceive + payloads.QuantityShort) * payloads.ItemPrice * GoodsReceiveEntities.CurrencyExchangeRate,
+		CreatedByUserId:          payloads.CreatedByUserId,
+		CreatedDate:              payloads.CreatedDate,
+		UpdatedByUserId:          payloads.UpdatedByUserId,
+		UpdatedDate:              payloads.UpdatedDate,
+		ChangeNo:                 1,
+	}
+	err = db.Create(&GoodsReceiveDetail).Error
+	if err != nil {
+		return GoodsReceiveDetail, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errors.New("failed to create goods receive detail entities"),
+		}
+	}
+	return GoodsReceiveDetail, nil
 }

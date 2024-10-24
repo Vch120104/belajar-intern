@@ -17,6 +17,7 @@ type GoodsReceiveController interface {
 	GetGoodsReceiveById(writer http.ResponseWriter, request *http.Request)
 	InsertGoodsReceive(writer http.ResponseWriter, request *http.Request)
 	UpdateGoodsReceive(writer http.ResponseWriter, request *http.Request)
+	InsertGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type GoodsReceiveControllerImpl struct {
@@ -86,4 +87,16 @@ func (controller *GoodsReceiveControllerImpl) UpdateGoodsReceive(writer http.Res
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "Successfully Update Goods Receive Header", http.StatusOK)
+}
+
+// goods-receive/detail post
+func (controller *GoodsReceiveControllerImpl) InsertGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request) {
+	var GoodsReceiveDetailPayloads transactionsparepartpayloads.GoodsReceiveDetailInsertPayloads
+	helper.ReadFromRequestBody(request, &GoodsReceiveDetailPayloads)
+	res, err := controller.service.InsertGoodsReceiveDetail(GoodsReceiveDetailPayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Insert Goods Receive Detail", http.StatusCreated)
 }
