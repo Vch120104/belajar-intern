@@ -24,7 +24,7 @@ type ItemImportRepositoryImpl struct {
 func (i *ItemImportRepositoryImpl) SaveItemImport(tx *gorm.DB, req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 
 	supplierResponse := masteritempayloads.SupplierResponse{}
-	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(req.SupplierId)
+	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
 
 	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
 
@@ -79,7 +79,7 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyItemIdandSupplierId(tx *gorm.D
 		}
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(response.SupplierId)
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -112,7 +112,7 @@ func (i *ItemImportRepositoryImpl) GetItemImportbyId(tx *gorm.DB, Id int) (maste
 		}
 	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(response.SupplierId)
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
 
 	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -243,7 +243,7 @@ func (i *ItemImportRepositoryImpl) UpdateItemImport(tx *gorm.DB, req masteriteme
 	}
 
 	supplierResponse := masteritempayloads.SupplierResponse{}
-	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(req.SupplierId)
+	getSupplierbyIdUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
 
 	errGetSupplier := utils.Get(getSupplierbyIdUrl, &supplierResponse, nil)
 
