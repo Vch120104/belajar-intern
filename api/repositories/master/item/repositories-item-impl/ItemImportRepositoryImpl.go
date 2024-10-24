@@ -153,7 +153,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	if supplierCode != "" || supplierName != "" {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master?page=" + strconv.Itoa(0) + "&limit=" + strconv.Itoa(10000000) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=" + strconv.Itoa(0) + "&limit=" + strconv.Itoa(10000000) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
 
 		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -162,14 +162,11 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 			}
 		}
 
-		if len(supplierResponses) == 0 {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New("supplier not found"),
-			}
-		}
 		for _, value := range supplierResponses {
 			supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
+		}
+		if len(supplierResponses) == 0 {
+			supplierMultipleId = "-1"
 		}
 	}
 
@@ -191,46 +188,45 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 		}
 	}
 
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("query item import not found"),
+	dataPaginate := []map[string]interface{}{}
+	totalPages := 0
+	totalRows := 0
+
+	if len(responses) > 0 {
+		responseSupplierMultiId := ""
+		for _, value := range responses {
+			responseSupplierMultiId += strconv.Itoa(value.SupplierId) + ","
 		}
-	}
 
-	for _, value := range responses {
-		supplierMultipleId += strconv.Itoa(value.SupplierId) + ","
-	}
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-multi-id/" + responseSupplierMultiId
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-multi-id/" + supplierMultipleId
-
-	if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errSupplier,
+		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errSupplier,
+			}
 		}
-	}
 
-	if len(supplierResponses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("supplier not found"),
+		if len(supplierResponses) == 0 {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("supplier not found"),
+			}
 		}
-	}
 
-	joinedDataSupplier, errdf := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
+		joinedDataSupplier, errdf := utils.DataFrameInnerJoin(responses, supplierResponses, "SupplierId")
 
-	if errdf != nil {
-		return joinedDataSupplier, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+		if errdf != nil {
+			return joinedDataSupplier, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errdf,
+			}
 		}
-	}
 
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
+		dataPaginate, totalPages, totalRows = pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
+	}
 
 	return dataPaginate, totalPages, totalRows, nil
-
 }
 
 // UpdateItemImport implements masteritemrepository.ItemImportRepository.
