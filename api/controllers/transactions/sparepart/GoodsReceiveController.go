@@ -4,6 +4,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"github.com/go-chi/chi/v5"
@@ -14,6 +15,8 @@ import (
 type GoodsReceiveController interface {
 	GetAllGoodsReceive(writer http.ResponseWriter, request *http.Request)
 	GetGoodsReceiveById(writer http.ResponseWriter, request *http.Request)
+	InsertGoodsReceive(writer http.ResponseWriter, request *http.Request)
+	UpdateGoodsReceive(writer http.ResponseWriter, request *http.Request)
 }
 
 type GoodsReceiveControllerImpl struct {
@@ -62,4 +65,25 @@ func (controller *GoodsReceiveControllerImpl) GetGoodsReceiveById(writer http.Re
 	}
 	payloads.NewHandleSuccess(writer, res, "Get Data Successfully!", http.StatusOK)
 
+}
+func (controller *GoodsReceiveControllerImpl) InsertGoodsReceive(writer http.ResponseWriter, request *http.Request) {
+	var GoodsReceiveHeaderPayloads transactionsparepartpayloads.GoodsReceiveInsertPayloads
+	helper.ReadFromRequestBody(request, &GoodsReceiveHeaderPayloads)
+	res, err := controller.service.InsertGoodsReceive(GoodsReceiveHeaderPayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Goods Receive Header", http.StatusCreated)
+}
+func (controller *GoodsReceiveControllerImpl) UpdateGoodsReceive(writer http.ResponseWriter, request *http.Request) {
+	var GoodsReceiveHeaderPayloads transactionsparepartpayloads.GoodsReceiveUpdatePayloads
+	GoodsReceiveSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "goods_receive_id"))
+	helper.ReadFromRequestBody(request, &GoodsReceiveHeaderPayloads)
+	res, err := controller.service.UpdateGoodsReceive(GoodsReceiveHeaderPayloads, GoodsReceiveSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Update Goods Receive Header", http.StatusOK)
 }

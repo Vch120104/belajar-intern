@@ -575,6 +575,7 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Post("/detail", BinningList.InsertBinningListDetail)
 	router.Patch("/detail", BinningList.UpdateBinningListDetail)
 	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
+	//router.Post("/{binning_system_number}",BinningList)
 	return router
 }
 func PurchaseOrderRouter(
@@ -617,6 +618,8 @@ func GoodsReceiveRouter(
 
 	router.Get("/", GoodsReceiveController.GetAllGoodsReceive)
 	router.Get("/{goods_receive_id}", GoodsReceiveController.GetGoodsReceiveById)
+	router.Post("/", GoodsReceiveController.InsertGoodsReceive)
+	router.Put("/{goods_receive_id}", GoodsReceiveController.UpdateGoodsReceive)
 	return router
 }
 func PurchasePriceRouter(

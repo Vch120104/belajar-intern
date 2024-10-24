@@ -1,6 +1,7 @@
 package transactionsparepartserviceimpl
 
 import (
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
@@ -34,6 +35,24 @@ func (service *GoodsReceiveServiceImpl) GetAllGoodsReceive(filter []utils.Filter
 func (service *GoodsReceiveServiceImpl) GetGoodsReceiveById(GoodsReceiveId int) (transactionsparepartpayloads.GoodsReceivesGetByIdResponses, *exceptions.BaseErrorResponse) {
 	tx := service.DB.Begin()
 	result, err := service.repository.GetGoodsReceiveById(tx, GoodsReceiveId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *GoodsReceiveServiceImpl) InsertGoodsReceive(payloads transactionsparepartpayloads.GoodsReceiveInsertPayloads) (transactionsparepartentities.GoodsReceive, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.InsertGoodsReceive(tx, payloads)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *GoodsReceiveServiceImpl) UpdateGoodsReceive(payloads transactionsparepartpayloads.GoodsReceiveUpdatePayloads, GoodsReceiveId int) (transactionsparepartentities.GoodsReceive, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.UpdateGoodsReceive(tx, payloads, GoodsReceiveId)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err

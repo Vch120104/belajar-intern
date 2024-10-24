@@ -52,7 +52,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 		Joins("LEFT OUTER JOIN mtr_item D ON D.item_id = A.original_item_id").
 		Joins("LEFT OUTER JOIN trx_item_purchase_order B ON A.reference_system_number = B.purchase_order_system_number").
 		Joins(`	LEFT OUTER JOIN trx_item_purchase_order_detail F ON A.reference_system_number = b.purchase_order_system_number
-                     	AND A.item_purchase_order_detail_id = F.purchase_order_detail_system_number`).
+                     	AND A.purchase_order_detail_system_number = F.purchase_order_detail_system_number`).
 		Joins("INNER JOIN mtr_warehouse_location WL ON A.warehouse_location_id = WL.warehouse_location_id").
 		Where("A.binning_system_number = ?", binningListId)
 	WhereQuery := utils.ApplyFilter(joinTable, filter)
@@ -66,7 +66,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 
 	if len(Responses) == 0 {
 		paginations.Rows = []string{}
-		return paginations, &exceptions.BaseErrorResponse{}
+		return paginations, nil
 	}
 	paginations.Rows = Responses
 	return paginations, nil
