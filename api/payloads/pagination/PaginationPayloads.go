@@ -63,6 +63,24 @@ func Paginate(value interface{}, pagination *Pagination, db *gorm.DB) func(db *g
 	}
 }
 
+func PaginateDistinct(pagination *Pagination, db *gorm.DB) func(db *gorm.DB) *gorm.DB {
+	var totalRows int64
+	var sort string = ""
+	if pagination.GetSortBy() != "" {
+		sort = pagination.GetSortBy() + " " + pagination.GetSortOf()
+	}
+
+	tx := db.Session(&gorm.Session{NewDB: true})
+	tx.Table("(?) as a", db).Count(&totalRows)
+
+	pagination.TotalRows = totalRows
+	totalPages := int(math.Ceil(float64(totalRows) / float64(pagination.Limit)))
+	pagination.TotalPages = totalPages
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Offset(pagination.GetOffset()).Limit(pagination.GetLimit()).Order(sort)
+	}
+}
+
 func toCamelCase(s string) string {
 	words := strings.Split(s, "_")
 	for i, word := range words {

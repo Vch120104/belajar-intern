@@ -41,7 +41,7 @@ type WorkOrder struct {
 	ContactPersonMobileDriver          string            `gorm:"column:contact_person_mobile_driver;size:50;" json:"contact_person_mobile_driver"`
 	ContactPersonContactVia            string            `gorm:"column:contact_person_contact_via;size:50;" json:"contact_person_contact_via"`
 	ContractServiceSystemNumber        int               `gorm:"column:contract_service_system_number;size:30;" json:"contract_service_system_number"`
-	AgreementGeneralRepairId           int               `gorm:"column:agrement_general_repair_id;size:30;" json:"agreement_general_repair_id"`
+	AgreementGeneralRepairId           int               `gorm:"column:agreement_general_repair_id;size:30;" json:"agreement_general_repair_id"`
 	AgreementBodyRepairId              int               `gorm:"column:agreement_body_repair_id;size:30;" json:"agreement_body_repair_id"`
 	BookingSystemNumber                int               `gorm:"column:booking_system_number;size:30;" json:"booking_system_number"`
 	EstimationSystemNumber             int               `gorm:"column:estimation_system_number;size:30;" json:"estimation_system_number"`

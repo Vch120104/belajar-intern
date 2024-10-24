@@ -103,6 +103,7 @@ func Migrate() {
 	//&masteritementities.ItemDetail{},
 	//&masteritementities.ItemLocationSource{},
 	// &masteritementities.Item{},
+	// &masteritementities.ItemPriceCode{},
 
 	//&masteritementities.ItemLocation{},
 	//&masteritementities.ItemLocationDetail{},
@@ -148,7 +149,11 @@ func Migrate() {
 	//&masterentities.WarehouseGroupMappingEntities{},
 	//&masterentities.ItemCycle{},
 	//&masterentities.MovingItemCode{},
+	//&masterentities.BinningTypeMaster{},
+	//&masterentities.BinningReferenceTypeMaster{},
+	//&masterentities.ItemClaimType{},
 	//
+
 	//&transactionjpcbentities.SettingTechnician{},
 	//&transactionjpcbentities.SettingTechnicianDetail{},
 	//&transactionjpcbentities.TechnicianAttendance{},
@@ -207,6 +212,8 @@ func Migrate() {
 	//&transactionsparepartentities.BinningStock{},
 	//&transactionsparepartentities.BinningStockDetail{},
 	//&transactionsparepartentities.PurchaseOrderLimit{},
+	//transactionsparepartentities.ItemClaim{},
+	//transactionsparepartentities.ItemClaimDetail{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

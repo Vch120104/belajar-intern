@@ -3,15 +3,20 @@ package transactionworkshoppayloads
 type QualityControlResponse struct {
 	WorkOrderDocumentNumber string `json:"work_order_document_number"`
 	WorkOrderDate           string `json:"work_order_date"`
+	ModelId                 int    `json:"model_id"`
 	ModelName               string `json:"model_name"`
+	ModelCode               string `json:"model_code"`
+	VariantId               int    `json:"variant_id"`
 	VariantName             string `json:"variant_name"`
+	VarianCode              string `json:"varian_code"`
+	VehicleId               int    `json:"vehicle_id"`
 	VehicleCode             string `json:"vehicle_chassis_number"`
 	VehicleTnkb             string `json:"vehicle_registration_certificate_tnkb"`
+	CustomerId              int    `json:"customer_id"`
 	CustomerName            string `json:"customer_name"`
 	WorkOrderSystemNumber   int    `json:"work_order_system_number"`
+	BrandId                 int    `json:"brand_id"`
 	BrandCode               string `json:"brand_code"`
-	VarianCode              string `json:"varian_code"`
-	ModelCode               string `json:"model_code"`
 }
 
 type QualityControlRequest struct {
@@ -21,6 +26,8 @@ type QualityControlRequest struct {
 	VariantId             int `json:"variant_id" parent_entity:"trx_work_order"`
 	VehicleId             int `json:"vehicle_id" parent_entity:"trx_work_order"`
 	CustomerId            int `json:"customer_id" parent_entity:"trx_work_order"`
+	ForemanId             int `json:"foreman_id" parent_entity:"trx_work_order"`
+	ServiceAdvisorId      int `json:"service_advisor_id" parent_entity:"trx_work_order"`
 }
 
 type QualityControlRequestId struct {
@@ -40,7 +47,7 @@ type QualityControlIdResponse struct {
 	VariantName             string                        `json:"variant_name"`
 	ColourName              string                        `json:"colour_name"`
 	VehicleCode             string                        `json:"vehicle_chassis_number"`
-	EngineCode              string                        `json:"engine_number"`
+	EngineCode              string                        `json:"vehicle_engine_number"`
 	LastMilage              int                           `json:"last_milage"`
 	CurrentMilage           int                           `json:"current_milage"`
 	VehicleTnkb             string                        `json:"vehicle_registration_certificate_tnkb"`
@@ -66,11 +73,13 @@ type QualityControlDetailsResponse struct {
 }
 
 type QualityControlDetailResponse struct {
+	OperationItemId   int     `json:"operation_item_id"`
 	OperationItemCode string  `json:"operation_item_code"`
 	OperationItemName string  `json:"operation_item_name"`
 	Frt               float64 `json:"frt"`
 	ServiceStatusId   int     `json:"service_status_id"`
 	ServiceStatusName string  `json:"service_status_name"`
+	TechnicianId      int     `json:"technician_id"`
 	TechnicianName    string  `json:"technician_name"`
 	TechnicianCode    string  `json:"technician_code"`
 }
@@ -85,4 +94,20 @@ type QualityControlUpdateResponse struct {
 type QualityControlReorder struct {
 	ExtraTime float64 `json:"quality_control_extra_frt"`
 	Reason    string  `json:"quality_control_extra_reason"`
+}
+
+type QualityControlForemanResponse struct {
+	ForemanId   int    `json:"user_employee_id"`
+	ForemanName string `json:"employee_name"`
+}
+
+type QualityControlServiceAdvisorResponse struct {
+	ServiceAdvisorId   int    `json:"user_employee_id"`
+	ServiceAdvisorName string `json:"employee_name"`
+}
+
+type QualityControlTechnicianResponse struct {
+	TechnicianId   int    `json:"user_employee_id"`
+	TechnicianName string `json:"employee_name"`
+	TechnicianCode string `json:"id_number"`
 }

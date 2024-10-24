@@ -122,11 +122,10 @@ func (s *WorkOrderServiceImpl) DeleteType(id int) (bool, *exceptions.BaseErrorRe
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) NewBill() ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) NewBill(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewBill(tx)
-	defer helper.CommitOrRollback(tx, err)
+	bills, err := s.structWorkOrderRepo.NewBill(tx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -281,12 +280,12 @@ func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondi
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetRequestById(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderServiceResponse, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	request, repoErr := s.structWorkOrderRepo.GetRequestById(tx, idwosn, idwos)
+	request, repoErr := s.structWorkOrderRepo.GetRequestById(tx, workorderID, detailID)
 
 	if repoErr != nil {
 		return request, repoErr
@@ -295,24 +294,35 @@ func (s *WorkOrderServiceImpl) GetRequestById(idwosn int, idwos int) (transactio
 	return request, nil
 }
 
-func (s *WorkOrderServiceImpl) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) UpdateRequest(workorderID int, detailID int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	update, err := s.structWorkOrderRepo.UpdateRequest(tx, idwosn, idwos, request)
+	update, err := s.structWorkOrderRepo.UpdateRequest(tx, workorderID, detailID, request)
 	if err != nil {
-		return transactionworkshopentities.WorkOrderRequestDescription{}, err
+		return transactionworkshopentities.WorkOrderService{}, err
 	}
 
 	return update, nil
 }
 
-func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 	save, err := s.structWorkOrderRepo.AddRequest(tx, id, request)
 	if err != nil {
-		return transactionworkshopentities.WorkOrderRequestDescription{}, err
+		return transactionworkshopentities.WorkOrderService{}, err
+	}
+
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) AddRequestMultiId(workorderID int, requests []transactionworkshoppayloads.WorkOrderServiceRequest) ([]transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	save, err := s.structWorkOrderRepo.AddRequestMultiId(tx, workorderID, requests)
+	if err != nil {
+		return nil, err
 	}
 
 	return save, nil
@@ -342,12 +352,12 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 	return results, totalPages, totalRows, nil
 }
 
-func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetVehicleServiceById(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderServiceVehicleResponse, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	result, repoErr := s.structWorkOrderRepo.GetVehicleServiceById(tx, idwosn, idwos)
+	result, repoErr := s.structWorkOrderRepo.GetVehicleServiceById(tx, workorderID, detailID)
 	if repoErr != nil {
 		return result, repoErr
 	}
@@ -355,11 +365,11 @@ func (s *WorkOrderServiceImpl) GetVehicleServiceById(idwosn int, idwos int) (tra
 	return result, nil
 }
 
-func (s *WorkOrderServiceImpl) UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) UpdateVehicleService(workorderID int, detailID int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	update, err := s.structWorkOrderRepo.UpdateVehicleService(tx, idwosn, idwos, request)
+	update, err := s.structWorkOrderRepo.UpdateVehicleService(tx, workorderID, detailID, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderServiceVehicle{}, err
@@ -417,12 +427,12 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 
 }
 
-func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	result, repoErr := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, idwosn, idwos)
+	result, repoErr := s.structWorkOrderRepo.GetDetailByIdWorkOrder(tx, workorderID, detailID)
 
 	if repoErr != nil {
 		if repoErr.StatusCode == http.StatusNotFound {
@@ -434,10 +444,10 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(idwosn int, idwos int) (tr
 	return result, nil
 }
 
-func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(workorderID int, detailID int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	update, err := s.structWorkOrderRepo.UpdateDetailWorkOrder(tx, idwosn, idwos, request)
+	update, err := s.structWorkOrderRepo.UpdateDetailWorkOrder(tx, workorderID, detailID, request)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
@@ -572,12 +582,12 @@ func (s *WorkOrderServiceImpl) SaveAffiliated(workOrderId int, id int, request t
 	return save, nil
 }
 
-func (s *WorkOrderServiceImpl) DeleteRequestMultiId(workOrderId int, id []int) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) DeleteRequestMultiId(workorderID int, detailID []int) (bool, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	deletemultiid, err := s.structWorkOrderRepo.DeleteRequestMultiId(tx, workOrderId, id)
+	deletemultiid, err := s.structWorkOrderRepo.DeleteRequestMultiId(tx, workorderID, detailID)
 	if err != nil {
 		return false, err
 	}
@@ -611,19 +621,19 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrderMultiId(workOrderId int, id 
 	return deletemultiid, nil
 }
 
-func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
 	change, err := s.structWorkOrderRepo.ChangeBillTo(tx, workOrderId, request)
 	if err != nil {
-		return false, err
+		return transactionworkshoppayloads.ChangeBillToResponse{}, err
 	}
 
 	return change, nil
 }
 
-func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
@@ -635,11 +645,11 @@ func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactio
 	return updatedPayload, nil
 }
 
-func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, detailID []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	confirm, err := s.structWorkOrderRepo.ConfirmPrice(tx, workOrderId, idwos, request)
+	confirm, err := s.structWorkOrderRepo.ConfirmPrice(tx, workOrderId, detailID, request)
 	if err != nil {
 		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
@@ -647,11 +657,10 @@ func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, idwos []int, reques
 	return confirm, nil
 }
 
-func (s *WorkOrderServiceImpl) NewTrxType() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) NewTrxType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewTrxType(tx)
-	defer helper.CommitOrRollback(tx, err)
+	bills, err := s.structWorkOrderRepo.NewTrxType(tx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -689,11 +698,10 @@ func (s *WorkOrderServiceImpl) DeleteTrxType(id int) (bool, *exceptions.BaseErro
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) NewLineType() ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) NewLineType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewLineType(tx)
-	defer helper.CommitOrRollback(tx, err)
+	bills, err := s.structWorkOrderRepo.NewLineType(tx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -731,11 +739,10 @@ func (s *WorkOrderServiceImpl) DeleteLineType(id int) (bool, *exceptions.BaseErr
 	return delete, nil
 }
 
-func (s *WorkOrderServiceImpl) NewTrxTypeSo() ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) NewTrxTypeSo(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewTrxTypeSo(tx)
-	defer helper.CommitOrRollback(tx, err)
+	bills, err := s.structWorkOrderRepo.NewTrxTypeSo(tx, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -766,6 +773,47 @@ func (s *WorkOrderServiceImpl) UpdateTrxTypeSo(id int, request transactionworksh
 func (s *WorkOrderServiceImpl) DeleteTrxTypeSo(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	delete, err := s.structWorkOrderRepo.DeleteTrxTypeSo(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
+
+func (s *WorkOrderServiceImpl) NewJobType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	bills, err := s.structWorkOrderRepo.NewJobType(tx, filter)
+	if err != nil {
+		return nil, err
+	}
+	return bills, nil
+}
+
+func (s *WorkOrderServiceImpl) AddJobType(request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	save, err := s.structWorkOrderRepo.AddJobType(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) UpdateJobType(id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	update, err := s.structWorkOrderRepo.UpdateJobType(tx, id, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return update, nil
+
+}
+
+func (s *WorkOrderServiceImpl) DeleteJobType(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	delete, err := s.structWorkOrderRepo.DeleteJobType(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
@@ -811,4 +859,100 @@ func (s *WorkOrderServiceImpl) AddFieldAction(workOrderId int, request transacti
 		return transactionworkshopentities.WorkOrderDetail{}, err
 	}
 	return save, nil
+}
+
+func (s *WorkOrderServiceImpl) GetServiceRequestByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetServiceRequestByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetClaimByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetClaimByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetClaimItemByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetClaimItemByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetWOByBillCode(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetWOByBillCode(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailWOByClaimBillCode(workOrderId int, transactionTypeId int, atpmClaimNumber string, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, repoErr := s.structWorkOrderRepo.GetDetailWOByClaimBillCode(tx, workOrderId, transactionTypeId, atpmClaimNumber, pages)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailWOByBillCode(workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, repoErr := s.structWorkOrderRepo.GetDetailWOByBillCode(tx, workOrderId, transactionTypeId, pages)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetDetailWOByATPMBillCode(workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, repoErr := s.structWorkOrderRepo.GetDetailWOByATPMBillCode(tx, workOrderId, transactionTypeId, pages)
+	if repoErr != nil {
+		return results, repoErr
+	}
+
+	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) GetSupplyByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	results, totalPages, totalRows, repoErr := s.structWorkOrderRepo.GetSupplyByWO(tx, workOrderId, filterCondition, pages)
+	if repoErr != nil {
+		return results, totalPages, totalRows, repoErr
+	}
+
+	return results, totalPages, totalRows, nil
 }

@@ -446,3 +446,24 @@ func (r *ItemLocationRepositoryImpl) DeleteItemLoc(tx *gorm.DB, ids []int) (bool
 
 	return true, nil
 }
+
+func (r *ItemLocationRepositoryImpl) IsDuplicateItemLoc(tx *gorm.DB, warehouseId int, warehouseLocationId int, itemId int) (bool, error) {
+	entities := masteritementities.ItemLocation{}
+	responses := []masteritementities.ItemLocation{}
+
+	err := tx.Model(&entities).Where(
+		masteritementities.ItemLocation{
+			WarehouseId:         warehouseId,
+			WarehouseLocationId: warehouseLocationId,
+			ItemId:              itemId,
+		}).Scan(&responses).Error
+
+	if err != nil {
+		return true, err
+	}
+
+	if len(responses) > 0 {
+		return true, nil
+	}
+	return false, nil
+}

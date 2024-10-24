@@ -30,7 +30,7 @@ type ItemController interface {
 	GetAllItemDetail(writer http.ResponseWriter, request *http.Request)
 	GetItemDetailById(writer http.ResponseWriter, request *http.Request)
 	AddItemDetail(writer http.ResponseWriter, request *http.Request)
-	DeleteItemDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteItemDetails(writer http.ResponseWriter, request *http.Request)
 	UpdateItem(writer http.ResponseWriter, request *http.Request)
 	UpdateItemDetail(writer http.ResponseWriter, request *http.Request)
 	GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request)
@@ -59,13 +59,32 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		"mtr_item.item_code":             queryValues.Get("item_code"),
 		"mtr_item.item_name":             queryValues.Get("item_name"),
 		"mtr_item.item_type":             queryValues.Get("item_type"),
+		"mtr_item.item_class_id":         queryValues.Get("item_class_id"),
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item.is_active":             queryValues.Get("is_active"),
+		"mtr_item.item_group_id":         queryValues.Get("item_group_id"),
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
 		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
 		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
 		"mtr_item.item_id":               queryValues.Get("item_id"),
 		"mtr_supplier.supplier_id":       queryValues.Get("supplier_id"),
+	}
+
+	// Handle item_type (Goods, Services, G, S)
+	itemTypes := strings.Split(queryValues.Get("item_type"), ",")
+	var processedItemTypes []string
+	for _, itemType := range itemTypes {
+		switch strings.ToLower(itemType) {
+		case "goods", "g", "go", "goo", "good":
+			processedItemTypes = append(processedItemTypes, "G")
+		case "services", "s", "se", "ser", "serv", "servi", "servic", "service":
+			processedItemTypes = append(processedItemTypes, "S")
+		}
+	}
+
+	// Jika ada itemTypes yang valid, tambahkan ke queryParams
+	if len(processedItemTypes) > 0 {
+		queryParams["mtr_item.item_type"] = strings.Join(processedItemTypes, ",")
 	}
 
 	// Handle multi_id and supplier_id as multiple parameters
@@ -242,7 +261,7 @@ func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWrite
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data.Rows), "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
 }
 
 // @Summary Get All Item Lookup
@@ -425,7 +444,18 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"item_id": queryValues.Get("item_id"),
+		"item_id":             queryValues.Get("item_id"),
+		"is_active":           queryValues.Get("is_active"),
+		"brand_id":            queryValues.Get("brand_id"),
+		"brand_name":          queryValues.Get("brand_name"),
+		"model_id":            queryValues.Get("model_id"),
+		"model_code":          queryValues.Get("model_code"),
+		"model_description":   queryValues.Get("model_description"),
+		"variant_id":          queryValues.Get("variant_id"),
+		"variant_code":        queryValues.Get("variant_code"),
+		"variant_description": queryValues.Get("variant_description"),
+		"mileage_every":       queryValues.Get("mileage_every"),
+		"return_every":        queryValues.Get("return_every"),
 	}
 
 	paginate := pagination.Pagination{
@@ -488,22 +518,24 @@ func (r *ItemControllerImpl) GetItemDetailById(writer http.ResponseWriter, reque
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/{item_id}/detail [post]
 func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *http.Request) {
-	itemID, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
 
+	itemIdStr := chi.URLParam(request, "item_id")
+	itemId, errA := strconv.Atoi(itemIdStr)
 	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		payloads.NewHandleError(writer, "Failed to read request param", http.StatusBadRequest)
 		return
 	}
 
 	var itemRequest masteritempayloads.ItemDetailRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
 
-	if err := r.itemservice.AddItemDetail(int(itemID), itemRequest); err != nil {
+	itemDetail, err := r.itemservice.AddItemDetail(itemId, itemRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item detail added successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, itemDetail, "Item detail added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Item Detail
@@ -516,24 +548,44 @@ func (r *ItemControllerImpl) AddItemDetail(writer http.ResponseWriter, request *
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item/{item_id}/detail/{item_detail_id} [delete]
-func (r *ItemControllerImpl) DeleteItemDetail(writer http.ResponseWriter, request *http.Request) {
+func (r *ItemControllerImpl) DeleteItemDetails(writer http.ResponseWriter, request *http.Request) {
 	itemID, errA := strconv.Atoi(chi.URLParam(request, "item_id"))
 	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	itemDetailID, errA := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Failed to read request param, please check your param input",
+			Err:        errA,
+		})
 		return
 	}
 
-	if err := r.itemservice.DeleteItemDetail(int(itemID), int(itemDetailID)); err != nil {
+	// Parse multiple itemDetailIDs from the request body
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var itemDetailIDs []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		itemDetailIDs = append(itemDetailIDs, num)
+	}
+
+	resp, err := r.itemservice.DeleteItemDetails(itemID, itemDetailIDs)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, nil, "Item detail deleted successfully", http.StatusOK)
+	payloads.NewHandleSuccess(writer, resp, "Item details deleted successfully", http.StatusOK)
 }
 
 func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *http.Request) {
@@ -554,20 +606,31 @@ func (r *ItemControllerImpl) UpdateItem(writer http.ResponseWriter, request *htt
 }
 
 func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, request *http.Request) {
-	var formRequest masteritempayloads.ItemDetailUpdateRequest
 
-	helper.ReadFromRequestBody(request, &formRequest)
-	item_detail_id, errA := strconv.Atoi(chi.URLParam(request, "item_detail_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	_, err := r.itemservice.UpdateItemDetail(item_detail_id, formRequest)
+	itemIdStr := chi.URLParam(request, "item_id")
+	itemId, err := strconv.Atoi(itemIdStr)
 	if err != nil {
-		exceptions.NewAppException(writer, request, err)
+		payloads.NewHandleError(writer, "Failed to read request param", http.StatusBadRequest)
 		return
 	}
-	payloads.NewHandleSuccess(writer, nil, "Item updated successfully", http.StatusOK)
+
+	itemDetailStr := chi.URLParam(request, "item_detail_id")
+	itemDetailId, err := strconv.Atoi(itemDetailStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Failed to read request param", http.StatusBadRequest)
+		return
+	}
+
+	var itemDetailRequest masteritempayloads.ItemDetailUpdateRequest
+	helper.ReadFromRequestBody(request, &itemDetailRequest)
+
+	update, errResp := r.itemservice.UpdateItemDetail(itemId, itemDetailId, itemDetailRequest)
+	if errResp != nil {
+		exceptions.NewAppException(writer, request, errResp)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Item detail updated successfully", http.StatusOK)
 }
 
 func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request) {

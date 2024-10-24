@@ -8,6 +8,7 @@ import (
 	"after-sales/api/utils"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -18,7 +19,7 @@ type LookupController interface {
 	ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByID(writer http.ResponseWriter, request *http.Request)
 	GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request)
-	CampaignMaster(writer http.ResponseWriter, request *http.Request)
+	GetCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
 	GetVehicleUnitByID(writer http.ResponseWriter, request *http.Request)
@@ -27,7 +28,9 @@ type LookupController interface {
 	CustomerByTypeAndAddressByID(writer http.ResponseWriter, request *http.Request)
 	CustomerByTypeAndAddressByCode(writer http.ResponseWriter, request *http.Request)
 	WorkOrderService(writer http.ResponseWriter, request *http.Request)
-	GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request)
+	ListItemLocation(writer http.ResponseWriter, request *http.Request)
+	WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request)
+	ItemListTransPL(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -80,7 +83,13 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	fmt.Println("linetypeId", linetypeId)
 
 	itemCode := chi.URLParam(request, "item_code")
-	if itemCode == "" {
+	itemCodeUnescaped, err := url.PathUnescape(itemCode)
+	if err != nil {
+		payloads.NewHandleError(writer, "Failed to decode Item Code", http.StatusBadRequest)
+		return
+	}
+
+	if itemCodeUnescaped == "" {
 		payloads.NewHandleError(writer, "Invalid Item Code", http.StatusBadRequest)
 		return
 	}
@@ -96,7 +105,7 @@ func (r *LookupControllerImpl) ItemOprCodeByCode(writer http.ResponseWriter, req
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCode, paginate, criteria)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.ItemOprCodeByCode(linetypeId, itemCodeUnescaped, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -203,8 +212,9 @@ func (r *LookupControllerImpl) ItemOprCodeWithPrice(writer http.ResponseWriter, 
 		return
 	}
 
-	billCodeStrId := chi.URLParam(request, "bill_code")
-	if billCodeStrId == "" {
+	billCodeStr := chi.URLParam(request, "transaction_type_id")
+	billCodeStrId, err := strconv.Atoi(billCodeStr)
+	if err != nil {
 		payloads.NewHandleError(writer, "Invalid Billcode", http.StatusBadRequest)
 		return
 	}
@@ -262,7 +272,7 @@ func (r *LookupControllerImpl) VehicleUnitMaster(writer http.ResponseWriter, req
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.VehicleUnitMaster(brandId, modelId, paginate, criteria)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.GetVehicleUnitMaster(brandId, modelId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -331,7 +341,7 @@ func (r *LookupControllerImpl) GetVehicleUnitByChassisNumber(writer http.Respons
 	payloads.NewHandleSuccessPagination(writer, lookup, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
-func (r *LookupControllerImpl) CampaignMaster(writer http.ResponseWriter, request *http.Request) {
+func (r *LookupControllerImpl) GetCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	companyStrId := chi.URLParam(request, "company_id")
 	companyId, err := strconv.Atoi(companyStrId)
 	if err != nil {
@@ -348,7 +358,7 @@ func (r *LookupControllerImpl) CampaignMaster(writer http.ResponseWriter, reques
 		SortBy: queryValues.Get("sort_by"),
 	}
 	criteria := utils.BuildFilterCondition(queryParams)
-	lookup, totalPages, totalRows, baseErr := r.LookupService.CampaignMaster(companyId, paginate, criteria)
+	lookup, totalPages, totalRows, baseErr := r.LookupService.GetCampaignMaster(companyId, paginate, criteria)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
@@ -475,7 +485,7 @@ func (r *LookupControllerImpl) CustomerByTypeAndAddressByCode(writer http.Respon
 // @Accept json
 // @Produce json
 // @Param item_code path string true "Item Code"
-// @Success 200 {object} ItemOprCodeResponse
+
 // @Router /master/lookup/line-type/{item_code} [get]
 func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request) {
 	itemCode := chi.URLParam(request, "item_code")
@@ -497,7 +507,40 @@ func (r *LookupControllerImpl) GetLineTypeByItemCode(writer http.ResponseWriter,
 	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
 }
 
-func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWriter, request *http.Request) {
+func (r *LookupControllerImpl) ListItemLocation(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	companyId, convErr := strconv.Atoi(queryValues.Get("company_id"))
+	if convErr != nil {
+		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusInternalServerError)
+		return
+	}
+
+	queryParams := map[string]string{
+		"warehouse_code":       queryValues.Get("warehouse_code"),
+		"warehouse_name":       queryValues.Get("warehouse_name"),
+		"warehouse_group_code": queryValues.Get("warehouse_group_code"),
+		"warehouse_group_name": queryValues.Get("warehouse_group_name"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	warehouse, baseErr := r.LookupService.ListItemLocation(companyId, criteria, paginate)
+	if baseErr != nil {
+		exceptions.NewNotFoundException(writer, request, baseErr)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, warehouse.Rows, "Get Data Successfully!", http.StatusOK, warehouse.Limit, warehouse.Page, warehouse.TotalRows, warehouse.TotalPages)
+}
+
+func (r *LookupControllerImpl) WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request) {
 	companyIdstr := chi.URLParam(request, "company_id")
 	if companyIdstr == "" {
 		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
@@ -505,10 +548,59 @@ func (r *LookupControllerImpl) GetItemLocationWarehouse(writer http.ResponseWrit
 
 	companyId, _ := strconv.Atoi(companyIdstr)
 
-	warehouse, baseErr := r.LookupService.GetItemLocationWarehouse(companyId)
+	warehouse, baseErr := r.LookupService.WarehouseGroupByCompany(companyId)
 	if baseErr != nil {
 		exceptions.NewNotFoundException(writer, request, baseErr)
 		return
 	}
 	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
+}
+
+func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	companyIdstr := queryValues.Get("company_id")
+	if companyIdstr == "" {
+		companyIdstr = "0"
+	}
+
+	companyId, _ := strconv.Atoi(companyIdstr)
+
+	queryParams := map[string]string{
+		"mid.brand_id":           queryValues.Get("brand_id"),
+		"mtr_item.item_group_id": queryValues.Get("item_group_id"),
+		"mtr_item.item_code":     queryValues.Get("item_code"),
+		"mtr_item.item_name":     queryValues.Get("item_name"),
+		"mic.item_class_code":    queryValues.Get("item_class_code"),
+		"mtr_item.item_type":     queryValues.Get("item_type"),
+		"mtr_item.item_level_1":  queryValues.Get("item_level_1"),
+		"mtr_item.item_level_2":  queryValues.Get("item_level_2"),
+		"mtr_item.item_level_3":  queryValues.Get("item_level_3"),
+	}
+
+	if queryParams["mid.brand_id"] == "" {
+		payloads.NewHandleError(writer, "brand_id is required", http.StatusBadRequest)
+		return
+	}
+
+	if queryParams["mtr_item.item_group_id"] == "" {
+		payloads.NewHandleError(writer, "item_group_id is required", http.StatusBadRequest)
+		return
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	item, baseErr := r.LookupService.ItemListTransPL(companyId, criteria, paginate)
+	if baseErr != nil {
+		item.Rows = []interface{}{}
+		item.TotalRows = 0
+		item.TotalPages = 0
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
 }

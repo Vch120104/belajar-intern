@@ -183,6 +183,31 @@ func ItemLevelRouter(
 	return router
 }
 
+func ItemPriceCodeRouter(
+	itemPriceCodeController masteritemcontroller.ItemPriceCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", itemPriceCodeController.GetAllItemPriceCode)
+	router.Get("/{item_price_code_id}", itemPriceCodeController.GetItemPriceCodeById)
+	router.Get("/by-code/{item_price_code}", itemPriceCodeController.GetItemPriceCodeByCode)
+	router.Get("/drop-down", itemPriceCodeController.GetItemPriceCodeDropDown)
+
+	router.Post("/", itemPriceCodeController.SaveItemPriceCode)
+
+	router.Delete("/{item_price_code_id}", itemPriceCodeController.DeleteItemPriceCode)
+
+	router.Put("/{item_price_code_id}", itemPriceCodeController.UpdateItemPriceCode)
+
+	router.Patch("/{item_price_code_id}", itemPriceCodeController.ChangeStatusItemPriceCode)
+	return router
+}
+
 func ItemRouter(
 	itemController masteritemcontroller.ItemController,
 ) chi.Router {
@@ -208,9 +233,9 @@ func ItemRouter(
 	router.Get("/detail", itemController.GetAllItemDetail)
 	router.Get("/detail/{item_id}/{item_detail_id}", itemController.GetItemDetailById)
 	router.Post("/{item_id}/detail", itemController.AddItemDetail)
-	router.Delete("/{item_id}/detail/{item_detail_id}", itemController.DeleteItemDetail)
+	router.Delete("/{item_id}/detail/{multi_id}", itemController.DeleteItemDetails)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
-	router.Put("/{item_detail_id}", itemController.UpdateItemDetail)
+	router.Put("/{item_id}/detail/{item_detail_id}", itemController.UpdateItemDetail)
 	router.Get("/catalog-code-drop-down", itemController.GetCatalogCode)
 	router.Get("/brand-parent-by-code/{catalogue_code}", itemController.GetPrincipleBrandParent)
 	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
@@ -535,6 +560,23 @@ func LocationStockRouter(
 	return router
 }
 
+func BinningListRouter(BinningList transactionsparepartcontroller.BinningListController) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/by-id/{binning_stock_system_number}", BinningList.GetBinningListById)
+	router.Get("/", BinningList.GetAllBinningListWithPagination)
+	router.Post("/", BinningList.InsertBinningListHeader)
+	router.Patch("/", BinningList.UpdateBinningListHeader)
+	router.Get("/detail/by-id/{binning_stock_detail_system_number}", BinningList.GetBinningDetailById)
+	router.Get("/detail/{binning_system_number}", BinningList.GetBinningListDetailWithPagination)
+	router.Post("/detail", BinningList.InsertBinningListDetail)
+	router.Patch("/detail", BinningList.UpdateBinningListDetail)
+	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
+	return router
+}
 func PurchaseOrderRouter(
 	PurchaseOrder transactionsparepartcontroller.PurchaseOrderController,
 ) chi.Router {
@@ -711,10 +753,10 @@ func OperationCodeRouter(
 	router.Get("/", operationCodeController.GetAllOperationCode)
 	router.Get("/by-id/{operation_id}", operationCodeController.GetByIdOperationCode)
 	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
-	router.Get("/by-code/{operation_code}", operationCodeController.GetByCodeOperationCode)
 	router.Post("/", operationCodeController.SaveOperationCode)
 	router.Patch("/{operation_id}", operationCodeController.ChangeStatusOperationCode)
 	router.Put("/{operation_id}", operationCodeController.UpdateOperationCode)
+	router.Get("/drop-down", operationCodeController.GetAllOperationCodeDropDown)
 
 	return router
 }
@@ -814,7 +856,7 @@ func WarehouseMasterRouter(
 	router.Post("/", warehouseMasterController.Save)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
-	router.Get("/authorize-user/{warehouse_id}", warehouseMasterController.GetAuthorizeUser)
+	router.Get("/authorize-user", warehouseMasterController.GetAuthorizeUser)
 	router.Post("/authorize-user", warehouseMasterController.PostAuthorizeUser)
 	router.Delete("/authorize-user/{warehouse_authorize_id}", warehouseMasterController.DeleteMultiIdAuthorizeUser)
 	router.Get("/drop-down/in-transit/{company_id}/{warehouse_group_id}", warehouseMasterController.InTransitWarehouseCodeDropdown)
@@ -1111,6 +1153,7 @@ func CampaignMasterRouter(
 	//campaign master header
 	router.Get("/", campaignmastercontroller.GetAllCampaignMaster)
 	router.Get("/{campaign_id}", campaignmastercontroller.GetByIdCampaignMaster)
+	router.Get("/by-code/{campaign_code}", campaignmastercontroller.GetByCodeCampaignMaster)
 	router.Get("/history", campaignmastercontroller.GetAllCampaignMasterCodeAndName)
 	router.Post("/", campaignmastercontroller.SaveCampaignMaster)
 	router.Patch("/{campaign_id}", campaignmastercontroller.ChangeStatusCampaignMaster)
@@ -1120,6 +1163,8 @@ func CampaignMasterRouter(
 	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
 	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
+	router.Post("/detail/save-from-package", campaignmastercontroller.SaveCampaignMasterDetailFromPackage)
+
 	router.Patch("/detail/deactivate/{campaign_detail_id}", campaignmastercontroller.DeactivateCampaignMasterDetail)
 	router.Patch("/detail/activate/{campaign_detail_id}", campaignmastercontroller.ActivateCampaignMasterDetail)
 	router.Put("/detail/update/{campaign_detail_id}", campaignmastercontroller.UpdateCampaignMasterDetail)
@@ -1245,6 +1290,7 @@ func WorkOrderRouter(
 	router.Get("/normal/requestservice", WorkOrderController.GetAllRequest)
 	router.Get("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.GetRequestById)
 	router.Post("/normal/{work_order_system_number}/requestservice", WorkOrderController.AddRequest)
+	router.Post("/normal/{work_order_system_number}/requestservice/multi", WorkOrderController.AddRequestMultiId)
 	router.Put("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.UpdateRequest)
 	router.Delete("/normal/{work_order_system_number}/requestservice/{work_order_service_id}", WorkOrderController.DeleteRequest)
 	router.Delete("/normal/{work_order_system_number}/requestservice/{multi_id}", WorkOrderController.DeleteRequestMultiId)
@@ -1287,13 +1333,18 @@ func WorkOrderRouter(
 
 	router.Get("/dropdown-transaction-type", WorkOrderController.NewTrxType)
 	router.Post("/dropdown-transaction-type", WorkOrderController.AddTrxType)
-	router.Put("/dropdown-transaction-type/{work_order_transaction_type_id}", WorkOrderController.UpdateTrxType)
-	router.Delete("/dropdown-transaction-type/{work_order_transaction_type_id}", WorkOrderController.DeleteTrxType)
+	router.Put("/dropdown-transaction-type/{transaction_type_id}", WorkOrderController.UpdateTrxType)
+	router.Delete("/dropdown-transaction-type/{transaction_type_id}", WorkOrderController.DeleteTrxType)
 
 	router.Get("/dropdown-transaction-type-so", WorkOrderController.NewTrxTypeSo)
 	router.Post("/dropdown-transaction-type-so", WorkOrderController.AddTrxTypeSo)
-	router.Put("/dropdown-transaction-type-so/{work_order_transaction_type_id}", WorkOrderController.UpdateTrxTypeSo)
-	router.Delete("/dropdown-transaction-type-so/{work_order_transaction_type_id}", WorkOrderController.DeleteTrxTypeSo)
+	router.Put("/dropdown-transaction-type-so/{transaction_type_id}", WorkOrderController.UpdateTrxTypeSo)
+	router.Delete("/dropdown-transaction-type-so/{transaction_type_id}", WorkOrderController.DeleteTrxTypeSo)
+
+	router.Get("/dropdown-job-type", WorkOrderController.NewJobType)
+	router.Post("/dropdown-job-type", WorkOrderController.AddJobType)
+	router.Put("/dropdown-job-type/{job_type_id}", WorkOrderController.UpdateJobType)
+	router.Delete("/dropdown-job-type/job_type_id}", WorkOrderController.DeleteJobType)
 
 	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
 	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
@@ -1306,6 +1357,16 @@ func WorkOrderRouter(
 	router.Put("/change-phone-no/{work_order_system_number}", WorkOrderController.ChangePhoneNo)
 	router.Put("/confirm-price/{work_order_system_number}/{multi_id}", WorkOrderController.ConfirmPrice)
 	router.Delete("/delete-campaign/{work_order_system_number}", WorkOrderController.DeleteCampaign)
+
+	// add req api mas hengwie
+	router.Get("/request-service/{work_order_system_number}", WorkOrderController.GetServiceRequestByWO)
+	router.Get("/claim-service/{work_order_system_number}", WorkOrderController.GetClaimByWO)
+	router.Get("/claim-item-service/{work_order_system_number}", WorkOrderController.GetClaimItemByWO)
+	router.Get("/transactiontype-service/{work_order_system_number}", WorkOrderController.GetWOByBillCode)
+	router.Get("/claim-detail-service/{work_order_system_number}/{transaction_type_id}/{atpm_claim_number}", WorkOrderController.GetDetailWOByClaimBillCode)
+	router.Get("/claim-bill-service/{work_order_system_number}/{transaction_type_id}", WorkOrderController.GetDetailWOByBillCode)
+	router.Get("/atpm-bill-service/{work_order_system_number}/{transaction_type_id}/{atpm_claim_number}", WorkOrderController.GetDetailWOByATPMBillCode)
+	router.Get("/supply-service/{work_order_system_number}", WorkOrderController.GetSupplyByWO)
 
 	return router
 }
@@ -1607,7 +1668,7 @@ func LookupRouter(
 	router.Get("/item-opr-code/{linetype_id}/{item_code}", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
-	router.Get("/campaign-master/{company_id}", LookupController.CampaignMaster)
+	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
 	router.Get("/vehicle-unit-master/{vehicle_id}", LookupController.GetVehicleUnitByID)
@@ -1616,7 +1677,9 @@ func LookupRouter(
 	router.Get("/new-bill-to/{customer_id}", LookupController.CustomerByTypeAndAddressByID)
 	router.Get("/new-bill-to/by-code/{customer_code}", LookupController.CustomerByTypeAndAddressByCode)
 	router.Get("/work-order-service", LookupController.WorkOrderService)
-	router.Get("/item-location-warehouse/{company_id}", LookupController.GetItemLocationWarehouse)
+	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
+	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
+	router.Get("/item-list", LookupController.ItemListTransPL)
 
 	return router
 }

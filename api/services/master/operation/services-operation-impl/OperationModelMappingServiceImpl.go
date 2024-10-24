@@ -117,14 +117,14 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.operationModelMappingRepo.GetAllOperationFrt(tx, id, pages)
+	results, totalPages, totalRows, err := s.operationModelMappingRepo.GetAllOperationFrt(tx, id, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return results, err
+		return results, totalPages, totalRows, err
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *OperationModelMappingServiceImpl) GetOperationDocumentRequirementById(id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse) {
