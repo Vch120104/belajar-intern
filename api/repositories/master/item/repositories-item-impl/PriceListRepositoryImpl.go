@@ -385,8 +385,8 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 
 	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)
-	//apply pagination and execute
-	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&payloads).Error
+	//execute
+	err := whereQuery.Scan(&payloads).Error
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
