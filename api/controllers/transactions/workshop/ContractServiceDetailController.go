@@ -60,9 +60,9 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
 	// Memanggil service untuk mendapatkan data
-	result, totalPages, totalRows, err := c.ContractServiceDetailService.GetAllDetail(contractServiceSystemNumber, filterCondition, pagination)
+	result, totalPages, totalRows, errs := c.ContractServiceDetailService.GetAllDetail(contractServiceSystemNumber, filterCondition, pagination)
 	if err != nil {
-		helper.ReturnError(writer, request, err)
+		helper.ReturnError(writer, request, errs)
 		return
 	}
 
