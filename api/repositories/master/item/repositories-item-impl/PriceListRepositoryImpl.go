@@ -385,8 +385,8 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 
 	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)
-	//apply pagination and execute
-	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&payloads).Error
+	//execute
+	err := whereQuery.Scan(&payloads).Error
 
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -415,7 +415,7 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 
 	joinedData1 := utils.DataFrameLeftJoin(joinedData, itemgrouppayloads, "ItemGroupId")
 
-	errCurrencyUrl := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code/", &currencypayloads, nil)
+	errCurrencyUrl := utils.Get(config.EnvConfigs.FinanceServiceUrl+"currency-code?page=0&limit=100000", &currencypayloads, nil)
 	if errCurrencyUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
