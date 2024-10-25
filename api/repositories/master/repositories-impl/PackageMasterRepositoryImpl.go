@@ -436,6 +436,21 @@ func (r *PackageMasterRepositoryImpl) GetByIdPackageMasterDetail(tx *gorm.DB, id
 	return response, nil
 }
 
+func (r *PackageMasterRepositoryImpl) GetByCodePackageMaster(tx *gorm.DB, code string) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
+	entities := masterentities.PackageMaster{}
+
+	err := tx.Model(&entities).Where(masterentities.PackageMaster{PackageCode: code}).First(&entities).Error
+
+	if err != nil {
+		return masterentities.PackageMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return entities, nil
+}
+
 func (r *PackageMasterRepositoryImpl) PostpackageMaster(tx *gorm.DB, req masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse) {
 	entities := masterentities.PackageMaster{
 		IsActive:       req.IsActive,

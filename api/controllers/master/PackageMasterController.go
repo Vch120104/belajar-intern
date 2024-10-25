@@ -20,6 +20,7 @@ type PackageMasterController interface {
 	GetAllPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
 	GetByIdPackageMaster(writer http.ResponseWriter, request *http.Request)
 	GetByIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request)
+	GetByCodePackageMaster(writer http.ResponseWriter, request *http.Request)
 	SavepackageMaster(writer http.ResponseWriter, request *http.Request)
 	SavePackageMasterDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPackageMaster(writer http.ResponseWriter, request *http.Request)
@@ -117,6 +118,17 @@ func (r *PackageMasterControllerImpl) GetByIdPackageMasterDetail(writer http.Res
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
+func (r *PackageMasterControllerImpl) GetByCodePackageMaster(writer http.ResponseWriter, request *http.Request) {
+	PackageMasterCode := chi.URLParam(request, "package_code")
+
+	result, err := r.PackageMasterService.GetByCodePackageMaster(PackageMasterCode)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
+}
+
 func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.PackageMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -140,9 +152,9 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 func (r *PackageMasterControllerImpl) SavePackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.PackageMasterDetail
 	helper.ReadFromRequestBody(request, &formRequest)
-	packageId,_ := strconv.Atoi(chi.URLParam(request,"package_id"))
+	packageId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
 
-	create, err := r.PackageMasterService.PostPackageMasterDetail(formRequest,packageId)
+	create, err := r.PackageMasterService.PostPackageMasterDetail(formRequest, packageId)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -180,7 +192,7 @@ func (r *PackageMasterControllerImpl) ActivateMultiIdPackageMasterDetail(writer 
 
 func (r *PackageMasterControllerImpl) DeactivateMultiIdPackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	PackageDetailId := chi.URLParam(request, "package_detail_id")
-	
+
 	response, err := r.PackageMasterService.DeactivateMultiIdPackageMasterDetail(PackageDetailId)
 
 	if err != nil {
