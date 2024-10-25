@@ -11,6 +11,7 @@ type ItemImport struct {
 	RoyaltyFlag        string  `gorm:"column:royalty_flag;not null;size:30"        json:"royalty_flag"`
 	ItemAliasName      string  `gorm:"column:item_alias_name;not null;size:100"        json:"item_alias_name"`
 	OrderConversion    float64 `gorm:"column:order_conversion;not null"        json:"order_conversion"`
+	Item               Item    `gorm:"foreignKey:ItemId;references:ItemId" json:"item"`
 }
 
 func (*ItemImport) TableName() string {

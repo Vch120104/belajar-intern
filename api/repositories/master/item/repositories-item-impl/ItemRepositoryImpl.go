@@ -117,7 +117,8 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	tableStruct := masteritempayloads.ItemSearch{}
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id")
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Handle item_id filter
