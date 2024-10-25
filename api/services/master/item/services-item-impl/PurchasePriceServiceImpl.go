@@ -166,8 +166,9 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 
 	// Generate template file
 	f := excelize.NewFile()
-	sheetName := "Sheet1"
+	sheetName := "purchase_price"
 	defer func() {
+		f.DeleteSheet("Sheet1")
 		if err := f.Close(); err != nil {
 			log.Error(err)
 		}
