@@ -226,6 +226,10 @@ func StartRouting(db *gorm.DB) {
 	warehouseLocationService := masterwarehouseserviceimpl.OpenWarehouseLocationService(warehouseLocationRepository, warehouseMasterService, db, rdb)
 	warehouseLocationController := masterwarehousecontroller.NewWarehouseLocationController(warehouseLocationService)
 
+	// Warehouse Costing Type
+	warehouseCostingTypeRepository := masterwarehouserepositoryimpl.NewWarehouseCostingTypeRepositoryImpl()
+	warehouseCostingTypeService := masterwarehouseserviceimpl.NewWarehouseCostingTypeServiceImpl(warehouseCostingTypeRepository, db, rdb)
+	warehouseCostingTypeController := masterwarehousecontroller.NewWarehouseCostingTypeController(warehouseCostingTypeService)
 	// Item Location
 	ItemLocationRepository := masteritemrepositoryimpl.StartItemLocationRepositoryImpl()
 	ItemLocationService := masteritemserviceimpl.StartItemLocationService(ItemLocationRepository, warehouseMasterRepository, warehouseLocationRepository, itemRepository, db, rdb)
@@ -427,6 +431,8 @@ func StartRouting(db *gorm.DB) {
 	WarehouseLocation := WarehouseLocationRouter(warehouseLocationController)
 	WarehouseLocationDefinition := WarehouseLocationDefinitionRouter(WarehouseLocationDefinitionController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
+	WarehouseCostingType := WarehouseCostingTypeMasterRouter(warehouseCostingTypeController)
+
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
 	unitOfMeasurementRouter := UnitOfMeasurementRouter(unitOfMeasurementController)
@@ -511,6 +517,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/warehouse-location", WarehouseLocation)
 		r.Mount("/warehouse-location-definition", WarehouseLocationDefinition)
 		r.Mount("/warehouse-master", WarehouseMaster)
+		r.Mount("/warehouse-costing-type", WarehouseCostingType)
 
 		/* Master */
 		r.Mount("/moving-code", MovingCodeRouter)

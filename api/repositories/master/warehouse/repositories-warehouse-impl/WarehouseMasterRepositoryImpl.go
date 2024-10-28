@@ -112,7 +112,7 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 		CompanyId:                     request.CompanyId,
 		IsActive:                      utils.BoolPtr(request.IsActive),
 		WarehouseId:                   request.WarehouseId,
-		WarehouseCostingType:          request.WarehouseCostingType,
+		WarehouseCostingTypeId:        request.WarehouseCostingTypeId,
 		WarehouseKaroseri:             utils.BoolPtr(request.WarehouseKaroseri),
 		WarehouseNegativeStock:        utils.BoolPtr(request.WarehouseNegativeStock),
 		WarehouseReplishmentIndicator: utils.BoolPtr(request.WarehouseReplishmentIndicator),
@@ -180,12 +180,21 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 			Err:        err,
 		}
 	}
-
+	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
+	err = tx.Model(&CostingTypeEntities).
+		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
+		First(&CostingTypeEntities).Error
+	if err != nil {
+		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("warehouse costing type is not found"),
+		}
+	}
 	// Map the entity to the response payload
 	warehouseMasterResponse = masterwarehousepayloads.GetAllWarehouseMasterResponse{
 		IsActive:                      *entities.IsActive,
 		WarehouseId:                   entities.WarehouseId,
-		WarehouseCostingType:          entities.WarehouseCostingType,
+		WarehouseCostingTypeId:        entities.WarehouseCostingTypeId,
 		WarehouseKaroseri:             *entities.WarehouseKaroseri,
 		WarehouseNegativeStock:        *entities.WarehouseNegativeStock,
 		WarehouseReplishmentIndicator: *entities.WarehouseReplishmentIndicator,
@@ -203,6 +212,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 		WarehouseGroupId:              entities.WarehouseGroupId,
 		WarehousePhoneNumber:          entities.WarehousePhoneNumber,
 		WarehouseFaxNumber:            entities.WarehouseFaxNumber,
+		WarehouseCostingTypeCode:      CostingTypeEntities.WarehouseCostingTypeCode,
 	}
 
 	// Fetch address details
