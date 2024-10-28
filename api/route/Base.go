@@ -863,6 +863,20 @@ func WarehouseMasterRouter(
 	return router
 }
 
+func WarehouseCostingTypeMasterRouter(
+	warehouseCostingTypeController masterwarehousecontroller.WarehouseCostingTypeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/by-code/{warehouse-costing-type-code}", warehouseCostingTypeController.GetWarehouseCostingTypeByCode)
+	return router
+}
+
 func WarehouseLocationRouter(
 	warehouseLocationController masterwarehousecontroller.WarehouseLocationController,
 ) chi.Router {

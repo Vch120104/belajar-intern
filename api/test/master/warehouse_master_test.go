@@ -22,7 +22,7 @@ func TestSaveWarehouseMaster(t *testing.T) {
 	save, err := warehouseMasterService.Save(
 		masterwarehousepayloads.GetWarehouseMasterResponse{
 			IsActive:                      true,
-			WarehouseCostingType:          "01",
+			WarehouseCostingTypeId:        1,
 			WarehouseKaroseri:             true,
 			WarehouseNegativeStock:        true,
 			WarehouseReplishmentIndicator: true,
