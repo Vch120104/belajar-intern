@@ -34,7 +34,7 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 	queryValues := request.URL.Query()
 
 	// Mengambil contract_service_system_number dari URL path parameter
-	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_system_number")
+	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_package_detail_system_number")
 	contractServiceSystemNumber, err := strconv.Atoi(contractServiceSystemNumberStr)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
@@ -61,7 +61,7 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 
 	// Memanggil service untuk mendapatkan data
 	result, totalPages, totalRows, errs := c.ContractServiceDetailService.GetAllDetail(contractServiceSystemNumber, filterCondition, pagination)
-	if err != nil {
+	if errs != nil {
 		helper.ReturnError(writer, request, errs)
 		return
 	}

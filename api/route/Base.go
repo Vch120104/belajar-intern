@@ -1497,6 +1497,21 @@ func ContractServiceRouter(
 	return router
 }
 
+func ContractServiceDetailRouter(
+	ContractServiceDetailController transactionworkshopcontroller.ContractServiceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{contract_service_package_detail_system_number}", ContractServiceDetailController.GetAllDetail)
+
+	return router
+}
+
 func QualityControlRouter(
 	QualityControlController transactionworkshopcontroller.QualityControlController,
 ) chi.Router {
