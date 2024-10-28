@@ -30,8 +30,13 @@ type ContractServiceDetailPayloads struct {
 	TotalUseFrtQuantity                      float64 `json:"total_use_frt_quantity"`
 }
 
-
 type Operation struct {
 	OperationCode string `json:"operation_code"`
 	OperationName string `json:"operation_name"`
+}
+
+type ContractServiceIdResponse struct {
+	ContractServicePackageDetailSystemNumber int     `json:"contract_service_package_detail_system_number"`
+	ItemOperationId                          int     `json:"ItemOperationId"`
+	ItemDiscountPercent                      float64 `json:"item_discount_percent"`
 }

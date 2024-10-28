@@ -20,6 +20,7 @@ type ContractServiceDetailControllerImpl struct {
 
 type ContractServiceDetailController interface {
 	GetAllDetail(writer http.ResponseWriter, request *http.Request)
+	GetById(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewContractServiceDetailController(contractServiceDetailService transactionworkshopservice.ContractServiceDetailService) ContractServiceDetailController {
@@ -34,7 +35,7 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 	queryValues := request.URL.Query()
 
 	// Mengambil contract_service_system_number dari URL path parameter
-	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_package_detail_system_number")
+	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_system_number")
 	contractServiceSystemNumber, err := strconv.Atoi(contractServiceSystemNumberStr)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
@@ -72,4 +73,17 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 	} else {
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
+}
+
+// GetById implements ContractServiceDetailController.
+func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
+	Id, _ := strconv.Atoi(chi.URLParam(request, "contract_service_package_detail_system_number"))
+
+	result, err := c.ContractServiceDetailService.GetById(Id)
+
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
 }
