@@ -45,7 +45,7 @@ func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils
 		"a.quantity_allocated," +
 		"a.quantity_in_transit," +
 		"a.quantity_ending," +
-		"b.warehouse_costing_type," +
+		"b.warehouse_costing_type_id," +
 		"b.brand_id," +
 		"(ISNULL(a.quantity_begin,0) + ISNULL(a.quantity_purchase,0)-ISNULL(a.quantity_purchase_return,0)" +
 		"+ ISNULL(A.quantity_transfer_in, 0) + ISNULL(A.quantity_claim_in, 0) + ISNULL(A.quantity_robbing_in, 0) +" +

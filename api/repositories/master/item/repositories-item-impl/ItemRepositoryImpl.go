@@ -117,7 +117,8 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	tableStruct := masteritempayloads.ItemSearch{}
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id")
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Handle item_id filter
@@ -253,23 +254,85 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).Select("u.*,mtr_item.*").
-		Where(masteritementities.Item{
-			ItemId: Id,
-		}).InnerJoins("Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
-		First(&response).
-		Rows()
+	// Fetch the item entity from the database
+	err := tx.Model(&entities).
+		Where(masteritementities.Item{ItemId: Id}).
+		First(&entities).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("item not found"),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	supplierResponse := masteritempayloads.SupplierMasterResponse{}
+	// Map the fields from the entity to the response struct
+	response = masteritempayloads.ItemResponse{
+		IsActive:                     entities.IsActive,
+		ItemId:                       entities.ItemId,
+		ItemCode:                     entities.ItemCode,
+		ItemClassId:                  entities.ItemClassId,
+		ItemName:                     entities.ItemName,
+		ItemGroupId:                  entities.ItemGroupId,
+		ItemType:                     entities.ItemType,
+		ItemLevel_1:                  entities.ItemLevel1,
+		ItemLevel_2:                  entities.ItemLevel2,
+		ItemLevel_3:                  entities.ItemLevel3,
+		ItemLevel_4:                  entities.ItemLevel4,
+		SupplierId:                   entities.SupplierId,
+		UnitOfMeasurementTypeId:      entities.UnitOfMeasurementTypeId,
+		UnitOfMeasurementSellingId:   entities.UnitOfMeasurementSellingId,
+		UnitOfMeasurementPurchaseId:  entities.UnitOfMeasurementPurchaseId,
+		UnitOfMeasurementStockId:     entities.UnitOfMeasurementStockId,
+		SalesItem:                    entities.SalesItem,
+		Lottable:                     entities.Lottable,
+		Inspection:                   entities.Inspection,
+		PriceListItem:                entities.PriceListItem,
+		StockKeeping:                 entities.StockKeeping,
+		DiscountId:                   entities.DiscountId,
+		MarkupMasterId:               entities.MarkupMasterId,
+		DimensionOfLength:            entities.DimensionOfLength,
+		DimensionOfWidth:             entities.DimensionOfWidth,
+		DimensionOfHeight:            entities.DimensionOfHeight,
+		DimensionUnitOfMeasurementId: entities.DimensionUnitOfMeasurementId,
+		Weight:                       entities.Weight,
+		UnitOfMeasurementWeight:      entities.UnitOfMeasurementWeight,
+		StorageTypeId:                entities.StorageTypeId,
+		Remark:                       entities.Remark,
+		LastPrice:                    entities.LastPrice,
+		UseDiscDecentralize:          entities.UseDiscDecentralize,
+		CommonPricelist:              entities.CommonPricelist,
+		IsRemovable:                  entities.IsRemovable,
+		IsMaterialPlus:               entities.IsMaterialPlus,
+		SpecialMovementId:            entities.SpecialMovementId,
+		IsItemRegulation:             entities.IsItemRegulation,
+		IsTechnicalDefect:            entities.IsTechnicalDefect,
+		IsMandatory:                  entities.IsMandatory,
+		MinimumOrderQty:              entities.MinimumOrderQty,
+		HarmonizedNo:                 entities.HarmonizedNo,
+		PmsItem:                      entities.PmsItem,
+		Regulation:                   entities.Regulation,
+		AutoPickWms:                  entities.AutoPickWms,
+		GmmCatalogCode:               entities.GmmCatalogCode,
+		PrincipalBrandParentId:       entities.PrincipalBrandParentId,
+		ProportionalSupplyWms:        entities.ProportionalSupplyWms,
+		Remark2:                      entities.Remark2,
+		Remark3:                      entities.Remark3,
+		SourceTypeId:                 entities.SourceTypeId,
+		PersonInChargeId:             entities.PersonInChargeId,
+		IsAffiliatedTrx:              entities.IsAffiliatedTrx,
+		IsSellable:                   entities.IsSellable,
+	}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "/supplier-master/" + strconv.Itoa(response.SupplierId)
+	// Call external service to get Supplier details
+	supplierResponse := masteritempayloads.SupplierMasterResponse{}
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(response.SupplierId)
 
 	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
@@ -278,15 +341,11 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 		}
 	}
 
+	// Populate supplier data into response
 	response.SupplierCode = &supplierResponse.SupplierCode
 	response.SupplierName = &supplierResponse.SupplierName
 
-	// joinSupplierData := utils.DataFrameInnerJoin([]masteritempayloads.ItemResponse{response}, []masteritempayloads.SupplierMasterResponse{supplierResponse}, "SupplierId")
-
-	// IMPLEMENT PERSON IN CHARGE AFTER INTEGRATION TOKEN AUTHORIZE TO USER SERVICE!!
-
-	defer rows.Close()
-
+	// Return the response with a populated supplier
 	return response, nil
 }
 
@@ -557,105 +616,127 @@ func (r *ItemRepositoryImpl) SaveItemDetail(tx *gorm.DB, request masteritempaylo
 }
 
 func (r *ItemRepositoryImpl) GetAllItemDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	// Define a slice to hold Item Detail responses
-	var responses []masteritempayloads.ItemDetailRequest
-	var brandpayload []masterpayloads.BrandResponse
-	var modelpayloads []masterpayloads.UnitModelResponse
-	var variantpayloads []masterpayloads.GetVariantResponse
-	// Filter internal service conditions
 
-	// Apply internal service filter conditions
+	var responses []masteritempayloads.ItemDetailRequest
+
 	tableStruct := masteritempayloads.ItemDetailRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 	whereQuery := utils.ApplyFilterExact(joinTable, filterCondition)
 
-	// Fetch data from database
-	err := whereQuery.Find(&responses).Error
+	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
+			Message:    "failed to fetch data from database",
+			Err:        err,
 		}
 	}
+	defer rows.Close()
 
-	// Check if responses are empty
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
+	var convertedResponses []masteritempayloads.ItemDetailResponse
+
+	for rows.Next() {
+		var (
+			itemDetailReq masteritempayloads.ItemDetailRequest
+			itemDetailRes masteritempayloads.ItemDetailResponse
+		)
+
+		if err := rows.Scan(
+			&itemDetailReq.ItemDetailId,
+			&itemDetailReq.ItemId,
+			&itemDetailReq.BrandId,
+			&itemDetailReq.ModelId,
+			&itemDetailReq.VariantId,
+			&itemDetailReq.MileageEvery,
+			&itemDetailReq.ReturnEvery,
+			&itemDetailReq.IsActive); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to scan item detail data",
+				Err:        err,
+			}
 		}
+
+		// Fetch Brand data
+		BrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(itemDetailReq.BrandId)
+		var getBrandResponse masterpayloads.BrandResponse
+		if err := utils.Get(BrandURL, &getBrandResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to fetch brand data",
+				Err:        err,
+			}
+		}
+
+		// Fetch Model data
+		ModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(itemDetailReq.ModelId)
+		var getModelResponse masterpayloads.UnitModelResponse
+		if err := utils.Get(ModelURL, &getModelResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to fetch model data",
+				Err:        err,
+			}
+		}
+
+		// Fetch Variant data
+		VariantURL := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(itemDetailReq.VariantId)
+		var getVariantResponse masterpayloads.GetVariantResponse
+		if err := utils.Get(VariantURL, &getVariantResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to fetch variant data",
+				Err:        err,
+			}
+		}
+
+		itemDetailRes = masteritempayloads.ItemDetailResponse{
+			ItemDetailId:       itemDetailReq.ItemDetailId,
+			ItemId:             itemDetailReq.ItemId,
+			BrandId:            itemDetailReq.BrandId,
+			BrandName:          getBrandResponse.BrandName,
+			ModelId:            itemDetailReq.ModelId,
+			ModelCode:          getModelResponse.ModelCode,
+			ModelDescription:   getModelResponse.ModelDescription,
+			VariantId:          itemDetailReq.VariantId,
+			VariantCode:        getVariantResponse.VariantCode,
+			VariantDescription: getVariantResponse.VariantDescription,
+			ReturnEvery:        itemDetailReq.ReturnEvery,
+			MileageEvery:       itemDetailReq.MileageEvery,
+			IsActive:           itemDetailReq.IsActive,
+		}
+
+		convertedResponses = append(convertedResponses, itemDetailRes)
 	}
 
-	errurlbrand := utils.Get(config.EnvConfigs.SalesServiceUrl+"/unit-brand?page=0&limit=1000000", &brandpayload, nil)
-	if errurlbrand != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no brand found"),
-		}
-	}
-	Joineddata1, errdf := utils.DataFrameInnerJoin(responses, brandpayload, "BrandId")
-
-	if errdf != nil {
+	if err := rows.Err(); err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
+			Message:    "error in item detail rows iteration",
+			Err:        err,
 		}
 	}
 
-	errurlmodel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model?page=0&limit=1000000", &modelpayloads, nil)
-	if errurlmodel != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-		}
-	}
-	joineddata2, errdf := utils.DataFrameInnerJoin(Joineddata1, modelpayloads, "ModelId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	errurlvariant := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-variant?page=0&limit=1000000", &variantpayloads, nil)
-	if errurlvariant != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-		}
-	}
-	joineddata3, errdf := utils.DataFrameInnerJoin(joineddata2, variantpayloads, "VariantId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	// Define a slice to hold map responses
 	var mapResponses []map[string]interface{}
-
-	// Iterate over responses and convert them to maps
-	for _, response := range joineddata3 {
+	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
-			"is_active":           response["IsActive"],
-			"item_detail_id":      response["ItemDetailId"],
-			"item_id":             response["ItemId"],
-			"brand_id":            response["BrandId"],
-			"brand_name":          response["BrandName"],
-			"mileage_every":       response["MileageEvery"],
-			"model_id":            response["ModelId"],
-			"model_code":          response["ModelCode"],
-			"model_description":   response["ModelDescription"],
-			"return_every":        response["ReturnEvery"],
-			"variant_id":          response["VariantId"],
-			"variant_code":        response["VariantCode"],
-			"variant_description": response["VariantDescription"],
+			"item_detail_id":      response.ItemDetailId,
+			"item_id":             response.ItemId,
+			"brand_id":            response.BrandId,
+			"brand_name":          response.BrandName,
+			"model_id":            response.ModelId,
+			"model_code":          response.ModelCode,
+			"model_description":   response.ModelDescription,
+			"variant_id":          response.VariantId,
+			"variant_code":        response.VariantCode,
+			"variant_description": response.VariantDescription,
+			"mileage_every":       response.MileageEvery,
+			"return_every":        response.ReturnEvery,
+			"is_active":           response.IsActive,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Paginate the response data
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
@@ -760,7 +841,7 @@ func (r *ItemRepositoryImpl) DeleteItemDetails(tx *gorm.DB, ItemId int, itemDeta
 func (r *ItemRepositoryImpl) UpdateItem(tx *gorm.DB, ItemId int, req masteritempayloads.ItemUpdateRequest) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.Item
 
-	result := tx.Model(&entities).Where("item_id=?", ItemId).First(&entities).Updates(req)
+	result := tx.Model(&entities).Where("item_id = ?", ItemId).First(&entities).Updates(req)
 	if result.Error != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,

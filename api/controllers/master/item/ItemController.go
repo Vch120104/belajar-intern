@@ -59,13 +59,30 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		"mtr_item.item_code":             queryValues.Get("item_code"),
 		"mtr_item.item_name":             queryValues.Get("item_name"),
 		"mtr_item.item_type":             queryValues.Get("item_type"),
+		"mtr_item.item_class_id":         queryValues.Get("item_class_id"),
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item.is_active":             queryValues.Get("is_active"),
+		"mtr_item.item_group_id":         queryValues.Get("item_group_id"),
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
-		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
-		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
-		"mtr_item.item_id":               queryValues.Get("item_id"),
-		"mtr_supplier.supplier_id":       queryValues.Get("supplier_id"),
+		"dms_microservices_general_dev.dbo.mtr_supplier.supplier_code": queryValues.Get("supplier_code"),
+		"dms_microservices_general_dev.dbo.mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
+	}
+
+	// Handle item_type (Goods, Services, G, S)
+	itemTypes := strings.Split(queryValues.Get("item_type"), ",")
+	var processedItemTypes []string
+	for _, itemType := range itemTypes {
+		switch strings.ToLower(itemType) {
+		case "goods", "g", "go", "goo", "good":
+			processedItemTypes = append(processedItemTypes, "G")
+		case "services", "s", "se", "ser", "serv", "servi", "servic", "service":
+			processedItemTypes = append(processedItemTypes, "S")
+		}
+	}
+
+	// Jika ada itemTypes yang valid, tambahkan ke queryParams
+	if len(processedItemTypes) > 0 {
+		queryParams["mtr_item.item_type"] = strings.Join(processedItemTypes, ",")
 	}
 
 	// Handle multi_id and supplier_id as multiple parameters
@@ -425,7 +442,18 @@ func (r *ItemControllerImpl) GetAllItemDetail(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query() // Retrieve query parameters
 
 	queryParams := map[string]string{
-		"item_id": queryValues.Get("item_id"),
+		"item_id":             queryValues.Get("item_id"),
+		"is_active":           queryValues.Get("is_active"),
+		"brand_id":            queryValues.Get("brand_id"),
+		"brand_name":          queryValues.Get("brand_name"),
+		"model_id":            queryValues.Get("model_id"),
+		"model_code":          queryValues.Get("model_code"),
+		"model_description":   queryValues.Get("model_description"),
+		"variant_id":          queryValues.Get("variant_id"),
+		"variant_code":        queryValues.Get("variant_code"),
+		"variant_description": queryValues.Get("variant_description"),
+		"mileage_every":       queryValues.Get("mileage_every"),
+		"return_every":        queryValues.Get("return_every"),
 	}
 
 	paginate := pagination.Pagination{

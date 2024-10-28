@@ -5,9 +5,10 @@ import masteritementities "after-sales/api/entities/master/item"
 const TableNameWarehouseMaster = "mtr_warehouse_master"
 
 type WarehouseMaster struct {
-	CompanyId                     int                             `gorm:"column:company_id;size:30;not null" json:"company_id"`
-	IsActive                      *bool                           `gorm:"column:is_active;default:true;not null" json:"is_active"`
-	WarehouseCostingType          string                          `gorm:"column:warehouse_costing_type;not null;type:varchar(50)" json:"warehouse_costing_type"`
+	CompanyId                     int   `gorm:"column:company_id;size:30;not null" json:"company_id"`
+	IsActive                      *bool `gorm:"column:is_active;default:true;not null" json:"is_active"`
+	WarehouseCostingTypeId        int   `gorm:"column:warehouse_costing_type_id;null;type:varchar(50)" json:"warehouse_costing_type_id"`
+	WarehouseCostingType          *WarehouseCostingType
 	WarehouseKaroseri             *bool                           `gorm:"column:warehouse_karoseri;default:false;not null" json:"warehouse_karoseri"`
 	WarehouseNegativeStock        *bool                           `gorm:"column:warehouse_negative_stock;default:false;not null" json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator *bool                           `gorm:"column:warehouse_replishment_indicator;default:false;not null" json:"warehouse_replishment_indicator"`
@@ -26,7 +27,7 @@ type WarehouseMaster struct {
 	WarehouseTransitDefault       string                          `gorm:"column:warehouse_transit_default;not null;type:varchar(5)" json:"warehouse_transit_default"`
 	WarehousePhoneNumber          string                          `gorm:"column:warehouse_phone_number;not null;size:30;default:'-'" json:"warehouse_phone_number"`
 	WarehouseFaxNumber            string                          `gorm:"column:warehouse_fax_number;size:30" json:"warehouse_fax_number"`
-	WarehouseGroup                WarehouseGroup                  `gorm:"foreignKey:warehouse_group_id;references:warehouse_group_id" json:"warehouse_group"`
+	WarehouseGroup                *WarehouseGroup                 // `gorm:"foreignKey:WarehouseId;references:WarehouseId" json:"warehouse_group"`
 	ItemLocation                  masteritementities.ItemLocation `gorm:"foreignkey:warehouse_id;references:warehouse_id" json:"item_location"`
 	WarehouseAuthorized           WarehouseAuthorize              `gorm:"foreignkey:warehouse_id;references:warehouse_id" json:"warehouse_authorized"`
 }

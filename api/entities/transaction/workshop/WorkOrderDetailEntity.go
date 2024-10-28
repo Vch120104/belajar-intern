@@ -13,7 +13,7 @@ type WorkOrderDetail struct {
 	OperationItemId                     int                                           `gorm:"column:operation_item_id;size:30;" json:"operation_item_id"`
 	OperationItemCode                   string                                        `gorm:"column:operation_item_code;size:50;" json:"operation_item_code"`
 	WorkOrderOperationItemLine          int                                           `gorm:"column:work_order_operation_item_line;size:30;" json:"work_order_operation_item_line"`
-	WorkorderStatusId                   int                                           `gorm:"column:work_order_status_id;size:30;" json:"workorder_status_id"`
+	WorkorderStatusId                   int                                           `gorm:"column:work_order_status_id;size:30;" json:"work_order_status_id"`
 	LineTypeId                          int                                           `gorm:"column:line_type_id;size:30;" json:"line_type_id"`
 	ServiceStatusId                     int                                           `gorm:"column:service_status_id;size:30;" json:"service_status_id"`
 	TransactionTypeId                   int                                           `gorm:"column:transaction_type_id;size:30;" json:"transaction_type_id"`

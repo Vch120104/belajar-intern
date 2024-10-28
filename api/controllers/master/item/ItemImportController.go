@@ -214,12 +214,12 @@ func (r *ItemImportControllerImpl) GetAllItemImport(writer http.ResponseWriter, 
 	queryValues := request.URL.Query()
 
 	internalFilterCondition := map[string]string{
-		"mtr_item.item_code": queryValues.Get("item_code"),
-		"mtr_item.item_name": queryValues.Get("item_name"),
+		"Item.item_code": queryValues.Get("item_code"),
+		"Item.item_name": queryValues.Get("item_name"),
 	}
 	externalFilterCondition := map[string]string{
-		"mtr_supplier.supplier_code": queryValues.Get("supplier_code"),
-		"mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
+		"supplier_code": queryValues.Get("supplier_code"),
+		"supplier_name": queryValues.Get("supplier_name"),
 	}
 
 	paginate := pagination.Pagination{

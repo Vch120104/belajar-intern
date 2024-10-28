@@ -15,6 +15,7 @@ type PackageMasterRepository interface {
 	GetAllPackageMasterDetail(*gorm.DB, int, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetByIdPackageMaster(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByIdPackageMasterDetail(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
+	GetByCodePackageMaster(*gorm.DB, string) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
 	PostpackageMaster(*gorm.DB, masterpayloads.PackageMasterResponse) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)
 	PostPackageMasterDetail(tx *gorm.DB, req masterpayloads.PackageMasterDetail, id int) (masterentities.PackageMasterDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusItemPackage(*gorm.DB, int) (masterentities.PackageMaster, *exceptions.BaseErrorResponse)

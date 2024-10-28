@@ -132,15 +132,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	page.Rows = Result
 	return page, nil
 }
-func GetApprovalStatusId(code string) int {
-	var DocResponse transactionsparepartpayloads.PurchaseOrderApprovalStatusResponses
 
-	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return 0
-	}
-	return DocResponse.ApprovalStatusId
-}
 func (repo *PurchaseOrderRepositoryImpl) GetByIdPurchaseOrder(db *gorm.DB, id int) (transactionsparepartpayloads.PurchaseOrderGetByIdResponses, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.PurchaseOrderEntities
 	response := transactionsparepartpayloads.PurchaseOrderGetByIdResponses{}

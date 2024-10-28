@@ -851,7 +851,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 'NON' "+
 			" AND whs.warehouse_id = x.warehouse_id) ", companyid, year, month).
 		//Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
 		Group("A.item_id,A.item_code," +
@@ -963,7 +963,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 'NON' "+
 			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
 		Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
 		Group("A.item_id,A.item_code,"+
@@ -1061,7 +1061,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 			" AND period_month = ? AND x.warehouse_id in (select whs.warehouse_id "+
 			" from mtr_warehouse_master whs "+
 			" where whs.company_id = x.company_id "+
-			" AND whs.warehouse_costing_type <> 'NON' "+
+			" AND whs.warehouse_costing_type_id <> 'NON' "+
 			" AND whs.warehouse_id = x.warehouse_id) ", compid, year, month).
 		Joins("INNER JOIN mtr_uom uom ON uom.uom_type_id = A.unit_of_measurement_type_id").
 		Group("A.item_id,A.item_code,"+

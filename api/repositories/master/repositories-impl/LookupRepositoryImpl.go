@@ -30,6 +30,8 @@ func StartLookupRepositoryImpl() masterrepository.LookupRepository {
 	return &LookupRepositoryImpl{}
 }
 
+// dbo.getOprItemDisc
+// get DISCOUNT value base on line type in operation or item master
 func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billCodeId int, oprItemCode int, agreementId int, profitCenterId int, minValue float64, companyId int, brandId int, contractServSysNo int, whsGroup int, orderTypeId int) (float64, *exceptions.BaseErrorResponse) {
 	var discount float64
 	var discCode string
@@ -292,6 +294,8 @@ func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billC
 	return discount, nil
 }
 
+// dbo.getOprItemPrice
+// get price value base on line type in operation or item master
 func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, companyId int, oprItemCode int, brandId int, modelId int, jobTypeId int, variantId int, currencyId int, billCode int, whsGroup string) (float64, *exceptions.BaseErrorResponse) {
 	var (
 		price               float64
@@ -558,7 +562,6 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 
 	switch linetypeId {
 	case utils.LinetypePackage:
-		// Use Raw SQL for UNION ALL subquery in JOIN
 		combinedDetailsSubQuery := `
 			(
 				SELECT package_id, frt_quantity, is_active 
@@ -746,6 +749,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 	return results, int(totalRows), totalPages, nil
 }
 
+// usp_comLookUp
+// IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
 func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var results []map[string]interface{}
 
@@ -972,6 +977,8 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 	return results, int(totalRows), totalPages, nil
 }
 
+// usp_comLookUp
+// IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
 func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var results []map[string]interface{}
 
@@ -1705,6 +1712,8 @@ func (r *LookupRepositoryImpl) GetVehicleUnitMaster(tx *gorm.DB, brandId int, mo
 	return vehicleMasters, totalPages, int(totalRows), nil
 }
 
+// usp_comLookUp
+// IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
 func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var (
 		vehicleMasters []map[string]interface{}
@@ -1780,6 +1789,8 @@ func (r *LookupRepositoryImpl) GetVehicleUnitByID(tx *gorm.DB, vehicleID int, pa
 	return vehicleMasters, totalPages, int(totalRows), nil
 }
 
+// usp_comLookUp
+// IF @strEntity = 'Vehicle0'--VEHICLE UNIT MASTER
 func (r *LookupRepositoryImpl) GetVehicleUnitByChassisNumber(tx *gorm.DB, chassisNumber string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var (
 		vehicleMasters []map[string]interface{}
@@ -2087,6 +2098,8 @@ func (r *LookupRepositoryImpl) CustomerByTypeAndAddress(tx *gorm.DB, paginate pa
 	return customerMasters, totalPages, int(totalRows), nil
 }
 
+// usp_comLookUp
+// IF @strEntity =  'CustomerByTypeAndAddress'--CUSTOMER MASTER
 func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByID(tx *gorm.DB, customerId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var (
 		customerMasters []map[string]interface{}
@@ -2154,6 +2167,8 @@ func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByID(tx *gorm.DB, custome
 	return customerMasters, totalPages, int(totalRows), nil
 }
 
+// usp_comLookUp
+// IF @strEntity =  'CustomerByTypeAndAddress'--CUSTOMER MASTER
 func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByCode(tx *gorm.DB, customerCode string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var (
 		customerMasters []map[string]interface{}
@@ -2218,6 +2233,7 @@ func (r *LookupRepositoryImpl) CustomerByTypeAndAddressByCode(tx *gorm.DB, custo
 	return customerMasters, totalPages, int(totalRows), nil
 }
 
+// dbo.FCT_getBillCode
 // FctGetBillCode retrieves the bill code based on companyCode, supcusCode, and supcusType
 func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supcusCode, supcusType string) (string, *exceptions.BaseErrorResponse) {
 	var (
@@ -2272,12 +2288,31 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					billCode = ""
 				} else {
 					// Handle customer logic
-					if err := tx.Raw("SELECT COALESCE((SELECT company_type FROM gmCompTypeMap WHERE company_from = ? AND company_to = ?), (SELECT customer_type FROM gmCust0 WHERE customer_code = ?))",
-						companyCode, supcusCode, supcusCode).Scan(&typeMap).Error; err != nil {
-						return "", &exceptions.BaseErrorResponse{
-							StatusCode: http.StatusInternalServerError,
-							Message:    "Failed to get customer type",
-							Err:        err,
+					var typeMap string
+
+					// First query: check company_type in mtr_company_type_map_from_customer
+					if err := tx.Table("dms_microservices_general_dev.dbo.mtr_company_type_map_from_customer").
+						Select("client_type_id").
+						Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
+						Scan(&typeMap).Error; err != nil {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
+							// Fallback query: check customer_type in mtr_customer if no record is found
+							if err := tx.Table("dms_microservices_general_dev.dbo.mtr_customer").
+								Select("client_type_id").
+								Where("customer_code = ?", supcusCode).
+								Scan(&typeMap).Error; err != nil {
+								return "", &exceptions.BaseErrorResponse{
+									StatusCode: http.StatusInternalServerError,
+									Message:    "Failed to get customer type",
+									Err:        err,
+								}
+							}
+						} else {
+							return "", &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "Failed to get company type",
+								Err:        err,
+							}
 						}
 					}
 
@@ -2304,8 +2339,21 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 				}
 			} else {
 				// Handle supplier logic
-				if err := tx.Raw("SELECT COALESCE((SELECT company_type FROM gmCompTypeMap WHERE company_from = ? AND company_to = ?), (SELECT supplier_type FROM gmSupplier0 WHERE supplier_code = ?))",
-					supcusCode, companyCode, supcusCode).Scan(&typeMap).Error; err != nil {
+				// Query the mtr_company_type_map_from_customer table for company type
+				err := tx.Table("dms_microservices_general_dev.dbo.mtr_company_type_map_from_customer").
+					Select("client_type_id").
+					Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
+					First(&typeMap).Error
+
+				// If no result found in company_type_map_from_customer, query the mtr_supplier table
+				if err == gorm.ErrRecordNotFound {
+					err = tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
+						Select("client_type_id").
+						Where("supplier_code = ?", supcusCode).
+						First(&typeMap).Error
+				}
+
+				if err != nil {
 					return "", &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
 						Message:    "Failed to get supplier type",
@@ -2369,6 +2417,8 @@ func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusC
 	return nil
 }
 
+// dbo.getLineTypebyItemCode
+// GetLineTypeByItemCode retrieves the line type based on the item code
 func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (int, *exceptions.BaseErrorResponse) {
 	var (
 		lineType         int
@@ -2488,6 +2538,8 @@ func (r *LookupRepositoryImpl) GetWhsGroup(tx *gorm.DB, companyCode int) (int, *
 	return whsGroup, nil
 }
 
+// dbo.getCampaignDiscForWO
+// GetCampaignDiscForWO retrieves the campaign discount for work order
 func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int, linetypeId int, oprItemId int, frtQty float64, markupAmount float64, markupPercentage float64, millage float64) (masterpayloads.CampaignDiscount, *exceptions.BaseErrorResponse) {
 
 	// Nested query for determining VAT_TAX_CODE based on certain conditions
@@ -2597,7 +2649,7 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
 	}
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.PaginateDistinct(&entities, &pages, whereQuery, "mtr_item.item_id")).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -2611,13 +2663,13 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 	return pages, nil
 }
 
-func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, companyId int, periodDate time.Time, whsCode string, locCode string, itemId int, whsGroup int, uomType string) (float64, *exceptions.BaseErrorResponse) {
+func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, companyId int, periodDate time.Time, whsCode int, locCode string, itemId int, whsGroup int, uomType string) (float64, *exceptions.BaseErrorResponse) {
 	var qtyResult float64
 	var qtyTemp float64
 	var periodYear, periodMonth string
 
 	moduleCode := "MODULE_SP"
-	periodStatusClose := "PERIOD_STATUS_CLOSE"
+	periodStatusClose := 3
 
 	// Validate Item Code
 	var itemCount int64
@@ -2649,11 +2701,11 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 	periodMonth = periodDate.Format("01")
 
 	// Check if the period is closed
-	var periodStatus string
-	if err := tx.Table("mtr_period").
-		Select("period_status").
+	var periodStatusId int
+	if err := tx.Table("dms_microservices_finance_dev.dbo.mtr_period_audit").
+		Select("period_status_id").
 		Where("company_id = ? AND period_year = ? AND period_month = ?", companyId, periodYear, periodMonth).
-		Scan(&periodStatus).Error; err != nil {
+		Scan(&periodStatusId).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get period status",
@@ -2661,7 +2713,7 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 		}
 	}
 
-	if periodStatus == periodStatusClose {
+	if periodStatusId == periodStatusClose {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusConflict,
 			Message:    "Period is closed",
@@ -2669,14 +2721,14 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 		}
 	}
 
-	// Build the query based on the @Option value: ON HAND QTY & AVAILABLE QTY
-	query := tx.Table("mtr_stock").
-		Where("company_id = ? AND period_year = ? AND period_month = ? AND whs_code = ? AND loc_code = ? AND item_id = ? AND whs_group = ? AND uom_type = ?",
-			companyId, periodYear, periodMonth, whsCode, locCode, itemId, whsGroup, uomType)
+	// Build the query based on the option: ON HAND QTY & AVAILABLE QTY
+	query := tx.Model(&masterentities.LocationStock{}).
+		Where("company_id = ? AND period_year = ? AND period_month = ? AND warehouse_id = ? AND location_id = ? AND item_id = ? AND warehouse_group = ?",
+			companyId, periodYear, periodMonth, whsCode, locCode, itemId, whsGroup)
 
 	switch option {
 	case 1:
-		if err := query.Select("SUM(stock_qty)").Scan(&qtyTemp).Error; err != nil {
+		if err := query.Select("SUM(quantity_ending)").Scan(&qtyTemp).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to get on hand quantity for item",
@@ -2686,7 +2738,7 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 	case 2:
 		if err := query.
 			Where("module_code = ?", moduleCode).
-			Select("SUM(stock_qty)").Scan(&qtyTemp).Error; err != nil {
+			Select("SUM(quantity_available)").Scan(&qtyTemp).Error; err != nil {
 			return 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to get available quantity for item",
@@ -2706,6 +2758,8 @@ func (r *LookupRepositoryImpl) SelectLocationStockItem(tx *gorm.DB, option int, 
 	return qtyResult, nil
 }
 
+// dbo.getOprItemFrt
+// GetOprItemFrt retrieves the FRT hour based on the input parameters
 func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId int, modelId int, variantId int, vehicleChassisNo string) (float64, *exceptions.BaseErrorResponse) {
 	var frt float64
 
