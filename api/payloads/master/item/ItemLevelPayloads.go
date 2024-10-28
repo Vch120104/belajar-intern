@@ -3,7 +3,7 @@ package masteritempayloads
 type SaveItemLevelRequest struct {
 	IsActive        bool   `json:"is_active"`
 	ItemLevelId     int    `json:"item_level_id"`
-	ItemLevel       string `json:"item_level"`
+	ItemLevel       int    `json:"item_level"`
 	ItemClassId     int    `json:"item_class_id"`
 	ItemLevelParent int    `json:"item_level_parent"`
 	ItemLevelCode   string `json:"item_level_code"`
@@ -30,7 +30,7 @@ type GetItemLevelDropdownResponse struct {
 type GetItemLevelResponseById struct {
 	IsActive        bool   `json:"is_active"`
 	ItemLevelId     int    `json:"item_level_id"`
-	ItemLevel       string `json:"item_level"`
+	ItemLevel       int    `json:"item_level"`
 	ItemClassId     int    `json:"item_class_id"`
 	ItemLevelParent string `json:"item_level_parent"`
 	ItemLevelCode   string `json:"item_level_code"`

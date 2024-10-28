@@ -176,14 +176,19 @@ func (r *ItemLevelControllerImpl) GetAll(writer http.ResponseWriter, request *ht
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/by-id/{item_level_id} [get]
 func (r *ItemLevelControllerImpl) GetById(writer http.ResponseWriter, request *http.Request) {
-
-	itemLevelId, errA := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	itemLevel, errA := strconv.Atoi(chi.URLParam(request, "item_level"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 
-	get, err := r.itemLevelService.GetById(itemLevelId)
+	itemLevelId, errB := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	if errB != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	get, err := r.itemLevelService.GetById(itemLevel, itemLevelId)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -244,15 +249,19 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/item-level/{item_level_id} [patch]
 func (r *ItemLevelControllerImpl) ChangeStatus(writer http.ResponseWriter, request *http.Request) {
-
-	itemLevelId, errA := strconv.Atoi(chi.URLParam(request, "item_level_id"))
-
+	itemLevel, errA := strconv.Atoi(chi.URLParam(request, "item_level"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 
-	response, err := r.itemLevelService.ChangeStatus(int(itemLevelId))
+	itemLevelId, errB := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	if errB != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	response, err := r.itemLevelService.ChangeStatus(itemLevel, int(itemLevelId))
 
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)

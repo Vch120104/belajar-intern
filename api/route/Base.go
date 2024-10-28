@@ -171,14 +171,14 @@ func ItemLevelRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLevelController.GetAll)
-	router.Get("/{item_level_id}", itemLevelController.GetById)
+	router.Get("/{item_level}/{item_level_id}", itemLevelController.GetById)
 
 	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
 	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
 	router.Get("/look-up-item-level-by-id/{item_level_id}", itemLevelController.GetItemLevelLookUpbyId)
 
 	router.Post("/", itemLevelController.Save)
-	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
+	router.Patch("/{item_level}/{item_level_id}", itemLevelController.ChangeStatus)
 
 	return router
 }

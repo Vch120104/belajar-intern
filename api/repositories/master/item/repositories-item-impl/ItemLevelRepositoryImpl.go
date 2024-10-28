@@ -210,19 +210,76 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, page
 	return pages, nil
 }
 
-func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
+func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
 
-	var entities masteritementities.ItemLevel
-	var itemLevelResponse masteritemlevelpayloads.GetItemLevelResponseById
+	itemLevelResponse := masteritemlevelpayloads.GetItemLevelResponseById{}
 
-	rows, err := tx.Model(&entities).
-		Where(masteritemlevelpayloads.GetItemLevelResponseById{
-			ItemLevelId: itemLevelId,
-		}).
-		Find(&itemLevelResponse).
-		First(&itemLevelResponse).
-		Rows()
+	var query *gorm.DB
 
+	switch itemLevel {
+	case 1:
+		entities := masteritementities.ItemLevel1{}
+		query = tx.Model(&entities).
+			Select(`
+				is_active,
+				item_level_1_id AS item_level_id,
+				1 AS item_level,
+				item_class_id,
+				'' AS item_level_parent,
+				item_level_1_code AS item_level_code,
+				item_level_1_name AS item_level_name
+			`).
+			Where("item_level_1_id = ?", itemLevelId)
+	case 2:
+		entities := masteritementities.ItemLevel2{}
+		query = tx.Model(&entities).
+			Select(`
+				mtr_item_level_2.is_active,
+				item_level_2_id as item_level_id,
+				2 AS item_level,
+				0 AS item_class_id,
+				mil1.item_level_1_code AS item_level_parent,
+				item_level_2_code AS item_level_code,
+				item_level_2_name AS item_level_name
+			`).
+			Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item_level_2.item_level_1_id").
+			Where("item_level_2_id = ?", itemLevelId)
+	case 3:
+		entities := masteritementities.ItemLevel3{}
+		query = tx.Model(&entities).
+			Select(`
+				mtr_item_level_3.is_active,
+				item_level_3_id as item_level_id,
+				3 AS item_level,
+				0 AS item_class_id,
+				mil2.item_level_2_code AS item_level_parent,
+				item_level_3_code AS item_level_code,
+				item_level_3_name AS item_level_name
+			`).
+			Joins("INNER JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item_level_3.item_level_2_id").
+			Where("item_level_3_id = ?", itemLevelId)
+	case 4:
+		entities := masteritementities.ItemLevel4{}
+		query = tx.Model(&entities).
+			Select(`
+				mtr_item_level_4.is_active,
+				item_level_4_id as item_level_id,
+				4 AS item_level,
+				0 AS item_class_id,
+				mil3.item_level_3_code AS item_level_parent,
+				item_level_4_code AS item_level_code,
+				item_level_4_name AS item_level_name
+			`).
+			Joins("INNER JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item_level_4.item_level_3_id").
+			Where("item_level_4_id = ?", itemLevelId)
+	default:
+		return itemLevelResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item_level is unavailable"),
+		}
+	}
+
+	err := query.First(&itemLevelResponse).Error
 	if err != nil {
 		return itemLevelResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -230,15 +287,13 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevelId int) (masteritemlevelpa
 		}
 	}
 
-	defer rows.Close()
-
 	return itemLevelResponse, nil
 }
 
 func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	//GET ITEM CLASS LEVEL PARENT, IF CREATE ITEM LEVEL > 1
-	itemleveltoInt, _ := strconv.Atoi(request.ItemLevel)
+	itemleveltoInt := request.ItemLevel
 	itemClassId := request.ItemClassId
 
 	model := masteritementities.ItemLevel{}
@@ -262,7 +317,7 @@ func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveIt
 	var itemLevelEntities = masteritementities.ItemLevel{
 		IsActive:        request.IsActive,
 		ItemLevelId:     request.ItemLevelId,
-		ItemLevel:       request.ItemLevel,
+		ItemLevel:       strconv.Itoa(request.ItemLevel),
 		ItemClassId:     itemClassId,
 		ItemLevelParent: request.ItemLevelParent,
 		ItemLevelCode:   request.ItemLevelCode,
