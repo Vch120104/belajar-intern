@@ -118,18 +118,67 @@ func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]m
 }
 
 func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemLevel{}
+	response := []masteritemlevelpayloads.GetAllItemLevelResponse{}
 
-	var itemLevelResponse []masteritemlevelpayloads.GetAllItemLevelResponse
+	entitiyLevel1 := masteritementities.ItemLevel1{}
+	queryLevel1 := tx.Model(&entitiyLevel1).
+		Select(`
+			mtr_item_level_1.is_active,
+			mtr_item_level_1.item_level_1_id AS item_level_id,
+			'1' AS item_level,
+			mtr_item_level_1.item_level_1_code AS item_level_code,
+			mtr_item_level_1.item_level_1_name AS item_level_name,
+			mic.item_class_id,
+			mic.item_class_code,
+			'' AS item_level_parent
+		`).
+		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item_level_1.item_class_id")
 
-	query := tx.Model(entities).Select("mtr_item_level.item_level_id,mtr_item_level.item_level_code,mtr_item_level.item_level,mtr_item_level.item_level_name,mtr_item_level.is_active,mtr_item_class.*,mil.item_level_code as item_level_parent").
-		Joins("join mtr_item_class on mtr_item_level.item_class_id = mtr_item_class.item_class_id").
-		Joins("left join mtr_item_level mil on mtr_item_level.item_level_parent = mil.item_level_id")
+	entityLevel2 := masteritementities.ItemLevel2{}
+	queryLevel2 := tx.Model(&entityLevel2).
+		Select(`
+			mtr_item_level_2.is_active,
+			item_level_2_id AS item_level_id,
+			'2' AS item_level,
+			item_level_2_code AS item_level_code,
+			item_level_2_name AS item_level_name,
+			0 AS item_class_id,
+			'' AS item_class_code,
+			mil1.item_level_1_code AS item_level_parent
+		`).
+		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item_level_2.item_level_1_id")
 
-	queryFilter := utils.ApplyFilter(query, filter)
+	entityLevel3 := masteritementities.ItemLevel3{}
+	queryLevel3 := tx.Model(&entityLevel3).
+		Select(`
+			mtr_item_level_3.is_active,
+			item_level_3_id AS item_level_id,
+			'3' AS item_level,
+			item_level_3_code AS item_level_code,
+			item_level_3_name AS item_level_name,
+			0 AS item_class_id,
+			'' AS item_class_code,
+			mil2.item_level_2_code AS item_level_parent
+		`).
+		Joins("INNER JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item_level_3.item_level_2_id")
 
-	err := queryFilter.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&itemLevelResponse).Error
+	entityLevel4 := masteritementities.ItemLevel4{}
+	queryLevel4 := tx.Model(&entityLevel4).
+		Select(`
+			mtr_item_level_4.is_active,
+			item_level_4_id AS item_level_id,
+			'4' AS item_level,
+			item_level_4_code AS item_level_code,
+			item_level_4_name AS item_level_name,
+			0 AS item_class_id,
+			'' AS item_class_code,
+			mil3.item_level_3_code AS item_level_parent
+		`).
+		Joins("INNER JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item_level_4.item_level_3_id")
 
+	unionQuery := tx.Table("(? UNION ALL ? UNION ALL ? UNION ALL ?) A", queryLevel1, queryLevel2, queryLevel3, queryLevel4)
+	whereQuery := utils.ApplyFilter(unionQuery, filter)
+	err := whereQuery.Scan(&response).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -137,7 +186,27 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, page
 		}
 	}
 
-	pages.Rows = itemLevelResponse
+	mapResponse := []map[string]interface{}{}
+	for _, data := range response {
+		temp := map[string]interface{}{
+			"is_active":         data.IsActive,
+			"item_level_id":     data.ItemLevelId,
+			"item_level":        data.ItemLevel,
+			"item_level_code":   data.ItemLevelCode,
+			"item_level_name":   data.ItemLevelName,
+			"item_class_id":     data.ItemClassId,
+			"item_class_code":   data.ItemClassCode,
+			"item_level_parent": data.ItemLevelParent,
+		}
+		mapResponse = append(mapResponse, temp)
+	}
+
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponse, &pages)
+
+	pages.Rows = dataPaginate
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
 	return pages, nil
 }
 
