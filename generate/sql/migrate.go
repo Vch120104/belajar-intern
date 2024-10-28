@@ -2,8 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-	masterentities "after-sales/api/entities/master"
-
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -138,7 +136,6 @@ func Migrate() {
 		//&masterentities.AgreementItemDetail{},
 		//&masterentities.CampaignMaster{},
 		// &masterentities.CampaignMasterDetail{},
-		&masterentities.StockTransactionType{},
 		//
 		//&masterentities.FieldAction{},
 		//&masterentities.FieldActionEligibleVehicleItem{},
