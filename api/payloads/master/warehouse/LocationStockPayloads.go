@@ -23,7 +23,7 @@ type LocationStockDBResponse struct {
 	QuantityAllocated      float64 `parent_entity:"mtr_location_stock" json:"quantity_allocated"`
 	QuantityInTransit      float64 `parent_entity:"mtr_location_stock" json:"quantity_in_transit"`
 	QuantityEnding         float64 `parent_entity:"mtr_location_stock" json:"quantity_ending"`
-	WarehouseCostingType   string  `parent_entity:"mtr_warehouse_master" json:"warehouse_costing_type"` //mtr_warehouse
+	WarehouseCostingTypeId int     `parent_entity:"mtr_warehouse_master" json:"warehouse_costing_type_id"` //mtr_warehouse
 	BrandId                int     `parent_entity:"mtr_warehouse_master" json:"brand_id"`
 	QuantityOnHand         float64 `gorm:"column:quantity_on_hand" json:"quantity_on_hand"`
 	QuantityAvailable      float64 `gorm:"column:quantity_available" json:"quantity_available"`
