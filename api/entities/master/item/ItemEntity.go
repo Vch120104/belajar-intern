@@ -9,7 +9,7 @@ type Item struct {
 	ItemClassId                  int        `gorm:"column:item_class_id;not null" json:"item_class_id"`
 	ItemName                     string     `gorm:"column:item_name;size:100" json:"item_name"`
 	ItemGroupId                  int        `gorm:"column:item_group_id;not null" json:"item_group_id"`
-	ItemType                     string     `gorm:"column:item_type;size:1" json:"item_type"`
+	ItemTypeId                   int        `gorm:"column:item_type_id;" json:"item_type_id"`
 	ItemLevel1                   string     `gorm:"column:item_level_1;size:10" json:"item_level_1"`
 	ItemLevel2                   string     `gorm:"column:item_level_2;size:10" json:"item_level_2"`
 	ItemLevel3                   string     `gorm:"column:item_level_3;size:10" json:"item_level_3"`

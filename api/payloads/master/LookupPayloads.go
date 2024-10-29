@@ -33,7 +33,7 @@ type ItemListForPriceList struct {
 	ItemCode      string `json:"item_code"`
 	ItemName      string `json:"item_name"`
 	ItemClassCode string `json:"item_class_code"`
-	ItemType      string `json:"item_type"`
+	ItemTypeId    string `json:"item_type_id"`
 	ItemLevel1    string `gorm:"column:item_level_1" json:"item_level_1"`
 	ItemLevel2    string `gorm:"column:item_level_2" json:"item_level_2"`
 	ItemLevel3    string `gorm:"column:item_level_3" json:"item_level_3"`
