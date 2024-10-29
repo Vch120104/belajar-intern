@@ -531,23 +531,25 @@ func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request mast
 }
 
 func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PurchasePriceDetail{}
+	var entities []masteritementities.PurchasePriceDetail
 
-	result := tx.Where("purchase_price_id = ? AND purchase_price_detail_id IN (?)", Id, iddet).First(&entities)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        result.Error,
+	// Menemukan semua entitas yang cocok
+	result := tx.Where("purchase_price_id = ? AND purchase_price_detail_id IN ?", Id, iddet).Find(&entities)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
 		}
-	} else if result.Error != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	err := tx.Delete(&entities).Error
-	if err != nil {
+	// Menghapus semua entitas yang ditemukan
+	if err := tx.Delete(&entities).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
