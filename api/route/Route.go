@@ -211,6 +211,10 @@ func StartRouting(db *gorm.DB) {
 	StockTransactionTypeService := masterserviceimpl.NewStockTransactionServiceImpl(StockTransactionTypeRepository, db, rdb)
 	StockTransactionTypeController := mastercontroller.NewStockTransactionTypeController(StockTransactionTypeService)
 
+	//stock transaction reason
+	StockTransactionReasonRepository := masterrepositoryimpl.StartStockTraansactionReasonRepositoryImpl()
+	StockTransactionReasonService := masterserviceimpl.StartStockTransactionReasonServiceImpl(StockTransactionReasonRepository, db, rdb)
+	StockTransactionReasonController := mastercontroller.StartStockTransactionReasonController(StockTransactionReasonService)
 	// Warehouse Group
 	warehouseGroupRepository := masterwarehouserepositoryimpl.OpenWarehouseGroupImpl()
 	warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository, db, rdb)
@@ -438,6 +442,7 @@ func StartRouting(db *gorm.DB) {
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	WarehouseCostingType := WarehouseCostingTypeMasterRouter(warehouseCostingTypeController)
 	StockTransactionTypeRouter := StockTransactionTypeRouter(StockTransactionTypeController)
+	StockTransactionReasonRouter := StockTransactionReasonRouter(StockTransactionReasonController)
 
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
@@ -545,6 +550,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/item-operation", ItemOperationRouter)
 		r.Mount("/item-cycle", ItemCycleRouter)
 		r.Mount("/stock-transaction-type", StockTransactionTypeRouter)
+		r.Mount("/stock-transaction-reason", StockTransactionReasonRouter)
 		/* Transaction */
 
 		/* Transaction JPCB */
