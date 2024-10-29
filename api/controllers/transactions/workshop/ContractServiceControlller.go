@@ -25,6 +25,7 @@ type ContractServiceController interface {
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Void(writer http.ResponseWriter, request *http.Request)
+	Submit(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewContractServiceController(ContractServiceService transactionworkshopservice.ContractServiceService) ContractServiceController {
@@ -162,4 +163,15 @@ func (r *ContractServiceControllerImpl) Void(writer http.ResponseWriter, request
 	} else {
 		payloads.NewHandleError(writer, "Failed to void contract service", http.StatusInternalServerError)
 	}
+}
+
+// Submit implements ContractServiceController.
+func (r *ContractServiceControllerImpl) Submit(writer http.ResponseWriter, request *http.Request) {
+	Id, _ := strconv.Atoi(chi.URLParam(request, "contract_service_system_number"))
+	res, err := r.ContractServiceService.Submit(Id)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Submit Contract Service", http.StatusOK)
 }

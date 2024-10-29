@@ -330,3 +330,41 @@ func (r *ContractServiceRepositoryImpl) Void(tx *gorm.DB, Id int) (bool, *except
 	}
 	return true, nil
 }
+
+// Submit implements transactionworkshoprepository.ContractServiceRepository.
+func (r *ContractServiceRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.ContractService
+
+	err := tx.Model(&transactionworkshopentities.ContractService{}).Where("contract_service_system_number = ?", Id).First(&entity).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				Message: "No COntract Service Data Found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			Message: fmt.Sprintf("Failed to retrive contract service from the database: %v", err),
+		}
+	}
+
+	// if entity.ContractServiceSystemNumber == " " {
+	// 	newDocumentNumber, genErr := r.GenerateDocumentNumber(tx, entity.ContractServiceSystemNumber)
+	// 	if genErr != nil {
+	// 		return false, "", genErr
+	// 	}
+
+	// 	entity.ContractServiceSystemNumber = newDocumentNumber
+
+	err = tx.Save(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			Message: "Failed to submit contrat service",
+		}
+	}
+	return true, nil
+	// } else {
+	// 	return false, &exceptions.BaseErrorResponse{
+	// 		Message: "Document number has already been generated",
+	// 	}
+}

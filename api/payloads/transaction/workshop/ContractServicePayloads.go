@@ -77,9 +77,9 @@ type ContractServiceInsert struct {
 	VehicleOwner                  string    `json:"vehicle_registration_certificate_owner_name"`
 	RegisteredMileage             int       `json:"registered_mileage"`
 	Remark                        string    `json:"remark"`
-	Total                         float64   `json:"total" default:"0"`  
-    Vat                           float64   `json:"vat" default:"0"`    
-    GrandTotal                    float64   `json:"grand_total" default:"0"` 
+	Total                         float64   `json:"total" default:"0"`
+	Vat                           float64   `json:"vat" default:"0"`
+	GrandTotal                    float64   `json:"grand_total" default:"0"`
 }
 
 type ContractServiceInsertResponse struct {
@@ -104,9 +104,9 @@ type ContractServiceInsertResponse struct {
 	VehicleOwner                  string    `json:"vehicle_registration_certificate_owner_name"`
 	RegisteredMileage             int       `json:"registered_mileage"`
 	Remark                        string    `json:"remark"`
-	Total                         float64   `json:"total" default:"0"`  
-    Vat                           float64   `json:"vat" default:"0"`    
-    GrandTotal                    float64   `json:"grand_total" default:"0"` 
+	Total                         float64   `json:"total" default:"0"`
+	Vat                           float64   `json:"vat" default:"0"`
+	GrandTotal                    float64   `json:"grand_total" default:"0"`
 }
 
 type ContractServiceBrand struct {
@@ -141,6 +141,11 @@ type ContractServiceVehicleResponse struct {
 	VehicleVariantId    int    `json:"vehicle_variant_id"`
 	VehicleColourId     int    `json:"vehicle_colour_id"`
 	VehicleOwner        string `json:"vehicle_registration_certificate_owner_name"`
+}
+
+type SubmitContractServiceResponse struct {
+	ContractServiceSystemNumber   int    `json:"contract_service_system_number"`
+	ContractSevriceDocumentNumber string `json:"contract_service_document_number"`
 }
 
 // type ContractServiceColour struct {

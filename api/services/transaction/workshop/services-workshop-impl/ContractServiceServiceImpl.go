@@ -136,3 +136,17 @@ func (s *ContractServiceServiceImpl) Void(Id int) (bool, *exceptions.BaseErrorRe
 	}
 	return delete, nil
 }
+
+// Submit implements transactionworkshopservice.ContractServiceService.
+func (s *ContractServiceServiceImpl) Submit(Id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	submit, err := s.ContractServiceRepository.Submit(tx, Id)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return false, err
+	}
+
+	return submit, nil
+}
