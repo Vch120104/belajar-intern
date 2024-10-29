@@ -627,6 +627,7 @@ func PurchasePriceRouter(
 	//detail
 	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
 	router.Get("/detail/{purchase_price_detail_id}", PurchasePriceController.GetPurchasePriceDetailById)
+	router.Get("/detail/{currency_id}/{supplier_id}/{effective_date}", PurchasePriceController.GetPurchasePriceDetailByParam)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Put("/detail/{purchase_price_detail_id}", PurchasePriceController.UpdatePurchasePriceDetail)
 	router.Delete("/detail/{purchase_price_id}/{multi_id}", PurchasePriceController.DeletePurchasePrice)
@@ -876,7 +877,6 @@ func WarehouseCostingTypeMasterRouter(
 	router.Get("/by-code/{warehouse-costing-type-code}", warehouseCostingTypeController.GetWarehouseCostingTypeByCode)
 	return router
 }
-
 func WarehouseLocationRouter(
 	warehouseLocationController masterwarehousecontroller.WarehouseLocationController,
 ) chi.Router {
@@ -954,7 +954,21 @@ func AgreementRouter(
 
 	return router
 }
+func StockTransactionTypeRouter(
+	StockTransactionType mastercontroller.StockTransactionTypeController,
+) chi.Router {
 
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{stock_transaction_type_code}", StockTransactionType.GetStockTransactionTypeByCode)
+	router.Get("/", StockTransactionType.GetAllStockTransactionType)
+	return router
+}
 func SkillLevelRouter(
 	SkillLevelController mastercontroller.SkillLevelController,
 ) chi.Router {

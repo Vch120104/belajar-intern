@@ -333,7 +333,7 @@ type PurchaseRequestItemGetAll struct {
 	ItemCode              string  `json:"item_code" gorm:"column:item_code"`
 	ItemName              string  `json:"item_name" gorm:"column:item_name"`
 	ItemClassName         string  `json:"item_class_name" gorm:"column:item_class_name"`
-	ItemType              string  `json:"item_type" gorm:"column:item_type"`
+	ItemTypeId            int     `json:"item_type_id" gorm:"column:item_type_id"`
 	ItemLevel1            string  `json:"item_level_1" gorm:"column:item_level_1"`
 	ItemLevel2            string  `json:"item_level_2" gorm:"column:item_level_2"`
 	ItemLevel3            string  `json:"item_level_3" gorm:"column:item_level_3"`

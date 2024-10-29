@@ -166,8 +166,9 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 
 	// Generate template file
 	f := excelize.NewFile()
-	sheetName := "Sheet1"
+	sheetName := "purchase_price"
 	defer func() {
+		f.DeleteSheet("Sheet1")
 		if err := f.Close(); err != nil {
 			log.Error(err)
 		}
@@ -537,4 +538,14 @@ func ConvertPurchasePriceDetailMapToStruct(maps []map[string]interface{}) ([]mas
 	}
 
 	return result, nil
+}
+
+func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
 }
