@@ -271,7 +271,8 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (ma
 				item_level_1_id AS item_level_id,
 				1 AS item_level,
 				item_class_id,
-				'' AS item_level_parent,
+				0 AS item_level_parent_id,
+				'' AS item_level_parent_code,
 				item_level_1_code AS item_level_code,
 				item_level_1_name AS item_level_name
 			`).
@@ -284,7 +285,8 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (ma
 				item_level_2_id as item_level_id,
 				2 AS item_level,
 				0 AS item_class_id,
-				mil1.item_level_1_code AS item_level_parent,
+				mil1.item_level_1_id AS item_level_parent_id,
+				mil1.item_level_1_code AS item_level_parent_code,
 				item_level_2_code AS item_level_code,
 				item_level_2_name AS item_level_name
 			`).
@@ -298,7 +300,8 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (ma
 				item_level_3_id as item_level_id,
 				3 AS item_level,
 				0 AS item_class_id,
-				mil2.item_level_2_code AS item_level_parent,
+				mil2.item_level_2_id AS item_level_parent_id,
+				mil2.item_level_2_code AS item_level_parent_code,
 				item_level_3_code AS item_level_code,
 				item_level_3_name AS item_level_name
 			`).
@@ -312,7 +315,8 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (ma
 				item_level_4_id as item_level_id,
 				4 AS item_level,
 				0 AS item_class_id,
-				mil3.item_level_3_code AS item_level_parent,
+				mil3.item_level_3_id AS item_level_parent_id,
+				mil3.item_level_3_code AS item_level_parent_code,
 				item_level_4_code AS item_level_code,
 				item_level_4_name AS item_level_name
 			`).

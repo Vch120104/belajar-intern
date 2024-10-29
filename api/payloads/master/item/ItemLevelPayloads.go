@@ -19,13 +19,14 @@ type GetItemLevelDropdownResponse struct {
 }
 
 type GetItemLevelResponseById struct {
-	IsActive        bool   `json:"is_active"`
-	ItemLevelId     int    `json:"item_level_id"`
-	ItemLevel       int    `json:"item_level"`
-	ItemClassId     int    `json:"item_class_id"`
-	ItemLevelParent string `json:"item_level_parent"`
-	ItemLevelCode   string `json:"item_level_code"`
-	ItemLevelName   string `json:"item_level_name"`
+	IsActive            bool   `json:"is_active"`
+	ItemLevelId         int    `json:"item_level_id"`
+	ItemLevel           int    `json:"item_level"`
+	ItemClassId         int    `json:"item_class_id"`
+	ItemLevelParentId   int    `json:"item_level_parent_id"`
+	ItemLevelParentCode string `json:"item_level_parent_code"`
+	ItemLevelCode       string `json:"item_level_code"`
+	ItemLevelName       string `json:"item_level_name"`
 }
 
 type GetItemLevelLookUp struct {
