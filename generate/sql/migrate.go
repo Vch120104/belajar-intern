@@ -105,8 +105,8 @@ func Migrate() {
 	// &masteritementities.Item{},
 	// &masteritementities.ItemPriceCode{},
 
-	//&masteritementities.ItemLocation{},
-	//&masteritementities.ItemLocationDetail{},
+	// &masteritementities.ItemLocation{},
+	// &masteritementities.ItemLocationDetail{},
 	//&masteritementities.ItemClass{},
 	//&masteritementities.Bom{},
 	//&masteritementities.BomDetail{},
