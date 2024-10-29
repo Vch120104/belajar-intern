@@ -840,7 +840,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 		"A.item_code,"+
 		"A.item_name,"+
 		"Z.item_class_name,"+
-		"A.item_type,"+
+		"A.item_type_id,"+
 		"A.item_level_1,"+
 		"A.item_level_2,"+
 		"A.item_level_3,"+
@@ -1156,22 +1156,26 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequestDetailMultiId(db *gor
 	ids := strings.Split(s, ",")
 	for _, i2 := range ids {
 		entities := transactionsparepartentities.PurchaseRequestDetail{}
-		converted, _ := strconv.Atoi(i2)
+		converted, err := strconv.Atoi(i2)
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
+		}
 
-		err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
+		err = db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
-		HeaderEntities := transactionsparepartentities.PurchaseRequestEntities{}
-		err = db.Model(HeaderEntities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: entities.PurchaseRequestSystemNumber}).Error
+
+		headerEntity := transactionsparepartentities.PurchaseRequestEntities{}
+		err = db.Model(&headerEntity).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: entities.PurchaseRequestSystemNumber}).First(&headerEntity).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
-		if HeaderEntities.PurchaseRequestDocumentStatusId != 10 {
-			if err != nil {
-				return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Document is Not Draf"}
-			}
+
+		if headerEntity.PurchaseRequestDocumentStatusId != 10 {
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Document is Not Draft"}
 		}
+
 		err = db.Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).Delete(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
