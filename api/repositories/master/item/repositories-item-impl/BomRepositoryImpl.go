@@ -525,7 +525,7 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 		mainAlias + ".item_id",
 		mainAlias + ".item_code",
 		mainAlias + ".item_name",
-		mainAlias + ".item_type",
+		mainAlias + ".item_type_id",
 		mainAlias + ".item_group_id",
 		mainAliasClass + ".item_class_id",
 		mainAliasClass + ".item_class_code",
@@ -559,13 +559,13 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 	for rows.Next() {
 		var isActive bool
 		var itemId, itemGroupId, itemClassId, uomId int
-		var itemCode, itemName, itemType, itemClassCode, uomDescription string
+		var itemCode, itemName, itemTypeId, itemClassCode, uomDescription string
 
 		err := rows.Scan(&isActive,
 			&itemId,
 			&itemCode,
 			&itemName,
-			&itemType,
+			&itemTypeId,
 			&itemGroupId,
 			&itemClassId,
 			&itemClassCode,
@@ -584,7 +584,7 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 			"item_id":                  itemId,
 			"item_code":                itemCode,
 			"item_name":                itemName,
-			"item_type":                itemType,
+			"item_type_id":             itemTypeId,
 			"item_group_id":            itemGroupId,
 			"item_class_id":            itemClassId,
 			"item_class_code":          itemClassCode,

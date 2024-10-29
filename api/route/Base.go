@@ -627,6 +627,7 @@ func PurchasePriceRouter(
 	//detail
 	router.Get("/detail", PurchasePriceController.GetAllPurchasePriceDetail)
 	router.Get("/detail/{purchase_price_detail_id}", PurchasePriceController.GetPurchasePriceDetailById)
+	router.Get("/detail/{currency_id}/{supplier_id}/{effective_date}", PurchasePriceController.GetPurchasePriceDetailByParam)
 	router.Post("/detail", PurchasePriceController.AddPurchasePrice)
 	router.Put("/detail/{purchase_price_detail_id}", PurchasePriceController.UpdatePurchasePriceDetail)
 	router.Delete("/detail/{purchase_price_id}/{multi_id}", PurchasePriceController.DeletePurchasePrice)
