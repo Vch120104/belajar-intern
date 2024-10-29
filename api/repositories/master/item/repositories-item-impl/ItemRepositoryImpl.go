@@ -133,7 +133,8 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	// Membuat join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
-		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id")
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id").
+		Joins("LEFT JOIN mtr_item_type ON mtr_item_type.item_type_id = mtr_item.item_type_id")
 
 	// Terapkan filter
 	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
