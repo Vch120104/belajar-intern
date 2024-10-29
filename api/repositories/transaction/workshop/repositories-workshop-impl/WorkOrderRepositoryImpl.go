@@ -6011,9 +6011,9 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 
 	// Initialize variables
 	var (
-		csrDescription, pphTaxCode, itemType                                                           string
+		csrDescription, pphTaxCode                                                                     string
 		csrFrtQty, csrPrice, csrDiscPercent, addDiscReqAmount, newFrtQty, supplyQty, oprItemDiscAmount float64
-		csrOprItemCode, wcfTypeMoney, woOprItemLine, csrLineType, atpmWcfType, addDiscStat             int
+		csrOprItemCode, wcfTypeMoney, woOprItemLine, csrLineType, atpmWcfType, addDiscStat, itemTypeId int
 	)
 
 	// Set default WCF type
@@ -6128,8 +6128,8 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 		default:
 			// Fetch item UOM and type for other items
 			type ItemUOMType struct {
-				ItemUom  string `gorm:"column:unit_of_measurement_selling_id"`
-				ItemType string `gorm:"column:item_type"`
+				ItemUom    string `gorm:"column:unit_of_measurement_selling_id"`
+				ItemTypeId int    `gorm:"column:item_type_id"`
 			}
 
 			var itemDetails ItemUOMType
@@ -6145,10 +6145,10 @@ func (s *WorkOrderRepositoryImpl) AddContractService(tx *gorm.DB, workOrderId in
 				}
 			}
 
-			itemType = itemDetails.ItemType
+			itemTypeId = itemDetails.ItemTypeId
 
 			supplyQty = 0
-			if itemType == "Service" {
+			if itemTypeId == 2 {
 				supplyQty = csrFrtQty
 			}
 		}
@@ -7095,7 +7095,7 @@ func (s *WorkOrderRepositoryImpl) AddGeneralRepairPackage(tx *gorm.DB, workOrder
 						var itemExists int64
 
 						if err := tx.Model(&masteritementities.Item{}).
-							Where("item_code = ? and item_group_id <> ? and item_type = ?", csrOprItemCode, 1, utils.ItemTypeService).
+							Where("item_code = ? and item_group_id <> ? and item_type_id = ?", csrOprItemCode, 1, 2).
 							Count(&itemExists).Error; err != nil {
 							return entity, &exceptions.BaseErrorResponse{
 								StatusCode: http.StatusInternalServerError,
@@ -7874,7 +7874,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							var itemCodeExists bool
 							itemGrpOJ := 6 // OJ
 							if err := tx.Table("mtr_item").
-								Select("EXISTS(SELECT 1 FROM mtr_item WHERE item_group_id <> ? AND item_code = ? AND item_type_id = ?) AS exists", itemGrpOJ, recallRecord.OprItemCode, utils.ItemTypeService).
+								Select("EXISTS(SELECT 1 FROM mtr_item WHERE item_group_id <> ? AND item_code = ? AND item_type_id = ?) AS exists", itemGrpOJ, recallRecord.OprItemCode, 2).
 								Scan(&itemCodeExists).Error; err != nil {
 								return entity, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,
@@ -8147,7 +8147,7 @@ func (s *WorkOrderRepositoryImpl) AddFieldAction(tx *gorm.DB, workOrderId int, r
 							var itemExists int64
 
 							if err := tx.Model(&masteritementities.Item{}).
-								Where("item_code = ? and item_group_id <> ? and item_type = ?", recallRecord.OprItemCode, 1, utils.ItemTypeService).
+								Where("item_code = ? and item_group_id <> ? and item_type_id = ?", recallRecord.OprItemCode, 1, 2).
 								Count(&itemExists).Error; err != nil {
 								return entity, &exceptions.BaseErrorResponse{
 									StatusCode: http.StatusInternalServerError,
