@@ -981,6 +981,10 @@ func StockTransactionReasonRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/{stock_transaction_reason_code}", StockTransactionReason.GetStockTransactionReasonByCode)
+	router.Get("/{stock_transaction_reason_id}", StockTransactionReason.GetStockTransactionReasonById)
+	router.Get("/", StockTransactionReason.GetAllStockTransactionReason)
+	router.Post("/", StockTransactionReason.InsertStockTransactionReason)
+
 	return router
 }
 func SkillLevelRouter(
