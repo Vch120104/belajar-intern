@@ -104,7 +104,12 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter,
 
 // GetItemLevelDropDown implements ItemLevelController.
 func (r *ItemLevelControllerImpl) GetItemLevelDropDown(writer http.ResponseWriter, request *http.Request) {
-	itemLevelId := chi.URLParam(request, "item_level")
+	itemLevelId, errA := strconv.Atoi(chi.URLParam(request, "item_level"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
 
 	get, err := r.itemLevelService.GetItemLevelDropDown(itemLevelId)
 

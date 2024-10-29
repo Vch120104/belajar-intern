@@ -6,7 +6,6 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	// masteritemlevelservice "after-sales/api/services/master/item_level"
@@ -97,23 +96,67 @@ func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCon
 
 }
 
-// GetItemLevelDropDown implements masteritemrepository.ItemLevelRepository.
-func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
-	model := masteritementities.ItemLevel{}
-	result := []masteritemlevelpayloads.GetItemLevelDropdownResponse{}
+func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel int) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
+	response := []masteritemlevelpayloads.GetItemLevelDropdownResponse{}
+	var query *gorm.DB
 
-	itemlevelInt, _ := strconv.Atoi(itemLevel)
+	switch itemLevel {
+	case 1:
+		entities := masteritementities.ItemLevel1{}
+		query = tx.Model(&entities).
+			Select(`
+				item_level_1_id AS item_level_id,
+				1 AS item_level,
+				item_level_1_code AS item_level_code,
+				item_level_1_name AS item_level_name
+			`)
+	case 2:
+		entities := masteritementities.ItemLevel2{}
+		query = tx.Model(&entities).
+			Select(`
+				item_level_2_id AS item_level_id,
+				2 AS item_level,
+				item_level_2_code AS item_level_code,
+				item_level_2_name AS item_level_name
+			`)
+	case 3:
+		entities := masteritementities.ItemLevel3{}
+		query = tx.Model(&entities).
+			Select(`
+				item_level_3_id AS item_level_id,
+				3 AS item_level,
+				item_level_3_code AS item_level_code,
+				item_level_3_name AS item_level_name
+			`)
+	case 4:
+		entities := masteritementities.ItemLevel4{}
+		query = tx.Model(&entities).
+			Select(`
+				item_level_4_id AS item_level_id,
+				4 AS item_level,
+				item_level_4_code AS item_level_code,
+				item_level_4_name AS item_level_name
+			`)
+	default:
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item_level is unavailable"),
+		}
+	}
 
-	err := tx.Model(&model).Select("mtr_item_level.*,CONCAT(item_level_code , ' - ',item_level_name)AS item_level_name").Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemlevelInt - 1)}).Scan(&result).Error
-
+	err := query.Scan(&response).Error
 	if err != nil {
-		return result, &exceptions.BaseErrorResponse{
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return result, nil
+	for i := 0; i < len(response); i++ {
+		response[i].ItemLevelCodeName = response[i].ItemLevelCode + " - " + response[i].ItemLevelName
+	}
+
+	return response, nil
 }
 
 func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {

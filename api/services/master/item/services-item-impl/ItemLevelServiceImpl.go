@@ -52,7 +52,7 @@ func (s *ItemLevelServiceImpl) GetItemLevelLookUp(filter []utils.FilterCondition
 }
 
 // GetItemLevelDropDown implements masteritemservice.ItemLevelService.
-func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
+func (s *ItemLevelServiceImpl) GetItemLevelDropDown(itemLevel int) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.structItemLevelRepo.GetItemLevelDropDown(tx, itemLevel)
 	defer helper.CommitOrRollback(tx, err)

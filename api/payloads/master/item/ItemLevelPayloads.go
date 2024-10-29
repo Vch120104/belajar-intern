@@ -22,9 +22,11 @@ type GetItemLevelResponse struct {
 }
 
 type GetItemLevelDropdownResponse struct {
-	ItemLevelId   int    `json:"item_level_id"`
-	ItemLevelName string `json:"item_level_name"`
-	ItemLevelCode string `json:"item_level_code"`
+	ItemLevelId       int    `json:"item_level_id"`
+	ItemLevel         int    `json:"item_level"`
+	ItemLevelCode     string `json:"item_level_code"`
+	ItemLevelName     string `json:"item_level_name"`
+	ItemLevelCodeName string `json:"item_level_code_name"`
 }
 
 type GetItemLevelResponseById struct {
