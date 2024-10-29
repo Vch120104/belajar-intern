@@ -120,8 +120,8 @@ func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]m
 func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	response := []masteritemlevelpayloads.GetAllItemLevelResponse{}
 
-	entitiyLevel1 := masteritementities.ItemLevel1{}
-	queryLevel1 := tx.Model(&entitiyLevel1).
+	entityLevel1 := masteritementities.ItemLevel1{}
+	queryLevel1 := tx.Model(&entityLevel1).
 		Select(`
 			mtr_item_level_1.is_active,
 			mtr_item_level_1.item_level_1_id AS item_level_id,
