@@ -43,14 +43,23 @@ func NewItemLevelController(ItemLevelService masteritemlevelservice.ItemLevelSer
 
 // GetItemLevelLookUpbyId implements ItemLevelController.
 func (r *ItemLevelControllerImpl) GetItemLevelLookUpbyId(writer http.ResponseWriter, request *http.Request) {
-	itemLevel, errA := strconv.Atoi(chi.URLParam(request, "item_level_id"))
+	itemLevel, errA := strconv.Atoi(chi.URLParam(request, "item_level_1_id"))
+
+	queryValues := request.URL.Query()
+	filter := map[string]string{
+		"mil2.item_level_2_id": queryValues.Get("item_level_2_id"),
+		"mil3.item_level_3_id": queryValues.Get("item_level_3_id"),
+		"mil4.item_level_4_id": queryValues.Get("item_level_4_id"),
+	}
+
+	internalCriteria := utils.BuildFilterCondition(filter)
 
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
 
-	get, err := r.itemLevelService.GetItemLevelLookUpbyId(itemLevel)
+	get, err := r.itemLevelService.GetItemLevelLookUpbyId(internalCriteria, itemLevel)
 
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
