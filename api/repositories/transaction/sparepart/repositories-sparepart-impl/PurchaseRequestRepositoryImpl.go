@@ -1158,12 +1158,14 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequestDetailMultiId(db *gor
 	ids := strings.Split(s, ",")
 	for _, i2 := range ids {
 		entities := transactionsparepartentities.PurchaseRequestDetail{}
-		converted, err := strconv.Atoi(i2)
+		converted, _ := strconv.Atoi(i2)
+
+		err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
-
-		err = db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
+		HeaderEntities := transactionsparepartentities.PurchaseRequestEntities{}
+		err = db.Model(HeaderEntities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: entities.PurchaseRequestSystemNumber}).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
@@ -1171,7 +1173,6 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequestDetailMultiId(db *gor
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Document is Not Draf"}
 
 		}
-
 		err = db.Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).Delete(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
