@@ -1158,7 +1158,13 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequestDetailMultiId(db *gor
 	ids := strings.Split(s, ",")
 	for _, i2 := range ids {
 		entities := transactionsparepartentities.PurchaseRequestDetail{}
-		converted, _ := strconv.Atoi(i2)
+		converted, errs := strconv.Atoi(i2)
+		if errs != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed on parse id please check input",
+			}
+		}
 
 		err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
 		if err != nil {
