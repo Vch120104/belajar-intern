@@ -156,6 +156,7 @@ func Migrate() {
 	//&masterentities.BinningReferenceTypeMaster{},
 	//&masterentities.ItemClaimType{},
 	//&masterentities.StockTransactionType{},
+	//&masterentities.StockTransactionReason{},
 
 	//
 
