@@ -259,9 +259,7 @@ func (r *ItemLevelImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, page
 }
 
 func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (masteritemlevelpayloads.GetItemLevelResponseById, *exceptions.BaseErrorResponse) {
-
 	itemLevelResponse := masteritemlevelpayloads.GetItemLevelResponseById{}
-
 	var query *gorm.DB
 
 	switch itemLevel {
