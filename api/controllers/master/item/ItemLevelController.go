@@ -81,14 +81,14 @@ func (r *ItemLevelControllerImpl) GetItemLevelLookUp(writer http.ResponseWriter,
 	}
 
 	filter := map[string]string{
-		"mtr_item_level.item_level_code": queryValues.Get("item_level_1"),
-		"mtr_item_level.item_level_name": queryValues.Get("item_level_1_name"),
-		"B.item_level_code":              queryValues.Get("item_level_2"),
-		"B.item_level_name":              queryValues.Get("item_level_2_name"),
-		"C.item_level_code":              queryValues.Get("item_level_3"),
-		"C.item_level_name":              queryValues.Get("item_level_3_name"),
-		"D.item_level_code":              queryValues.Get("item_level_4"),
-		"D.item_level_name":              queryValues.Get("item_level_4_name"),
+		"mtr_item_level_1.item_level_1_code": queryValues.Get("item_level_1_code"),
+		"mtr_item_level_1.item_level_1_name": queryValues.Get("item_level_1_name"),
+		"mil2.item_level_2_code":             queryValues.Get("item_level_2_code"),
+		"mil2.item_level_2_name":             queryValues.Get("item_level_2_name"),
+		"mil3.item_level_3_code":             queryValues.Get("item_level_3_code"),
+		"mil3.item_level_3_name":             queryValues.Get("item_level_3_name"),
+		"mil4.item_level_4_code":             queryValues.Get("item_level_4_code"),
+		"mil4.item_level_4_name":             queryValues.Get("item_level_4_name"),
 	}
 
 	paginate := pagination.Pagination{

@@ -62,27 +62,32 @@ func (r *ItemLevelImpl) GetItemLevelLookUpbyId(tx *gorm.DB, filter []utils.Filte
 }
 
 func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	model := masteritementities.ItemLevel{}
+	entities := masteritementities.ItemLevel1{}
 	responses := []masteritemlevelpayloads.GetItemLevelLookUp{}
 
-	query := tx.Model(model).
-		Select(`mtr_item_level.item_level_code AS [item_level_1],
-	mtr_item_level.item_level_name AS [item_level_1_name],
-	B.item_level_code AS [item_level_2],
-	B.item_level_name AS [item_level_2_name],
-	C.item_level_code AS [item_level_3],
-	C.item_level_name AS [item_level_3_name],
-	D.item_level_code AS [item_level_4],
-	D.item_level_name AS [item_level_4_name],
-	mtr_item_level.item_level_id AS [item_level_id],
-	mtr_item_level.is_active AS [is_active]`).Joins("LEFT OUTER JOIN mtr_item_level B ON mtr_item_level.item_level_id = B.item_level_parent AND B.item_level = 2").
-		Joins("LEFT OUTER JOIN mtr_item_level C ON B.item_level_id = C.item_level_parent AND C.item_level = 3").
-		Joins("LEFT OUTER JOIN mtr_item_level D ON C.item_level_id = D.item_level_parent AND D.item_level = 4").
-		Where(masteritementities.ItemLevel{ItemClassId: itemClassId})
+	query := tx.Model(&entities).
+		Select(`
+			mtr_item_level_1.item_level_1_id,
+			mtr_item_level_1.item_level_1_code,
+			mtr_item_level_1.item_level_1_name,
+			mil2.item_level_2_id,
+			mil2.item_level_2_code,
+			mil2.item_level_2_name,
+			mil3.item_level_3_id,
+			mil3.item_level_3_code,
+			mil3.item_level_3_name,
+			mil4.item_level_4_id,
+			mil4.item_level_4_code,
+			mil4.item_level_4_name,
+			mtr_item_level_1.is_active
+		`).
+		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_1_id = mtr_item_level_1.item_level_1_id").
+		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_2_id = mil2.item_level_2_id").
+		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_3_id = mil3.item_level_3_id").
+		Where("mtr_item_level_1.item_class_id = ?", itemClassId)
 
 	queryFilter := utils.ApplyFilter(query, filter)
-
-	err := queryFilter.Scopes(pagination.Paginate(&model, &pages, queryFilter)).Order("mtr_item_level.item_level_id").Scan(&responses).Error
+	err := queryFilter.Scopes(pagination.Paginate(&entities, &pages, queryFilter)).Order("mtr_item_level_1.item_level_1_id").Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
