@@ -28,9 +28,87 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	var responses []masteritempayloads.PurchasePriceRequest
 
+	newFilterCondition := []utils.FilterCondition{}
+	supplierCode := ""
+	supplierName := ""
+	currencyCode := ""
+	effectiveDate := ""
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "supplier_code") {
+			supplierCode = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "supplier_name") {
+			supplierName = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "currency_code") {
+			currencyCode = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "purchase_price_effective_date") {
+			effectiveDate = filter.ColumnValue
+			continue
+		}
+		newFilterCondition = append(newFilterCondition, filter)
+	}
+
 	tableStruct := masteritempayloads.PurchasePriceRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
+
+	if supplierCode != "" || supplierName != "" {
+		var supplierIds []int
+		supplierName = strings.ReplaceAll(supplierName, " ", "%20")
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=1000000&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		var supplierResponse []masteritempayloads.PurchasePriceSupplierResponse
+		if err := utils.GetArray(supplierUrl, &supplierResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, supplier := range supplierResponse {
+			if isNotInList(supplierIds, supplier.SupplierId) {
+				supplierIds = append(supplierIds, supplier.SupplierId)
+			}
+		}
+
+		if len(supplierIds) == 0 {
+			supplierIds = []int{-1}
+		}
+
+		whereQuery = whereQuery.Where("supplier_id IN ?", supplierIds)
+	}
+
+	if currencyCode != "" {
+		var currencyIds []int
+		currencyCodeUrl := config.EnvConfigs.FinanceServiceUrl + "currency-code?currency_code=" + currencyCode
+		var currencyCodeResponse []masteritempayloads.CurrencyResponse
+		if err := utils.GetArray(currencyCodeUrl, &currencyCodeResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, currency := range currencyCodeResponse {
+			if isNotInList(currencyIds, currency.CurrencyId) {
+				currencyIds = append(currencyIds, currency.CurrencyId)
+			}
+		}
+
+		if len(currencyIds) == 0 {
+			currencyIds = []int{-1}
+		}
+
+		whereQuery = whereQuery.Where("currency_id IN ?", currencyIds)
+	}
+
+	if effectiveDate != "" {
+		whereQuery = whereQuery.Where("FORMAT(purchase_price_effective_date, 'd MMM yyyy') LIKE (?)", "%"+effectiveDate+"%")
+	}
 
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
@@ -584,4 +662,13 @@ func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id 
 	}
 
 	return entity, nil
+}
+
+func isNotInList(list []int, value int) bool {
+	for _, v := range list {
+		if v == value {
+			return false
+		}
+	}
+	return true
 }
