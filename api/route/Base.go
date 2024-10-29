@@ -1510,6 +1510,8 @@ func ContractServiceRouter(
 
 	router.Delete("/{contract_service_system_number}", ContractServiceController.Void)
 
+	router.Put("/{contract_service_system_number}", ContractServiceController.Submit)
+
 	return router
 }
 

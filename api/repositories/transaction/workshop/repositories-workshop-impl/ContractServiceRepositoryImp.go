@@ -2,6 +2,7 @@ package transactionworkshoprepositoryimpl
 
 import (
 	"after-sales/api/config"
+	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
@@ -10,8 +11,11 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -204,7 +208,7 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 	payload := transactionworkshoppayloads.ContractServiceResponseId{
 		CompanyId:                     entity.CompanyId,
 		ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
-		ContractServiceDocumentNumber: entity.ContractSevriceDocumentNumber,
+		ContractServiceDocumentNumber: entity.ContractServiceDocumentNumber,
 		ContractServiceFrom:           entity.ContractServiceFrom,
 		ContractServiceTo:             entity.ContractServiceTo,
 		BrandId:                       entity.BrandId,
@@ -267,7 +271,7 @@ func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionwor
 	// Prepare entity for insertion (only IDs and finance values set to 0 initially)
 	contractService := transactionworkshopentities.ContractService{
 		CompanyId:                     payload.CompanyId,
-		ContractSevriceDocumentNumber: payload.ContractServiceDocumentNumber,
+		ContractServiceDocumentNumber: payload.ContractServiceDocumentNumber,
 		ContractServiceDate:           payload.ContractServiceDate,
 		ContractServiceFrom:           payload.ContractServiceFrom,
 		ContractServiceTo:             payload.ContractServiceTo,
@@ -331,6 +335,96 @@ func (r *ContractServiceRepositoryImpl) Void(tx *gorm.DB, Id int) (bool, *except
 	return true, nil
 }
 
+func (r *ContractServiceRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, Id int) (string, *exceptions.BaseErrorResponse) {
+	var supplySlip transactionsparepartentities.SupplySlip
+
+	err1 := tx.Model(&transactionsparepartentities.SupplySlip{}).
+		Where("contract_service_system_number = ?", Id).
+		First(&supplySlip).
+		Error
+	if err1 != nil {
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve contract service from the database: %v", err1)}
+	}
+
+	var workOrder transactionworkshopentities.WorkOrder
+	var brandResponse transactionworkshoppayloads.BrandDocResponse
+
+	workOrderId := supplySlip.WorkOrderSystemNumber
+
+	// Get the work order based on the work order system number
+	err := tx.Model(&transactionworkshopentities.WorkOrder{}).Where("work_order_system_number = ?", workOrderId).First(&workOrder).Error
+	if err != nil {
+
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve work order from the database: %v", err)}
+	}
+
+	if workOrder.BrandId == 0 {
+
+		return "", &exceptions.BaseErrorResponse{Message: "brand_id is missing in the work order. Please ensure the work order has a valid brand_id before generating document number."}
+	}
+
+	// Get the last work order based on the work order system number
+	var lastWorkOrder transactionworkshopentities.WorkOrder
+	err = tx.Model(&transactionworkshopentities.WorkOrder{}).
+		Where("brand_id = ?", workOrder.BrandId).
+		Order("work_order_document_number desc").
+		First(&lastWorkOrder).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+
+		return "", &exceptions.BaseErrorResponse{Message: fmt.Sprintf("Failed to retrieve last work order: %v", err)}
+	}
+
+	currentTime := time.Now()
+	month := int(currentTime.Month())
+	year := currentTime.Year() % 100 // Use last two digits of the year
+
+	// fetch data brand from external api
+	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(workOrder.BrandId)
+	errUrl := utils.Get(brandUrl, &brandResponse, nil)
+	if errUrl != nil {
+		return "", &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errUrl,
+		}
+	}
+
+	// Check if BrandCode is not empty before using it
+	if brandResponse.BrandCode == "" {
+		return "", &exceptions.BaseErrorResponse{StatusCode: http.StatusInternalServerError, Message: "Brand code is empty"}
+	}
+
+	// Get the initial of the brand code
+	brandInitial := brandResponse.BrandCode[0]
+
+	// Handle the case when there is no last work order or the format is invalid
+	newDocumentNumber := fmt.Sprintf("WSCS/%c/%02d/%02d/00001", brandInitial, month, year)
+	if lastWorkOrder.WorkOrderSystemNumber != 0 {
+		lastWorkOrderDate := lastWorkOrder.WorkOrderDate
+		lastWorkOrderYear := lastWorkOrderDate.Year() % 100
+
+		// Check if the last work order is from the same year
+		if lastWorkOrderYear == year {
+			lastWorkOrderCode := lastWorkOrder.WorkOrderDocumentNumber
+			codeParts := strings.Split(lastWorkOrderCode, "/")
+			if len(codeParts) == 5 {
+				lastWorkOrderNumber, err := strconv.Atoi(codeParts[4])
+				if err == nil {
+					newWorkOrderNumber := lastWorkOrderNumber + 1
+					newDocumentNumber = fmt.Sprintf("SPSS/%c/%02d/%02d/%05d", brandInitial, month, year, newWorkOrderNumber)
+				} else {
+					log.Printf("Failed to parse last work order code: %v", err)
+				}
+			} else {
+				log.Println("Invalid last work order code format")
+			}
+		}
+	}
+
+	log.Printf("New document number: %s", newDocumentNumber)
+	return newDocumentNumber, nil
+}
+
 // Submit implements transactionworkshoprepository.ContractServiceRepository.
 func (r *ContractServiceRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ContractService
@@ -348,23 +442,24 @@ func (r *ContractServiceRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, *exce
 		}
 	}
 
-	// if entity.ContractServiceSystemNumber == " " {
-	// 	newDocumentNumber, genErr := r.GenerateDocumentNumber(tx, entity.ContractServiceSystemNumber)
-	// 	if genErr != nil {
-	// 		return false, "", genErr
-	// 	}
+	if entity.ContractServiceDocumentNumber == " " {
+		newDocumentNumber, genErr := r.GenerateDocumentNumber(tx, entity.ContractServiceSystemNumber)
+		if genErr != nil {
+			return false, genErr
+		}
 
-	// 	entity.ContractServiceSystemNumber = newDocumentNumber
+		entity.ContractServiceDocumentNumber = newDocumentNumber
 
-	err = tx.Save(&entity).Error
-	if err != nil {
+		err = tx.Save(&entity).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				Message: "Failed to submit contract service",
+			}
+		}
+		return true, nil
+	} else {
 		return false, &exceptions.BaseErrorResponse{
-			Message: "Failed to submit contrat service",
+			Message: "Document number has already been generated",
 		}
 	}
-	return true, nil
-	// } else {
-	// 	return false, &exceptions.BaseErrorResponse{
-	// 		Message: "Document number has already been generated",
-	// 	}
 }
