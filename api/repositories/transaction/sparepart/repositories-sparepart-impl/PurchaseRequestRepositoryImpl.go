@@ -119,7 +119,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 
 func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
 	//TODO implement me
-	result := transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{}
+	//result := transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{}
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
 	response := transactionsparepartpayloads.PurchaseRequestGetByIdResponses{}
 	rows, err := db.Model(&entities).
@@ -276,41 +276,40 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 			Err:        err,
 		}
 	}
-
-	result = transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{
-		Company:                       CompanyReponse[0].CompanyName,
-		PurchaseRequestSystemNumber:   response.PurchaseRequestSystemNumber,
-		PurchaseRequestDocumentNumber: response.PurchaseRequestDocumentNumber,
-		PurchaseRequestDocumentDate:   response.PurchaseRequestDocumentDate,
-		PurchaseRequestDocumentStatus: purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-		ItemGroup:                     ItemGroup.ItemGroupName,
-		Brand:                         GetBrandName.PurchaseRequestStatusDescription,
-		ReferenceType:                 PurchaseRequestReferenceType.ReferenceTypePurchaseRequestName,
-		//ReferenceDocumentNumber:       docNo,
-		ReferenceDocumentNumber: response.ReferenceDocumentNumber,
-
-		OrderType:                  OrderType.OrderTypeName,
-		BudgetCode:                 response.BudgetCode,
-		ProjectNo:                  response.ProjectNo,
-		Division:                   GetDivisionName.DivisionName,
-		PurchaseRequestRemark:      response.PurchaseRequestRemark,
-		PurchaseRequestTotalAmount: response.PurchaseRequestTotalAmount,
-		ExpectedArrivalDate:        response.ExpectedArrivalDate,
-		ExpectedArrivalTime:        response.ExpectedArrivalTime,
-		CostCenter:                 GetCostCenterName.CostCenterName,
-		ProfitCenter:               ProfitCenterName.ProfitCenterName,
-		WarehouseGroup:             WarehouseGroupName.WarehouseGroupName,
-		Warehouse:                  GetWarehouseResponsesName.WarehouseName,
-		SetOrder:                   response.SetOrder,
-		Currency:                   GetCcyName.CurrencyName,
-		ChangeNo:                   0,
-		CreatedByUser:              RequestBy.UserEmployeeName,
-		CreatedDate:                response.CreatedDate,
-		UpdatedByUser:              UpdatedBy.UserEmployeeName,
-		UpdatedDate:                response.UpdatedDate,
-	}
-	fmt.Println(result)
 	return response, nil
+	//result = transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{
+	//	Company:                       CompanyReponse[0].CompanyName,
+	//	PurchaseRequestSystemNumber:   response.PurchaseRequestSystemNumber,
+	//	PurchaseRequestDocumentNumber: response.PurchaseRequestDocumentNumber,
+	//	PurchaseRequestDocumentDate:   response.PurchaseRequestDocumentDate,
+	//	PurchaseRequestDocumentStatus: purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
+	//	ItemGroup:                     ItemGroup.ItemGroupName,
+	//	Brand:                         GetBrandName.PurchaseRequestStatusDescription,
+	//	ReferenceType:                 PurchaseRequestReferenceType.ReferenceTypePurchaseRequestName,
+	//	//ReferenceDocumentNumber:       docNo,
+	//	ReferenceDocumentNumber: response.ReferenceDocumentNumber,
+	//
+	//	OrderType:                  OrderType.OrderTypeName,
+	//	BudgetCode:                 response.BudgetCode,
+	//	ProjectNo:                  response.ProjectNo,
+	//	Division:                   GetDivisionName.DivisionName,
+	//	PurchaseRequestRemark:      response.PurchaseRequestRemark,
+	//	PurchaseRequestTotalAmount: response.PurchaseRequestTotalAmount,
+	//	ExpectedArrivalDate:        response.ExpectedArrivalDate,
+	//	ExpectedArrivalTime:        response.ExpectedArrivalTime,
+	//	CostCenter:                 GetCostCenterName.CostCenterName,
+	//	ProfitCenter:               ProfitCenterName.ProfitCenterName,
+	//	WarehouseGroup:             WarehouseGroupName.WarehouseGroupName,
+	//	Warehouse:                  GetWarehouseResponsesName.WarehouseName,
+	//	SetOrder:                   response.SetOrder,
+	//	Currency:                   GetCcyName.CurrencyName,
+	//	ChangeNo:                   0,
+	//	CreatedByUser:              RequestBy.UserEmployeeName,
+	//	CreatedDate:                response.CreatedDate,
+	//	UpdatedByUser:              UpdatedBy.UserEmployeeName,
+	//	UpdatedDate:                response.UpdatedDate,
+	//}
+	//fmt.Println(result)
 }
 func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB, conditions []utils.FilterCondition, paginationResponses pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
@@ -751,6 +750,7 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequest(db *gorm.DB, i int) 
 	return true, nil
 }
 func (p *PurchaseRequestRepositoryImpl) SubmitPurchaseRequest(db *gorm.DB, request transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest, id int) (transactionsparepartpayloads.PurchaseRequestGetByIdResponses, *exceptions.BaseErrorResponse) {
+	//fix normalize response
 	var count int64
 	var res transactionsparepartpayloads.PurchaseRequestGetByIdResponses
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
@@ -1009,6 +1009,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 	}
 	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
 	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	response.UnitOfMeasurementRate = UomRate
 	uomentities := masteritementities.UomItem{}
 	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
 	response.UnitOfMeasurementCode = uomentities.UomTypeCode
@@ -1109,6 +1110,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	uomentities := masteritementities.UomItem{}
 	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
 	response.UnitOfMeasurementCode = uomentities.UomTypeCode
+	response.UnitOfMeasurementRate = UomRate
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			uomentities.UomTypeCode = ""
@@ -1156,26 +1158,27 @@ func (p *PurchaseRequestRepositoryImpl) VoidPurchaseRequestDetailMultiId(db *gor
 	ids := strings.Split(s, ",")
 	for _, i2 := range ids {
 		entities := transactionsparepartentities.PurchaseRequestDetail{}
-		converted, err := strconv.Atoi(i2)
+		converted, errs := strconv.Atoi(i2)
+		if errs != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed on parse id please check input",
+			}
+		}
+
+		err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
-
-		err = db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).First(&entities).Error
+		HeaderEntities := transactionsparepartentities.PurchaseRequestEntities{}
+		err = db.Model(HeaderEntities).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: entities.PurchaseRequestSystemNumber}).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
+		if HeaderEntities.PurchaseRequestDocumentStatusId != 10 {
+			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Document is Not Draf"}
 
-		headerEntity := transactionsparepartentities.PurchaseRequestEntities{}
-		err = db.Model(&headerEntity).Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: entities.PurchaseRequestSystemNumber}).First(&headerEntity).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
 		}
-
-		if headerEntity.PurchaseRequestDocumentStatusId != 10 {
-			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: "Document is Not Draft"}
-		}
-
 		err = db.Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: converted}).Delete(&entities).Error
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Message: err.Error()}
