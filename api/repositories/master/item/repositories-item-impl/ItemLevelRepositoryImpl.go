@@ -5,7 +5,6 @@ import (
 	masteritemlevelrepo "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -291,40 +290,82 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (ma
 }
 
 func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
+	var err error
 
-	//GET ITEM CLASS LEVEL PARENT, IF CREATE ITEM LEVEL > 1
-	itemleveltoInt := request.ItemLevel
-	itemClassId := request.ItemClassId
+	if request.ItemLevel > 1 && request.ItemLevelParent == 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item_level_parent is required"),
+		}
+	}
 
-	model := masteritementities.ItemLevel{}
-
-	fmt.Println(itemleveltoInt, request.ItemLevelParent)
-
-	if itemleveltoInt > 1 {
-		if err := tx.Model(model).
-			Select("mtr_item_level.item_class_id").
-			Where(masteritementities.ItemLevel{ItemLevel: strconv.Itoa(itemleveltoInt - 1), ItemLevelId: request.ItemLevelParent}).
-			First(&itemClassId).Error; err != nil {
+	switch request.ItemLevel {
+	case 1:
+		entities := masteritementities.ItemLevel1{
+			IsActive:       request.IsActive,
+			ItemLevel1Id:   request.ItemLevelId,
+			ItemLevel1Name: request.ItemLevelName,
+			ItemLevel1Code: request.ItemLevelCode,
+			ItemClassId:    request.ItemClassId,
+		}
+		err = tx.Save(&entities).Error
+	case 2:
+		entityLevel1 := masteritementities.ItemLevel1{}
+		err = tx.Model(&entityLevel1).Where(masteritementities.ItemLevel1{ItemLevel1Id: request.ItemLevelParent}).First(&entityLevel1).Error
+		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
+		entities := masteritementities.ItemLevel2{
+			IsActive:       request.IsActive,
+			ItemLevel2Id:   request.ItemLevelId,
+			ItemLevel1Id:   entityLevel1.ItemLevel1Id,
+			ItemLevel2Code: request.ItemLevelCode,
+			ItemLevel2Name: request.ItemLevelName,
+		}
+		err = tx.Save(&entities).Error
+	case 3:
+		entityLevel2 := masteritementities.ItemLevel2{}
+		err = tx.Model(&entityLevel2).Where(masteritementities.ItemLevel2{ItemLevel2Id: request.ItemLevelParent}).First(&entityLevel2).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		entities := masteritementities.ItemLevel3{
+			IsActive:       request.IsActive,
+			ItemLevel3Id:   request.ItemLevelId,
+			ItemLevel2Id:   entityLevel2.ItemLevel2Id,
+			ItemLevel3Code: request.ItemLevelCode,
+			ItemLevel3Name: request.ItemLevelName,
+		}
+		err = tx.Save(&entities).Error
+	case 4:
+		entityLevel3 := masteritementities.ItemLevel3{}
+		err = tx.Model(&entityLevel3).Where(masteritementities.ItemLevel3{ItemLevel3Id: request.ItemLevelParent}).First(&entityLevel3).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		entities := masteritementities.ItemLevel4{
+			IsActive:       request.IsActive,
+			ItemLevel4Id:   request.ItemLevelId,
+			ItemLevel3Id:   entityLevel3.ItemLevel3Id,
+			ItemLevel4Code: request.ItemLevelCode,
+			ItemLevel4Name: request.ItemLevelName,
+		}
+		err = tx.Save(&entities).Error
+	default:
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item_level is unavailable"),
+		}
 	}
-
-	//
-
-	var itemLevelEntities = masteritementities.ItemLevel{
-		IsActive:        request.IsActive,
-		ItemLevelId:     request.ItemLevelId,
-		ItemLevel:       strconv.Itoa(request.ItemLevel),
-		ItemClassId:     itemClassId,
-		ItemLevelParent: request.ItemLevelParent,
-		ItemLevelCode:   request.ItemLevelCode,
-		ItemLevelName:   request.ItemLevelName,
-	}
-
-	err := tx.Save(&itemLevelEntities).Error
 
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate") {
@@ -333,7 +374,6 @@ func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveIt
 				Err:        err,
 			}
 		} else {
-
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
