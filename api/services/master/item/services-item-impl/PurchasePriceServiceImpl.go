@@ -539,3 +539,13 @@ func ConvertPurchasePriceDetailMapToStruct(maps []map[string]interface{}) ([]mas
 
 	return result, nil
 }
+
+func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}

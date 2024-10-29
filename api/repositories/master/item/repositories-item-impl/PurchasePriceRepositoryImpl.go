@@ -533,7 +533,6 @@ func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request mast
 func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
 	var entities []masteritementities.PurchasePriceDetail
 
-	// Menemukan semua entitas yang cocok
 	result := tx.Where("purchase_price_id = ? AND purchase_price_detail_id IN ?", Id, iddet).Find(&entities)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -548,7 +547,6 @@ func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int, i
 		}
 	}
 
-	// Menghapus semua entitas yang ditemukan
 	if err := tx.Delete(&entities).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -673,4 +671,52 @@ func isNotInList(list []int, value int) bool {
 		}
 	}
 	return true
+}
+
+func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailByParam(tx *gorm.DB, curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.PurchasePriceDetail
+
+	// Fetch PurchasePrice data
+	err := tx.Model(&masteritementities.PurchasePriceDetail{}).
+		Where("purchase_price_id = ? AND supplier_id = ? AND purchase_price_effective_date = ?", curId, supId, effectiveDate).
+		First(&entities).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Purchase price detail data not found",
+				Err:        fmt.Errorf("purchase price detail with ID %d not found", curId),
+			}
+		}
+		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error while fetching purchase price detail",
+			Err:        err,
+		}
+	}
+
+	// Fetch Item data from external service
+	ItemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entities.ItemId)
+	var getItemResponse masteritempayloads.PurchasePriceItemResponse
+	if err := utils.Get(ItemURL, &getItemResponse, nil); err != nil {
+		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error while fetching item data",
+			Err:        err,
+		}
+	}
+
+	// Prepare response payload
+	payloads := masteritempayloads.PurchasePriceDetailResponses{
+		PurchasePriceDetailId: entities.PurchasePriceDetailId,
+		PurchasePriceId:       entities.PurchasePriceId,
+		ItemId:                entities.ItemId,
+		ItemCode:              getItemResponse.ItemCode,
+		ItemName:              getItemResponse.ItemName,
+		IsActive:              entities.IsActive,
+		PurchasePrice:         entities.PurchasePrice,
+	}
+
+	return payloads, nil
 }
