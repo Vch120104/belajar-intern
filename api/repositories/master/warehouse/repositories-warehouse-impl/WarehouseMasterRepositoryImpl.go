@@ -472,7 +472,17 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 			Err:        err,
 		}
 	}
-
+	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
+	err = tx.Model(&CostingTypeEntities).
+		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
+		First(&CostingTypeEntities).Error
+	if err != nil {
+		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("warehouse costing type is not found"),
+		}
+	}
+	warehouseMasterResponse.WarehouseCostingTypeCode = CostingTypeEntities.WarehouseCostingTypeCode
 	// Populate the nested fields
 	warehouseMasterResponse.AddressDetails = getAddressResponse
 	warehouseMasterResponse.BrandDetails = getBrandResponse
