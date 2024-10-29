@@ -114,7 +114,7 @@ func (s *ItemLevelServiceImpl) ChangeStatus(itemLevel int, itemLevelId int) (boo
 		return false, err
 	}
 
-	change_status, err := s.structItemLevelRepo.ChangeStatus(tx, itemLevelId)
+	change_status, err := s.structItemLevelRepo.ChangeStatus(tx, itemLevel, itemLevelId)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {

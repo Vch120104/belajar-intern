@@ -344,32 +344,65 @@ func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveIt
 	return true, nil
 }
 
-func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
-	var entities masteritementities.ItemLevel
+func (r *ItemLevelImpl) ChangeStatus(tx *gorm.DB, itemLevel int, itemLevelId int) (bool, *exceptions.BaseErrorResponse) {
+	var err error
 
-	result := tx.Model(&entities).
-		Where("item_level_id = ?", Id).
-		First(&entities)
-
-	if result.Error != nil {
+	switch itemLevel {
+	case 1:
+		entities := masteritementities.ItemLevel1{}
+		err = tx.Model(&entities).Where(masteritementities.ItemLevel1{ItemLevel1Id: itemLevelId}).First(&entities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		entities.IsActive = !entities.IsActive
+		err = tx.Save(&entities).Error
+	case 2:
+		entities := masteritementities.ItemLevel2{}
+		err = tx.Model(&entities).Where(masteritementities.ItemLevel2{ItemLevel2Id: itemLevelId}).First(&entities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		entities.IsActive = !entities.IsActive
+		err = tx.Save(&entities).Error
+	case 3:
+		entities := masteritementities.ItemLevel3{}
+		err = tx.Model(&entities).Where(masteritementities.ItemLevel3{ItemLevel3Id: itemLevelId}).First(&entities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		entities.IsActive = !entities.IsActive
+		err = tx.Save(&entities).Error
+	case 4:
+		entities := masteritementities.ItemLevel4{}
+		err = tx.Model(&entities).Where(masteritementities.ItemLevel4{ItemLevel4Id: itemLevelId}).First(&entities).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+		entities.IsActive = !entities.IsActive
+		err = tx.Save(&entities).Error
+	default:
 		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("item_level is unavailable"),
 		}
 	}
 
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
-
-	result = tx.Save(&entities)
-
-	if result.Error != nil {
+	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
+			Err:        err,
 		}
 	}
 

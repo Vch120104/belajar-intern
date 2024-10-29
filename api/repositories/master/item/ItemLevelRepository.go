@@ -16,5 +16,5 @@ type ItemLevelRepository interface {
 	GetItemLevelDropDown(tx *gorm.DB, itemLevel string) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse)
 	GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetItemLevelLookUpbyId(tx *gorm.DB, itemLevelId int) (masteritemlevelpayloads.GetItemLevelLookUp, *exceptions.BaseErrorResponse)
-	ChangeStatus(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
+	ChangeStatus(tx *gorm.DB, itemLevel int, itemLevelId int) (bool, *exceptions.BaseErrorResponse)
 }
