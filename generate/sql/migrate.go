@@ -2,7 +2,6 @@ package migration
 
 import (
 	"after-sales/api/config"
-
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -152,6 +151,8 @@ func Migrate() {
 	//&masterentities.BinningTypeMaster{},
 	//&masterentities.BinningReferenceTypeMaster{},
 	//&masterentities.ItemClaimType{},
+	//&masterentities.StockTransactionType{},
+
 	//
 
 	//&transactionjpcbentities.SettingTechnician{},
