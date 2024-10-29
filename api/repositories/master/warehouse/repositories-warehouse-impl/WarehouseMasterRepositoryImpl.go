@@ -474,7 +474,7 @@ func (r *WarehouseMasterImpl) GetWarehouseMasterByCode(tx *gorm.DB, Code string)
 	}
 	CostingTypeEntities := masterwarehouseentities.WarehouseCostingType{}
 	err = tx.Model(&CostingTypeEntities).
-		Where("warehouse_costing_type_id = ?", entities.WarehouseCostingTypeId).
+		Where("warehouse_costing_type_id = ?", warehouseMasterResponse.WarehouseCostingTypeId).
 		First(&CostingTypeEntities).Error
 	if err != nil {
 		return masterwarehousepayloads.GetAllWarehouseMasterResponse{}, &exceptions.BaseErrorResponse{
