@@ -206,6 +206,11 @@ func StartRouting(db *gorm.DB) {
 	markupRateService := masteritemserviceimpl.StartMarkupRateService(markupRateRepository, db, rdb)
 	markupRateController := masteritemcontroller.NewMarkupRateController(markupRateService)
 
+	//stock transaction type
+	StockTransactionTypeRepository := masterrepositoryimpl.NewStockTransactionRepositoryImpl()
+	StockTransactionTypeService := masterserviceimpl.NewStockTransactionServiceImpl(StockTransactionTypeRepository, db, rdb)
+	StockTransactionTypeController := mastercontroller.NewStockTransactionTypeController(StockTransactionTypeService)
+
 	// Warehouse Group
 	warehouseGroupRepository := masterwarehouserepositoryimpl.OpenWarehouseGroupImpl()
 	warehouseGroupService := masterwarehouseserviceimpl.OpenWarehouseGroupService(warehouseGroupRepository, db, rdb)
@@ -442,6 +447,7 @@ func StartRouting(db *gorm.DB) {
 	WarehouseLocationDefinition := WarehouseLocationDefinitionRouter(WarehouseLocationDefinitionController)
 	WarehouseMaster := WarehouseMasterRouter(warehouseMasterController)
 	WarehouseCostingType := WarehouseCostingTypeMasterRouter(warehouseCostingTypeController)
+	StockTransactionTypeRouter := StockTransactionTypeRouter(StockTransactionTypeController)
 
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
@@ -550,6 +556,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/location-stock", LocationStockRouter)
 		r.Mount("/item-operation", ItemOperationRouter)
 		r.Mount("/item-cycle", ItemCycleRouter)
+		r.Mount("/stock-transaction-type", StockTransactionTypeRouter)
 		/* Transaction */
 
 		/* Transaction JPCB */

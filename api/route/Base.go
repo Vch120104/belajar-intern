@@ -876,7 +876,6 @@ func WarehouseCostingTypeMasterRouter(
 	router.Get("/by-code/{warehouse-costing-type-code}", warehouseCostingTypeController.GetWarehouseCostingTypeByCode)
 	return router
 }
-
 func WarehouseLocationRouter(
 	warehouseLocationController masterwarehousecontroller.WarehouseLocationController,
 ) chi.Router {
@@ -954,7 +953,21 @@ func AgreementRouter(
 
 	return router
 }
+func StockTransactionTypeRouter(
+	StockTransactionType mastercontroller.StockTransactionTypeController,
+) chi.Router {
 
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{stock_transaction_type_code}", StockTransactionType.GetStockTransactionTypeByCode)
+	router.Get("/", StockTransactionType.GetAllStockTransactionType)
+	return router
+}
 func SkillLevelRouter(
 	SkillLevelController mastercontroller.SkillLevelController,
 ) chi.Router {
