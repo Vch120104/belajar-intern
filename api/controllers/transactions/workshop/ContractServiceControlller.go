@@ -24,6 +24,7 @@ type ContractServiceController interface {
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
+	Void(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewContractServiceController(ContractServiceService transactionworkshopservice.ContractServiceService) ContractServiceController {
@@ -134,4 +135,31 @@ func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request
 
 	// Jika berhasil, kirimkan response success dengan payload result
 	payloads.NewHandleSuccess(writer, result, "Contract Service Saved Successfully", http.StatusOK)
+}
+
+// Void implements ContractServiceController.
+func (r *ContractServiceControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
+	// Void work order
+	workOrderIdStr := chi.URLParam(request, "contract_service_system_number")
+	workOrderId, err := strconv.Atoi(workOrderIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid contratct service ID", http.StatusBadRequest)
+		return
+	}
+
+	success, baseErr := r.ContractServiceService.Void(workOrderId)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "contract service voided successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to void contract service", http.StatusInternalServerError)
+	}
 }

@@ -301,3 +301,32 @@ func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionwor
 	// Return updated payload
 	return payload, nil
 }
+
+// Void implements transactionworkshoprepository.ContractServiceRepository.
+func (r *ContractServiceRepositoryImpl) Void(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.ContractService
+
+	err := tx.Model(transactionworkshopentities.ContractService{}).Where("contract_service_system_number", Id).First(&entity).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	err = tx.Delete(&entity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete the work order",
+			Err:        err,
+		}
+	}
+	return true, nil
+}

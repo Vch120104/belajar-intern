@@ -1494,6 +1494,8 @@ func ContractServiceRouter(
 
 	router.Post("/", ContractServiceController.Save)
 
+	router.Delete("/{contract_service_system_number}", ContractServiceController.Void)
+
 	return router
 }
 

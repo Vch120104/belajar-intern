@@ -124,3 +124,15 @@ func (s *ContractServiceServiceImpl) Save(payload transactionworkshoppayloads.Co
 
 	return result, nil
 }
+
+// Void implements transactionworkshopservice.ContractServiceService.
+func (s *ContractServiceServiceImpl) Void(Id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	delete, err := s.ContractServiceRepository.Void(tx, Id)
+	if err != nil {
+		return false, err
+	}
+	return delete, nil
+}
