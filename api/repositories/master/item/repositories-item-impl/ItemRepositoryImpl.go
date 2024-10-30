@@ -90,12 +90,14 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_class_id,
 			ic.item_class_code,
 			ic.item_class_name,
-			mtr_item.item_type,
+			mtr_item.item_type_id,
+			it.item_type_code,
 			mtr_item.item_level_1,
 			mtr_item.item_level_2,
 			mtr_item.item_level_3,
 			mtr_item.item_level_4`).
-		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id")
+		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id").
+		Joins("INNER JOIN mtr_item_type it ON it.item_type_id = mtr_item.item_type_id")
 
 	whereQuery := utils.ApplyFilterSearch(baseModelQuery, filterCondition)
 
@@ -216,6 +218,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			"item_group_id":   response.ItemGroupId,
 			"item_class_id":   response.ItemClassId,
 			"item_type_id":    response.ItemTypeId,
+			"item_type":       response.ItemTypeCode,
 			"supplier_id":     response.SupplierId,
 			"item_class_code": response.ItemClassCode,
 			"item_group_code": getItemGroupResponses.ItemGroupCode,

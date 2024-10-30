@@ -2636,9 +2636,10 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 	responses := []masterpayloads.ItemListForPriceList{}
 
 	baseModelQuery := tx.Model(&entities).
-		Select("DISTINCT mtr_item.*, mic.item_class_code").
+		Select("DISTINCT mtr_item.*, mic.item_class_code, mit.item_type_code").
 		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
-		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mid.item_id").
+		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where("mtr_item.is_active = ?", true).
 		Where("mtr_item.price_list_item = 'Y'")
 
