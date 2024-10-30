@@ -32,9 +32,7 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 
 	// Buat query dasar
 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.ContractServiceRequest{})
-	fmt.Println("Generated Query:", joinTable)
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-	fmt.Println("Where Query Generated:", whereQuery)
 
 	// Eksekusi query untuk mendapatkan data contract service
 	if err := whereQuery.Find(&entities).Error; err != nil {
@@ -102,9 +100,14 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			ContractServiceDocumentNumber: entity.ContractServiceDocumentNumber,
 			ContractServiceFrom:           entity.ContractServiceFrom,
 			ContractServiceTo:             entity.ContractServiceTo,
-			BrandName:                     brandResponse.BrandName,        // Mengambil nama brand dari response API
-			ModelName:                     modelResponse.ModelName,        // Mengambil nama model dari response API
-			VehicleTnkb:                   vehicleResponses.VehicleTnkb,   // Mengambil TNKB kendaraan dari response API
+			BrandId:                       brandResponse.BrandId,
+			BrandName:                     brandResponse.BrandName,
+			BrandCode:                     brandResponse.BrandCode, // Mengambil nama brand dari response API
+			ModelId:                       modelResponse.ModelId,
+			ModelName:                     modelResponse.ModelName,
+			ModelCode:                     modelResponse.ModelCode, // Mengambil nama model dari response API
+			VehicleTnkb:                   vehicleResponses.VehicleTnkb,
+			VehicleCode:                   vehicleResponses.VehicleCode,   // Mengambil TNKB kendaraan dari response API
 			ContractServiceStatusId:       entity.ContractServiceStatusId, // Mengambil status dari entitas contract service
 			ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
 		})
@@ -118,9 +121,14 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			"contract_service_document_number": response.ContractServiceDocumentNumber,
 			"contract_service_from":            response.ContractServiceFrom,
 			"contract_service_to":              response.ContractServiceTo,
+			"brand_id":                         response.BrandId,
 			"brand_name":                       response.BrandName,
+			"brand_code":                       response.BrandCode,
+			"model_id":                         response.ModelId,
 			"model_name":                       response.ModelName,
-			"tnkb":                             response.VehicleTnkb,
+			"model_code":                       response.ModelCode,
+			"vehicle_tnkb":                     response.VehicleTnkb,
+			"vehicle_code":                     response.VehicleCode,
 			// "customer_name":                    response.ContractServiceStatusId,
 			"contract_service_system_number": response.ContractServiceSystemNumber,
 			"status":                         response.ContractServiceStatusId,

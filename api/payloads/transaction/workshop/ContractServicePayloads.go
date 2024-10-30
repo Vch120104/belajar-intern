@@ -49,6 +49,7 @@ type ContractServiceRequest struct {
 	ContractServiceDocumentNumber string    `json:"contract_service_document_number" parent_entity:"trx_contract_service"`
 	ContractServiceFrom           time.Time `json:"contract_service_from" parent_entity:"trx_contract_service"`
 	ContractServiceTo             time.Time `json:"contract_service_to" parent_entity:"trx_contract_service"`
+	ContractServiceDate           time.Time `json:"contract_service_date" parent_entity:"trx_contract_service"`
 	BrandId                       int       `json:"brand_id" parent_entity:"trx_contract_service"`
 	ModelId                       int       `json:"model_id" parent_entity:"trx_contract_service"`
 	VehicleId                     int       `json:"vehicle_id" parent_entity:"trx_contract_service"`
