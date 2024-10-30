@@ -11,7 +11,7 @@ import (
 type DeductionService interface {
 	GetAllDeduction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdDeductionDetail(id int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse)
-	GetDeductionById(Id int,pgainate pagination.Pagination) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse)
+	GetDeductionById(Id int,pgainate pagination.Pagination) (masterpayloads.DeductionById, *exceptions.BaseErrorResponse)
 	GetAllDeductionDetail(Id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	PostDeductionDetail(req masterpayloads.DeductionDetailResponse, id int) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse)
 	PostDeductionList(req masterpayloads.DeductionListResponse) (masterentities	.DeductionList, *exceptions.BaseErrorResponse)
