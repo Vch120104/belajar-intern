@@ -86,10 +86,10 @@ type ItemRequest struct {
 	ItemName                     string  `json:"item_name"`
 	ItemGroupId                  int     `json:"item_group_id"`
 	ItemTypeId                   int     `json:"item_type_id"`
-	ItemLevel1                   string  `json:"item_level_1"`
-	ItemLevel2                   string  `json:"item_level_2"`
-	ItemLevel3                   string  `json:"item_level_3"`
-	ItemLevel4                   string  `json:"item_level_4"`
+	ItemLevel1Id                 int     `json:"item_level_1_id"`
+	ItemLevel2Id                 *int    `json:"item_level_2_id"`
+	ItemLevel3Id                 *int    `json:"item_level_3_id"`
+	ItemLevel4Id                 *int    `json:"item_level_4_id"`
 	SupplierId                   int     `json:"supplier_id"`
 	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
@@ -142,15 +142,15 @@ type ItemRequest struct {
 }
 
 type ItemSaveResponse struct {
-	IsActive   bool   `json:"is_active"`
-	ItemId     int    `json:"item_id"`
-	ItemCode   string `json:"item_code"`
-	ItemName   string `json:"item_name"`
-	ItemTypeId int    `json:"item_type_id"`
-	ItemLevel1 string `json:"item_level_1"`
-	ItemLevel2 string `json:"item_level_2"`
-	ItemLevel3 string `json:"item_level_3"`
-	ItemLevel4 string `json:"item_level_4"`
+	IsActive     bool   `json:"is_active"`
+	ItemId       int    `json:"item_id"`
+	ItemCode     string `json:"item_code"`
+	ItemName     string `json:"item_name"`
+	ItemTypeId   int    `json:"item_type_id"`
+	ItemLevel1Id int    `json:"item_level_1_id"`
+	ItemLevel2Id *int   `json:"item_level_2_id"`
+	ItemLevel3Id *int   `json:"item_level_3_id"`
+	ItemLevel4Id *int   `json:"item_level_4_id"`
 }
 
 type AtpmOrderTypeResponse struct {

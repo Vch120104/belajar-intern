@@ -424,10 +424,10 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		ItemName:                     req.ItemName,
 		ItemGroupId:                  req.ItemGroupId,
 		ItemTypeId:                   req.ItemTypeId,
-		ItemLevel1Str:                req.ItemLevel1,
-		ItemLevel2Str:                req.ItemLevel2,
-		ItemLevel3Str:                req.ItemLevel3,
-		ItemLevel4Str:                req.ItemLevel4,
+		ItemLevel1Id:                 req.ItemLevel1Id,
+		ItemLevel2Id:                 req.ItemLevel2Id,
+		ItemLevel3Id:                 req.ItemLevel3Id,
+		ItemLevel4Id:                 req.ItemLevel4Id,
 		SupplierId:                   req.SupplierId,
 		UnitOfMeasurementTypeId:      req.UnitOfMeasurementTypeId,
 		UnitOfMeasurementSellingId:   req.UnitOfMeasurementSellingId,
@@ -537,15 +537,15 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	result := masteritempayloads.ItemSaveResponse{
-		IsActive:   entities.IsActive,
-		ItemId:     entities.ItemId,
-		ItemName:   entities.ItemName,
-		ItemCode:   entities.ItemCode,
-		ItemTypeId: entities.ItemTypeId,
-		ItemLevel1: entities.ItemLevel1Str,
-		ItemLevel2: entities.ItemLevel2Str,
-		ItemLevel3: entities.ItemLevel3Str,
-		ItemLevel4: entities.ItemLevel4Str,
+		IsActive:     entities.IsActive,
+		ItemId:       entities.ItemId,
+		ItemName:     entities.ItemName,
+		ItemCode:     entities.ItemCode,
+		ItemTypeId:   entities.ItemTypeId,
+		ItemLevel1Id: entities.ItemLevel1Id,
+		ItemLevel2Id: entities.ItemLevel2Id,
+		ItemLevel3Id: entities.ItemLevel3Id,
+		ItemLevel4Id: entities.ItemLevel4Id,
 	}
 
 	return result, nil

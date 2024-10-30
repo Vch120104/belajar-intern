@@ -14,10 +14,6 @@ type Item struct {
 	ItemLevel2Id                 *int       `gorm:"column:item_level_2_id;size:30" json:"item_level_2_id"`
 	ItemLevel3Id                 *int       `gorm:"column:item_level_3_id;size:30" json:"item_level_3_id"`
 	ItemLevel4Id                 *int       `gorm:"column:item_level_4_id;size:30" json:"item_level_4_id"`
-	ItemLevel1Str                string     `gorm:"column:item_level_1_str;size:10" json:"item_level_1_str"`
-	ItemLevel2Str                string     `gorm:"column:item_level_2_str;size:10" json:"item_level_2_str"`
-	ItemLevel3Str                string     `gorm:"column:item_level_3_str;size:10" json:"item_level_3_str"`
-	ItemLevel4Str                string     `gorm:"column:item_level_4_str;size:10" json:"item_level_4_str"`
 	SupplierId                   int        `gorm:"column:supplier_id;size:30;not null" json:"supplier_id"`
 	UnitOfMeasurementTypeId      int        `gorm:"column:unit_of_measurement_type_id;size:30;not null" json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int        `gorm:"column:unit_of_measurement_selling_id;size:30" json:"unit_of_measurement_selling_id"`
