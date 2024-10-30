@@ -199,7 +199,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 
 		// Fetch Customer data from external service
 		CustomerURL := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(AgreementReq.CustomerId)
-		fmt.Println("Fetching Customer data from:", CustomerURL)
+		//fmt.Println("Fetching Customer data from:", CustomerURL)
 		var getCustomerResponse masterpayloads.AgreementCustomerResponse
 		if err := utils.Get(CustomerURL, &getCustomerResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -210,7 +210,7 @@ func (r *AgreementRepositoryImpl) GetAllAgreement(tx *gorm.DB, filterCondition [
 
 		// Fetch Company data from external service
 		CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(AgreementReq.DealerId)
-		fmt.Println("Fetching Company data from:", CompanyURL)
+		//fmt.Println("Fetching Company data from:", CompanyURL)
 		var getCompanyResponse masterpayloads.AgreementCompanyResponse
 		if err := utils.Get(CompanyURL, &getCompanyResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{

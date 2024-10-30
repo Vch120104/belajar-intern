@@ -457,9 +457,8 @@ func PriceListRouter(
 	router.Use(middleware.Recoverer)
 	router.Use(middlewares.MetricsMiddleware)
 
-	router.Get("/", priceListController.GetPriceList)
+	router.Get("/", priceListController.GetAllPriceListNew)
 	router.Get("/pop-up/", priceListController.GetPriceListLookup)
-	router.Get("/new/", priceListController.GetAllPriceListNew)
 	router.Get("/{price_list_id}", priceListController.GetPriceListById)
 	router.Post("/", priceListController.SavePriceList)
 	router.Patch("/{price_list_id}", priceListController.ChangeStatusPriceList)
@@ -557,6 +556,7 @@ func LocationStockRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", LocationStock.GetAllLocationStock)
+	router.Put("/", LocationStock.UpdateLocationStock)
 	return router
 }
 

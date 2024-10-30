@@ -38,12 +38,12 @@ func (s *ItemOperationServiceImpl) GetAllItemOperation(filterCondition []utils.F
 	return result, nil
 }
 
-func (s *ItemOperationServiceImpl) GetByIdItemOperation(id int) (masterpayloads.ItemOperationGet, *exceptions.BaseErrorResponse) {
+func (s *ItemOperationServiceImpl) GetByIdItemOperation(id int) (masterpayloads.ItemOperationPost, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result, err := s.ItemOperationRepository.GetByIdItemOperation(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return masterpayloads.ItemOperationGet{}, err
+		return masterpayloads.ItemOperationPost{}, err
 	}
 	return result, nil
 }
