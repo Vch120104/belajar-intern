@@ -237,6 +237,11 @@ func (r *ItemLevelControllerImpl) Save(writer http.ResponseWriter, request *http
 		return
 	}
 
+	if formRequest.ItemLevel > 1 && formRequest.ItemLevelParent == 0 {
+		payloads.NewHandleError(writer, "item_level_parent is required", http.StatusBadRequest)
+		return
+	}
+
 	create, err := r.itemLevelService.Save(formRequest)
 
 	if err != nil {

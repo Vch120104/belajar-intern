@@ -343,13 +343,6 @@ func (r *ItemLevelImpl) GetById(tx *gorm.DB, itemLevel int, itemLevelId int) (ma
 func (r *ItemLevelImpl) Save(tx *gorm.DB, request masteritemlevelpayloads.SaveItemLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 	var err error
 
-	if request.ItemLevel > 1 && request.ItemLevelParent == 0 {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("item_level_parent is required"),
-		}
-	}
-
 	switch request.ItemLevel {
 	case 1:
 		entities := masteritementities.ItemLevel1{
