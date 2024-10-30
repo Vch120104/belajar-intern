@@ -25,7 +25,6 @@ import (
 
 type PriceListController interface {
 	GetPriceListLookup(writer http.ResponseWriter, request *http.Request)
-	GetPriceList(writer http.ResponseWriter, request *http.Request)
 	SavePriceList(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPriceList(writer http.ResponseWriter, request *http.Request)
 	DeletePriceList(writer http.ResponseWriter, request *http.Request)
@@ -343,101 +342,6 @@ func (r *PriceListControllerImpl) GetPriceListLookup(writer http.ResponseWriter,
 
 	result, err := r.pricelistservice.GetPriceList(priceListRequest)
 
-	if err != nil {
-		helper.ReturnError(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccess(writer, result, "success", 200)
-}
-
-// @Summary Get All Price List
-// @Description REST API Price List
-// @Param price_list_code query string false "price_list_code"
-// @Param company_id query int false "company_id"
-// @Param brand_id query int false "brand_id"
-// @Param currency_id query int false "currency_id"
-// @Param effective_date query string false "effective_date"
-// @Param item_id query int false "item_id"
-// @Param item_group_id query int false "item_group_id"
-// @Param item_class_id query int false "item_class_id"
-// @Param price_list_amount query string false "price_list_amount"
-// @Param price_list_modifiable query string false "price_list_modifiable" Enums(true, false)
-// @Param atpm_syncronize query string false "atpm_syncronize" Enums(true, false)
-// @Param atpm_syncronize_time query string false "atpm_syncronize_time"
-// @Accept json
-// @Produce json
-// @Tags Master : Price List
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/price-list/ [get]
-func (r *PriceListControllerImpl) GetPriceList(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-	PriceListCode := queryValues.Get("price_list_code")
-	companyId, errA := strconv.Atoi(queryValues.Get("company_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	brandId, errA := strconv.Atoi(queryValues.Get("brand_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	currencyId, errA := strconv.Atoi(queryValues.Get("currency_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	effectiveDate, errA := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("effective_date"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	itemId, errA := strconv.Atoi(queryValues.Get("item_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	itemGroupId, errA := strconv.Atoi(queryValues.Get("item_group_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	itemClassId, errA := strconv.Atoi(queryValues.Get("item_class_id"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	priceListAmount, errA := strconv.ParseFloat(queryValues.Get("price_list_amount"), 64)
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-	priceListModifiable := queryValues.Get("price_list_modifiable")
-	atpmSyncronize := queryValues.Get("atpm_syncronize")
-	atpmSyncronizeTime, errA := time.Parse("2006-01-02T15:04:05.000Z", queryValues.Get("atpm_syncronize_time"))
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
-	priceListRequest := masteritempayloads.PriceListGetAllRequest{
-		PriceListCode:       PriceListCode,
-		CompanyId:           companyId,
-		BrandId:             brandId,
-		CurrencyId:          currencyId,
-		EffectiveDate:       effectiveDate,
-		ItemId:              itemId,
-		ItemGroupId:         itemGroupId,
-		ItemClassId:         itemClassId,
-		PriceListAmount:     priceListAmount,
-		PriceListModifiable: priceListModifiable,
-		AtpmSyncronize:      atpmSyncronize,
-		AtpmSyncronizeTime:  atpmSyncronizeTime,
-	}
-
-	result, err := r.pricelistservice.GetPriceList(priceListRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return

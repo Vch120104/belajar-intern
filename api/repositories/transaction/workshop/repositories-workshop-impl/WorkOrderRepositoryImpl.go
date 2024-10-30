@@ -1846,7 +1846,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			&workOrderReq.OperationItemCode,
 			&workOrderReq.OperationItemPrice,
 			&workOrderReq.OperationItemDiscountAmount,
-			&workOrderReq.ProposedPrice,
+			&workOrderReq.OperationItemDiscountRequestAmount,
 			&workOrderReq.OperationItemDiscountPercent,
 			&workOrderReq.OperationItemDiscountRequestPercent,
 		); err != nil {
@@ -1906,7 +1906,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			SupplyQuantity:                      workOrderReq.SupplyQuantity,
 			OperationItemPrice:                  workOrderReq.OperationItemPrice,
 			OperationItemDiscountAmount:         workOrderReq.OperationItemDiscountAmount,
-			OperationItemDiscountRequestAmount:  workOrderReq.ProposedPrice,
+			OperationItemDiscountRequestAmount:  workOrderReq.OperationItemDiscountRequestAmount,
 			OperationItemDiscountPercent:        workOrderReq.OperationItemDiscountPercent,
 			OperationItemDiscountRequestPercent: workOrderReq.OperationItemDiscountRequestPercent,
 		}
@@ -1943,7 +1943,7 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 
 }
 
-func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.WorkOrderDetail
 	err := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Where("work_order_system_number = ? AND work_order_detail_id = ?", workorderID, detailID).
@@ -1951,19 +1951,19 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return transactionworkshoppayloads.WorkOrderDetailRequest{}, &exceptions.BaseErrorResponse{
+			return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Message:    "Work order detail not found",
 				Err:        err,
 			}
 		}
-		return transactionworkshoppayloads.WorkOrderDetailRequest{}, &exceptions.BaseErrorResponse{
+		return transactionworkshoppayloads.WorkOrderDetailResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve work order detail from the database",
 			Err:        err}
 	}
 
-	payload := transactionworkshoppayloads.WorkOrderDetailRequest{
+	payload := transactionworkshoppayloads.WorkOrderDetailResponse{
 		WorkOrderDetailId:     entity.WorkOrderDetailId,
 		WorkOrderSystemNumber: entity.WorkOrderSystemNumber,
 		LineTypeId:            entity.LineTypeId,
@@ -1971,7 +1971,6 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 		JobTypeId:             entity.JobTypeId,
 		FrtQuantity:           entity.FrtQuantity,
 		SupplyQuantity:        entity.SupplyQuantity,
-		PriceListId:           entity.PriceListId,
 	}
 
 	return payload, nil
@@ -2738,7 +2737,7 @@ func (r *WorkOrderRepositoryImpl) UpdateDetailWorkOrder(tx *gorm.DB, IdWorkorder
 	entity.FrtQuantity = request.FrtQuantity
 	entity.SupplyQuantity = request.SupplyQuantity
 	entity.PriceListId = request.PriceListId
-	entity.OperationItemDiscountRequestAmount = request.ProposedPrice
+	entity.OperationItemDiscountRequestAmount = request.OperationItemDiscountRequestAmount
 	entity.OperationItemPrice = request.OperationItemPrice
 
 	if request.LineTypeId == 1 {
