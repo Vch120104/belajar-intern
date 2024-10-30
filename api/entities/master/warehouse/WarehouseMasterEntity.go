@@ -5,9 +5,10 @@ import masteritementities "after-sales/api/entities/master/item"
 const TableNameWarehouseMaster = "mtr_warehouse_master"
 
 type WarehouseMaster struct {
-	CompanyId                     int                             `gorm:"column:company_id;size:30;not null" json:"company_id"`
-	IsActive                      *bool                           `gorm:"column:is_active;default:true;not null" json:"is_active"`
-	WarehouseCostingType          string                          `gorm:"column:warehouse_costing_type;not null;type:varchar(50)" json:"warehouse_costing_type"`
+	CompanyId                     int   `gorm:"column:company_id;size:30;not null" json:"company_id"`
+	IsActive                      *bool `gorm:"column:is_active;default:true;not null" json:"is_active"`
+	WarehouseCostingTypeId        int   `gorm:"column:warehouse_costing_type_id;null;type:varchar(50)" json:"warehouse_costing_type_id"`
+	WarehouseCostingType          *WarehouseCostingType
 	WarehouseKaroseri             *bool                           `gorm:"column:warehouse_karoseri;default:false;not null" json:"warehouse_karoseri"`
 	WarehouseNegativeStock        *bool                           `gorm:"column:warehouse_negative_stock;default:false;not null" json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator *bool                           `gorm:"column:warehouse_replishment_indicator;default:false;not null" json:"warehouse_replishment_indicator"`

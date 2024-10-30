@@ -90,12 +90,14 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			mtr_item.item_class_id,
 			ic.item_class_code,
 			ic.item_class_name,
-			mtr_item.item_type,
+			mtr_item.item_type_id,
+			it.item_type_code,
 			mtr_item.item_level_1,
 			mtr_item.item_level_2,
 			mtr_item.item_level_3,
 			mtr_item.item_level_4`).
-		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id")
+		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id").
+		Joins("INNER JOIN mtr_item_type it ON it.item_type_id = mtr_item.item_type_id")
 
 	whereQuery := utils.ApplyFilterSearch(baseModelQuery, filterCondition)
 
@@ -114,20 +116,57 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 }
 
 func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
 	tableStruct := masteritempayloads.ItemSearch{}
 
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	var supplierCode, supplierName string
+	newFilterCondition := []utils.FilterCondition{}
+
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "supplier_code") {
+			supplierCode = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "supplier_name") {
+			supplierName = filter.ColumnValue
+			continue
+		}
+		newFilterCondition = append(newFilterCondition, filter)
+	}
+
+	// Membuat join table
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id").
+		Joins("LEFT JOIN mtr_item_type AS mtr_item_type_alias ON mtr_item_type_alias.item_type_id = mtr_item.item_type_id")
+
+	// Terapkan filter
+	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
 
 	// Handle item_id filter
 	if len(itemIDs) > 0 && itemIDs[0] != "" {
 		whereQuery = whereQuery.Where("mtr_item.item_id IN (?)", itemIDs)
 	}
 
-	// Handle supplier_id filter
-	if len(supplierIDs) > 0 && supplierIDs[0] != "" {
-		whereQuery = whereQuery.Where("mtr_item.supplier_id IN (?)", supplierIDs)
+	var supplierIds []int
+	if supplierCode != "" || supplierName != "" {
+		supplierName = strings.ReplaceAll(supplierName, " ", "%20")
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=1000000&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		var supplierResponse []masteritempayloads.PurchasePriceSupplierResponse
+		if err := utils.GetArray(supplierUrl, &supplierResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, supplier := range supplierResponse {
+			supplierIds = append(supplierIds, supplier.SupplierId)
+		}
+
+		if len(supplierIds) == 0 {
+			supplierIds = []int{-1}
+		}
+
+		whereQuery = whereQuery.Where("mtr_item.supplier_id IN ?", supplierIds)
 	}
 
 	var responses []masteritempayloads.ItemSearch
@@ -139,6 +178,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			Err:        errors.New("failed to fetch data from database"),
 		}
 	}
+
 	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -158,24 +198,16 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 				Err:        err,
 			}
 		}
+
 		itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
 		getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
 		errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
-		if err := utils.Get(itemGroupUrl, &getItemGroupResponses, nil); errUrlItemPackage != nil {
+		if errUrlItemPackage != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
-		// var ItemGroup transactionsparepartpayloads.PurchaseOrderItemGroupResponse
-		// ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(payloads.ItemGroupId)
-		// if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
-		// 	return false, &exceptions.BaseErrorResponse{
-		// 		StatusCode: http.StatusInternalServerError,
-		// 		Message:    "Failed to fetch Item Group data from external service",
-		// 		Err:        err,
-		// 	}
-		// }
 
 		// Build response map dengan data dari supplier
 		responseMap := map[string]interface{}{
@@ -185,7 +217,8 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			"item_name":       response.ItemName,
 			"item_group_id":   response.ItemGroupId,
 			"item_class_id":   response.ItemClassId,
-			"item_type":       response.ItemType,
+			"item_type_id":    response.ItemTypeId,
+			"item_type":       response.ItemTypeCode,
 			"supplier_id":     response.SupplierId,
 			"item_class_code": response.ItemClassCode,
 			"item_group_code": getItemGroupResponses.ItemGroupCode,
@@ -194,6 +227,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
+
 	return mapResponses, pages.TotalPages, int(pages.TotalRows), nil
 }
 
@@ -230,7 +264,7 @@ func (r *ItemRepositoryImpl) GetAllItem(tx *gorm.DB, filterCondition []utils.Fil
 			"item_name":       response.ItemName,
 			"item_group_id":   response.ItemGroupId,
 			"item_class_id":   response.ItemClassId,
-			"item_type":       response.ItemType,
+			"item_type_id":    response.ItemTypeId,
 			"supplier_id":     response.SupplierId,
 			"item_class_name": response.ItemClassName,
 			"item_level_1":    response.ItemLevel_1,
@@ -262,11 +296,13 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errors.New("item not found"),
+				Message:    "item not found",
+				Err:        err,
 			}
 		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch item data",
 			Err:        err,
 		}
 	}
@@ -279,7 +315,7 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 		ItemClassId:                  entities.ItemClassId,
 		ItemName:                     entities.ItemName,
 		ItemGroupId:                  entities.ItemGroupId,
-		ItemType:                     entities.ItemType,
+		ItemTypeId:                   entities.ItemTypeId,
 		ItemLevel_1:                  entities.ItemLevel1,
 		ItemLevel_2:                  entities.ItemLevel2,
 		ItemLevel_3:                  entities.ItemLevel3,
@@ -331,11 +367,11 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 
 	// Call external service to get Supplier details
 	supplierResponse := masteritempayloads.SupplierMasterResponse{}
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-master/" + strconv.Itoa(response.SupplierId)
-
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
 	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch supplier data",
 			Err:        err,
 		}
 	}
@@ -430,7 +466,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		ItemClassId:                  req.ItemClassId,
 		ItemName:                     req.ItemName,
 		ItemGroupId:                  req.ItemGroupId,
-		ItemType:                     req.ItemType,
+		ItemTypeId:                   req.ItemTypeId,
 		ItemLevel1:                   req.ItemLevel1,
 		ItemLevel2:                   req.ItemLevel2,
 		ItemLevel3:                   req.ItemLevel3,
@@ -444,7 +480,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		Lottable:                     req.Lottable,
 		Inspection:                   req.Inspection,
 		PriceListItem:                req.PriceListItem,
-		StockKeeping:                 req.StockKeeping,
+		StockKeeping:                 r.DetermineStockKeeping(req, req.StockKeeping),
 		DiscountId:                   req.DiscountId,
 		MarkupMasterId:               req.MarkupMasterId,
 		DimensionOfLength:            req.DimensionOfLength,
@@ -485,43 +521,40 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	err := tx.Save(&entities).Error
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to save item",
 			Err:        err,
 		}
 	}
 
 	model := masteritementities.Item{}
-
 	err = tx.Model(&model).Where(masteritementities.Item{ItemCode: req.ItemCode}).First(&model).Error
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch item data",
 			Err:        err,
 		}
 	}
 
 	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
-
 	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
-
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch atpm order type data",
 			Err:        err,
 		}
 	}
 
 	uomTypeModel := masteritementities.UomType{}
-
 	err = tx.Model(&uomTypeModel).Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).First(&uomTypeModel).Error
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch uom type data",
 			Err:        err,
 		}
 	}
@@ -538,10 +571,10 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	err = tx.Save(&uomItemEntities).Error
-
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to save uom item",
 			Err:        err,
 		}
 	}
@@ -551,7 +584,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		ItemId:     entities.ItemId,
 		ItemName:   entities.ItemName,
 		ItemCode:   entities.ItemCode,
-		ItemType:   entities.ItemType,
+		ItemTypeId: entities.ItemTypeId,
 		ItemLevel1: entities.ItemLevel1,
 		ItemLevel2: entities.ItemLevel2,
 		ItemLevel3: entities.ItemLevel3,
@@ -559,6 +592,42 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	return result, nil
+}
+
+func (r *ItemRepositoryImpl) DetermineStockKeeping(req masteritempayloads.ItemRequest, manualStockKeeping bool) bool {
+	itemGroupID := req.ItemGroupId
+	itemClassID := req.ItemClassId
+	itemTypeID := req.ItemTypeId
+
+	switch itemGroupID {
+	case 1: // Fixed Asset
+		return false // Non-stock keeping for Fixed Asset
+	case 6: // Outside Job
+		if itemTypeID == 2 { // Check for Service (ID 2)
+			return false // Non-stock keeping for Services in Outside Job group
+		}
+	case 7: // Prepaid
+		return false // Non-stock keeping for Prepaid group
+	case 4, 5: // OPEX, Opex Promosi
+		return false // Non-stock keeping for OPEX-related groups
+	case 2: // Inventory
+		switch itemClassID {
+		case 73: // Fee
+			if itemTypeID == 2 { // Check for Service (ID 2)
+				return false // Non-stock keeping for Services in Fee class
+			}
+		case 75, 76, 71, 70, 77, 69: // Consumable Material, Equipment, Material, Oil, Souvenir, Sparepart
+			return true // Stock keeping for these item classes
+		case 74: // Accessories
+			if itemTypeID == 1 { // Check for Goods (ID 1)
+				return true // Stock keeping for Goods in Accessories
+			} else if itemTypeID == 2 { // Check for Service (ID 2)
+				return false // Non-stock keeping for Services in Accessories
+			}
+		}
+	}
+
+	return manualStockKeeping
 }
 
 func (r *ItemRepositoryImpl) ChangeStatusItem(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {

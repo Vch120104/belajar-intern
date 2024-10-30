@@ -35,8 +35,7 @@ func StartLookupRepositoryImpl() masterrepository.LookupRepository {
 func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billCodeId int, oprItemCode int, agreementId int, profitCenterId int, minValue float64, companyId int, brandId int, contractServSysNo int, whsGroup int, orderTypeId int) (float64, *exceptions.BaseErrorResponse) {
 	var discount float64
 	var discCode string
-	var itemType string
-	var itemTypeServices string
+	var itemTypeId int
 	var companyCodePrice int
 	var useDiscDecentralize string
 	var hpp float64
@@ -206,8 +205,8 @@ func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billC
 			// Get Use Disc Decentralize and Item Type
 			tx.Model(&masteritementities.Item{}).
 				Where("item_id = ?", oprItemCode).
-				Select("use_disc_decentralize, item_type").
-				Row().Scan(&useDiscDecentralize, &itemType)
+				Select("use_disc_decentralize, item_type_id").
+				Row().Scan(&useDiscDecentralize, &itemTypeId)
 
 			if useDiscDecentralize == "N" {
 				discount = 0
@@ -269,7 +268,7 @@ func (r *LookupRepositoryImpl) GetOprItemDisc(tx *gorm.DB, lineTypeId int, billC
 			}
 
 			// Check ItemType Services
-			if itemType == itemTypeServices {
+			if itemTypeId == 2 {
 				discount = 0
 			}
 		}
@@ -305,7 +304,6 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 		commonPriceList     bool
 		defaultPriceCodeId  int
 		useDiscDecentralize string
-		itemService         string
 		priceCount          int64
 		priceCodeId         int
 	)
@@ -434,8 +432,8 @@ func (r *LookupRepositoryImpl) GetOprItemPrice(tx *gorm.DB, linetypeId int, comp
 			// Check item type
 			itemTypeExists := false
 			if err := tx.Model(&masteritementities.Item{}).
-				Where("item_id = ? AND item_type = ?", oprItemCode, itemService).
-				Select("item_type").
+				Where("item_id = ? AND item_type_id = ?", oprItemCode, 2).
+				Select("item_type_id").
 				Scan(&itemTypeExists).Error; err != nil {
 				return 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
@@ -1329,7 +1327,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				A.item_level_4 AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type
+						CASE A.item_type_id
 							WHEN ? THEN
 								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
@@ -1364,7 +1362,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
 				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode). // Parameters for the final ELSE condition.
 			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
@@ -1385,7 +1383,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				A.item_level_4 AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type
+						CASE A.item_type_id
 							WHEN ? THEN
 								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
@@ -1420,7 +1418,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
 				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("A.item_group_id = ? AND A.item_type = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
@@ -1477,7 +1475,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
 				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("A.item_group_id = ? AND A.item_type = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
@@ -1501,7 +1499,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				A.item_level_4 AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type
+						CASE A.item_type_id
 							WHEN ? THEN
 								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
@@ -1536,7 +1534,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
 				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
@@ -1558,7 +1556,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				A.item_level_4 AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
-						CASE A.item_type
+						CASE A.item_type_id
 							WHEN ? THEN
 								(SELECT TOP 1 price_list_amount FROM mtr_item_price_list
 								WHERE is_active = 1 
@@ -1593,7 +1591,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				END AS PRICE
 			`, year, month, companyId, whsGroup, // Parameters for AvailQty subquery
 				billCode, utils.TrxTypeWoCentralize.Code, utils.TrxTypeWoInternal.Code, utils.TrxTypeWoNoCharge.Code, // Parameters for CASE statement
-				utils.ItemTypeService, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
+				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
@@ -2423,12 +2421,11 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	var (
 		lineType         int
 		itemGrp          string
-		itemType         string
+		itemTypeId       int
 		itemCls          string
 		itmClsSublet     = "SB" // Assuming these are constants in your utils
 		lineTypeSublet   = utils.LinetypeSublet
 		itemClsFee       = "WF"
-		itemTypeService  = "S"
 		itemGrpInventory = "IN"
 		itemClsAccs      = "AC"
 		itemClsSv        = "SV"
@@ -2437,7 +2434,7 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	// Retrieve item details
 	var itemDetails struct {
 		ItemGroupId string
-		ItemType    string
+		ItemTypeId  int
 		ItemClassId string
 	}
 
@@ -2453,12 +2450,12 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	}
 
 	itemGrp = itemDetails.ItemGroupId
-	itemType = itemDetails.ItemType
+	itemTypeId = itemDetails.ItemTypeId
 	itemCls = itemDetails.ItemClassId
 
 	// Determine line type based on the item details
 	if itemGrp == itemGrpInventory {
-		if itemType == "G" {
+		if itemTypeId == 1 {
 			switch itemCls {
 			case "SP":
 				lineType = utils.LinetypeSparepart
@@ -2477,10 +2474,10 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 			}
 		} else if itemCls == itemClsFee {
 			lineType = lineTypeSublet
-		} else if itemCls == itemClsAccs && itemType == itemTypeService {
+		} else if itemCls == itemClsAccs && itemTypeId == 2 {
 			lineType = utils.LinetypeOperation
 		}
-	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemType == itemTypeService && itemCls == itemClsFee) {
+	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemTypeId == 2 && itemCls == itemClsFee) {
 		lineType = lineTypeSublet
 	}
 
@@ -2639,9 +2636,10 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 	responses := []masterpayloads.ItemListForPriceList{}
 
 	baseModelQuery := tx.Model(&entities).
-		Select("DISTINCT mtr_item.*, mic.item_class_code").
+		Select("DISTINCT mtr_item.*, mic.item_class_code, mit.item_type_code").
 		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
-		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mid.item_id").
+		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where("mtr_item.is_active = ?", true).
 		Where("mtr_item.price_list_item = 'Y'")
 

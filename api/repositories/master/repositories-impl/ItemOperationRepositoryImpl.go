@@ -20,10 +20,10 @@ func StartItemOperationRepositoryImpl() masterrepository.ItemOperationRepository
 }
 
 func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var responses []masterpayloads.ItemOperationGet
+	var responses []masterpayloads.ItemOperationPost
 	var entities masterentities.ItemOperation
 
-	query := tx.Select("mtr_item_operation.*")
+	query := tx.Select("*").Table("mtr_item_operation")
 	WhereQuery := utils.ApplyFilter(query, filterCondition)
 
 	err := WhereQuery.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&responses).Error
@@ -38,12 +38,12 @@ func (r *ItemOperationRepositoryImpl) GetAllItemOperation(tx *gorm.DB, filterCon
 	return pages, nil
 }
 
-func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) (masterpayloads.ItemOperationGet, *exceptions.BaseErrorResponse) {
-	var responses masterpayloads.ItemOperationGet
+func (r *ItemOperationRepositoryImpl) GetByIdItemOperation(tx *gorm.DB, id int) (masterpayloads.ItemOperationPost, *exceptions.BaseErrorResponse) {
+	var responses masterpayloads.ItemOperationPost
 	err := tx.Select("mtr_item_operation.*").Table("mtr_item_operation").
 		Where("item_operation_id=?", id).Scan(&responses).Error
 	if err != nil {
-		return masterpayloads.ItemOperationGet{}, &exceptions.BaseErrorResponse{
+		return masterpayloads.ItemOperationPost{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}

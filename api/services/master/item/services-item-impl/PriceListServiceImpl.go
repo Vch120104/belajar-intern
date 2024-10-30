@@ -122,6 +122,12 @@ func (s *PriceListServiceImpl) Download(uploadRequest masteritempayloads.PriceLi
 
 		data := result.Rows
 
+		parsedDate, err := time.Parse("2006-01-02", uploadRequest.Date)
+		if err != nil {
+			return f, &exceptions.BaseErrorResponse{Err: err, StatusCode: 500}
+		}
+		formattedDate := parsedDate.Format("02/01/2006")
+
 		if data, ok := data.([]masteritempayloads.PriceListItemResponses); ok {
 			if len(data) == 0 {
 				break
@@ -129,7 +135,7 @@ func (s *PriceListServiceImpl) Download(uploadRequest masteritempayloads.PriceLi
 			for i := 0; i < len(data); i++ {
 				f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), uploadRequest.BrandName)
 				f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), uploadRequest.CurrencyCode)
-				f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), uploadRequest.Date)
+				f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), formattedDate)
 				f.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), data[i].ItemCode)
 				f.SetCellValue(sheetName, fmt.Sprintf("E%d", i+2), data[i].PriceListAmount)
 			}

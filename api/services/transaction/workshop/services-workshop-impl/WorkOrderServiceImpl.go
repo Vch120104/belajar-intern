@@ -427,7 +427,7 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 
 }
 
-func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)

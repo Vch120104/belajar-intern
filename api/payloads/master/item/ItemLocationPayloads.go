@@ -1,10 +1,10 @@
 package masteritempayloads
 
 type ItemLocationRequest struct {
-	ItemLocationId   int `json:"item_location_id" parent_entity:"mtr_item_location" main_table:"mtr_item_location"`
-	WarehouseGroupId int `json:"warehouse_group_id" parent_entity:"mtr_item_location"`
-	WarehouseId      int `json:"warehouse_id" parent_entity:"mtr_item_location"`
-	ItemId           int `json:"item_id" parent_entity:"mtr_item_location"`
+	ItemLocationId   int `json:"item_location_id" parent_entity:"mtr_location_item" main_table:"mtr_location_item"`
+	WarehouseGroupId int `json:"warehouse_group_id" parent_entity:"mtr_location_item"`
+	WarehouseId      int `json:"warehouse_id" parent_entity:"mtr_location_item"`
+	ItemId           int `json:"item_id" parent_entity:"mtr_location_item"`
 }
 
 type ItemLocationResponse struct {
@@ -81,13 +81,13 @@ type ItemLocationGetAllResponse struct {
 }
 
 type ItemLocationGetByIdResponse struct {
-	ItemLocationId        int    `json:"item_location_id" parent_entity:"mtr_item_location" main_table:"mtr_item_location"`
-	WarehouseGroupId      int    `json:"warehouse_group_id" parent_entity:"mtr_item_location"`
-	WarehouseId           int    `json:"warehouse_id" parent_entity:"mtr_item_location"`
-	ItemId                int    `json:"item_id" parent_entity:"mtr_item_location"`
+	ItemLocationId        int    `json:"item_location_id" parent_entity:"mtr_location_item" main_table:"mtr_location_item"`
+	WarehouseGroupId      int    `json:"warehouse_group_id" parent_entity:"mtr_location_item"`
+	WarehouseId           int    `json:"warehouse_id" parent_entity:"mtr_location_item"`
+	ItemId                int    `json:"item_id" parent_entity:"mtr_location_item"`
 	ItemCode              string `json:"item_code" parent_entity:"mtr_item"`
 	ItemName              string `json:"item_name" parent_entity:"mtr_item"`
-	WarehouseLocationId   int    `json:"warehouse_location_id" parent_entity:"mtr_item_location"`
+	WarehouseLocationId   int    `json:"warehouse_location_id" parent_entity:"mtr_location_item"`
 	WarehouseLocationName string `json:"warehouse_location_name" parent_entity:"mtr_warehouse_location"`
 	WarehouseLocationCode string `json:"warehouse_location_code" parent_entity:"mtr_warehouse_location"`
 }

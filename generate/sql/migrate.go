@@ -104,8 +104,8 @@ func Migrate() {
 	//&masteritementities.Item{},
 	// &masteritementities.ItemPriceCode{},
 
-	//&masteritementities.ItemLocation{},
-	//&masteritementities.ItemLocationDetail{},
+	// &masteritementities.ItemLocation{},
+	// &masteritementities.ItemLocationDetail{},
 	//&masteritementities.ItemClass{},
 	//&masteritementities.Bom{},
 	//&masteritementities.BomDetail{},
@@ -154,6 +154,9 @@ func Migrate() {
 	//&masterentities.GoodsReceiveReferenceType{},
 	//&masterentities.GoodsReceiveDocumentStatus{},
 	//&masterwarehouseentities.WarehouseCostingType{},
+	//&masterentities.StockTransactionType{},
+	//&masterentities.StockTransactionReason{},
+
 	//
 
 	//&transactionjpcbentities.SettingTechnician{},

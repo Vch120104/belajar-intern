@@ -989,9 +989,9 @@ type WorkOrderDetailRequest struct {
 	OperationItemCode                   string  `json:"operation_item_code" parent_entity:"trx_work_order_detail"`
 	OperationItemPrice                  float64 `json:"operation_item_price" parent_entity:"trx_work_order_detail"`
 	OperationItemDiscountAmount         float64 `json:"operation_item_discount_amount" parent_entity:"trx_work_order_detail"`
-	ProposedPrice                       float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
 	OperationItemDiscountPercent        float64 `json:"operation_item_discount_percent" parent_entity:"trx_work_order_detail"`
 	OperationItemDiscountRequestPercent float64 `json:"operation_item_discount_request_percent" parent_entity:"trx_work_order_detail"`
+	OperationItemDiscountRequestAmount  float64 `json:"operation_item_discount_request_amount" parent_entity:"trx_work_order_detail"`
 }
 
 type WorkOrderDetailResponse struct {
@@ -1012,6 +1012,11 @@ type WorkOrderDetailResponse struct {
 	OperationItemDiscountRequestAmount  float64 `json:"operation_item_discount_request_amount"`
 	OperationItemDiscountPercent        float64 `json:"operation_item_discount_percent"`
 	OperationItemDiscountRequestPercent float64 `json:"operation_item_discount_request_percent"`
+	OperationItemCode                   string  `json:"operation_item_code"`
+	OperationItemName                   string  `json:"operation_item_name"`
+	AtpmWCFTypeId                       int     `json:"warranty_claim_type_id"`
+	TotalCostOfGoodsSold                float64 `json:"total_cost_of_goods_sold"`
+	ServiceCategoryId                   int     `json:"service_category_id"`
 }
 
 type WorkOrderAffiliate struct {
