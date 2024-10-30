@@ -28,7 +28,7 @@ func TestUpdateLocationStock(t *testing.T) {
 	//}()
 	timeNow := time.Now().UTC()
 	payloads := masterwarehousepayloads.LocationStockUpdatePayloads{
-		CompanyId:                2,
+		CompanyId:                3,
 		PeriodYear:               "2013",
 		PeriodMonth:              "02",
 		WarehouseId:              1,
