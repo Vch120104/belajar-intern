@@ -78,12 +78,97 @@ func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils
 
 	return pages, nil
 }
+func periodMonthConcatinatedString(periodMonth string) string {
+	if len(periodMonth) == 1 {
+		return "0" + periodMonth
+	}
+	return periodMonth
+}
+func FetchMaxYear(db *gorm.DB, payloads *masterwarehousepayloads.LocationStockUpdatePayloads) (int, error) {
+	var lastPeriodYear int
+	err := db.Model(&masterentities.LocationStock{}).
+		Select("COALESCE(MAX(CAST(period_year AS INTEGER)), 0)").
+		Where(masterentities.LocationStock{
+			CompanyId:  payloads.CompanyId,
+			LocationId: payloads.LocationId,
+			ItemId:     payloads.ItemId,
+		}).
+		Scan(&lastPeriodYear).Error
+	return lastPeriodYear, err
+}
+
+func FetchMaxMonth(db *gorm.DB, lastPeriodYear int, payloads *masterwarehousepayloads.LocationStockUpdatePayloads) (int, error) {
+	var lastPeriodMonth int
+	err := db.Model(&masterentities.LocationStock{}).
+		Select("COALESCE(MAX(CAST(period_month AS INTEGER)), 0)").
+		Where(masterentities.LocationStock{
+			PeriodYear: strconv.Itoa(lastPeriodYear),
+			CompanyId:  payloads.CompanyId,
+			LocationId: payloads.LocationId,
+			ItemId:     payloads.ItemId,
+		}).
+		Scan(&lastPeriodMonth).Error
+	return lastPeriodMonth, err
+
+}
+
+func FetchLocationStockData(db *gorm.DB, payloads *masterwarehousepayloads.LocationStockUpdatePayloads, periodMonth, periodYear string) error {
+	if periodYear == "0" || periodMonth == "0" {
+		return nil
+	}
+	return db.Model(&masterentities.LocationStock{}).
+		Where(masterentities.LocationStock{
+			PeriodMonth: periodMonth,
+			PeriodYear:  periodYear,
+			CompanyId:   payloads.CompanyId,
+			LocationId:  payloads.LocationId,
+			ItemId:      payloads.ItemId,
+		}).
+		Select("quantity_begin, quantity_allocated").
+		Row().
+		Scan(&payloads.QuantityBegin, &payloads.QuantityAllocated)
+}
+
+func CreateNewLocationStockRecord(db *gorm.DB, payloads *masterwarehousepayloads.LocationStockUpdatePayloads) error {
+	newLocationStock := masterentities.LocationStock{
+		CompanyId:              payloads.CompanyId,
+		PeriodMonth:            payloads.PeriodMonth,
+		PeriodYear:             payloads.PeriodYear,
+		ItemId:                 payloads.ItemId,
+		WarehouseId:            payloads.WarehouseId,
+		WarehouseGroup:         payloads.WarehouseGroup,
+		LocationId:             payloads.LocationId,
+		QuantityBegin:          payloads.QuantityBegin,
+		QuantityAdjustment:     0,
+		QuantityAllocated:      payloads.QuantityAllocated,
+		QuantityPurchase:       0,
+		QuantityPurchaseReturn: 0,
+		QuantitySales:          0,
+		QuantitySalesReturn:    0,
+		QuantityClaimOut:       0,
+		QuantityClaimIn:        0,
+		QuantityTransferOut:    0,
+		QuantityTransferIn:     0,
+		QuantityInTransit:      0,
+		QuantityEnding:         0,
+		ChangeNo:               0,
+		CreatedByUserId:        payloads.CreatedByUserId,
+		CreatedDate:            payloads.CreatedDate,
+		UpdatedByUserId:        payloads.UpdatedByUserId,
+		UpdatedDate:            payloads.UpdatedDate,
+		QuantityRobbingIn:      0,
+		QuantityRobbingOut:     0,
+		QuantityAssemblyOut:    0,
+		QuantityAssemblyIn:     0,
+	}
+
+	return db.Create(&newLocationStock).Error
+}
 
 // ALTER PROCEDURE [dbo].[uspg_amLocationStock_Update]
 func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloads masterwarehousepayloads.LocationStockUpdatePayloads) (bool, *exceptions.BaseErrorResponse) {
 	//SELECT @Negative_Stock = NEGATIVE_STOCK FROM gmLoc1 WHERE COMPANY_CODE = @Company_Code AND WAREHOUSE_CODE = @Whs_Code
 	var WarehouseMasterEntity masterwarehouseentities.WarehouseMaster
-	var LocationStockEntity masterentities.LocationStock
 
 	//TS(SELECT TOP 1 1
 	//FROM amLocationStock WITH(UPDLOCK)
@@ -94,92 +179,91 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 	//AND PERIOD_YEAR = @Period_Year
 	//AND PERIOD_MONTH = @Period_Month)
 	//BEGIN
-	err := db.Model(&masterentities.LocationStock{}).Where(masterentities.LocationStock{
-		CompanyId:   payloads.CompanyId,
-		WarehouseId: payloads.WarehouseId,
-		LocationId:  payloads.LocationId,
-		ItemId:      payloads.ItemId,
-		PeriodMonth: payloads.PeriodMonth,
-		PeriodYear:  payloads.PeriodYear,
-	}).First(&LocationStockEntity).Error
+
+	//begin refactor
+	var locationStockEntity masterentities.LocationStock
+
+	err := db.Model(&masterentities.LocationStock{}).
+		Where(masterentities.LocationStock{
+			CompanyId:   payloads.CompanyId,
+			WarehouseId: payloads.WarehouseId,
+			LocationId:  payloads.LocationId,
+			ItemId:      payloads.ItemId,
+			PeriodMonth: payloads.PeriodMonth,
+			PeriodYear:  payloads.PeriodYear,
+		}).First(&locationStockEntity).Error
+
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch Location Stock Data",
 		}
 	}
-	//if location stock belum ada dari period diatas
+
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		currentPeriodString := fmt.Sprintf("%s-%s-%s", payloads.PeriodYear, payloads.PeriodMonth, "01")
-		ParsePeriodDatetime, errParse := time.Parse("2006-01-02", currentPeriodString)
+		currentPeriodString := fmt.Sprintf("%s-%s-01", payloads.PeriodYear, payloads.PeriodMonth)
+		parsePeriodDatetime, errParse := time.Parse("2006-01-02", currentPeriodString)
 		if errParse != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "failed to parse current period",
 			}
 		}
-		LastParsePeriodDatetime := ParsePeriodDatetime.AddDate(0, -1, 0)
-		LastPeriodMonth := int(LastParsePeriodDatetime.Month())
-		LastPeriodYear := LastParsePeriodDatetime.Year()
-		//DECLARE @Qty_Allocated_LastPeriod numeric(10,2) = 0
-		//SET @Last_Period =  (DATEADD(month, -1, CAST(@Period_Year + @Period_Month + '01' As DateTime)))
-		//SELECT	@Qty_Begin	= ISNULL(QTY_ENDING,0),
-		//@Qty_Allocated_LastPeriod = ISNULL(QTY_ALLOCATED,0)
-		//FROM	amLocationStock
-		//WHERE	COMPANY_CODE = @Company_Code AND WHS_CODE = @Whs_Code AND LOC_CODE = @Loc_Code AND  ITEM_CODE = @Item_Code AND
-		//PERIOD_YEAR = CAST(YEAR(@Last_Period) As VarChar(4)) AND PERIOD_MONTH = (SELECT RIGHT('0' + CAST(MONTH(@Last_Period) As VarChar(2)), 2))
-		err = db.Model(&LocationStockEntity).Where(masterentities.LocationStock{
-			PeriodMonth: strconv.Itoa(LastPeriodMonth),
-			PeriodYear:  strconv.Itoa(LastPeriodYear),
-			CompanyId:   payloads.CompanyId,
-			LocationId:  payloads.LocationId,
-			ItemId:      payloads.ItemId,
-		}).Select("quantity_begin,quantity_allocated").Row().Scan(&payloads.QuantityBegin, &payloads.QuantityAllocated)
+
+		lastPeriodDatetime := parsePeriodDatetime.AddDate(0, -1, 0)
+		lastPeriodMonth := strconv.Itoa(int(lastPeriodDatetime.Month()))
+		lastPeriodYear := strconv.Itoa(lastPeriodDatetime.Year())
+
+		err = FetchLocationStockData(db, &payloads, lastPeriodMonth, lastPeriodYear)
 		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "failed to fetch Last Location Stock Data",
+			if err.Error() == "sql: no rows in result set" {
+				lastPeriodYearInt, errs := FetchMaxYear(db, &payloads)
+				if errs != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "failed to fetch Last Period Year",
+					}
+				}
+
+				lastPeriodMonthInt, err := FetchMaxMonth(db, lastPeriodYearInt, &payloads)
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "failed to fetch Last Period Month",
+					}
+				}
+
+				lastPeriodMonth = strconv.Itoa(lastPeriodMonthInt)
+				lastPeriodYear = strconv.Itoa(lastPeriodYearInt)
+
+				err = FetchLocationStockData(db, &payloads, lastPeriodMonth, lastPeriodYear)
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "failed to fetch Last Location Stock Data",
+					}
+				}
+			} else {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to fetch Last Location Stock Data",
+				}
 			}
 		}
-		var NewLocationStockEntity masterentities.LocationStock
-		NewLocationStockEntity.CompanyId = payloads.CompanyId
-		NewLocationStockEntity.PeriodMonth = payloads.PeriodMonth
-		NewLocationStockEntity.PeriodYear = payloads.PeriodYear
-		NewLocationStockEntity.ItemId = payloads.ItemId
-		NewLocationStockEntity.WarehouseId = payloads.WarehouseId
-		NewLocationStockEntity.WarehouseGroup = payloads.WarehouseGroup
-		NewLocationStockEntity.QuantityBegin = payloads.QuantityBegin
-		NewLocationStockEntity.QuantityAdjustment = 0
-		NewLocationStockEntity.QuantityAllocated = payloads.QuantityAllocated
-		NewLocationStockEntity.QuantityPurchase = 0
-		NewLocationStockEntity.QuantityPurchaseReturn = 0
-		NewLocationStockEntity.QuantitySales = 0
-		NewLocationStockEntity.QuantitySalesReturn = 0
-		NewLocationStockEntity.QuantityClaimOut = 0
-		NewLocationStockEntity.QuantityClaimIn = 0
-		NewLocationStockEntity.QuantityTransferOut = 0
-		NewLocationStockEntity.QuantityTransferIn = 0
-		NewLocationStockEntity.QuantityInTransit = 0
-		NewLocationStockEntity.QuantityEnding = 0
-		NewLocationStockEntity.ChangeNo = 0
-		NewLocationStockEntity.CreatedByUserId = payloads.CreatedByUserId
-		NewLocationStockEntity.CreatedDate = payloads.CreatedDate
-		NewLocationStockEntity.UpdatedByUserId = payloads.UpdatedByUserId
-		NewLocationStockEntity.UpdatedDate = payloads.UpdatedDate
-		NewLocationStockEntity.QuantityRobbingIn = 0
-		NewLocationStockEntity.QuantityRobbingOut = 0
-		NewLocationStockEntity.QuantityAssemblyOut = 0
-		NewLocationStockEntity.QuantityAssemblyIn = 0
-		err = db.Create(&NewLocationStockEntity).Scan(&NewLocationStockEntity).Error
+
+		// Create new location stock record
+		err = CreateNewLocationStockRecord(db, &payloads)
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "failed to create Location Stock Data",
 			}
 		}
-		return true, &exceptions.BaseErrorResponse{}
+
+		return true, nil
 	}
 
+	//endd refactor
 	TransactionTypeEntity := masterentities.StockTransactionType{}
 	err = db.Model(&TransactionTypeEntity).Where(masterentities.StockTransactionType{StockTransactionTypeId: payloads.StockTransactionTypeId}).
 		First(&TransactionTypeEntity).Error
@@ -331,6 +415,5 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 				Message:    "error on saving location stock"}
 		}
 	}
-
 	return true, nil
 }

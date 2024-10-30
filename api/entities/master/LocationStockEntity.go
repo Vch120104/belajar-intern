@@ -11,7 +11,7 @@ type LocationStock struct {
 	PeriodMonth            string     `gorm:"column:period_month;size:2;not null"        json:"period_month"`
 	WarehouseId            int        `gorm:"column:warehouse_id;not null"        json:"warehouse_id"`
 	LocationId             int        `gorm:"column:location_id;not null"        json:"location_id"`
-	ItemId                 int        `gorm:"column:item_id;not null"        json:"item_id"`
+	ItemId                 int        `gorm:"column:item_id;not null;"        json:"item_id"`
 	WarehouseGroup         string     `gorm:"column:warehouse_group;size:50;not null"        json:"warehouse_group"`
 	QuantityBegin          float64    `gorm:"column:quantity_begin;null"        json:"quantity_begin"`
 	QuantitySales          float64    `gorm:"column:quantity_sales;null"        json:"quantity_sales"`
