@@ -74,7 +74,7 @@ type WorkOrderRepository interface {
 	DeleteVehicleServiceMultiId(tx *gorm.DB, workorderID int, detailID []int) (bool, *exceptions.BaseErrorResponse)
 
 	GetAllDetailWorkOrder(tx *gorm.DB, filterCondition []utils.FilterCondition, page pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetDetailByIdWorkOrder(tx *gorm.DB, workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse)
+	GetDetailByIdWorkOrder(tx *gorm.DB, workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse)
 	UpdateDetailWorkOrder(tx *gorm.DB, workorderID int, detailID int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	AddDetailWorkOrder(tx *gorm.DB, workorderID int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrder(tx *gorm.DB, workorderID int, detailID int) (bool, *exceptions.BaseErrorResponse)

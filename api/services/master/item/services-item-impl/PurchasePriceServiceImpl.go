@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 
 	"github.com/labstack/gommon/log"
@@ -324,7 +325,7 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 
 func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
 	var results []masteritempayloads.PurchasePriceDetailResponses
-
+	var numericRegex = regexp.MustCompile(`^\d+$`)
 	for i, row := range rows {
 		if i == 0 {
 			// Skip header row
@@ -337,6 +338,15 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 				Message:    "Invalid row length",
 			}
 		}
+		// Check if purchase price is numeric without punctuation
+		if !numericRegex.MatchString(row[2]) {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Purchase price must be numeric without any punctuation",
+			}
+		}
+
+		// Convert validated numeric string to integer
 		purchasePrice, err := strconv.Atoi(row[2])
 		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
@@ -344,6 +354,7 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 				Message:    "Invalid purchase price format",
 			}
 		}
+
 		purchasePriceFloat := float64(purchasePrice)
 		results = append(results, masteritempayloads.PurchasePriceDetailResponses{
 			ItemCode:        row[0], // Include ItemCode here
