@@ -285,8 +285,23 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 
 	// Fetch the item entity from the database
 	err := tx.Model(&entities).
+		Select(`
+			mtr_item.*,
+			mil1.item_level_1_code,
+			mil1.item_level_1_name,
+			mil2.item_level_2_code,
+			mil2.item_level_2_name,
+			mil3.item_level_3_code,
+			mil3.item_level_3_name,
+			mil4.item_level_4_code,
+			mil4.item_level_4_name
+			`).
+		Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
+		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
+		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
+		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
 		Where(masteritementities.Item{ItemId: Id}).
-		First(&entities).Error
+		First(&response).Error
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -301,64 +316,6 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 			Message:    "failed to fetch item data",
 			Err:        err,
 		}
-	}
-
-	// Map the fields from the entity to the response struct
-	response = masteritempayloads.ItemResponse{
-		IsActive:                     entities.IsActive,
-		ItemId:                       entities.ItemId,
-		ItemCode:                     entities.ItemCode,
-		ItemClassId:                  entities.ItemClassId,
-		ItemName:                     entities.ItemName,
-		ItemGroupId:                  entities.ItemGroupId,
-		ItemTypeId:                   entities.ItemTypeId,
-		ItemLevel_1:                  entities.ItemLevel1,
-		ItemLevel_2:                  entities.ItemLevel2,
-		ItemLevel_3:                  entities.ItemLevel3,
-		ItemLevel_4:                  entities.ItemLevel4,
-		SupplierId:                   entities.SupplierId,
-		UnitOfMeasurementTypeId:      entities.UnitOfMeasurementTypeId,
-		UnitOfMeasurementSellingId:   entities.UnitOfMeasurementSellingId,
-		UnitOfMeasurementPurchaseId:  entities.UnitOfMeasurementPurchaseId,
-		UnitOfMeasurementStockId:     entities.UnitOfMeasurementStockId,
-		SalesItem:                    entities.SalesItem,
-		Lottable:                     entities.Lottable,
-		Inspection:                   entities.Inspection,
-		PriceListItem:                entities.PriceListItem,
-		StockKeeping:                 entities.StockKeeping,
-		DiscountId:                   entities.DiscountId,
-		MarkupMasterId:               entities.MarkupMasterId,
-		DimensionOfLength:            entities.DimensionOfLength,
-		DimensionOfWidth:             entities.DimensionOfWidth,
-		DimensionOfHeight:            entities.DimensionOfHeight,
-		DimensionUnitOfMeasurementId: entities.DimensionUnitOfMeasurementId,
-		Weight:                       entities.Weight,
-		UnitOfMeasurementWeight:      entities.UnitOfMeasurementWeight,
-		StorageTypeId:                entities.StorageTypeId,
-		Remark:                       entities.Remark,
-		LastPrice:                    entities.LastPrice,
-		UseDiscDecentralize:          entities.UseDiscDecentralize,
-		CommonPricelist:              entities.CommonPricelist,
-		IsRemovable:                  entities.IsRemovable,
-		IsMaterialPlus:               entities.IsMaterialPlus,
-		SpecialMovementId:            entities.SpecialMovementId,
-		IsItemRegulation:             entities.IsItemRegulation,
-		IsTechnicalDefect:            entities.IsTechnicalDefect,
-		IsMandatory:                  entities.IsMandatory,
-		MinimumOrderQty:              entities.MinimumOrderQty,
-		HarmonizedNo:                 entities.HarmonizedNo,
-		PmsItem:                      entities.PmsItem,
-		Regulation:                   entities.Regulation,
-		AutoPickWms:                  entities.AutoPickWms,
-		GmmCatalogCode:               entities.GmmCatalogCode,
-		PrincipalBrandParentId:       entities.PrincipalBrandParentId,
-		ProportionalSupplyWms:        entities.ProportionalSupplyWms,
-		Remark2:                      entities.Remark2,
-		Remark3:                      entities.Remark3,
-		SourceTypeId:                 entities.SourceTypeId,
-		PersonInChargeId:             entities.PersonInChargeId,
-		IsAffiliatedTrx:              entities.IsAffiliatedTrx,
-		IsSellable:                   entities.IsSellable,
 	}
 
 	// Call external service to get Supplier details
@@ -463,10 +420,10 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		ItemName:                     req.ItemName,
 		ItemGroupId:                  req.ItemGroupId,
 		ItemTypeId:                   req.ItemTypeId,
-		ItemLevel1:                   req.ItemLevel1,
-		ItemLevel2:                   req.ItemLevel2,
-		ItemLevel3:                   req.ItemLevel3,
-		ItemLevel4:                   req.ItemLevel4,
+		ItemLevel1Str:                req.ItemLevel1,
+		ItemLevel2Str:                req.ItemLevel2,
+		ItemLevel3Str:                req.ItemLevel3,
+		ItemLevel4Str:                req.ItemLevel4,
 		SupplierId:                   req.SupplierId,
 		UnitOfMeasurementTypeId:      req.UnitOfMeasurementTypeId,
 		UnitOfMeasurementSellingId:   req.UnitOfMeasurementSellingId,
@@ -581,10 +538,10 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		ItemName:   entities.ItemName,
 		ItemCode:   entities.ItemCode,
 		ItemTypeId: entities.ItemTypeId,
-		ItemLevel1: entities.ItemLevel1,
-		ItemLevel2: entities.ItemLevel2,
-		ItemLevel3: entities.ItemLevel3,
-		ItemLevel4: entities.ItemLevel4,
+		ItemLevel1: entities.ItemLevel1Str,
+		ItemLevel2: entities.ItemLevel2Str,
+		ItemLevel3: entities.ItemLevel3Str,
+		ItemLevel4: entities.ItemLevel4Str,
 	}
 
 	return result, nil
