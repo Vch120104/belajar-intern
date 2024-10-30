@@ -99,7 +99,7 @@ type OrderTypeStatusResponse struct {
 type WarehouseResponsesPurchaseOrder struct {
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        int    `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
 	WahouseNegativeStock          bool   `json:"wahouse_negative_stock"`
 	WarehouseReplishmentIndicator bool   `json:"warehouse_replishment_indicator"`
@@ -602,11 +602,4 @@ type PurchaseOrderResponse struct {
 	CompanyId   int    `json:"company_id"`
 	CompanyCode string `json:"company_code"`
 	CompanyName string `json:"company_name"`
-}
-
-type PurchaseOrderApprovalStatusResponses struct {
-	IsActive                  bool   `json:"is_active"`
-	ApprovalStatusId          int    `json:"approval_status_id"`
-	ApprovalStatusCode        string `json:"approval_status_code"`
-	ApprovalStatusDescription string `json:"approval_status_description"`
 }

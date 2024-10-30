@@ -52,15 +52,14 @@ func (r *QualityControlControllerImpl) GetAll(writer http.ResponseWriter, reques
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"trx_work_order.brand_id":            queryValues.Get("brand_id"),
-		"trx_work_order.model_id":            queryValues.Get("model_id"),
-		"trx_work_order.variant_id":          queryValues.Get("variant_id"),
-		"trx_work_order.foreman_id":          queryValues.Get("foreman_id"),
-		"trx_work_order.service_advisor_id":  queryValues.Get("service_advisor_id"),
-		"mtr_vehicle.vehicle_chassis_number": queryValues.Get("vehicle_chassis_number"),
-		"mtr_vehicle_registration_certificate.vehicle_registration_certificate_tnkb": queryValues.Get("vehicle_registration_certificate_tnkb"),
-		"trx_work_order.work_order_date":                                             queryValues.Get("work_order_date"),
-		"trx_work_order.work_order_system_number":                                    queryValues.Get("work_order_system_number"),
+		"trx_work_order.brand_id":                 queryValues.Get("brand_id"),
+		"trx_work_order.model_id":                 queryValues.Get("model_id"),
+		"trx_work_order.variant_id":               queryValues.Get("variant_id"),
+		"trx_work_order.foreman_id":               queryValues.Get("foreman_id"),
+		"trx_work_order.service_advisor_id":       queryValues.Get("service_advisor_id"),
+		"trx_work_order.work_order_date_from":     queryValues.Get("work_order_date_from"),
+		"trx_work_order.work_order_date_to":       queryValues.Get("work_order_date_to"),
+		"trx_work_order.work_order_system_number": queryValues.Get("work_order_system_number"),
 	}
 
 	fmt.Println("Query Params:", queryParams)

@@ -49,10 +49,10 @@ func (r *ItemPriceCodeRepositoryImpl) GetAllItemPriceCode(tx *gorm.DB, filterCon
 	mapResults := make([]map[string]interface{}, len(results))
 	for i, result := range results {
 		mapResults[i] = map[string]interface{}{
-			"price_code":      result.ItemPriceCodeId,
-			"price_code_name": result.ItemPriceCodeName,
-			"is_active":       result.IsActive,
-			"item_price_id":   result.ItemPriceCode,
+			"item_price_code_id":   result.ItemPriceCodeId,
+			"item_price_code_name": result.ItemPriceCodeName,
+			"is_active":            result.IsActive,
+			"item_price_code":      result.ItemPriceCode,
 		}
 	}
 
@@ -208,4 +208,19 @@ func (r *ItemPriceCodeRepositoryImpl) ChangeStatusItemPriceCode(tx *gorm.DB, id 
 	}
 
 	return true, nil
+}
+
+func (r *ItemPriceCodeRepositoryImpl) GetItemPriceCodeDropDown(tx *gorm.DB) ([]masteritempayloads.SaveItemPriceCode, *exceptions.BaseErrorResponse) {
+	model := masteritementities.ItemPriceCode{}
+	responses := []masteritempayloads.SaveItemPriceCode{}
+	err := tx.Model(model).Scan(&responses).Error
+
+	if err != nil {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return responses, nil
 }

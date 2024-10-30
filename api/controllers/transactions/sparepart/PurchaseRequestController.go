@@ -72,7 +72,7 @@ func (controller *PurchaseRequestControllerImpl) GetAllItemTypePr(writer http.Re
 		"item_code":       queryValues.Get("item_code"),
 		"item_name":       queryValues.Get("item_name"),
 		"item_class_name": queryValues.Get("item_class_name"),
-		"item_type":       queryValues.Get("item_type"),
+		"item_type_id":    queryValues.Get("item_type_id"),
 		"item_level_1":    queryValues.Get("item_level_1"),
 		"item_level_2":    queryValues.Get("item_level_2"),
 		"item_level_3":    queryValues.Get("item_level_3"),
@@ -234,7 +234,7 @@ func (controller *PurchaseRequestControllerImpl) GetByIdPurchaseRequestDetail(wr
 	//}
 }
 
-// SavePurchaseRequestHeader
+// NewPurchaseRequestHeader
 //
 //	@Summary		Create New Purchase Request
 //	@Description	Create a new SaveHeader
@@ -259,7 +259,7 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestHeader(writer
 
 }
 
-// SavePurchaseRequestDetail
+// NewPurchaseRequestDetail
 //
 //	@Summary		Create New Purchase Request Detail
 //	@Description	Create a new Save Detail

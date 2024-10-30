@@ -1,5 +1,7 @@
 package masterentities
 
+import masteritementities "after-sales/api/entities/master/item"
+
 var CreateFieldActionEligibleVehicleItemTable = "mtr_field_action_eligible_vehicle_item"
 
 type FieldActionEligibleVehicleItem struct {
@@ -11,6 +13,7 @@ type FieldActionEligibleVehicleItem struct {
 	FieldActionEligibleVehicleItemLineNumber   float64                    `gorm:"column:field_action_eligible_vehicle_item_line_number;null"        json:"field_action_eligible_vehicle_item_line_number"`
 	ItemId                                     int                        `gorm:"column:item_id;not null;size:30"        json:"item_id"`
 	FieldActionFrt                             float64                    `gorm:"column:field_action_frt;not null"        json:"field_action_frt"`
+	Item                                       masteritementities.Item    `gorm:"foreignKey:ItemId;references:ItemId" json:"item"`
 	// FieldActionHasTaken                        bool    `gorm:"column:field_action_has_taken;null"        json:"field_action_has_taken"`
 }
 

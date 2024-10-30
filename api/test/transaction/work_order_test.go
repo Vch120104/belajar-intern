@@ -228,19 +228,24 @@ func (m *MockWorkOrderService) GetAllRequest(filterCondition []utils.FilterCondi
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetRequestById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos)
-	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) UpdateRequest(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos, request)
-	return args.Get(0).(transactionworkshopentities.WorkOrderRequestDescription), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshopentities.WorkOrderService), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderRequestDescription, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) AddRequest(id int, request transactionworkshoppayloads.WorkOrderServiceRequest) (transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
 	args := m.Called(id, request)
-	return args.Get(0).(transactionworkshopentities.WorkOrderRequestDescription), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshopentities.WorkOrderService), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) AddRequestMultiId(id int, request []transactionworkshoppayloads.WorkOrderServiceRequest) ([]transactionworkshopentities.WorkOrderService, *exceptions.BaseErrorResponse) {
+	args := m.Called(id, request)
+	return args.Get(0).([]transactionworkshopentities.WorkOrderService), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) DeleteRequest(idwosn int, idwos int) (bool, *exceptions.BaseErrorResponse) {
@@ -259,9 +264,9 @@ func (m *MockWorkOrderService) GetAllVehicleService(filterCondition []utils.Filt
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetVehicleServiceById(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderServiceVehicleResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos)
-	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceVehicleRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderServiceVehicleResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) UpdateVehicleService(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderServiceVehicleRequest) (transactionworkshopentities.WorkOrderServiceVehicle, *exceptions.BaseErrorResponse) {
@@ -290,9 +295,9 @@ func (m *MockWorkOrderService) GetAllDetailWorkOrder(filterCondition []utils.Fil
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos)
-	return args.Get(0).(transactionworkshoppayloads.WorkOrderDetailRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderDetailResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
@@ -357,14 +362,14 @@ func (m *MockWorkOrderService) SaveAffiliated(workOrderId int, id int, request t
 	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (bool, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) ChangeBillTo(workOrderId int, request transactionworkshoppayloads.ChangeBillToRequest) (transactionworkshoppayloads.ChangeBillToResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId, request)
-	return args.Bool(0), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.ChangeBillToResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) ChangePhoneNo(workOrderId int, request transactionworkshoppayloads.ChangePhoneNoRequest) (*transactionworkshoppayloads.ChangePhoneNoResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId, request)
-	return args.Get(0).(*transactionworkshoppayloads.ChangePhoneNoRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(*transactionworkshoppayloads.ChangePhoneNoResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) ConfirmPrice(workOrderId int, idwos []int, request transactionworkshoppayloads.WorkOrderConfirmPriceRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
@@ -390,6 +395,46 @@ func (m *MockWorkOrderService) AddGeneralRepairPackage(workOrderId int, request 
 func (m *MockWorkOrderService) AddFieldAction(workOrderId int, request transactionworkshoppayloads.WorkOrderFieldActionRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
 	args := m.Called(workOrderId, request)
 	return args.Get(0).(transactionworkshopentities.WorkOrderDetail), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetServiceRequestByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	args := m.Called(filterCondition, pages)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetClaimByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	args := m.Called(pages)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetClaimItemByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	args := m.Called(pages)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetWOByBillCode(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	args := m.Called(pages)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetDetailWOByClaimBillCode(workOrderId int, transactionTypeId int, atpmClaimNumber string, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	args := m.Called(workOrderId, transactionTypeId, atpmClaimNumber, pages)
+	return args.Get(0).([]transactionworkshoppayloads.GetClaimResponsePayload), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetDetailWOByBillCode(workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	args := m.Called(workOrderId, transactionTypeId, pages)
+	return args.Get(0).([]transactionworkshoppayloads.GetClaimResponsePayload), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetDetailWOByATPMBillCode(workOrderId int, transactionTypeId int, pages pagination.Pagination) ([]transactionworkshoppayloads.GetClaimResponsePayload, *exceptions.BaseErrorResponse) {
+	args := m.Called(workOrderId, transactionTypeId, pages)
+	return args.Get(0).([]transactionworkshoppayloads.GetClaimResponsePayload), args.Get(1).(*exceptions.BaseErrorResponse)
+}
+
+func (m *MockWorkOrderService) GetSupplyByWO(workOrderId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	args := m.Called(pages)
+	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
 // Get All Normal Work Order

@@ -13,7 +13,7 @@ import (
 type DeductionRepository interface {
 	GetAllDeduction(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllDeductionDetail(*gorm.DB, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetDeductionById(*gorm.DB, int, pagination.Pagination) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse)
+	GetDeductionById(*gorm.DB, int, pagination.Pagination) (masterpayloads.DeductionById, *exceptions.BaseErrorResponse)
 	GetByIdDeductionDetail(*gorm.DB, int) (masterpayloads.DeductionDetailResponse, *exceptions.BaseErrorResponse)
 	SaveDeductionList(*gorm.DB, masterpayloads.DeductionListResponse) (masterentities.DeductionList, *exceptions.BaseErrorResponse)
 	SaveDeductionDetail(*gorm.DB, masterpayloads.DeductionDetailResponse, int) (masterentities.DeductionDetail, *exceptions.BaseErrorResponse)

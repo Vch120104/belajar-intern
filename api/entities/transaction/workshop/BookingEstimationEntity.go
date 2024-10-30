@@ -29,7 +29,7 @@ type BookingEstimation struct {
 	ContactPersonName                string                             `gorm:"column:contact_person_name;type:varchar(40)" json:"contact_person_name"`
 	ContactPersonPhone               string                             `gorm:"column:contact_person_phone;type:varchar(13)" json:"contact_person_phone"`
 	ContactPersonMobile              string                             `gorm:"column:contact_person_mobile;type:varchar(13)" json:"contact_person_mobile"`
-	ContactPersonViaId               int                                `gorm:"column:contact_person_via_id;type:varchar(5)" json:"contact_person_via_id"`
+	ContactPersonViaId               int                                `gorm:"column:contact_person_via;type:varchar(5)" json:"contact_person_via"`
 	InsurancePolicyNo                string                             `gorm:"column:insurance_policy_no;type:varchar(25)" json:"insurance_policy_no"`
 	InsuranceExpiredDate             time.Time                          `gorm:"column:insurance_expired_date" json:"insurance_expired_date"`
 	InsuranceClaimNo                 string                             `gorm:"column:insurance_claim_no;type:varchar(25)" json:"insurance_claim_no"`

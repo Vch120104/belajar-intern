@@ -506,14 +506,12 @@ func (r *ServiceBodyshopRepositoryImpl) StartService(tx *gorm.DB, idAlloc int, i
 				// --validation TECHNICIAN CANNOT START IF ALREADY START ANOTHER OPERATION
 				var exists bool
 				// Define the subquery
-				// Define the subquery as a raw SQL string
 				subquery := `
 				SELECT MAX(technician_allocation_line) 
 				FROM trx_service_log AS subquery
 				WHERE subquery.technician_allocation_system_number = trx_service_log.technician_allocation_system_number`
 				//AND subquery.sequence_number = trx_service_log.sequence_number`
 
-				// Perform the main query with the raw SQL subquery
 				err := tx.Model(&transactionworkshopentities.ServiceLog{}).
 					Select("1").
 					Where(

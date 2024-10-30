@@ -10,7 +10,7 @@ import (
 
 type ItemOperationService interface {
 	GetAllItemOperation(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetByIdItemOperation(id int) (masterpayloads.ItemOperationGet, *exceptions.BaseErrorResponse)
+	GetByIdItemOperation(id int) (masterpayloads.ItemOperationPost, *exceptions.BaseErrorResponse)
 	PostItemOperation(req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse)
 	DeleteItemOperation(id int) (bool, *exceptions.BaseErrorResponse)
 	UpdateItemOperation(id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse)

@@ -6,20 +6,21 @@ import (
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
-	"after-sales/api/payloads/crossservice/financeservice"
-	"after-sales/api/payloads/crossservice/generalservice"
+	financeservice "after-sales/api/payloads/cross-service/finance-service"
+	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type PurchaseOrderRepositoryImpl struct {
@@ -132,15 +133,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	page.Rows = Result
 	return page, nil
 }
-func GetApprovalStatusId(code string) int {
-	var DocResponse transactionsparepartpayloads.PurchaseOrderApprovalStatusResponses
 
-	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return 0
-	}
-	return DocResponse.ApprovalStatusId
-}
 func (repo *PurchaseOrderRepositoryImpl) GetByIdPurchaseOrder(db *gorm.DB, id int) (transactionsparepartpayloads.PurchaseOrderGetByIdResponses, *exceptions.BaseErrorResponse) {
 	var entities transactionsparepartentities.PurchaseOrderEntities
 	response := transactionsparepartpayloads.PurchaseOrderGetByIdResponses{}

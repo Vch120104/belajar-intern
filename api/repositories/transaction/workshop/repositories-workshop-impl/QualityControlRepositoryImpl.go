@@ -33,7 +33,7 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	var entities []transactionworkshoppayloads.QualityControlRequest
 
 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.QualityControlRequest{})
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilterSearch(joinTable, filterCondition)
 	whereQuery = whereQuery.Where("work_order_status_id = ?", utils.WoStatStop) // 40 Stop
 
 	if err := whereQuery.Find(&entities).Error; err != nil {
@@ -54,7 +54,8 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 	if len(entities) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Message:    "No entities found",
+			Message:    "No data found",
+			Err:        errors.New("no data found"),
 		}
 	}
 
@@ -395,7 +396,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 	query := tx.Model(&transactionworkshopentities.WorkOrderDetail{}).
 		Joins("INNER JOIN mtr_item AS WTA ON trx_work_order_detail.operation_item_id = WTA.item_id").
 		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_service_status AS MSS ON trx_work_order_detail.service_status_id = MSS.service_status_id").
-		Select("WTA.item_code as operation_item_code, WTA.item_name as operation_item_name, trx_work_order_detail.frt_quantity as frt, trx_work_order_detail.service_status_id, MSS.service_status_description as service_status_name").
+		Select("WTA.item_id as operation_item_id,WTA.item_code as operation_item_code, WTA.item_name as operation_item_name, trx_work_order_detail.frt_quantity as frt, trx_work_order_detail.service_status_id, MSS.service_status_description as service_status_name").
 		Where("trx_work_order_detail.work_order_system_number = ?", id).
 		Offset(pages.GetOffset()).
 		Limit(pages.GetLimit())
@@ -444,7 +445,7 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		CustomerName:            workorderUsers[0].CustomerName,
 		Address0:                workorderUsers[0].Address_Street_1,
 		Address1:                workorderUsers[0].Address_Street_2,
-		Address2:                workorderUsers[0].Address_Street_3,
+		RTRW:                    workorderUsers[0].Address_Street_3,
 		LastMilage:              workorderVehicleDetails[0].VehicleLastKm,
 		CurrentMilage:           workOrderResponses.WorkOrderCurrentMileage,
 		Phone:                   workOrderResponses.PhoneCust,

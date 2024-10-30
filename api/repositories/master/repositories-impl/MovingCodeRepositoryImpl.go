@@ -89,7 +89,6 @@ func (r *MovingCodeRepositoryImpl) GetDropdownMovingCode(tx *gorm.DB, companyId 
 		}
 
 	}
-
 	return responses, nil
 }
 

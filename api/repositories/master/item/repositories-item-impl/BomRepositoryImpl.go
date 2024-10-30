@@ -128,7 +128,7 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 	var totalRows int64
 
 	// Fetch the BOM Master record
-	err := tx.Model(&bomMaster).Where("bom_master_id = ?", id).First(&bomMaster).Error
+	err := tx.Where("bom_master_id = ?", id).First(&bomMaster).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return masteritempayloads.BomMasterResponseDetail{}, &exceptions.BaseErrorResponse{
@@ -160,26 +160,18 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 	offset := pagination.GetPage() * pagination.GetLimit()
 	limit := pagination.GetLimit()
 
-	// Fetch BOM details with UOM description and item details
-	errBomDetails := tx.Raw(`
-        SELECT 
-            bd.bom_master_id,
-            bd.bom_detail_id,
-            bd.bom_detail_seq,
-            bd.bom_detail_qty,
-            bd.bom_detail_remark,
-            bd.bom_detail_costing_percent,
-            bd.bom_detail_type_id,
-            uom.uom_description,
-            item.item_code,
-            item.item_name
-        FROM mtr_bom_detail bd
-        JOIN mtr_uom uom ON bd.bom_detail_material_id = uom.uom_id
-        JOIN mtr_item item ON bd.bom_detail_material_id = item.item_id
-        WHERE bd.bom_master_id = ?
-        ORDER BY bd.bom_detail_seq
-        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
-    `, id, offset, limit).Scan(&bomDetails).Error
+	// Fetch BOM details with associations (UOM description and item details)
+	errBomDetails := tx.Model(&masteritementities.BomDetail{}).
+		Select(`bom_detail.bom_master_id, bom_detail.bom_detail_id, bom_detail.bom_detail_seq, 
+			bom_detail.bom_detail_qty, bom_detail.bom_detail_remark, 
+			bom_detail.bom_detail_costing_percent, bom_detail.bom_detail_type_id, 
+			uom.uom_description, item.item_code, item.item_name`).
+		Joins("JOIN mtr_uom uom ON bom_detail.bom_detail_material_id = uom.uom_id").
+		Joins("JOIN mtr_item item ON bom_detail.bom_detail_material_id = item.item_id").
+		Where("bom_detail.bom_master_id = ?", id).
+		Order("bom_detail.bom_detail_seq").
+		Offset(offset).Limit(limit).
+		Scan(&bomDetails).Error
 	if errBomDetails != nil {
 		return masteritempayloads.BomMasterResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -204,11 +196,9 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 	}
 
 	// Count total rows for pagination
-	errCount := tx.Raw(`
-        SELECT COUNT(*) 
-        FROM mtr_bom_detail bd
-        WHERE bd.bom_master_id = ?
-    `, id).Scan(&totalRows).Error
+	errCount := tx.Model(&masteritementities.BomDetail{}).
+		Where("bom_master_id = ?", id).
+		Count(&totalRows).Error
 	if errCount != nil {
 		return masteritempayloads.BomMasterResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -218,8 +208,8 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 	}
 
 	// Calculate total pages
-	totalPages := int(totalRows / int64(pagination.GetLimit()))
-	if totalRows%int64(pagination.GetLimit()) != 0 {
+	totalPages := int(totalRows / int64(limit))
+	if totalRows%int64(limit) != 0 {
 		totalPages++
 	}
 
@@ -235,7 +225,7 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 		ItemName:               itemResponse.ItemName,
 		BomDetails: masteritempayloads.BomDetailsResponse{
 			Page:       pagination.GetPage(),
-			Limit:      pagination.GetLimit(),
+			Limit:      limit,
 			TotalPages: totalPages,
 			TotalRows:  int(totalRows),
 			Data:       bomDetails,
@@ -535,7 +525,7 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 		mainAlias + ".item_id",
 		mainAlias + ".item_code",
 		mainAlias + ".item_name",
-		mainAlias + ".item_type",
+		mainAlias + ".item_type_id",
 		mainAlias + ".item_group_id",
 		mainAliasClass + ".item_class_id",
 		mainAliasClass + ".item_class_code",
@@ -569,13 +559,13 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 	for rows.Next() {
 		var isActive bool
 		var itemId, itemGroupId, itemClassId, uomId int
-		var itemCode, itemName, itemType, itemClassCode, uomDescription string
+		var itemCode, itemName, itemTypeId, itemClassCode, uomDescription string
 
 		err := rows.Scan(&isActive,
 			&itemId,
 			&itemCode,
 			&itemName,
-			&itemType,
+			&itemTypeId,
 			&itemGroupId,
 			&itemClassId,
 			&itemClassCode,
@@ -594,7 +584,7 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 			"item_id":                  itemId,
 			"item_code":                itemCode,
 			"item_name":                itemName,
-			"item_type":                itemType,
+			"item_type_id":             itemTypeId,
 			"item_group_id":            itemGroupId,
 			"item_class_id":            itemClassId,
 			"item_class_code":          itemClassCode,

@@ -156,7 +156,10 @@ func (r *CampaignMasterControllerImpl) GetByIdCampaignMaster(writer http.Respons
 	CampaignIdstr := chi.URLParam(request, "campaign_id")
 
 	CampaignId, errA := strconv.Atoi(CampaignIdstr)
-
+	if CampaignId <= 0 {
+		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusNotFound, Err: errors.New("id cannot be 0")})
+		return
+	}
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
