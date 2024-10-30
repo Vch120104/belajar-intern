@@ -557,6 +557,7 @@ func LocationStockRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", LocationStock.GetAllLocationStock)
+	router.Put("/", LocationStock.UpdateLocationStock)
 	return router
 }
 
