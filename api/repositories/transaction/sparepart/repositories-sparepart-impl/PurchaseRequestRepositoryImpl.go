@@ -1123,23 +1123,23 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 			Err:        err,
 		}
 	}
-	// var UomRate float64
-	// var QtyRes float64
-	// if UomItemResponse.SourceConvertion == nil {
-	// 	QtyRes = 0
-	// } else {
-	// 	QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
+	var UomRate float64
+	var QtyRes float64
+	if UomItemResponse.SourceConvertion == nil {
+		QtyRes = 0
+	} else {
+		QtyRes = response.Quantity * *UomItemResponse.TargetConvertion
 
-	// }
-	// if UomItemResponse.SourceConvertion == nil {
-	// 	return response, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Message:    "Failed to fetch Uom Source Convertion From External Data",
-	// 		Err:        err,
-	// 	}
-	// }
-	// UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
-	// UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
+	}
+	if UomItemResponse.SourceConvertion == nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch Uom Source Convertion From External Data",
+			Err:        err,
+		}
+	}
+	UomRate = QtyRes * *UomItemResponse.SourceConvertion // QtyRes * *UomItemResponse.SourceConvertion
+	UomRate, _ = strconv.ParseFloat(fmt.Sprintf("%.2f", UomRate), 64)
 	uomentities := masteritementities.UomItem{}
 	err = db.Model(&uomentities).Where(masteritementities.UomItem{ItemId: response.ItemId}).Scan(&uomentities).Error
 	response.UnitOfMeasurementCode = uomentities.UomTypeCode
