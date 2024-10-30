@@ -969,6 +969,24 @@ func StockTransactionTypeRouter(
 	router.Get("/", StockTransactionType.GetAllStockTransactionType)
 	return router
 }
+func StockTransactionReasonRouter(
+	StockTransactionReason mastercontroller.StockTransactionReasonController,
+) chi.Router {
+
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{stock_transaction_reason_code}", StockTransactionReason.GetStockTransactionReasonByCode)
+	router.Get("/{stock_transaction_reason_id}", StockTransactionReason.GetStockTransactionReasonById)
+	router.Get("/", StockTransactionReason.GetAllStockTransactionReason)
+	router.Post("/", StockTransactionReason.InsertStockTransactionReason)
+
+	return router
+}
 func SkillLevelRouter(
 	SkillLevelController mastercontroller.SkillLevelController,
 ) chi.Router {
