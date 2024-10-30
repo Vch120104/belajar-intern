@@ -3,10 +3,13 @@ package transactionworkshopcontroller
 import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
+	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -21,6 +24,7 @@ type ContractServiceDetailControllerImpl struct {
 type ContractServiceDetailController interface {
 	GetAllDetail(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
+	SaveDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewContractServiceDetailController(contractServiceDetailService transactionworkshopservice.ContractServiceDetailService) ContractServiceDetailController {
@@ -86,4 +90,27 @@ func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter
 		return
 	}
 	payloads.NewHandleSuccess(writer, result, "Get Data Successfully", http.StatusOK)
+}
+
+// SaveDetail implements ContractServiceDetailController.
+func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWriter, request *http.Request) {
+	formRequest := transactionworkshoppayloads.ContractServiceIdResponse{}
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := c.ContractServiceDetailService.SaveDetail(formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusOK)
 }

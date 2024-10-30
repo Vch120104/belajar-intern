@@ -57,3 +57,14 @@ func (s *ContractServiceDetailServiceImpl) GetById(Id int) (transactionworkshopp
 	}
 	return result, nil
 }
+
+// SaveDetail implements transactionworkshopservice.ContractServiceDetailService.
+func (s *ContractServiceDetailServiceImpl) SaveDetail(req transactionworkshoppayloads.ContractServiceIdResponse) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.ContractServiceDetailRepository.SaveDetail(tx, req)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

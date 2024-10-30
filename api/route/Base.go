@@ -1546,6 +1546,8 @@ func ContractServiceDetailRouter(
 	router.Get("/{contract_service_system_number}", ContractServiceDetailController.GetAllDetail)
 	router.Get("/by-id/{contract_service_package_detail_system_number}", ContractServiceDetailController.GetById)
 
+	router.Post("/", ContractServiceDetailController.SaveDetail)
+
 	return router
 }
 

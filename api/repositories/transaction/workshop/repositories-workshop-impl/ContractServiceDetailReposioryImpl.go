@@ -1,6 +1,7 @@
 package transactionworkshoprepositoryimpl
 
 import (
+	"after-sales/api/config"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
@@ -8,6 +9,7 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	"net/http"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -76,5 +78,50 @@ func (r *ContractServiceDetailRepositoryImpl) GetById(tx *gorm.DB, Id int) (tran
 			Err:        err,
 		}
 	}
+	return responses, nil
+}
+
+// SaveDetail implements transactionworkshoprepository.ContractServiceDetailRepository.
+func (r *ContractServiceDetailRepositoryImpl) SaveDetail(tx *gorm.DB, req transactionworkshoppayloads.ContractServiceIdResponse) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse) {
+	entities := transactionworkshopentities.ContractServiceDetail{
+		ContractServicePackageDetailSystemNumber: req.ContractServicePackageDetailSystemNumber,
+		ItemOperationId:                          req.ItemOperationId,
+		ItemDiscountPercent:                      req.ItemDiscountPercent,
+	}
+	responses := transactionworkshoppayloads.ContractServiceDetailPayloads{}
+
+	lineTypeResponse := transactionworkshoppayloads.LineTypeResponse{}
+
+	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(entities.LineTypeId)
+
+	if err := utils.Get(lineTypeUrl, &lineTypeResponse, nil); err != nil {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	err := tx.Save(&entities).Error
+
+	if err != nil {
+		return responses, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	responses.ContractServicePackageDetailSystemNumber = entities.ContractServicePackageDetailSystemNumber
+	responses.ContractServiceSystemNumber = entities.ContractServiceSystemNumber
+	responses.ContractServiceLine = entities.ContractServiceLine
+	responses.LineTypeId = entities.LineTypeId
+	responses.ItemOperationId = entities.ItemOperationId
+	responses.Description = entities.Description
+	responses.FrtQuantity = entities.FrtQuantity
+	responses.ItemPrice = entities.ItemPrice
+	responses.ItemDiscountPercent = entities.ItemDiscountPercent
+	responses.ItemDiscountAmount = entities.ItemDiscountAmount
+	responses.PackageId = entities.PackageId
+	responses.TotalUseFrtQuantity = entities.TotalUseFrtQuantity
+
 	return responses, nil
 }

@@ -37,6 +37,12 @@ type Operation struct {
 
 type ContractServiceIdResponse struct {
 	ContractServicePackageDetailSystemNumber int     `json:"contract_service_package_detail_system_number"`
-	ItemOperationId                          int     `json:"ItemOperationId"`
+	ItemOperationId                          int     `json:"item_operation_id"`
 	ItemDiscountPercent                      float64 `json:"item_discount_percent"`
+}
+
+type LineTypeResponse struct {
+	LineTypeId   int    `json:"line_type_id"`
+	LineTypeCode string `json:"line_type_code"`
+	LineTypeName string `json:"line_type_name"`
 }
