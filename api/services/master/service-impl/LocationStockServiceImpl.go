@@ -3,6 +3,7 @@ package masterserviceimpl
 import (
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
+	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
@@ -15,6 +16,16 @@ type LocationStockServiceImpl struct {
 	LocationStockRepo masterrepository.LocationStockRepository
 	DB                *gorm.DB
 	RedisClient       *redis.Client
+}
+
+func (l *LocationStockServiceImpl) UpdateLocationStock(payloads masterwarehousepayloads.LocationStockUpdatePayloads) (bool, *exceptions.BaseErrorResponse) {
+	tx := l.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	results, repoErr := l.LocationStockRepo.UpdateLocationStock(tx, payloads)
+	if repoErr != nil {
+		return results, repoErr
+	}
+	return results, nil
 }
 
 func (l *LocationStockServiceImpl) GetAllLocationStock(conditions []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
