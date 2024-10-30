@@ -41,7 +41,7 @@ type WorkOrderService interface {
 
 	// detail work order
 	GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetDetailByIdWorkOrder(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse)
+	GetDetailByIdWorkOrder(workorderID int, detailID int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse)
 	UpdateDetailWorkOrder(workorderID int, detailID int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	AddDetailWorkOrder(int, transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse)
 	DeleteDetailWorkOrder(int, int) (bool, *exceptions.BaseErrorResponse)

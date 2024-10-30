@@ -295,9 +295,9 @@ func (m *MockWorkOrderService) GetAllDetailWorkOrder(filterCondition []utils.Fil
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockWorkOrderService) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailRequest, *exceptions.BaseErrorResponse) {
+func (m *MockWorkOrderService) GetDetailByIdWorkOrder(idwosn int, idwos int) (transactionworkshoppayloads.WorkOrderDetailResponse, *exceptions.BaseErrorResponse) {
 	args := m.Called(idwosn, idwos)
-	return args.Get(0).(transactionworkshoppayloads.WorkOrderDetailRequest), args.Get(1).(*exceptions.BaseErrorResponse)
+	return args.Get(0).(transactionworkshoppayloads.WorkOrderDetailResponse), args.Get(1).(*exceptions.BaseErrorResponse)
 }
 
 func (m *MockWorkOrderService) UpdateDetailWorkOrder(idwosn int, idwos int, request transactionworkshoppayloads.WorkOrderDetailRequest) (transactionworkshopentities.WorkOrderDetail, *exceptions.BaseErrorResponse) {
