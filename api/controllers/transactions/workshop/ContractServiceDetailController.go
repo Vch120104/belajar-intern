@@ -95,22 +95,29 @@ func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter
 // SaveDetail implements ContractServiceDetailController.
 func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWriter, request *http.Request) {
 	formRequest := transactionworkshoppayloads.ContractServiceIdResponse{}
+
+	// Membaca body dari request
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	if err != nil {
 		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 
+	// Validasi form data dari request
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
+	// Proses penyimpanan melalui service
 	create, err := c.ContractServiceDetailService.SaveDetail(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusOK)
+
+	// Return response sukses
+	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusCreated) // Menggunakan StatusCreated (201)
 }
+
