@@ -58,16 +58,14 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 	queryParams := map[string]string{
 		"mtr_item.item_code":             queryValues.Get("item_code"),
 		"mtr_item.item_name":             queryValues.Get("item_name"),
-		"mtr_item.item_type":             queryValues.Get("item_type"),
+		"mtr_item_type.item_type_code":   queryValues.Get("item_type"),
 		"mtr_item.item_class_id":         queryValues.Get("item_class_id"),
 		"mtr_item_class.item_class_code": queryValues.Get("item_class_code"),
 		"mtr_item.is_active":             queryValues.Get("is_active"),
 		"mtr_item.item_group_id":         queryValues.Get("item_group_id"),
 		"mtr_item_group.item_group_code": queryValues.Get("item_group_code"),
-		"mtr_supplier.supplier_code":     queryValues.Get("supplier_code"),
-		"mtr_supplier.supplier_name":     queryValues.Get("supplier_name"),
-		"mtr_item.item_id":               queryValues.Get("item_id"),
-		"mtr_supplier.supplier_id":       queryValues.Get("supplier_id"),
+		"dms_microservices_general_dev.dbo.mtr_supplier.supplier_code": queryValues.Get("supplier_code"),
+		"dms_microservices_general_dev.dbo.mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
 	}
 
 	// Handle item_type (Goods, Services, G, S)
@@ -84,7 +82,7 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 
 	// Jika ada itemTypes yang valid, tambahkan ke queryParams
 	if len(processedItemTypes) > 0 {
-		queryParams["mtr_item.item_type"] = strings.Join(processedItemTypes, ",")
+		queryParams["mtr_item_type.item_type_code"] = strings.Join(processedItemTypes, ",")
 	}
 
 	// Handle multi_id and supplier_id as multiple parameters
@@ -102,7 +100,7 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 
 	data, totalPages, totalRows, err := r.itemservice.GetAllItemSearch(criteria, itemIDs, supplierIDs, paginate)
 	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
+		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 		return
 	}
 
@@ -230,7 +228,7 @@ func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWrite
 		"item_class_id":   queryValues.Get("item_class_id"),
 		"item_class_code": queryValues.Get("item_class_code"),
 		"item_class_name": queryValues.Get("item_class_name"),
-		"item_type":       queryValues.Get("item_type"),
+		"item_type_code":  queryValues.Get("item_type"),
 		"item_level_1":    queryValues.Get("item_level_1"),
 		"item_level_2":    queryValues.Get("item_level_2"),
 		"item_level_3":    queryValues.Get("item_level_3"),

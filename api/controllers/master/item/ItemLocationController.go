@@ -103,8 +103,8 @@ func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWrit
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"mtr_item_location.warehouse_group_id": queryValues.Get("warehouse_group_id"),
-		"mtr_item_location.item_id":            queryValues.Get("item_id"),
+		"mtr_location_item.warehouse_group_id": queryValues.Get("warehouse_group_id"),
+		"mtr_location_item.item_id":            queryValues.Get("item_id"),
 	}
 
 	paginate := pagination.Pagination{
