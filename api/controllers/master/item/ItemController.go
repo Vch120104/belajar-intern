@@ -223,16 +223,16 @@ func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWrite
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"item_code":       queryValues.Get("item_code"),
-		"item_name":       queryValues.Get("item_name"),
-		"item_class_id":   queryValues.Get("item_class_id"),
-		"item_class_code": queryValues.Get("item_class_code"),
-		"item_class_name": queryValues.Get("item_class_name"),
-		"item_type_code":  queryValues.Get("item_type"),
-		"item_level_1":    queryValues.Get("item_level_1"),
-		"item_level_2":    queryValues.Get("item_level_2"),
-		"item_level_3":    queryValues.Get("item_level_3"),
-		"item_level_4":    queryValues.Get("item_level_4"),
+		"mtr_item.item_code":     queryValues.Get("item_code"),
+		"mtr_item.item_name":     queryValues.Get("item_name"),
+		"mtr_item.item_class_id": queryValues.Get("item_class_id"),
+		"ic.item_class_code":     queryValues.Get("item_class_code"),
+		"ic.item_class_name":     queryValues.Get("item_class_name"),
+		"it.item_type_code":      queryValues.Get("item_type"),
+		"mil1.item_level_1_code": queryValues.Get("item_level_1_code"),
+		"mil2.item_level_2_code": queryValues.Get("item_level_2_code"),
+		"mil3.item_level_3_code": queryValues.Get("item_level_3_code"),
+		"mil4.item_level_4_code": queryValues.Get("item_level_4_code"),
 	}
 
 	for key, value := range queryParams {

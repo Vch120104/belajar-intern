@@ -77,6 +77,7 @@ func (r *ItemRepositoryImpl) GetUomTypeDropDown(tx *gorm.DB) ([]masteritempayloa
 	return responses, nil
 }
 
+// IF @strEntity = 'ItemListTrans'
 func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	entites := masteritementities.Item{}
@@ -92,12 +93,16 @@ func (r *ItemRepositoryImpl) GetAllItemListTransLookup(tx *gorm.DB, filterCondit
 			ic.item_class_name,
 			mtr_item.item_type_id,
 			it.item_type_code,
-			mtr_item.item_level_1,
-			mtr_item.item_level_2,
-			mtr_item.item_level_3,
-			mtr_item.item_level_4`).
+			mil1.item_level_1_code,
+			mil2.item_level_2_code,
+			mil3.item_level_3_code,
+			mil4.item_level_4_code`).
 		Joins("INNER JOIN mtr_item_class ic ON ic.item_class_id = mtr_item.item_class_id").
-		Joins("INNER JOIN mtr_item_type it ON it.item_type_id = mtr_item.item_type_id")
+		Joins("INNER JOIN mtr_item_type it ON it.item_type_id = mtr_item.item_type_id").
+		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
+		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
+		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
+		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id")
 
 	whereQuery := utils.ApplyFilterSearch(baseModelQuery, filterCondition)
 

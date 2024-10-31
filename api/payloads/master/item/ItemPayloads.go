@@ -335,18 +335,18 @@ type ItemSearch struct {
 }
 
 type ItemListTransLookUp struct {
-	ItemId        int    `json:"item_id"`
-	ItemCode      string `json:"item_code"`
-	ItemName      string `json:"item_name"`
-	ItemClassId   int    `json:"item_class_id"`
-	ItemClassCode string `json:"item_class_code"`
-	ItemClassName string `json:"item_class_name"`
-	ItemTypeId    int    `json:"item_type_id"`
-	ItemTypeCode  string `json:"item_type"`
-	ItemLevel_1   string `json:"item_level_1"`
-	ItemLevel_2   string `json:"item_level_2"`
-	ItemLevel_3   string `json:"item_level_3"`
-	ItemLevel_4   string `json:"item_level_4"`
+	ItemId           int    `json:"item_id"`
+	ItemCode         string `json:"item_code"`
+	ItemName         string `json:"item_name"`
+	ItemClassId      int    `json:"item_class_id"`
+	ItemClassCode    string `json:"item_class_code"`
+	ItemClassName    string `json:"item_class_name"`
+	ItemTypeId       int    `json:"item_type_id"`
+	ItemTypeCode     string `json:"item_type"`
+	ItemLevel_1_Code string `json:"item_level_1_code"`
+	ItemLevel_2_Code string `json:"item_level_2_code"`
+	ItemLevel_3_Code string `json:"item_level_3_code"`
+	ItemLevel_4_Code string `json:"item_level_4_code"`
 }
 
 type DeleteItemResponse struct {
