@@ -571,10 +571,11 @@ func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, reque
 		"mtr_item.item_code":     queryValues.Get("item_code"),
 		"mtr_item.item_name":     queryValues.Get("item_name"),
 		"mic.item_class_code":    queryValues.Get("item_class_code"),
-		"mtr_item.item_type":     queryValues.Get("item_type"),
-		"mtr_item.item_level_1":  queryValues.Get("item_level_1"),
-		"mtr_item.item_level_2":  queryValues.Get("item_level_2"),
-		"mtr_item.item_level_3":  queryValues.Get("item_level_3"),
+		"mit.item_type_code":     queryValues.Get("item_type_code"),
+		"mil1.item_level_1_code": queryValues.Get("item_level_1_code"),
+		"mil2.item_level_2_code": queryValues.Get("item_level_2_code"),
+		"mil3.item_level_3_code": queryValues.Get("item_level_3_code"),
+		"mil4.item_level_4_code": queryValues.Get("item_level_4_code"),
 	}
 
 	if queryParams["mid.brand_id"] == "" {
