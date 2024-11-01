@@ -37,7 +37,7 @@ type LocationStockUpdatePayloads struct {
 	WarehouseId              int        `gorm:"column:warehouse_id;not null"        json:"warehouse_id"`
 	LocationId               int        `gorm:"column:location_id;not null"        json:"location_id"`
 	ItemId                   int        `gorm:"column:item_id;not null"        json:"item_id"`
-	WarehouseGroup           string     `gorm:"column:warehouse_group;size:50;not null"        json:"warehouse_group"`
+	WarehouseGroupId         int        `gorm:"column:warehouse_group_id;size:30;not null"        json:"warehouse_group_id"`
 	QuantityBegin            float64    `gorm:"column:quantity_begin;null"        json:"quantity_begin"`
 	QuantitySales            float64    `gorm:"column:quantity_sales;null"        json:"quantity_sales"`
 	QuantitySalesReturn      float64    `gorm:"column:quantity_sales_return;null"        json:"quantity_sales_return"`

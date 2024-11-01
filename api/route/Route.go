@@ -208,7 +208,7 @@ func StartRouting(db *gorm.DB) {
 
 	//stock transaction type
 	StockTransactionTypeRepository := masterrepositoryimpl.NewStockTransactionRepositoryImpl()
-	StockTransactionTypeService := masterserviceimpl.NewStockTransactionServiceImpl(StockTransactionTypeRepository, db, rdb)
+	StockTransactionTypeService := masterserviceimpl.NewStockTransactionTypeServiceImpl(StockTransactionTypeRepository, db, rdb)
 	StockTransactionTypeController := mastercontroller.NewStockTransactionTypeController(StockTransactionTypeService)
 
 	//stock transaction reason

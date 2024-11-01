@@ -142,6 +142,7 @@ func (i *ItemCycleRepositoryImpl) InsertItemCycle(db *gorm.DB, payloads masterpa
 				Err:        err}
 		}
 	}
+
 	return true, nil
 
 }
