@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"after-sales/api/config"
-	generalservicepayloads "after-sales/api/payloads/crossservice/generalservice"
 	"errors"
 	"strconv"
 	"time"
@@ -177,12 +175,3 @@ var ErrNotFound = errors.New(GetDataNotFound)
 var ErrConflict = errors.New(DataExists)
 var ErrEntity = errors.New(JsonError)
 var ErrInternalServerError = errors.New(SomethingWrong)
-
-func GetCompanyDataById(companyId int) (generalservicepayloads.GetCompanyByIdResponses, bool) {
-	var CompanyResponse generalservicepayloads.GetCompanyByIdResponses
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(companyId)
-	if err := Get(CompanyUrl, &CompanyResponse, nil); err != nil {
-		return CompanyResponse, false
-	}
-	return CompanyResponse, true
-}
