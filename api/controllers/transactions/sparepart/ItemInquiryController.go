@@ -26,9 +26,21 @@ func NewItemInquiryController(itemInquiryService transactionsparepartservice.Ite
 func (i *ItemInquiryControllerImpl) GetAllItemInquiry(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"company_id":         queryValues.Get("company_id"),
-		"company_session_id": queryValues.Get("company_session_id"),
-		"mi.item_id":         queryValues.Get("item_id"),
+		"company_id":                queryValues.Get("company_id"),
+		"company_session_id":        queryValues.Get("company_session_id"),
+		"mi.item_id":                queryValues.Get("item_id"),
+		"mtr_item_detail.brand_id":  queryValues.Get("brand_id"),
+		"mtr_item_detail.model_id":  queryValues.Get("model_id"),
+		"mi.item_code":              queryValues.Get("item_code"),
+		"mi.item_name":              queryValues.Get("item_name"),
+		"mi.item_class_id":          queryValues.Get("item_class_id"),
+		"available_quantity_from":   queryValues.Get("available_quantity_from"),
+		"available_quantity_to":     queryValues.Get("available_quantity_to"),
+		"sales_price_from":          queryValues.Get("sales_price_from"),
+		"sales_price_to":            queryValues.Get("sales_price_to"),
+		"mwg.warehouse_group_id":    queryValues.Get("warehouse_group_id"),
+		"mwm.warehouse_id":          queryValues.Get("warehouse_id"),
+		"mwl.warehouse_location_id": queryValues.Get("warehouse_location_id"),
 	}
 
 	if queryParams["company_id"] == "" {

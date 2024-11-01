@@ -44,7 +44,7 @@ type ItemInquiryGetAllPayloads struct {
 	WarehouseGroupCode     string  `json:"warehouse_group_code"`
 	WarehouseCode          string  `json:"warehouse_code"`
 	WarehouseLocationCode  string  `json:"warehouse_location_code"`
-	PriceListAmount        float64 `json:"price_list_amount"`
+	SalesPrice             float64 `json:"sales_price"`
 	QuantityAvailable      float64 `json:"quantity_available"`
 	ItemSubstitute         string  `json:"item_substitute"`
 	MovingCode             string  `json:"moving_code"`
@@ -54,4 +54,19 @@ type ItemInquiryGetAllPayloads struct {
 type ItemInquiryBrandResponse struct {
 	BrandId   int    `json:"brand_id"`
 	BrandCode string `json:"brand_code"`
+}
+
+type ItemInquiryModelResponse struct {
+	ModelId   int    `json:"model_id"`
+	ModelCode string `json:"model_code"`
+}
+
+type ItemInquiryToolTip struct {
+	BrandId int `json:"brand_id"`
+	ModelId int `json:"model_id"`
+}
+
+type ItemInquiryGetAllToolTip struct {
+	ItemId  int                      `json:"ItemId"`
+	Tooltip []map[string]interface{} `json:"tooltip"`
 }

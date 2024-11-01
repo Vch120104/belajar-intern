@@ -34,6 +34,10 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 	var companyId int
 	var companySessionId int
 	var itemId int
+	var availableQuantityFrom *float64
+	var availableQuantityTo *float64
+	var salesPriceFrom *float64
+	var salesPriceTo *float64
 	for _, filter := range filterCondition {
 		if strings.Contains(filter.ColumnField, "company_id") {
 			companyId, _ = strconv.Atoi(filter.ColumnValue)
@@ -45,6 +49,26 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		}
 		if strings.Contains(filter.ColumnField, "item_id") {
 			itemId, _ = strconv.Atoi(filter.ColumnValue) // purposely added to newFilter
+		}
+		if strings.Contains(filter.ColumnField, "available_quantity_from") {
+			availableQuantityFromTemp, _ := strconv.ParseFloat(filter.ColumnValue, 64)
+			availableQuantityFrom = &availableQuantityFromTemp
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "available_quantity_to") {
+			availableQuantityToTemp, _ := strconv.ParseFloat(filter.ColumnValue, 64)
+			availableQuantityTo = &availableQuantityToTemp
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "sales_price_from") {
+			salesPriceFromTemp, _ := strconv.ParseFloat(filter.ColumnValue, 64)
+			salesPriceFrom = &salesPriceFromTemp
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "sales_price_to") {
+			salesPriceToTemp, _ := strconv.ParseFloat(filter.ColumnValue, 64)
+			salesPriceTo = &salesPriceToTemp
+			continue
 		}
 		newFilterCondition = append(newFilterCondition, filter)
 	}
@@ -140,8 +164,8 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				ISNULL(mwg.warehouse_group_code, '') warehouse_group_code,
 				ISNULL(mwm.warehouse_code, '') warehouse_code,
 				ISNULL(mwl.warehouse_location_code, '') warehouse_location_code,
-				ISNULL(mipl.price_list_amount, 0) price_list_amount,
-				CASE WHEN ISNULL(auto_pick_wms, 'Y') = 'N' THEN 0 ELSE (ISNULL(mls.quantity_sales, 0) + ISNULL(mls.quantity_transfer_out, 0) + ISNULL(mls.quantity_robbing_out, 0) + ISNULL(mls.quantity_assembly_out, 0) + ISNULL(mls.quantity_allocated, 0)) END quantity_available,
+				ISNULL(mipl.price_list_amount, 0) sales_price,
+				CASE WHEN ISNULL(auto_pick_wms, '1') = '0' THEN 0 ELSE (ISNULL(mls.quantity_sales, 0) + ISNULL(mls.quantity_transfer_out, 0) + ISNULL(mls.quantity_robbing_out, 0) + ISNULL(mls.quantity_assembly_out, 0) + ISNULL(mls.quantity_allocated, 0)) END quantity_available,
 				CASE WHEN ISNULL(mis.item_id, 0) = 0 THEN 'N' ELSE 'Y' END item_substitute,
 				CASE WHEN ? = '200000' AND ISNULL(mmc.moving_code, '') != '' THEN ISNULL(mmc.moving_code_description, '') ELSE '' END moving_code,
 				ISNULL(available_in_other_dealer, '') available_in_other_dealer
@@ -210,7 +234,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				ISNULL(mwg.warehouse_group_code, '') warehouse_group_code,
 				ISNULL(mwm.warehouse_code, '') warehouse_code,
 				ISNULL(mwl.warehouse_location_code, '') warehouse_location_code,
-				ISNULL(mipl.price_list_amount, 0) price_list_amount,
+				ISNULL(mipl.price_list_amount, 0) sales_price,
 				(ISNULL(mls.quantity_sales, 0) + ISNULL(mls.quantity_transfer_out, 0) + ISNULL(mls.quantity_robbing_out, 0) + ISNULL(mls.quantity_assembly_out, 0) + ISNULL(mls.quantity_allocated, 0)) quantity_available,
 				CASE WHEN ISNULL(mis.item_id, 0) = 0 THEN 'N' ELSE 'Y' END item_substitute,
 				CASE WHEN ISNULL(mmc.moving_code, '') != '' THEN ISNULL(mmc.moving_code_description, '') ELSE '' END moving_code,
@@ -280,7 +304,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 				'' warehouse_group_code,
 				'' warehouse_code,
 				'' warehouse_location_code,
-				ISNULL(mipl.price_list_amount, 0) price_list_amount,
+				ISNULL(mipl.price_list_amount, 0) sales_price,
 				0 quantity_available, --(ISNULL(mls.quantity_sales, 0) + ISNULL(mls.quantity_transfer_out, 0) + ISNULL(mls.quantity_robbing_out, 0) + ISNULL(mli.quantity_assembly_out, 0) + ISNULL(mli.quantity_allocated, 0)),
 				CASE WHEN ISNULL(mis.item_id, 0) = 0 THEN 'N' ELSE 'Y' END item_substitute,
 				CASE WHEN ? = '1516098' AND ISNULL(mmc.moving_code, '') != '' THEN ISNULL(mmc.moving_code_description, '') ELSE '' END moving_code,
@@ -367,9 +391,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		Where("mi.is_active = ?", true).
 		Where("mtr_item_detail.brand_id IN ?", companyBrandIds)
 
-	whereQuery := utils.ApplyFilterExact(baseModelQuery, newFilterCondition)
-	err = whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&response).Error
-
+	err = utils.ApplyFilter(baseModelQuery, newFilterCondition).Scan(&response).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -377,17 +399,64 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		}
 	}
 
-	joinedData := []map[string]interface{}{}
+	mapResponse := []map[string]interface{}{}
+	for _, data := range response {
+		if availableQuantityFrom != nil {
+			if !(data.QuantityAvailable >= *availableQuantityFrom) {
+				continue
+			}
+		}
+		if availableQuantityTo != nil {
+			if !(data.QuantityAvailable <= *availableQuantityTo) {
+				continue
+			}
+		}
+		if salesPriceFrom != nil {
+			if !(data.SalesPrice >= *salesPriceFrom) {
+				continue
+			}
+		}
+		if salesPriceTo != nil {
+			if !(data.SalesPrice <= *salesPriceTo) {
+				continue
+			}
+		}
+		temp := map[string]interface{}{
+			"ItemDetailId":           data.ItemDetailId,
+			"ItemId":                 data.ItemId,
+			"ItemCode":               data.ItemCode,
+			"ItemName":               data.ItemName,
+			"ItemClassCode":          data.ItemClassCode,
+			"BrandId":                data.BrandId,
+			"ModelCode":              data.ModelCode,
+			"WarehouseGroupCode":     data.WarehouseGroupCode,
+			"WarehouseCode":          data.WarehouseCode,
+			"WarehouseLocationCode":  data.WarehouseLocationCode,
+			"SalesPrice":             data.SalesPrice,
+			"QuantityAvailable":      data.QuantityAvailable,
+			"ItemSubstitute":         data.ItemSubstitute,
+			"MovingCode":             data.MovingCode,
+			"AvailableInOtherDealer": data.AvailableInOtherDealer,
+		}
+		mapResponse = append(mapResponse, temp)
+	}
 
-	if len(response) > 0 {
+	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponse, &pages)
+
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	finalJoinedData := []map[string]interface{}{}
+
+	if len(paginatedData) > 0 {
 		brandIds := []int{}
 		brandIdsStr := ""
 
-		for _, data := range response {
-			if isNotInList(brandIds, data.BrandId) {
-				str := strconv.Itoa(data.BrandId)
+		for _, data := range paginatedData {
+			if isNotInList(brandIds, data["BrandId"].(int)) {
+				str := strconv.Itoa(data["BrandId"].(int))
 				brandIdsStr += str + ","
-				brandIds = append(brandIds, data.BrandId)
+				brandIds = append(brandIds, data["BrandId"].(int))
 			}
 		}
 
@@ -396,7 +465,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		if err := utils.GetArray(brandUrl, &brandResponse, nil); err != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "unit brand does not exist",
+				Message:    "fail to fetch unit brand data",
 				Err:        err,
 			}
 		}
@@ -404,14 +473,109 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		if len(brandResponse) == 0 {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNoContent,
-				Err:        errors.New("fail to fetch unit brand data"),
+				Err:        errors.New("unit brand does not exist"),
 			}
 		}
 
-		joinedData = utils.DataFrameLeftJoin(response, brandResponse, "BrandId")
-	}
+		joinedData := utils.DataFrameLeftJoin(paginatedData, brandResponse, "BrandId")
 
-	pages.Rows = joinedData
+		// start usp_comToolTip @strEntity = 'ItemInquiryBrandModel'
+		itemIds := []int{}
+
+		for _, data := range joinedData {
+			if isNotInList(itemIds, data["ItemId"].(int)) {
+				itemIds = append(itemIds, data["ItemId"].(int))
+			}
+		}
+
+		tooltips := []transactionsparepartpayloads.ItemInquiryGetAllToolTip{}
+		for _, itemId := range itemIds {
+			entitiesItemDetails := masteritementities.ItemDetail{}
+			responseItemDetails := []transactionsparepartpayloads.ItemInquiryToolTip{}
+			err = tx.Model(&entitiesItemDetails).
+				Where(masteritementities.ItemDetail{ItemId: itemId}).
+				Scan(&responseItemDetails).Error
+
+			if err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNoContent,
+					Err:        err,
+				}
+			}
+
+			ttpBrandIds := []int{}
+			ttpModelids := []int{}
+			ttpBrandIdsStr := ""
+			ttpModelIdsStr := ""
+
+			for _, dataa := range responseItemDetails {
+				if isNotInList(ttpBrandIds, dataa.BrandId) {
+					str := strconv.Itoa(dataa.BrandId)
+					ttpBrandIdsStr += str + ","
+					ttpBrandIds = append(ttpBrandIds, dataa.BrandId)
+				}
+				if isNotInList(ttpModelids, dataa.ModelId) {
+					str := strconv.Itoa(dataa.ModelId)
+					ttpModelIdsStr += str + ","
+					ttpModelids = append(ttpModelids, dataa.ModelId)
+				}
+			}
+
+			ttpBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand-multi-id/" + ttpBrandIdsStr
+			ttpBrandResponse := []transactionsparepartpayloads.ItemInquiryBrandResponse{}
+			if err := utils.GetArray(ttpBrandUrl, &ttpBrandResponse, nil); err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "fail to fetch ttp unit brand data",
+					Err:        err,
+				}
+			}
+			if len(ttpBrandResponse) == 0 {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNoContent,
+					Err:        errors.New("ttp unit brand does not exist"),
+				}
+			}
+
+			ttpModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + ttpModelIdsStr
+			ttpModelResponse := []transactionsparepartpayloads.ItemInquiryModelResponse{}
+			if err := utils.GetArray(ttpModelUrl, &ttpModelResponse, nil); err != nil {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "fail to fetch ttp unit model data",
+					Err:        err,
+				}
+			}
+			if len(ttpModelResponse) == 0 {
+				return pages, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusNoContent,
+					Err:        errors.New("ttp unit model does not exist"),
+				}
+			}
+
+			ttpJoinedData := utils.DataFrameLeftJoin(responseItemDetails, ttpBrandResponse, "BrandId")
+			ttpJoinedData2 := utils.DataFrameLeftJoin(ttpJoinedData, ttpModelResponse, "ModelId")
+
+			tooltips = append(tooltips, transactionsparepartpayloads.ItemInquiryGetAllToolTip{
+				ItemId:  itemId,
+				Tooltip: ttpJoinedData2,
+			})
+		}
+		// end usp_comToolTip @strEntity = 'ItemInquiryBrandModel'
+
+		// manual left join data frame for adding tooltip resonse
+		for i := 0; i < len(joinedData); i++ {
+			joinedData[i]["Tooltip"] = []map[string]interface{}{}
+			for j := 0; j < len(tooltips); j++ {
+				if joinedData[i]["ItemId"].(int) == tooltips[j].ItemId {
+					joinedData[i]["Tooltip"] = tooltips[j].Tooltip
+					break
+				}
+			}
+		}
+		finalJoinedData = joinedData
+	}
+	pages.Rows = finalJoinedData
 
 	return pages, nil
 }
