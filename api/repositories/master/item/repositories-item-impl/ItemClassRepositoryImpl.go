@@ -280,6 +280,8 @@ func (r *ItemClassRepositoryImpl) GetItemClassById(tx *gorm.DB, Id int) (masteri
 		}
 	}
 
+	fmt.Println(response)
+
 	lineTypeResponse := masteritempayloads.LineTypeResponse{}
 
 	lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(response.LineTypeId)

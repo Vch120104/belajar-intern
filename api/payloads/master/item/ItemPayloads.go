@@ -1,61 +1,65 @@
 package masteritempayloads
 
 type ItemResponse struct {
-	IsActive                    bool    `json:"is_active"`
-	ItemId                      int     `json:"item_id"`
-	ItemCode                    string  `json:"item_code"`
-	ItemName                    string  `json:"item_name"`
-	ItemClassId                 int     `json:"item_class_id"`
-	ItemGroupId                 int     `json:"item_group_id"`
-	ItemTypeId                  int     `json:"item_type_id"`
-	Remark                      string  `json:"remark"`
-	Remark2                     string  `json:"remark2"`
-	Remark3                     string  `json:"remark3"`
-	SourceTypeId                int     `json:"source_type_id"`
-	SupplierId                  int     `json:"supplier_id"`
-	SupplierName                *string `json:"supplier_name"`
-	SupplierCode                *string `json:"supplier_code"`
-	AtpmSupplierId              int     `json:"atpm_supplier_id"`
-	PersonInChargeId            int     `json:"person_in_charge_id"`
-	HarmonizedNo                string  `json:"harmonized_no"`
-	MinimumOrderQty             float64 `json:"minimum_order_qty"`
-	CommonPricelist             bool    `json:"common_pricelist"`
-	IsRemovable                 bool    `json:"is_removable"`
-	ItemLevel_1_Id              int     `json:"item_level_1_id"`
-	ItemLevel_1_Code            string  `json:"item_level_1_code"`
-	ItemLevel_1_Name            string  `json:"item_level_1_name"`
-	ItemLevel_2_Id              int     `json:"item_level_2_id"`
-	ItemLevel_2_Code            string  `json:"item_level_2_code"`
-	ItemLevel_2_Name            string  `json:"item_level_2_name"`
-	ItemLevel_3_Id              int     `json:"item_level_3_id"`
-	ItemLevel_3_Code            string  `json:"item_level_3_code"`
-	ItemLevel_3_Name            string  `json:"item_level_3_name"`
-	ItemLevel_4_Id              int     `json:"item_level_4_id"`
-	ItemLevel_4_Code            string  `json:"item_level_4_code"`
-	ItemLevel_4_Name            string  `json:"item_level_4_name"`
-	UnitOfMeasurementTypeId     int     `json:"unit_of_measurement_type_id"`
-	UnitOfMeasurementSellingId  int     `json:"unit_of_measurement_selling_id"`
-	UnitOfMeasurementPurchaseId int     `json:"unit_of_measurement_purchase_id"`
-	UnitOfMeasurementStockId    int     `json:"unit_of_measurement_stock_id"`
-	IsSellable                  bool    `json:"is_sellable"`
-	Lottable                    bool    `json:"lottable"`
-	Inspection                  bool    `json:"inspection"`
-	StockKeeping                bool    `json:"stock_keeping"`
-	DiscountId                  int     `json:"discount_id"`
-	MarkupMasterId              int     `json:"markup_master_id"`
-	StorageTypeId               int     `json:"storage_type_id"`
-	AtpmWarrantyClaimTypeId     int     `json:"atpm_warranty_claim_type_id"`
-	IsAffiliatedTrx             bool    `json:"is_affiliated_trx"`
-	IsItemRegulation            bool    `json:"is_item_regulation"`
-	Regulation                  string  `json:"regulation"`
-	IsTechnicalDefect           bool    `json:"is_technical_defect"`
-	PmsItem                     bool    `json:"pms_item"`
-	SpecialMovementId           int     `json:"special_movement_id"`
-	AutoPickWms                 bool    `json:"auto_pick_wms"`
-	ProportionalSupplyWms       bool    `json:"proportional_supply_wms"`
-	GmmCatalogCode              int     `json:"gmm_catalog_code"`
-	PrincipalBrandParentId      int     `json:"principal_brand_parent_id"`
-
+	IsActive                     bool    `json:"is_active"`
+	ItemId                       int     `json:"item_id"`
+	ItemCode                     string  `json:"item_code"`
+	ItemName                     string  `json:"item_name"`
+	ItemClassId                  int     `json:"item_class_id"`
+	ItemGroupId                  int     `json:"item_group_id"`
+	ItemTypeId                   int     `json:"item_type_id"`
+	Remark                       string  `json:"remark"`
+	Remark2                      string  `json:"remark2"`
+	Remark3                      string  `json:"remark3"`
+	SourceTypeId                 int     `json:"source_type_id"`
+	SupplierId                   int     `json:"supplier_id"`
+	SupplierName                 *string `json:"supplier_name"`
+	SupplierCode                 *string `json:"supplier_code"`
+	AtpmSupplierId               int     `json:"atpm_supplier_id"`
+	PersonInChargeId             int     `json:"person_in_charge_id"`
+	HarmonizedNo                 string  `json:"harmonized_no"`
+	MinimumOrderQty              float64 `json:"minimum_order_qty"`
+	CommonPricelist              bool    `json:"common_pricelist"`
+	IsRemovable                  bool    `json:"is_removable"`
+	ItemLevel_1_Id               int     `json:"item_level_1_id"`
+	ItemLevel_1_Code             string  `json:"item_level_1_code"`
+	ItemLevel_1_Name             string  `json:"item_level_1_name"`
+	ItemLevel_2_Id               int     `json:"item_level_2_id"`
+	ItemLevel_2_Code             string  `json:"item_level_2_code"`
+	ItemLevel_2_Name             string  `json:"item_level_2_name"`
+	ItemLevel_3_Id               int     `json:"item_level_3_id"`
+	ItemLevel_3_Code             string  `json:"item_level_3_code"`
+	ItemLevel_3_Name             string  `json:"item_level_3_name"`
+	ItemLevel_4_Id               int     `json:"item_level_4_id"`
+	ItemLevel_4_Code             string  `json:"item_level_4_code"`
+	ItemLevel_4_Name             string  `json:"item_level_4_name"`
+	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
+	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
+	UnitOfMeasurementPurchaseId  int     `json:"unit_of_measurement_purchase_id"`
+	UnitOfMeasurementStockId     int     `json:"unit_of_measurement_stock_id"`
+	IsSellable                   bool    `json:"is_sellable"`
+	Lottable                     bool    `json:"lottable"`
+	Inspection                   bool    `json:"inspection"`
+	StockKeeping                 bool    `json:"stock_keeping"`
+	DiscountId                   int     `json:"discount_id"`
+	MarkupMasterId               int     `json:"markup_master_id"`
+	StorageTypeId                int     `json:"storage_type_id"`
+	AtpmWarrantyClaimTypeId      int     `json:"atpm_warranty_claim_type_id"`
+	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
+	IsItemRegulation             bool    `json:"is_item_regulation"`
+	Regulation                   string  `json:"regulation"`
+	IsTechnicalDefect            bool    `json:"is_technical_defect"`
+	PmsItem                      bool    `json:"pms_item"`
+	SpecialMovementId            int     `json:"special_movement_id"`
+	AutoPickWms                  bool    `json:"auto_pick_wms"`
+	ProportionalSupplyWms        bool    `json:"proportional_supply_wms"`
+	GmmCatalogCode               int     `json:"gmm_catalog_code"`
+	PrincipalBrandParentId       int     `json:"principal_brand_parent_id"`
+	SourceConvertion             float64 `json:"source_convertion"`
+	TargetConvertion             float64 `json:"target_convertion"`
+	UomItemId                    int     `json:"uom_item_id"`
+	SourceUomId                  int     `    json:"source_uom_id"`
+	TargetUomId                  int     `    json:"target_uom_id"`
 	SalesItem                    string  `json:"sales_item"`
 	PriceListItem                string  `json:"price_list_item"`
 	DimensionOfLength            float64 `json:"dimension_of_length"`
@@ -95,6 +99,11 @@ type ItemRequest struct {
 	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  int     `json:"unit_of_measurement_purchase_id"`
 	UnitOfMeasurementStockId     int     `json:"unit_of_measurement_stock_id"`
+	SourceConvertion             float64 `json:"source_convertion"`
+	TargetConvertion             float64 `json:"target_convertion"`
+	UomItemId                    int     `json:"uom_item_id"`
+	SourceUomId                  int     `    json:"source_uom_id"`
+	TargetUomId                  int     `    json:"target_uom_id"`
 	SalesItem                    string  `json:"sales_item"`
 	Lottable                     bool    `json:"lottable"`
 	Inspection                   bool    `json:"inspection"`
@@ -135,8 +144,6 @@ type ItemRequest struct {
 	SourceTypeId                 int     `json:"source_type_id"`
 	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             int     `json:"person_in_charge_id"`
-	SourceConvertion             float32 `json:"source_convertion"`
-	TargetConvertion             float32 `json:"target_convertion"`
 	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
 	IsSellable                   bool    `json:"is_sellable"`
 }
@@ -241,6 +248,10 @@ type SupplierMasterResponse struct {
 	SupplierId   int    `json:"supplier_id"`
 	SupplierCode string `json:"supplier_code"` //fk luar mtr_supplier supplier_id -> supplier_code
 	SupplierName string `json:"supplier_name"` //supplier_id -> supplier_name
+}
+
+type SupplierMasterResponse1 struct {
+	SupplierId int `json:"supplier_id"`
 }
 
 type StorageTypeResponse struct {

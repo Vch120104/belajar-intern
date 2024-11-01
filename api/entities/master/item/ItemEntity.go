@@ -63,6 +63,7 @@ type Item struct {
 	PersonInChargeId             int        `gorm:"column:person_in_charge_id;size:30" json:"person_in_charge_id"`
 	ItemClass                    *ItemClass `gorm:"foreignKey:ItemClassId;references:ItemClassId"`
 	ItemDetail                   ItemDetail `gorm:"foreignKey:ItemId;references:ItemId"`
+	ItemType                     ItemType   `gorm:"foreignKey:ItemTypeId;references ItemTypeId"`
 	ItemLevel1                   ItemLevel1
 	ItemLevel2                   ItemLevel2
 	ItemLevel3                   ItemLevel3

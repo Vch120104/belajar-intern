@@ -303,12 +303,18 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 			mil3.item_level_3_code,
 			mil3.item_level_3_name,
 			mil4.item_level_4_code,
-			mil4.item_level_4_name
+			mil4.item_level_4_name,
+			uom.uom_item_id,
+			uom.source_uom_id,
+			uom.target_uom_id,
+			uom.source_convertion,
+	uom.target_convertion 
 			`).
 		Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
 		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
 		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
 		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
+		Joins("LEFT JOIN mtr_uom_item uom on uom.item_id = mtr_item.item_id").
 		Where(masteritementities.Item{ItemId: Id}).
 		First(&response).Error
 
@@ -421,6 +427,45 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
 	response := masteritempayloads.ItemSaveResponse{}
+
+	//CHECK ITEM TYPE EXISTENCE
+	shouldReturn, returnValue, errorItemType := checkItemTypeExistence(tx, req, response)
+	if shouldReturn {
+		return returnValue, errorItemType
+	}
+
+	//CHECK ITEM LEVEL EXISTENCE
+	shouldReturn1, returnValue2, errorItemLevel := checkIfItemLevelExists(tx, req, response)
+	if shouldReturn1 {
+		return returnValue2, errorItemLevel
+	}
+
+	//CHECK ITEM CLASS EXISTENCE
+	shouldReturn2, returnValue1, errorItemClass := checkItemClasExistence(tx, req, response)
+	if shouldReturn2 {
+		return returnValue1, errorItemClass
+	}
+
+	//CHECK ITEM GROUP EXISTENCE
+	shouldReturn3, returnValue3, errorItemGroup := checkItemGroupExistence(tx, req, response)
+	if shouldReturn3 {
+		return returnValue3, errorItemGroup
+	}
+
+	//CHECK SUPPLIER
+
+	supplierResponse := masteritempayloads.SupplierMasterResponse1{}
+
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
+
+	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Supplier not found",
+			Err:        errors.New("supplier not found"),
+		}
+	}
+
 	entities := masteritementities.Item{
 		IsActive:                     req.IsActive,
 		ItemId:                       req.ItemId,
@@ -484,16 +529,23 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	err := tx.Save(&entities).Error
 	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to save item",
-			Err:        err,
+		if strings.Contains(err.Error(), "duplicate") {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusConflict,
+				Err:        err,
+			}
+		} else {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 
 	model := masteritementities.Item{}
 	err = tx.Model(&model).Where(masteritementities.Item{ItemCode: req.ItemCode}).First(&model).Error
 	if err != nil {
+
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch item data",
@@ -502,11 +554,19 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
-	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
+	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch atpm order type data",
+			Err:        err,
+		}
+	}
+
+	if atpmResponse == (masteritempayloads.AtpmOrderTypeResponse{}) {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "atpm order type not found",
 			Err:        err,
 		}
 	}
@@ -521,15 +581,29 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
+	//get uomitemid if update
+
+	var uomItemId int
+
+	err = tx.Model(masteritementities.UomItem{}).Select("uom_item_id").Where(masteritementities.UomItem{ItemId: model.ItemId}).First(&uomItemId).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
 	uomItemEntities := masteritementities.UomItem{
 		IsActive:          req.IsActive,
+		UomItemId:         uomItemId,
 		ItemId:            model.ItemId,
 		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
 		UomTypeCode:       uomTypeModel.UomTypeCode,
 		SourceUomId:       req.UnitOfMeasurementPurchaseId,
 		TargetUomId:       req.UnitOfMeasurementStockId,
-		SourceConvertion:  float64(req.SourceConvertion),
-		TargetConvertion:  float64(req.TargetConvertion),
+		SourceConvertion:  req.SourceConvertion,
+		TargetConvertion:  req.TargetConvertion,
 	}
 
 	err = tx.Save(&uomItemEntities).Error
@@ -554,6 +628,147 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	return result, nil
+}
+
+func checkItemGroupExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var countGroup int64
+	if err := tx.Model(&masteritementities.ItemGroup{}).
+		Where(masteritementities.ItemGroup{ItemGroupId: req.ItemGroupId}).
+		Count(&countGroup).Error; err != nil {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Database error on ItemGroup",
+			Err:        err,
+		}
+	}
+	if countGroup == 0 {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Item group not found",
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkItemClasExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var countClass int64
+	if err := tx.Model(&masteritementities.ItemClass{}).
+		Where(masteritementities.ItemClass{ItemClassId: req.ItemClassId}).
+		Count(&countClass).Error; err != nil {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Database error on ItemClass",
+			Err:        err,
+		}
+	}
+	if countClass == 0 {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Item class not found",
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkIfItemLevelExists(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var countLevel1 int64
+	if err := tx.Model(&masteritementities.ItemLevel1{}).
+		Where(masteritementities.ItemLevel1{
+			ItemLevel1Id: req.ItemLevel1Id,
+		}).
+		Count(&countLevel1).Error; err != nil {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Database error on ItemLevel1",
+			Err:        err,
+		}
+	}
+	if countLevel1 == 0 {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Item level 1 not found",
+		}
+	}
+
+	if req.ItemLevel2Id != nil {
+		var countLevel2 int64
+		if err := tx.Model(&masteritementities.ItemLevel2{}).
+			Where(masteritementities.ItemLevel2{ItemLevel2Id: *req.ItemLevel2Id}).
+			Count(&countLevel2).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on ItemLevel2",
+				Err:        err,
+			}
+		}
+		if countLevel2 == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Item level 2 not found",
+			}
+		}
+	}
+
+	if req.ItemLevel3Id != nil {
+		var countLevel3 int64
+		if err := tx.Model(&masteritementities.ItemLevel3{}).
+			Where(masteritementities.ItemLevel3{ItemLevel3Id: *req.ItemLevel3Id}).
+			Count(&countLevel3).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on ItemLevel3",
+				Err:        err,
+			}
+		}
+		if countLevel3 == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Item level 3 not found",
+			}
+		}
+	}
+
+	if req.ItemLevel4Id != nil {
+		var countLevel4 int64
+		if err := tx.Model(&masteritementities.ItemLevel4{}).
+			Where(masteritementities.ItemLevel4{ItemLevel4Id: *req.ItemLevel4Id}).
+			Count(&countLevel4).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on ItemLevel4",
+				Err:        err,
+			}
+		}
+		if countLevel4 == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Item level 4 not found",
+			}
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkItemTypeExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var count int64
+	if err := tx.Model(&masteritementities.ItemType{}).
+		Where("item_type_id = ?", req.ItemTypeId).
+		Count(&count).Error; err != nil {
+
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Database error",
+			Err:        err,
+		}
+	}
+
+	if count == 0 {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Item type not found",
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
 }
 
 func (r *ItemRepositoryImpl) DetermineStockKeeping(req masteritempayloads.ItemRequest, manualStockKeeping bool) bool {
