@@ -81,7 +81,7 @@ func (r *ItemClassControllerImpl) GetItemClassbyId(writer http.ResponseWriter, r
 	response, err := r.ItemClassService.GetItemClassById(itemClassId)
 
 	if err != nil {
-		exceptions.NewBadRequestException(writer, request, err)
+		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
