@@ -387,10 +387,15 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*").
+	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*, mil1.*, mil2.*, mil3.*, mil4.*").
 		Where(masteritementities.Item{
 			ItemCode: code,
-		}).InnerJoins("Join mtr_uom_item u ON mtr_item.item_id = u.item_id").
+		}).
+		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
+		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
+		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
+		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
+		Joins("LEFT JOIN mtr_uom_item u ON mtr_item.item_id = u.item_id").
 		First(&response).
 		Rows()
 
@@ -403,7 +408,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 
 	supplierResponse := masteritempayloads.SupplierMasterResponse{}
 
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "/supplier-master/" + strconv.Itoa(response.SupplierId)
+	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
 
 	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
