@@ -34,7 +34,7 @@ func TestUpdateLocationStock(t *testing.T) {
 		WarehouseId:              1,
 		LocationId:               1,
 		ItemId:                   293773,
-		WarehouseGroup:           "SP",
+		WarehouseGroupId:         1,
 		QuantityBegin:            1,
 		QuantitySales:            1,
 		QuantitySalesReturn:      1,

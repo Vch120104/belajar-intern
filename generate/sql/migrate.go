@@ -2,6 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
+
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -103,6 +104,8 @@ func Migrate() {
 	//&masteritementities.ItemLocationSource{},
 	//&masteritementities.Item{},
 	//&masteritementities.ItemPriceCode{},
+	//&masteritementities.Item{},
+	// &masteritementities.ItemPriceCode{},
 
 	// &masteritementities.ItemLocation{},
 	// &masteritementities.ItemLocationDetail{},
@@ -216,6 +219,7 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseOrderLimit{},
 	//transactionsparepartentities.ItemClaim{},
 	//transactionsparepartentities.ItemClaimDetail{},
+	//&transactionsparepartentities.StockTransaction{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

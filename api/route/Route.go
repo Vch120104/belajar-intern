@@ -208,7 +208,7 @@ func StartRouting(db *gorm.DB) {
 
 	//stock transaction type
 	StockTransactionTypeRepository := masterrepositoryimpl.NewStockTransactionRepositoryImpl()
-	StockTransactionTypeService := masterserviceimpl.NewStockTransactionServiceImpl(StockTransactionTypeRepository, db, rdb)
+	StockTransactionTypeService := masterserviceimpl.NewStockTransactionTypeServiceImpl(StockTransactionTypeRepository, db, rdb)
 	StockTransactionTypeController := mastercontroller.NewStockTransactionTypeController(StockTransactionTypeService)
 
 	//stock transaction reason
@@ -348,6 +348,10 @@ func StartRouting(db *gorm.DB) {
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
 	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
 
+	//stock transaction
+	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
+	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
+	StockTransactionController := transactionsparepartcontroller.StartStockTransactionControllerImpl(StockTransactionService)
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -453,7 +457,7 @@ func StartRouting(db *gorm.DB) {
 	WarehouseCostingType := WarehouseCostingTypeMasterRouter(warehouseCostingTypeController)
 	StockTransactionTypeRouter := StockTransactionTypeRouter(StockTransactionTypeController)
 	StockTransactionReasonRouter := StockTransactionReasonRouter(StockTransactionReasonController)
-
+	StockTransactionRouter := StockTransactionRouter(StockTransactionController)
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
 	unitOfMeasurementRouter := UnitOfMeasurementRouter(unitOfMeasurementController)
@@ -586,6 +590,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/contract-service", ContractServiceRouter)
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
 
+		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
 		r.Mount("/quality-control-bodyshop", QualityControlBodyshopRouter)

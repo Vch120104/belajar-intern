@@ -4,20 +4,21 @@ import (
 	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
-	masterrepository "after-sales/api/repositories/master"
+	masterrepository "after-sales/api/services/master"
 	"after-sales/api/utils"
 	"errors"
-	"gorm.io/gorm"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-type StockTransactionRepositoryImpl struct {
+type StockTransactionTypeRepositoryImpl struct {
 }
 
 func NewStockTransactionRepositoryImpl() masterrepository.StockTransactionTypeRepository {
-	return &StockTransactionRepositoryImpl{}
+	return &StockTransactionTypeRepositoryImpl{}
 }
-func (s *StockTransactionRepositoryImpl) GetStockTransactionTypeByCode(db *gorm.DB, Code string) (masterentities.StockTransactionType, *exceptions.BaseErrorResponse) {
+func (s *StockTransactionTypeRepositoryImpl) GetStockTransactionTypeByCode(db *gorm.DB, Code string) (masterentities.StockTransactionType, *exceptions.BaseErrorResponse) {
 	var StockTransaction masterentities.StockTransactionType
 	err := db.Model(&StockTransaction).Where(masterentities.StockTransactionType{StockTransactionTypeCode: Code}).First(&StockTransaction).Error
 	if err != nil {
@@ -35,7 +36,7 @@ func (s *StockTransactionRepositoryImpl) GetStockTransactionTypeByCode(db *gorm.
 	return StockTransaction, nil
 }
 
-func (s *StockTransactionRepositoryImpl) GetAllStockTransactionType(db *gorm.DB, conditions []utils.FilterCondition, paginationParams pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *StockTransactionTypeRepositoryImpl) GetAllStockTransactionType(db *gorm.DB, conditions []utils.FilterCondition, paginationParams pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var StockTransaction masterentities.StockTransactionType
 	var Responses []masterentities.StockTransactionType
 

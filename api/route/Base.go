@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -984,6 +983,21 @@ func StockTransactionReasonRouter(
 	router.Get("/{stock_transaction_reason_id}", StockTransactionReason.GetStockTransactionReasonById)
 	router.Get("/", StockTransactionReason.GetAllStockTransactionReason)
 	router.Post("/", StockTransactionReason.InsertStockTransactionReason)
+
+	return router
+}
+func StockTransactionRouter(
+	StockTransaction transactionsparepartcontroller.StockTransactionController,
+) chi.Router {
+
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Post("/", StockTransaction.StockTransactionInsert)
 
 	return router
 }
