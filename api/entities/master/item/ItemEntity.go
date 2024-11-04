@@ -10,7 +10,7 @@ type Item struct {
 	ItemName                     string     `gorm:"column:item_name;size:100" json:"item_name"`
 	ItemGroupId                  int        `gorm:"column:item_group_id;size:30;not null" json:"item_group_id"`
 	ItemTypeId                   int        `gorm:"column:item_type_id;size:30;not null" json:"item_type_id"`
-	ItemLevel1Id                 int        `gorm:"column:item_level_1_id;size:30;not null" json:"item_level_1_id"`
+	ItemLevel1Id                 int        `gorm:"column:item_level_1_id;size:30" json:"item_level_1_id"`
 	ItemLevel2Id                 *int       `gorm:"column:item_level_2_id;size:30" json:"item_level_2_id"`
 	ItemLevel3Id                 *int       `gorm:"column:item_level_3_id;size:30" json:"item_level_3_id"`
 	ItemLevel4Id                 *int       `gorm:"column:item_level_4_id;size:30" json:"item_level_4_id"`
@@ -23,7 +23,7 @@ type Item struct {
 	Lottable                     bool       `gorm:"column:lottable" json:"lottable"`
 	Inspection                   bool       `gorm:"column:inspection" json:"inspection"`
 	PriceListItem                string     `gorm:"column:price_list_item;size:1" json:"price_list_item"`
-	StockKeeping                 bool       `gorm:"column:stock_keeping;not null" json:"stock_keeping"`
+	StockKeeping                 bool       `gorm:"column:stock_keeping" json:"stock_keeping"`
 	DiscountId                   int        `gorm:"column:discount_id;size:30;not null" json:"discount_id"`
 	MarkupMasterId               int        `gorm:"column:markup_master_id;size:30;not null" json:"markup_master_id"`
 	DimensionOfLength            float64    `gorm:"column:dimension_of_length" json:"dimension_of_length"`
@@ -54,7 +54,7 @@ type Item struct {
 	Regulation                   string     `gorm:"column:regulation;size:25" json:"regulation"`
 	AutoPickWms                  bool       `gorm:"column:auto_pick_wms" json:"auto_pick_wms"`
 	GmmCatalogCode               int        `gorm:"column:gmm_catalog_code" json:"gmm_catalog_code"`
-	PrincipalBrandParentId       int        `gorm:"column:principal_brand_parent_id;size:30;not null" json:"principal_brand_parent_id"`
+	PrincipalBrandParentId       int        `gorm:"column:principal_brand_parent_id;size:30" json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        bool       `gorm:"column:proportional_supply_wms" json:"proportional_supply_wms"`
 	Remark2                      string     `gorm:"column:remark2;size:512" json:"remark2"`
 	Remark3                      string     `gorm:"column:remark3;size:512" json:"remark3"`
