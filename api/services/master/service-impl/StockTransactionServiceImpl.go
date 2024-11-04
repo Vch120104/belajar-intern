@@ -1,39 +1,31 @@
 package masterserviceimpl
 
 import (
-	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
 	"after-sales/api/helper"
-	"after-sales/api/payloads/pagination"
-	masterrepository "after-sales/api/repositories/master"
-	masterservice "after-sales/api/services/master"
-	"after-sales/api/utils"
+	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
+	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
+	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type StockTransactionServiceImpl struct {
-	StockTransactionRepo masterrepository.StockTransactionTypeRepository
-	DB                   *gorm.DB
-	RedisClient          *redis.Client // Redis client
+	StockTransactionRepository transactionsparepartrepository.StockTransactionRepository
+	db                         *gorm.DB
+	rdb                        *redis.Client
 }
 
-func NewStockTransactionServiceImpl(StockTransactionRepo masterrepository.StockTransactionTypeRepository, DB *gorm.DB, redisClient *redis.Client) masterservice.StockTransactionTypeService {
-	return &StockTransactionServiceImpl{StockTransactionRepo: StockTransactionRepo, DB: DB, RedisClient: redisClient}
-}
-func (service *StockTransactionServiceImpl) GetStockTransactionTypeByCode(Code string) (masterentities.StockTransactionType, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.StockTransactionRepo.GetStockTransactionTypeByCode(tx, Code)
-	defer helper.CommitOrRollbackTrx(tx)
-	if err != nil {
-		return result, err
+func StartStockTransactionServiceImpl(StockTransactionRepository transactionsparepartrepository.StockTransactionRepository, db *gorm.DB, rdb *redis.Client) transactionsparepartservice.StockTransactionService {
+	return &StockTransactionServiceImpl{
+		StockTransactionRepository: StockTransactionRepository,
+		db:                         db,
+		rdb:                        rdb,
 	}
-	return result, nil
 }
-
-func (service *StockTransactionServiceImpl) GetAllStockTransactionType(conditions []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.StockTransactionRepo.GetAllStockTransactionType(tx, conditions, pagination)
+func (s *StockTransactionServiceImpl) StockTransactionInsert(payloads transactionsparepartpayloads.StockTransactionInsertPayloads) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.db.Begin()
+	result, err := s.StockTransactionRepository.StockTransactionInsert(tx, payloads)
 	defer helper.CommitOrRollbackTrx(tx)
 	if err != nil {
 		return result, err

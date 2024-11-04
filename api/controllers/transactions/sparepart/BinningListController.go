@@ -124,7 +124,7 @@ func (controller *BinningListControllerImpl) InsertBinningListHeader(writer http
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Header", http.StatusOK)
+	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Header", http.StatusCreated)
 }
 
 // UpdateBinningListHeader

@@ -1,4 +1,4 @@
-package masterrepository
+package masterservice
 
 import (
 	masterentities "after-sales/api/entities/master"
