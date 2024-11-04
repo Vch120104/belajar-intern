@@ -136,7 +136,7 @@ type ItemRequest struct {
 	PmsItem                      bool    `json:"pms_item"`
 	Regulation                   string  `json:"regulation"`
 	AutoPickWms                  bool    `json:"auto_pick_wms"`
-	GmmCatalogCode               int     `json:"gmm_catalog_code"`
+	GmmCatalogId                 *int    `json:"gmm_catalog_id"`
 	PrincipalBrandParentId       *int    `json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        bool    `json:"proportional_supply_WMS"`
 	Remark2                      string  `json:"remark2"`

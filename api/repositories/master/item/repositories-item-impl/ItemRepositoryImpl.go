@@ -527,7 +527,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		PmsItem:                      req.PmsItem,
 		Regulation:                   req.Regulation,
 		AutoPickWms:                  req.AutoPickWms,
-		GmmCatalogCode:               req.GmmCatalogCode,
+		GmmCatalogId:                 req.GmmCatalogId,
 		PrincipalBrandParentId:       req.PrincipalBrandParentId,
 		ProportionalSupplyWms:        req.ProportionalSupplyWms,
 		Remark2:                      req.Remark2,

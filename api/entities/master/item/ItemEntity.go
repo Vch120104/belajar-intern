@@ -53,7 +53,7 @@ type Item struct {
 	PmsItem                      bool       `gorm:"column:pms_item" json:"pms_item"`
 	Regulation                   string     `gorm:"column:regulation;size:25" json:"regulation"`
 	AutoPickWms                  bool       `gorm:"column:auto_pick_wms" json:"auto_pick_wms"`
-	GmmCatalogCode               int        `gorm:"column:gmm_catalog_code" json:"gmm_catalog_code"`
+	GmmCatalogId                 *int       `gorm:"column:gmm_catalog_id;size:30" json:"gmm_catalog_id"`
 	PrincipalBrandParentId       *int       `gorm:"column:principal_brand_parent_id;size:30" json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        bool       `gorm:"column:proportional_supply_wms" json:"proportional_supply_wms"`
 	Remark2                      string     `gorm:"column:remark2;size:512" json:"remark2"`
@@ -68,6 +68,7 @@ type Item struct {
 	ItemLevel2                   ItemLevel2
 	ItemLevel3                   ItemLevel3
 	ItemLevel4                   ItemLevel4
+	GmmCatalog                   GmmCatalogCode
 }
 
 func (*Item) TableName() string {
