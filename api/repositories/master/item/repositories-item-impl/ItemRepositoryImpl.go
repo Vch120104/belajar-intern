@@ -400,6 +400,13 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 		Rows()
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "item not found",
+				Err:        err,
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
