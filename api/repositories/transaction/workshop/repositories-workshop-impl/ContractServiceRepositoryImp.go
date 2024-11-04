@@ -115,10 +115,10 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			ModelName:                     modelResponse.ModelName,
 			ModelCode:                     modelResponse.ModelCode,
 			// ModelCodeDescription:          modelResponse.ModelCodeDescription,
-			VehicleId:               vehicleResponse.VehicleId,
-			VehicleTnkb:             vehicleResponse.VehicleTnkb,
-			VehicleCode:             vehicleResponse.VehicleCode,
-			VehicleEngineNumber:     vehicleResponse.VehicleEngineNumber,
+			VehicleId: vehicleResponse.Master.VehicleId,
+			//VehicleTnkb:             vehicleResponse.VehicleTnkb,
+			//VehicleCode:             vehicleResponse.VehicleCode,
+			//VehicleEngineNumber:     vehicleResponse.VehicleEngineNumber,
 			ContractServiceStatusId: entity.ContractServiceStatusId,
 		})
 	}
@@ -332,9 +332,9 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 	// Handle case where vehicle data is not found
 	var vehicleTnkb, vehicleCode, vehicleOwner string
 	if len(vehicleResponses) > 0 {
-		vehicleTnkb = vehicleResponses[0].VehicleTnkb
-		vehicleCode = vehicleResponses[0].VehicleCode   // Mengambil VehicleCode dari respons API
-		vehicleOwner = vehicleResponses[0].VehicleOwner // Mengambil VehicleOwner dari respons API
+		//vehicleTnkb = vehicleResponses[0].VehicleTnkb
+		//vehicleCode = vehicleResponses[0].VehicleCode   // Mengambil VehicleCode dari respons API
+		//vehicleOwner = vehicleResponses[0].VehicleOwner // Mengambil VehicleOwner dari respons API
 	} else {
 		vehicleTnkb = "Unknown"
 		vehicleCode = "Unknown"  // Memberikan nilai default jika tidak ditemukan
@@ -436,8 +436,8 @@ func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionwor
 	// Update response payload dengan data dari external API
 	payload.BrandName = brandResponse.BrandName
 	payload.ModelName = modelResponse.ModelName
-	payload.VehicleTnkb = vehicleResponses.VehicleTnkb
-	payload.VehicleOwner = vehicleResponses.VehicleOwner
+	payload.VehicleTnkb = vehicleResponses.Stnk.VehicleRegistrationCertificateTnkb
+	payload.VehicleOwner = vehicleResponses.Stnk.VehicleRegistrationCertificateOwnerName
 
 	// Return updated payload
 	return payload, nil
