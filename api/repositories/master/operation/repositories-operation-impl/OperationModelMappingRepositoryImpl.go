@@ -4,8 +4,8 @@ import (
 	"after-sales/api/config"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
-	"errors"
 	"net/http"
+	"reflect"
 	"strings"
 	"time"
 
@@ -81,125 +81,276 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandMod
 	return response, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []map[string]interface{}
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
+	tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
-	// Fetch OperationModelMapping data
-	var operationModelMappingResponses []masteroperationpayloads.OperationModelMappingLookup
+	var responses []masteroperationpayloads.OperationModelMappingLookup
+	var getBrandResponse []masteroperationpayloads.BrandResponse
+	var getModelResponse []masteroperationpayloads.ModelResponse
 
-	// Define table struct
-	tableStruct := masteroperationpayloads.OperationModelMappingLookup{}
+	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
+	var brandCode, modelCode string
+	responseStruct := reflect.TypeOf(masteroperationpayloads.OperationModelMappingLookup{})
 
-	// Join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+	// Separate internal and external filters
+	for _, filter := range filterCondition {
+		isInternal := false
+		for j := 0; j < responseStruct.NumField(); j++ {
+			field := responseStruct.Field(j)
+			if filter.ColumnField == field.Tag.Get("parent_entity")+"."+field.Tag.Get("json") {
+				internalServiceFilter = append(internalServiceFilter, filter)
+				isInternal = true
+				break
+			}
+		}
+		if !isInternal {
+			externalServiceFilter = append(externalServiceFilter, filter)
+		}
+	}
 
-	// Apply filter
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	for _, extFilter := range externalServiceFilter {
+		if strings.Contains(extFilter.ColumnField, "brand_code") {
+			brandCode = extFilter.ColumnValue
+		} else if strings.Contains(extFilter.ColumnField, "model_code") {
+			modelCode = extFilter.ColumnValue
+		}
+	}
 
-	// Execute query
-	rows, err := whereQuery.Rows()
-	if err != nil {
+	// Begin query with join only once
+	// result := tx.Model(masteroperationentities.OperationModelMapping{}).
+	// 	Select("mtr_operation_model_mapping.operation_model_mapping_id, mtr_operation_model_mapping.brand_id, mtr_operation_model_mapping.model_id, mtr_operation_model_mapping.operation_id, mtr_operation_model_mapping.is_active, oc.operation_code, oc.operation_name").
+	// 	Joins("JOIN mtr_operation_code AS oc ON mtr_operation_model_mapping.operation_id = oc.operation_id")
+
+	// // Apply internal filters as WHERE conditions
+	// whereQuery := utils.ApplyFilter(result, internalServiceFilter)
+
+	// // Log the SQL query for debugging
+	// querySQL := whereQuery.Statement.SQL.String()
+	// fmt.Println("Generated Query SQL:", querySQL)
+
+	// // Execute the query
+	// rows, err := whereQuery.Scan(&responses).Rows()
+	// if err != nil {
+	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Err:        err,
+	// 	}
+	// }
+	// defer rows.Close()
+
+	// if len(responses) == 0 {
+	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusNotFound,
+	// 		Err:        errors.New("no data found"),
+	// 	}
+	// }
+
+	var operationMappings []masteroperationentities.OperationModelMapping
+
+	whereQuery := utils.ApplyFilter(tx.Model(&masteroperationentities.OperationModelMapping{}), internalServiceFilter)
+
+	if err := whereQuery.Find(&operationMappings).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// Fetch and map the data to OperationModelMappingLookup struct
-	for rows.Next() {
-		var response masteroperationpayloads.OperationModelMappingLookup
-		if err := rows.Scan(
-			&response.IsActive,
-			&response.OperationModelMappingId,
-			&response.OperationId,
-			&response.OperationName,
-			&response.OperationCode,
-			&response.BrandId,
-			&response.ModelId,
-		); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-		operationModelMappingResponses = append(operationModelMappingResponses, response)
+	var operationIds []int
+	for _, mapping := range operationMappings {
+		operationIds = append(operationIds, mapping.OperationId)
 	}
 
-	if len(operationModelMappingResponses) == 0 {
+	var operationCodes []masteroperationentities.OperationCode
+	if err := tx.Where("operation_id IN ?", operationIds).Find(&operationCodes).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
 		}
 	}
 
-	// Fetch brand data
-	var brandResponses []masteroperationpayloads.BrandResponse
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=10"
-	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
-	if errUrlBrand != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlBrand,
-		}
+	operationCodeMap := make(map[int]masteroperationentities.OperationCode)
+	for _, code := range operationCodes {
+		operationCodeMap[code.OperationId] = code
 	}
 
-	// Fetch model data
-	var modelResponses []masteroperationpayloads.ModelResponse
-	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10"
-	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
-	if errUrlModel != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlModel,
-		}
-	}
-
-	// Create a map to hold brand and model data
-	brandMap := make(map[int]masteroperationpayloads.BrandResponse)
-	modelMap := make(map[int]masteroperationpayloads.ModelResponse)
-
-	// Fill brand and model maps
-	for _, brand := range brandResponses {
-		brandMap[brand.BrandId] = brand
-	}
-
-	for _, model := range modelResponses {
-		modelMap[model.ModelId] = model
-	}
-
-	// Combine data from OperationModelMapping, Brand, and Model
-	for _, mapping := range operationModelMappingResponses {
-		brand, brandExists := brandMap[mapping.BrandId]
-		model, modelExists := modelMap[mapping.ModelId]
-
-		if !brandExists || !modelExists {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New("brand or model data not found"),
-			}
+	// Combine data
+	for _, mapping := range operationMappings {
+		response := masteroperationpayloads.OperationModelMappingLookup{
+			OperationModelMappingId: mapping.OperationModelMappingId,
+			BrandId:                 mapping.BrandId,
+			ModelId:                 mapping.ModelId,
+			OperationId:             mapping.OperationId,
+			IsActive:                mapping.IsActive,
 		}
 
-		response := map[string]interface{}{
-			"IsActive":                mapping.IsActive,
-			"OperationModelMappingId": mapping.OperationModelMappingId,
-			"OperationId":             mapping.OperationId,
-			"OperationName":           mapping.OperationName,
-			"OperationCode":           mapping.OperationCode,
-			"BrandId":                 mapping.BrandId,
-			"ModelId":                 mapping.ModelId,
-			"BrandName":               brand.BrandName,
-			"ModelDescription":        model.ModelDescription,
+		if code, exists := operationCodeMap[mapping.OperationId]; exists {
+			response.OperationCode = code.OperationCode
+			response.OperationName = code.OperationName
 		}
 
 		responses = append(responses, response)
 	}
 
-	// Paginate the data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+	// Join with brand data
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_code=" + brandCode
+	if err := utils.Get(unitBrandUrl, &getBrandResponse, nil); err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinedData1, err := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Join with model data
+	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=100000&model_code=" + modelCode
+	if err := utils.Get(unitModelUrl, &getModelResponse, nil); err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	joinedData2, err := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Paginate the final joined data
+	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
 
 	return dataPaginate, totalPages, totalRows, nil
 }
+
+// func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+// 	var responses []map[string]interface{}
+
+// 	// Fetch OperationModelMapping data
+// 	var operationModelMappingResponses []masteroperationpayloads.OperationModelMappingLookup
+
+// 	// Define table struct
+// 	tableStruct := masteroperationpayloads.OperationModelMappingLookup{}
+
+// 	// Join table
+// 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
+
+// 	// Apply filter
+// 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+
+// 	// Execute query
+// 	rows, err := whereQuery.Rows()
+// 	if err != nil {
+// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        err,
+// 		}
+// 	}
+// 	defer rows.Close()
+
+// 	// Fetch and map the data to OperationModelMappingLookup struct
+// 	for rows.Next() {
+// 		var response masteroperationpayloads.OperationModelMappingLookup
+// 		if err := rows.Scan(
+// 			&response.IsActive,
+// 			&response.OperationModelMappingId,
+// 			&response.OperationId,
+// 			&response.OperationName,
+// 			&response.OperationCode,
+// 			&response.BrandId,
+// 			&response.ModelId,
+// 		); err != nil {
+// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
+// 				StatusCode: http.StatusNotFound,
+// 				Err:        err,
+// 			}
+// 		}
+// 		operationModelMappingResponses = append(operationModelMappingResponses, response)
+// 	}
+
+// 	if len(operationModelMappingResponses) == 0 {
+// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        errors.New("no data found"),
+// 		}
+// 	}
+
+// 	// Fetch brand data
+// 	var brandResponses []masteroperationpayloads.BrandResponse
+// 	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=10"
+// 	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
+// 	if errUrlBrand != nil {
+// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        errUrlBrand,
+// 		}
+// 	}
+
+// 	// Fetch model data
+// 	var modelResponses []masteroperationpayloads.ModelResponse
+// 	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10"
+// 	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
+// 	if errUrlModel != nil {
+// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusNotFound,
+// 			Err:        errUrlModel,
+// 		}
+// 	}
+
+// 	// Create a map to hold brand and model data
+// 	brandMap := make(map[int]masteroperationpayloads.BrandResponse)
+// 	modelMap := make(map[int]masteroperationpayloads.ModelResponse)
+
+// 	// Fill brand and model maps
+// 	for _, brand := range brandResponses {
+// 		brandMap[brand.BrandId] = brand
+// 	}
+
+// 	for _, model := range modelResponses {
+// 		modelMap[model.ModelId] = model
+// 	}
+
+// 	// Combine data from OperationModelMapping, Brand, and Model
+// 	for _, mapping := range operationModelMappingResponses {
+// 		brand, brandExists := brandMap[mapping.BrandId]
+// 		model, modelExists := modelMap[mapping.ModelId]
+
+// 		if !brandExists || !modelExists {
+// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
+// 				StatusCode: http.StatusNotFound,
+// 				Err:        errors.New("brand or model data not found"),
+// 			}
+// 		}
+
+// 		response := map[string]interface{}{
+// 			"IsActive":                mapping.IsActive,
+// 			"OperationModelMappingId": mapping.OperationModelMappingId,
+// 			"OperationId":             mapping.OperationId,
+// 			"OperationName":           mapping.OperationName,
+// 			"OperationCode":           mapping.OperationCode,
+// 			"BrandId":                 mapping.BrandId,
+// 			"ModelId":                 mapping.ModelId,
+// 			"BrandName":               brand.BrandName,
+// 			"ModelDescription":        model.ModelDescription,
+// 		}
+
+// 		responses = append(responses, response)
+// 	}
+
+// 	// Paginate the data
+// 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+
+// 	return dataPaginate, totalPages, totalRows, nil
+// }
 
 func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationModelMapping{
