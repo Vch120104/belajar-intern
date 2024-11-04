@@ -8,6 +8,8 @@ type PrincipleBrandParent struct {
 	PrincipalBrandParentCode        string `gorm:"column:principal_brand_parent_code;unique;size:10;not null"        json:"principal_brand_parent_code"`
 	PrincipalBrandParentDescription string `gorm:"column:principal_brand_parent_description;size:50;not null"        json:"principal_brand_parent_description"`
 	CatalogueCode                   string `gorm:"column:catalogue_code;size:10;not null"        json:"catalogue_code"`
+	GmmCatalogId                    int    `gorm:"column:gmm_catalog_id;size:30;unique" json:"gmm_catalog_id"`
+	GmmCatalog                      GmmCatalogCode
 }
 
 func (*PrincipleBrandParent) TableName() string {

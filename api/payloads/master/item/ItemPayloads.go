@@ -212,7 +212,7 @@ type ItemDetailResponse struct {
 }
 
 type GetCatalogCode struct {
-	CatalogueCode int `json:"catalogue_code"`
+	CatalogueCode string `json:"catalogue_code"`
 }
 
 type ItemDetailRequest struct {

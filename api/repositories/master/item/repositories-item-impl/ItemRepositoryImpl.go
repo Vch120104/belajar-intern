@@ -1169,7 +1169,10 @@ func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.G
 	entities := masteritementities.PrincipleBrandParent{}
 	payloads := []masteritempayloads.GetCatalogCode{}
 
-	err := tx.Model(&entities).Scan(&payloads).Error
+	err := tx.Model(&entities).
+		Select("mgcc.gmm_catalog_code AS catalogue_code").
+		Joins("INNER JOIN mtr_gmm_catalog_code mgcc ON mgcc.gmm_catalog_id = mtr_principle_brand_parent.gmm_catalog_id").
+		Scan(&payloads).Error
 	if err != nil {
 		return payloads, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -1183,9 +1186,10 @@ func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.G
 func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PrincipleBrandParent{}
 	payloads := []masteritempayloads.PrincipleBrandDropdownDescription{}
-	err := tx.Model(&entities).Where(masteritementities.PrincipleBrandParent{
-		CatalogueCode: code,
-	}).Scan(&payloads).Error
+	err := tx.Model(&entities).
+		Joins("INNER JOIN mtr_gmm_catalog_code mgcc ON mgcc.gmm_catalog_id = mtr_principle_brand_parent.gmm_catalog_id").
+		Where("mgcc.gmm_catalog_code = ?", code).
+		Scan(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
