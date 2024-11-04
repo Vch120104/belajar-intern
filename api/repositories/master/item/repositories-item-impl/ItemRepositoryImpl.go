@@ -566,7 +566,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
-	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
+	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(*req.SourceTypeId)
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -612,8 +612,8 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		ItemId:            model.ItemId,
 		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
 		UomTypeCode:       uomTypeModel.UomTypeCode,
-		SourceUomId:       req.UnitOfMeasurementPurchaseId,
-		TargetUomId:       req.UnitOfMeasurementStockId,
+		SourceUomId:       *req.UnitOfMeasurementPurchaseId,
+		TargetUomId:       *req.UnitOfMeasurementStockId,
 		SourceConvertion:  req.SourceConvertion,
 		TargetConvertion:  req.TargetConvertion,
 	}
@@ -686,7 +686,7 @@ func checkIfItemLevelExists(tx *gorm.DB, req masteritempayloads.ItemRequest, res
 	var countLevel1 int64
 	if err := tx.Model(&masteritementities.ItemLevel1{}).
 		Where(masteritementities.ItemLevel1{
-			ItemLevel1Id: req.ItemLevel1Id,
+			ItemLevel1Id: *req.ItemLevel1Id,
 		}).
 		Count(&countLevel1).Error; err != nil {
 		return true, response, &exceptions.BaseErrorResponse{

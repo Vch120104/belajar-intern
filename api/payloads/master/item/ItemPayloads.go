@@ -90,15 +90,15 @@ type ItemRequest struct {
 	ItemName                     string  `json:"item_name"`
 	ItemGroupId                  int     `json:"item_group_id"`
 	ItemTypeId                   int     `json:"item_type_id"`
-	ItemLevel1Id                 int     `json:"item_level_1_id"`
+	ItemLevel1Id                 *int    `json:"item_level_1_id"`
 	ItemLevel2Id                 *int    `json:"item_level_2_id"`
 	ItemLevel3Id                 *int    `json:"item_level_3_id"`
 	ItemLevel4Id                 *int    `json:"item_level_4_id"`
 	SupplierId                   int     `json:"supplier_id"`
 	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
-	UnitOfMeasurementPurchaseId  int     `json:"unit_of_measurement_purchase_id"`
-	UnitOfMeasurementStockId     int     `json:"unit_of_measurement_stock_id"`
+	UnitOfMeasurementPurchaseId  *int    `json:"unit_of_measurement_purchase_id"`
+	UnitOfMeasurementStockId     *int    `json:"unit_of_measurement_stock_id"`
 	SourceConvertion             float64 `json:"source_convertion"`
 	TargetConvertion             float64 `json:"target_convertion"`
 	UomItemId                    int     `json:"uom_item_id"`
@@ -114,12 +114,12 @@ type ItemRequest struct {
 	DimensionOfLength            float64 `json:"dimension_of_length"`
 	DimensionOfWidth             float64 `json:"dimension_of_width"`
 	DimensionOfHeight            float64 `json:"dimension_of_height"`
-	DimensionUnitOfMeasurementId int     `json:"dimension_unit_of_measurement_id"`
+	DimensionUnitOfMeasurementId *int    `json:"dimension_unit_of_measurement_id"`
 	Weight                       float64 `json:"weight"`
 	UnitOfMeasurementWeight      string  `json:"unit_of_measurement_weight"`
 	StorageTypeId                int     `json:"storage_type_id"`
 	Remark                       string  `json:"remark"`
-	AtpmWarrantyClaimTypeId      int     `json:"atpm_warranty_claim_type_id"`
+	AtpmWarrantyClaimTypeId      *int    `json:"atpm_warranty_claim_type_id"`
 	LastPrice                    float64 `json:"last_price"`
 	UseDiscDecentralize          string  `json:"use_disc_decentralize"`
 	CommonPricelist              bool    `json:"common_pricelist"`
@@ -137,13 +137,13 @@ type ItemRequest struct {
 	Regulation                   string  `json:"regulation"`
 	AutoPickWms                  bool    `json:"auto_pick_wms"`
 	GmmCatalogCode               int     `json:"gmm_catalog_code"`
-	PrincipalBrandParentId       int     `json:"principal_brand_parent_id"`
+	PrincipalBrandParentId       *int    `json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        bool    `json:"proportional_supply_WMS"`
 	Remark2                      string  `json:"remark2"`
 	Remark3                      string  `json:"remark3"`
-	SourceTypeId                 int     `json:"source_type_id"`
-	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
-	PersonInChargeId             int     `json:"person_in_charge_id"`
+	SourceTypeId                 *int    `json:"source_type_id"`
+	AtpmSupplierCodeOrderId      *int    `json:"atpm_supplier_code_order_id"`
+	PersonInChargeId             *int    `json:"person_in_charge_id"`
 	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
 	IsSellable                   bool    `json:"is_sellable"`
 }
@@ -154,7 +154,7 @@ type ItemSaveResponse struct {
 	ItemCode     string `json:"item_code"`
 	ItemName     string `json:"item_name"`
 	ItemTypeId   int    `json:"item_type_id"`
-	ItemLevel1Id int    `json:"item_level_1_id"`
+	ItemLevel1Id *int   `json:"item_level_1_id"`
 	ItemLevel2Id *int   `json:"item_level_2_id"`
 	ItemLevel3Id *int   `json:"item_level_3_id"`
 	ItemLevel4Id *int   `json:"item_level_4_id"`
@@ -258,10 +258,6 @@ type StorageTypeResponse struct {
 	StorageTypeId   int    `json:"storage_type_id"`
 	StorageTypeCode string `json:"storage_type_code"`
 	StorageTypeName string `json:"storage_type_name"`
-}
-
-type AtpmWarrantyClaimTypeResponse struct {
-	AtpmWarrantyClaimTypeId int `json:"atpm_warranty_claim_type_id"`
 }
 
 type SpecialMovementResponse struct {
