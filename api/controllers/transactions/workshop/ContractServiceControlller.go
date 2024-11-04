@@ -37,7 +37,6 @@ func NewContractServiceController(ContractServiceService transactionworkshopserv
 func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 
-	// Mengambil query params sesuai dengan SQL VB yang diberikan
 	queryParams := map[string]string{
 		"trx_contract_service.company_id":                       queryValues.Get("company_code"),
 		"trx_contract_service.contract_service_document_number": queryValues.Get("contract_serv_doc_no"),
@@ -51,7 +50,6 @@ func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, reque
 
 	fmt.Println("Query Params:", queryParams)
 
-	// Pagination params
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -59,23 +57,18 @@ func (r *ContractServiceControllerImpl) GetAll(writer http.ResponseWriter, reque
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Menggunakan utils untuk membangun filter condition dari queryParams
 	criteria := utils.BuildFilterCondition(queryParams)
 	fmt.Println("Filter Conditions:", criteria)
 
-	// Panggil service untuk mendapatkan data sesuai filter
 	paginatedData, totalPages, totalRows, err := r.ContractServiceService.GetAll(criteria, paginate)
 	if err != nil {
-		// Jika ada error
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	// Jika data ditemukan
 	if len(paginatedData) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 	} else {
-		// Jika data tidak ditemukan
 		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
 	}
 }
@@ -91,7 +84,6 @@ func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, requ
 
 	queryValues := request.URL.Query()
 
-	// Convert map to []utils.FilterCondition
 	var filterConditions []utils.FilterCondition
 	for field, value := range map[string]string{
 		"trx_contract_service.contract_service_system_number": queryValues.Get("contract_service_system_number"),
@@ -122,25 +114,20 @@ func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, requ
 
 // Save implements ContractServiceController.
 func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
-	// Membaca request body menjadi struct ContractServiceInsert
 	var contractServiceInsert transactionworkshoppayloads.ContractServiceInsert
 	helper.ReadFromRequestBody(request, &contractServiceInsert)
 
-	// Panggil service untuk menyimpan contract service
 	result, saveErr := r.ContractServiceService.Save(contractServiceInsert)
 	if saveErr != nil {
-		// Jika ada error dari service saat menyimpan, kembalikan error
 		helper.ReturnError(writer, request, saveErr)
 		return
 	}
 
-	// Jika berhasil, kirimkan response success dengan payload result
 	payloads.NewHandleSuccess(writer, result, "Contract Service Saved Successfully", http.StatusOK)
 }
 
 // Void implements ContractServiceController.
 func (r *ContractServiceControllerImpl) Void(writer http.ResponseWriter, request *http.Request) {
-	// Void work order
 	workOrderIdStr := chi.URLParam(request, "contract_service_system_number")
 	workOrderId, err := strconv.Atoi(workOrderIdStr)
 	if err != nil {

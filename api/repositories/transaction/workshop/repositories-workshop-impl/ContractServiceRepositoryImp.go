@@ -30,12 +30,9 @@ func OpenContractServicelRepositoryImpl() transactionworkshoprepository.Contract
 func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities []transactionworkshoppayloads.ContractServiceRequest
 
-	// Membuat query dasar dengan filter
-	// joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.ContractServiceRequest{})
 	joinTable := tx.Model(&transactionworkshopentities.ContractService{})
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
-	// Eksekusi query untuk mendapatkan data contract service
 	if err := whereQuery.Find(&entities).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -59,10 +56,8 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 		}
 	}
 
-	// Konversi data menjadi response sesuai struct ContractServiceResponse
 	var convertedResponses []transactionworkshoppayloads.ContractServiceResponse
 	for _, entity := range entities {
-		// Mengambil data brand dari API eksternal
 		BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
 		var brandResponse transactionworkshoppayloads.ContractServiceBrand
 		errBrand := utils.Get(BrandUrl, &brandResponse, nil)
@@ -74,7 +69,6 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			}
 		}
 
-		// Mengambil data model dari API eksternal
 		ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
 		var modelResponse transactionworkshoppayloads.ContractServiceModel
 		errModel := utils.Get(ModelUrl, &modelResponse, nil)
@@ -86,7 +80,6 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			}
 		}
 
-		// Mengambil data vehicle dari API eksternal
 		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
 		var vehicleResponse transactionworkshoppayloads.ContractServiceVehicleResponse
 		errVehicle := utils.Get(VehicleUrl, &vehicleResponse, nil)
@@ -97,11 +90,9 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 				Err:        errVehicle,
 			}
 		} else {
-			// Tambahkan log untuk memeriksa isi vehicleResponse
 			log.Printf("Received vehicle data: %+v", vehicleResponse)
 		}
 
-		// Menambahkan data ke dalam ContractServiceResponse
 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.ContractServiceResponse{
 			CompanyId:                     entity.CompanyId,
 			ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
@@ -114,16 +105,14 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			ModelId:                       modelResponse.ModelId,
 			ModelName:                     modelResponse.ModelName,
 			ModelCode:                     modelResponse.ModelCode,
-			// ModelCodeDescription:          modelResponse.ModelCodeDescription,
-			VehicleId: vehicleResponse.Master.VehicleId,
-			//VehicleTnkb:             vehicleResponse.VehicleTnkb,
-			//VehicleCode:             vehicleResponse.VehicleCode,
-			//VehicleEngineNumber:     vehicleResponse.VehicleEngineNumber,
-			ContractServiceStatusId: entity.ContractServiceStatusId,
+			VehicleId:                     vehicleResponse.Master.VehicleId,
+			VehicleTnkb:                   vehicleResponse.STNK.VehicleRegistrationCertificateTnkb,
+			VehicleCode:                   vehicleResponse.Master.VehicleCode,
+			VehicleEngineNumber:           vehicleResponse.Master.VehicleEngineNumber,
+			ContractServiceStatusId:       entity.ContractServiceStatusId,
 		})
 	}
 
-	// Mengonversi hasil ke dalam format map untuk fleksibilitas output
 	var mapResponses []map[string]interface{}
 	for _, response := range convertedResponses {
 		responseMap := map[string]interface{}{
@@ -140,142 +129,22 @@ func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 			"model_code":                       response.ModelCode,
 			"vehicle_id":                       response.VehicleId,
 			"vehicle_tnkb":                     response.VehicleTnkb,
-			"vehicle_code":                     response.VehicleCode,
+			"vehicle_chassis_number":           response.VehicleCode,
 			"vehicle_engine_number":            response.VehicleEngineNumber,
 			"status":                           response.ContractServiceStatusId,
 		}
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Lakukan paginasi
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
 }
 
-// func (r *ContractServiceRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-// 	var entities []transactionworkshoppayloads.ContractServiceRequest
-
-// 	// Buat query dasar
-// 	joinTable := utils.CreateJoinSelectStatement(tx, transactionworkshoppayloads.ContractServiceRequest{})
-// 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-// 	// Eksekusi query untuk mendapatkan data contract service
-// 	if err := whereQuery.Find(&entities).Error; err != nil {
-// 		if errors.Is(err, gorm.ErrRecordNotFound) {
-// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusNotFound,
-// 				Message:    "Contract service not found",
-// 				Err:        err,
-// 			}
-// 		}
-// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Message:    "Failed to fetch contract service entity",
-// 			Err:        err,
-// 		}
-// 	}
-
-// 	if len(entities) == 0 {
-// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Message:    "No contract service entities found",
-// 		}
-// 	}
-
-// 	// Konversi ke response yang dibutuhkan, termasuk fetch data dari external API jika perlu
-// 	var convertedResponses []transactionworkshoppayloads.ContractServiceResponse
-// 	for _, entity := range entities {
-// 		// Fetch data external (contoh: brand, model, TNKB)
-// 		BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
-// 		var brandResponse transactionworkshoppayloads.ContractServiceBrand
-// 		errBrand := utils.Get(BrandUrl, &brandResponse, nil)
-// 		if errBrand != nil {
-// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Message:    "Failed to retrieve brand data from external API",
-// 				Err:        errBrand,
-// 			}
-// 		}
-
-// 		ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
-// 		var modelResponse transactionworkshoppayloads.ContractServiceModel
-// 		errModel := utils.Get(ModelUrl, &modelResponse, nil)
-// 		if errModel != nil {
-// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Message:    "Failed to retrieve model data from external API",
-// 				Err:        errModel,
-// 			}
-// 		}
-
-// 		// Contoh tambahan untuk TNKB/Vehicle data dari API eksternal jika perlu
-// 		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-// 		var vehicleResponses transactionworkshoppayloads.VehicleResponse
-// 		errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
-// 		if errVehicle != nil {
-// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusInternalServerError,
-// 				Message:    "Failed to retrieve vehicle data from the external API",
-// 				Err:        errVehicle,
-// 			}
-// 		}
-
-// 		// Buat response contract service
-// 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.ContractServiceResponse{
-// 			ContractServiceDocumentNumber: entity.ContractServiceDocumentNumber,
-// 			ContractServiceFrom:           entity.ContractServiceFrom,
-// 			ContractServiceTo:             entity.ContractServiceTo,
-// 			BrandId:                       brandResponse.BrandId,
-// 			BrandName:                     brandResponse.BrandName,
-// 			BrandCode:                     brandResponse.BrandCode, // Mengambil nama brand dari response API
-// 			ModelId:                       modelResponse.ModelId,
-// 			ModelName:                     modelResponse.ModelName,
-// 			ModelCode:                     modelResponse.ModelCode, // Mengambil nama model dari response API
-// 			VehicleId:                     vehicleResponses.VehicleId,
-// 			VehicleTnkb:                   vehicleResponses.VehicleTnkb,
-// 			VehicleCode:                   vehicleResponses.VehicleCode, // Mengambil TNKB kendaraan dari response API
-// 			VehicleEngineNumber:           vehicleResponses.VehicleEngineNumber,
-// 			ContractServiceStatusId:       entity.ContractServiceStatusId, // Mengambil status dari entitas contract service
-// 			ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
-// 		})
-
-// 	}
-
-// 	// Konversi hasil ke dalam format yang diinginkan
-// 	var mapResponses []map[string]interface{}
-// 	for _, response := range convertedResponses {
-// 		responseMap := map[string]interface{}{
-// 			"contract_service_document_number": response.ContractServiceDocumentNumber,
-// 			"contract_service_from":            response.ContractServiceFrom,
-// 			"contract_service_to":              response.ContractServiceTo,
-// 			"brand_id":                         response.BrandId,
-// 			"brand_name":                       response.BrandName,
-// 			"brand_code":                       response.BrandCode,
-// 			"model_id":                         response.ModelId,
-// 			"model_name":                       response.ModelName,
-// 			"model_code":                       response.ModelCode,
-// 			"vehicle_id":                       response.VehicleId,
-// 			"vehicle_tnkb":                     response.VehicleTnkb,
-// 			"vehicle_code":                     response.VehicleCode,
-// 			"vehicle_engine_number":            response.VehicleEngineNumber,
-// 			"contract_service_system_number":   response.ContractServiceSystemNumber,
-// 			"status":                           response.ContractServiceStatusId,
-// 		}
-// 		mapResponses = append(mapResponses, responseMap)
-// 	}
-
-// 	// Lakukan pagination
-// 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-// 	return paginatedData, totalPages, totalRows, nil
-// }
-
 // GetById implements transactionworkshoprepository.ContractServiceRepository.
 func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (transactionworkshoppayloads.ContractServiceResponseId, *exceptions.BaseErrorResponse) {
 
 	var entity transactionworkshopentities.ContractService
-	// Fetch Contract Service by Id
 	err := tx.Model(&transactionworkshopentities.ContractService{}).
 		Where("contract_service_system_number = ?", Id).
 		First(&entity).Error
@@ -293,7 +162,6 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 		}
 	}
 
-	// Fetch data brand from external API
 	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
 	var brandResponse transactionworkshoppayloads.ContractServiceBrand
 	errBrand := utils.Get(BrandUrl, &brandResponse, nil)
@@ -305,7 +173,6 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 		}
 	}
 
-	// Fetch data model from external API
 	ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
 	var modelResponse transactionworkshoppayloads.ContractServiceModel
 	errModel := utils.Get(ModelUrl, &modelResponse, nil)
@@ -317,9 +184,8 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 		}
 	}
 
-	// Fetch data vehicle from external API
-	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(entity.VehicleId)
-	var vehicleResponses []transactionworkshoppayloads.ContractServiceVehicleResponse
+	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
+	var vehicleResponses transactionworkshoppayloads.ContractServiceVehicleResponse
 	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
@@ -329,19 +195,11 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 		}
 	}
 
-	// Handle case where vehicle data is not found
-	var vehicleTnkb, vehicleCode, vehicleOwner string
-	if len(vehicleResponses) > 0 {
-		//vehicleTnkb = vehicleResponses[0].VehicleTnkb
-		//vehicleCode = vehicleResponses[0].VehicleCode   // Mengambil VehicleCode dari respons API
-		//vehicleOwner = vehicleResponses[0].VehicleOwner // Mengambil VehicleOwner dari respons API
-	} else {
-		vehicleTnkb = "Unknown"
-		vehicleCode = "Unknown"  // Memberikan nilai default jika tidak ditemukan
-		vehicleOwner = "Unknown" // Memberikan nilai default jika tidak ditemukan
-	}
+	vehicleTnkb := vehicleResponses.STNK.VehicleRegistrationCertificateTnkb
+	vehicleCode := vehicleResponses.Master.VehicleCode // Pastikan nama field benar
+	vehicleOwner := vehicleResponses.STNK.VehicleRegistrationCertificateOwnerName
+	vehicleEngineNumber := vehicleResponses.Master.VehicleEngineNumber
 
-	// Prepare the response payload
 	payload := transactionworkshoppayloads.ContractServiceResponseId{
 		CompanyId:                     entity.CompanyId,
 		ContractServiceSystemNumber:   entity.ContractServiceSystemNumber,
@@ -358,6 +216,7 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 		VehicleTnkb:                   vehicleTnkb,
 		VehicleCode:                   vehicleCode,
 		VehicleOwner:                  vehicleOwner,
+		VehicleEngineNumber:           vehicleEngineNumber,
 		ContractServiceStatusId:       entity.ContractServiceStatusId,
 	}
 
@@ -366,7 +225,6 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 
 // Save implements transactionworkshoprepository.ContractServiceRepository.
 func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionworkshoppayloads.ContractServiceInsert) (transactionworkshoppayloads.ContractServiceInsert, *exceptions.BaseErrorResponse) {
-	// Fetch data eksternal dari API
 	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(payload.BrandId)
 	var brandResponse transactionworkshoppayloads.ContractServiceBrand
 	errBrand := utils.Get(BrandUrl, &brandResponse, nil)
@@ -400,12 +258,10 @@ func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionwor
 		}
 	}
 
-	// Set default nilai total, vat, dan grand_total
 	payload.Total = 0.0
 	payload.Vat = 0.0
 	payload.GrandTotal = 0.0
 
-	// Prepare entity for insertion (only IDs and finance values set to 0 initially)
 	contractService := transactionworkshopentities.ContractService{
 		CompanyId:                     payload.CompanyId,
 		ContractServiceDocumentNumber: payload.ContractServiceDocumentNumber,
@@ -423,7 +279,6 @@ func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionwor
 		ValueAfterTaxrate:             payload.GrandTotal,
 	}
 
-	// Simpan ke database
 	err := tx.Create(&contractService).Error
 	if err != nil {
 		return payload, &exceptions.BaseErrorResponse{
@@ -433,13 +288,11 @@ func (r *ContractServiceRepositoryImpl) Save(tx *gorm.DB, payload transactionwor
 		}
 	}
 
-	// Update response payload dengan data dari external API
 	payload.BrandName = brandResponse.BrandName
 	payload.ModelName = modelResponse.ModelName
-	payload.VehicleTnkb = vehicleResponses.Stnk.VehicleRegistrationCertificateTnkb
-	payload.VehicleOwner = vehicleResponses.Stnk.VehicleRegistrationCertificateOwnerName
+	payload.VehicleTnkb = vehicleResponses.STNK.VehicleRegistrationCertificateTnkb
+	payload.VehicleOwner = vehicleResponses.STNK.VehicleRegistrationCertificateOwnerName
 
-	// Return updated payload
 	return payload, nil
 }
 
@@ -562,7 +415,6 @@ func (r *ContractServiceRepositoryImpl) GenerateDocumentNumber(tx *gorm.DB, Id i
 	return newDocumentNumber, nil
 }
 
-// Submit implements transactionworkshoprepository.ContractServiceRepository.
 func (r *ContractServiceRepositoryImpl) Submit(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ContractService
 

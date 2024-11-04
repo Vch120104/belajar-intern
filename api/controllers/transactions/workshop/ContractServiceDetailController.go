@@ -35,10 +35,8 @@ func NewContractServiceDetailController(contractServiceDetailService transaction
 
 // GetAllDetail implements ContractServiceDetailController.
 func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseWriter, request *http.Request) {
-	// Mengambil query parameters
 	queryValues := request.URL.Query()
 
-	// Mengambil contract_service_system_number dari URL path parameter
 	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_system_number")
 	contractServiceSystemNumber, err := strconv.Atoi(contractServiceSystemNumberStr)
 	if err != nil {
@@ -49,7 +47,6 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 		return
 	}
 
-	// Mempersiapkan pagination
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -57,21 +54,17 @@ func (c *ContractServiceDetailControllerImpl) GetAllDetail(writer http.ResponseW
 		SortBy: queryValues.Get("sort_by"),
 	}
 
-	// Mendapatkan filter kondisi jika ada
 	queryParams := map[string]string{
 		"contract_service_system_number": contractServiceSystemNumberStr,
-		// Tambahkan kondisi filter lain jika diperlukan
 	}
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	// Memanggil service untuk mendapatkan data
 	result, totalPages, totalRows, errs := c.ContractServiceDetailService.GetAllDetail(contractServiceSystemNumber, filterCondition, pagination)
 	if errs != nil {
 		helper.ReturnError(writer, request, errs)
 		return
 	}
 
-	// Mengembalikan response sukses dengan data paginated
 	if len(result) > 0 {
 		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(result), "Get Data Successfully", http.StatusOK, pagination.Limit, pagination.Page, int64(totalRows), totalPages)
 	} else {
@@ -96,28 +89,23 @@ func (c *ContractServiceDetailControllerImpl) GetById(writer http.ResponseWriter
 func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWriter, request *http.Request) {
 	formRequest := transactionworkshoppayloads.ContractServiceIdResponse{}
 
-	// Membaca body dari request
 	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
 	if err != nil {
 		exceptions.NewEntityException(writer, request, err)
 		return
 	}
 
-	// Validasi form data dari request
 	err = validation.ValidationForm(writer, request, formRequest)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)
 		return
 	}
 
-	// Proses penyimpanan melalui service
 	create, err := c.ContractServiceDetailService.SaveDetail(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	// Return response sukses
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusCreated) // Menggunakan StatusCreated (201)
 }
-

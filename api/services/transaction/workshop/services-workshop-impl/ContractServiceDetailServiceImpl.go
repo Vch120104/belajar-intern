@@ -19,7 +19,6 @@ type ContractServiceDetailServiceImpl struct {
 	RedisClient                     *redis.Client
 }
 
-// Fungsi pembuka untuk membuat instance ContractServiceServiceImpl
 func OpenContractServiceDetailServiceImpl(ContractServiceDetailRepo transactionworkshoprepository.ContractServiceDetailRepository, db *gorm.DB, redisClient *redis.Client) transactionworkshopservice.ContractServiceDetailService {
 	return &ContractServiceDetailServiceImpl{
 		ContractServiceDetailRepository: ContractServiceDetailRepo,
@@ -29,19 +28,16 @@ func OpenContractServiceDetailServiceImpl(ContractServiceDetailRepo transactionw
 }
 
 // GetAllDetail implements transactionworkshopservice.ContractServiceDetailService.
-// GetAllDetail implements transactionworkshopservice.ContractServiceDetailService.
 func (s *ContractServiceDetailServiceImpl) GetAllDetail(Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// Memulai transaksi
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollbackTrx(tx)
 
-	// Memanggil repository untuk mengambil data ContractServiceDetail berdasarkan contract_service_system_number
 	results, totalPages, totalRows, repoErr := s.ContractServiceDetailRepository.GetAllDetail(tx, Id, filterCondition, pages)
 	if repoErr != nil {
 		return results, totalPages, totalRows, repoErr
 	}
 
-	// Menggunakan pagination untuk hasil
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(results, &pages)
 
 	return paginatedData, totalPages, totalRows, nil
