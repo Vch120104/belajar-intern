@@ -7,11 +7,12 @@ import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
-	generalservicepayloads "after-sales/api/payloads/crossservice/generalservice"
+	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"context"
 	"errors"
 	"fmt"
@@ -755,8 +756,8 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 		}
 	}
 	//get company code
-	CompanyData, errs := utils.GetCompanyDataById(BinningEntities.CompanyId)
-	if !errs {
+	CompanyData, errResponse := generalserviceapiutils.GetCompanyDataById(BinningEntities.CompanyId)
+	if errResponse != nil {
 		return BinningEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("failed To Fetch Company Data From Cross service"),

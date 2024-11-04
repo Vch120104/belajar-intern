@@ -11,6 +11,8 @@ type ItemLocation struct {
 	WarehouseId         int  `gorm:"column:warehouse_id;size:30;not null " json:"warehouse_id"`
 	WarehouseLocationId int  `gorm:"column:warehouse_location_id;size:30;not null" json:"warehouse_location_id"`
 	StockOpname         bool `gorm:"column:stock_opname;default:false" json:"stock_opname"`
+	Item                Item `gorm:"foreignKey:ItemId;references:ItemId" json:"item"`
+	ItemLocationDetail  ItemLocationDetail `gorm:"foreignKey:ItemLocationId;references:ItemLocationId" json:"itemLocationId"`
 }
 
 func (*ItemLocation) TableName() string {

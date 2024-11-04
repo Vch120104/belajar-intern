@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"after-sales/api/config"
-	generalservicepayloads "after-sales/api/payloads/crossservice/generalservice"
 	"errors"
 	"strconv"
 	"time"
@@ -87,7 +85,6 @@ var JobTypeWarehouse = JobType{Code: "W", ID: 14}              // JOBTYPE_WAREHO
 var JobTypeWarranty = JobType{Code: "W", ID: 15}               // JOBTYPE_WARRANTY
 
 var UomTypeService string = "S"     // UOMTYPE_SERVICE Services
-var ItemTypeService string = "S"    // ITEMTYPE_SERVICE Services
 var EstWoOrderTypeId int = 1        // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
 var EstWoOrderType string = "E"     // EST_WO_ORDER_TYPE Order Type For Work Order and Estimation
 var EstWoDiscSelectionId int = 1    // EST_WO_DISC_SELECTION Discount Selection for Estimation and WO
@@ -178,12 +175,3 @@ var ErrNotFound = errors.New(GetDataNotFound)
 var ErrConflict = errors.New(DataExists)
 var ErrEntity = errors.New(JsonError)
 var ErrInternalServerError = errors.New(SomethingWrong)
-
-func GetCompanyDataById(companyId int) (generalservicepayloads.GetCompanyByIdResponses, bool) {
-	var CompanyResponse generalservicepayloads.GetCompanyByIdResponses
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(companyId)
-	if err := Get(CompanyUrl, &CompanyResponse, nil); err != nil {
-		return CompanyResponse, false
-	}
-	return CompanyResponse, true
-}
