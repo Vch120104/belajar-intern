@@ -465,16 +465,15 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	//CHECK SUPPLIER
-
-	supplierResponse := masteritempayloads.SupplierMasterResponse1{}
-
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.SupplierId)
-
-	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Supplier not found",
-			Err:        errors.New("supplier not found"),
+	if req.SupplierId != nil {
+		supplierResponse := masteritempayloads.SupplierMasterResponse1{}
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*req.SupplierId)
+		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Supplier not found",
+				Err:        errors.New("supplier not found"),
+			}
 		}
 	}
 

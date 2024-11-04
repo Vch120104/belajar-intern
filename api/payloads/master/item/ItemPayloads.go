@@ -94,7 +94,7 @@ type ItemRequest struct {
 	ItemLevel2Id                 *int    `json:"item_level_2_id"`
 	ItemLevel3Id                 *int    `json:"item_level_3_id"`
 	ItemLevel4Id                 *int    `json:"item_level_4_id"`
-	SupplierId                   int     `json:"supplier_id"`
+	SupplierId                   *int    `json:"supplier_id"`
 	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
 	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  *int    `json:"unit_of_measurement_purchase_id"`
