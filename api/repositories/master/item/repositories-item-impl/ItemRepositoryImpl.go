@@ -464,6 +464,18 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		return returnValue3, errorItemGroup
 	}
 
+	//CHECK UOM TYPE EXISTENCE
+	shouldReturn4, returnValue4, errorUomType := checkUomTypeExistence(tx, req, response)
+	if shouldReturn4 {
+		return returnValue4, errorUomType
+	}
+
+	// CHECK UOM EXISTENCE
+	shouldReturn5, returnValue5, errorUom := checkUomExistence(tx, req, response)
+	if shouldReturn5 {
+		return returnValue5, errorUom
+	}
+
 	//CHECK SUPPLIER
 	if req.SupplierId != nil {
 		supplierResponse := masteritempayloads.SupplierMasterResponse1{}
@@ -639,6 +651,85 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	return result, nil
+}
+
+func checkUomExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var countUom int64
+	if err := tx.Model(&masteritementities.Uom{}).
+		Where(masteritementities.Uom{UomId: req.UnitOfMeasurementSellingId}).
+		Count(&countUom).Error; err != nil {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Database error on Uom Selling",
+			Err:        err,
+		}
+	}
+	if countUom == 0 {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Uom Selling not found",
+		}
+	}
+
+	if req.UnitOfMeasurementPurchaseId != nil {
+		countUom = 0
+		if err := tx.Model(&masteritementities.Uom{}).
+			Where(masteritementities.Uom{UomId: *req.UnitOfMeasurementPurchaseId}).
+			Count(&countUom).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Uom Purchase",
+				Err:        err,
+			}
+		}
+		if countUom == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Uom Purchase not found",
+			}
+		}
+	}
+
+	if req.UnitOfMeasurementStockId != nil {
+		countUom = 0
+		if err := tx.Model(&masteritementities.Uom{}).
+			Where(masteritementities.Uom{UomId: *req.UnitOfMeasurementStockId}).
+			Count(&countUom).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Uom Stock",
+				Err:        err,
+			}
+		}
+		if countUom == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Uom Stock not found",
+			}
+		}
+	}
+
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkUomTypeExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var countUomType int64
+	if err := tx.Model(&masteritementities.UomType{}).
+		Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).
+		Count(&countUomType).Error; err != nil {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Database error on UomType",
+			Err:        err,
+		}
+	}
+	if countUomType == 0 {
+		return true, response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Uom Type not found",
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
 }
 
 func checkItemGroupExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
