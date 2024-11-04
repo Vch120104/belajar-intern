@@ -1525,6 +1525,46 @@ func WorkOrderBypassRouter(
 
 }
 
+func ContractServiceRouter(
+	ContractServiceController transactionworkshopcontroller.ContractServiceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ContractServiceController.GetAll)
+	router.Get("/by-id/{contract_service_system_number}", ContractServiceController.GetById)
+
+	router.Post("/", ContractServiceController.Save)
+
+	router.Delete("/{contract_service_system_number}", ContractServiceController.Void)
+
+	router.Put("/{contract_service_system_number}", ContractServiceController.Submit)
+
+	return router
+}
+
+func ContractServiceDetailRouter(
+	ContractServiceDetailController transactionworkshopcontroller.ContractServiceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{contract_service_system_number}", ContractServiceDetailController.GetAllDetail)
+	router.Get("/by-id/{contract_service_package_detail_system_number}", ContractServiceDetailController.GetById)
+
+	router.Post("/", ContractServiceDetailController.SaveDetail)
+
+	return router
+}
+
 func QualityControlRouter(
 	QualityControlController transactionworkshopcontroller.QualityControlController,
 ) chi.Router {
