@@ -57,7 +57,7 @@ func handleResponse(resp *http.Response, result interface{}) error {
 	//log.Printf("Received HTTP status: %d", resp.StatusCode)
 
 	// Check for non-200 status code
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK {
 		var errorResponse ResponseBody
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return fmt.Errorf("error decoding error response: %w", err)
@@ -80,14 +80,9 @@ func handleResponse(resp *http.Response, result interface{}) error {
 		return fmt.Errorf("error unmarshalling general response: %w, body: %s", err, bodyBytes)
 	}
 
-	var mapNestedCheck map[string]interface{}
-	//IsNestedErrorChecking will become nil if data nested
-	IsNestedErrorChecking := json.Unmarshal(generalResponse.Data, &mapNestedCheck)
-	if IsNestedErrorChecking == nil {
-		// Unmarshal the nested data if present
-		if err := json.Unmarshal(generalResponse.Data, result); err != nil {
-			return fmt.Errorf("error unmarshalling nested data: %w", err)
-		}
+	// Unmarshal the nested data if present
+	if err := json.Unmarshal(generalResponse.Data, result); err != nil {
+		return fmt.Errorf("error unmarshalling nested data: %w", err)
 	}
 
 	return nil
