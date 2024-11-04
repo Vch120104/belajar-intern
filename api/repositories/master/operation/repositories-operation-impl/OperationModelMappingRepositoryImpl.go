@@ -4,6 +4,7 @@ import (
 	"after-sales/api/config"
 	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
+	"errors"
 	"net/http"
 	"reflect"
 	"strings"
@@ -108,6 +109,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 		}
 	}
 
+	// Assign values for external filters (brand and model)
 	for _, extFilter := range externalServiceFilter {
 		if strings.Contains(extFilter.ColumnField, "brand_code") {
 			brandCode = extFilter.ColumnValue
@@ -117,79 +119,27 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 	}
 
 	// Begin query with join only once
-	// result := tx.Model(masteroperationentities.OperationModelMapping{}).
-	// 	Select("mtr_operation_model_mapping.operation_model_mapping_id, mtr_operation_model_mapping.brand_id, mtr_operation_model_mapping.model_id, mtr_operation_model_mapping.operation_id, mtr_operation_model_mapping.is_active, oc.operation_code, oc.operation_name").
-	// 	Joins("JOIN mtr_operation_code AS oc ON mtr_operation_model_mapping.operation_id = oc.operation_id")
+	result := tx.Table("mtr_operation_model_mapping").
+		Select("mtr_operation_model_mapping.operation_model_mapping_id, " +
+			"mtr_operation_model_mapping.brand_id, mtr_operation_model_mapping.model_id, " +
+			"mtr_operation_model_mapping.operation_id, mtr_operation_model_mapping.is_active, " +
+			"mtr_operation_code.operation_code, mtr_operation_code.operation_name").
+		Joins("JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id")
 
-	// // Apply internal filters as WHERE conditions
-	// whereQuery := utils.ApplyFilter(result, internalServiceFilter)
-
-	// // Log the SQL query for debugging
-	// querySQL := whereQuery.Statement.SQL.String()
-	// fmt.Println("Generated Query SQL:", querySQL)
-
-	// // Execute the query
-	// rows, err := whereQuery.Scan(&responses).Rows()
-	// if err != nil {
-	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
-	// defer rows.Close()
-
-	// if len(responses) == 0 {
-	// 	return nil, 0, 0, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusNotFound,
-	// 		Err:        errors.New("no data found"),
-	// 	}
-	// }
-
-	var operationMappings []masteroperationentities.OperationModelMapping
-
-	whereQuery := utils.ApplyFilter(tx.Model(&masteroperationentities.OperationModelMapping{}), internalServiceFilter)
-
-	if err := whereQuery.Find(&operationMappings).Error; err != nil {
+	// Apply internal filters as WHERE conditions
+	whereQuery := utils.ApplyFilter(result, internalServiceFilter)
+	if err := whereQuery.Scan(&responses).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	var operationIds []int
-	for _, mapping := range operationMappings {
-		operationIds = append(operationIds, mapping.OperationId)
-	}
-
-	var operationCodes []masteroperationentities.OperationCode
-	if err := tx.Where("operation_id IN ?", operationIds).Find(&operationCodes).Error; err != nil {
+	if len(responses) == 0 {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
 		}
-	}
-
-	operationCodeMap := make(map[int]masteroperationentities.OperationCode)
-	for _, code := range operationCodes {
-		operationCodeMap[code.OperationId] = code
-	}
-
-	// Combine data
-	for _, mapping := range operationMappings {
-		response := masteroperationpayloads.OperationModelMappingLookup{
-			OperationModelMappingId: mapping.OperationModelMappingId,
-			BrandId:                 mapping.BrandId,
-			ModelId:                 mapping.ModelId,
-			OperationId:             mapping.OperationId,
-			IsActive:                mapping.IsActive,
-		}
-
-		if code, exists := operationCodeMap[mapping.OperationId]; exists {
-			response.OperationCode = code.OperationCode
-			response.OperationName = code.OperationName
-		}
-
-		responses = append(responses, response)
 	}
 
 	// Join with brand data
