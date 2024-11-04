@@ -360,7 +360,7 @@ func (r *OperationModelMappingControllerImpl) GetAllOperationFrt(writer http.Res
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, results, "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(results), "Get Data Successfully!", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Get Operation Document Requirement By ID
