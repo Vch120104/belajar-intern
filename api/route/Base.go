@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -987,6 +986,21 @@ func StockTransactionReasonRouter(
 
 	return router
 }
+func StockTransactionRouter(
+	StockTransaction transactionsparepartcontroller.StockTransactionController,
+) chi.Router {
+
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Post("/", StockTransaction.StockTransactionInsert)
+
+	return router
+}
 func SkillLevelRouter(
 	SkillLevelController mastercontroller.SkillLevelController,
 ) chi.Router {
@@ -1509,6 +1523,46 @@ func WorkOrderBypassRouter(
 
 	return router
 
+}
+
+func ContractServiceRouter(
+	ContractServiceController transactionworkshopcontroller.ContractServiceController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", ContractServiceController.GetAll)
+	router.Get("/by-id/{contract_service_system_number}", ContractServiceController.GetById)
+
+	router.Post("/", ContractServiceController.Save)
+
+	router.Delete("/{contract_service_system_number}", ContractServiceController.Void)
+
+	router.Put("/{contract_service_system_number}", ContractServiceController.Submit)
+
+	return router
+}
+
+func ContractServiceDetailRouter(
+	ContractServiceDetailController transactionworkshopcontroller.ContractServiceDetailController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/{contract_service_system_number}", ContractServiceDetailController.GetAllDetail)
+	router.Get("/by-id/{contract_service_package_detail_system_number}", ContractServiceDetailController.GetById)
+
+	router.Post("/", ContractServiceDetailController.SaveDetail)
+
+	return router
 }
 
 func QualityControlRouter(

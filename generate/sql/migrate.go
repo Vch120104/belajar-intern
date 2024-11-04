@@ -222,6 +222,7 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseOrderLimit{},
 	//transactionsparepartentities.ItemClaim{},
 	//transactionsparepartentities.ItemClaimDetail{},
+	//&transactionsparepartentities.StockTransaction{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

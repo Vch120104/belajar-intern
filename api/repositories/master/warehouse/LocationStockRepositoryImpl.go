@@ -132,7 +132,7 @@ func CreateNewLocationStockRecord(db *gorm.DB, payloads masterwarehousepayloads.
 		PeriodYear:             payloads.PeriodYear,
 		ItemId:                 payloads.ItemId,
 		WarehouseId:            payloads.WarehouseId,
-		WarehouseGroup:         payloads.WarehouseGroup,
+		WarehouseGroupId:       payloads.WarehouseGroupId,
 		LocationId:             payloads.LocationId,
 		QuantityBegin:          payloads.QuantityBegin,
 		QuantityAdjustment:     0,
@@ -274,7 +274,7 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 		NewLocationStockEntity.PeriodYear = payloads.PeriodYear
 		NewLocationStockEntity.ItemId = payloads.ItemId
 		NewLocationStockEntity.WarehouseId = payloads.WarehouseId
-		NewLocationStockEntity.WarehouseGroup = payloads.WarehouseGroup
+		NewLocationStockEntity.WarehouseGroupId = payloads.WarehouseGroupId
 		NewLocationStockEntity.LocationId = payloads.LocationId
 		NewLocationStockEntity.QuantityBegin = payloads.QuantityBegin
 		NewLocationStockEntity.QuantityAdjustment = 0
