@@ -9,14 +9,14 @@ type Item struct {
 	ItemClassId                  int        `gorm:"column:item_class_id;size:30;not null" json:"item_class_id"`
 	ItemName                     string     `gorm:"column:item_name;size:100" json:"item_name"`
 	ItemGroupId                  int        `gorm:"column:item_group_id;size:30;not null" json:"item_group_id"`
-	ItemTypeId                   int        `gorm:"column:item_type_id;size:30;" json:"item_type_id"`
+	ItemTypeId                   int        `gorm:"column:item_type_id;size:30;not null" json:"item_type_id"`
 	ItemLevel1Id                 int        `gorm:"column:item_level_1_id;size:30;not null" json:"item_level_1_id"`
 	ItemLevel2Id                 *int       `gorm:"column:item_level_2_id;size:30" json:"item_level_2_id"`
 	ItemLevel3Id                 *int       `gorm:"column:item_level_3_id;size:30" json:"item_level_3_id"`
 	ItemLevel4Id                 *int       `gorm:"column:item_level_4_id;size:30" json:"item_level_4_id"`
 	SupplierId                   int        `gorm:"column:supplier_id;size:30;not null" json:"supplier_id"`
 	UnitOfMeasurementTypeId      int        `gorm:"column:unit_of_measurement_type_id;size:30;not null" json:"unit_of_measurement_type_id"`
-	UnitOfMeasurementSellingId   int        `gorm:"column:unit_of_measurement_selling_id;size:30" json:"unit_of_measurement_selling_id"`
+	UnitOfMeasurementSellingId   int        `gorm:"column:unit_of_measurement_selling_id;size:30;not null" json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  int        `gorm:"column:unit_of_measurement_purchase_id;size:30" json:"unit_of_measurement_purchase_id"`
 	UnitOfMeasurementStockId     int        `gorm:"column:unit_of_measurement_stock_id;size:30" json:"unit_of_measurement_stock_id"`
 	SalesItem                    string     `gorm:"column:sales_item;size:1" json:"sales_item"`
