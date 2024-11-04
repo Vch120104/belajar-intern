@@ -182,126 +182,6 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-// func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-// 	var responses []map[string]interface{}
-
-// 	// Fetch OperationModelMapping data
-// 	var operationModelMappingResponses []masteroperationpayloads.OperationModelMappingLookup
-
-// 	// Define table struct
-// 	tableStruct := masteroperationpayloads.OperationModelMappingLookup{}
-
-// 	// Join table
-// 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-
-// 	// Apply filter
-// 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-
-// 	// Execute query
-// 	rows, err := whereQuery.Rows()
-// 	if err != nil {
-// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        err,
-// 		}
-// 	}
-// 	defer rows.Close()
-
-// 	// Fetch and map the data to OperationModelMappingLookup struct
-// 	for rows.Next() {
-// 		var response masteroperationpayloads.OperationModelMappingLookup
-// 		if err := rows.Scan(
-// 			&response.IsActive,
-// 			&response.OperationModelMappingId,
-// 			&response.OperationId,
-// 			&response.OperationName,
-// 			&response.OperationCode,
-// 			&response.BrandId,
-// 			&response.ModelId,
-// 		); err != nil {
-// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusNotFound,
-// 				Err:        err,
-// 			}
-// 		}
-// 		operationModelMappingResponses = append(operationModelMappingResponses, response)
-// 	}
-
-// 	if len(operationModelMappingResponses) == 0 {
-// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        errors.New("no data found"),
-// 		}
-// 	}
-
-// 	// Fetch brand data
-// 	var brandResponses []masteroperationpayloads.BrandResponse
-// 	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=10"
-// 	errUrlBrand := utils.Get(brandUrl, &brandResponses, nil)
-// 	if errUrlBrand != nil {
-// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        errUrlBrand,
-// 		}
-// 	}
-
-// 	// Fetch model data
-// 	var modelResponses []masteroperationpayloads.ModelResponse
-// 	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=10"
-// 	errUrlModel := utils.Get(modelUrl, &modelResponses, nil)
-// 	if errUrlModel != nil {
-// 		return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusNotFound,
-// 			Err:        errUrlModel,
-// 		}
-// 	}
-
-// 	// Create a map to hold brand and model data
-// 	brandMap := make(map[int]masteroperationpayloads.BrandResponse)
-// 	modelMap := make(map[int]masteroperationpayloads.ModelResponse)
-
-// 	// Fill brand and model maps
-// 	for _, brand := range brandResponses {
-// 		brandMap[brand.BrandId] = brand
-// 	}
-
-// 	for _, model := range modelResponses {
-// 		modelMap[model.ModelId] = model
-// 	}
-
-// 	// Combine data from OperationModelMapping, Brand, and Model
-// 	for _, mapping := range operationModelMappingResponses {
-// 		brand, brandExists := brandMap[mapping.BrandId]
-// 		model, modelExists := modelMap[mapping.ModelId]
-
-// 		if !brandExists || !modelExists {
-// 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-// 				StatusCode: http.StatusNotFound,
-// 				Err:        errors.New("brand or model data not found"),
-// 			}
-// 		}
-
-// 		response := map[string]interface{}{
-// 			"IsActive":                mapping.IsActive,
-// 			"OperationModelMappingId": mapping.OperationModelMappingId,
-// 			"OperationId":             mapping.OperationId,
-// 			"OperationName":           mapping.OperationName,
-// 			"OperationCode":           mapping.OperationCode,
-// 			"BrandId":                 mapping.BrandId,
-// 			"ModelId":                 mapping.ModelId,
-// 			"BrandName":               brand.BrandName,
-// 			"ModelDescription":        model.ModelDescription,
-// 		}
-
-// 		responses = append(responses, response)
-// 	}
-
-// 	// Paginate the data
-// 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
-
-// 	return dataPaginate, totalPages, totalRows, nil
-// }
-
 func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationModelMapping{
 		IsActive:                request.IsActive,
@@ -361,11 +241,16 @@ func (r *OperationModelMappingRepositoryImpl) ChangeStatusOperationModelMapping(
 
 func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// OperationFrtMapping := []masteroperationentities.OperationFrt{}
-	OperationFrtResponse := []masteroperationpayloads.OperationModelMappingFrtRequest{}
-	VariantPayloads := []masteroperationpayloads.VariantResponse{}
+	var OperationFrtResponse []masteroperationpayloads.OperationModelMappingFrtRequest
+	var VariantPayloads []masteroperationpayloads.VariantResponse
 
-	err := tx.
-		Model(masteroperationentities.OperationFrt{}).
+	err := tx.Table(masteroperationentities.TableNameOperationFrt).
+		Select("mtr_operation_frt.operation_frt_id AS operation_frt_id, "+
+			"mtr_operation_frt.operation_model_mapping_id AS operation_model_mapping_id, "+
+			"mtr_operation_frt.variant_id AS variant_id, "+
+			"mtr_operation_frt.frt_hour AS frt_hour, "+
+			"mtr_operation_frt.frt_hour_express AS frt_hour_express, "+
+			"mtr_operation_frt.is_active AS is_active").
 		Where("operation_model_mapping_id = ?", id).
 		Scan(&OperationFrtResponse).Error
 
@@ -641,29 +526,33 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationLevel(tx *gorm.DB, re
 
 func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	OperationLevelResponse := []masteroperationpayloads.OperationLevelGetAll{}
+	var OperationLevelResponse []masteroperationpayloads.OperationLevelGetAll
+	var OperationLevelEntity []masteroperationentities.OperationLevel
 
-	err := tx.Model(&masteroperationentities.OperationLevel{}).
-		Select(`
-			mtr_operation_level.operation_level_id,
-			mtr_operation_group.operation_group_id,
-			mtr_operation_group.operation_group_code,
-			mtr_operation_group.operation_group_description,
-			mtr_operation_section.operation_section_id,
-			mtr_operation_section.operation_section_code,
-			mtr_operation_section.operation_section_description,
-			mtr_operation_key.operation_key_id,
-			mtr_operation_key.operation_key_code,
-			mtr_operation_key.operation_key_description,
-			mtr_operation_entries.operation_entries_id,
-			mtr_operation_entries.operation_entries_code,
-			mtr_operation_entries.operation_entries_description`).
-		Joins("JOIN mtr_operation_entries ON mtr_operation_entries.operation_entries_id = mtr_operation_level.operation_entries_id").
-		Joins("JOIN mtr_operation_group ON mtr_operation_group.operation_group_id = mtr_operation_entries.operation_group_id").
-		Joins("JOIN mtr_operation_key ON mtr_operation_key.operation_key_id = mtr_operation_entries.operation_key_id").
-		Joins("JOIN mtr_operation_section ON mtr_operation_section.operation_section_id = mtr_operation_entries.operation_section_id").
-		Where("mtr_operation_level.operation_model_mapping_id = ?", id).
-		Scan(&OperationLevelResponse).Error
+	query := tx.Table("mtr_operation_level").Select(`
+		mtr_operation_level.operation_level_id,
+		mtr_operation_group.operation_group_id,
+		mtr_operation_group.operation_group_code,
+		mtr_operation_group.operation_group_description,
+		mtr_operation_section.operation_section_id,
+		mtr_operation_section.operation_section_code,
+		mtr_operation_section.operation_section_description,
+		mtr_operation_key.operation_key_id,
+		mtr_operation_key.operation_key_code,
+		mtr_operation_key.operation_key_description,
+		op_entries.operation_entries_id,
+		op_entries.operation_entries_code,
+		op_entries.operation_entries_description`).
+		Joins("JOIN mtr_operation_entries AS op_entries ON op_entries.operation_entries_id = mtr_operation_level.operation_entries_id").
+		Joins("JOIN mtr_operation_group ON mtr_operation_group.operation_group_id = op_entries.operation_group_id").
+		Joins("JOIN mtr_operation_key ON mtr_operation_key.operation_key_id = op_entries.operation_key_id").
+		Joins("JOIN mtr_operation_section ON mtr_operation_section.operation_section_id = op_entries.operation_section_id").
+		Where("mtr_operation_level.operation_model_mapping_id = ?", id)
+
+	err := query.
+		Scopes(pagination.Paginate(&OperationLevelEntity, &pages, query)).
+		Scan(&OperationLevelResponse).
+		Error
 
 	if len(OperationLevelResponse) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
