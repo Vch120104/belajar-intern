@@ -1183,12 +1183,12 @@ func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.G
 	return payloads, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, id int) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.PrincipleBrandParent{}
 	payloads := []masteritempayloads.PrincipleBrandDropdownDescription{}
 	err := tx.Model(&entities).
 		Joins("INNER JOIN mtr_gmm_catalog_code mgcc ON mgcc.gmm_catalog_id = mtr_principle_brand_parent.gmm_catalog_id").
-		Where("mgcc.gmm_catalog_code = ?", code).
+		Where("mgcc.gmm_catalog_id = ?", id).
 		Scan(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{

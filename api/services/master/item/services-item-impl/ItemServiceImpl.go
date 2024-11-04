@@ -246,9 +246,9 @@ func (s *ItemServiceImpl) UpdateItemDetail(id int, itemDetail int, req masterite
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetPrincipleBrandParent(id int) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.itemRepo.GetPrincipleBrandParent(tx, code)
+	result, err := s.itemRepo.GetPrincipleBrandParent(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err

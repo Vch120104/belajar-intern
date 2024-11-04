@@ -641,8 +641,12 @@ func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWrite
 }
 
 func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request) {
-	principleBrandCode := chi.URLParam(request, "catalogue_code")
-	result, err := r.itemservice.GetPrincipleBrandParent(principleBrandCode)
+	gmmCatalogId, errA := strconv.Atoi(chi.URLParam(request, "gmm_catalog_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	result, err := r.itemservice.GetPrincipleBrandParent(gmmCatalogId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
