@@ -276,44 +276,166 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 			}
 		}
 	}
-	if OriginalItemId == payloads.ReferenceItemId {
-		//IF @Trans_Reason_Code = @Reason_NL
-		//BEGIN
-		//EXEC [dbo].[uspg_amItemCycle_Insert]
-		//@Option			= 0,
-		//@Company_Code	= @Company_Code,
-		//@Period_Year	= @Period_Year,
-		//@Period_Month	= @Period_Month,
-		//@Item_Code		= @Ref_Item_Code,
-		//@Order_Cycle	= 0,
-		//@Qty_On_Order	= @Ref_Qty_Negatif ,
-		//@Qty_Back_Order = 0
-		//END
-		if stockTransactionReason.StockTransactionReasonCode == "NL" {
-			ItemCyclePayloads := masterpayloads.ItemCycleInsertPayloads{
-				CompanyId:         payloads.CompanyId,
-				PeriodYear:        periodYear,
-				PeriodMonth:       periodMonth,
-				ItemId:            OriginalItemId,
-				OrderCycle:        0,
-				QuantityOnOrder:   referenceQuantityNegative,
-				QuantityBackOrder: 0,
+	//notes dls tidak perlu cek apakah original item id sama atau ga karan menurut legacy yang membedakan hanya item code yang dikirimkan
+	//jika asumsi original item id sama dengan reference item id makan akan selalu send original item id saja
+	//if OriginalItemId == payloads.ReferenceItemId {
+	//IF @Trans_Reason_Code = @Reason_NL
+	//BEGIN
+	//EXEC [dbo].[uspg_amItemCycle_Insert]
+	//@Option			= 0,
+	//@Company_Code	= @Company_Code,
+	//@Period_Year	= @Period_Year,
+	//@Period_Month	= @Period_Month,
+	//@Item_Code		= @Ref_Item_Code,
+	//@Order_Cycle	= 0,
+	//@Qty_On_Order	= @Ref_Qty_Negatif ,
+	//@Qty_Back_Order = 0
+	//END
+	if stockTransactionReason.StockTransactionReasonCode == "NL" {
+		ItemCyclePayloads := masterpayloads.ItemCycleInsertPayloads{
+			CompanyId:         payloads.CompanyId,
+			PeriodYear:        periodYear,
+			PeriodMonth:       periodMonth,
+			ItemId:            OriginalItemId,
+			OrderCycle:        0,
+			QuantityOnOrder:   referenceQuantityNegative,
+			QuantityBackOrder: 0,
+		}
+		var responseApi transactionsparepartpayloads.LocationUpdateResponse
+		ItemCycleUrl := config.EnvConfigs.AfterSalesServiceUrl + "item-cycle"
+		errCrossService := utils.Post(ItemCycleUrl, &ItemCyclePayloads, &responseApi)
+		if errCrossService != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    errCrossService.Error(),
 			}
-			var responseApi transactionsparepartpayloads.LocationUpdateResponse
-			ItemCycleUrl := config.EnvConfigs.AfterSalesServiceUrl + "item-cycle"
-			errCrossService := utils.Post(ItemCycleUrl, &ItemCyclePayloads, &responseApi)
-			if errCrossService != nil {
+		}
+	}
+	if stockTransactionReason.StockTransactionReasonCode != "WP" {
+		//Exec uspg_amGroupStock_Update
+		//@Option = 1 ,
+		//@Company_Code	= @Company_Code	,
+		//@Period_Year	= @Period_Year	,
+		//@Period_Month	= @Period_Month	,
+		//@Whs_Group		= @Ref_Whs_Group	,
+		//@Item_Code		= @Ref_Item_Code,
+		//@Price_Begin	= @Cogs , -- for onhand = 0 condition (insert new)
+		//@Price_Current	= @Cogs
+
+		//update group stock
+		//cek data is exist
+		var warehouseGroup masterwarehouseentities.WarehouseGroup
+		err = db.Model(&masterwarehouseentities.WarehouseGroup{}).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupId: payloads.ReferenceWarehouseGroupId}).
+			First(&warehouseGroup).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    fmt.Sprintf("failed to get warehouse group : %s", err.Error()),
+			}
+		}
+		var GroupStockEntity masterentities.GroupStock
+		err = db.Model(&masterentities.GroupStock{}).Where(masterentities.GroupStock{
+			CompanyId:   payloads.CompanyId,
+			PeriodYear:  periodYear,
+			PeriodMonth: periodMonth,
+			WhsGroup:    warehouseGroup.WarehouseGroupCode,
+			ItemId:      payloads.ReferenceItemId,
+		}).First(&GroupStockEntity).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    fmt.Sprintf("failed to get group stock : %s", err.Error()),
+			}
+		}
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			//make new data first
+			currentPeriodString := fmt.Sprintf("%s-%s-%s", periodYear, periodMonth, "01")
+			ParsePeriodDatetime, errParse := time.Parse("2006-01-02", currentPeriodString)
+			if errParse != nil {
 				return false, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
-					Message:    errCrossService.Error(),
+					Message:    "failed to parse current period",
+				}
+			}
+			LastParsePeriodDatetime := ParsePeriodDatetime.AddDate(0, -1, 0)
+			LastPeriodMonth := ConvertMonth(strconv.Itoa(int(LastParsePeriodDatetime.Month())))
+			LastPeriodYear := strconv.Itoa(int(LastParsePeriodDatetime.Year()))
+			dataExist := 0
+			err = db.Model(&GroupStockEntity).Where(masterentities.GroupStock{CompanyId: payloads.CompanyId,
+				WhsGroup: warehouseGroup.WarehouseGroupCode,
+				ItemId:   payloads.ReferenceItemId}).Select("1").Scan(&dataExist).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    fmt.Sprintf("failed to get group stock : %s", err.Error()),
+				}
+			}
+			currentPrice := 0.0
+			if dataExist == 1 {
+				err = db.Model(&GroupStockEntity).Where(masterentities.GroupStock{
+					CompanyId:   payloads.CompanyId,
+					PeriodYear:  LastPeriodYear,
+					PeriodMonth: LastPeriodMonth,
+					WhsGroup:    warehouseGroup.WarehouseGroupCode,
+					ItemId:      payloads.ReferenceItemId,
+				}).Select("price_current").Scan(&currentPrice).Error
+				if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    fmt.Sprintf("failed to get group stock to cek current price: %s", err.Error()),
+					}
+				}
+			}
+			newGroupStock := masterentities.GroupStock{
+				//GroupStockId: 0,
+				CompanyId:    payloads.CompanyId,
+				PeriodYear:   LastPeriodYear,
+				PeriodMonth:  LastPeriodMonth,
+				WhsGroup:     warehouseGroup.WarehouseGroupCode,
+				ItemId:       payloads.ReferenceItemId,
+				PriceBegin:   currentPrice,
+				PriceCurrent: payloads.TransactionCogs,
+			}
+			err = db.Create(&newGroupStock).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    fmt.Sprintf("failed to create group stock : %s", err.Error()),
 				}
 			}
 		}
-		if stockTransactionReason.StockTransactionReasonCode != "WP" {
-			
+		GroupStockEntity.PriceCurrent = payloads.TransactionCogs
+		err = db.Save(&GroupStockEntity).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    fmt.Sprintf("failed to update group stock : %s", err.Error()),
+			}
 		}
-
 	}
+	//}
+	//} else {
+	//	if stockTransactionReason.StockTransactionReasonCode == "NL" {
+	//		ItemCyclePayloads := masterpayloads.ItemCycleInsertPayloads{
+	//			CompanyId:         payloads.CompanyId,
+	//			PeriodYear:        periodYear,
+	//			PeriodMonth:       periodMonth,
+	//			ItemId:            OriginalItemId,
+	//			OrderCycle:        0,
+	//			QuantityOnOrder:   referenceQuantityNegative,
+	//			QuantityBackOrder: 0,
+	//		}
+	//		var responseApi transactionsparepartpayloads.LocationUpdateResponse
+	//		ItemCycleUrl := config.EnvConfigs.AfterSalesServiceUrl + "item-cycle"
+	//		errCrossService := utils.Post(ItemCycleUrl, &ItemCyclePayloads, &responseApi)
+	//		if errCrossService != nil {
+	//			return false, &exceptions.BaseErrorResponse{
+	//				StatusCode: http.StatusInternalServerError,
+	//				Message:    errCrossService.Error(),
+	//			}
+	//		}
+	//	}
+	//}
 
-	return false, nil
+	return true, nil
 }

@@ -24,12 +24,12 @@ func TestStockTransactionInsert(t *testing.T) {
 	service := setupStockTransaction()
 	currentTime := time.Date(2024, time.January, 10, 0, 0, 0, 0, time.UTC)
 	payloads := transactionsparepartpayloads.StockTransactionInsertPayloads{
-		CompanyId:                    1,
+		CompanyId:                    421,
 		StockTransactionId:           0,
 		TransactionTypeId:            12,
 		TransactionReasonId:          8,
 		ReferenceId:                  0,
-		ReferenceDocumentNumber:      "REFERENCE_NUMBER",
+		ReferenceDocumentNumber:      "Dummy Reference Number",
 		ReferenceDate:                &currentTime,
 		ReferenceWarehouseId:         7,
 		ReferenceWarehouseGroupId:    1,

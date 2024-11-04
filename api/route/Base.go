@@ -987,6 +987,21 @@ func StockTransactionReasonRouter(
 
 	return router
 }
+func StockTransactionRouter(
+	StockTransaction transactionsparepartcontroller.StockTransactionController,
+) chi.Router {
+
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Post("/", StockTransaction.StockTransactionInsert)
+
+	return router
+}
 func SkillLevelRouter(
 	SkillLevelController mastercontroller.SkillLevelController,
 ) chi.Router {

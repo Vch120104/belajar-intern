@@ -80,16 +80,16 @@ func handleResponse(resp *http.Response, result interface{}) error {
 		return fmt.Errorf("error unmarshalling general response: %w, body: %s", err, bodyBytes)
 	}
 
-	// Unmarshal the nested data if present
-	var test map[string]interface{}
-	IsNested := json.Unmarshal(generalResponse.Data, &test)
-	if IsNested != nil {
-
-	} else {
+	var mapNestedCheck map[string]interface{}
+	//IsNestedErrorChecking will become nil if data nested
+	IsNestedErrorChecking := json.Unmarshal(generalResponse.Data, &mapNestedCheck)
+	if IsNestedErrorChecking == nil {
+		// Unmarshal the nested data if present
 		if err := json.Unmarshal(generalResponse.Data, result); err != nil {
 			return fmt.Errorf("error unmarshalling nested data: %w", err)
 		}
 	}
+
 	return nil
 }
 
