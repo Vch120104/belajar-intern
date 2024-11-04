@@ -1170,7 +1170,7 @@ func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.G
 	payloads := []masteritempayloads.GetCatalogCode{}
 
 	err := tx.Model(&entities).
-		Select("mgcc.gmm_catalog_code AS catalogue_code").
+		Select("mgcc.*").
 		Joins("INNER JOIN mtr_gmm_catalog_code mgcc ON mgcc.gmm_catalog_id = mtr_principle_brand_parent.gmm_catalog_id").
 		Scan(&payloads).Error
 	if err != nil {

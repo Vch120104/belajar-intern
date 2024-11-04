@@ -212,7 +212,8 @@ type ItemDetailResponse struct {
 }
 
 type GetCatalogCode struct {
-	CatalogueCode string `json:"catalogue_code"`
+	GmmCatalogId   int    `json:"gmm_catalog_id"`
+	GmmCatalogCode string `json:"gmm_catalog_code"`
 }
 
 type ItemDetailRequest struct {
