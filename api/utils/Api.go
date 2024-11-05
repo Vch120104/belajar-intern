@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
 	"time"
 )
 
@@ -93,7 +94,6 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 	var reqBody []byte
 	var err error
 
-	// Encode request body if provided
 	if body != nil {
 		reqBody, err = json.Marshal(body)
 		if err != nil {
@@ -104,7 +104,7 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 	for retry := 0; retry < maxRetries; retry++ {
 		err = makeRequest(method, url, reqBody, result)
 		if err == nil {
-			return nil // Request was successful
+			return nil
 		}
 
 		// Log the retry attempt
@@ -119,7 +119,7 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 
 // Helper function for making the actual HTTP request
 func makeRequest(method, url string, reqBody []byte, result interface{}) error {
-	// Create a new request with a context
+
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
@@ -129,41 +129,67 @@ func makeRequest(method, url string, reqBody []byte, result interface{}) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute the request
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error executing request: %w", err)
 	}
 
-	// Handle the response
 	return handleResponse(resp, result)
 }
 
 // Helper functions for CRUD operations
-
-// Get makes a GET request
+// GET request
 func Get(url string, result interface{}, params interface{}) error {
 	return CallAPI("GET", url, params, result)
 }
 
-// Post makes a POST request
+// POST request
 func Post(url string, body interface{}, result interface{}) error {
 	return CallAPI("POST", url, body, result)
 }
 
-// Put makes a PUT request
+// PUT request
 func Put(url string, body interface{}, result interface{}) error {
 	return CallAPI("PUT", url, body, result)
 }
 
-// Delete makes a DELETE request
+// DELETE request
 func Delete(url string, body interface{}, result interface{}) error {
 	return CallAPI("DELETE", url, body, result)
 }
 
 // GetArray handles array responses
-func GetArray(url string, result interface{}, params interface{}) error {
-	return CallAPI("GET", url, params, &result)
+func GetArray(baseURL string, params interface{}, result interface{}) error {
+	query := "?"
+	val := reflect.ValueOf(params)
+
+	switch val.Kind() {
+	case reflect.Map:
+		for _, key := range val.MapKeys() {
+			query += fmt.Sprintf("%s=%v&", key.String(), val.MapIndex(key).Interface())
+		}
+	case reflect.Struct:
+		for i := 0; i < val.NumField(); i++ {
+			field := val.Type().Field(i)
+			value := val.Field(i).Interface()
+			query += fmt.Sprintf("%s=%v&", field.Tag.Get("json"), value)
+		}
+	default:
+		return fmt.Errorf("params must be a struct or a map")
+	}
+
+	if len(query) > 1 {
+		query = query[:len(query)-1]
+	}
+
+	finalURL := baseURL + query
+
+	err := CallAPI("GET", finalURL, nil, result)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // BatchRequest supports sending multiple requests in one call
