@@ -7,6 +7,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
@@ -18,6 +19,8 @@ type GoodsReceiveController interface {
 	InsertGoodsReceive(writer http.ResponseWriter, request *http.Request)
 	UpdateGoodsReceive(writer http.ResponseWriter, request *http.Request)
 	InsertGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
+	LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request)
 }
 
 type GoodsReceiveControllerImpl struct {
@@ -99,4 +102,51 @@ func (controller *GoodsReceiveControllerImpl) InsertGoodsReceiveDetail(writer ht
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "Successfully Insert Goods Receive Detail", http.StatusCreated)
+}
+
+// /detail put
+func (controller *GoodsReceiveControllerImpl) UpdateGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request) {
+	GoodsReceiveDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "goods_receive_detail_system_number"))
+	fmt.Println(GoodsReceiveDetailSystemNumber)
+	var GoodsReceiveDetailPayloads transactionsparepartpayloads.GoodsReceiveDetailUpdatePayloads
+	helper.ReadFromRequestBody(request, &GoodsReceiveDetailPayloads)
+	res, err := controller.service.UpdateGoodsReceiveDetail(GoodsReceiveDetailPayloads, GoodsReceiveDetailSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	if res {
+		payloads.NewHandleSuccess(writer, res, "Status updated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// goods-receive/location-item get
+func (controller *GoodsReceiveControllerImpl) LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		//"A.warehouse_id":            queryValues.Get("warehouse_id"),
+		//"A.item_id":                 queryValues.Get("item_id"),
+		//"A.item_location_id":        queryValues.Get("item_location_id"),
+		"B.warehouse_location_name": queryValues.Get("warehouse_location_name"),
+		"item.item_code":            queryValues.Get("item_code"),
+		"whs.company_id":            queryValues.Get("company_id"),
+		"whs.warehouse_code":        queryValues.Get("warehouse_code"),
+	}
+	paginations := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	filterCondition := utils.BuildFilterCondition(queryParams)
+	res, err := controller.service.LocationItemGoodsReceive(filterCondition, paginations)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
+
+	panic("implement me")
 }

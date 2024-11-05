@@ -68,3 +68,21 @@ func (service *GoodsReceiveServiceImpl) InsertGoodsReceiveDetail(payloads transa
 	}
 	return result, nil
 }
+func (service *GoodsReceiveServiceImpl) UpdateGoodsReceiveDetail(payloads transactionsparepartpayloads.GoodsReceiveDetailUpdatePayloads, DetailId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.UpdateGoodsReceiveDetail(tx, payloads, DetailId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *GoodsReceiveServiceImpl) LocationItemGoodsReceive(filter []utils.FilterCondition, PaginationParams pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.LocationItemGoodsReceive(tx, filter, PaginationParams)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

@@ -621,6 +621,8 @@ func GoodsReceiveRouter(
 	router.Post("/", GoodsReceiveController.InsertGoodsReceive)
 	router.Put("/{goods_receive_id}", GoodsReceiveController.UpdateGoodsReceive)
 	router.Post("/detail", GoodsReceiveController.InsertGoodsReceiveDetail)
+	router.Put("/detail/{goods_receive_detail_system_number}", GoodsReceiveController.UpdateGoodsReceiveDetail)
+	router.Get("/location-item", GoodsReceiveController.LocationItemGoodsReceive)
 	return router
 }
 func PurchasePriceRouter(

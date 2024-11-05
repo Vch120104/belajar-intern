@@ -26,12 +26,12 @@ type GoodsReceiveDetail struct {
 	QuantityWrong            float64 `gorm:"column:quantity_wrong;null"        json:"quantity_wrong"`
 	QuantityGoodsReceive     float64 `gorm:"column:quantity_goods_receive;null"        json:"quantity_goods_receive"`
 	WarehouseLocationId      int     `gorm:"column:warehouse_location_id;not null;size:30"        json:"warehouse_location_id"`
-	WarehouseLocation        masterwarehouseentities.WarehouseLocation
+	WarehouseLocation        *masterwarehouseentities.WarehouseLocation
 	WarehouseLocationClaimId int `gorm:"column:warehouse_location_claim_id;not null;size:30"        json:"warehouse_location_claim_id"`
 	//WarehouseLocationClaim
 	CaseNumber               string `gorm:"column:case_number;null"        json:"case_number;size:40"`
 	BinningId                int    `gorm:"column:binning_system_number;not null;size:30"        json:"binning_system_number"`
-	Binning                  BinningStock
+	Binning                  *BinningStock
 	BinningDocumentNumber    string `gorm:"column:binning_document_number;not null;size:25"        json:"binning_document_number"`
 	BinningLineNumber        int    `gorm:"column:binning_line_number;not null"        json:"binning_line_number"`
 	ReferenceSystemNumber    int    `gorm:"column:reference_system_number;null;size:30"        json:"reference_system_number"`
