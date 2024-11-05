@@ -540,7 +540,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
-	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "/atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
+	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(req.SourceTypeId)
 	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

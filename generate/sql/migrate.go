@@ -2,6 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
+
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -219,6 +220,7 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseOrderLimit{},
 	//transactionsparepartentities.ItemClaim{},
 	//transactionsparepartentities.ItemClaimDetail{},
+	//&transactionsparepartentities.StockTransaction{},
 	//&transactionsparepartentities.GoodsReceiveDetail{},
 	//&transactionsparepartentities.GoodsReceive{},
 	)
