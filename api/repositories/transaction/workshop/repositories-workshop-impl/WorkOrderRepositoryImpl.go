@@ -166,8 +166,8 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			WorkOrderTypeName:       workOrderTypeName,
 			BrandId:                 workOrderReq.BrandId,
 			BrandName:               getBrandResponse.BrandName,
-			VehicleCode:             vehicleResponses[0].VehicleCode,
-			VehicleTnkb:             vehicleResponses[0].VehicleTnkb,
+			VehicleCode:             vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
 			ModelId:                 workOrderReq.ModelId,
 			ModelName:               getModelResponse.ModelName,
 			VehicleId:               workOrderReq.VehicleId,
@@ -274,7 +274,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		PDISystemNumber:            request.PDISystemNumber,
 		RepeatedSystemNumber:       request.RepeatedSystemNumber,
 		ServiceSite:                "OD - Service On Dealer",
-		VehicleChassisNumber:       vehicleResponses[0].VehicleCode,
+		VehicleChassisNumber:       vehicleResponses.VehicleChassisNumber,
 
 		// Provided values
 		BrandId:                  request.BrandId,
@@ -470,18 +470,6 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve variant data from the external API",
 			Err:        variantErr.Err,
-		}
-	}
-
-	// Fetch data colour from external API
-	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
-	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
-	if errColour != nil || len(colourResponses) == 0 {
-		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve colour data from the external API",
-			Err:        errColour,
 		}
 	}
 
@@ -799,8 +787,8 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		VariantId:                     entity.VariantId,
 		VariantName:                   variantResponse.VariantName,
 		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   vehicleResponses[0].VehicleCode,
-		VehicleTnkb:                   vehicleResponses[0].VehicleTnkb,
+		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CustomerId:                    entity.CustomerId,
 		ServiceSite:                   entity.ServiceSite,
 		BilltoCustomerId:              entity.BillableToId,
@@ -2795,7 +2783,7 @@ func (r *WorkOrderRepositoryImpl) NewBooking(tx *gorm.DB, request transactionwor
 		BookingSystemNumber:     request.BookingSystemNumber,
 		EstimationSystemNumber:  request.EstimationSystemNumber,
 		ServiceSite:             "OD - Service On Dealer",
-		VehicleChassisNumber:    vehicleResponses[0].VehicleCode,
+		VehicleChassisNumber:    vehicleResponses.VehicleChassisNumber,
 
 		// Provided values
 		BrandId:                  request.BrandId,
@@ -3005,8 +2993,8 @@ func (r *WorkOrderRepositoryImpl) GetAllBooking(tx *gorm.DB, filterCondition []u
 			WorkOrderTypeId:            workOrderReq.WorkOrderTypeId,
 			BrandId:                    workOrderReq.BrandId,
 			BrandName:                  getBrandResponse.BrandName,
-			VehicleCode:                vehicleResponses[0].VehicleCode,
-			VehicleTnkb:                vehicleResponses[0].VehicleTnkb,
+			VehicleCode:                vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:                vehicleResponses.VehicleRegistrationCertificateTNKB,
 			ModelId:                    workOrderReq.ModelId,
 			ModelName:                  getModelResponse.ModelName,
 			VehicleId:                  workOrderReq.VehicleId,
@@ -3085,18 +3073,6 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve variant data from the external API",
 			Err:        variantErr.Err,
-		}
-	}
-
-	// Fetch data colour from external API
-	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
-	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
-	if errColour != nil || len(colourResponses) == 0 {
-		return transactionworkshoppayloads.WorkOrderBookingResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve colour data from the external API",
-			Err:        errColour,
 		}
 	}
 
@@ -3396,8 +3372,8 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 		VariantId:                     entity.VariantId,
 		VariantName:                   variantResponse.VariantName,
 		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   vehicleResponses[0].VehicleCode,
-		VehicleTnkb:                   vehicleResponses[0].VehicleTnkb,
+		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CustomerId:                    entity.CustomerId,
 		BilltoCustomerId:              entity.BillableToId,
 		CampaignId:                    entity.CampaignId,
@@ -3658,8 +3634,8 @@ func (r *WorkOrderRepositoryImpl) GetAllAffiliated(tx *gorm.DB, filterCondition 
 			ServiceRequestDocumentNumber: getServiceRequestResponse.ServiceRequestDocumentNumber,
 			BrandId:                      workOrderReq.BrandId,
 			BrandName:                    getBrandResponse.BrandName,
-			VehicleCode:                  getVehicleResponse[0].VehicleCode,
-			VehicleTnkb:                  getVehicleResponse[0].VehicleTnkb,
+			VehicleCode:                  getVehicleResponse.VehicleChassisNumber,
+			VehicleTnkb:                  getVehicleResponse.VehicleRegistrationCertificateTNKB,
 			ModelId:                      workOrderReq.ModelId,
 			ModelName:                    getModelResponse.ModelName,
 			VehicleId:                    workOrderReq.VehicleId,
@@ -3741,18 +3717,6 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve variant data from the external API",
 			Err:        variantErr.Err,
-		}
-	}
-
-	// Fetch data colour from external API
-	colourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
-	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(colourUrl, &colourResponses, nil)
-	if errColour != nil || len(colourResponses) == 0 {
-		return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve colour data from the external API",
-			Err:        errColour,
 		}
 	}
 
@@ -3858,8 +3822,8 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 		VariantId:                     entity.VariantId,
 		VariantName:                   variantResponse.VariantName,
 		VehicleId:                     entity.VehicleId,
-		VehicleCode:                   vehicleResponses[0].VehicleCode,
-		VehicleTnkb:                   vehicleResponses[0].VehicleTnkb,
+		VehicleCode:                   vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:                   vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CustomerId:                    entity.CustomerId,
 		BilltoCustomerId:              entity.BillableToId,
 		CampaignId:                    entity.CampaignId,
@@ -4895,7 +4859,7 @@ func (s *WorkOrderRepositoryImpl) ConfirmPrice(tx *gorm.DB, workOrderId int, idw
 		}
 	}
 
-	vehicleChassisNo = vehicleResponses[0].VehicleCode
+	vehicleChassisNo = vehicleResponses.VehicleChassisNumber
 
 	// Check if the vehicle is in the grey market by looking up the vehicle chassis number
 	err = tx.Table("dms_microservices_sales_dev.dbo.mtr_vehicle").

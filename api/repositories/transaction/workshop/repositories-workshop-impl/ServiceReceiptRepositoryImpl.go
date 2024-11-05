@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"math"
@@ -109,23 +110,21 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(ServiceReceiptReq.BrandId)
-		var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-		if err := utils.GetArray(ColourUrl, &colourResponses, nil); err != nil || len(colourResponses) == 0 {
+		colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(ServiceReceiptReq.BrandId)
+		if colourErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve colour data from the external API",
-				Err:        err,
+				Err:        colourErr.Err,
 			}
 		}
 
-		CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(ServiceReceiptReq.CompanyId)
-		var companyResponses transactionworkshoppayloads.CompanyResponse
-		if err := utils.Get(CompanyUrl, &companyResponses, nil); err != nil {
+		companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(ServiceReceiptReq.CompanyId)
+		if companyErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve company data from the external API",
-				Err:        err,
+				Err:        companyErr.Err,
 			}
 		}
 
@@ -138,16 +137,9 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		if len(vehicleResponses) == 0 {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "No vehicle data found",
-			}
-		}
-
 		ServiceRequestStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "service-request/dropdown-status?service_request_status_id=" + strconv.Itoa(ServiceReceiptReq.ServiceRequestStatusId)
-		var statusResponses []transactionworkshoppayloads.ServiceRequestStatusResponse
-		if err := utils.GetArray(ServiceRequestStatusURL, &statusResponses, nil); err != nil || len(statusResponses) == 0 {
+		var statusResponses transactionworkshoppayloads.ServiceRequestStatusResponse
+		if err := utils.GetArray(ServiceRequestStatusURL, &statusResponses, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve status service request data from the external API",
@@ -160,13 +152,13 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ServiceRequestDocumentNumber: ServiceReceiptReq.ServiceRequestDocumentNumber,
 			ServiceRequestDate:           ServiceReceiptReq.ServiceRequestDate.Format("2006-01-02 15:04:05"),
 			ServiceRequestBy:             ServiceReceiptReq.ServiceRequestBy,
-			ServiceRequestStatusName:     statusResponses[0].ServiceRequestStatusName,
+			ServiceRequestStatusName:     statusResponses.Data[0].ServiceRequestStatusDescription,
 			BrandName:                    brandResponses.BrandName,
 			ModelName:                    modelResponses.ModelName,
 			VariantName:                  variantResponses.VariantName,
 			VariantColourName:            colourResponses[0].VariantColourName,
-			VehicleCode:                  vehicleResponses[0].VehicleCode,
-			VehicleTnkb:                  vehicleResponses[0].VehicleTnkb,
+			VehicleCode:                  vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:                  vehicleResponses.VehicleRegistrationCertificateTNKB,
 			CompanyName:                  companyResponses.CompanyName,
 			WorkOrderSystemNumber:        ServiceReceiptReq.WorkOrderSystemNumber,
 			BookingSystemNumber:          ServiceReceiptReq.BookingSystemNumber,
@@ -262,14 +254,12 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	// Fetch data colour from external API
-	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
-	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(ColourUrl, &colourResponses, nil)
-	if errColour != nil || len(colourResponses) == 0 {
+	colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(entity.BrandId)
+	if colourErr != nil {
 		return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve colour data from the external API",
-			Err:        errColour,
+			Err:        colourErr.Err,
 		}
 	}
 
@@ -297,9 +287,9 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 
 	// Fetch data Service Request Status from external API
 	ServiceRequestStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "service-request/dropdown-status?service_request_status_id=" + strconv.Itoa(entity.ServiceRequestStatusId)
-	var StatusResponses []transactionworkshoppayloads.ServiceRequestStatusResponse
+	var StatusResponses transactionworkshoppayloads.ServiceRequestStatusResponse
 	errStatus := utils.GetArray(ServiceRequestStatusURL, &StatusResponses, nil)
-	if errStatus != nil || len(StatusResponses) == 0 {
+	if errStatus != nil {
 		return transactionworkshoppayloads.ServiceReceiptResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve status service request data from the external API",
@@ -412,7 +402,7 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	payload := transactionworkshoppayloads.ServiceReceiptResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
 		ServiceRequestStatusId:       entity.ServiceRequestStatusId,
-		ServiceRequestStatusName:     StatusResponses[0].ServiceRequestStatusName,
+		ServiceRequestStatusName:     StatusResponses.Data[0].ServiceRequestStatusDescription,
 		ServiceRequestDocumentNumber: entity.ServiceRequestDocumentNumber,
 		ServiceRequestDate:           ServiceRequestDate,
 		BrandId:                      entity.BrandId,
@@ -423,8 +413,8 @@ func (s *ServiceReceiptRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		VariantName:                  variantResponse.VariantName,
 		VariantColourName:            colourResponses[0].VariantColourName,
 		VehicleId:                    entity.VehicleId,
-		VehicleCode:                  vehicleResponses[0].VehicleCode,
-		VehicleTnkb:                  vehicleResponses[0].VehicleTnkb,
+		VehicleCode:                  vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:                  vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CompanyId:                    entity.CompanyId,
 		CompanyName:                  companyResponses.CompanyName,
 		DealerRepresentativeId:       entity.DealerRepresentativeId,

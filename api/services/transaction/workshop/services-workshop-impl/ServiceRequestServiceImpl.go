@@ -51,7 +51,7 @@ func (s *ServiceRequestServiceImpl) NewStatus(filter []utils.FilterCondition) ([
 
 	statuses, err := s.ServiceRequestRepository.NewStatus(tx, filter)
 	if err != nil {
-		return nil, err
+		return []transactionworkshopentities.ServiceRequestMasterStatus{}, err
 	}
 	return statuses, nil
 }

@@ -93,13 +93,6 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		if len(vehicleResponses) == 0 {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "No vehicle data found",
-			}
-		}
-
 		// Fetch data customer from external API
 		CustomerUrl := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
 		var customerResponses transactionworkshoppayloads.CustomerResponse
@@ -128,8 +121,8 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		convertedResponses = append(convertedResponses, transactionworkshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-			VehicleCode:             vehicleResponses[0].VehicleCode,
-			VehicleTnkb:             vehicleResponses[0].VehicleTnkb,
+			VehicleCode:             vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
 			CustomerName:            customerResponses.CustomerName,
 			WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
 			VarianCode:              variantResponses.VariantCode,
@@ -406,8 +399,8 @@ func (r *QualityControlRepositoryImpl) GetById(tx *gorm.DB, id int, filterCondit
 		ModelName:               modelResponses.ModelName,
 		VariantName:             variantResponses.VariantName,
 		ColourName:              colourResponses[0].VariantColourName,
-		VehicleCode:             vehicleResponses[0].VehicleCode,
-		VehicleTnkb:             vehicleResponses[0].VehicleTnkb,
+		VehicleCode:             vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CustomerName:            workorderUsers[0].CustomerName,
 		Address0:                workorderUsers[0].Address_Street_1,
 		Address1:                workorderUsers[0].Address_Street_2,
@@ -518,7 +511,7 @@ func (r *QualityControlRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet int) (t
 		Select("ISNULL(MAX(technician_allocation_system_number), 0)").
 		Where("work_order_system_number = ?", id).
 		Where("work_order_line = ?", lineTypeOperation).
-		Where("brand_id = ?", vehicleResponses[0].VehicleBrandId).
+		Where("brand_id = ?", vehicleResponses.VehicleBrandID).
 		Where("company_id = ?", details.CompanyId).
 		Where("operation_code = ?", details.OprItemCode).
 		Scan(&techAllocSysNo).Error

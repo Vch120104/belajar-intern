@@ -650,9 +650,6 @@ func (r *ServiceRequestControllerImp) NewStatus(writer http.ResponseWriter, requ
 		return
 	}
 
-	if len(statuses) > 0 {
-		payloads.NewHandleSuccess(writer, statuses, "List of service request statuses", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccess(writer, statuses, "List of service request statuses", http.StatusOK)
+
 }

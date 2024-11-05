@@ -4,41 +4,44 @@ import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
-	"encoding/json"
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-type VehicleResponse struct {
-	VehicleId           int             `json:"vehicle_id"`
-	VehicleCode         string          `json:"vehicle_chassis_number"`
-	VehicleEngineNumber string          `json:"vehicle_engine_number"`
-	VehicleTnkb         string          `json:"vehicle_registration_certificate_tnkb"`
-	VehicleProduction   json.RawMessage `json:"vehicle_production_year"`
-	VehicleLastKm       json.RawMessage `json:"vehicle_last_km"`
-	VehicleBrandId      int             `json:"vehicle_brand_id"`
-	VehicleModelId      int             `json:"vehicle_model_id"`
-	VehicleModelVariant string          `json:"model_variant_colour_description"`
-	VehicleVariantId    int             `json:"vehicle_variant_id"`
-	VehicleColourId     int             `json:"vehicle_colour_id"`
-	VehicleOwner        string          `json:"vehicle_registration_certificate_owner_name"`
+type VehicleParams struct {
+	Page      int `json:"page"`
+	Limit     int `json:"limit"`
+	VehicleID int `json:"vehicle_id"`
 }
 
-type VehicleArrayResponse []struct {
-	VehicleId           int             `json:"vehicle_id"`
-	VehicleCode         string          `json:"vehicle_chassis_number"`
-	VehicleEngineNumber string          `json:"vehicle_engine_number"`
-	VehicleTnkb         string          `json:"vehicle_registration_certificate_tnkb"`
-	VehicleProduction   json.RawMessage `json:"vehicle_production_year"`
-	VehicleLastKm       json.RawMessage `json:"vehicle_last_km"`
-	VehicleBrandId      int             `json:"vehicle_brand_id"`
-	VehicleModelId      int             `json:"vehicle_model_id"`
-	VehicleModelVariant string          `json:"model_variant_colour_description"`
-	VehicleVariantId    int             `json:"vehicle_variant_id"`
-	VehicleColourId     int             `json:"vehicle_colour_id"`
-	VehicleOwner        string          `json:"vehicle_registration_certificate_owner_name"`
+type VehicleResponse struct {
+	OrderID                                 int     `json:"order_id"`
+	VehicleID                               int     `json:"vehicle_id"`
+	VehicleChassisNumber                    string  `json:"vehicle_chassis_number"`
+	VehicleRegistrationCertificateTNKB      string  `json:"vehicle_registration_certificate_tnkb"`
+	VehicleServiceBookingNumber             string  `json:"vehicle_service_booking_number"`
+	VehicleRegistrationCertificateOwnerName string  `json:"vehicle_registration_certificate_owner_name"`
+	ModelVariantColourDescription           string  `json:"model_variant_colour_description"`
+	VehicleProductionYear                   float64 `json:"vehicle_production_year"`
+	VehicleLastServiceDate                  string  `json:"vehicle_last_service_date"`
+	VehicleLastKm                           float64 `json:"vehicle_last_km"`
+	ColourPoliceName                        string  `json:"colour_police_name"`
+	ColourCommercialName                    string  `json:"colour_commercial_name"`
+	VehicleBrandID                          int     `json:"vehicle_brand_id"`
+	VehicleModelID                          int     `json:"vehicle_model_id"`
+	VehicleVariantID                        int     `json:"vehicle_variant_id"`
+	VehicleColourID                         int     `json:"vehicle_colour_id"`
+	IsActive                                bool    `json:"is_active"`
+}
+
+type VehicleListResponse struct {
+	TotalRows  int               `json:"total_rows"`
+	TotalPages int               `json:"total_pages"`
+	Data       []VehicleResponse `json:"data"`
 }
 
 type VehicleUpdate struct {
@@ -46,18 +49,21 @@ type VehicleUpdate struct {
 	VehicleLastServiceDate time.Time `json:"vehicle_last_service_date"`
 }
 
+// Functions
+
 func GetVehicleByChassisNumber(chassis string) (VehicleResponse, *exceptions.BaseErrorResponse) {
-	var vehicle VehicleResponse
+	var vehicleResponse VehicleResponse
 	url := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + chassis
-	errVehicle := utils.CallAPI("GET", url, nil, &vehicle)
+	errVehicle := utils.CallAPI("GET", url, nil, &vehicleResponse)
 	if errVehicle != nil {
-		return vehicle, &exceptions.BaseErrorResponse{
+		return VehicleResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "error consume external vehicle api",
-			Err:        errors.New("error consume external vehicle api"),
+			Message:    "error consuming external vehicle API",
+			Err:        errors.New("error consuming external vehicle API"),
 		}
 	}
-	return vehicle, nil
+
+	return vehicleResponse, nil
 }
 
 func UpdateVehicle(id int, request VehicleUpdate) *exceptions.BaseErrorResponse {
@@ -66,36 +72,42 @@ func UpdateVehicle(id int, request VehicleUpdate) *exceptions.BaseErrorResponse 
 	if errVehicle != nil {
 		return &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "error consume external vehicle api",
-			Err:        errors.New("error consume external vehicle api"),
+			Message:    "error consuming external vehicle API",
+			Err:        errors.New("error consuming external vehicle API"),
 		}
 	}
 	return nil
 }
 
-func GetVehicleById(id int) (VehicleArrayResponse, *exceptions.BaseErrorResponse) {
-	var vehicle VehicleArrayResponse
+func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
+	var vehicleResponse VehicleListResponse
 
 	baseURL := config.EnvConfigs.SalesServiceUrl + "vehicle-master"
 
-	params := struct {
-		Page      int `json:"page"`
-		Limit     int `json:"limit"`
-		VehicleID int `json:"vehicle_id"`
-	}{
+	params := VehicleParams{
 		Page:      0,
-		Limit:     1000000000,
+		Limit:     100000,
 		VehicleID: id,
 	}
 
-	err := utils.GetArray(baseURL, params, &vehicle)
+	finalURL := fmt.Sprintf("%s?page=%d&limit=%d&vehicle_id=%d", baseURL, params.Page, params.Limit, params.VehicleID)
+	log.Printf("Final URL: %s", finalURL)
+
+	// Make the GET request
+	err := utils.GetArray(finalURL, nil, &vehicleResponse) // Ensure you pass nil if no body is needed
 	if err != nil {
-		return vehicle, &exceptions.BaseErrorResponse{
+		return VehicleResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external vehicle API",
-			Err:        errors.New("error consuming external vehicle API: " + err.Error()),
+			Message:    "error consuming external vehicle API: " + err.Error(),
 		}
 	}
 
-	return vehicle, nil
+	if len(vehicleResponse.Data) == 0 {
+		return VehicleResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "vehicle not found",
+		}
+	}
+
+	return vehicleResponse.Data[0], nil
 }
