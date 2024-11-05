@@ -14,10 +14,11 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type StockTransactionRepositoryImpl struct {
@@ -80,7 +81,7 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errors.New(fmt.Sprintf("failed to get item entity with Item Id : %d", payloads.ReferenceItemId)),
+				Err:        fmt.Errorf("failed to get item entity with Item Id : %d", payloads.ReferenceItemId),
 			}
 		}
 		return false, &exceptions.BaseErrorResponse{
