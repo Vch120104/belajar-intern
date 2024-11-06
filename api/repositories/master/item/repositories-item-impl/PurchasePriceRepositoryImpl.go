@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -145,12 +146,12 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 
 		// Fetch Currency data from external service
-		CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(purchasePriceReq.CurrencyId)
-		var getCurrencyResponse masteritempayloads.CurrencyResponse
-		if err := utils.Get(CurrencyURL, &getCurrencyResponse, nil); err != nil {
+		getCurrencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(purchasePriceReq.CurrencyId)
+		if currencyErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Message:    "Internal server error while fetching currency data",
+				Err:        errors.New(currencyErr.Message),
 			}
 		}
 
@@ -298,13 +299,12 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 	}
 
 	// Fetch Currency data from external service
-	CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(entities.CurrencyId)
-	var getCurrencyResponse masteritempayloads.CurrencyResponse
-	if err := utils.Get(CurrencyURL, &getCurrencyResponse, nil); err != nil {
+	getCurrencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(entities.CurrencyId)
+	if currencyErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Internal server error while fetching currency data",
-			Err:        err,
+			Err:        errors.New(currencyErr.Message),
 		}
 	}
 
