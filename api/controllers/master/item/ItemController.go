@@ -33,11 +33,11 @@ type ItemController interface {
 	DeleteItemDetails(writer http.ResponseWriter, request *http.Request)
 	UpdateItem(writer http.ResponseWriter, request *http.Request)
 	UpdateItemDetail(writer http.ResponseWriter, request *http.Request)
-	GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request)
-	GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request)
+	GetPrincipalBrandParent(writer http.ResponseWriter, request *http.Request)
+	GetPrincipalBrandDropdown(writer http.ResponseWriter, request *http.Request)
 	AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
-	GetCatalogCode(writer http.ResponseWriter, request *http.Request)
+	GetPrincipalCatalog(writer http.ResponseWriter, request *http.Request)
 	GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -631,8 +631,8 @@ func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, update, "Item detail updated successfully", http.StatusOK)
 }
 
-func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request) {
-	result, err := r.itemservice.GetPrincipleBrandDropdown()
+func (r *ItemControllerImpl) GetPrincipalBrandDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.itemservice.GetPrincipalBrandDropdown()
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -640,13 +640,13 @@ func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request) {
-	gmmCatalogId, errA := strconv.Atoi(chi.URLParam(request, "gmm_catalog_id"))
+func (r *ItemControllerImpl) GetPrincipalBrandParent(writer http.ResponseWriter, request *http.Request) {
+	principalCatalogId, errA := strconv.Atoi(chi.URLParam(request, "principal_catalog_id"))
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
 		return
 	}
-	result, err := r.itemservice.GetPrincipleBrandParent(gmmCatalogId)
+	result, err := r.itemservice.GetPrincipalBrandParent(principalCatalogId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -669,8 +669,8 @@ func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, re
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-func (r *ItemControllerImpl) GetCatalogCode(writer http.ResponseWriter, request *http.Request) {
-	result, err := r.itemservice.GetCatalogCode()
+func (r *ItemControllerImpl) GetPrincipalCatalog(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.itemservice.GetPrincipalCatalog()
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return

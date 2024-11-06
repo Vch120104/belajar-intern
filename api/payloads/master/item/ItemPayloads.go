@@ -45,7 +45,6 @@ type ItemResponse struct {
 	MarkupMasterId               int     `json:"markup_master_id"`
 	StorageTypeId                int     `json:"storage_type_id"`
 	AtpmWarrantyClaimTypeId      int     `json:"atpm_warranty_claim_type_id"`
-	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
 	IsItemRegulation             bool    `json:"is_item_regulation"`
 	Regulation                   string  `json:"regulation"`
 	IsTechnicalDefect            bool    `json:"is_technical_defect"`
@@ -53,14 +52,13 @@ type ItemResponse struct {
 	SpecialMovementId            int     `json:"special_movement_id"`
 	AutoPickWms                  bool    `json:"auto_pick_wms"`
 	ProportionalSupplyWms        bool    `json:"proportional_supply_wms"`
-	GmmCatalogCode               int     `json:"gmm_catalog_code"`
+	PrincipalCatalogId           int     `json:"principal_catalog_id"`
 	PrincipalBrandParentId       int     `json:"principal_brand_parent_id"`
 	SourceConvertion             float64 `json:"source_convertion"`
 	TargetConvertion             float64 `json:"target_convertion"`
 	UomItemId                    int     `json:"uom_item_id"`
 	SourceUomId                  int     `    json:"source_uom_id"`
 	TargetUomId                  int     `    json:"target_uom_id"`
-	SalesItem                    string  `json:"sales_item"`
 	PriceListItem                string  `json:"price_list_item"`
 	DimensionOfLength            float64 `json:"dimension_of_length"`
 	DimensionOfWidth             float64 `json:"dimension_of_width"`
@@ -69,7 +67,7 @@ type ItemResponse struct {
 	Weight                       float64 `json:"weight"`
 	UnitOfMeasurementWeight      string  `json:"unit_of_measurement_weight"`
 	LastPrice                    float64 `json:"last_price"`
-	UseDiscDecentralize          string  `json:"use_disc_decentralize"`
+	UseDiscDecentralize          bool    `json:"use_disc_decentralize"`
 	IsMaterialPlus               bool    `json:"is_material_plus"`
 	IsMandatory                  bool    `json:"is_mandatory"`
 	AtpmVendorSuppliability      string  `json:"atpm_vendor_suppliability"`
@@ -102,7 +100,6 @@ type ItemRequest struct {
 	SourceConvertion             float64 `json:"source_convertion"`
 	TargetConvertion             float64 `json:"target_convertion"`
 	UomItemId                    int     `json:"uom_item_id"`
-	SalesItem                    string  `json:"sales_item"`
 	Lottable                     bool    `json:"lottable"`
 	Inspection                   bool    `json:"inspection"`
 	PriceListItem                string  `json:"price_list_item"`
@@ -115,11 +112,10 @@ type ItemRequest struct {
 	DimensionUnitOfMeasurementId *int    `json:"dimension_unit_of_measurement_id"`
 	Weight                       float64 `json:"weight"`
 	UnitOfMeasurementWeight      string  `json:"unit_of_measurement_weight"`
-	StorageTypeId                int     `json:"storage_type_id"`
 	Remark                       string  `json:"remark"`
 	AtpmWarrantyClaimTypeId      *int    `json:"atpm_warranty_claim_type_id"`
 	LastPrice                    float64 `json:"last_price"`
-	UseDiscDecentralize          string  `json:"use_disc_decentralize"`
+	UseDiscDecentralize          bool    `json:"use_disc_decentralize"`
 	CommonPricelist              bool    `json:"common_pricelist"`
 	IsRemovable                  bool    `json:"is_removable"`
 	IsMaterialPlus               bool    `json:"is_material_plus"`
@@ -134,7 +130,7 @@ type ItemRequest struct {
 	PmsItem                      bool    `json:"pms_item"`
 	Regulation                   string  `json:"regulation"`
 	AutoPickWms                  bool    `json:"auto_pick_wms"`
-	GmmCatalogId                 *int    `json:"gmm_catalog_id"`
+	PrincipalCatalogId           *int    `json:"principal_catalog_id"`
 	PrincipalBrandParentId       *int    `json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        bool    `json:"proportional_supply_WMS"`
 	Remark2                      string  `json:"remark2"`
@@ -142,7 +138,6 @@ type ItemRequest struct {
 	SourceTypeId                 *int    `json:"source_type_id"`
 	AtpmSupplierCodeOrderId      *int    `json:"atpm_supplier_code_order_id"`
 	PersonInChargeId             *int    `json:"person_in_charge_id"`
-	IsAffiliatedTrx              bool    `json:"is_affiliated_trx"`
 	IsSellable                   bool    `json:"is_sellable"`
 }
 
@@ -209,9 +204,9 @@ type ItemDetailResponse struct {
 	ReturnEvery        float64 `json:"return_every"`
 }
 
-type GetCatalogCode struct {
-	GmmCatalogId   int    `json:"gmm_catalog_id"`
-	GmmCatalogCode string `json:"gmm_catalog_code"`
+type GetPrincipalCatalog struct {
+	PrincipalCatalogId   int    `json:"principal_catalog_id"`
+	PrincipalCatalogCode string `json:"principal_catalog_code"`
 }
 
 type ItemDetailRequest struct {
@@ -290,13 +285,13 @@ type PersonInChargeResponse struct {
 }
 
 type ItemUpdateRequest struct {
-	IsTechnicalDefect bool    `json:"is_technical_defect"`
-	SpecialMovementId int     `json:"special_movement_id"`
-	GmmCatalogCode    int     `json:"gmm_catalog_code"`
-	IsAffiliatedTrx   bool    `json:"is_affiliated_trx"`
-	IsSellable        bool    `json:"is_sellable"`
-	SourceConvertion  float64 `json:"source_convertion"`
-	TargetConvertion  float64 `json:"target_convertion"`
+	IsTechnicalDefect   bool    `json:"is_technical_defect"`
+	SpecialMovementId   int     `json:"special_movement_id"`
+	PrincipalCatalogId  int     `json:"principal_catalog_id"`
+	UseDiscDecentralize bool    `json:"use_disc_decentralize"`
+	IsSellable          bool    `json:"is_sellable"`
+	SourceConvertion    float64 `json:"source_convertion"`
+	TargetConvertion    float64 `json:"target_convertion"`
 }
 
 type ItemDetailUpdateRequest struct {
@@ -304,15 +299,15 @@ type ItemDetailUpdateRequest struct {
 	ReturnEvery  float64 `json:"return_every"`
 }
 
-type PrincipleBrandDropdownResponse struct {
+type PrincipalBrandDropdownResponse struct {
 	IsActive                 bool   `json:"is_active"`
-	PrincipalBrandParentId   int    `json:"principle_brand_parent_id"`
-	PrincipalBrandParentCode string `json:"principle_brand_parent_code"`
+	PrincipalBrandParentId   int    `json:"principal_brand_parent_id"`
+	PrincipalBrandParentCode string `json:"principal_brand_parent_code"`
 }
 
-type PrincipleBrandDropdownDescription struct {
-	PrincipalBrandParentId          int    `json:"principle_brand_parent_id"`
-	PrincipalBrandParentDescription string `json:"principle_brand_parent_description"`
+type PrincipalBrandDropdownDescription struct {
+	PrincipalBrandParentId          int    `json:"principal_brand_parent_id"`
+	PrincipalBrandParentDescription string `json:"principal_brand_parent_description"`
 }
 
 type BrandModelVariantResponse struct {

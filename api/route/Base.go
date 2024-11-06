@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -235,8 +236,8 @@ func ItemRouter(
 	router.Delete("/{item_id}/detail/{multi_id}", itemController.DeleteItemDetails)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_id}/detail/{item_detail_id}", itemController.UpdateItemDetail)
-	router.Get("/catalog-code-drop-down", itemController.GetCatalogCode)
-	router.Get("/brand-parent/{gmm_catalog_id}", itemController.GetPrincipleBrandParent)
+	router.Get("/principal-catalog-drop-down", itemController.GetPrincipalCatalog)
+	router.Get("/brand-parent/{principal_catalog_id}", itemController.GetPrincipalBrandParent)
 	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
 
 	return router

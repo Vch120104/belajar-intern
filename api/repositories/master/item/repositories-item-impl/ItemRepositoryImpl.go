@@ -9,6 +9,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"log"
@@ -506,23 +507,23 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		return returnValue7, errorMarkupMaster
 	}
 
-	//CHECK GMM CATALOG CODE EXISTENCE
-	shouldReturn8, returnValue8, errorGmmCatalogCode := checkGmmCatalogCodeExistence(tx, req, response)
+	//CHECK PRINCIPAL CATALOG EXISTENCE
+	shouldReturn8, returnValue8, errorPrincipalCatalog := checkPrincipalCatalogExistence(tx, req, response)
 	if shouldReturn8 {
-		return returnValue8, errorGmmCatalogCode
+		return returnValue8, errorPrincipalCatalog
 	}
 
-	//CHECK PRINCIPLE BRAND PARENT EXISTENCE
-	shouldReturn9, returnValue9, errorPrincipleBrandParent := checkPrincipleBrandParentExistence(tx, req, response)
+	//CHECK PRINCIPAL BRAND PARENT EXISTENCE
+	shouldReturn9, returnValue9, errorPrincipalBrandParent := checkPrincipalBrandParentExistence(tx, req, response)
 	if shouldReturn9 {
-		return returnValue9, errorPrincipleBrandParent
+		return returnValue9, errorPrincipalBrandParent
 	}
 
 	//CHECK SUPPLIER
 	if req.SupplierId != nil {
-		supplierResponse := masteritempayloads.SupplierMasterResponse1{}
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*req.SupplierId)
-		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil || supplierResponse.SupplierId == 0 {
+		fmt.Println("call supplier api")
+		supplierResponse, supplierErr := generalserviceapiutils.GetSupplierMasterByID(*req.SupplierId)
+		if supplierErr != nil || supplierResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Supplier not found",
@@ -531,22 +532,11 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
-	//CHECK STORAGE TYPE EXISTENCE
-	storageTypeUrl := config.EnvConfigs.GeneralServiceUrl + "storage-type/" + strconv.Itoa(req.StorageTypeId)
-	storageTypeResponse := masteritempayloads.StorageTypeResponse{}
-	if err := utils.Get(storageTypeUrl, &storageTypeResponse, nil); err != nil || storageTypeResponse.StorageTypeId == 0 {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Storage Type not found",
-			Err:        errors.New("storage type not found"),
-		}
-	}
-
 	//CHECK WARRANTY CLAIM TYPE EXISTENCE
 	if req.AtpmWarrantyClaimTypeId != nil {
-		warrantyClaimTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-claim-type/" + strconv.Itoa(*req.AtpmWarrantyClaimTypeId)
-		warrantyClaimTypeResponse := masteritempayloads.WarrantyClaimTypeResponse{}
-		if err := utils.Get(warrantyClaimTypeUrl, &warrantyClaimTypeResponse, nil); err != nil || warrantyClaimTypeResponse.WarrantyClaimTypeId == 0 {
+		fmt.Println("call atpm warranty claim api")
+		warrantyClaimTypeResponse, warrantyClaimTypeError := generalserviceapiutils.GetWarrantyClaimTypeById(*req.AtpmWarrantyClaimTypeId)
+		if warrantyClaimTypeError != nil || warrantyClaimTypeResponse.WarrantyClaimTypeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Warranty Claim Type not found",
@@ -556,9 +546,8 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	//CHECK SPECIAL MOVEMENT EXISTENCE
-	specialMovementUrl := config.EnvConfigs.GeneralServiceUrl + "special-movement/" + strconv.Itoa(req.SpecialMovementId)
-	specialMovementResponse := masteritempayloads.SpecialMovementResponse{}
-	if err := utils.Get(specialMovementUrl, &specialMovementResponse, nil); err != nil || specialMovementResponse.SpecialMovementId == 0 {
+	specialMovementResponse, specialMovementError := generalserviceapiutils.GetSpecialMovementById(req.SpecialMovementId)
+	if specialMovementError != nil || specialMovementResponse.SpecialMovementId == 0 {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Special Movement not found",
@@ -567,9 +556,8 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	//CHECK ATPM SUPPLIER EXISTENCE
-	atpmSupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.AtpmSupplierId)
-	atpmSupplierResponse := masteritempayloads.SupplierMasterResponse1{}
-	if err := utils.Get(atpmSupplierUrl, &atpmSupplierResponse, nil); err != nil || atpmSupplierResponse.SupplierId == 0 {
+	atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterByID(req.AtpmSupplierId)
+	if atpmSupplierError != nil || atpmSupplierResponse.SupplierId == 0 {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "ATPM Supplier not found",
@@ -579,9 +567,8 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK ATPM ORDER TYPE EXISTENCE
 	if req.SourceTypeId != nil {
-		atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(*req.SourceTypeId)
-		atpmOrderTypeResponse := masteritempayloads.AtpmOrderTypeResponse{}
-		if err := utils.Get(atpmOrderTypeUrl, &atpmOrderTypeResponse, nil); err != nil || atpmOrderTypeResponse.AtpmOrderTypeId == 0 {
+		atpmOrderTypeResponse, atpmOrderTypeError := generalserviceapiutils.GetAtpmOrderTypeById(*req.SourceTypeId)
+		if atpmOrderTypeError != nil || atpmOrderTypeResponse.AtpmOrderTypeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "ATPM Order Type not found",
@@ -590,10 +577,10 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
+	//CHECK ATPM SUPPLIER CODE ORDER EXISTENCE
 	if req.AtpmSupplierCodeOrderId != nil {
-		atpmSupplierOrderUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*req.AtpmSupplierCodeOrderId)
-		atpmSupplierOrderResponse := masteritempayloads.SupplierMasterResponse{}
-		if err := utils.Get(atpmSupplierOrderUrl, &atpmSupplierOrderResponse, nil); err != nil || atpmSupplierOrderResponse.SupplierId == 0 {
+		atpmSupplierCodeOrderResponse, atpmSupplierCodeOrderError := generalserviceapiutils.GetSupplierMasterByID(*req.AtpmSupplierCodeOrderId)
+		if atpmSupplierCodeOrderError != nil || atpmSupplierCodeOrderResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "ATPM Supplier Order not found",
@@ -602,10 +589,11 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
+	//CHECK PERSON IN CHARGE EXISTENCE
 	if req.PersonInChargeId != nil {
-		picUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(*req.PersonInChargeId)
-		picResponse := masteritempayloads.UserDetailResponse{}
-		if err := utils.Get(picUrl, &picResponse, nil); err != nil || picResponse.UserEmployeeId == 0 {
+		fmt.Println("call employee api")
+		picResponse, picError := generalserviceapiutils.GetEmployeeByID(*req.PersonInChargeId)
+		if picError != nil || picResponse.UserEmployeeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Person in Charge not found",
@@ -630,7 +618,6 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		UnitOfMeasurementSellingId:   req.UnitOfMeasurementSellingId,
 		UnitOfMeasurementPurchaseId:  req.UnitOfMeasurementPurchaseId,
 		UnitOfMeasurementStockId:     req.UnitOfMeasurementStockId,
-		SalesItem:                    req.SalesItem,
 		Lottable:                     req.Lottable,
 		Inspection:                   req.Inspection,
 		PriceListItem:                req.PriceListItem,
@@ -643,7 +630,6 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		DimensionUnitOfMeasurementId: req.DimensionUnitOfMeasurementId,
 		Weight:                       req.Weight,
 		UnitOfMeasurementWeight:      req.UnitOfMeasurementWeight,
-		StorageTypeId:                req.StorageTypeId,
 		Remark:                       req.Remark,
 		AtpmWarrantyClaimTypeId:      req.AtpmWarrantyClaimTypeId,
 		LastPrice:                    req.LastPrice,
@@ -662,7 +648,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		PmsItem:                      req.PmsItem,
 		Regulation:                   req.Regulation,
 		AutoPickWms:                  req.AutoPickWms,
-		GmmCatalogId:                 req.GmmCatalogId,
+		PrincipalCatalogId:           req.PrincipalCatalogId,
 		PrincipalBrandParentId:       req.PrincipalBrandParentId,
 		ProportionalSupplyWms:        req.ProportionalSupplyWms,
 		Remark2:                      req.Remark2,
@@ -671,7 +657,6 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		AtpmSupplierCodeOrderId:      req.AtpmSupplierCodeOrderId,
 		PersonInChargeId:             req.PersonInChargeId,
 		IsSellable:                   req.IsSellable,
-		IsAffiliatedTrx:              req.IsAffiliatedTrx,
 	}
 
 	err := tx.Save(&entities).Error
@@ -798,22 +783,22 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	return result, nil
 }
 
-func checkPrincipleBrandParentExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+func checkPrincipalBrandParentExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
 	if req.PrincipalBrandParentId != nil {
 		var countPrincipalBrandParent int64
-		if err := tx.Model(&masteritementities.PrincipleBrandParent{}).
-			Where(masteritementities.PrincipleBrandParent{PrincipalBrandParentId: *req.PrincipalBrandParentId}).
+		if err := tx.Model(&masteritementities.PrincipalBrandParent{}).
+			Where(masteritementities.PrincipalBrandParent{PrincipalBrandParentId: *req.PrincipalBrandParentId}).
 			Count(&countPrincipalBrandParent).Error; err != nil {
 			return true, response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Database error on Principle Brand Parent",
+				Message:    "Database error on Principal Brand Parent",
 				Err:        err,
 			}
 		}
 		if countPrincipalBrandParent == 0 {
 			return true, response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Message:    "Principle Brand Parent not found",
+				Message:    "Principal Brand Parent not found",
 			}
 		}
 	}
@@ -821,22 +806,22 @@ func checkPrincipleBrandParentExistence(tx *gorm.DB, req masteritempayloads.Item
 	return false, masteritempayloads.ItemSaveResponse{}, nil
 }
 
-func checkGmmCatalogCodeExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
-	if req.GmmCatalogId != nil {
-		var countGmmCatalogCode int64
-		if err := tx.Model(&masteritementities.GmmCatalogCode{}).
-			Where(masteritementities.GmmCatalogCode{GmmCatalogId: *req.GmmCatalogId}).
-			Count(&countGmmCatalogCode).Error; err != nil {
+func checkPrincipalCatalogExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	if req.PrincipalCatalogId != nil {
+		var countPrincipalCatalog int64
+		if err := tx.Model(&masteritementities.PrincipalCatalog{}).
+			Where(masteritementities.PrincipalCatalog{PrincipalCatalogId: *req.PrincipalCatalogId}).
+			Count(&countPrincipalCatalog).Error; err != nil {
 			return true, response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Database error on Gmm Catalog Code",
+				Message:    "Database error on Principal Catalog",
 				Err:        err,
 			}
 		}
-		if countGmmCatalogCode == 0 {
+		if countPrincipalCatalog == 0 {
 			return true, response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Message:    "Gmm Catalog Code not found",
+				Message:    "Principal Catalog not found",
 			}
 		}
 	}
@@ -1501,9 +1486,9 @@ func (r *ItemRepositoryImpl) UpdateItemDetail(tx *gorm.DB, Id int, itemDetailId 
 	return entities, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PrincipleBrandParent{}
-	payloads := []masteritempayloads.PrincipleBrandDropdownResponse{}
+func (r *ItemRepositoryImpl) GetPrincipalBrandDropdown(tx *gorm.DB) ([]masteritempayloads.PrincipalBrandDropdownResponse, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipalBrandParent{}
+	payloads := []masteritempayloads.PrincipalBrandDropdownResponse{}
 	err := tx.Model(&entities).Scan(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{
@@ -1514,13 +1499,13 @@ func (r *ItemRepositoryImpl) GetPrincipleBrandDropdown(tx *gorm.DB) ([]masterite
 	return payloads, nil
 }
 
-func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PrincipleBrandParent{}
-	payloads := []masteritempayloads.GetCatalogCode{}
+func (r *ItemRepositoryImpl) GetPrincipalCatalog(tx *gorm.DB) ([]masteritempayloads.GetPrincipalCatalog, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipalBrandParent{}
+	payloads := []masteritempayloads.GetPrincipalCatalog{}
 
 	err := tx.Model(&entities).
-		Select("mgcc.*").
-		Joins("INNER JOIN mtr_gmm_catalog_code mgcc ON mgcc.gmm_catalog_id = mtr_principle_brand_parent.gmm_catalog_id").
+		Select("mpc.*").
+		Joins("INNER JOIN mtr_principal_catalog mpc ON mpc.principal_catalog_id = mtr_principal_brand_parent.principal_catalog_id").
 		Scan(&payloads).Error
 	if err != nil {
 		return payloads, &exceptions.BaseErrorResponse{
@@ -1532,12 +1517,12 @@ func (r *ItemRepositoryImpl) GetCatalogCode(tx *gorm.DB) ([]masteritempayloads.G
 	return payloads, nil
 }
 
-func (r *ItemRepositoryImpl) GetPrincipleBrandParent(tx *gorm.DB, id int) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PrincipleBrandParent{}
-	payloads := []masteritempayloads.PrincipleBrandDropdownDescription{}
+func (r *ItemRepositoryImpl) GetPrincipalBrandParent(tx *gorm.DB, id int) ([]masteritempayloads.PrincipalBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.PrincipalBrandParent{}
+	payloads := []masteritempayloads.PrincipalBrandDropdownDescription{}
 	err := tx.Model(&entities).
-		Joins("INNER JOIN mtr_gmm_catalog_code mgcc ON mgcc.gmm_catalog_id = mtr_principle_brand_parent.gmm_catalog_id").
-		Where("mgcc.gmm_catalog_id = ?", id).
+		Joins("INNER JOIN mtr_principal_catalog mpc ON mpc.principal_catalog_id = mtr_principal_brand_parent.principal_catalog_id").
+		Where("mpc.principal_catalog_id = ?", id).
 		Scan(&payloads).Error
 	if err != nil {
 		return nil, &exceptions.BaseErrorResponse{

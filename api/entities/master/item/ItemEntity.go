@@ -19,7 +19,6 @@ type Item struct {
 	UnitOfMeasurementSellingId   *int                  `gorm:"column:unit_of_measurement_selling_id;size:30" json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  *int                  `gorm:"column:unit_of_measurement_purchase_id;size:30" json:"unit_of_measurement_purchase_id"`
 	UnitOfMeasurementStockId     *int                  `gorm:"column:unit_of_measurement_stock_id;size:30" json:"unit_of_measurement_stock_id"`
-	SalesItem                    string                `gorm:"column:sales_item;size:1" json:"sales_item"`
 	Lottable                     bool                  `gorm:"column:lottable" json:"lottable"`
 	Inspection                   bool                  `gorm:"column:inspection" json:"inspection"`
 	PriceListItem                string                `gorm:"column:price_list_item;size:1" json:"price_list_item"`
@@ -32,11 +31,10 @@ type Item struct {
 	DimensionUnitOfMeasurementId *int                  `gorm:"column:dimension_unit_of_measurement_id;size:30" json:"dimension_unit_of_measurement_id"`
 	Weight                       float64               `gorm:"column:weight" json:"weight"`
 	UnitOfMeasurementWeight      string                `gorm:"column:unit_of_measurement_weight;size:3" json:"unit_of_measurement_weight"`
-	StorageTypeId                int                   `gorm:"column:storage_type_id;size:30;not null" json:"storage_type_id"` // fk to storage type in general-service
 	Remark                       string                `gorm:"column:remark;size:512" json:"remark"`
 	AtpmWarrantyClaimTypeId      *int                  `gorm:"column:atpm_warranty_claim_type_id;size:30" json:"atpm_warranty_claim_type_id"` // fk to warranty claim type in general-service
 	LastPrice                    float64               `gorm:"column:last_price" json:"last_price"`
-	UseDiscDecentralize          string                `gorm:"column:use_disc_decentralize;size:1" json:"use_disc_decentralize"`
+	UseDiscDecentralize          bool                  `gorm:"column:use_disc_decentralize" json:"use_disc_decentralize"`
 	CommonPricelist              bool                  `gorm:"column:common_pricelist;default:false" json:"common_pricelist"`
 	IsRemovable                  bool                  `gorm:"column:is_removable" json:"is_removable"`
 	IsMaterialPlus               bool                  `gorm:"column:is_material_plus" json:"is_material_plus"`
@@ -45,7 +43,6 @@ type Item struct {
 	IsTechnicalDefect            bool                  `gorm:"column:is_technical_defect" json:"is_technical_defect"`
 	IsMandatory                  bool                  `gorm:"column:is_mandatory" json:"is_mandatory"`
 	IsSellable                   bool                  `gorm:"column:is_sellable" json:"is_sellable"`
-	IsAffiliatedTrx              bool                  `gorm:"column:is_affiliated_trx" json:"is_affiliated_trx"`
 	MinimumOrderQty              float64               `gorm:"column:minimum_order_qty" json:"minimum_order_qty"`
 	HarmonizedNo                 string                `gorm:"column:harmonized_no;size:10" json:"harmonized_no"`
 	AtpmSupplierId               int                   `gorm:"column:atpm_supplier_id;size:30;not null" json:"atpm_supplier_id"` // fk to supplier in general-service
@@ -53,7 +50,7 @@ type Item struct {
 	PmsItem                      bool                  `gorm:"column:pms_item" json:"pms_item"`
 	Regulation                   string                `gorm:"column:regulation;size:25" json:"regulation"`
 	AutoPickWms                  bool                  `gorm:"column:auto_pick_wms" json:"auto_pick_wms"`
-	GmmCatalogId                 *int                  `gorm:"column:gmm_catalog_id;size:30" json:"gmm_catalog_id"`
+	PrincipalCatalogId           *int                  `gorm:"column:principal_catalog_id;size:30" json:"principal_catalog_id"`
 	PrincipalBrandParentId       *int                  `gorm:"column:principal_brand_parent_id;size:30" json:"principal_brand_parent_id"`
 	ProportionalSupplyWms        bool                  `gorm:"column:proportional_supply_wms" json:"proportional_supply_wms"`
 	Remark2                      string                `gorm:"column:remark2;size:512" json:"remark2"`
@@ -75,8 +72,8 @@ type Item struct {
 	Discount                     *Discount             `gorm:"foreignKey:DiscountId;references:DiscountCodeId"`
 	MarkupMaster                 *MarkupMaster         `gorm:"foreignKey:MarkupMasterId;references:MarkupMasterId"`
 	DimensionUnitOfMeasurement   *Uom                  `gorm:"foreignKey:DimensionUnitOfMeasurementId;references:UomId"`
-	GmmCatalog                   *GmmCatalogCode       `gorm:"foreignKey:GmmCatalogId;references:GmmCatalogId"`
-	PrincipalBrandParent         *PrincipleBrandParent `gorm:"foreignKey:PrincipalBrandParentId;references:PrincipalBrandParentId"`
+	PrincipalCatalog             *PrincipalCatalog     `gorm:"foreignKey:PrincipalCatalogId;references:PrincipalCatalogId"`
+	PrincipalBrandParent         *PrincipalBrandParent `gorm:"foreignKey:PrincipalBrandParentId;references:PrincipalBrandParentId"`
 }
 
 func (*Item) TableName() string {
