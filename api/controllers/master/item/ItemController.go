@@ -3,6 +3,7 @@ package masteritemcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -383,7 +384,12 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 	var formRequest masteritempayloads.ItemRequest
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
 
 	create, err := r.itemservice.SaveItem(formRequest)
 	if err != nil {
