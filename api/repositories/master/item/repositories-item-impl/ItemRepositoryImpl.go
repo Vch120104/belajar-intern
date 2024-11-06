@@ -440,6 +440,24 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
 	response := masteritempayloads.ItemSaveResponse{}
 
+	if req.ItemId != 0 {
+		var itemExist int64
+		err := tx.Model(&masteritementities.Item{}).Where(masteritementities.Item{ItemId: req.ItemId}).Count(&itemExist).Error
+		if err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching item data",
+				Err:        err,
+			}
+		}
+		if itemExist == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("item data not found"),
+			}
+		}
+	}
+
 	//CHECK ITEM TYPE EXISTENCE
 	shouldReturn, returnValue, errorItemType := checkItemTypeExistence(tx, req, response)
 	if shouldReturn {
@@ -470,17 +488,41 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		return returnValue4, errorUomType
 	}
 
-	// CHECK UOM EXISTENCE
+	//CHECK UOM EXISTENCE
 	shouldReturn5, returnValue5, errorUom := checkUomExistence(tx, req, response)
 	if shouldReturn5 {
 		return returnValue5, errorUom
+	}
+
+	//CHECK DISCOUNT EXISTENCE
+	shouldReturn6, returnValue6, errorDiscount := checkDiscountExistence(tx, req, response)
+	if shouldReturn6 {
+		return returnValue6, errorDiscount
+	}
+
+	//CHECK MARKUP MASTER EXISTENCE
+	shouldReturn7, returnValue7, errorMarkupMaster := checkMarkupMasterExistence(tx, req, response)
+	if shouldReturn7 {
+		return returnValue7, errorMarkupMaster
+	}
+
+	//CHECK GMM CATALOG CODE EXISTENCE
+	shouldReturn8, returnValue8, errorGmmCatalogCode := checkGmmCatalogCodeExistence(tx, req, response)
+	if shouldReturn8 {
+		return returnValue8, errorGmmCatalogCode
+	}
+
+	//CHECK PRINCIPLE BRAND PARENT EXISTENCE
+	shouldReturn9, returnValue9, errorPrincipleBrandParent := checkPrincipleBrandParentExistence(tx, req, response)
+	if shouldReturn9 {
+		return returnValue9, errorPrincipleBrandParent
 	}
 
 	//CHECK SUPPLIER
 	if req.SupplierId != nil {
 		supplierResponse := masteritempayloads.SupplierMasterResponse1{}
 		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*req.SupplierId)
-		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil || supplierResponse.SupplierId == 0 {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Message:    "Supplier not found",
@@ -489,6 +531,88 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
+	//CHECK STORAGE TYPE EXISTENCE
+	storageTypeUrl := config.EnvConfigs.GeneralServiceUrl + "storage-type/" + strconv.Itoa(req.StorageTypeId)
+	storageTypeResponse := masteritempayloads.StorageTypeResponse{}
+	if err := utils.Get(storageTypeUrl, &storageTypeResponse, nil); err != nil || storageTypeResponse.StorageTypeId == 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Storage Type not found",
+			Err:        errors.New("storage type not found"),
+		}
+	}
+
+	//CHECK WARRANTY CLAIM TYPE EXISTENCE
+	if req.AtpmWarrantyClaimTypeId != nil {
+		warrantyClaimTypeUrl := config.EnvConfigs.GeneralServiceUrl + "warranty-claim-type/" + strconv.Itoa(*req.AtpmWarrantyClaimTypeId)
+		warrantyClaimTypeResponse := masteritempayloads.WarrantyClaimTypeResponse{}
+		if err := utils.Get(warrantyClaimTypeUrl, &warrantyClaimTypeResponse, nil); err != nil || warrantyClaimTypeResponse.WarrantyClaimTypeId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Warranty Claim Type not found",
+				Err:        errors.New("warranty claim type not found"),
+			}
+		}
+	}
+
+	//CHECK SPECIAL MOVEMENT EXISTENCE
+	specialMovementUrl := config.EnvConfigs.GeneralServiceUrl + "special-movement/" + strconv.Itoa(req.SpecialMovementId)
+	specialMovementResponse := masteritempayloads.SpecialMovementResponse{}
+	if err := utils.Get(specialMovementUrl, &specialMovementResponse, nil); err != nil || specialMovementResponse.SpecialMovementId == 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Special Movement not found",
+			Err:        errors.New("special movement not found"),
+		}
+	}
+
+	//CHECK ATPM SUPPLIER EXISTENCE
+	atpmSupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(req.AtpmSupplierId)
+	atpmSupplierResponse := masteritempayloads.SupplierMasterResponse1{}
+	if err := utils.Get(atpmSupplierUrl, &atpmSupplierResponse, nil); err != nil || atpmSupplierResponse.SupplierId == 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "ATPM Supplier not found",
+			Err:        errors.New("atpm supplier not found"),
+		}
+	}
+
+	//CHECK ATPM ORDER TYPE EXISTENCE
+	if req.SourceTypeId != nil {
+		atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(*req.SourceTypeId)
+		atpmOrderTypeResponse := masteritempayloads.AtpmOrderTypeResponse{}
+		if err := utils.Get(atpmOrderTypeUrl, &atpmOrderTypeResponse, nil); err != nil || atpmOrderTypeResponse.AtpmOrderTypeId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "ATPM Order Type not found",
+				Err:        errors.New("atpm order type not found"),
+			}
+		}
+	}
+
+	if req.AtpmSupplierCodeOrderId != nil {
+		atpmSupplierOrderUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*req.AtpmSupplierCodeOrderId)
+		atpmSupplierOrderResponse := masteritempayloads.SupplierMasterResponse{}
+		if err := utils.Get(atpmSupplierOrderUrl, &atpmSupplierOrderResponse, nil); err != nil || atpmSupplierOrderResponse.SupplierId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "ATPM Supplier Order not found",
+				Err:        errors.New("atpm Supplier Order not found"),
+			}
+		}
+	}
+
+	if req.PersonInChargeId != nil {
+		picUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(*req.PersonInChargeId)
+		picResponse := masteritempayloads.UserDetailResponse{}
+		if err := utils.Get(picUrl, &picResponse, nil); err != nil || picResponse.UserEmployeeId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Person in Charge not found",
+				Err:        errors.New("person in charge not found"),
+			}
+		}
+	}
 	entities := masteritementities.Item{
 		IsActive:                     req.IsActive,
 		ItemId:                       req.ItemId,
@@ -565,76 +689,97 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		}
 	}
 
-	model := masteritementities.Item{}
-	err = tx.Model(&model).Where(masteritementities.Item{ItemCode: req.ItemCode}).First(&model).Error
+	entitiyItemType := masteritementities.ItemType{}
+	err = tx.Model(&entitiyItemType).Where(masteritementities.ItemType{ItemTypeId: entities.ItemTypeId}).First(&entitiyItemType).Error
 	if err != nil {
-
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("item type not found"),
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch item data",
+			Message:    "failed to fetch item type data",
 			Err:        err,
 		}
 	}
 
-	atpmResponse := masteritempayloads.AtpmOrderTypeResponse{}
-	atpmOrderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "atpm-order-type/" + strconv.Itoa(*req.SourceTypeId)
-	if err := utils.Get(atpmOrderTypeUrl, &atpmResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch atpm order type data",
-			Err:        err,
+	// only insert to mtr_uom_item if item type is Goods
+	if entitiyItemType.ItemTypeCode == "G" {
+		entityUomItemPurchaseReq := masteritementities.UomItem{
+			IsActive:          true,
+			ItemId:            entities.ItemId,
+			UomSourceTypeCode: "P",
+			UomTypeId:         *req.UnitOfMeasurementTypeId,
+			SourceUomId:       *req.UnitOfMeasurementPurchaseId,
+			TargetUomId:       *req.UnitOfMeasurementStockId,
+			SourceConvertion:  req.SourceConvertion,
+			TargetConvertion:  req.TargetConvertion,
 		}
-	}
-
-	if atpmResponse == (masteritempayloads.AtpmOrderTypeResponse{}) {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "atpm order type not found",
-			Err:        err,
+		entityUomItemSellingReq := masteritementities.UomItem{
+			IsActive:          true,
+			ItemId:            entities.ItemId,
+			UomSourceTypeCode: "S",
+			UomTypeId:         *req.UnitOfMeasurementTypeId,
+			SourceUomId:       *req.UnitOfMeasurementStockId,
+			TargetUomId:       *req.UnitOfMeasurementStockId,
+			SourceConvertion:  1,
+			TargetConvertion:  1,
 		}
-	}
 
-	uomTypeModel := masteritementities.UomType{}
-	err = tx.Model(&uomTypeModel).Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).First(&uomTypeModel).Error
-	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch uom type data",
-			Err:        err,
+		entityUomItemPurchase := masteritementities.UomItem{}
+		err = tx.Model(&entityUomItemPurchase).
+			Where(masteritementities.UomItem{
+				ItemId:            entities.ItemId,
+				UomSourceTypeCode: "P",
+			}).
+			First(&entityUomItemPurchase).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching uom item purchase",
+				Err:        err,
+			}
 		}
-	}
 
-	//get uomitemid if update
-
-	var uomItemId int
-
-	err = tx.Model(masteritementities.UomItem{}).Select("uom_item_id").Where(masteritementities.UomItem{ItemId: model.ItemId}).First(&uomItemId).Error
-
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+		entityUomItemSelling := masteritementities.UomItem{}
+		err = tx.Model(&entityUomItemSelling).
+			Where(masteritementities.UomItem{
+				ItemId:            entities.ItemId,
+				UomSourceTypeCode: "S",
+			}).
+			First(&entityUomItemSelling).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error fetching uom item selling",
+				Err:        err,
+			}
 		}
-	}
 
-	uomItemEntities := masteritementities.UomItem{
-		IsActive:          req.IsActive,
-		UomItemId:         uomItemId,
-		ItemId:            model.ItemId,
-		UomSourceTypeCode: atpmResponse.AtpmOrderTypeCode,
-		UomTypeCode:       uomTypeModel.UomTypeCode,
-		SourceUomId:       *req.UnitOfMeasurementPurchaseId,
-		TargetUomId:       *req.UnitOfMeasurementStockId,
-		SourceConvertion:  req.SourceConvertion,
-		TargetConvertion:  req.TargetConvertion,
-	}
+		// initiate update uom item if uom item already exist
+		if entityUomItemPurchase.UomItemId != 0 {
+			entityUomItemPurchaseReq.UomItemId = entityUomItemPurchase.UomItemId
+		}
+		if entityUomItemSelling.UomItemId != 0 {
+			entityUomItemSellingReq.UomItemId = entityUomItemSelling.UomItemId
+		}
 
-	err = tx.Save(&uomItemEntities).Error
-	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to save uom item",
-			Err:        err,
+		if err := tx.Save(&entityUomItemPurchaseReq).Error; err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed insert/update uom item purchase",
+				Err:        err,
+			}
+		}
+
+		if err := tx.Save(&entityUomItemSellingReq).Error; err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed insert/update uom item selling",
+				Err:        err,
+			}
 		}
 	}
 
@@ -653,21 +798,114 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	return result, nil
 }
 
-func checkUomExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
-	var countUom int64
-	if err := tx.Model(&masteritementities.Uom{}).
-		Where(masteritementities.Uom{UomId: req.UnitOfMeasurementSellingId}).
-		Count(&countUom).Error; err != nil {
-		return true, response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Database error on Uom Selling",
-			Err:        err,
+func checkPrincipleBrandParentExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	if req.PrincipalBrandParentId != nil {
+		var countPrincipalBrandParent int64
+		if err := tx.Model(&masteritementities.PrincipleBrandParent{}).
+			Where(masteritementities.PrincipleBrandParent{PrincipalBrandParentId: *req.PrincipalBrandParentId}).
+			Count(&countPrincipalBrandParent).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Principle Brand Parent",
+				Err:        err,
+			}
+		}
+		if countPrincipalBrandParent == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Principle Brand Parent not found",
+			}
 		}
 	}
-	if countUom == 0 {
-		return true, response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Uom Selling not found",
+
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkGmmCatalogCodeExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	if req.GmmCatalogId != nil {
+		var countGmmCatalogCode int64
+		if err := tx.Model(&masteritementities.GmmCatalogCode{}).
+			Where(masteritementities.GmmCatalogCode{GmmCatalogId: *req.GmmCatalogId}).
+			Count(&countGmmCatalogCode).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Gmm Catalog Code",
+				Err:        err,
+			}
+		}
+		if countGmmCatalogCode == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Gmm Catalog Code not found",
+			}
+		}
+	}
+
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkMarkupMasterExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	if req.MarkupMasterId != nil {
+		var countMarkupMaster int64
+		if err := tx.Model(&masteritementities.MarkupMaster{}).
+			Where(masteritementities.MarkupMaster{MarkupMasterId: *req.MarkupMasterId}).
+			Count(&countMarkupMaster).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Markup Master",
+				Err:        err,
+			}
+		}
+		if countMarkupMaster == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Markup Master not found",
+			}
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkDiscountExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	if req.DiscountId != nil {
+		var countDiscount int64
+		if err := tx.Model(&masteritementities.Discount{}).
+			Where(masteritementities.Discount{DiscountCodeId: *req.DiscountId}).
+			Count(&countDiscount).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Discount",
+				Err:        err,
+			}
+		}
+		if countDiscount == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Discount not found",
+			}
+		}
+	}
+	return false, masteritempayloads.ItemSaveResponse{}, nil
+}
+
+func checkUomExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
+	var countUom int64
+	if req.UnitOfMeasurementSellingId != nil {
+		countUom = 0
+		if err := tx.Model(&masteritementities.Uom{}).
+			Where(masteritementities.Uom{UomId: *req.UnitOfMeasurementSellingId}).
+			Count(&countUom).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Uom Selling",
+				Err:        err,
+			}
+		}
+		if countUom == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Uom Selling not found",
+			}
 		}
 	}
 
@@ -709,24 +947,45 @@ func checkUomExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response
 		}
 	}
 
+	if req.DimensionUnitOfMeasurementId != nil {
+		countUom = 0
+		if err := tx.Model(&masteritementities.Uom{}).
+			Where(masteritementities.Uom{UomId: *req.DimensionUnitOfMeasurementId}).
+			Count(&countUom).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on Dimension Uom",
+				Err:        err,
+			}
+		}
+		if countUom == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Dimension Uom not found",
+			}
+		}
+	}
+
 	return false, masteritempayloads.ItemSaveResponse{}, nil
 }
 
 func checkUomTypeExistence(tx *gorm.DB, req masteritempayloads.ItemRequest, response masteritempayloads.ItemSaveResponse) (bool, masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
-	var countUomType int64
-	if err := tx.Model(&masteritementities.UomType{}).
-		Where(masteritementities.UomType{UomTypeId: req.UnitOfMeasurementTypeId}).
-		Count(&countUomType).Error; err != nil {
-		return true, response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Database error on UomType",
-			Err:        err,
+	if req.UnitOfMeasurementTypeId != nil {
+		var countUomType int64
+		if err := tx.Model(&masteritementities.UomType{}).
+			Where(masteritementities.UomType{UomTypeId: *req.UnitOfMeasurementTypeId}).
+			Count(&countUomType).Error; err != nil {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Database error on UomType",
+				Err:        err,
+			}
 		}
-	}
-	if countUomType == 0 {
-		return true, response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Uom Type not found",
+		if countUomType == 0 {
+			return true, response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Uom Type not found",
+			}
 		}
 	}
 	return false, masteritempayloads.ItemSaveResponse{}, nil

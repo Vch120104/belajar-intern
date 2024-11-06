@@ -95,22 +95,20 @@ type ItemRequest struct {
 	ItemLevel3Id                 *int    `json:"item_level_3_id"`
 	ItemLevel4Id                 *int    `json:"item_level_4_id"`
 	SupplierId                   *int    `json:"supplier_id"`
-	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
-	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
+	UnitOfMeasurementTypeId      *int    `json:"unit_of_measurement_type_id"`
+	UnitOfMeasurementSellingId   *int    `json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  *int    `json:"unit_of_measurement_purchase_id"`
 	UnitOfMeasurementStockId     *int    `json:"unit_of_measurement_stock_id"`
 	SourceConvertion             float64 `json:"source_convertion"`
 	TargetConvertion             float64 `json:"target_convertion"`
 	UomItemId                    int     `json:"uom_item_id"`
-	SourceUomId                  int     `    json:"source_uom_id"`
-	TargetUomId                  int     `    json:"target_uom_id"`
 	SalesItem                    string  `json:"sales_item"`
 	Lottable                     bool    `json:"lottable"`
 	Inspection                   bool    `json:"inspection"`
 	PriceListItem                string  `json:"price_list_item"`
 	StockKeeping                 bool    `json:"stock_keeping"`
-	DiscountId                   int     `json:"discount_id"`
-	MarkupMasterId               int     `json:"markup_master_id"`
+	DiscountId                   *int    `json:"discount_id"`
+	MarkupMasterId               *int    `json:"markup_master_id"`
 	DimensionOfLength            float64 `json:"dimension_of_length"`
 	DimensionOfWidth             float64 `json:"dimension_of_width"`
 	DimensionOfHeight            float64 `json:"dimension_of_height"`

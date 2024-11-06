@@ -15,8 +15,8 @@ type Item struct {
 	ItemLevel3Id                 *int                  `gorm:"column:item_level_3_id;size:30" json:"item_level_3_id"`
 	ItemLevel4Id                 *int                  `gorm:"column:item_level_4_id;size:30" json:"item_level_4_id"`
 	SupplierId                   *int                  `gorm:"column:supplier_id;size:30" json:"supplier_id"`
-	UnitOfMeasurementTypeId      int                   `gorm:"column:unit_of_measurement_type_id;size:30;not null" json:"unit_of_measurement_type_id"`
-	UnitOfMeasurementSellingId   int                   `gorm:"column:unit_of_measurement_selling_id;size:30;not null" json:"unit_of_measurement_selling_id"`
+	UnitOfMeasurementTypeId      *int                  `gorm:"column:unit_of_measurement_type_id;size:30" json:"unit_of_measurement_type_id"`
+	UnitOfMeasurementSellingId   *int                  `gorm:"column:unit_of_measurement_selling_id;size:30" json:"unit_of_measurement_selling_id"`
 	UnitOfMeasurementPurchaseId  *int                  `gorm:"column:unit_of_measurement_purchase_id;size:30" json:"unit_of_measurement_purchase_id"`
 	UnitOfMeasurementStockId     *int                  `gorm:"column:unit_of_measurement_stock_id;size:30" json:"unit_of_measurement_stock_id"`
 	SalesItem                    string                `gorm:"column:sales_item;size:1" json:"sales_item"`
@@ -24,8 +24,8 @@ type Item struct {
 	Inspection                   bool                  `gorm:"column:inspection" json:"inspection"`
 	PriceListItem                string                `gorm:"column:price_list_item;size:1" json:"price_list_item"`
 	StockKeeping                 bool                  `gorm:"column:stock_keeping" json:"stock_keeping"`
-	DiscountId                   int                   `gorm:"column:discount_id;size:30;not null" json:"discount_id"`
-	MarkupMasterId               int                   `gorm:"column:markup_master_id;size:30;not null" json:"markup_master_id"`
+	DiscountId                   *int                  `gorm:"column:discount_id;size:30" json:"discount_id"`
+	MarkupMasterId               *int                  `gorm:"column:markup_master_id;size:30" json:"markup_master_id"`
 	DimensionOfLength            float64               `gorm:"column:dimension_of_length" json:"dimension_of_length"`
 	DimensionOfWidth             float64               `gorm:"column:dimension_of_width" json:"dimension_of_width"`
 	DimensionOfHeight            float64               `gorm:"column:dimension_of_height" json:"dimension_of_height"`
@@ -61,19 +61,19 @@ type Item struct {
 	SourceTypeId                 *int                  `gorm:"column:source_type_id;size:30" json:"source_type_id"`                           // fk to order type in general-service
 	AtpmSupplierCodeOrderId      *int                  `gorm:"column:atpm_supplier_code_order_id;size:30" json:"atpm_supplier_code_order_id"` // fk to supplier in general-service
 	PersonInChargeId             *int                  `gorm:"column:person_in_charge_id;size:30" json:"person_in_charge_id"`                 // fk to user details in general-service
-	ItemClass                    *ItemClass            `gorm:"foreignKey:ItemClassId;references:ItemClassId"`
+	ItemClass                    ItemClass             `gorm:"foreignKey:ItemClassId;references:ItemClassId"`
 	ItemType                     ItemType              `gorm:"foreignKey:ItemTypeId;references:ItemTypeId"`
 	ItemGroup                    ItemGroup             `gorm:"foreignKey:ItemGroupId;references:ItemGroupId"`
 	ItemLevel1                   *ItemLevel1           `gorm:"foreignKey:ItemLevel1Id;references:ItemLevel1Id"`
 	ItemLevel2                   *ItemLevel2           `gorm:"foreignKey:ItemLevel2Id;references:ItemLevel2Id"`
 	ItemLevel3                   *ItemLevel3           `gorm:"foreignKey:ItemLevel3Id;references:ItemLevel3Id"`
 	ItemLevel4                   *ItemLevel4           `gorm:"foreignKey:ItemLevel4Id;references:ItemLevel4Id"`
-	UnitOfMeasurementType        UomType               `gorm:"foreignKey:UnitOfMeasurementTypeId;references:UomTypeId"`
-	UnitOfMeasurementSelling     Uom                   `gorm:"foreignKey:UnitOfMeasurementSellingId;references:UomId"`
+	UnitOfMeasurementType        *UomType              `gorm:"foreignKey:UnitOfMeasurementTypeId;references:UomTypeId"`
+	UnitOfMeasurementSelling     *Uom                  `gorm:"foreignKey:UnitOfMeasurementSellingId;references:UomId"`
 	UnitOfMeasurementPurchase    *Uom                  `gorm:"foreignKey:UnitOfMeasurementPurchaseId;references:UomId"`
 	UnitOfMeasurementStock       *Uom                  `gorm:"foreignKey:UnitOfMeasurementStockId;references:UomId"`
-	Discount                     Discount              `gorm:"foreignKey:DiscountId;references:DiscountCodeId"`
-	MarkupMaster                 MarkupMaster          `gorm:"foreignKey:MarkupMasterId;references:MarkupMasterId"`
+	Discount                     *Discount             `gorm:"foreignKey:DiscountId;references:DiscountCodeId"`
+	MarkupMaster                 *MarkupMaster         `gorm:"foreignKey:MarkupMasterId;references:MarkupMasterId"`
 	DimensionUnitOfMeasurement   *Uom                  `gorm:"foreignKey:DimensionUnitOfMeasurementId;references:UomId"`
 	GmmCatalog                   *GmmCatalogCode       `gorm:"foreignKey:GmmCatalogId;references:GmmCatalogId"`
 	PrincipalBrandParent         *PrincipleBrandParent `gorm:"foreignKey:PrincipalBrandParentId;references:PrincipalBrandParentId"`

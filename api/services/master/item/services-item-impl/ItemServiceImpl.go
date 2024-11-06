@@ -149,14 +149,6 @@ func (s *ItemServiceImpl) GetItemCode(code string) (masteritempayloads.ItemRespo
 func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result := masteritempayloads.ItemSaveResponse{}
-
-	if req.ItemId != 0 {
-		_, err := s.itemRepo.GetItemById(tx, req.ItemId)
-		if err != nil {
-			return result, err
-		}
-	}
-
 	results, err := s.itemRepo.SaveItem(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
