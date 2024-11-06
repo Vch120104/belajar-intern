@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"bytes"
 	"errors"
 	"net/http"
@@ -143,6 +144,10 @@ func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter
 	var formRequest masteritempayloads.ItemLocationRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	create, err := r.ItemLocationService.SaveItemLocation(formRequest)
 	if err != nil {
@@ -256,6 +261,10 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 
 	var formRequest masteritempayloads.ItemLocationDetailRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
 		exceptions.NewAppException(writer, request, err)
@@ -345,6 +354,10 @@ func (r *ItemLocationControllerImpl) SaveItemLoc(writer http.ResponseWriter, req
 	var formRequest masteritempayloads.SaveItemlocation
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	create, err := r.ItemLocationService.SaveItemLoc(formRequest)
 	if err != nil {

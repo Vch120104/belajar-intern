@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -132,6 +133,10 @@ func (r *PackageMasterControllerImpl) GetByCodePackageMaster(writer http.Respons
 func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.PackageMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.PackageMasterService.PostPackageMaster(formRequest)
@@ -152,6 +157,10 @@ func (r *PackageMasterControllerImpl) SavepackageMaster(writer http.ResponseWrit
 func (r *PackageMasterControllerImpl) SavePackageMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.PackageMasterDetail
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	packageId, _ := strconv.Atoi(chi.URLParam(request, "package_id"))
 
 	create, err := r.PackageMasterService.PostPackageMasterDetail(formRequest, packageId)

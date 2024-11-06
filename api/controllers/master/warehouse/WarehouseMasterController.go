@@ -5,6 +5,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -272,7 +273,10 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -353,6 +357,10 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	formRequest := masterwarehousepayloads.WarehouseAuthorize{}
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	save, err := r.WarehouseMasterService.PostAuthorizeUser(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

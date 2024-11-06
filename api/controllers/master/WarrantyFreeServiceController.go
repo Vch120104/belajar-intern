@@ -9,6 +9,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -120,6 +121,10 @@ func (r *WarrantyFreeServiceControllerImpl) SaveWarrantyFreeService(writer http.
 
 	var formRequest masterpayloads.WarrantyFreeServiceRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.WarrantyFreeServiceService.SaveWarrantyFreeService(formRequest)
@@ -172,6 +177,10 @@ func (r *WarrantyFreeServiceControllerImpl) UpdateWarrantyFreeService(writer htt
 	}
 	var formRequest masterentities.WarrantyFreeService
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.WarrantyFreeServiceService.UpdateWarrantyFreeService(formRequest, warranty_free_services_id)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)

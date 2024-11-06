@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -97,7 +98,10 @@ func (r *ItemPriceCodeControllerImpl) GetItemPriceCodeByCode(writer http.Respons
 func (r *ItemPriceCodeControllerImpl) SaveItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.SaveItemPriceCode
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.ItemPriceCodeService.SaveItemPriceCode(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -130,7 +134,10 @@ func (r *ItemPriceCodeControllerImpl) DeleteItemPriceCode(writer http.ResponseWr
 func (r *ItemPriceCodeControllerImpl) UpdateItemPriceCode(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteritempayloads.UpdateItemPriceCode
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	itemPriceCodeId, err := strconv.Atoi(chi.URLParam(request, "item_price_code_id"))
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{

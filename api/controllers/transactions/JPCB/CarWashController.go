@@ -80,6 +80,10 @@ func (r *CarWashControllerImpl) GetAllCarWash(writer http.ResponseWriter, reques
 func (r *CarWashControllerImpl) UpdatePriority(writer http.ResponseWriter, request *http.Request) {
 	var formRequest transactionjpcbpayloads.CarWashUpdatePriorityRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	response, err := r.CarWashService.UpdatePriority(formRequest.WorkOrderSystemNumber, formRequest.CarWashPriorityId)
 	if err != nil {

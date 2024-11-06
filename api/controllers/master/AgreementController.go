@@ -11,6 +11,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -91,17 +92,22 @@ func (r *AgreementControllerImpl) GetAgreementById(writer http.ResponseWriter, r
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/agreement [post]
 func (r *AgreementControllerImpl) SaveAgreement(writer http.ResponseWriter, request *http.Request) {
-
 	var formRequest masterpayloads.AgreementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
-	var message = ""
 
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	var message string
 	create, err := r.AgreementService.SaveAgreement(formRequest)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
 		return
 	}
 
+	// Set success message based on operation type
 	if formRequest.AgreementId == 0 {
 		message = "Create Data Successfully!"
 		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
@@ -132,6 +138,10 @@ func (r *AgreementControllerImpl) UpdateAgreement(writer http.ResponseWriter, re
 
 	var formRequest masterpayloads.AgreementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	response, err := r.AgreementService.UpdateAgreement(int(AgreementId), formRequest)
 	if err != nil {
@@ -240,6 +250,10 @@ func (r *AgreementControllerImpl) AddDiscountGroup(writer http.ResponseWriter, r
 
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
+	if validationErr := validation.ValidationForm(writer, request, &groupRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	add, err := r.AgreementService.AddDiscountGroup(int(agreementID), groupRequest)
 	if err != nil {
@@ -275,6 +289,10 @@ func (r *AgreementControllerImpl) UpdateDiscountGroup(writer http.ResponseWriter
 
 	var groupRequest masterpayloads.DiscountGroupRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
+	if validationErr := validation.ValidationForm(writer, request, &groupRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	update, err := r.AgreementService.UpdateDiscountGroup(int(agreementID), int(groupID), groupRequest)
 	if err != nil {
@@ -334,6 +352,10 @@ func (r *AgreementControllerImpl) AddItemDiscount(writer http.ResponseWriter, re
 
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
+	if validationErr := validation.ValidationForm(writer, request, &itemRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	add, err := r.AgreementService.AddItemDiscount(int(agreementID), itemRequest)
 	if err != nil {
@@ -369,6 +391,10 @@ func (r *AgreementControllerImpl) UpdateItemDiscount(writer http.ResponseWriter,
 
 	var itemRequest masterpayloads.ItemDiscountRequest
 	helper.ReadFromRequestBody(request, &itemRequest)
+	if validationErr := validation.ValidationForm(writer, request, &itemRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	update, err := r.AgreementService.UpdateItemDiscount(int(agreementID), int(itemID), itemRequest)
 	if err != nil {
@@ -428,6 +454,10 @@ func (r *AgreementControllerImpl) AddDiscountValue(writer http.ResponseWriter, r
 
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
+	if validationErr := validation.ValidationForm(writer, request, &valueRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	add, err := r.AgreementService.AddDiscountValue(int(agreementID), valueRequest)
 	if err != nil {
@@ -463,6 +493,10 @@ func (r *AgreementControllerImpl) UpdateDiscountValue(writer http.ResponseWriter
 
 	var valueRequest masterpayloads.DiscountValueRequest
 	helper.ReadFromRequestBody(request, &valueRequest)
+	if validationErr := validation.ValidationForm(writer, request, &valueRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	update, err := r.AgreementService.UpdateDiscountValue(int(agreementID), int(valueID), valueRequest)
 	if err != nil {

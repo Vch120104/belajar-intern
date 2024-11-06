@@ -3,6 +3,7 @@ package masteroperationcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	"after-sales/api/validation"
 	"errors"
 
 	"after-sales/api/payloads"
@@ -173,6 +174,10 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationSectionRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	var message = ""
 
