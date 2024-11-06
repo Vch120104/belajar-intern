@@ -309,13 +309,13 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 			uom.source_uom_id,
 			uom.target_uom_id,
 			uom.source_convertion,
-	uom.target_convertion 
-			`).
+			uom.target_convertion
+		`).
 		Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
 		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
 		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
 		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
-		Joins("LEFT JOIN mtr_uom_item uom on uom.item_id = mtr_item.item_id").
+		Joins("LEFT JOIN mtr_uom_item uom on uom.item_id = mtr_item.item_id and uom.uom_source_type_code = 'P'").
 		Where(masteritementities.Item{ItemId: Id}).
 		First(&response).Error
 
@@ -396,7 +396,7 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
 		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
 		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
-		Joins("LEFT JOIN mtr_uom_item u ON mtr_item.item_id = u.item_id").
+		Joins("LEFT JOIN mtr_uom_item u ON mtr_item.item_id = u.item_id AND u.uom_source_type_code = 'P'").
 		First(&response).
 		Rows()
 
