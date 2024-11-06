@@ -355,9 +355,8 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 // @Router /v1/item/by-code/{item_code} [get]
 func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *http.Request) {
 
-	itemCode := chi.URLParam(request, "item_code")
-
-	itemCodeEncode := strings.ReplaceAll(itemCode, "!", "/")
+	queryValues := request.URL.Query()
+	itemCodeEncode := queryValues.Get("item_code")
 
 	// Melakukan URL encoding pada item_code
 	// encodedItemCode := url.PathEscape(itemCode)
