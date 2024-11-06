@@ -7,6 +7,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
+	"after-sales/api/validation"
 
 	"after-sales/api/utils"
 	"fmt"
@@ -116,6 +117,10 @@ func (r *ContractServiceControllerImpl) GetById(writer http.ResponseWriter, requ
 func (r *ContractServiceControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
 	var contractServiceInsert transactionworkshoppayloads.ContractServiceInsert
 	helper.ReadFromRequestBody(request, &contractServiceInsert)
+	if validationErr := validation.ValidationForm(writer, request, &contractServiceInsert); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	result, saveErr := r.ContractServiceService.Save(contractServiceInsert)
 	if saveErr != nil {

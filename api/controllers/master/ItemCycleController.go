@@ -1,10 +1,12 @@
 package mastercontroller
 
 import (
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterpayloads "after-sales/api/payloads/master"
 	masterservice "after-sales/api/services/master"
+	"after-sales/api/validation"
 	"net/http"
 )
 
@@ -34,6 +36,10 @@ func NewItemCycleController(ItemCycleService masterservice.ItemCycleService) Ite
 func (i *ItemCycleControllerImpl) ItemCycleInsert(writer http.ResponseWriter, request *http.Request) {
 	var itemCycleInsert masterpayloads.ItemCycleInsertPayloads
 	helper.ReadFromRequestBody(request, &itemCycleInsert)
+	if validationErr := validation.ValidationForm(writer, request, &itemCycleInsert); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, err := i.ItemCycleService.ItemCycleInsert(itemCycleInsert)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

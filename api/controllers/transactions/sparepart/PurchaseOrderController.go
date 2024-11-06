@@ -8,9 +8,11 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
-	"github.com/go-chi/chi/v5"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type PurchaseOrderControllerImpl struct {
@@ -163,6 +165,10 @@ func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderHeader(writer htt
 	var purchaseRequest transactionsparepartpayloads.PurchaseOrderNewPurchaseOrderResponses
 
 	helper.ReadFromRequestBody(request, &purchaseRequest)
+	if validationErr := validation.ValidationForm(writer, request, &purchaseRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, err := controller.service.NewPurchaseOrderHeader(purchaseRequest)
 	if err != nil {
@@ -189,6 +195,10 @@ func (controller *PurchaseOrderControllerImpl) UpdatePurchaseOrderHeader(writer 
 	PurchaseOrderSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_order_system_number"))
 
 	helper.ReadFromRequestBody(request, &puchaseRequestHeader)
+	if validationErr := validation.ValidationForm(writer, request, &puchaseRequestHeader); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, err := controller.service.UpdatePurchaseOrderHeader(PurchaseOrderSystemNumber, puchaseRequestHeader)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -236,6 +246,10 @@ func (controller *PurchaseOrderControllerImpl) NewPurchaseOrderDetail(writer htt
 	var payload transactionsparepartpayloads.PurchaseOrderDetailPayloads
 
 	helper.ReadFromRequestBody(request, &payload)
+	if validationErr := validation.ValidationForm(writer, request, &payload); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, err := controller.service.NewPurchaseOrderDetail(payload)
 	if err != nil {
@@ -288,6 +302,10 @@ func (controller *PurchaseOrderControllerImpl) DeletePurchaseOrderDetailMultiId(
 func (controller *PurchaseOrderControllerImpl) SavePurchaseOrderDetail(writer http.ResponseWriter, request *http.Request) {
 	var payload transactionsparepartpayloads.PurchaseOrderSaveDetailPayloads
 	helper.ReadFromRequestBody(request, &payload)
+	if validationErr := validation.ValidationForm(writer, request, &payload); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, err := controller.service.SavePurchaseOrderDetail(payload)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

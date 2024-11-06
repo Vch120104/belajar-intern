@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"bytes"
 	"errors"
 	"net/http"
@@ -146,6 +147,10 @@ func (r *BomControllerImpl) SaveBomMaster(writer http.ResponseWriter, request *h
 	var formRequest masteritempayloads.BomMasterRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	create, err := r.BomService.SaveBomMaster(formRequest)
 	if err != nil {
@@ -177,6 +182,10 @@ func (r *BomControllerImpl) UpdateBomMaster(writer http.ResponseWriter, request 
 	var formRequest masteritempayloads.BomMasterRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	bomMasterId, errA := strconv.Atoi(chi.URLParam(request, "bom_master_id"))
 
@@ -346,6 +355,10 @@ func (r *BomControllerImpl) SaveBomDetail(writer http.ResponseWriter, request *h
 	var formRequest masteritempayloads.BomDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	create, err := r.BomService.SaveBomDetail(formRequest)
 	if err != nil {
@@ -378,7 +391,10 @@ func (r *BomControllerImpl) UpdateBomDetail(writer http.ResponseWriter, request 
 	var formRequest masteritempayloads.BomDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	bomDetailId, errA := strconv.Atoi(chi.URLParam(request, "bom_detail_id"))
 
 	if errA != nil {

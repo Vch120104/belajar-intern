@@ -11,6 +11,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -74,6 +75,10 @@ func (r *ForecastMasterControllerImpl) SaveForecastMaster(writer http.ResponseWr
 
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.ForecastMasterService.SaveForecastMaster(formRequest)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
@@ -167,6 +172,10 @@ func (r *ForecastMasterControllerImpl) UpdateForecastMaster(writer http.Response
 	}
 	var formRequest masterpayloads.ForecastMasterResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.ForecastMasterService.UpdateForecastMaster(formRequest, forecast_master_id)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)

@@ -8,6 +8,7 @@ import (
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 
@@ -113,6 +114,10 @@ func (r *BayMasterControllerImpl) GetAllDeactiveCarWashBay(writer http.ResponseW
 func (r *BayMasterControllerImpl) ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request) {
 	valueRequest := transactionjpcbpayloads.BayMasterUpdateRequest{}
 	helper.ReadFromRequestBody(request, &valueRequest)
+	if validationErr := validation.ValidationForm(writer, request, &valueRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	update, err := r.bayMasterService.ChangeStatusCarWashBay(valueRequest)
 	if err != nil {

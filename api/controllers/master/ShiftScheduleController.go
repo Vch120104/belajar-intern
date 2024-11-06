@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 
 	// "after-sales/api/middlewares"
@@ -151,6 +152,10 @@ func (r *ShiftScheduleControllerImpl) SaveShiftSchedule(writer http.ResponseWrit
 
 	var formRequest masterpayloads.ShiftScheduleResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message = ""
 
 	create, err := r.ShiftScheduleService.SaveShiftSchedule(formRequest)

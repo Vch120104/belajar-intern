@@ -290,6 +290,7 @@ type WorkOrderNormalRequest struct {
 	CampaignId                 int       `json:"campaign_id"`
 	CompanyId                  int       `json:"company_id"`
 	FromEra                    bool      `json:"from_era"`
+	ServiceAdvisorId           int       `json:"service_advisor_id"`
 	QueueSystemNumber          int       `json:"queue_system_number"`
 	WorkOrderArrivalTime       time.Time `json:"work_order_arrival_time"`
 	WorkOrderCurrentMileage    int       `json:"work_order_current_mileage"`

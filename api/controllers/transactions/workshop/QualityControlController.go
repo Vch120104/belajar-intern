@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"fmt"
 	"strconv"
 
@@ -205,6 +206,10 @@ func (r *QualityControlControllerImpl) Reorder(writer http.ResponseWriter, reque
 
 	var ReorderRequest transactionworkshoppayloads.QualityControlReorder
 	helper.ReadFromRequestBody(request, &ReorderRequest)
+	if validationErr := validation.ValidationForm(writer, request, &ReorderRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	reorder, baseErr := r.QualityControlService.Reorder(id, iddet, ReorderRequest)
 	if baseErr != nil {

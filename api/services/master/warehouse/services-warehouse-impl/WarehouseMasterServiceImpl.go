@@ -126,7 +126,7 @@ func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []int) ([]masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(tx, MultiIds)
 	defer helper.CommitOrRollback(tx, err)
@@ -148,7 +148,7 @@ func (s *WarehouseMasterServiceImpl) GetAll(filter []utils.FilterCondition, page
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
 	defer helper.CommitOrRollback(tx, err)

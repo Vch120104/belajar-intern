@@ -5,6 +5,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"strconv"
 
@@ -160,6 +161,10 @@ func (r *WarehouseGroupControllerImpl) SaveWarehouseGroup(writer http.ResponseWr
 	var message string
 	var formRequest masterwarehousegrouppayloads.GetWarehouseGroupResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	save, err := r.WarehouseGroupService.SaveWarehouseGroup(formRequest)
 	if err != nil {
