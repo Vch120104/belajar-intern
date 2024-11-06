@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"log"
 	"net/http"
 	"strconv"
@@ -193,7 +194,10 @@ func (r *ServiceRequestControllerImp) GetById(writer http.ResponseWriter, reques
 func (r *ServiceRequestControllerImp) New(writer http.ResponseWriter, request *http.Request) {
 	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveRequest
 	helper.ReadFromRequestBody(request, &ServiceRequestSaveRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &ServiceRequestSaveRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, baseErr := r.ServiceRequestService.New(ServiceRequestSaveRequest)
 	if baseErr != nil {
 		errorMap := map[string]int{
@@ -235,6 +239,10 @@ func (r *ServiceRequestControllerImp) Save(writer http.ResponseWriter, request *
 
 	var ServiceRequestSaveRequest transactionworkshoppayloads.ServiceRequestSaveDataRequest
 	helper.ReadFromRequestBody(request, &ServiceRequestSaveRequest)
+	if validationErr := validation.ValidationForm(writer, request, &ServiceRequestSaveRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, baseErr := r.ServiceRequestService.Save(ServiceRequestId, ServiceRequestSaveRequest)
 	if baseErr != nil {
@@ -463,6 +471,10 @@ func (r *ServiceRequestControllerImp) AddServiceDetail(writer http.ResponseWrite
 
 	var serviceDetailSaveRequest transactionworkshoppayloads.ServiceDetailSaveRequest
 	helper.ReadFromRequestBody(request, &serviceDetailSaveRequest)
+	if validationErr := validation.ValidationForm(writer, request, &serviceDetailSaveRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, baseErr := r.ServiceRequestService.AddServiceDetail(serviceRequestSystemNumber, serviceDetailSaveRequest)
 	if baseErr != nil {
@@ -502,6 +514,10 @@ func (r *ServiceRequestControllerImp) UpdateServiceDetail(writer http.ResponseWr
 
 	var serviceDetailSaveRequest transactionworkshoppayloads.ServiceDetailUpdateRequest
 	helper.ReadFromRequestBody(request, &serviceDetailSaveRequest)
+	if validationErr := validation.ValidationForm(writer, request, &serviceDetailSaveRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	entity, baseErr := r.ServiceRequestService.UpdateServiceDetail(serviceDetailSystemId, serviceDetailId, serviceDetailSaveRequest)
 	if baseErr != nil {
@@ -650,9 +666,6 @@ func (r *ServiceRequestControllerImp) NewStatus(writer http.ResponseWriter, requ
 		return
 	}
 
-	if len(statuses) > 0 {
-		payloads.NewHandleSuccess(writer, statuses, "List of service request statuses", http.StatusOK)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccess(writer, statuses, "List of service request statuses", http.StatusOK)
+
 }

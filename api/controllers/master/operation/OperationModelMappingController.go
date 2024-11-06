@@ -5,6 +5,7 @@ import (
 	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -172,6 +173,10 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandMod
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMapping(formRequest)
@@ -226,6 +231,10 @@ func (r *OperationModelMappingControllerImpl) ChangeStatusOperationModelMapping(
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingFrtRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMappingFrt(formRequest)
@@ -427,6 +436,10 @@ func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.Re
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMappingDocumentRequirement(formRequest)
@@ -471,6 +484,10 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequireme
 func (r *OperationModelMappingControllerImpl) SaveOperationLevel(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationLevelRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationLevel(formRequest)

@@ -4,6 +4,7 @@ import (
 	// "after-sales/api/helper"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads"
+	"after-sales/api/validation"
 	"errors"
 	"strconv"
 
@@ -107,6 +108,10 @@ func (r *FieldActionControllerImpl) SaveFieldAction(writer http.ResponseWriter, 
 
 	var formRequest masterpayloads.FieldActionRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.FieldActionService.SaveFieldAction(formRequest)
@@ -320,6 +325,10 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleItemDetail(writer http
 		return
 	}
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.FieldActionService.PostFieldActionVehicleItemDetail(FIeldActionVehicleDetailId, formRequest)
@@ -355,6 +364,10 @@ func (r *FieldActionControllerImpl) PostFieldActionVehicleDetail(writer http.Res
 		return
 	}
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.FieldActionService.PostFieldActionVehicleDetail(FieldActionId, formRequest)
@@ -398,6 +411,10 @@ func (r *FieldActionControllerImpl) PostMultipleVehicleDetail(writer http.Respon
 	queryId := queryValues.Get("multi_id")
 
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.FieldActionService.PostMultipleVehicleDetail(FieldActionId, queryId)
@@ -436,6 +453,10 @@ func (r *FieldActionControllerImpl) PostVehicleItemIntoAllVehicleDetail(writer h
 	}
 
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.FieldActionService.PostVehicleItemIntoAllVehicleDetail(FieldActionHeaderId, formRequest)

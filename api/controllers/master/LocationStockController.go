@@ -1,12 +1,14 @@
 package mastercontroller
 
 import (
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 )
 
@@ -76,6 +78,10 @@ func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWri
 	var locationStockPayloads masterwarehousepayloads.LocationStockUpdatePayloads
 
 	helper.ReadFromRequestBody(request, &locationStockPayloads)
+	if validationErr := validation.ValidationForm(writer, request, &locationStockPayloads); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	//if err != nil {
 	//	helper.ReturnError(writer, request, err)
 	//	return
