@@ -16,4 +16,5 @@ type GoodsReceiveService interface {
 	InsertGoodsReceiveDetail(payloads transactionsparepartpayloads.GoodsReceiveDetailInsertPayloads) (transactionsparepartentities.GoodsReceiveDetail, *exceptions.BaseErrorResponse)
 	UpdateGoodsReceiveDetail(payloads transactionsparepartpayloads.GoodsReceiveDetailUpdatePayloads, DetailId int) (bool, *exceptions.BaseErrorResponse)
 	LocationItemGoodsReceive(filter []utils.FilterCondition, PaginationParams pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	SubmitGoodsReceive(GoodsReceiveId int) (bool, *exceptions.BaseErrorResponse)
 }

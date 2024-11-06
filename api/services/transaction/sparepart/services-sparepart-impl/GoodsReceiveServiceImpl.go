@@ -86,3 +86,13 @@ func (service *GoodsReceiveServiceImpl) LocationItemGoodsReceive(filter []utils.
 	}
 	return result, nil
 }
+
+func (service *GoodsReceiveServiceImpl) SubmitGoodsReceive(GoodsReceiveId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.SubmitGoodsReceive(tx, GoodsReceiveId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

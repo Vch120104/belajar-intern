@@ -194,3 +194,27 @@ type GetAllLocationGRPOResponse struct {
 	CompanyId             int    `gorm:"column:company_id" json:"company_id"`
 	WarehouseCode         string `gorm:"column:warehouse_code" json:"warehouse_code"`
 }
+
+type GoodsReceiveSubmitResponse struct {
+	GoodsReceiveDetailSystemNumber int     `gorm:"column:goods_receive_detail_system_number;not null;primaryKey;size:30"        json:"goods_receive_detail_system_number"`
+	BinningId                      int     `gorm:"column:binning_system_number;not null;size:30"        json:"binning_system_number"`
+	BinningDetailId                int     `gorm:"column:binning_detail_id;not null;size:30"        json:"binning_detail_id"`
+	WarehouseLocationId            int     `gorm:"column:warehouse_location_id;not null;size:30"        json:"warehouse_location_id"`
+	WarehouseLocationClaimId       int     `gorm:"column:warehouse_location_claim_id;not null;size:30"        json:"warehouse_location_claim_id"`
+	ItemId                         int     `gorm:"column:item_id;not null;size:30"        json:"item_id"`
+	ItemUnitOfMeasurement          string  `gorm:"column:item_unit_of_measurement;null;size:5"        json:"item_unit_of_measurement"`
+	ItemPrice                      float64 `gorm:"column:item_price;null"        json:"item_price"`
+	QuantityReference              float64 `gorm:"column:quantity_reference;null"        json:"quantity_reference"`
+	QuantityGoodsReceive           float64 `gorm:"column:quantity_goods_receive;null"        json:"quantity_goods_receive"`
+	QuantityVariance               float64 `gorm:"column:quantity_variance;null"         json:"quantity_variance"`
+	ItemDiscountPercent            float64 `gorm:"column:item_discount_percent;null"        json:"item_discount_percent"`
+	QuantityDeliveryOrder          float64 `gorm:"column:quantity_delivery_order;null"        json:"quantity_delivery_order"`
+	StockKeeping                   bool    `gorm:"column:stock_keeping;not null" json:"stock_keeping"`
+	UnitOfMeasurementStockId       int     `gorm:"column:unit_of_measurement_stock_id" json:"unit_of_measurement_stock_id"`
+	QuantityOnHand                 float64 `gorm:"column:quantity_on_hand" json:"quantity_on_hand"`
+	QuantityInTransit              float64 `gorm:"column:quantity_in_transit" json:"quantity_in_transit"`
+	PricePurchase                  float64 `json:"price_purchase"`
+	QuantityClaimIn                float64 `json:"quantity_claim_in"`
+	HppNew                         float64 `json:"hpp_new"`
+	HppCurrent                     float64 `json:"hpp_current"`
+}
