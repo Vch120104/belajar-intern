@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -790,6 +791,7 @@ func OperationModelMappingRouter(
 	router.Patch("/operation-document-requirement/activate/{operation_document_requirement_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
 	router.Patch("/operation-level/deactivate/{operation_level_id}", operationModelMappingController.DeactivateOperationLevel)
 	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
+	router.Delete("/operation-level/delete/{operation_level_id}", operationModelMappingController.DeleteOperationLevel)
 
 	return router
 }

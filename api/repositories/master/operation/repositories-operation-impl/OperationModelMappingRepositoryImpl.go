@@ -325,6 +325,18 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingFrt(tx *g
 	return true, nil
 }
 
+func (r *OperationModelMappingRepositoryImpl) DeleteOperationLevel(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masteroperationentities.OperationLevel
+	if err := tx.Delete(&entities, ids).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
 func (r *OperationModelMappingRepositoryImpl) DeactivateOperationFrt(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(id, ",")
 

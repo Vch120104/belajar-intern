@@ -9,6 +9,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -38,6 +39,7 @@ type OperationModelMappingController interface {
 	GetOperationLevelById(writer http.ResponseWriter, request *http.Request)
 	ActivateOperationLevel(writer http.ResponseWriter, request *http.Request)
 	DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request)
+	DeleteOperationLevel(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -250,6 +252,29 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 	}
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) DeleteOperationLevel(writer http.ResponseWriter, request *http.Request) {
+	operationLevelIds := chi.URLParam(request, "operation_level_id")
+	operationLevelIds = strings.Trim(operationLevelIds, "[]")
+	elements := strings.Split(operationLevelIds, ",")
+
+	operationLvlIds := []int{}
+	for _, element := range elements {
+		num, convErr := strconv.Atoi(strings.TrimSpace(element))
+		if convErr != nil {
+			payloads.NewHandleError(writer, "Failed to convert ID string", http.StatusInternalServerError)
+			return
+		}
+		operationLvlIds = append(operationLvlIds, num)
+	}
+	if deleted, err := r.operationmodelmappingservice.DeleteOperationLevel(operationLvlIds); err != nil {
+		exceptions.NewAppException(writer, request, err)
+	} else if deleted {
+		payloads.NewHandleSuccess(writer, deleted, "Delete Data Successfully!", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
+	}
 }
 
 // @Summary Deactivate Operation FRT
