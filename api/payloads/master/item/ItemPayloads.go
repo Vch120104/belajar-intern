@@ -46,7 +46,7 @@ type ItemResponse struct {
 	StorageTypeId                int     `json:"storage_type_id"`
 	AtpmWarrantyClaimTypeId      int     `json:"atpm_warranty_claim_type_id"`
 	IsItemRegulation             bool    `json:"is_item_regulation"`
-	Regulation                   string  `json:"regulation"`
+	ItemRegulationId             int     `json:"item_regulation_id"`
 	IsTechnicalDefect            bool    `json:"is_technical_defect"`
 	PmsItem                      bool    `json:"pms_item"`
 	SpecialMovementId            int     `json:"special_movement_id"`
@@ -102,7 +102,7 @@ type ItemRequest struct {
 	UomItemId                    int     `json:"uom_item_id"`
 	Lottable                     bool    `json:"lottable"`
 	Inspection                   bool    `json:"inspection"`
-	PriceListItem                string  `json:"price_list_item"`
+	PriceListItem                bool    `json:"price_list_item"`
 	StockKeeping                 bool    `json:"stock_keeping"`
 	DiscountId                   *int    `json:"discount_id"`
 	MarkupMasterId               *int    `json:"markup_master_id"`
@@ -119,16 +119,16 @@ type ItemRequest struct {
 	CommonPricelist              bool    `json:"common_pricelist"`
 	IsRemovable                  bool    `json:"is_removable"`
 	IsMaterialPlus               bool    `json:"is_material_plus"`
-	SpecialMovementId            int     `json:"special_movement_id"`
+	SpecialMovementId            *int    `json:"special_movement_id"`
 	IsItemRegulation             bool    `json:"is_item_regulation"`
 	IsTechnicalDefect            bool    `json:"is_technical_defect"`
 	IsMandatory                  bool    `json:"is_mandatory"`
 	MinimumOrderQty              float64 `json:"minimum_order_qty"`
 	HarmonizedNo                 string  `json:"harmonized_no"`
-	AtpmSupplierId               int     `json:"atpm_supplier_id"`
+	AtpmSupplierId               *int    `json:"atpm_supplier_id"`
 	AtpmVendorSuppliability      bool    `json:"atpm_vendor_suppliability"`
 	PmsItem                      bool    `json:"pms_item"`
-	Regulation                   string  `json:"regulation"`
+	ItemRegulationId             *int    `json:"item_regulation_id"`
 	AutoPickWms                  bool    `json:"auto_pick_wms"`
 	PrincipalCatalogId           *int    `json:"principal_catalog_id"`
 	PrincipalBrandParentId       *int    `json:"principal_brand_parent_id"`

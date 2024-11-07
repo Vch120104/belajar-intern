@@ -21,7 +21,7 @@ type Item struct {
 	UnitOfMeasurementStockId     *int                  `gorm:"column:unit_of_measurement_stock_id;size:30" json:"unit_of_measurement_stock_id"`
 	Lottable                     bool                  `gorm:"column:lottable" json:"lottable"`
 	Inspection                   bool                  `gorm:"column:inspection" json:"inspection"`
-	PriceListItem                string                `gorm:"column:price_list_item;size:1" json:"price_list_item"`
+	PriceListItem                bool                  `gorm:"column:price_list_item" json:"price_list_item"`
 	StockKeeping                 bool                  `gorm:"column:stock_keeping" json:"stock_keeping"`
 	DiscountId                   *int                  `gorm:"column:discount_id;size:30" json:"discount_id"`
 	MarkupMasterId               *int                  `gorm:"column:markup_master_id;size:30" json:"markup_master_id"`
@@ -38,17 +38,17 @@ type Item struct {
 	CommonPricelist              bool                  `gorm:"column:common_pricelist;default:false" json:"common_pricelist"`
 	IsRemovable                  bool                  `gorm:"column:is_removable" json:"is_removable"`
 	IsMaterialPlus               bool                  `gorm:"column:is_material_plus" json:"is_material_plus"`
-	SpecialMovementId            int                   `gorm:"column:special_movement_id;size:30;not null" json:"special_movement_id"` // fk to special movement in general-service
+	SpecialMovementId            *int                  `gorm:"column:special_movement_id;size:30" json:"special_movement_id"` // fk to special movement in general-service
 	IsItemRegulation             bool                  `gorm:"column:is_item_regulation" json:"is_item_regulation"`
 	IsTechnicalDefect            bool                  `gorm:"column:is_technical_defect" json:"is_technical_defect"`
 	IsMandatory                  bool                  `gorm:"column:is_mandatory" json:"is_mandatory"`
 	IsSellable                   bool                  `gorm:"column:is_sellable" json:"is_sellable"`
 	MinimumOrderQty              float64               `gorm:"column:minimum_order_qty" json:"minimum_order_qty"`
 	HarmonizedNo                 string                `gorm:"column:harmonized_no;size:10" json:"harmonized_no"`
-	AtpmSupplierId               int                   `gorm:"column:atpm_supplier_id;size:30;not null" json:"atpm_supplier_id"` // fk to supplier in general-service
+	AtpmSupplierId               *int                  `gorm:"column:atpm_supplier_id;size:30" json:"atpm_supplier_id"` // fk to supplier in general-service
 	AtpmVendorSuppliability      bool                  `gorm:"column:atpm_vendor_suppliability" json:"atpm_vendor_suppliability"`
 	PmsItem                      bool                  `gorm:"column:pms_item" json:"pms_item"`
-	Regulation                   string                `gorm:"column:regulation;size:25" json:"regulation"`
+	ItemRegulationId             *int                  `gorm:"column:item_regulation_id;size:30" json:"item_regulation_id"`
 	AutoPickWms                  bool                  `gorm:"column:auto_pick_wms" json:"auto_pick_wms"`
 	PrincipalCatalogId           *int                  `gorm:"column:principal_catalog_id;size:30" json:"principal_catalog_id"`
 	PrincipalBrandParentId       *int                  `gorm:"column:principal_brand_parent_id;size:30" json:"principal_brand_parent_id"`

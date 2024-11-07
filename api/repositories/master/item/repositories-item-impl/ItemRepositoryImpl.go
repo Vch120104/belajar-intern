@@ -534,7 +534,6 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK WARRANTY CLAIM TYPE EXISTENCE
 	if req.AtpmWarrantyClaimTypeId != nil {
-		fmt.Println("call atpm warranty claim api")
 		warrantyClaimTypeResponse, warrantyClaimTypeError := generalserviceapiutils.GetWarrantyClaimTypeById(*req.AtpmWarrantyClaimTypeId)
 		if warrantyClaimTypeError != nil || warrantyClaimTypeResponse.WarrantyClaimTypeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
@@ -546,22 +545,38 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 	}
 
 	//CHECK SPECIAL MOVEMENT EXISTENCE
-	specialMovementResponse, specialMovementError := generalserviceapiutils.GetSpecialMovementById(req.SpecialMovementId)
-	if specialMovementError != nil || specialMovementResponse.SpecialMovementId == 0 {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Special Movement not found",
-			Err:        errors.New("special movement not found"),
+	if req.SpecialMovementId != nil {
+		specialMovementResponse, specialMovementError := generalserviceapiutils.GetSpecialMovementById(*req.SpecialMovementId)
+		if specialMovementError != nil || specialMovementResponse.SpecialMovementId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Special Movement not found",
+				Err:        errors.New("special movement not found"),
+			}
 		}
 	}
 
 	//CHECK ATPM SUPPLIER EXISTENCE
-	atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterByID(req.AtpmSupplierId)
-	if atpmSupplierError != nil || atpmSupplierResponse.SupplierId == 0 {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "ATPM Supplier not found",
-			Err:        errors.New("atpm supplier not found"),
+	if req.AtpmSupplierId != nil {
+		atpmSupplierResponse, atpmSupplierError := generalserviceapiutils.GetSupplierMasterByID(*req.AtpmSupplierId)
+		if atpmSupplierError != nil || atpmSupplierResponse.SupplierId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "ATPM Supplier not found",
+				Err:        errors.New("atpm supplier not found"),
+			}
+		}
+	}
+
+	//CHECK ITEM REGULATION EXISTENCE
+	if req.ItemRegulationId != nil {
+		itemRegulationResponse, itemRegulationError := generalserviceapiutils.GetItemRegulationById(*req.ItemRegulationId)
+		if itemRegulationError != nil || itemRegulationResponse.ItemRegulationId == 0 {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Item Regulation not found",
+				Err:        errors.New("item regulation not found"),
+			}
 		}
 	}
 
@@ -591,7 +606,6 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 
 	//CHECK PERSON IN CHARGE EXISTENCE
 	if req.PersonInChargeId != nil {
-		fmt.Println("call employee api")
 		picResponse, picError := generalserviceapiutils.GetEmployeeByID(*req.PersonInChargeId)
 		if picError != nil || picResponse.UserEmployeeId == 0 {
 			return response, &exceptions.BaseErrorResponse{
@@ -646,7 +660,7 @@ func (r *ItemRepositoryImpl) SaveItem(tx *gorm.DB, req masteritempayloads.ItemRe
 		AtpmSupplierId:               req.AtpmSupplierId,
 		AtpmVendorSuppliability:      req.AtpmVendorSuppliability,
 		PmsItem:                      req.PmsItem,
-		Regulation:                   req.Regulation,
+		ItemRegulationId:             req.ItemRegulationId,
 		AutoPickWms:                  req.AutoPickWms,
 		PrincipalCatalogId:           req.PrincipalCatalogId,
 		PrincipalBrandParentId:       req.PrincipalBrandParentId,
