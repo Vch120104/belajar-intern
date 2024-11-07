@@ -171,14 +171,14 @@ func ItemLevelRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLevelController.GetAll)
-	router.Get("/{item_level_id}", itemLevelController.GetById)
+	router.Get("/{item_level}/{item_level_id}", itemLevelController.GetById)
 
 	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
 	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
-	router.Get("/look-up-item-level-by-id/{item_level_id}", itemLevelController.GetItemLevelLookUpbyId)
+	router.Get("/look-up-item-level-by-id/{item_level_1_id}", itemLevelController.GetItemLevelLookUpbyId)
 
 	router.Post("/", itemLevelController.Save)
-	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
+	router.Patch("/{item_level}/{item_level_id}", itemLevelController.ChangeStatus)
 
 	return router
 }
@@ -222,7 +222,7 @@ func ItemRouter(
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
-	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
+	router.Get("/by-code", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Get("/search", itemController.GetAllItem)
@@ -236,8 +236,8 @@ func ItemRouter(
 	router.Delete("/{item_id}/detail/{multi_id}", itemController.DeleteItemDetails)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_id}/detail/{item_detail_id}", itemController.UpdateItemDetail)
-	router.Get("/catalog-code-drop-down", itemController.GetCatalogCode)
-	router.Get("/brand-parent-by-code/{catalogue_code}", itemController.GetPrincipleBrandParent)
+	router.Get("/principal-catalog-drop-down", itemController.GetPrincipalCatalog)
+	router.Get("/brand-parent/{principal_catalog_id}", itemController.GetPrincipalBrandParent)
 	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
 
 	return router

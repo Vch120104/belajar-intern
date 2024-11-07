@@ -115,9 +115,9 @@ func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, 
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetCatalogCode() ([]masteritempayloads.GetCatalogCode, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetPrincipalCatalog() ([]masteritempayloads.GetPrincipalCatalog, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.itemRepo.GetCatalogCode(tx)
+	result, err := s.itemRepo.GetPrincipalCatalog(tx)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
@@ -149,14 +149,6 @@ func (s *ItemServiceImpl) GetItemCode(code string) (masteritempayloads.ItemRespo
 func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (masteritempayloads.ItemSaveResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	result := masteritempayloads.ItemSaveResponse{}
-
-	if req.ItemId != 0 {
-		_, err := s.itemRepo.GetItemById(tx, req.ItemId)
-		if err != nil {
-			return result, err
-		}
-	}
-
 	results, err := s.itemRepo.SaveItem(tx, req)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
@@ -246,9 +238,9 @@ func (s *ItemServiceImpl) UpdateItemDetail(id int, itemDetail int, req masterite
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetPrincipleBrandParent(code string) ([]masteritempayloads.PrincipleBrandDropdownDescription, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetPrincipalBrandParent(id int) ([]masteritempayloads.PrincipalBrandDropdownDescription, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.itemRepo.GetPrincipleBrandParent(tx, code)
+	result, err := s.itemRepo.GetPrincipalBrandParent(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
@@ -256,9 +248,9 @@ func (s *ItemServiceImpl) GetPrincipleBrandParent(code string) ([]masteritempayl
 	return result, nil
 }
 
-func (s *ItemServiceImpl) GetPrincipleBrandDropdown() ([]masteritempayloads.PrincipleBrandDropdownResponse, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetPrincipalBrandDropdown() ([]masteritempayloads.PrincipalBrandDropdownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, err := s.itemRepo.GetPrincipleBrandDropdown(tx)
+	result, err := s.itemRepo.GetPrincipalBrandDropdown(tx)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
