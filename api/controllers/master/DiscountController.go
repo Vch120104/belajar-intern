@@ -57,9 +57,9 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 func (r *DiscountControllerImpl) GetAllDiscount(writer http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query()
 	queryParams := map[string]string{
-		"is_active":                 query.Get("is_active"),
-		"discount_code_value":       query.Get("discount_code_value"),
-		"discount_code_description": query.Get("discount_code_description"),
+		"is_active":            query.Get("is_active"),
+		"discount_code":        query.Get("discount_code"),
+		"discount_description": query.Get("discount_description"),
 	}
 
 	pagination := pagination.Pagination{
@@ -136,7 +136,7 @@ func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, r
 	query := request.URL.Query()
 	// discountCode, _ := strconv.Atoi(chi.URLParam(request, "discount_code"))
 
-	discountCode := query.Get("discount_code_value")
+	discountCode := query.Get("discount_code")
 	result, err := r.discountservice.GetDiscountByCode(discountCode)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)

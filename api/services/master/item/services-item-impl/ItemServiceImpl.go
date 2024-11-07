@@ -85,16 +85,6 @@ func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pa
 
 }
 
-func (s *ItemServiceImpl) GetAllItemListTransLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	pages, err := s.itemRepo.GetAllItemListTransLookup(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return pages, err
-	}
-	return pages, nil
-}
-
 func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.itemRepo.GetAllItemLookup(tx, filter)

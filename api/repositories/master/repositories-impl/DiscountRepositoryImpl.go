@@ -57,7 +57,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscountIsActive(tx *gorm.DB) ([]masterpa
 
 	err := tx.
 		Model(&Discounts).
-		Select("is_active, discount_code_id, discount_code_value, discount_code_description, CONCAT(discount_code_value, ' - ', discount_code_description) as discount_code_value_description").
+		Select("is_active, discount_code_id, discount_code, discount_description, CONCAT(discount_code, ' - ', discount_description) as discount_code_description").
 		Where("is_active = ?", true).
 		Scan(&response).Error
 
@@ -107,8 +107,9 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 	response := masterpayloads.DiscountResponse{}
 
 	rows, err := tx.Model(&entities).
+		Select("mtr_discount.*, discount_code + ' - ' + discount_description AS discount_code_description").
 		Where(masteritementities.Discount{
-			DiscountCodeValue: Code,
+			DiscountCode: Code,
 		}).
 		First(&response).
 		Rows()
@@ -127,10 +128,10 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 
 func (r *DiscountRepositoryImpl) SaveDiscount(tx *gorm.DB, req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Discount{
-		IsActive:                req.IsActive,
-		DiscountCodeId:          req.DiscountCodeId,
-		DiscountCodeValue:       req.DiscountCodeValue,
-		DiscountCodeDescription: req.DiscountCodeDescription,
+		IsActive:            req.IsActive,
+		DiscountCodeId:      req.DiscountCodeId,
+		DiscountCode:        req.DiscountCode,
+		DiscountDescription: req.DiscountDescription,
 	}
 
 	err := tx.Save(&entities).Error

@@ -2630,10 +2630,48 @@ func (r *LookupRepositoryImpl) WarehouseGroupByCompany(tx *gorm.DB, companyId in
 	return response, nil
 }
 
+// usp_comLookUp IF @strEntity = 'ItemListTrans'
+func (r *LookupRepositoryImpl) ItemListTrans(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.Item{}
+	responses := []masterpayloads.ItemListTransResponse{}
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`DISTINCT
+			mtr_item.*,
+			mil1.item_level_1_code,
+			mil2.item_level_2_code,
+			mil3.item_level_3_code,
+			mil4.item_level_4_code,
+			mic.item_class_code,
+			mit.item_type_code
+		`).
+		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
+		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
+		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
+		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
+		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
+		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
+		Where("mtr_item.is_active = ?", true)
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	pages.Rows = responses
+
+	return pages, nil
+}
+
 // usp_comLookUp IF @strEntity = 'ItemListTransPL'
 func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Item{}
-	responses := []masterpayloads.ItemListForPriceList{}
+	responses := []masterpayloads.ItemListTransPLResponse{}
 
 	baseModelQuery := tx.Model(&entities).
 		Select(`DISTINCT
@@ -2653,7 +2691,7 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
 		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where("mtr_item.is_active = ?", true).
-		Where("mtr_item.price_list_item = 'Y'")
+		Where("mtr_item.price_list_item = ?", true)
 
 	if companyId == 0 {
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
