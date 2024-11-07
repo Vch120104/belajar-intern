@@ -39,7 +39,6 @@ type ItemController interface {
 	AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
 	GetPrincipalCatalog(writer http.ResponseWriter, request *http.Request)
-	GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
@@ -218,49 +217,6 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-}
-
-func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"mtr_item.item_code":     queryValues.Get("item_code"),
-		"mtr_item.item_name":     queryValues.Get("item_name"),
-		"mtr_item.item_class_id": queryValues.Get("item_class_id"),
-		"ic.item_class_code":     queryValues.Get("item_class_code"),
-		"ic.item_class_name":     queryValues.Get("item_class_name"),
-		"it.item_type_code":      queryValues.Get("item_type"),
-		"mil1.item_level_1_code": queryValues.Get("item_level_1_code"),
-		"mil2.item_level_2_code": queryValues.Get("item_level_2_code"),
-		"mil3.item_level_3_code": queryValues.Get("item_level_3_code"),
-		"mil4.item_level_4_code": queryValues.Get("item_level_4_code"),
-	}
-
-	for key, value := range queryParams {
-		if value == "" {
-			delete(queryParams, key)
-		}
-	}
-
-	fmt.Printf("Query parameters: %+v\n", queryParams)
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	data, err := r.itemservice.GetAllItemListTransLookup(criteria, paginate)
-	if err != nil {
-		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
-
-		return
-	}
-
-	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
 }
 
 // @Summary Get All Item Lookup

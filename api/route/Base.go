@@ -238,7 +238,6 @@ func ItemRouter(
 	router.Put("/{item_id}/detail/{item_detail_id}", itemController.UpdateItemDetail)
 	router.Get("/principal-catalog-drop-down", itemController.GetPrincipalCatalog)
 	router.Get("/brand-parent/{principal_catalog_id}", itemController.GetPrincipalBrandParent)
-	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
 
 	return router
 }
@@ -1782,7 +1781,8 @@ func LookupRouter(
 	router.Get("/work-order-service", LookupController.WorkOrderService)
 	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
 	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
-	router.Get("/item-list", LookupController.ItemListTransPL)
+	router.Get("/item-list-trans", LookupController.ItemListTrans)
+	router.Get("/item-list-trans-pl", LookupController.ItemListTransPL)
 
 	return router
 }
