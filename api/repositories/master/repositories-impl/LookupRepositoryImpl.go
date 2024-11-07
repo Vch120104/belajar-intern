@@ -2653,7 +2653,7 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
 		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where("mtr_item.is_active = ?", true).
-		Where("mtr_item.price_list_item = 'Y'")
+		Where("mtr_item.price_list_item = ?", true)
 
 	if companyId == 0 {
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
