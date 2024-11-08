@@ -515,7 +515,6 @@ func (controller *PurchaseRequestControllerImpl) VoidDetail(writer http.Response
 		}
 		return
 	}
-
 	if success {
 		payloads.NewHandleSuccess(writer, nil, "Purchase Request Detail voided successfully", http.StatusOK)
 	} else {

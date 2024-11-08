@@ -60,7 +60,7 @@ func handleResponse(resp *http.Response, result interface{}) error {
 	//log.Printf("Received HTTP status: %d", resp.StatusCode)
 
 	// Check for non-200 status code
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		var errorResponse ResponseBody
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return fmt.Errorf("error decoding error response: %w", err)

@@ -9,7 +9,7 @@ type LocationStockDBResponse struct {
 	WarehouseId            int     `parent_entity:"mtr_location_stock" json:"warehouse_id"`
 	LocationId             int     `parent_entity:"mtr_location_stock" json:"location_id"`
 	ItemId                 int     `parent_entity:"mtr_location_stock" json:"item_id"`
-	WarehouseGroup         string  `parent_entity:"mtr_location_stock" json:"warehouse_group"`
+	WarehouseGroupId       int     `parent_entity:"mtr_location_stock" json:"warehouse_group_id"`
 	QuantityBegin          float64 `parent_entity:"mtr_location_stock" json:"quantity_begin"`
 	QuantitySales          float64 `parent_entity:"mtr_location_stock" json:"quantity_sales"`
 	QuantitySalesReturn    float64 `parent_entity:"mtr_location_stock" json:"quantity_sales_return"`
