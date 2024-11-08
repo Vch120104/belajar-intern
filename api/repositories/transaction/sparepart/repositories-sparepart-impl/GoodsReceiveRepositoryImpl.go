@@ -15,6 +15,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -1020,7 +1021,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				Err:        errors.New("failed to fetch from purchase order"),
 			}
 		}
-		if PurchaseOrderEntities.CostCenterId == GoodsReceiveEntities.CostCenterId {
+		if PurchaseOrderEntities.ProfitCenterId != GoodsReceiveEntities.ProfitCenterId {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
 				Err:        fmt.Errorf("profit center with in PO With Id : %d is not  match with gr Profit Center Id %d", PurchaseOrderEntities.ProfitCenterId, GoodsReceiveEntities.ProfitCenterId),
@@ -1191,13 +1192,13 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	//AND GRPO1.REF_SYS_NO = @Ref_Sys_No
 	//AND GRPO1.REF_LINE_NO = @CSR1_Ref_Line_No)
 	var quantitySumGoodsReceive float64
-	err = db.Table("trx_goods_receive_detail A").Joins("INNER JOIN trx_goods_receive B ON A.goods_receive_systen_number = B.goods_receive_systen_number").
+	err = db.Table("trx_goods_receive_detail A").Joins("INNER JOIN trx_goods_receive B ON A.goods_receive_system_number = B.goods_receive_system_number").
 		Where(`
 					B.goods_receive_status_id = ?
 					AND B.reference_type_good_receive_id = ?
 					AND A.reference_system_number = ?
 			`, StatusIdReady, GoodsReceiveEntities.ReferenceTypeGoodReceiveId, GoodsReceiveEntities.ReferenceSystemNumber).
-		Select("SUM(ISNULL(quantity_goods_receive,0))").Scan(&quantitySumGoodsReceive).Error
+		Select("COALESCE(SUM(quantity_goods_receive), 0)").Scan(&quantitySumGoodsReceive).Error
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1220,14 +1221,55 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				A.item_price,
 				a.quantity_reference,
 				a.quantity_goods_receive,
+				A.quantity_short,
 				A.quantity_damage + a.quantity_over+a.quantity_wrong as quantity_variance,
 				A.item_discount_percent,
 				A.quantity_delivery_order,
 				item.stock_keeping,
-				item.unit_of_measurement_stock_id
+				item.unit_of_measurement_stock_id,
+				A.reference_system_number
 			`).Where("goods_receive_system_number = ?", GoodsReceiveId).
 		Scan(&goodsReceivesDetailResponse).Error
 	for _, resdb := range goodsReceivesDetailResponse {
+		//get onhand and intransit first
+		var UomRate float64
+		err = db.Table("mtr_location_stock A").
+			Joins("INNER JOIN mtr_warehouse_master B ON A.company_id = B.company_id AND A.warehouse_id = b.warehouse_id").
+			Where(`
+					A.period_year = ?
+					AND period_month = ?
+					AND A.company_id = ?
+					AND A.item_id = ?
+					AND A.warehouse_group_id  = ?
+					AND B.warehouse_costing_type_id = ?
+					`, PeriodResponseSp.PeriodYear,
+				PeriodResponseSp.PeriodMonth,
+				GoodsReceiveEntities.CompanyId,
+				resdb.ItemId,
+				GoodsReceiveEntities.WarehouseGroupId,
+				CostingTypeNon.WarehouseCostingTypeId,
+			).
+			Select(`
+						A.quantity_in_transit,
+						ISNULL(A.quantity_claim_in, 0) + ISNULL(A.quantity_robbing_out, 0) + ISNULL(A.quantity_assembly_out, 0)
+					`).Row().Scan(&resdb.QuantityInTransit, &resdb.QuantityOnHand)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				resdb.QuantityInTransit = 0
+				resdb.QuantityOnHand = 0
+			} else {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    fmt.Sprintf("error occured when fetch quantity instransit and quantity on hand"),
+				}
+			}
+		}
+		if resdb.QuantityInTransit != 0 {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        fmt.Errorf("there is quantity in transit : %d. Please finish the transfer process before Goods Receive", resdb.QuantityInTransit),
+			}
+		}
 		//IF ((SELECT COUNT(*) FROM amLocationItem  WHERE COMPANY_CODE  = @Company_Code AND LOC_CODE = @CSR1_Loc_Code AND ITEM_CODE = @CSR1_Item_Code) = 0)
 		//BEGIN
 		//SET @Err_Msg = 'Location Code '+@CSR1_Loc_Code+ ' must be set for this item ' + @CSR1_Item_Code
@@ -1295,7 +1337,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 		if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "CL" {
 			err = db.Model(&transactionsparepartentities.ItemClaimDetail{}).
 				Where(transactionsparepartentities.ItemClaimDetail{ClaimSystemNumber: GoodsReceiveEntities.ReferenceSystemNumber}).
-				Select("SUM(ISNULL(quantity_claimed,0))").
+				Select("COALESCE(SUM(quantity_claimed), 0)").
 				Scan(&quantitySumReference).Error
 			if err != nil {
 				return false, &exceptions.BaseErrorResponse{
@@ -1352,54 +1394,49 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				//WHERE  PERIOD_YEAR = @Period_Year  AND PERIOD_MONTH = @Period_Month
 				//AND VS.COMPANY_CODE = @Company_Code AND ITEM_CODE = @CSR1_Item_Code
 				//AND	WHS_GROUP = @Whs_Group AND L.COSTING_TYPE <> @CostTypeNon
-				err = db.Table("mtr_location_stock A").
-					Joins("INNER JOIN mtr_warehouse_master B ON A.company_id = B.company_id AND A.warehouse_id = b.warehouse_id").
-					Where(` 
-					A.period_year = ? 
-					AND period_month = ?
-					AND A.company_id = ? 
-					AND A.item_id = ? 
-					AND A.warehouse_group_id  = ?
-					AND B.warehouse_costing_type_id = ?
- 					`, PeriodResponseSp.PeriodYear,
-						PeriodResponseSp.PeriodMonth,
-						GoodsReceiveEntities.CompanyId,
-						GoodsReceiveEntities.WarehouseGroupId,
-						CostingTypeNon.WarehouseCostingTypeId,
-					).
-					Select(`
-						select A.quantity_in_transit,
-						ISNULL(A.quantity_claim_in, 0) + ISNULL(A.quantity_robbing_out, 0) + ISNULL(A.quantity_assembly_out, 0)
-					`).Row().Scan(&resdb.QuantityInTransit, &resdb.QuantityOnHand)
-				if err != nil {
-					return false, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    fmt.Sprintf("error occured when fetch quantity instransit and quantity on hand"),
-					}
-				}
-				if resdb.QuantityInTransit != 0 {
-					return false, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusBadRequest,
-						Err:        fmt.Errorf("there is quantity in transit : %d. Please finish the transfer process before Goods Receive", resdb.QuantityInTransit),
-					}
-				}
+				//err = db.Table("mtr_location_stock A").
+				//	Joins("INNER JOIN mtr_warehouse_master B ON A.company_id = B.company_id AND A.warehouse_id = b.warehouse_id").
+				//	Where(`
+				//	A.period_year = ?
+				//	AND period_month = ?
+				//	AND A.company_id = ?
+				//	AND A.item_id = ?
+				//	AND A.warehouse_group_id  = ?
+				//	AND B.warehouse_costing_type_id = ?
+				//	`, PeriodResponseSp.PeriodYear,
+				//		PeriodResponseSp.PeriodMonth,
+				//		GoodsReceiveEntities.CompanyId,
+				//		GoodsReceiveEntities.WarehouseGroupId,
+				//		CostingTypeNon.WarehouseCostingTypeId,
+				//	).
+				//	Select(`
+				//		select A.quantity_in_transit,
+				//		ISNULL(A.quantity_claim_in, 0) + ISNULL(A.quantity_robbing_out, 0) + ISNULL(A.quantity_assembly_out, 0)
+				//	`).Row().Scan(&resdb.QuantityInTransit, &resdb.QuantityOnHand)
+				//if err != nil {
+				//	return false, &exceptions.BaseErrorResponse{
+				//		StatusCode: http.StatusInternalServerError,
+				//		Message:    fmt.Sprintf("error occured when fetch quantity instransit and quantity on hand"),
+				//	}
+				//}
+
 				//validation if item group is inventory
 				//so get item group by code first
-				ItemGroupInventoryId := 0
-				err = db.Model(&masteritementities.ItemGroup{}).Where(masteritementities.ItemGroup{ItemGroupCode: "IN"}).
-					Select("item_group_id").Scan(&ItemGroupInventoryId).Error
-				if err != nil {
-					return false, &exceptions.BaseErrorResponse{
-						StatusCode: http.StatusInternalServerError,
-						Message:    "failed to get item group inventory with code IN",
-					}
-				}
+				/*				ItemGroupInventoryId := 0
+								err = db.Model(&masteritementities.ItemGroup{}).Where(masteritementities.ItemGroup{ItemGroupCode: "IN"}).
+									Select("item_group_id").Scan(&ItemGroupInventoryId).Error
+								if err != nil {
+									return false, &exceptions.BaseErrorResponse{
+										StatusCode: http.StatusInternalServerError,
+										Message:    "failed to get item group inventory with code IN",
+									}
+								}*/
 				//quantityClaimIn := 1.0
-				if GoodsReceiveEntities.ItemGroupId == ItemGroupInventoryId {
+				if GoodsReceivesItemGroupEntities.ItemGroupCode == "IN" {
 					//not yet dev
 					//SET @Qty_Claim_In = dbo.getQtyConvertion(@Source_Type, @CSR1_Item_Code, @CSR1_Qty_Variance)
 
-					UomRate := resdb.QuantityClaimIn / (func() float64 {
+					UomRate = resdb.QuantityClaimIn / (func() float64 {
 						if resdb.QuantityVariance == 0 {
 							return 1.0
 						} else {
@@ -1517,9 +1554,430 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 					UpdatedByUserId:              GoodsReceiveEntities.UpdatedByUserId,
 					UpdatedDate:                  time.Now(),
 				}
+				stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
+
+				errStockTransaction := utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
+				if errStockTransaction != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "error on inserting stock transaction type claim in",
+					}
+				}
+				//-- End Update Binning List
+			}
+			//IF @CSR1_Qty_Short > 0
+			//BEGIN
+			//IF @Item_Group = @ItemGroupInventory
+			//BEGIN
+
+		}
+		if resdb.QuantityShort > 0 && GoodsReceivesItemGroupEntities.ItemGroupCode == "IN" {
+			if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "PO" {
+				//first get po data first for updating
+				var PurchaseOrderDetailEntities transactionsparepartentities.PurchaseOrderDetailEntities
+				err = db.Model(&PurchaseOrderDetailEntities).Where(transactionsparepartentities.PurchaseOrderDetailEntities{
+					PurchaseOrderDetailSystemNumber: resdb.ReferenceSystemNumber,
+				}).First(&PurchaseOrderDetailEntities).Error
+				if err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusNotFound,
+							Err:        fmt.Errorf("purchase order detail with reference number : %s is not found on table purchase order", GoodsReceiveEntities.ReferenceDocumentNumber),
+						}
+					}
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Err:        errors.New("failed to fetch from purchase order detail"),
+					}
+				}
+				*PurchaseOrderDetailEntities.GoodsReceiveQuantity += resdb.QuantityShort
+				PurchaseOrderDetailEntities.ChangeNo += 1
+				PurchaseOrderDetailEntities.CreatedByUserId = GoodsReceiveEntities.CreatedByUserId
+				PurchaseOrderDetailEntities.UpdatedByUserId = GoodsReceiveEntities.UpdatedByUserId
+				err = db.Save(&PurchaseOrderDetailEntities).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "failed to save purchase order detail",
+					}
+				}
+			}
+			if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "CL" {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("cannot have quantity short for item claim"),
+				}
+			}
+			if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "WC" {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("cannot have quantity short for item claim"),
+				}
 			}
 		}
+		//IF @CSR1_Qty_Grpo > 0
+		//BEGIN
+		//IF @Item_Group = @ItemGroupInventory
+
+		if resdb.QuantityGoodsReceive > 0 {
+			if GoodsReceivesItemGroupEntities.ItemGroupCode == "IN" {
+
+				//SET @Qty_Purchase = dbo.getQtyConvertion(@Source_Type, @CSR1_Item_Code, @CSR1_Qty_Grpo)
+				//resdb.QuantityPurchase
+				UomRate = resdb.QuantityClaimIn / (func() float64 {
+					if resdb.QuantityVariance == 0 {
+						return 1.0
+					} else {
+						return resdb.QuantityVariance
+					}
+				}())
+				if UomRate == 0 {
+					UomRate = 1
+				}
+				if resdb.QuantityPurchase == 0 {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Err:        fmt.Errorf("item id %d doesnot have UOM conversion, please define uom conversion", resdb.ItemId),
+					}
+				}
+				if resdb.ItemId != 0 {
+					resdb.PricePurchase = (resdb.QuantityGoodsReceive * resdb.ItemPrice) / resdb.QuantityPurchase
+				} else {
+					resdb.PricePurchase = 0
+				}
+				if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "PO" ||
+					goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "CL" {
+					var groupStock masterentities.GroupStock
+					err = db.Model(&groupStock).Where(masterentities.GroupStock{
+						CompanyId:        GoodsReceiveEntities.CompanyId,
+						WarehouseGroupId: GoodsReceiveEntities.WarehouseGroupId,
+						PeriodYear:       PeriodResponseSp.PeriodYear,
+						PeriodMonth:      PeriodResponseSp.PeriodMonth,
+						ItemId:           resdb.ItemId,
+					}).First(&groupStock).Error
+					if err != nil {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
+							resdb.HppCurrent = 0.0
+						} else {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusInternalServerError,
+								Message:    "failed to get group stock on error : " + err.Error(),
+							}
+						}
+					}
+					resdb.HppCurrent = groupStock.PriceCurrent
+					if resdb.PricePurchase == 0 {
+						resdb.PricePurchase = resdb.HppCurrent
+					}
+					if isCostingTypeNon == 1 {
+						resdb.HppCurrent = 0
+						resdb.QuantityOnHand = 0
+					}
+					if resdb.QuantityClaimIn+resdb.QuantityOnHand == 0 {
+						resdb.HppNew = 0
+					} else {
+						resdb.HppNew = ((resdb.QuantityClaimIn * resdb.PricePurchase) + (resdb.QuantityOnHand * resdb.HppCurrent)) / (resdb.QuantityClaimIn + resdb.QuantityOnHand)
+					}
+					//end hpp
+				} else {
+					resdb.HppNew = 0
+				}
+				claimTypePurchaseId := 0
+				err = db.Model(&masterentities.StockTransactionType{}).
+					Where(masterentities.StockTransactionType{StockTransactionTypeCode: "PU"}).
+					Select("stock_transaction_type_id").First(&claimTypePurchaseId).Error
+				if err != nil {
+
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "failed to get stock transaction type purchase on database",
+					}
+				}
+				//cek back order on po header data
+				var PurchaseOrderEntities transactionsparepartentities.PurchaseOrderEntities
+				err = db.Model(&PurchaseOrderEntities).Where(transactionsparepartentities.PurchaseOrderEntities{
+					PurchaseOrderSystemNumber: GoodsReceiveEntities.ReferenceSystemNumber,
+				}).First(&PurchaseOrderEntities).Error
+				if err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusNotFound,
+							Err:        fmt.Errorf("purchase order with reference number : %s is not found on table purchase order", GoodsReceiveEntities.ReferenceDocumentNumber),
+						}
+					}
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Err:        errors.New("failed to fetch from purchase order"),
+					}
+				}
+				stockReasonCode := ""
+				if PurchaseOrderEntities.BackOrder == true {
+					stockReasonCode = "NL"
+				} else {
+					stockReasonCode = "BO"
+				}
+				if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "WC" {
+					stockReasonCode = "WP"
+				}
+				//get type reason code
+				claimReasonId := 0
+				err = db.Model(&masterentities.StockTransactionReason{}).
+					Where(&masterentities.StockTransactionReason{StockTransactionReasonCode: stockReasonCode}).
+					Select("stock_transaction_reason_id").First(&claimReasonId).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "Failed to get claim reason type AP please check database",
+					}
+				}
+				payloadsStockTransaction := transactionsparepartpayloads.StockTransactionInsertPayloads{
+					CompanyId:                    GoodsReceiveEntities.CompanyId,
+					TransactionTypeId:            claimTypePurchaseId,
+					TransactionReasonId:          claimReasonId,
+					ReferenceId:                  GoodsReceiveEntities.GoodsReceiveSystemNumber,
+					ReferenceDocumentNumber:      GoodsReceiveEntities.ReferenceDocumentNumber,
+					ReferenceDate:                &GoodsReceiveEntities.GoodsReceiveDocumentDate,
+					ReferenceWarehouseId:         GoodsReceiveEntities.WarehouseId,
+					ReferenceWarehouseGroupId:    GoodsReceiveEntities.WarehouseGroupId,
+					ReferenceLocationId:          resdb.WarehouseLocationClaimId,
+					ReferenceItemId:              resdb.ItemId,
+					ReferenceQuantity:            resdb.QuantityClaimIn,
+					ReferenceUnitOfMeasurementId: resdb.UnitOfMeasurementStockId,
+					ReferencePrice:               resdb.PricePurchase,
+					ReferenceCurrencyId:          GoodsReceiveEntities.CurrencyId,
+					TransactionCogs:              resdb.HppNew,
+					ChangeNo:                     1,
+					CreatedByUserId:              GoodsReceiveEntities.UpdatedByUserId,
+					CreatedDate:                  time.Now(),
+					UpdatedByUserId:              GoodsReceiveEntities.UpdatedByUserId,
+					UpdatedDate:                  time.Now(),
+				}
+				stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
+
+				errStockTransaction := utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
+				if errStockTransaction != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "error on inserting stock transaction type claim in",
+					}
+				}
+				//--==Begin Update Item Claim ==-- IF REFERENCE TYPE CLAIM
+				//------------------------////////////////////////////-------------
+				if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "CL" {
+					if resdb.QuantityDeliveryOrder-resdb.QuantityReference > 0 {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusBadRequest,
+							Err:        errors.New("delivery order quantity is bigger than claim quantity"),
+						}
+					}
+					err = db.Model(&transactionsparepartentities.ItemClaimDetail{}).
+						Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: resdb.ReferenceSystemNumber}).
+						Updates(map[string]interface{}{
+							"quantity_goods_receive": gorm.Expr("quantity_goods_receive + ?", resdb.QuantityGoodsReceive),
+						}).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "failed to update item claim detail"}
+					}
+				}
+			} //end 1330
+			if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "PO" {
+				err = db.Model(&transactionsparepartentities.PurchaseOrderDetailEntities{}).
+					Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: resdb.ReferenceSystemNumber}).
+					Updates(map[string]interface{}{
+						"goods_receive_quantity": gorm.Expr("goods_receive_quantity + ?", resdb.QuantityGoodsReceive),
+						"change_no":              gorm.Expr("change_no + ?", 1),
+						"updated_by_user_id":     GoodsReceiveEntities.UpdatedByUserId,
+						"updated_date":           time.Now(),
+					}).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "failed to update purchase order detail"}
+				}
+				if GoodsReceivesItemGroupEntities.ItemGroupCode == "OJ" {
+					//update wo but getting data from po- >pr- >wo
+					var purchaseOrderDetail transactionsparepartentities.PurchaseOrderDetailEntities
+					err = db.Model(&purchaseOrderDetail).
+						Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: resdb.ReferenceSystemNumber}).
+						First(&purchaseOrderDetail).Error
+					if err != nil {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusNotFound,
+								Err:        errors.New("purchase order detail is not found"),
+							}
+						}
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "error occured when retreiving purchase order detail",
+						}
+					}
+					//get pr
+					var purchaseRequestDetail transactionsparepartentities.PurchaseRequestDetail
+					err = db.Model(&purchaseRequestDetail).
+						Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: purchaseOrderDetail.PurchaseRequestDetailSystemNumber}).
+						First(&purchaseRequestDetail).Error
+					if err != nil {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusNotFound,
+								Err:        errors.New("purchase request detail is not found in purchase request"),
+							}
+						}
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "error occured when retreiving purchase request detail",
+						}
+					}
+					//get supply quantity and total cogs from wtworkorder 2
+					var workOrderDetail transactionworkshopentities.WorkOrderDetail
+					err = db.Model(&workOrderDetail).Where(transactionworkshopentities.WorkOrderDetail{WorkOrderDetailId: purchaseRequestDetail.ReferenceSystemNumber}).
+						Select("supply_quantity,total_cost_of_goods_sold").
+						First(&workOrderDetail).Error
+					if err != nil {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
+							return false, &exceptions.BaseErrorResponse{
+								StatusCode: http.StatusNotFound,
+								Err:        errors.New("work order detail is not found"),
+							}
+						}
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "error on getting supply quantity and total cogs from work order detail",
+						}
+					}
+					totalCogs := (workOrderDetail.TotalCostOfGoodsSold * workOrderDetail.SupplyQuantity) + (*purchaseOrderDetail.ItemPrice*resdb.QuantityGoodsReceive)/(workOrderDetail.SupplyQuantity+resdb.QuantityGoodsReceive)
+
+					workOrderDetail.SupplyQuantity += resdb.QuantityGoodsReceive
+					workOrderDetail.TotalCostOfGoodsSold = totalCogs
+
+					//save work order update
+					err = db.Save(&workOrderDetail).Error
+					if err != nil {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusInternalServerError,
+							Message:    "error on updating work order detail",
+						}
+					}
+				}
+			} else if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "WC" {
+				var workOrderDetail transactionworkshopentities.WorkOrderDetail
+				err = db.Model(&workOrderDetail).Where(transactionworkshopentities.WorkOrderDetail{WorkOrderDetailId: resdb.ReferenceSystemNumber}).
+					First(&workOrderDetail).Error
+				if err != nil {
+					if errors.Is(err, gorm.ErrRecordNotFound) {
+						return false, &exceptions.BaseErrorResponse{
+							StatusCode: http.StatusNotFound,
+							Err:        errors.New("work order detail is not found type claim"),
+						}
+					}
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "error on getting supply quantity and total cogs from work order detail type claim",
+					}
+				}
+				workOrderDetail.SupplyQuantity += resdb.QuantityGoodsReceive
+				//save work order update
+				err = db.Save(&workOrderDetail).Error
+				if err != nil {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusInternalServerError,
+						Message:    "error on updating work order detail",
+					}
+				}
+			}
+
+			//UPDATE dbo.atItemGRPO1
+			//SET UOM_RATE = @Uom_Rate,
+			//	ITEM_TOTAL = QTY_GRPO * ITEM_PRICE,
+			//	ITEM_TOTAL_BASE_AMOUNT = QTY_GRPO * ITEM_PRICE * @Ccy_Exch_Rate,
+			//	CHANGE_NO = CHANGE_NO + 1,
+			//	CHANGE_DATETIME = GETDATE(),
+			//	CHANGE_USER_ID = @Change_User_Id
+			//WHERE GRPO_SYS_NO = @Grpo_Sys_No AND GRPO_LINE_NO = @CSR1_Grpo_Line_No
+		}
+		//get exchange rate for item total base amount
+
+		//resdb.GoodsReceiveDetailSystemNumber
+		err = db.Model(&goodsReceiveDetailEntities).
+			Where(transactionsparepartentities.GoodsReceiveDetail{GoodsReceiveDetailSystemNumber: resdb.GoodsReceiveDetailSystemNumber}).
+			Updates(map[string]interface{}{
+				"unit_of_measurement_rate": UomRate,
+				"item_total":               gorm.Expr("quantity_goods_receive * item_price"),
+				"item_total_base_amount":   gorm.Expr("quantity_goods_receive * item_price * ?", GoodsReceiveEntities.CurrencyExchangeRate),
+				"change_no":                gorm.Expr("change_no + 1"),
+				"updated_by_user_id":       GoodsReceiveEntities.UpdatedByUserId,
+				"updated_date":             time.Now(),
+			}).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error on updating goods receive detail",
+			}
+		}
+		//untuk else nya dms live pengecekan berulang tidak perlu dibuat --notes devin
 	}
+	////update purchase order
+	//IF NOT EXISTS(SELECT PO_LINE FROM atItemPO1 WHERE PO_SYS_NO = @Ref_Sys_No AND ITEM_QTY <> GRPO_QTY)
+	//BEGIN
+	//UPDATE atItemPO0
+	//SET PO_STATUS = dbo.getVariableValue('APPROVAL_CLOSED'),
+	//	CHANGE_NO = CHANGE_NO + 1,
+	//	CHANGE_DATETIME = @Change_Datetime,
+	//	CHANGE_USER_ID = @Change_User_Id
+	//WHERE PO_SYS_NO = @Ref_Sys_No
+	//END
+	//
+	//update purchase order
+	var DocResponse generalservicepayloads.ApprovalStatusResponses
+
+	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/99"
+	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on getting approval status codes",
+		}
+	}
+
+	err = db.Model(&transactionsparepartentities.PurchaseOrderEntities{}).
+		Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: GoodsReceiveEntities.ReferenceSystemNumber}).
+		Updates(map[string]interface{}{
+			"purchase_order_status_id": DocResponse.ApprovalStatusId,
+			"change_no":                gorm.Expr("change_no + 1"),
+			"updated_date":             time.Now(),
+			"updated_by_user_id":       GoodsReceiveEntities.UpdatedByUserId,
+		}).
+		Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on update status purchase order",
+		}
+	}
+	//not yet journal exec
+	//IF EXISTS (SELECT GRPO_SYS_NO FROM atItemGRPO0 WHERE GRPO_SYS_NO = @Grpo_Sys_No AND REF_TYPE <> @RefTypeWcf)
+	//BEGIN
+	//SET @Process_Code = dbo.getVariableValue('GL_PROCESS_CODE_SP_GRPO')
+	//SELECT @Process_Code,@Profit_Center,@Trx_Type,@Event_No,@Grpo_Doc_Date,@Grpo_Sys_No,@Grpo_Doc_No,@Change_User_Id
+	//EXEC usp_comJournalAction
+	//@Process_Code =@Process_Code,
+	//@Cpc_Code = @Profit_Center,
+	//@Trx_Type = @Trx_Type,
+	//@Event_No = @Event_No,
+	//@Journal_Sys_No = @Journal_Sys_No Output,
+	//@Journal_Date = @Grpo_Doc_Date,
+	//@Ref_Sys_No = @Grpo_Sys_No,
+	//@Ref_Doc_No = @Grpo_Doc_No,
+	//@Creation_User_Id = @Change_User_Id
+	//
+	//--IF ISNULL(@Journal_sys_no,0) = 0 --:GH bisa ga create journal
+	//--BEGIN
+	//--	RAISERROR('Journal is not created',16,1)
+	//--END
+	//END
+
 	return true, nil
 }
 

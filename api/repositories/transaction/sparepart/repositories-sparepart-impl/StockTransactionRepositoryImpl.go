@@ -439,7 +439,6 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 	}
 	if stockTransactionType.StockTransactionTypeCode == "CI" &&
 		stockTransactionReason.StockTransactionReasonCode == "AP" {
-
 		RequestBodyLocationStock.QuantityClaimIn = payloads.ReferenceQuantity
 		urlLocationStock := config.EnvConfigs.AfterSalesServiceUrl + "location-stock"
 		errCrossService := utils.Put(urlLocationStock, &RequestBodyLocationStock, nil)

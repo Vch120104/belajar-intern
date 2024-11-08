@@ -217,4 +217,7 @@ type GoodsReceiveSubmitResponse struct {
 	QuantityClaimIn                float64 `json:"quantity_claim_in"`
 	HppNew                         float64 `json:"hpp_new"`
 	HppCurrent                     float64 `json:"hpp_current"`
+	QuantityPurchase               float64 `json:"quantity_purchase"`
+	QuantityShort                  float64 `gorm:"column:quantity_short;null"        json:"quantity_short"`
+	ReferenceSystemNumber          int     `gorm:"column:reference_system_number;null;size:30"        json:"reference_system_number"`
 }

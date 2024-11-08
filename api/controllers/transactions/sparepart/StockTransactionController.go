@@ -5,6 +5,7 @@ import (
 	"after-sales/api/payloads"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
+	"fmt"
 	"net/http"
 )
 
@@ -21,9 +22,10 @@ func (s *StockTransactionControllerImpl) StockTransactionInsert(writer http.Resp
 	helper.ReadFromRequestBody(request, &stocktransaction)
 	res, err := s.service.StockTransactionInsert(stocktransaction)
 	if err != nil {
-		//helper.ReturnError(writer, request, err)+-
+		helper.ReturnError(writer, request, err)
 		return
 	}
+	fmt.Println(res)
 	payloads.NewHandleSuccess(writer, res, "Insert SuccessFull!", http.StatusCreated)
 }
 
