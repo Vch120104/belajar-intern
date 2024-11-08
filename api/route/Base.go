@@ -134,7 +134,7 @@ func MarkupMasterRouter(
 
 	router.Get("/", markupMasterController.GetMarkupMasterList)
 	router.Get("/{markup_master_id}", markupMasterController.GetMarkupMasterByID)
-	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
+	router.Get("/code/{markup_code}", markupMasterController.GetMarkupMasterByCode)
 	router.Get("/dropdown", markupMasterController.GetAllMarkupMasterIsActive)
 	router.Post("/", markupMasterController.SaveMarkupMaster)
 	router.Patch("/{markup_master_id}", markupMasterController.ChangeStatusMarkupMaster)
