@@ -26,7 +26,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 	responses := []masterpayloads.DiscountResponse{}
 
 	//define base model
-	baseModelQuery := tx.Model(&entities).Scan(&responses)
+	baseModelQuery := tx.Model(&entities).Select("mtr_discount.*, discount_code + ' - ' + discount_description AS discount_code_description")
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
@@ -84,6 +84,7 @@ func (r *DiscountRepositoryImpl) GetDiscountById(tx *gorm.DB, Id int) (masterpay
 	var response masterpayloads.DiscountResponse
 
 	rows, err := tx.Model(&entities).
+		Select("mtr_discount.*, discount_code + ' - ' + discount_description AS discount_code_description").
 		Where(masteritementities.Discount{
 			DiscountCodeId: Id,
 		}).
