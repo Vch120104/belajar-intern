@@ -31,6 +31,21 @@ func GetProfitCenterByCode(code string) (ProfitCenterResponse, *exceptions.BaseE
 	return getProfitCenter, nil
 }
 
+func GetProfitCenterById(id int) (ProfitCenterResponse, *exceptions.BaseErrorResponse) {
+	var getProfitCenter ProfitCenterResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(id)
+
+	err := utils.CallAPI("GET", url, nil, &getProfitCenter)
+	if err != nil {
+		return getProfitCenter, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching profit center by ID",
+			Err:        errors.New("failed to retrieve profit center data from external API by ID"),
+		}
+	}
+	return getProfitCenter, nil
+}
+
 func GetProfitCenterByMultiId(ids []int, abstractType interface{}) *exceptions.BaseErrorResponse {
 
 	ids = utils.RemoveDuplicateIds(ids)

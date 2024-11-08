@@ -131,16 +131,6 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 		WarehouseFaxNumber:            request.WarehouseFaxNumber,
 	}
 
-	var existingWarehouse masterwarehouseentities.WarehouseMaster
-	if err := tx.Where("warehouse_code = ?", request.WarehouseCode).First(&existingWarehouse).Error; err == nil {
-
-		return masterwarehouseentities.WarehouseMaster{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
-			Message:    "Warehouse code already exists",
-			Err:        err,
-		}
-	}
-
 	if err := tx.Save(&warehouseMaster).Error; err != nil {
 		return masterwarehouseentities.WarehouseMaster{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

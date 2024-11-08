@@ -7,6 +7,7 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"strconv"
 
 	"after-sales/api/utils"
@@ -182,14 +183,12 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 
 	// Fetch line type names and update BOM details
 	for i := range bomDetails {
-		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(bomDetails[i].BomDetailTypeId)
-		var lineTypeResponse masteritempayloads.LineTypeResponse
-		errLineType := utils.Get(lineTypeUrl, &lineTypeResponse, nil)
+		lineTypeResponse, errLineType := generalserviceapiutils.GetLineTypeById(bomDetails[i].BomDetailTypeId)
 		if errLineType != nil {
 			return masteritempayloads.BomMasterResponseDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch line type name",
-				Err:        errLineType,
+				Err:        errLineType.Err,
 			}
 		}
 		bomDetails[i].LineTypeName = lineTypeResponse.LineTypeName

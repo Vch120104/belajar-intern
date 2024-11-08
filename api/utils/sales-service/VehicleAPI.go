@@ -6,7 +6,6 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -91,7 +90,7 @@ func GetVehicleById(id int) (VehicleResponse, *exceptions.BaseErrorResponse) {
 	}
 
 	finalURL := fmt.Sprintf("%s?page=%d&limit=%d&vehicle_id=%d", baseURL, params.Page, params.Limit, params.VehicleID)
-	log.Printf("Final URL: %s", finalURL)
+	//log.Printf("Final URL: %s", finalURL)
 
 	// Make the GET request
 	err := utils.GetArray(finalURL, nil, &vehicleResponse) // Ensure you pass nil if no body is needed

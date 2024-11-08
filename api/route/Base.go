@@ -574,6 +574,7 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Post("/detail", BinningList.InsertBinningListDetail)
 	router.Patch("/detail", BinningList.UpdateBinningListDetail)
 	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
+	//router.Post("/{binning_system_number}",BinningList)
 	return router
 }
 func PurchaseOrderRouter(
@@ -604,6 +605,23 @@ func PurchaseOrderRouter(
 
 	//	@Router			/v1/purchase-order/{purchase_order_system_number} [put]
 
+	return router
+}
+func GoodsReceiveRouter(
+	GoodsReceiveController transactionsparepartcontroller.GoodsReceiveController,
+) chi.Router {
+	router := chi.NewRouter()
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", GoodsReceiveController.GetAllGoodsReceive)
+	router.Get("/{goods_receive_id}", GoodsReceiveController.GetGoodsReceiveById)
+	router.Post("/", GoodsReceiveController.InsertGoodsReceive)
+	router.Put("/{goods_receive_id}", GoodsReceiveController.UpdateGoodsReceive)
+	router.Post("/detail", GoodsReceiveController.InsertGoodsReceiveDetail)
+	router.Put("/detail/{goods_receive_detail_system_number}", GoodsReceiveController.UpdateGoodsReceiveDetail)
+	router.Get("/location-item", GoodsReceiveController.LocationItemGoodsReceive)
 	return router
 }
 
