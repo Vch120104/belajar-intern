@@ -6,7 +6,6 @@ import (
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -93,6 +92,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
 		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
 		"mtr_warehouse_master.is_active":           queryValues.Get("is_active"),
+		"mtr_warehouse_master.company_id":          queryValues.Get("company_id"),
 	}
 
 	pagination := pagination.Pagination{
@@ -188,7 +188,6 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		}
 		return
 	}
-	fmt.Print("test : ", getbyid)
 	payloads.NewHandleSuccess(writer, getbyid, "Get Data Successfully!", http.StatusOK)
 }
 

@@ -9,6 +9,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
 	"strconv"
@@ -104,14 +105,12 @@ func (r *WorkOrderBypassRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []ut
 		}
 
 		// fetch line type from internal services
-		OperationURL := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(workOrderReq.LineTypeId)
-		//fmt.Println("Fetching  operation data from:", OperationURL)
-		var getOperationResponse transactionworkshoppayloads.Linetype
-		if err := utils.Get(OperationURL, &getOperationResponse, nil); err != nil {
+		getOperationResponse, lineErr := generalserviceapiutils.GetLineTypeById(workOrderReq.LineTypeId)
+		if lineErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch operation data from external service",
-				Err:        err,
+				Message:    "Failed to fetch line type data from external service",
+				Err:        lineErr.Err,
 			}
 		}
 
@@ -211,14 +210,12 @@ func (r *WorkOrderBypassRepositoryImpl) GetById(tx *gorm.DB, id int) (transactio
 	}
 
 	// fetch data operation from internal services
-	OperationURL := config.EnvConfigs.GeneralServiceUrl + "line-type-by-code/" + strconv.Itoa(tableStruct.LineTypeId)
-	//fmt.Println("Fetching  operation data from:", OperationURL)
-	var getOperationResponse transactionworkshoppayloads.Linetype
-	if err := utils.Get(OperationURL, &getOperationResponse, nil); err != nil {
+	getOperationResponse, lineErr := generalserviceapiutils.GetLineTypeById(tableStruct.LineTypeId)
+	if lineErr != nil {
 		return transactionworkshoppayloads.WorkOrderBypassResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch operation data from external service",
-			Err:        err,
+			Message:    "Failed to fetch line type data from external service",
+			Err:        lineErr.Err,
 		}
 	}
 
