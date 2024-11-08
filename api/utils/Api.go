@@ -61,6 +61,12 @@ func handleResponse(resp *http.Response, result interface{}) error {
 
 	// Check for non-200 status code
 	if resp.StatusCode != http.StatusOK {
+		// If 404
+		if resp.StatusCode == http.StatusNotFound {
+			log.Printf("Data not found (404) for URL: %s. Returning nil for data.", resp.Request.URL)
+			return nil
+		}
+
 		var errorResponse ResponseBody
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return fmt.Errorf("error decoding error response: %w", err)
@@ -91,15 +97,19 @@ func handleResponse(resp *http.Response, result interface{}) error {
 			return fmt.Errorf("error unmarshalling nested data into slice: %w", err)
 		}
 	} else {
-		// If the result is not a slice, check if data is an array
-		var tempData json.RawMessage
-		if err := json.Unmarshal(generalResponse.Data, &tempData); err != nil {
-			return fmt.Errorf("error unmarshalling nested data into temp data: %w", err)
-		}
+		// // If the result is not a slice, check if data is an array
+		// var tempData json.RawMessage
+		// if err := json.Unmarshal(generalResponse.Data, &tempData); err != nil {
+		// 	return fmt.Errorf("error unmarshalling nested data into temp data: %w", err)
+		// }
 
-		// Try unmarshalling into the expected struct
-		if err := json.Unmarshal(tempData, result); err != nil {
-			return fmt.Errorf("error unmarshalling nested data: %w", err)
+		// // Try unmarshalling into the expected struct
+		// if err := json.Unmarshal(tempData, result); err != nil {
+		// 	return fmt.Errorf("error unmarshalling nested data: %w", err)
+		// }
+		// single object types
+		if err := json.Unmarshal(generalResponse.Data, result); err != nil {
+			return fmt.Errorf("error unmarshalling data: %w, data: %s", err, generalResponse.Data)
 		}
 	}
 

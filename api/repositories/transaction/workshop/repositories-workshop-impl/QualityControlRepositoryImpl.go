@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
@@ -94,14 +95,12 @@ func (r *QualityControlRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		}
 
 		// Fetch data customer from external API
-		CustomerUrl := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(entity.CustomerId)
-		var customerResponses transactionworkshoppayloads.CustomerResponse
-		errCustomer := utils.Get(CustomerUrl, &customerResponses, nil)
-		if errCustomer != nil {
+		customerResponses, customerErr := generalserviceapiutils.GetCustomerMasterDetailById(entity.CustomerId)
+		if customerErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve customer data from the external API",
-				Err:        errCustomer,
+				Err:        customerErr.Err,
 			}
 		}
 
