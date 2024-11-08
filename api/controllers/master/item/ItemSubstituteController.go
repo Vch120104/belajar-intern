@@ -348,14 +348,14 @@ func (r *ItemSubstituteControllerImpl) GetallItemForFilter(writer http.ResponseW
 	queryValues := request.URL.Query()
 
 	queryParams := map[string]string{
-		"item_code":    queryValues.Get("item_code"),
-		"item_name":    queryValues.Get("item_name"),
-		"item_class":   queryValues.Get("item-class"),
-		"item_type":    queryValues.Get("item_get"),
-		"item_level_1": queryValues.Get("item_level_1"),
-		"item_level_2": queryValues.Get("item_level_2"),
-		"item_level_3": queryValues.Get("item_level_3"),
-		"item_level_4": queryValues.Get("item_level_4"),
+		"item_code":         queryValues.Get("item_code"),
+		"item_name":         queryValues.Get("item_name"),
+		"item_class":        queryValues.Get("item_class"),
+		"item_type_code":    queryValues.Get("item_type_code"),
+		"item_level_1_code": queryValues.Get("item_level_1_code"),
+		"item_level_2_code": queryValues.Get("item_level_2_code"),
+		"item_level_3_code": queryValues.Get("item_level_3_code"),
+		"item_level_4_code": queryValues.Get("item_level_4_code"),
 	}
 
 	pagination := pagination.Pagination{

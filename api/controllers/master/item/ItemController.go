@@ -3,6 +3,7 @@ package masteritemcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	jsonchecker "after-sales/api/helper/json/json-checker"
 	"after-sales/api/payloads"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
@@ -33,12 +34,11 @@ type ItemController interface {
 	DeleteItemDetails(writer http.ResponseWriter, request *http.Request)
 	UpdateItem(writer http.ResponseWriter, request *http.Request)
 	UpdateItemDetail(writer http.ResponseWriter, request *http.Request)
-	GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request)
-	GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request)
+	GetPrincipalBrandParent(writer http.ResponseWriter, request *http.Request)
+	GetPrincipalBrandDropdown(writer http.ResponseWriter, request *http.Request)
 	AddItemDetailByBrand(writer http.ResponseWriter, request *http.Request)
 	GetAllItemSearch(writer http.ResponseWriter, request *http.Request)
-	GetCatalogCode(writer http.ResponseWriter, request *http.Request)
-	GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request)
+	GetPrincipalCatalog(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemControllerImpl struct {
@@ -219,49 +219,6 @@ func (r *ItemControllerImpl) GetAllItem(writer http.ResponseWriter, request *htt
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(data), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
-func (r *ItemControllerImpl) GetAllItemListTransLookup(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"item_code":       queryValues.Get("item_code"),
-		"item_name":       queryValues.Get("item_name"),
-		"item_class_id":   queryValues.Get("item_class_id"),
-		"item_class_code": queryValues.Get("item_class_code"),
-		"item_class_name": queryValues.Get("item_class_name"),
-		"item_type_code":  queryValues.Get("item_type"),
-		"item_level_1":    queryValues.Get("item_level_1"),
-		"item_level_2":    queryValues.Get("item_level_2"),
-		"item_level_3":    queryValues.Get("item_level_3"),
-		"item_level_4":    queryValues.Get("item_level_4"),
-	}
-
-	for key, value := range queryParams {
-		if value == "" {
-			delete(queryParams, key)
-		}
-	}
-
-	fmt.Printf("Query parameters: %+v\n", queryParams)
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	data, err := r.itemservice.GetAllItemListTransLookup(criteria, paginate)
-	if err != nil {
-		payloads.NewHandleSuccessPagination(writer, []interface{}{}, "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
-
-		return
-	}
-
-	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", 200, paginate.Limit, paginate.Page, data.TotalRows, data.TotalPages)
-}
-
 // @Summary Get All Item Lookup
 // @Description REST API Item
 // @Accept json
@@ -354,9 +311,8 @@ func (r *ItemControllerImpl) GetItemWithMultiId(writer http.ResponseWriter, requ
 // @Router /v1/item/by-code/{item_code} [get]
 func (r *ItemControllerImpl) GetItemByCode(writer http.ResponseWriter, request *http.Request) {
 
-	itemCode := chi.URLParam(request, "item_code")
-
-	itemCodeEncode := strings.ReplaceAll(itemCode, "!", "/")
+	queryValues := request.URL.Query()
+	itemCodeEncode := queryValues.Get("item_code")
 
 	// Melakukan URL encoding pada item_code
 	// encodedItemCode := url.PathEscape(itemCode)
@@ -383,7 +339,12 @@ func (r *ItemControllerImpl) SaveItem(writer http.ResponseWriter, request *http.
 	var formRequest masteritempayloads.ItemRequest
 	var message = ""
 
-	helper.ReadFromRequestBody(request, &formRequest)
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
 
 	create, err := r.itemservice.SaveItem(formRequest)
 	if err != nil {
@@ -631,8 +592,8 @@ func (r *ItemControllerImpl) UpdateItemDetail(writer http.ResponseWriter, reques
 	payloads.NewHandleSuccess(writer, update, "Item detail updated successfully", http.StatusOK)
 }
 
-func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWriter, request *http.Request) {
-	result, err := r.itemservice.GetPrincipleBrandDropdown()
+func (r *ItemControllerImpl) GetPrincipalBrandDropdown(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.itemservice.GetPrincipalBrandDropdown()
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -640,9 +601,13 @@ func (r *ItemControllerImpl) GetPrincipleBrandDropdown(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-func (r *ItemControllerImpl) GetPrincipleBrandParent(writer http.ResponseWriter, request *http.Request) {
-	principleBrandCode := chi.URLParam(request, "catalogue_code")
-	result, err := r.itemservice.GetPrincipleBrandParent(principleBrandCode)
+func (r *ItemControllerImpl) GetPrincipalBrandParent(writer http.ResponseWriter, request *http.Request) {
+	principalCatalogId, errA := strconv.Atoi(chi.URLParam(request, "principal_catalog_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+	result, err := r.itemservice.GetPrincipalBrandParent(principalCatalogId)
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
@@ -665,8 +630,8 @@ func (r *ItemControllerImpl) AddItemDetailByBrand(writer http.ResponseWriter, re
 	payloads.NewHandleSuccess(writer, result, "success", 200)
 }
 
-func (r *ItemControllerImpl) GetCatalogCode(writer http.ResponseWriter, request *http.Request) {
-	result, err := r.itemservice.GetCatalogCode()
+func (r *ItemControllerImpl) GetPrincipalCatalog(writer http.ResponseWriter, request *http.Request) {
+	result, err := r.itemservice.GetPrincipalCatalog()
 	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return

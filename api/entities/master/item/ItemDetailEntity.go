@@ -11,6 +11,7 @@ type ItemDetail struct {
 	VariantId    int     `gorm:"column:variant_id;size:30;not null;uniqueindex:idx_item_detail" json:"variant_id"`
 	MileageEvery float64 `gorm:"column:mileage_every" json:"mileage_every"`
 	ReturnEvery  float64 `gorm:"column:return_every" json:"return_every"`
+	Item         Item    `gorm:"foreignKey:ItemId;references:ItemId"`
 }
 
 func (*ItemDetail) TableName() string {

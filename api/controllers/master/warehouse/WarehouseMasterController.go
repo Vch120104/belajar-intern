@@ -5,10 +5,11 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-	"fmt"
 
 	// masteritemlevelentities "after-sales/api/entities/master/item_level"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
@@ -187,7 +188,7 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		}
 		return
 	}
-	fmt.Print("test : ",getbyid)
+	fmt.Print("test : ", getbyid)
 	payloads.NewHandleSuccess(writer, getbyid, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -231,15 +232,24 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request) {
 
 	warehouse_ids := chi.URLParam(request, "warehouse_ids")
-
 	if warehouse_ids == "" {
 		payloads.NewHandleError(writer, "Warehouse IDs are required", http.StatusBadRequest)
 		return
 	}
 
-	sliceOfIds := strings.Split(warehouse_ids, ",")
+	sliceOfIdsStr := strings.Split(warehouse_ids, ",")
+	var sliceOfIdsInt []int
 
-	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfIds)
+	for _, idStr := range sliceOfIdsStr {
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			payloads.NewHandleError(writer, "Invalid warehouse ID: "+idStr, http.StatusBadRequest)
+			return
+		}
+		sliceOfIdsInt = append(sliceOfIdsInt, id)
+	}
+
+	result, err := r.WarehouseMasterService.GetWarehouseWithMultiId(sliceOfIdsInt)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
@@ -263,7 +273,10 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -344,6 +357,10 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 func (r *WarehouseMasterControllerImpl) PostAuthorizeUser(writer http.ResponseWriter, request *http.Request) {
 	formRequest := masterwarehousepayloads.WarehouseAuthorize{}
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	save, err := r.WarehouseMasterService.PostAuthorizeUser(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

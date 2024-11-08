@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
+	"reflect"
 	"time"
 )
 
@@ -15,6 +17,7 @@ const (
 	FinanceURL     = "https://testing-backendims.indomobil.co.id/finance-service/v1/"
 	SalesURL       = "https://testing-backendims.indomobil.co.id/sales-service/v1/"
 	GeneralURL     = "https://testing-backendims.indomobil.co.id/general-service/v1/"
+	AftersalesURL  = "https://testing-backendims.indomobil.co.id/aftersales-service/v1/"
 	requestTimeout = 10 * time.Second
 	maxRetries     = 3 // Number of retries for failed requests
 )
@@ -62,6 +65,7 @@ func handleResponse(resp *http.Response, result interface{}) error {
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return fmt.Errorf("error decoding error response: %w", err)
 		}
+		//log.Printf("Error response: %s, status code: %d", errorResponse.Message, resp.StatusCode)
 		return fmt.Errorf("error response: %s, status code: %d", errorResponse.Message, resp.StatusCode)
 	}
 
@@ -74,17 +78,27 @@ func handleResponse(resp *http.Response, result interface{}) error {
 	// Log the raw response body for debugging
 	//log.Printf("Raw response body: %s", bodyBytes)
 
-	// Unmarshal into GeneralServiceResponse to check the data field
+	// Unmarshal into GeneralResponse to check the data field
 	var generalResponse GeneralResponse
 	if err := json.Unmarshal(bodyBytes, &generalResponse); err != nil {
 		return fmt.Errorf("error unmarshalling general response: %w, body: %s", err, bodyBytes)
 	}
 
-	// Unmarshal the nested data if present
-	var mapNestedCheck map[string]interface{}
-	isNestedErrorCheck := json.Unmarshal(generalResponse.Data, &mapNestedCheck)
-	if isNestedErrorCheck == nil {
+	// Determine if result is a slice or a single object
+	if reflect.TypeOf(result).Kind() == reflect.Slice {
+		// Expecting an array
 		if err := json.Unmarshal(generalResponse.Data, result); err != nil {
+			return fmt.Errorf("error unmarshalling nested data into slice: %w", err)
+		}
+	} else {
+		// If the result is not a slice, check if data is an array
+		var tempData json.RawMessage
+		if err := json.Unmarshal(generalResponse.Data, &tempData); err != nil {
+			return fmt.Errorf("error unmarshalling nested data into temp data: %w", err)
+		}
+
+		// Try unmarshalling into the expected struct
+		if err := json.Unmarshal(tempData, result); err != nil {
 			return fmt.Errorf("error unmarshalling nested data: %w", err)
 		}
 	}
@@ -97,7 +111,6 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 	var reqBody []byte
 	var err error
 
-	// Encode request body if provided
 	if body != nil {
 		reqBody, err = json.Marshal(body)
 		if err != nil {
@@ -108,14 +121,13 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 	for retry := 0; retry < maxRetries; retry++ {
 		err = makeRequest(method, url, reqBody, result)
 		if err == nil {
-			return nil // Request was successful
+			return nil
 		}
 
-		// Log the retry attempt
 		log.Printf("Retry attempt %d for %s request to %s failed: %v", retry+1, method, url, err)
 
-		// Wait before retrying
-		time.Sleep(2 * time.Second)
+		// Use exponential backoff
+		time.Sleep(time.Duration(math.Pow(2, float64(retry))) * time.Second)
 	}
 
 	return fmt.Errorf("request failed after %d retries: %w", maxRetries, err)
@@ -123,7 +135,7 @@ func CallAPI(method, url string, body interface{}, result interface{}) error {
 
 // Helper function for making the actual HTTP request
 func makeRequest(method, url string, reqBody []byte, result interface{}) error {
-	// Create a new request with a context
+
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
@@ -133,41 +145,63 @@ func makeRequest(method, url string, reqBody []byte, result interface{}) error {
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute the request
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("error executing request: %w", err)
 	}
 
-	// Handle the response
 	return handleResponse(resp, result)
 }
 
 // Helper functions for CRUD operations
-
-// Get makes a GET request
+// GET request
 func Get(url string, result interface{}, params interface{}) error {
 	return CallAPI("GET", url, params, result)
 }
 
-// Post makes a POST request
+// POST request
 func Post(url string, body interface{}, result interface{}) error {
 	return CallAPI("POST", url, body, result)
 }
 
-// Put makes a PUT request
+// PUT request
 func Put(url string, body interface{}, result interface{}) error {
 	return CallAPI("PUT", url, body, result)
 }
 
-// Delete makes a DELETE request
+// DELETE request
 func Delete(url string, body interface{}, result interface{}) error {
 	return CallAPI("DELETE", url, body, result)
 }
 
 // GetArray handles array responses
-func GetArray(url string, result interface{}, params interface{}) error {
-	return CallAPI("GET", url, params, &result)
+func GetArray(url string, body interface{}, response interface{}) error {
+	// Set up HTTP client and request
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil) // Adjust method and body as necessary
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Execute the request
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("received non-200 response: %s", resp.Status)
+	}
+
+	// Unmarshal the response body
+	err = json.NewDecoder(resp.Body).Decode(response)
+	if err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return nil
 }
 
 // BatchRequest supports sending multiple requests in one call

@@ -15,9 +15,9 @@ type CurrencyResponse struct {
 	CurrencyName string `json:"currency_name"`
 }
 
-func GetCurrency(id int) (CurrencyResponse, *exceptions.BaseErrorResponse) {
+func GetCurrencyId(id int) (CurrencyResponse, *exceptions.BaseErrorResponse) {
 	var getCurrency CurrencyResponse
-	url := config.EnvConfigs.FinanceServiceUrl + "currency/" + strconv.Itoa(id)
+	url := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCurrency)
 	if err != nil {
 		return getCurrency, &exceptions.BaseErrorResponse{

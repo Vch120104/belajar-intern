@@ -5,9 +5,11 @@ import (
 	helper "after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -37,6 +39,7 @@ type OperationModelMappingController interface {
 	GetOperationLevelById(writer http.ResponseWriter, request *http.Request)
 	ActivateOperationLevel(writer http.ResponseWriter, request *http.Request)
 	DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request)
+	DeleteOperationLevel(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -172,6 +175,10 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingByBrandMod
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingResponse
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMapping(formRequest)
@@ -226,6 +233,10 @@ func (r *OperationModelMappingControllerImpl) ChangeStatusOperationModelMapping(
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingFrtRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMappingFrt(formRequest)
@@ -241,6 +252,29 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingFrt(write
 	}
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) DeleteOperationLevel(writer http.ResponseWriter, request *http.Request) {
+	operationLevelIds := chi.URLParam(request, "operation_level_id")
+	operationLevelIds = strings.Trim(operationLevelIds, "[]")
+	elements := strings.Split(operationLevelIds, ",")
+
+	operationLvlIds := []int{}
+	for _, element := range elements {
+		num, convErr := strconv.Atoi(strings.TrimSpace(element))
+		if convErr != nil {
+			payloads.NewHandleError(writer, "Failed to convert ID string", http.StatusInternalServerError)
+			return
+		}
+		operationLvlIds = append(operationLvlIds, num)
+	}
+	if deleted, err := r.operationmodelmappingservice.DeleteOperationLevel(operationLvlIds); err != nil {
+		exceptions.NewAppException(writer, request, err)
+	} else if deleted {
+		payloads.NewHandleSuccess(writer, deleted, "Delete Data Successfully!", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete data", http.StatusInternalServerError)
+	}
 }
 
 // @Summary Deactivate Operation FRT
@@ -427,6 +461,10 @@ func (r *OperationModelMappingControllerImpl) GetOperationFrtById(writer http.Re
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingDocumentRequirement(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationModelMappingDocumentRequirement(formRequest)
@@ -471,6 +509,10 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationDocumentRequireme
 func (r *OperationModelMappingControllerImpl) SaveOperationLevel(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationLevelRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.operationmodelmappingservice.SaveOperationLevel(formRequest)

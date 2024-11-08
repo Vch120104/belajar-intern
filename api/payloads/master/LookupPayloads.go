@@ -28,16 +28,28 @@ type WarehouseGroupByCompanyResponse struct {
 	WarehouseGroupCodeName string `json:"warehouse_group_code_name"`
 }
 
-type ItemListForPriceList struct {
-	ItemId        int    `json:"item_id"`
-	ItemCode      string `json:"item_code"`
-	ItemName      string `json:"item_name"`
-	ItemClassCode string `json:"item_class_code"`
-	ItemTypeCode  string `json:"item_type"`
-	ItemLevel1    string `gorm:"column:item_level_1" json:"item_level_1"`
-	ItemLevel2    string `gorm:"column:item_level_2" json:"item_level_2"`
-	ItemLevel3    string `gorm:"column:item_level_3" json:"item_level_3"`
-	ItemLevel4    string `gorm:"column:item_level_4" json:"item_level_4"`
+type ItemListTransResponse struct {
+	ItemId           int    `json:"item_id"`
+	ItemCode         string `json:"item_code"`
+	ItemName         string `json:"item_name"`
+	ItemClassCode    string `json:"item_class_code"`
+	ItemTypeCode     string `json:"item_type"`
+	ItemLevel_1_Code string `json:"item_level_1_code"`
+	ItemLevel_2_Code string `json:"item_level_2_code"`
+	ItemLevel_3_Code string `json:"item_level_3_code"`
+	ItemLevel_4_Code string `json:"item_level_4_code"`
+}
+
+type ItemListTransPLResponse struct {
+	ItemId           int    `json:"item_id"`
+	ItemCode         string `json:"item_code"`
+	ItemName         string `json:"item_name"`
+	ItemClassCode    string `json:"item_class_code"`
+	ItemTypeCode     string `json:"item_type"`
+	ItemLevel_1_Code string `json:"item_level_1_code"`
+	ItemLevel_2_Code string `json:"item_level_2_code"`
+	ItemLevel_3_Code string `json:"item_level_3_code"`
+	ItemLevel_4_Code string `json:"item_level_4_code"`
 }
 
 type GetPriceListCodeResponse struct {

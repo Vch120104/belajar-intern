@@ -8,6 +8,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -249,6 +250,10 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestHeader(writer
 	var purchaseRequest transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
 
 	helper.ReadFromRequestBody(request, &purchaseRequest)
+	if validationErr := validation.ValidationForm(writer, request, &purchaseRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, err := controller.PurchaseRequestService.NewPurchaseRequestHeader(purchaseRequest)
 	if err != nil {
@@ -275,6 +280,10 @@ func (controller *PurchaseRequestControllerImpl) NewPurchaseRequestDetail(writer
 	//var purchaseRequest transactionsparepartpayloads.PurchaseRequestHeaderSaveRequest
 
 	helper.ReadFromRequestBody(request, &purchaseRequest)
+	if validationErr := validation.ValidationForm(writer, request, &purchaseRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, err := controller.PurchaseRequestService.NewPurchaseRequestDetail(purchaseRequest)
 	if err != nil {
@@ -303,6 +312,10 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestHeader(wri
 	PurchaseRequestSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "purchase_request_system_number"))
 
 	helper.ReadFromRequestBody(request, &puchaseRequestHeader)
+	if validationErr := validation.ValidationForm(writer, request, &puchaseRequestHeader); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, err := controller.PurchaseRequestService.SavePurchaseRequestUpdateHeader(puchaseRequestHeader, PurchaseRequestSystemNumber)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -330,6 +343,10 @@ func (controller *PurchaseRequestControllerImpl) UpdatePurchaseRequestDetail(wri
 
 	var puchaseRequestDetail transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
 	helper.ReadFromRequestBody(request, &puchaseRequestDetail)
+	if validationErr := validation.ValidationForm(writer, request, &puchaseRequestDetail); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, err := controller.PurchaseRequestService.SavePurchaseRequestUpdateDetail(puchaseRequestDetail, PurchaseRequestSystemNumberDetail)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -414,6 +431,10 @@ func (controller *PurchaseRequestControllerImpl) SubmitPurchaseRequestDetail(wri
 
 	var puchaseRequestDetail transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads
 	helper.ReadFromRequestBody(request, &puchaseRequestDetail)
+	if validationErr := validation.ValidationForm(writer, request, &puchaseRequestDetail); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	success, err := controller.PurchaseRequestService.InsertPurchaseRequestUpdateDetail(puchaseRequestDetail, PurchaseRequestSystemNumberDetail)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

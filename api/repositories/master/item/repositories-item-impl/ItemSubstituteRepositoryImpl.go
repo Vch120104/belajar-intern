@@ -307,19 +307,34 @@ func (r *ItemSubstituteRepositoryImpl) ActivateItemSubstituteDetail(tx *gorm.DB,
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetallItemForFilter(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// Declare the payload slice and query
+	entities := masteritementities.Item{}
 	payloads := []masteritempayloads.Itemforfilter{}
 
 	// Build the query, ensure Select is used properly
-	query := tx.Select("mtr_item.item_id,mtr_item.item_code, mtr_item.item_name, mtr_item.item_level_1, mtr_item.item_level_2, mtr_item.item_level_3, mtr_item.item_level_4, mtr_item_class.item_class_code, mtr_item.item_type").
-		Table("mtr_item").
-		Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item.item_class_id")
+	query := tx.Model(&entities).
+		Select(`
+			mtr_item.item_id,
+			mtr_item.item_code,
+			mtr_item.item_name,
+			mil1.item_level_1_code,
+			mil2.item_level_2_code,
+			mil3.item_level_3_code,
+			mil4.item_level_4_code,
+			mtr_item_class.item_class_code,
+			mit.item_type_code
+		`).
+		Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item.item_class_id").
+		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
+		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
+		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
+		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
+		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id")
 
 	// Apply filters
 	whereQuery := utils.ApplyFilter(query, filterCondition)
 
 	// Apply pagination and execute the query
-	err := whereQuery.Scopes(pagination.Paginate(nil, &pages, whereQuery)).Scan(&payloads).Error
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

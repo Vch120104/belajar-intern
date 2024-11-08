@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -133,7 +134,7 @@ func MarkupMasterRouter(
 
 	router.Get("/", markupMasterController.GetMarkupMasterList)
 	router.Get("/{markup_master_id}", markupMasterController.GetMarkupMasterByID)
-	router.Get("/code/{markup_master_code}", markupMasterController.GetMarkupMasterByCode)
+	router.Get("/code/{markup_code}", markupMasterController.GetMarkupMasterByCode)
 	router.Get("/dropdown", markupMasterController.GetAllMarkupMasterIsActive)
 	router.Post("/", markupMasterController.SaveMarkupMaster)
 	router.Patch("/{markup_master_id}", markupMasterController.ChangeStatusMarkupMaster)
@@ -170,14 +171,14 @@ func ItemLevelRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", itemLevelController.GetAll)
-	router.Get("/{item_level_id}", itemLevelController.GetById)
+	router.Get("/{item_level}/{item_level_id}", itemLevelController.GetById)
 
 	router.Get("/drop-down-item-level/{item_level}", itemLevelController.GetItemLevelDropDown)
 	router.Get("/look-up-item-level/{item_class_id}", itemLevelController.GetItemLevelLookUp)
-	router.Get("/look-up-item-level-by-id/{item_level_id}", itemLevelController.GetItemLevelLookUpbyId)
+	router.Get("/look-up-item-level-by-id/{item_level_1_id}", itemLevelController.GetItemLevelLookUpbyId)
 
 	router.Post("/", itemLevelController.Save)
-	router.Patch("/{item_level_id}", itemLevelController.ChangeStatus)
+	router.Patch("/{item_level}/{item_level_id}", itemLevelController.ChangeStatus)
 
 	return router
 }
@@ -221,7 +222,7 @@ func ItemRouter(
 	router.Get("/{item_id}", itemController.GetItembyId)
 	// router.Get("/lookup", itemController.GetAllItemLookup) ON PROGRESS NATHAN TAKE OVER
 	router.Get("/multi-id/{item_ids}", itemController.GetItemWithMultiId)
-	router.Get("/by-code/{item_code}", itemController.GetItemByCode)
+	router.Get("/by-code", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
 	router.Get("/search", itemController.GetAllItem)
@@ -235,9 +236,8 @@ func ItemRouter(
 	router.Delete("/{item_id}/detail/{multi_id}", itemController.DeleteItemDetails)
 	router.Post("/{item_id}/{brand_id}", itemController.AddItemDetailByBrand)
 	router.Put("/{item_id}/detail/{item_detail_id}", itemController.UpdateItemDetail)
-	router.Get("/catalog-code-drop-down", itemController.GetCatalogCode)
-	router.Get("/brand-parent-by-code/{catalogue_code}", itemController.GetPrincipleBrandParent)
-	router.Get("/look-up-list-trans", itemController.GetAllItemListTransLookup)
+	router.Get("/principal-catalog-drop-down", itemController.GetPrincipalCatalog)
+	router.Get("/brand-parent/{principal_catalog_id}", itemController.GetPrincipalBrandParent)
 
 	return router
 }
@@ -808,6 +808,7 @@ func OperationModelMappingRouter(
 	router.Patch("/operation-document-requirement/activate/{operation_document_requirement_id}", operationModelMappingController.ActivateOperationDocumentRequirement)
 	router.Patch("/operation-level/deactivate/{operation_level_id}", operationModelMappingController.DeactivateOperationLevel)
 	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
+	router.Delete("/operation-level/delete/{operation_level_id}", operationModelMappingController.DeleteOperationLevel)
 
 	return router
 }
@@ -1798,7 +1799,8 @@ func LookupRouter(
 	router.Get("/work-order-service", LookupController.WorkOrderService)
 	router.Get("/item-location-warehouse", LookupController.ListItemLocation)
 	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
-	router.Get("/item-list", LookupController.ItemListTransPL)
+	router.Get("/item-list-trans", LookupController.ItemListTrans)
+	router.Get("/item-list-trans-pl", LookupController.ItemListTransPL)
 
 	return router
 }

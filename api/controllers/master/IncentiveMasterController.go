@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -124,7 +125,10 @@ func (r *IncentiveMasterControllerImpl) SaveIncentiveMaster(writer http.Response
 
 	var formRequest masterpayloads.IncentiveMasterRequest
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	entity, err := r.IncentiveMasterService.SaveIncentiveMaster(formRequest)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)
@@ -158,7 +162,10 @@ func (r *IncentiveMasterControllerImpl) UpdateIncentiveMaster(writer http.Respon
 
 	var formRequest masterpayloads.IncentiveMasterRequest
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	entity, err := r.IncentiveMasterService.UpdateIncentiveMaster(formRequest, IncentiveLevelIds)
 	if err != nil {
 		exceptions.NewBadRequestException(writer, request, err)

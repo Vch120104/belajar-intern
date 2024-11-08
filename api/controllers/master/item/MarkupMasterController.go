@@ -60,9 +60,9 @@ func NewMarkupMasterController(MarkupMasterService masteritemservice.MarkupMaste
 func (r *MarkupMasterControllerImpl) GetMarkupMasterList(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"markup_master_code":        queryValues.Get("markup_master_code"),
-		"markup_master_description": queryValues.Get("markup_master_description"),
-		"is_active":                 queryValues.Get("is_active"),
+		"markup_code":        queryValues.Get("markup_code"),
+		"markup_description": queryValues.Get("markup_description"),
+		"is_active":          queryValues.Get("is_active"),
 	}
 
 	pagination := pagination.Pagination{
@@ -114,7 +114,7 @@ func (r *MarkupMasterControllerImpl) GetMarkupMasterByID(writer http.ResponseWri
 // @Router /v1/markup-master/by-code/{markup_master_code} [get]
 func (r *MarkupMasterControllerImpl) GetMarkupMasterByCode(writer http.ResponseWriter, request *http.Request) {
 
-	markupMasterCode := chi.URLParam(request, "markup_master_code")
+	markupMasterCode := chi.URLParam(request, "markup_code")
 
 	result, err := r.markupMasterService.GetMarkupMasterByCode(markupMasterCode)
 

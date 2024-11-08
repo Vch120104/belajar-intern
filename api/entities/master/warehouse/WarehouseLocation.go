@@ -10,7 +10,7 @@ type WarehouseLocation struct {
 	WarehouseId                   int   `gorm:"column:warehouse_id;size:30; not null; uniqueindex:idx_warehouse_location" json:"warehouse_id"`
 	Warehouse                     *WarehouseMaster
 	WarehouseGroupId              int                             `gorm:"column:warehouse_group_id;size:30;not null" json:"warehouse_group_id"`
-	WarehouseLocationCode         string                          `gorm:"column:warehouse_location_code;not null;size:5; uniqueindex:idx_warehouse_location" json:"warehouse_location_code"`
+	WarehouseLocationCode         string                          `gorm:"column:warehouse_location_code;not null;size:50; uniqueindex:idx_warehouse_location" json:"warehouse_location_code"`
 	WarehouseLocationName         string                          `gorm:"column:warehouse_location_name;not null;size:100; uniqueindex:idx_warehouse_location" json:"warehouse_location_name"`
 	WarehouseLocationDetailName   string                          `gorm:"column:warehouse_location_detail_name;not null;size:100" json:"warehouse_location_detail_name"`
 	WarehouseLocationPickSequence int                             `gorm:"column:warehouse_location_pick_sequence;size:30;not null" json:"warehouse_location_pick_sequence"`

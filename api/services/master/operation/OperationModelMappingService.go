@@ -28,4 +28,5 @@ type OperationModelMappingService interface {
 	GetOperationLevelById(id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse)
 	DeactivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse)
 	ActivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse)
+	DeleteOperationLevel(ids []int) (bool, *exceptions.BaseErrorResponse)
 }

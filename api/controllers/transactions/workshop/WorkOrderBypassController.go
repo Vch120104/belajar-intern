@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -122,6 +123,10 @@ func (r *WorkOrderBypassControllerImpl) Bypass(writer http.ResponseWriter, reque
 
 	var detailRequest transactionworkshoppayloads.WorkOrderBypassRequestDetail
 	helper.ReadFromRequestBody(request, &detailRequest)
+	if validationErr := validation.ValidationForm(writer, request, &detailRequest); validationErr != nil {
+		exceptions.NewConflictException(writer, request, validationErr)
+		return
+	}
 
 	workOrder, baseErr := r.WorkOrderBypassService.Bypass(workOrderId, detailRequest)
 	if baseErr != nil {
