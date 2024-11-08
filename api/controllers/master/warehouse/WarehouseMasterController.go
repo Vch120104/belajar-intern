@@ -268,8 +268,6 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/ [post]
 func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
-	var message string
-	var status int
 
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -277,13 +275,14 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
+
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, save, message, status)
+	payloads.NewHandleSuccess(writer, save, "Create Data Successfully!", http.StatusCreated)
 }
 
 // @Summary Update Warehouse Master
