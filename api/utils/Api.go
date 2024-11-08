@@ -60,7 +60,7 @@ func handleResponse(resp *http.Response, result interface{}) error {
 	//log.Printf("Received HTTP status: %d", resp.StatusCode)
 
 	// Check for non-200 status code
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		// If 404
 		if resp.StatusCode == http.StatusNotFound {
 			log.Printf("Data not found (404) for URL: %s. Returning nil for data.", resp.Request.URL)

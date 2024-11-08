@@ -33,7 +33,7 @@ type GoodsReceiveDetail struct {
 	BinningId                int    `gorm:"column:binning_system_number;not null;size:30"        json:"binning_system_number"`
 	Binning                  *BinningStock
 	BinningDocumentNumber    string `gorm:"column:binning_document_number;not null;size:25"        json:"binning_document_number"`
-	BinningDetailId          int    `gorm:"column:binning_detail_id;not null;size:30"        json:"binning_detail_id"`
+	BinningDetailId          int    `gorm:"column:binning_detail_id;null;size:30"        json:"binning_detail_id"`
 	BinningLineNumber        int    `gorm:"column:binning_line_number;not null"        json:"binning_line_number"`
 	ReferenceSystemNumber    int    `gorm:"column:reference_system_number;null;size:30"        json:"reference_system_number"`
 	ReferenceLineNumber      int    `gorm:"column:reference_line_number;null"        json:"reference_line_number"`

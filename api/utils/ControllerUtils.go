@@ -172,3 +172,11 @@ func TimeValue(t time.Time) float64 {
 
 	return timeValue
 }
+func NotInSlice(item string, slice []string) bool {
+	for _, element := range slice {
+		if element == item {
+			return false
+		}
+	}
+	return true
+}
