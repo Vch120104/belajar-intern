@@ -2,6 +2,7 @@ package migration
 
 import (
 	"after-sales/api/config"
+
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	// masterentities "after-sales/api/entities/master"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
@@ -90,9 +91,14 @@ func Migrate() {
 	//&masteritementities.Uom{},
 	//&masteritementities.UomItem{},
 	//&masteritementities.MarkupRate{},
-	//&masteritementities.PrincipleBrandParent{},
+	//&masteritementities.PrincipalCatalog{},
+	//&masteritementities.PrincipalBrandParent{},
 	//&masteritementities.MarkupMaster{},
 	//&masteritementities.ItemLevel{},
+	//&masteritementities.ItemLevel1{},
+	//&masteritementities.ItemLevel2{},
+	//&masteritementities.ItemLevel3{},
+	//&masteritementities.ItemLevel4{},
 	//&masteritementities.PriceList{},
 	//&masteritementities.ItemSubstituteDetail{},
 	//&masteritementities.ItemSubstitute{},
@@ -101,7 +107,7 @@ func Migrate() {
 	//&masteritementities.ItemImport{},
 	//&masteritementities.ItemDetail{},
 	//&masteritementities.ItemLocationSource{},
-	// &masteritementities.Item{},
+	//&masteritementities.Item{},
 	// &masteritementities.ItemPriceCode{},
 
 	// &masteritementities.ItemLocation{},
@@ -216,6 +222,7 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseOrderLimit{},
 	//transactionsparepartentities.ItemClaim{},
 	//transactionsparepartentities.ItemClaimDetail{},
+	//&transactionsparepartentities.StockTransaction{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

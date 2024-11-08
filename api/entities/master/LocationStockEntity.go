@@ -5,14 +5,15 @@ import "time"
 const tablename = "mtr_location_stock"
 
 type LocationStock struct {
-	ItemInquiryId          int        `gorm:"column:item_inquiry_id;not null;primaryKey" json:"item_inquiry_id"`
-	CompanyId              int        `gorm:"column:company_id;not null"        json:"company_id"` //Fk with mtr_brand on sales service
-	PeriodYear             string     `gorm:"column:period_year;size:4;not null"        json:"period_year"`
-	PeriodMonth            string     `gorm:"column:period_month;size:2;not null"        json:"period_month"`
-	WarehouseId            int        `gorm:"column:warehouse_id;not null"        json:"warehouse_id"`
-	LocationId             int        `gorm:"column:location_id;not null"        json:"location_id"`
-	ItemId                 int        `gorm:"column:item_id;not null;"        json:"item_id"`
-	WarehouseGroup         string     `gorm:"column:warehouse_group;size:50;not null"        json:"warehouse_group"`
+	ItemInquiryId    int    `gorm:"column:item_inquiry_id;not null;primaryKey" json:"item_inquiry_id"`
+	CompanyId        int    `gorm:"column:company_id;not null"        json:"company_id"` //Fk with mtr_brand on sales service
+	PeriodYear       string `gorm:"column:period_year;size:4;not null"        json:"period_year"`
+	PeriodMonth      string `gorm:"column:period_month;size:2;not null"        json:"period_month"`
+	WarehouseId      int    `gorm:"column:warehouse_id;not null"        json:"warehouse_id"`
+	LocationId       int    `gorm:"column:location_id;not null"        json:"location_id"`
+	ItemId           int    `gorm:"column:item_id;not null;"        json:"item_id"`
+	WarehouseGroupId int    `gorm:"column:warehouse_group_id;size:30;not null"        json:"warehouse_group_id"`
+	//WarehouseGroup         string     `gorm:"column:warehouse_group;size:50;not null"        json:"warehouse_group"`
 	QuantityBegin          float64    `gorm:"column:quantity_begin;null"        json:"quantity_begin"`
 	QuantitySales          float64    `gorm:"column:quantity_sales;null"        json:"quantity_sales"`
 	QuantitySalesReturn    float64    `gorm:"column:quantity_sales_return;null"        json:"quantity_sales_return"`

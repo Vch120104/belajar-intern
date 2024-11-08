@@ -9,6 +9,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -109,6 +110,10 @@ func (r *SupplySlipControllerImpl) SaveSupplySlip(writer http.ResponseWriter, re
 
 	var formRequest transactionsparepartentities.SupplySlip
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.supplyslipservice.SaveSupplySlip(formRequest)
@@ -126,6 +131,10 @@ func (r *SupplySlipControllerImpl) SaveSupplySlipDetail(writer http.ResponseWrit
 
 	var formRequest transactionsparepartentities.SupplySlipDetail
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.supplyslipservice.SaveSupplySlipDetail(formRequest)
@@ -157,6 +166,10 @@ func (r *SupplySlipControllerImpl) UpdateSupplySlip(writer http.ResponseWriter, 
 	supplyId, _ := strconv.Atoi(chi.URLParam(request, "supply_system_number"))
 	var formRequest transactionsparepartentities.SupplySlip
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.supplyslipservice.UpdateSupplySlip(formRequest, supplyId)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)

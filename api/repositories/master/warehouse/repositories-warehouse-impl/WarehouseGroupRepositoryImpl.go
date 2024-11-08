@@ -64,7 +64,7 @@ func (r *WarehouseGroupImpl) GetWarehouseGroupDropdown(tx *gorm.DB) ([]masterwar
 	entity := masterwarehouseentities.WarehouseGroup{}
 	response := []masterwarehousepayloads.GetWarehouseGroupDropdown{}
 
-	err := tx.Model(&entity).
+	err := tx.Model(&entity).Select("CONCAT(warehouse_group_code, ' - ', warehouse_group_name) AS warehouse_group_name, warehouse_group_id").
 		Scan(&response).Error
 
 	if err != nil {

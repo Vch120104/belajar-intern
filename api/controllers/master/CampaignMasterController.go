@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"net/http"
 	"strconv"
@@ -47,6 +48,10 @@ func NewCampaignMasterController(campaignmasterservice masterservice.CampaignMas
 func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterPost
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 	var status int
 
@@ -70,6 +75,10 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMaster(writer http.ResponseWr
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPayloads
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	campaignId, _ := strconv.Atoi(chi.URLParam(request, "campaign_id"))
 
 	create, err := r.CampaignMasterService.PostCampaignDetailMaster(formRequest, campaignId)
@@ -107,6 +116,10 @@ func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromHistory(write
 func (r *CampaignMasterControllerImpl) SaveCampaignMasterDetailFromPackage(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masterpayloads.CampaignMasterDetailPostFromPackageRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	response, err := r.CampaignMasterService.PostCampaignMasterDetailFromPackage(formRequest)
 	if err != nil {
@@ -294,6 +307,10 @@ func (r *CampaignMasterControllerImpl) UpdateCampaignMasterDetail(writer http.Re
 		return
 	}
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message = ""
 	result, err := r.CampaignMasterService.UpdateCampaignMasterDetail(CampaignDetailId, formRequest)
 	if err != nil {

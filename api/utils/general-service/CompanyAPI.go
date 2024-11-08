@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type VatCompany struct {
@@ -39,6 +40,7 @@ type CompanyMasterResponse struct {
 	CompanyCode string `json:"company_code"`
 	CompanyName string `json:"company_name"`
 	IsDistbutor bool   `json:"is_distributor"`
+	BizCategory string `json:"biz_category"`
 }
 
 func GetCompanyVat(id int) (VatCompany, *exceptions.BaseErrorResponse) {
@@ -48,8 +50,8 @@ func GetCompanyVat(id int) (VatCompany, *exceptions.BaseErrorResponse) {
 	if err != nil {
 		return getCompanyMaster, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "error consume data company vat external api",
-			Err:        errors.New("error consume data company vat external api"),
+			Message:    "error consuming external API for company VAT data",
+			Err:        errors.New("error consuming external API for company VAT data"),
 		}
 	}
 	return getCompanyMaster, nil
@@ -69,4 +71,33 @@ func GetCompanyDataById(companyId int) (generalservicepayloads.GetCompanyByIdRes
 	}
 
 	return companyResponse, nil
+}
+
+func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorResponse {
+
+	ids = utils.RemoveDuplicateIds(ids)
+	validIds := make([]string, 0, len(ids))
+
+	for _, id := range ids {
+		if id != 0 {
+			validIds = append(validIds, strconv.Itoa(id))
+		}
+	}
+
+	strIds := "[" + strings.Join(validIds, ",") + "]"
+	url := config.EnvConfigs.GeneralServiceUrl + "company-by-multi-id/" + strIds
+
+	err := utils.CallAPI("GET", url, nil, response)
+	if err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error consuming external API for multiple company data",
+			Err:        errors.New("error consuming external API for multiple company data"),
+		}
+	}
+	return nil
+}
+
+func IsFTZCompany(companyId int) bool {
+	return companyId == 139 //  ID for FTZ company check
 }

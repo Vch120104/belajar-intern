@@ -219,6 +219,18 @@ func (s *LookupServiceImpl) WarehouseGroupByCompany(companyId int) ([]masterpayl
 	return warehouse, nil
 }
 
+func (s *LookupServiceImpl) ItemListTrans(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	item, baseErr := s.LookupRepo.ItemListTrans(tx, filterCondition, pages)
+	if baseErr != nil {
+		return item, baseErr
+	}
+
+	return item, nil
+}
+
 func (s *LookupServiceImpl) ItemListTransPL(companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)

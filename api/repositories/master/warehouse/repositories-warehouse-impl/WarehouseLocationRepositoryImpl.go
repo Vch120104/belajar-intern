@@ -79,7 +79,8 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 	err := tx.Model(entities).
 		Select(`"mtr_warehouse_location"."is_active",
 		"mtr_warehouse_location"."warehouse_location_id",
-		mtr_warehouse_master.company_id,
+		"mtr_warehouse_master"."company_id",
+		"mtr_warehouse_master"."warehouse_id",
 		"mtr_warehouse_location"."warehouse_group_id",
 		"mtr_warehouse_location"."warehouse_location_code",
 		"mtr_warehouse_location"."warehouse_location_name",
@@ -97,6 +98,13 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 		First(&warehouseLocationResponse).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return warehouseLocationResponse, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "warehouse location not found",
+				Err:        err,
+			}
+		}
 		return warehouseLocationResponse, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,

@@ -13,7 +13,7 @@ type GetCompanyByIdResponses struct {
 	BusinessCategoryId     int         `json:"business_category_id"`
 	CompanyPhoneNumber     string      `json:"company_phone_number"`
 	IncentiveGroupId       int         `json:"incentive_group_id"`
-	CompanyNoOfStall       int         `json:"company_no_of_stall"`
+	CompanyNoOfStall       float64     `json:"company_no_of_stall"`
 	CompanyCode            string      `json:"company_code"`
 	CompanyTypeId          int         `json:"company_type_id"`
 	CompanyFaxNumber       string      `json:"company_fax_number"`

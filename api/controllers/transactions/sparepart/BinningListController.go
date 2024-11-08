@@ -1,15 +1,18 @@
 package transactionsparepartcontroller
 
 import (
+	"after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
-	"github.com/go-chi/chi/v5"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type BinningListController interface {
@@ -102,7 +105,6 @@ func (controller *BinningListControllerImpl) GetAllBinningListWithPagination(wri
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
-	return
 }
 
 // InsertBinningListHeader
@@ -119,12 +121,16 @@ func (controller *BinningListControllerImpl) GetAllBinningListWithPagination(wri
 func (controller *BinningListControllerImpl) InsertBinningListHeader(writer http.ResponseWriter, request *http.Request) {
 	var BinningHeader transactionsparepartpayloads.BinningListInsertPayloads
 	helper.ReadFromRequestBody(request, &BinningHeader)
+	if validationErr := validation.ValidationForm(writer, request, &BinningHeader); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	res, err := controller.service.InsertBinningListHeader(BinningHeader)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Header", http.StatusOK)
+	payloads.NewHandleSuccess(writer, res, "Successfully Inserted Binning List Header", http.StatusCreated)
 }
 
 // UpdateBinningListHeader
@@ -141,6 +147,10 @@ func (controller *BinningListControllerImpl) InsertBinningListHeader(writer http
 func (controller *BinningListControllerImpl) UpdateBinningListHeader(writer http.ResponseWriter, request *http.Request) {
 	var BinningHeaderSavePayloads transactionsparepartpayloads.BinningListSavePayload
 	helper.ReadFromRequestBody(request, &BinningHeaderSavePayloads)
+	if validationErr := validation.ValidationForm(writer, request, &BinningHeaderSavePayloads); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	res, err := controller.service.UpdateBinningListHeader(BinningHeaderSavePayloads)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -212,6 +222,10 @@ func (controller *BinningListControllerImpl) GetBinningListDetailWithPagination(
 func (controller *BinningListControllerImpl) InsertBinningListDetail(writer http.ResponseWriter, request *http.Request) {
 	var BinningListSavePayloads transactionsparepartpayloads.BinningListDetailPayloads
 	helper.ReadFromRequestBody(request, &BinningListSavePayloads)
+	if validationErr := validation.ValidationForm(writer, request, &BinningListSavePayloads); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	res, err := controller.service.InsertBinningListDetail(BinningListSavePayloads)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
@@ -224,6 +238,10 @@ func (controller *BinningListControllerImpl) InsertBinningListDetail(writer http
 func (controller *BinningListControllerImpl) UpdateBinningListDetail(writer http.ResponseWriter, request *http.Request) {
 	var BinningListSavePayloads transactionsparepartpayloads.BinningListDetailUpdatePayloads
 	helper.ReadFromRequestBody(request, &BinningListSavePayloads)
+	if validationErr := validation.ValidationForm(writer, request, &BinningListSavePayloads); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	res, err := controller.service.UpdateBinningListDetail(BinningListSavePayloads)
 	if err != nil {
 		helper.ReturnError(writer, request, err)

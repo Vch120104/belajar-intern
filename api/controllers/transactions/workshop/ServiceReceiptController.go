@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"log"
 
 	"net/http"
@@ -150,6 +151,10 @@ func (r *ServiceReceiptControllerImp) Save(writer http.ResponseWriter, request *
 
 	var serviceReceiptSaveRequest transactionworkshoppayloads.ServiceReceiptSaveDataRequest
 	helper.ReadFromRequestBody(request, &serviceReceiptSaveRequest)
+	if validationErr := validation.ValidationForm(writer, request, &serviceReceiptSaveRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	savedData, baseErr := r.ServiceReceiptService.Save(ServiceRequestId, serviceReceiptSaveRequest)
 	if baseErr != nil {

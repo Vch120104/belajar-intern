@@ -208,7 +208,7 @@ func StartRouting(db *gorm.DB) {
 
 	//stock transaction type
 	StockTransactionTypeRepository := masterrepositoryimpl.NewStockTransactionRepositoryImpl()
-	StockTransactionTypeService := masterserviceimpl.NewStockTransactionServiceImpl(StockTransactionTypeRepository, db, rdb)
+	StockTransactionTypeService := masterserviceimpl.NewStockTransactionTypeServiceImpl(StockTransactionTypeRepository, db, rdb)
 	StockTransactionTypeController := mastercontroller.NewStockTransactionTypeController(StockTransactionTypeService)
 
 	//stock transaction reason
@@ -353,6 +353,10 @@ func StartRouting(db *gorm.DB) {
 	ItemInquiryService := transactionsparepartserviceimpl.StartItemInquiryService(ItemInquiryRepository, db, rdb)
 	ItemInquiryController := transactionsparepartcontroller.NewItemInquiryController(ItemInquiryService)
 
+	//stock transaction
+	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
+	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
+	StockTransactionController := transactionsparepartcontroller.StartStockTransactionControllerImpl(StockTransactionService)
 	//Work Order Allocation
 	WorkOrderAllocationRepository := transactionworkshoprepositoryimpl.OpenWorkOrderAllocationRepositoryImpl()
 	WorkOrderAllocationService := transactionworkshopserviceimpl.OpenWorkOrderAllocationServiceImpl(WorkOrderAllocationRepository, db, rdb)
@@ -413,6 +417,16 @@ func StartRouting(db *gorm.DB) {
 	ServiceBodyshopService := transactionbodyshopserviceimpl.OpenServiceBodyshopServiceImpl(ServiceBodyshopRepository, db, rdb)
 	ServiceBodyshopController := transactionbodyshopcontroller.NewServiceBodyshopController(ServiceBodyshopService)
 
+	//Contract Service
+	ContractServiceRepository := transactionworkshoprepositoryimpl.OpenContractServicelRepositoryImpl()
+	ContractServiceService := transactionworkshopserviceimpl.OpenContractServiceServiceImpl(ContractServiceRepository, db, rdb)
+	ContractServiceController := transactionworkshopcontroller.NewContractServiceController(ContractServiceService)
+
+	//Contract Service Detail
+	ContractServiceDetailRepository := transactionworkshoprepositoryimpl.OpenContractServicelDetailRepositoryImpl()
+	ContractServiceDetailService := transactionworkshopserviceimpl.OpenContractServiceDetailServiceImpl(ContractServiceDetailRepository, db, rdb)
+	ContractServiceDetailController := transactionworkshopcontroller.NewContractServiceDetailController(ContractServiceDetailService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -448,7 +462,7 @@ func StartRouting(db *gorm.DB) {
 	WarehouseCostingType := WarehouseCostingTypeMasterRouter(warehouseCostingTypeController)
 	StockTransactionTypeRouter := StockTransactionTypeRouter(StockTransactionTypeController)
 	StockTransactionReasonRouter := StockTransactionReasonRouter(StockTransactionReasonController)
-
+	StockTransactionRouter := StockTransactionRouter(StockTransactionController)
 	SkillLevelRouter := SkillLevelRouter(SkillLevelController)
 	ShiftScheduleRouter := ShiftScheduleRouter(ShiftScheduleController)
 	unitOfMeasurementRouter := UnitOfMeasurementRouter(unitOfMeasurementController)
@@ -491,6 +505,8 @@ func StartRouting(db *gorm.DB) {
 	BinningListRouter := BinningListRouter(BinningListController)
 	ItemInquiryRouter := ItemInquiryRouter(ItemInquiryController)
 	LookupRouter := LookupRouter(LookupController)
+	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
+	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -577,7 +593,10 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/work-order-bypass", WorkOrderBypassRouter)
 		r.Mount("/quality-control", QualityControlRouter)
 		r.Mount("/service-workshop", ServiceWorkshopRouter)
+		r.Mount("/contract-service", ContractServiceRouter)
+		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
 
+		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
 		r.Mount("/service-bodyshop", ServiceBodyshopRouter)
 		r.Mount("/quality-control-bodyshop", QualityControlBodyshopRouter)

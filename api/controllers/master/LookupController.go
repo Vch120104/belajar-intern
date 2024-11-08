@@ -2,6 +2,7 @@ package mastercontroller
 
 import (
 	exceptions "after-sales/api/exceptions"
+	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
@@ -30,6 +31,7 @@ type LookupController interface {
 	WorkOrderService(writer http.ResponseWriter, request *http.Request)
 	ListItemLocation(writer http.ResponseWriter, request *http.Request)
 	WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request)
+	ItemListTrans(writer http.ResponseWriter, request *http.Request)
 	ItemListTransPL(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -556,6 +558,38 @@ func (r *LookupControllerImpl) WarehouseGroupByCompany(writer http.ResponseWrite
 	payloads.NewHandleSuccess(writer, warehouse, "Get Data Successfully", http.StatusOK)
 }
 
+func (r *LookupControllerImpl) ItemListTrans(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"mtr_item.item_code":     queryValues.Get("item_code"),
+		"mtr_item.item_name":     queryValues.Get("item_name"),
+		"mtr_item.item_class_id": queryValues.Get("item_class_id"),
+		"mic.item_class_code":    queryValues.Get("item_class_code"),
+		"mic.item_class_name":    queryValues.Get("item_class_name"),
+		"mit.item_type_code":     queryValues.Get("item_type_code"),
+		"mil1.item_level_1_code": queryValues.Get("item_level_1_code"),
+		"mil2.item_level_2_code": queryValues.Get("item_level_2_code"),
+		"mil3.item_level_3_code": queryValues.Get("item_level_3_code"),
+		"mil4.item_level_4_code": queryValues.Get("item_level_4_code"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	item, baseErr := r.LookupService.ItemListTrans(criteria, paginate)
+	if baseErr != nil {
+		helper.ReturnError(writer, request, baseErr)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
 func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	companyIdstr := queryValues.Get("company_id")
@@ -571,10 +605,11 @@ func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, reque
 		"mtr_item.item_code":     queryValues.Get("item_code"),
 		"mtr_item.item_name":     queryValues.Get("item_name"),
 		"mic.item_class_code":    queryValues.Get("item_class_code"),
-		"mtr_item.item_type":     queryValues.Get("item_type"),
-		"mtr_item.item_level_1":  queryValues.Get("item_level_1"),
-		"mtr_item.item_level_2":  queryValues.Get("item_level_2"),
-		"mtr_item.item_level_3":  queryValues.Get("item_level_3"),
+		"mit.item_type_code":     queryValues.Get("item_type_code"),
+		"mil1.item_level_1_code": queryValues.Get("item_level_1_code"),
+		"mil2.item_level_2_code": queryValues.Get("item_level_2_code"),
+		"mil3.item_level_3_code": queryValues.Get("item_level_3_code"),
+		"mil4.item_level_4_code": queryValues.Get("item_level_4_code"),
 	}
 
 	if queryParams["mid.brand_id"] == "" {

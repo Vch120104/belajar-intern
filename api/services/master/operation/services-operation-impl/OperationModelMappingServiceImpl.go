@@ -87,6 +87,16 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request 
 	return results, nil
 }
 
+func (s *OperationModelMappingServiceImpl) DeleteOperationLevel(ids []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.operationModelMappingRepo.DeleteOperationLevel(tx, ids)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return result, nil
+}
+
 func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationModelMappingRepo.DeactivateOperationFrt(tx, id)

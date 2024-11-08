@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -115,7 +116,10 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePrice(writer http.ResponseWr
 	var formRequest masteritempayloads.PurchasePriceRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	PurchasePriceId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_id")) // Get Purchase Price ID from URL
 
 	if errA != nil {
@@ -147,7 +151,10 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 	var formRequest masteritempayloads.PurchasePriceRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	create, err := r.PurchasePriceService.SavePurchasePrice(formRequest)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -316,7 +323,10 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePriceDetail(writer http.Resp
 	var formRequest masteritempayloads.PurchasePriceDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	PurchasePriceDetailId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id")) // Get Purchase Price ID from URL
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
@@ -347,7 +357,10 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 	var formRequest masteritempayloads.PurchasePriceDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	create, err := r.PurchasePriceService.AddPurchasePrice(formRequest)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)

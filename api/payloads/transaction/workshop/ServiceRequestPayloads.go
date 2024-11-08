@@ -222,10 +222,16 @@ type CompanyResponse struct {
 	BizCategory string `json:"biz_category"`
 }
 
+type ServiceRequestStatus struct {
+	ServiceRequestStatusID          int    `json:"service_request_status_id"`
+	ServiceRequestStatusCode        string `json:"service_request_status_code"`
+	ServiceRequestStatusDescription string `json:"service_request_status_description"`
+}
+
 type ServiceRequestStatusResponse struct {
-	ServiceRequestStatusId   int    `json:"service_request_status_id"`
-	ServiceRequestStatusCode string `json:"service_request_status_code"`
-	ServiceRequestStatusName string `json:"service_request_status_description"`
+	StatusCode int                    `json:"status_code"`
+	Message    string                 `json:"message"`
+	Data       []ServiceRequestStatus `json:"data"`
 }
 
 type ServiceRequestBookingEstimation struct {

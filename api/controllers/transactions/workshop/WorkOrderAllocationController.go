@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"log"
 	"strconv"
 	"time"
@@ -330,6 +331,10 @@ func (r *WorkOrderAllocationControllerImp) NewAssignTechnician(writer http.Respo
 
 	var req transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest
 	helper.ReadFromRequestBody(request, &req)
+	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	// Pass the parsed date to your service
 	entity, baseErr := r.WorkOrderAllocationService.NewAssignTechnician(serviceRequestDate, technicianId, req)
@@ -384,6 +389,10 @@ func (r *WorkOrderAllocationControllerImp) SaveAssignTechnician(writer http.Resp
 
 	var req transactionworkshoppayloads.WorkOrderAllocationAssignTechnicianRequest
 	helper.ReadFromRequestBody(request, &req)
+	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	entity, baseErr := r.WorkOrderAllocationService.SaveAssignTechnician(serviceRequestDate, technicianId, AssignId, req)
 	if baseErr != nil {
@@ -501,6 +510,10 @@ func (r *WorkOrderAllocationControllerImp) SaveAllocateDetail(writer http.Respon
 
 	var req transactionworkshoppayloads.WorkOrderAllocationDetailRequest
 	helper.ReadFromRequestBody(request, &req)
+	if validationErr := validation.ValidationForm(writer, request, &req); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	entity, baseErr := r.WorkOrderAllocationService.SaveAllocateDetail(serviceRequestDate, technicianId, req, foremanId, companyId)
 	if baseErr != nil {

@@ -7,6 +7,7 @@ import (
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"errors"
 	"strconv"
 
@@ -157,6 +158,10 @@ func (r *OperationEntriesControllerImpl) SaveOperationEntries(writer http.Respon
 	var requestForm masteroperationpayloads.OperationEntriesResponse
 	var message = ""
 	helper.ReadFromRequestBody(request, &requestForm)
+	if validationErr := validation.ValidationForm(writer, request, &requestForm); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	create, err := r.operationEntriesService.SaveOperationEntries(requestForm)
 
