@@ -27,9 +27,9 @@ func StartOperationGroupService(operationGroupRepo masteroperationrepository.Ope
 	}
 }
 
-func (s *OperationGroupServiceImpl) GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
+func (s *OperationGroupServiceImpl) GetOperationGroupDropDown() ([]masteroperationpayloads.OperationGroupDropDownResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	get, err := s.operationGroupRepo.GetAllOperationGroupIsActive(tx)
+	get, err := s.operationGroupRepo.GetOperationGroupDropDown(tx)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
