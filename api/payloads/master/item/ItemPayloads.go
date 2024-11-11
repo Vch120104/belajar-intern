@@ -59,7 +59,7 @@ type ItemResponse struct {
 	UomItemId                    int     `json:"uom_item_id"`
 	SourceUomId                  int     `    json:"source_uom_id"`
 	TargetUomId                  int     `    json:"target_uom_id"`
-	PriceListItem                string  `json:"price_list_item"`
+	PriceListItem                bool    `json:"price_list_item"`
 	DimensionOfLength            float64 `json:"dimension_of_length"`
 	DimensionOfWidth             float64 `json:"dimension_of_width"`
 	DimensionOfHeight            float64 `json:"dimension_of_height"`
@@ -70,7 +70,7 @@ type ItemResponse struct {
 	UseDiscDecentralize          bool    `json:"use_disc_decentralize"`
 	IsMaterialPlus               bool    `json:"is_material_plus"`
 	IsMandatory                  bool    `json:"is_mandatory"`
-	AtpmVendorSuppliability      string  `json:"atpm_vendor_suppliability"`
+	AtpmVendorSuppliability      bool    `json:"atpm_vendor_suppliability"`
 	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
 }
 
