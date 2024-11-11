@@ -72,29 +72,6 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterC
 	return pages, nil
 }
 
-func (r *OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
-	entities := masteroperationentities.OperationGroup{}
-	response := masteroperationpayloads.OperationGroupResponse{}
-
-	rows, err := tx.Model(&entities).
-		Where(masteroperationentities.OperationGroup{
-			OperationGroupId: Id,
-		}).
-		First(&response).
-		Rows()
-
-	if err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	defer rows.Close()
-
-	return response, nil
-}
-
 func (r *OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
 	entities := masteroperationentities.OperationGroup{}
 	response := masteroperationpayloads.OperationGroupResponse{}
@@ -192,4 +169,30 @@ func (r *OperationGroupRepositoryImpl) GetOperationGroupDropDown(tx *gorm.DB) ([
 		}
 	}
 	return operationGroupDropDownResponse, nil
+}
+
+func (r *OperationGroupRepositoryImpl) GetOperationGroupById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
+	entities := masteroperationentities.OperationGroup{}
+	response := masteroperationpayloads.OperationGroupResponse{}
+
+	err := tx.Model(&entities).
+		Where(masteroperationentities.OperationGroup{
+			OperationGroupId: Id,
+		}).
+		First(&entities).
+		Error
+
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	response.OperationGroupId = entities.OperationGroupId
+	response.OperationGroupCode = entities.OperationGroupCode
+	response.OperationGroupDescription = entities.OperationGroupDescription
+	response.IsActive = entities.IsActive
+
+	return response, nil
 }

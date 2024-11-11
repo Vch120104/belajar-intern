@@ -27,6 +27,7 @@ type OperationGroupController interface {
 	GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request)
 	SaveOperationGroup(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationGroup(writer http.ResponseWriter, request *http.Request)
+	GetOperationGroupById(writer http.ResponseWriter, request *http.Request)
 }
 type OperationGroupControllerImpl struct {
 	OperationGroupService masteroperationservice.OperationGroupService
@@ -186,4 +187,22 @@ func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.Re
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationGroupControllerImpl) GetOperationGroupById(writer http.ResponseWriter, request *http.Request) {
+
+	OperationGroupId, errA := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.OperationGroupService.GetOperationGroupById(int(OperationGroupId))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
