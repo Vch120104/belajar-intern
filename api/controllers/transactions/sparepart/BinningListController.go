@@ -25,6 +25,8 @@ type BinningListController interface {
 	InsertBinningListDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateBinningListDetail(writer http.ResponseWriter, request *http.Request)
 	SubmitBinningList(writer http.ResponseWriter, request *http.Request)
+	DeleteBinningList(writer http.ResponseWriter, request *http.Request)
+	DeleteBinningListDetailMultiId(writer http.ResponseWriter, request *http.Request)
 }
 
 type BinningListControllerImpl struct {
@@ -258,6 +260,25 @@ func (controller *BinningListControllerImpl) SubmitBinningList(writer http.Respo
 		helper.ReturnError(writer, request, err)
 		return
 	}
-	payloads.NewHandleSuccess(writer, res, "Successfully Submit Binning List Detail", http.StatusOK)
+	payloads.NewHandleSuccess(writer, res, "Successfully Submit Binning List", http.StatusOK)
 
+}
+func (controller *BinningListControllerImpl) DeleteBinningList(writer http.ResponseWriter, request *http.Request) {
+	BinningStockSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "binning_system_number"))
+	res, err := controller.service.DeleteBinningList(BinningStockSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Delete Binning List", http.StatusOK)
+}
+
+func (controller *BinningListControllerImpl) DeleteBinningListDetailMultiId(writer http.ResponseWriter, request *http.Request) {
+	BinningStockDetailSystemNumber := chi.URLParam(request, "binning_detail_multi_id")
+	res, err := controller.service.DeleteBinningListDetailMultiId(BinningStockDetailSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "Successfully Delete Binning List Detail Multi Id", http.StatusOK)
 }

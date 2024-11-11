@@ -12,6 +12,7 @@ import (
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"math"
@@ -2054,12 +2055,15 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//UPDATE atItemPO0
 	//
 	//get document status id for approved
-	ApprovedStatusId := GetApprovalStatusId("20")
+	ApprovedStatus, errs := generalserviceapiutils.GetApprovalStatusByCode("20")
+	if errs != nil {
+		return false, errs
+	}
 	//masi dummy anggap always true belum ada
 	//dbo.getApprovalCodeBrand
 	//dan approvalreqrfp
 	if true { //ISNULL(@Approval_Req_No, 0)
-		poEntities.PurchaseOrderStatusId = ApprovedStatusId
+		poEntities.PurchaseOrderStatusId = ApprovedStatus.ApprovalStatusId
 		poEntities.PurchaseOrderRemark = payloads.PurchaseOrderRemark
 		*poEntities.LastTotalDiscount = *poEntities.TotalDiscount
 		*poEntities.TotalAmount = *poEntities.TotalAmountConfirm
