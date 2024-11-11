@@ -142,6 +142,44 @@ func (r *WarehouseMasterImpl) Save(tx *gorm.DB, request masterwarehousepayloads.
 	return warehouseMaster, nil
 }
 
+func (r *WarehouseMasterImpl) Update(tx *gorm.DB, warehouseId int, companyId int, request masterwarehousepayloads.UpdateWarehouseMasterRequest) (masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
+	var warehouseMaster = masterwarehouseentities.WarehouseMaster{
+		IsActive:                      utils.BoolPtr(request.IsActive),
+		WarehouseCostingTypeId:        request.WarehouseCostingTypeId,
+		WarehouseKaroseri:             utils.BoolPtr(request.WarehouseKaroseri),
+		WarehouseNegativeStock:        utils.BoolPtr(request.WarehouseNegativeStock),
+		WarehouseReplishmentIndicator: utils.BoolPtr(request.WarehouseReplishmentIndicator),
+		WarehouseContact:              request.WarehouseContact,
+		WarehouseCode:                 request.WarehouseCode,
+		AddressId:                     request.AddressId,
+		BrandId:                       request.BrandId,
+		SupplierId:                    request.SupplierId,
+		UserId:                        request.UserId,
+		CompanyId:                     request.CompanyId,
+		WarehouseId:                   request.WarehouseId,
+		WarehouseSalesAllow:           utils.BoolPtr(request.WarehouseSalesAllow),
+		WarehouseInTransit:            utils.BoolPtr(request.WarehouseInTransit),
+		WarehouseName:                 request.WarehouseName,
+		WarehouseDetailName:           request.WarehouseDetailName,
+		WarehouseTransitDefault:       request.WarehouseTransitDefault,
+		WarehouseGroupId:              request.WarehouseGroupId,
+		WarehousePhoneNumber:          request.WarehousePhoneNumber,
+		WarehouseFaxNumber:            request.WarehouseFaxNumber,
+	}
+
+	if err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
+		Where("warehouse_id = ? AND company_id = ?", warehouseId, companyId).
+		Updates(&warehouseMaster).Error; err != nil {
+		return masterwarehouseentities.WarehouseMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update warehouse master",
+			Err:        err,
+		}
+	}
+
+	return warehouseMaster, nil
+}
+
 func (r *WarehouseMasterImpl) DropdownWarehouse(tx *gorm.DB) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 
 	var warehouseMasterResponse []masterwarehousepayloads.DropdownWarehouseMasterResponse
@@ -203,6 +241,7 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 		BrandId:                       entities.BrandId,
 		SupplierId:                    entities.SupplierId,
 		UserId:                        entities.UserId,
+		CompanyId:                     entities.CompanyId,
 		WarehouseSalesAllow:           *entities.WarehouseSalesAllow,
 		WarehouseInTransit:            *entities.WarehouseInTransit,
 		WarehouseName:                 entities.WarehouseName,

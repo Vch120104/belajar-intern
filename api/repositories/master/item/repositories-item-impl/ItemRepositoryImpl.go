@@ -345,10 +345,24 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*, mil1.*, mil2.*, mil3.*, mil4.*").
-		Where(masteritementities.Item{
-			ItemCode: code,
-		}).
+	rows, err := tx.Model(&entities).
+		Select(`
+			mtr_item.*,
+			mil1.item_level_1_code,
+			mil1.item_level_1_name,
+			mil2.item_level_2_code,
+			mil2.item_level_2_name,
+			mil3.item_level_3_code,
+			mil3.item_level_3_name,
+			mil4.item_level_4_code,
+			mil4.item_level_4_name,
+			u.uom_item_id,
+			u.source_uom_id,
+			u.target_uom_id,
+			u.source_convertion,
+			u.target_convertion
+		`).
+		Where(masteritementities.Item{ItemCode: code}).
 		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
 		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
 		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
