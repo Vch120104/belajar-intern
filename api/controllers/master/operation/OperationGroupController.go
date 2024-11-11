@@ -23,10 +23,11 @@ import (
 
 type OperationGroupController interface {
 	GetAllOperationGroup(writer http.ResponseWriter, request *http.Request)
-	GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request)
+	GetOperationGroupDropDown(writer http.ResponseWriter, request *http.Request)
 	GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request)
 	SaveOperationGroup(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationGroup(writer http.ResponseWriter, request *http.Request)
+	GetOperationGroupById(writer http.ResponseWriter, request *http.Request)
 }
 type OperationGroupControllerImpl struct {
 	OperationGroupService masteroperationservice.OperationGroupService
@@ -88,9 +89,9 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/drop-down [get]
-func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request) {
+func (r *OperationGroupControllerImpl) GetOperationGroupDropDown(writer http.ResponseWriter, request *http.Request) {
 
-	result, err := r.OperationGroupService.GetAllOperationGroupIsActive()
+	result, err := r.OperationGroupService.GetOperationGroupDropDown()
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
@@ -186,4 +187,22 @@ func (r *OperationGroupControllerImpl) ChangeStatusOperationGroup(writer http.Re
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationGroupControllerImpl) GetOperationGroupById(writer http.ResponseWriter, request *http.Request) {
+
+	OperationGroupId, errA := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.OperationGroupService.GetOperationGroupById(int(OperationGroupId))
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

@@ -112,3 +112,13 @@ func (s *UnitOfMeasurementServiceImpl) GetUnitOfMeasurementItem(payload masterit
 	}
 	return results, nil
 }
+
+func (s *UnitOfMeasurementServiceImpl) GetQuantityConversion(payload masteritempayloads.UomGetQuantityConversion) (masteritempayloads.GetQuantityConversionResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.unitOfMeasurementRepo.GetQuantityConversion(tx, payload)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
