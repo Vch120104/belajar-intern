@@ -5,7 +5,9 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -32,6 +34,68 @@ type SupplierMasterResponse struct {
 	SupplierTypeId            int                       `json:"supplier_type_id"`
 	SupplierMasterVatResponse SupplierMasterVatResponse `json:"vat_supplier"`
 	ClientTypeId              int                       `json:"client_type_id"`
+}
+
+type SupplierMasterParams struct {
+	Page                      int    `json:"page"`
+	Limit                     int    `json:"limit"`
+	SupplierCode              string `json:"supplier_code"`
+	SupplierName              string `json:"supplier_name"`
+	ClientTypeCode            string `json:"client_type_code"`
+	ClientTypeDescription     string `json:"client_type_description"`
+	CompanyId                 string `json:"company_id"`
+	Address_1                 string `json:"address_1"`
+	Address_2                 string `json:"address_2"`
+	Address_3                 string `json:"address_3"`
+	IsActive                  string `json:"is_active"`
+	SupplierStatusDescription string `json:"supplier_status_description"`
+	SortBy                    string `json:"sort_by"`
+	SortOf                    string `json:"sort_of"`
+}
+
+type SupplierMasterGetAllResponse struct {
+	StatusCode int                      `json:"status_code"`
+	Message    string                   `json:"message"`
+	Page       int                      `json:"page"`
+	PageLimit  int                      `json:"page_limit"`
+	TotalRows  int                      `json:"total_rows"`
+	TotalPages int                      `json:"total_pages"`
+	Data       []SupplierMasterResponse `json:"data"`
+}
+
+func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResponse, *exceptions.BaseErrorResponse) {
+	var getSupplierMaster SupplierMasterGetAllResponse
+	if params.Limit == 0 {
+		params.Limit = 1000000
+	}
+
+	baseURL := config.EnvConfigs.GeneralServiceUrl + "supplier"
+
+	queryParams := fmt.Sprintf("page=%d&limit=%d", params.Page, params.Limit)
+
+	v := reflect.ValueOf(params)
+	typeOfParams := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		value := v.Field(i).Interface()
+		if strVal, ok := value.(string); ok && strVal != "" {
+			key := typeOfParams.Field(i).Tag.Get("json")
+			value := strings.ReplaceAll(strVal, " ", "%20")
+			queryParams += "&" + key + "=" + value
+		}
+	}
+
+	url := baseURL + "?" + queryParams
+
+	err := utils.GetArray(url, nil, &getSupplierMaster)
+	if err != nil {
+		return getSupplierMaster, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error fetching get all supplier",
+			Err:        errors.New("failed to retrieve supplier data"),
+		}
+	}
+
+	return getSupplierMaster, nil
 }
 
 func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
