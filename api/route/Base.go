@@ -713,6 +713,7 @@ func OperationSectionRouter(
 	router.Get("/by-id/{operation_section_id}", operationSectionController.GetOperationSectionByID)
 	router.Get("/by-name", operationSectionController.GetOperationSectionName)
 	router.Get("/code-by-group-id/{operation_group_id}", operationSectionController.GetSectionCodeByGroupId)
+	router.Get("/drop-down/{operation_group_id}", operationSectionController.GetOperationSectionDropDown)
 	router.Post("/", operationSectionController.SaveOperationSection)
 	router.Patch("/{operation_section_id}", operationSectionController.ChangeStatusOperationSection)
 
