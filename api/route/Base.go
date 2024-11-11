@@ -10,7 +10,6 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -100,6 +99,7 @@ func UnitOfMeasurementRouter(
 	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
 	router.Patch("/{uom_id}", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
 	router.Get("/{item_id}/{source_type}", unitOfMeasurementController.GetUnitOfMeasurementItem)
+	router.Post("/get_quantity_conversion", unitOfMeasurementController.GetQuantityConversion)
 
 	return router
 }
