@@ -28,6 +28,46 @@ import (
 type BinningListRepositoryImpl struct {
 }
 
+func (b *BinningListRepositoryImpl) GetReferenceNumberTypoPOWithPagination(db *gorm.DB, filter []utils.FilterCondition, paginations pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	//var purchaseOrderEntities []transactionsparepartentities.PurchaseOrderEntities
+	var purchaseOrderEntities []transactionsparepartentities.PurchaseOrderEntities
+	joinTable := db.Table(`trx_item_purchase_order A`).
+		Select(`	A.purchase_order_document_date,
+						A.purchase_order_document_number,
+						A.supplier_id
+`)
+	WhereQuery := utils.ApplyFilter(joinTable, filter)
+	err := WhereQuery.Scopes(pagination.Paginate(&transactionsparepartentities.PurchaseOrderEntities{}, &paginations, WhereQuery)).Order("purchase_order_document_number").Scan(&purchaseOrderEntities).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return paginations, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to to paginate purchase order reference type",
+			Err:        errors.New("failed To Get Paginate purchase order reference type"),
+		}
+	}
+	if len(purchaseOrderEntities) == 0 {
+		paginations.Rows = []string{}
+		return paginations, nil
+	}
+	var responsePO []transactionsparepartpayloads.BinningListReferenceDocumentNumberTypePOResponse
+
+	for _, item := range purchaseOrderEntities {
+		supplierRes, errRes := generalserviceapiutils.GetSupplierMasterByID(item.SupplierId)
+		if errRes != nil {
+			return paginations, errRes
+		}
+		responsePO = append(responsePO, transactionsparepartpayloads.BinningListReferenceDocumentNumberTypePOResponse{
+			PurchaseNumber: item.PurchaseOrderDocumentNumber,
+			DocumentDate:   *item.PurchaseOrderDocumentDate,
+			SupplierCode:   supplierRes.SupplierCode,
+			SupplierName:   supplierRes.SupplierName,
+			SupplierId:     item.SupplierId,
+		})
+	}
+	paginations.Rows = responsePO
+	return paginations, nil
+}
+
 func NewbinningListRepositoryImpl() transactionsparepartrepository.BinningListRepository {
 	return &BinningListRepositoryImpl{}
 }

@@ -575,7 +575,9 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Patch("/detail", BinningList.UpdateBinningListDetail)
 	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
 	router.Delete("/delete/{binning_system_number}", BinningList.DeleteBinningList)
-	router.Delete("/detail/delete/{binning_detail_multi_id}", BinningList.DeleteBinningListDetailMultiId) //router.Post("/{binning_system_number}",BinningList)
+	router.Delete("/detail/delete/{binning_detail_multi_id}", BinningList.DeleteBinningListDetailMultiId)
+	router.Get("/reference-type-purchase-order", BinningList.GetReferenceNumberTypoPOWithPagination)
+	//router.Post("/{binning_system_number}",BinningList)
 	return router
 }
 func PurchaseOrderRouter(
