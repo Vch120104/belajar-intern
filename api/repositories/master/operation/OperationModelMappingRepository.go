@@ -30,4 +30,5 @@ type OperationModelMappingRepository interface {
 	GetOperationLevelById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse)
 	ActivateOperationLevel(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
 	DeactivateOperationLevel(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
+	DeleteOperationLevel(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse)
 }

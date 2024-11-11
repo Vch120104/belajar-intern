@@ -12,8 +12,8 @@ type ItemSubstitute struct {
 	ItemSubstituteId int       `gorm:"column:item_substitute_id;not null;size:30;primaryKey" json:"item_substitute_id"`
 	EffectiveDate    time.Time `gorm:"column:effective_date;not null;" json:"effective_date"`
 	ItemId           int       `gorm:"column:item_id;not null;size:30" json:"item_id"`
-	Item             *Item
-	Description      string `gorm:"column:description;nullable;size:250;defaullt:null" json:"description"`
+	Item             Item      `gorm:"foreignKey:ItemId;references:ItemId" json:"item"`
+	Description      string    `gorm:"column:description;nullable;size:250;defaullt:null" json:"description"`
 }
 
 func (*ItemSubstitute) TableName() string {

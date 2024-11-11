@@ -15,7 +15,7 @@ import (
 
 	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
-	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
+	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"``
 
 	"time"
 
@@ -91,9 +91,14 @@ func Migrate() {
 	//&masteritementities.Uom{},
 	// &masteritementities.UomItem{},
 	//&masteritementities.MarkupRate{},
-	//&masteritementities.PrincipleBrandParent{},
+	//&masteritementities.PrincipalCatalog{},
+	//&masteritementities.PrincipalBrandParent{},
 	//&masteritementities.MarkupMaster{},
 	//&masteritementities.ItemLevel{},
+	//&masteritementities.ItemLevel1{},
+	//&masteritementities.ItemLevel2{},
+	//&masteritementities.ItemLevel3{},
+	//&masteritementities.ItemLevel4{},
 	//&masteritementities.PriceList{},
 	//&masteritementities.ItemSubstituteDetail{},
 	//&masteritementities.ItemSubstitute{},
@@ -102,11 +107,12 @@ func Migrate() {
 	//&masteritementities.ItemImport{},
 	//&masteritementities.ItemDetail{},
 	//&masteritementities.ItemLocationSource{},
-	// &masteritementities.Item{},
+	//&masteritementities.Item{},
 	// &masteritementities.ItemPriceCode{},
+	//&masteritementities.ItemGroup{},
 
-	//&masteritementities.ItemLocation{},
-	//&masteritementities.ItemLocationDetail{},
+	// &masteritementities.ItemLocation{},
+	// &masteritementities.ItemLocationDetail{},
 	//&masteritementities.ItemClass{},
 	//&masteritementities.Bom{},
 	//&masteritementities.BomDetail{},
@@ -137,6 +143,7 @@ func Migrate() {
 	//&masterentities.AgreementItemDetail{},
 	//&masterentities.CampaignMaster{},
 	// &masterentities.CampaignMasterDetail{},
+	// &masterentities.GroupStock{},
 	//
 	//&masterentities.FieldAction{},
 	//&masterentities.FieldActionEligibleVehicleItem{},
@@ -152,6 +159,12 @@ func Migrate() {
 	//&masterentities.BinningTypeMaster{},
 	//&masterentities.BinningReferenceTypeMaster{},
 	//&masterentities.ItemClaimType{},
+	//&masterentities.GoodsReceiveReferenceType{},
+	//&masterentities.GoodsReceiveDocumentStatus{},
+	//&masterwarehouseentities.WarehouseCostingType{},
+	//&masterentities.StockTransactionType{},
+	//&masterentities.StockTransactionReason{},
+
 	//
 
 	//&transactionjpcbentities.SettingTechnician{},
@@ -214,6 +227,9 @@ func Migrate() {
 	//&transactionsparepartentities.PurchaseOrderLimit{},
 	//transactionsparepartentities.ItemClaim{},
 	//transactionsparepartentities.ItemClaimDetail{},
+	//&transactionsparepartentities.StockTransaction{},
+	//&transactionsparepartentities.GoodsReceiveDetail{},
+	// &transactionsparepartentities.GoodsReceive{},
 	)
 	if err != nil {
 		log.Printf("%s Failed with error: %s", logEntry, err)

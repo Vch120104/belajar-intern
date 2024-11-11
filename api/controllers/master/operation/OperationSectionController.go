@@ -3,6 +3,7 @@ package masteroperationcontroller
 import (
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
+	"after-sales/api/validation"
 	"errors"
 
 	"after-sales/api/payloads"
@@ -25,6 +26,7 @@ type OperationSectionController interface {
 	GetOperationSectionName(writer http.ResponseWriter, request *http.Request)
 	SaveOperationSection(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationSection(writer http.ResponseWriter, request *http.Request)
+	GetOperationSectionDropDown(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationSectionControllerImpl struct {
@@ -173,6 +175,10 @@ func (r *OperationSectionControllerImpl) GetOperationSectionName(writer http.Res
 func (r *OperationSectionControllerImpl) SaveOperationSection(writer http.ResponseWriter, request *http.Request) {
 	var formRequest masteroperationpayloads.OperationSectionRequest
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	var message = ""
 
@@ -218,4 +224,20 @@ func (r *OperationSectionControllerImpl) ChangeStatusOperationSection(writer htt
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationSectionControllerImpl) GetOperationSectionDropDown(writer http.ResponseWriter, request *http.Request) {
+
+	operationGroupId, err := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Operation Group Id", http.StatusBadRequest)
+		return
+	}
+
+	result, errr := r.operationsectionservice.GetOperationSectionDropDown(operationGroupId)
+	if errr != nil {
+		exceptions.NewNotFoundException(writer, request, errr)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

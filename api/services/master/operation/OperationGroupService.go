@@ -9,7 +9,7 @@ import (
 
 type OperationGroupService interface {
 	GetAllOperationGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetAllOperationGroupIsActive() ([]masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse)
+	GetOperationGroupDropDown() ([]masteroperationpayloads.OperationGroupDropDownResponse, *exceptions.BaseErrorResponse)
 	GetOperationGroupById(int) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse)
 	GetOperationGroupByCode(string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationGroup(int) (bool, *exceptions.BaseErrorResponse)

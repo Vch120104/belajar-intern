@@ -5,6 +5,7 @@ import (
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -155,7 +156,10 @@ func (r *WarehouseLocationDefinitionControllerImpl) Save(writer http.ResponseWri
 	var message string
 	var formRequest masterwarehousepayloads.WarehouseLocationDefinitionResponse
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	save, err := r.WarehouseLocationDefinitionService.Save(formRequest)
 
 	if formRequest.WarehouseLocationDefinitionId == 0 {

@@ -1,0 +1,126 @@
+package generalserviceapiutils
+
+import (
+	"after-sales/api/config"
+	"after-sales/api/exceptions"
+	"after-sales/api/utils"
+	"errors"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+type CustomerMasterVatResponse struct {
+	NpwpNumber         string `json:"npwp_no"`
+	NpwpDate           string `json:"npwp_date"`
+	PkpType            bool   `json:"pkp_type"`
+	PkpNumber          string `json:"pkp_no"`
+	PkpDate            string `json:"pkp_date"`
+	TaxTransactionId   int    `json:"tax_transaction_id"`
+	Name               string `json:"name"`
+	AddressStreet1     string `json:"address_street_1"`
+	AddressStreet2     string `json:"address_street_2"`
+	AddressStreet3     string `json:"address_street_3"`
+	VillageId          int    `json:"village_id"`
+	TaxServiceOfficeId int    `json:"tax_service_office_id"`
+}
+
+type CustomerMasterDetailResponse struct {
+	IsActive                  bool                      `json:"is_active"`
+	CustomerId                int                       `json:"customer_id"`
+	CustomerCode              string                    `json:"customer_code"`
+	CustomerName              string                    `json:"customer_name"`
+	CustomerTitlePrefix       string                    `json:"customer_title_prefix"`
+	CustomerTitleSuffix       string                    `json:"customer_title_suffix"`
+	ClientTypeId              int                       `json:"client_type_id"`
+	IdType                    int                       `json:"id_type"`
+	IdNumber                  string                    `json:"id_number"`
+	AddressId                 int                       `json:"id_address_id"`
+	CustomerMasterVatResponse CustomerMasterVatResponse `json:"vat_customer"`
+	TaxCustomer               TaxCustomer               `json:"tax_customer"`
+}
+
+type TaxCustomer struct {
+	NpwpNumber string `json:"npwp_no"`
+}
+
+type CustomerMasterResponse struct {
+	CustomerId   int    `json:"customer_id"`
+	CustomerCode string `json:"customer_code"`
+	CustomerName string `json:"customer_name"`
+	IdType       int    `json:"id_type"`
+}
+
+type CustomerMasterByCodeResponse struct {
+	CustomerId   int    `json:"customer_id"`
+	CustomerCode string `json:"customer_code"`
+	CustomerName string `json:"customer_name"`
+	ClientTypeId int    `json:"client_type_id"`
+}
+
+func GetCustomerMasterDetailById(id int) (CustomerMasterDetailResponse, *exceptions.BaseErrorResponse) {
+	var getCustomerMaster CustomerMasterDetailResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "customer-detail/" + strconv.Itoa(id)
+	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
+	if err != nil {
+		return getCustomerMaster, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error consuming external API for customer detail by ID",
+			Err:        err,
+		}
+	}
+	return getCustomerMaster, nil
+}
+
+func GetCustomerMasterByID(id int) (CustomerMasterResponse, *exceptions.BaseErrorResponse) {
+	var getCustomerMaster CustomerMasterResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(id)
+	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
+	if err != nil {
+		return getCustomerMaster, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error consuming external API for customer by ID",
+			Err:        errors.New("error consuming external API for customer by ID"),
+		}
+	}
+	return getCustomerMaster, nil
+}
+
+func GetCustomerMasterByCode(code string) (CustomerMasterByCodeResponse, *exceptions.BaseErrorResponse) {
+	var getCustomerMaster CustomerMasterByCodeResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "customer-code/" + code
+	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
+	if err != nil {
+		return getCustomerMaster, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error consuming external API for customer by code",
+			Err:        errors.New("error consuming external API for customer by code"),
+		}
+	}
+	return getCustomerMaster, nil
+}
+
+func GetCustomerMultiId(ids []int, response interface{}) *exceptions.BaseErrorResponse {
+
+	ids = utils.RemoveDuplicateIds(ids)
+	validIds := make([]string, 0, len(ids))
+
+	for _, id := range ids {
+		if id != 0 {
+			validIds = append(validIds, strconv.Itoa(id))
+		}
+	}
+
+	strIds := "[" + strings.Join(validIds, ",") + "]"
+	url := config.EnvConfigs.GeneralServiceUrl + "customer-multi-id/" + strIds
+
+	err := utils.CallAPI("GET", url, nil, response)
+	if err != nil {
+		return &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error consuming external API for customer by multiple IDs",
+			Err:        errors.New("error consuming external API for customer by multiple IDs"),
+		}
+	}
+	return nil
+}

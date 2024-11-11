@@ -52,10 +52,10 @@ func (r *DeductionRepositoryImpl) GetAllDeduction(tx *gorm.DB, filterCondition [
 	return pages, nil
 }
 
-func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int, pages pagination.Pagination) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
+func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int, pages pagination.Pagination) (masterpayloads.DeductionById, *exceptions.BaseErrorResponse) {
 
 	var entities masterentities.DeductionList
-	var response masterpayloads.DeductionListResponse
+	var response masterpayloads.DeductionById
 	var detail masterentities.DeductionDetail
 
 	err := tx.Model(&entities).
@@ -75,7 +75,7 @@ func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int, pages pa
 		Find(&detailresponse).Error
 
 	if err2 != nil {
-		return masterpayloads.DeductionListResponse{}, &exceptions.BaseErrorResponse{
+		return masterpayloads.DeductionById{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err2,
 		}

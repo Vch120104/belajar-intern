@@ -2,7 +2,7 @@ package masterwarehousepayloads
 
 type SaveWarehouseMasterRequest struct {
 	IsActive                      bool   `json:"is_active"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        int    `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool   `json:"wahouse_negative_stock"`
 	WarehouseReplishmentIndicator bool   `json:"warehouse_replishment_indicator"`
@@ -22,9 +22,9 @@ type SaveWarehouseMasterRequest struct {
 type UpdateWarehouseMasterRequest struct {
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        int    `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
-	WarehouseNegativeStock        bool   `json:"wahouse_negative_stock"`
+	WarehouseNegativeStock        bool   `json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator bool   `json:"warehouse_replishment_indicator"`
 	WarehouseContact              string `json:"warehouse_contact"`
 	WarehouseCode                 string `json:"warehouse_code"`
@@ -32,18 +32,22 @@ type UpdateWarehouseMasterRequest struct {
 	BrandId                       int    `json:"brand_id"`
 	SupplierId                    int    `json:"supplier_id"`
 	UserId                        int    `json:"user_id"`
+	CompanyId                     int    `json:"company_id"`
 	WarehouseSalesAllow           bool   `json:"warehouse_sales_allow"`
 	WarehouseInTransit            bool   `json:"warehouse_in_transit"`
 	WarehouseName                 string `json:"warehouse_name"`
 	WarehouseDetailName           string `json:"warehouse_detail_name"`
 	WarehouseTransitDefault       string `json:"warehouse_transit_default"`
+	WarehouseGroupId              int    `json:"warehouse_group_id"`
+	WarehousePhoneNumber          string `json:"warehouse_phone_number"`
+	WarehouseFaxNumber            string `json:"warehouse_fax_number"`
 }
 
 type GetWarehouseMasterResponse struct {
 	CompanyId                     int    `json:"company_id"`
 	IsActive                      bool   `json:"is_active"`
-	WarehouseId                   int    `json:"warehouse_id"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseId                   int    `json:"warehouse_id,omitempty"`
+	WarehouseCostingTypeId        int    `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool   `json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator bool   `json:"warehouse_replishment_indicator"`
@@ -66,7 +70,7 @@ type GetWarehouseMasterResponse struct {
 type GetAllWarehouseMasterRequest struct {
 	IsActive                      string `json:"is_active"`
 	WarehouseId                   string `json:"warehouse_id"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        string `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             string `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        string `json:"wahouse_negative_stock"`
 	WarehouseReplishmentIndicator string `json:"warehouse_replishment_indicator"`
@@ -86,7 +90,8 @@ type GetAllWarehouseMasterRequest struct {
 type GetAllWarehouseMasterResponse struct {
 	IsActive                      bool                          `json:"is_active"`
 	WarehouseId                   int                           `json:"warehouse_id"`
-	WarehouseCostingType          string                        `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        int                           `json:"warehouse_costing_type_id"`
+	WarehouseCostingTypeCode      string                        `json:"warehouse_costing_type"`
 	WarehouseKaroseri             bool                          `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool                          `json:"warehouse_negative_stock"`
 	WarehouseReplishmentIndicator bool                          `json:"warehouse_replishment_indicator"`
@@ -96,6 +101,7 @@ type GetAllWarehouseMasterResponse struct {
 	BrandId                       int                           `json:"brand_id"`
 	SupplierId                    int                           `json:"supplier_id"`
 	UserId                        int                           `json:"user_id"`
+	CompanyId                     int                           `json:"company_id"`
 	WarehouseSalesAllow           bool                          `json:"warehouse_sales_allow"`
 	WarehouseInTransit            bool                          `json:"warehouse_in_transit"`
 	WarehouseName                 string                        `json:"warehouse_name"`
@@ -111,6 +117,36 @@ type GetAllWarehouseMasterResponse struct {
 	JobPositionDetails            JobPositionResponse           `json:"job_position_details"`
 	VillageDetails                VillageResponse               `json:"village_details"`
 	AuthorizedDetails             AuthorizedUserDetailsResponse `json:"authorized_details"`
+}
+
+type GetAllWarehouseMasterCodeResponse struct {
+	IsActive                      bool                `json:"is_active"`
+	WarehouseId                   int                 `json:"warehouse_id"`
+	WarehouseCostingTypeId        int                 `json:"warehouse_costing_type_id"`
+	WarehouseCostingTypeCode      string              `json:"warehouse_costing_type"`
+	WarehouseKaroseri             bool                `json:"warehouse_karoseri"`
+	WarehouseNegativeStock        bool                `json:"warehouse_negative_stock"`
+	WarehouseReplishmentIndicator bool                `json:"warehouse_replishment_indicator"`
+	WarehouseContact              string              `json:"warehouse_contact"`
+	WarehouseCode                 string              `json:"warehouse_code"`
+	AddressId                     int                 `json:"address_id"`
+	BrandId                       int                 `json:"brand_id"`
+	SupplierId                    int                 `json:"supplier_id"`
+	UserId                        int                 `json:"user_id"`
+	WarehouseSalesAllow           bool                `json:"warehouse_sales_allow"`
+	WarehouseInTransit            bool                `json:"warehouse_in_transit"`
+	WarehouseName                 string              `json:"warehouse_name"`
+	WarehouseDetailName           string              `json:"warehouse_detail_name"`
+	WarehouseTransitDefault       string              `json:"warehouse_transit_default"`
+	WarehouseGroupId              int                 `json:"warehouse_group_id"`
+	WarehousePhoneNumber          string              `json:"warehouse_phone_number"`
+	WarehouseFaxNumber            string              `json:"warehouse_fax_number"`
+	AddressDetails                AddressResponse     `json:"address_details"`
+	BrandDetails                  BrandResponse       `json:"brand_details"`
+	SupplierDetails               SupplierResponse    `json:"supplier_details"`
+	UserDetails                   UserResponse        `json:"user_details"`
+	JobPositionDetails            JobPositionResponse `json:"job_position_details"`
+	VillageDetails                VillageResponse     `json:"village_details"`
 }
 
 type GetLookupWarehouseMasterResponse struct {
@@ -135,7 +171,7 @@ type DropdownWarehouseMasterByCodeResponse struct {
 type IsActiveWarehouseMasterResponse struct {
 	IsActive                      bool   `json:"is_active"`
 	WarehouseId                   int    `json:"warehouse_id"`
-	WarehouseCostingType          string `json:"warehouse_costing_type"`
+	WarehouseCostingTypeId        string `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool   `json:"wahouse_negative_stock"`
 	WarehouseReplishmentIndicator bool   `json:"warehouse_replishment_indicator"`
@@ -175,12 +211,13 @@ type BrandResponse struct {
 type UserResponse struct {
 	UserId        int    `json:"user_id"`
 	EmployeeName  string `json:"employee_name"`
-	JobPositionId int    `json:"job_position_id"`
+	JobPositionId int    `json:"role_id"`
 }
 
 type JobPositionResponse struct {
-	JobPositionId   int    `json:"job_position_id"`
-	JobPositionName string `json:"job_position_name"`
+	RolePositionId   int    `json:"role_id"`
+	RolePositionCode string `json:"role_code"`
+	RolePositionName string `json:"role_name"`
 }
 
 type VillageResponse struct {
@@ -207,7 +244,7 @@ type AuthorizedUserResponse struct {
 	WarehouseAuthorizedId int    `json:"warehouse_authorize_id" gorm:"column:warehouse_authorize_id"`
 	EmployeeId            int    `json:"user_employee_id" gorm:"column:employee_id"`
 	EmployeeName          string `json:"employee_name" gorm:"column:employee_name"`
-	IdNumber              int    `json:"id_number" gorm:"column:id_number"`
+	UserId                int    `json:"user_id" gorm:"column:user_id"`
 }
 
 type WarehouseAuthorize struct {

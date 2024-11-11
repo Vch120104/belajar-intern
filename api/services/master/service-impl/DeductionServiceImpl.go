@@ -78,7 +78,7 @@ func (s *DeductionServiceImpl) PostDeductionDetail(req masterpayloads.DeductionD
 	return result, nil
 }
 
-func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagination) (masterpayloads.DeductionListResponse, *exceptions.BaseErrorResponse) {
+func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagination) (masterpayloads.DeductionById, *exceptions.BaseErrorResponse) {
 
 	// If data is not available in cache, fetch it from the database
 	tx := s.DB.Begin()
@@ -86,7 +86,7 @@ func (s *DeductionServiceImpl) GetDeductionById(Id int, paginate pagination.Pagi
 	defer helper.CommitOrRollback(tx, dbErr)
 	if dbErr != nil {
 		// Handle error
-		return masterpayloads.DeductionListResponse{}, dbErr
+		return masterpayloads.DeductionById{}, dbErr
 	}
 	return result, nil
 }

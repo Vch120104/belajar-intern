@@ -78,7 +78,7 @@ func (r *MarkupMasterRepositoryImpl) GetAllMarkupMasterIsActive(tx *gorm.DB) ([]
 	MarkupMasters := masteritementities.MarkupMaster{}
 	response := []masteritempayloads.MarkupMasterDropDownResponse{}
 
-	err := tx.Model(&MarkupMasters).Select("mtr_markup_master.*, CONCAT(markup_master_code, ' - ', markup_master_description) AS markup_master_code_description").Where("is_active = 'true'").Find(&response).Error
+	err := tx.Model(&MarkupMasters).Select("mtr_markup_master.*, CONCAT(markup_code, ' - ', markup_description) AS markup_code_description").Where("is_active = 'true'").Find(&response).Error
 	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -90,10 +90,10 @@ func (r *MarkupMasterRepositoryImpl) GetAllMarkupMasterIsActive(tx *gorm.DB) ([]
 
 func (r *MarkupMasterRepositoryImpl) SaveMarkupMaster(tx *gorm.DB, req masteritempayloads.MarkupMasterResponse) (bool, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.MarkupMaster{
-		IsActive:                req.IsActive,
-		MarkupMasterId:          req.MarkupMasterId,
-		MarkupMasterCode:        req.MarkupMasterCode,
-		MarkupMasterDescription: req.MarkupMasterDescription,
+		IsActive:          req.IsActive,
+		MarkupMasterId:    req.MarkupMasterId,
+		MarkupCode:        req.MarkupCode,
+		MarkupDescription: req.MarkupDescription,
 	}
 
 	err := tx.Save(&entities).Error
@@ -150,7 +150,7 @@ func (r *MarkupMasterRepositoryImpl) GetMarkupMasterByCode(tx *gorm.DB, markupCo
 	response := masteritempayloads.MarkupMasterResponse{}
 	var entities masteritementities.MarkupMaster
 	rows, err := tx.Model(&entities).
-		Where("markup_master_code = ?", markupCode).
+		Where("markup_code = ?", markupCode).
 		First(&response).Rows()
 
 	if err != nil {

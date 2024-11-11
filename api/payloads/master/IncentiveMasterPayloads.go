@@ -25,7 +25,7 @@ type IncentiveMasterRequest struct {
 }
 
 type JobPositionResponse struct {
-	JobPositionId   int    `json:"job_position_id"`
-	JobPositionName string `json:"job_position_name"`
-	JobPositionCode string `json:"job_position_code"`
+	JobPositionId   int    `json:"role_id"`
+	JobPositionName string `json:"role_name"`
+	JobPositionCode string `json:"role_code"`
 }

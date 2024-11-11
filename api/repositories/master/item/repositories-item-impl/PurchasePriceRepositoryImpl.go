@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -28,9 +29,87 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 
 	var responses []masteritempayloads.PurchasePriceRequest
 
+	newFilterCondition := []utils.FilterCondition{}
+	supplierCode := ""
+	supplierName := ""
+	currencyCode := ""
+	effectiveDate := ""
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "supplier_code") {
+			supplierCode = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "supplier_name") {
+			supplierName = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "currency_code") {
+			currencyCode = filter.ColumnValue
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "purchase_price_effective_date") {
+			effectiveDate = filter.ColumnValue
+			continue
+		}
+		newFilterCondition = append(newFilterCondition, filter)
+	}
+
 	tableStruct := masteritempayloads.PurchasePriceRequest{}
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
+
+	if supplierCode != "" || supplierName != "" {
+		var supplierIds []int
+		supplierName = strings.ReplaceAll(supplierName, " ", "%20")
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=1000000&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		var supplierResponse []masteritempayloads.PurchasePriceSupplierResponse
+		if err := utils.GetArray(supplierUrl, &supplierResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, supplier := range supplierResponse {
+			if isNotInList(supplierIds, supplier.SupplierId) {
+				supplierIds = append(supplierIds, supplier.SupplierId)
+			}
+		}
+
+		if len(supplierIds) == 0 {
+			supplierIds = []int{-1}
+		}
+
+		whereQuery = whereQuery.Where("supplier_id IN ?", supplierIds)
+	}
+
+	if currencyCode != "" {
+		var currencyIds []int
+		currencyCodeUrl := config.EnvConfigs.FinanceServiceUrl + "currency-code?currency_code=" + currencyCode
+		var currencyCodeResponse []masteritempayloads.CurrencyResponse
+		if err := utils.GetArray(currencyCodeUrl, &currencyCodeResponse, nil); err != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+
+		for _, currency := range currencyCodeResponse {
+			if isNotInList(currencyIds, currency.CurrencyId) {
+				currencyIds = append(currencyIds, currency.CurrencyId)
+			}
+		}
+
+		if len(currencyIds) == 0 {
+			currencyIds = []int{-1}
+		}
+
+		whereQuery = whereQuery.Where("currency_id IN ?", currencyIds)
+	}
+
+	if effectiveDate != "" {
+		whereQuery = whereQuery.Where("FORMAT(purchase_price_effective_date, 'd MMM yyyy') LIKE (?)", "%"+effectiveDate+"%")
+	}
 
 	rows, err := whereQuery.Find(&responses).Rows()
 	if err != nil {
@@ -67,12 +146,12 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		}
 
 		// Fetch Currency data from external service
-		CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(purchasePriceReq.CurrencyId)
-		var getCurrencyResponse masteritempayloads.CurrencyResponse
-		if err := utils.Get(CurrencyURL, &getCurrencyResponse, nil); err != nil {
+		getCurrencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(purchasePriceReq.CurrencyId)
+		if currencyErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        err,
+				Message:    "Internal server error while fetching currency data",
+				Err:        errors.New(currencyErr.Message),
 			}
 		}
 
@@ -220,13 +299,12 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceById(tx *gorm.DB, Id int, 
 	}
 
 	// Fetch Currency data from external service
-	CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(entities.CurrencyId)
-	var getCurrencyResponse masteritempayloads.CurrencyResponse
-	if err := utils.Get(CurrencyURL, &getCurrencyResponse, nil); err != nil {
+	getCurrencyResponse, currencyErr := financeserviceapiutils.GetCurrencyId(entities.CurrencyId)
+	if currencyErr != nil {
 		return masteritempayloads.PurchasePriceResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Internal server error while fetching currency data",
-			Err:        err,
+			Err:        errors.New(currencyErr.Message),
 		}
 	}
 
@@ -453,23 +531,23 @@ func (r *PurchasePriceRepositoryImpl) AddPurchasePrice(tx *gorm.DB, request mast
 }
 
 func (r *PurchasePriceRepositoryImpl) DeletePurchasePrice(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.PurchasePriceDetail{}
+	var entities []masteritementities.PurchasePriceDetail
 
-	result := tx.Where("purchase_price_id = ? AND purchase_price_detail_id IN (?)", Id, iddet).First(&entities)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        result.Error,
+	result := tx.Where("purchase_price_id = ? AND purchase_price_detail_id IN ?", Id, iddet).Find(&entities)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
 		}
-	} else if result.Error != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	err := tx.Delete(&entities).Error
-	if err != nil {
+	if err := tx.Delete(&entities).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
@@ -584,4 +662,61 @@ func (r *PurchasePriceRepositoryImpl) ChangeStatusPurchasePrice(tx *gorm.DB, Id 
 	}
 
 	return entity, nil
+}
+
+func isNotInList(list []int, value int) bool {
+	for _, v := range list {
+		if v == value {
+			return false
+		}
+	}
+	return true
+}
+
+func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailByParam(tx *gorm.DB, curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.PurchasePriceDetail
+
+	// Fetch PurchasePrice data
+	err := tx.Model(&masteritementities.PurchasePriceDetail{}).
+		Where("purchase_price_id = ? AND supplier_id = ? AND purchase_price_effective_date = ?", curId, supId, effectiveDate).
+		First(&entities).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Purchase price detail data not found",
+				Err:        fmt.Errorf("purchase price detail with ID %d not found", curId),
+			}
+		}
+		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error while fetching purchase price detail",
+			Err:        err,
+		}
+	}
+
+	// Fetch Item data from external service
+	ItemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/" + strconv.Itoa(entities.ItemId)
+	var getItemResponse masteritempayloads.PurchasePriceItemResponse
+	if err := utils.Get(ItemURL, &getItemResponse, nil); err != nil {
+		return masteritempayloads.PurchasePriceDetailResponses{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Internal server error while fetching item data",
+			Err:        err,
+		}
+	}
+
+	// Prepare response payload
+	payloads := masteritempayloads.PurchasePriceDetailResponses{
+		PurchasePriceDetailId: entities.PurchasePriceDetailId,
+		PurchasePriceId:       entities.PurchasePriceId,
+		ItemId:                entities.ItemId,
+		ItemCode:              getItemResponse.ItemCode,
+		ItemName:              getItemResponse.ItemName,
+		IsActive:              entities.IsActive,
+		PurchasePrice:         entities.PurchasePrice,
+	}
+
+	return payloads, nil
 }

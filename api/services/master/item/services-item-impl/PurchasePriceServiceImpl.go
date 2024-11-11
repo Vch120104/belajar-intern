@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 
 	"github.com/labstack/gommon/log"
@@ -166,8 +167,9 @@ func (s *PurchasePriceServiceImpl) GenerateTemplateFile() (*excelize.File, *exce
 
 	// Generate template file
 	f := excelize.NewFile()
-	sheetName := "Sheet1"
+	sheetName := "purchase_price"
 	defer func() {
+		f.DeleteSheet("Sheet1")
 		if err := f.Close(); err != nil {
 			log.Error(err)
 		}
@@ -323,7 +325,7 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 
 func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
 	var results []masteritempayloads.PurchasePriceDetailResponses
-
+	var numericRegex = regexp.MustCompile(`^\d+$`)
 	for i, row := range rows {
 		if i == 0 {
 			// Skip header row
@@ -336,6 +338,15 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 				Message:    "Invalid row length",
 			}
 		}
+		// Check if purchase price is numeric without punctuation
+		if !numericRegex.MatchString(row[2]) {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Purchase price must be numeric without any punctuation",
+			}
+		}
+
+		// Convert validated numeric string to integer
 		purchasePrice, err := strconv.Atoi(row[2])
 		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
@@ -343,6 +354,7 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 				Message:    "Invalid purchase price format",
 			}
 		}
+
 		purchasePriceFloat := float64(purchasePrice)
 		results = append(results, masteritempayloads.PurchasePriceDetailResponses{
 			ItemCode:        row[0], // Include ItemCode here
@@ -537,4 +549,14 @@ func ConvertPurchasePriceDetailMapToStruct(maps []map[string]interface{}) ([]mas
 	}
 
 	return result, nil
+}
+
+func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
 }

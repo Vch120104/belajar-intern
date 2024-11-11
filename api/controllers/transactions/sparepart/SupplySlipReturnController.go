@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 
@@ -38,6 +39,10 @@ func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturn(writer http.Respon
 
 	var formRequest transactionsparepartentities.SupplySlipReturn
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.supplySlipReturnService.SaveSupplySlipReturn(formRequest)
@@ -55,6 +60,10 @@ func (r *SupplySlipReturnControllerImpl) SaveSupplySlipReturnDetail(writer http.
 
 	var formRequest transactionsparepartentities.SupplySlipReturnDetail
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	var message string
 
 	create, err := r.supplySlipReturnService.SaveSupplySlipReturnDetail(formRequest)
@@ -146,6 +155,10 @@ func (r *SupplySlipReturnControllerImpl) UpdateSupplySlipReturn(writer http.Resp
 	supplyReturnId, _ := strconv.Atoi(chi.URLParam(request, "supply_return_system_number"))
 	var formRequest transactionsparepartentities.SupplySlipReturn
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.supplySlipReturnService.UpdateSupplySlipReturn(formRequest, supplyReturnId)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)
@@ -159,6 +172,10 @@ func (r *SupplySlipReturnControllerImpl) UpdateSupplySlipReturnDetail(writer htt
 	supplyReturnDetailId, _ := strconv.Atoi(chi.URLParam(request, "supply_return_detail_system_number"))
 	var formRequest transactionsparepartentities.SupplySlipReturnDetail
 	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	result, err := r.supplySlipReturnService.UpdateSupplySlipReturnDetail(formRequest, supplyReturnDetailId)
 	if err != nil {
 		exceptions.NewConflictException(writer, request, err)

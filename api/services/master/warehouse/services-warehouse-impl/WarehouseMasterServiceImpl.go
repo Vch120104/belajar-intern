@@ -93,6 +93,18 @@ func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWar
 	return save, nil
 }
 
+func (s *WarehouseMasterServiceImpl) Update(warehouseId int, companyId int, request masterwarehousepayloads.UpdateWarehouseMasterRequest) (masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	update, err := s.warehouseMasterRepo.Update(tx, warehouseId, companyId, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return update, err
+	}
+	return update, nil
+}
+
 func (s *WarehouseMasterServiceImpl) GetById(warehouseId int, pagination pagination.Pagination) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId, pagination)
@@ -126,7 +138,7 @@ func (s *WarehouseMasterServiceImpl) GetAllIsActive() ([]masterwarehousepayloads
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []string) ([]masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetWarehouseWithMultiId(MultiIds []int) ([]masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetWarehouseWithMultiId(tx, MultiIds)
 	defer helper.CommitOrRollback(tx, err)
@@ -148,7 +160,7 @@ func (s *WarehouseMasterServiceImpl) GetAll(filter []utils.FilterCondition, page
 	return get, nil
 }
 
-func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCode(tx, Code)
 	defer helper.CommitOrRollback(tx, err)

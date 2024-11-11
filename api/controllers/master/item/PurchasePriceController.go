@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -31,6 +32,7 @@ type PurchasePriceController interface {
 	GetPurchasePriceById(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	GetPurchasePriceDetailById(writer http.ResponseWriter, request *http.Request)
+	GetPurchasePriceDetailByParam(writer http.ResponseWriter, request *http.Request)
 	GetAllPurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
 	AddPurchasePrice(writer http.ResponseWriter, request *http.Request)
 	UpdatePurchasePriceDetail(writer http.ResponseWriter, request *http.Request)
@@ -96,11 +98,7 @@ func (r *PurchasePriceControllerImpl) GetAllPurchasePrice(writer http.ResponseWr
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }
 
 // @Summary Update Purchase Price
@@ -118,7 +116,10 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePrice(writer http.ResponseWr
 	var formRequest masteritempayloads.PurchasePriceRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	PurchasePriceId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_id")) // Get Purchase Price ID from URL
 
 	if errA != nil {
@@ -150,7 +151,10 @@ func (r *PurchasePriceControllerImpl) SavePurchasePrice(writer http.ResponseWrit
 	var formRequest masteritempayloads.PurchasePriceRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	create, err := r.PurchasePriceService.SavePurchasePrice(formRequest)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -319,7 +323,10 @@ func (r *PurchasePriceControllerImpl) UpdatePurchasePriceDetail(writer http.Resp
 	var formRequest masteritempayloads.PurchasePriceDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	PurchasePriceDetailId, errA := strconv.Atoi(chi.URLParam(request, "purchase_price_detail_id")) // Get Purchase Price ID from URL
 	if errA != nil {
 		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
@@ -350,7 +357,10 @@ func (r *PurchasePriceControllerImpl) AddPurchasePrice(writer http.ResponseWrite
 	var formRequest masteritempayloads.PurchasePriceDetailRequest
 	var message = ""
 	helper.ReadFromRequestBody(request, &formRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	create, err := r.PurchasePriceService.AddPurchasePrice(formRequest)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
@@ -603,6 +613,7 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 	// Retrieve the file from the form data
 	file, handler, err := request.FormFile("file")
 	if err != nil {
+		log.Printf("Error retrieving file from form data: %v", err) // Logging error
 		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "Error retrieving file from form data",
@@ -612,11 +623,15 @@ func (r *PurchasePriceControllerImpl) Upload(writer http.ResponseWriter, request
 	}
 	defer file.Close()
 
+	// Log the filename for debugging
+	log.Printf("Received file: %s", handler.Filename)
+
 	// Check that the file is an xlsx format
 	if !strings.HasSuffix(handler.Filename, ".xlsx") {
 		exceptions.NewNotFoundException(writer, request, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Message:    "File must be in xlsx format",
+			Err:        errors.New("file must be in xlsx format"),
 		})
 		return
 	}
@@ -823,4 +838,52 @@ func (r *PurchasePriceControllerImpl) Download(writer http.ResponseWriter, reque
 			log.Errorf("Error deleting file: %v", err)
 		}
 	}()
+}
+
+// GetPurchasePriceDetailByParam godoc
+// @Summary Get Purchase Price Detail By Param
+// @Description REST API  Purchase Price Detail
+// @Accept json
+// @Produce json
+// @Tags Master : Purchase Price
+// @Param currency_id query int true "currency_id"
+// @Param supplier_id query int true "supplier_id"
+// @Param effective_date query string true "effective_date"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/purchase-price/detail/{currency_id}/{supplier_id}/{effective_date} [get]
+func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailByParam(writer http.ResponseWriter, request *http.Request) {
+	currencyIDStr := chi.URLParam(request, "currency_id")
+	currencyID, err := strconv.Atoi(currencyIDStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid currency ID", http.StatusBadRequest)
+		return
+	}
+
+	supplierIDStr := chi.URLParam(request, "supplier_id")
+	supplierID, err := strconv.Atoi(supplierIDStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid supplier ID", http.StatusBadRequest)
+		return
+	}
+
+	effectiveDateStr := chi.URLParam(request, "effective_date")
+	effectiveDate, err := time.Parse("2006-01-02T15:04:05.000Z", effectiveDateStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+		return
+	}
+	effectiveDateFormatted := effectiveDate.Format("2006-01-02")
+
+	result, baseErr := r.PurchasePriceService.GetPurchasePriceDetailByParam(currencyID, supplierID, effectiveDateFormatted)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Purchase price detail data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

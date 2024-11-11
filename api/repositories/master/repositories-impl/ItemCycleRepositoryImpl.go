@@ -4,15 +4,16 @@ import (
 	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
-	"after-sales/api/payloads/crossservice/financeservice"
+	financeservice "after-sales/api/payloads/cross-service/finance-service"
 	masterpayloads "after-sales/api/payloads/master"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 type ItemCycleRepositoryImpl struct {
@@ -141,6 +142,7 @@ func (i *ItemCycleRepositoryImpl) InsertItemCycle(db *gorm.DB, payloads masterpa
 				Err:        err}
 		}
 	}
+
 	return true, nil
 
 }

@@ -85,6 +85,10 @@ func NewGetQueryInt(queryValues url.Values, param string) int {
 	value, _ := strconv.Atoi(queryValues.Get(param))
 	return value
 }
+func NewGetQueryfloat(queryValues url.Values, param string) float64 {
+	value, _ := strconv.ParseFloat(queryValues.Get(param), 64)
+	return value
+}
 
 // ConvertDateTimeFormat converts ISO8601 format to separate date and time components
 func ConvertDateFormat(dateTime time.Time) (string, error) {
@@ -171,4 +175,12 @@ func TimeValue(t time.Time) float64 {
 	timeValue := float64(hour) + (float64(minute)+float64(second)/60)/60
 
 	return timeValue
+}
+func NotInSlice(item string, slice []string) bool {
+	for _, element := range slice {
+		if element == item {
+			return false
+		}
+	}
+	return true
 }

@@ -8,6 +8,7 @@ import (
 	transactionbodyshoppayloads "after-sales/api/payloads/transaction/bodyshop"
 	transactionbodyshopservice "after-sales/api/services/transaction/bodyshop"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"strconv"
 
 	"net/http"
@@ -200,6 +201,10 @@ func (r *QualityControlBodyshopControllerImpl) Reorder(writer http.ResponseWrite
 
 	var ReorderRequest transactionbodyshoppayloads.QualityControlReorder
 	helper.ReadFromRequestBody(request, &ReorderRequest)
+	if validationErr := validation.ValidationForm(writer, request, &ReorderRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	reorder, baseErr := r.QualityControlBodyshopService.Reorder(id, iddet, ReorderRequest)
 	if baseErr != nil {

@@ -7,11 +7,12 @@ import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
-	generalservicepayloads "after-sales/api/payloads/crossservice/generalservice"
+	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"context"
 	"errors"
 	"fmt"
@@ -53,7 +54,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 		Joins("LEFT OUTER JOIN mtr_item D ON D.item_id = A.original_item_id").
 		Joins("LEFT OUTER JOIN trx_item_purchase_order B ON A.reference_system_number = B.purchase_order_system_number").
 		Joins(`	LEFT OUTER JOIN trx_item_purchase_order_detail F ON A.reference_system_number = b.purchase_order_system_number
-                     	AND A.item_purchase_order_detail_id = F.purchase_order_detail_system_number`).
+                     	AND A.purchase_order_detail_system_number = F.purchase_order_detail_system_number`).
 		Joins("INNER JOIN mtr_warehouse_location WL ON A.warehouse_location_id = WL.warehouse_location_id").
 		Where("A.binning_system_number = ?", binningListId)
 	WhereQuery := utils.ApplyFilter(joinTable, filter)
@@ -67,7 +68,7 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 
 	if len(Responses) == 0 {
 		paginations.Rows = []string{}
-		return paginations, &exceptions.BaseErrorResponse{}
+		return paginations, nil
 	}
 	paginations.Rows = Responses
 	return paginations, nil
@@ -755,8 +756,8 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 		}
 	}
 	//get company code
-	CompanyData, errs := utils.GetCompanyDataById(BinningEntities.CompanyId)
-	if !errs {
+	CompanyData, errResponse := generalserviceapiutils.GetCompanyDataById(BinningEntities.CompanyId)
+	if errResponse != nil {
 		return BinningEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
 			Err:        errors.New("failed To Fetch Company Data From Cross service"),

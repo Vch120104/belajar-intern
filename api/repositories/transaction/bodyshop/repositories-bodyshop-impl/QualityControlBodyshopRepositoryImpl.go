@@ -9,6 +9,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionbodyshoprepository "after-sales/api/repositories/transaction/bodyshop"
 	"after-sales/api/utils"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"math"
 	"net/http"
@@ -62,50 +63,34 @@ func (r *QualityControlBodyshopRepositoryImpl) GetAll(tx *gorm.DB, filterConditi
 
 	for _, entity := range entities {
 		// Fetch data brand from external API
-		BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
-		var brandResponses transactionworkshoppayloads.WorkOrderVehicleBrand
-		errBrand := utils.Get(BrandUrl, &brandResponses, nil)
-		if errBrand != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve brand data from the external API",
-				Err:        errBrand,
-			}
-		}
 
 		// Fetch data model from external API
-		ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
-		var modelResponses transactionworkshoppayloads.WorkOrderVehicleModel
-		errModel := utils.Get(ModelUrl, &modelResponses, nil)
-		if errModel != nil {
+		modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
+		if modelErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve model data from the external API",
-				Err:        errModel,
+				Err:        modelErr.Err,
 			}
 		}
 
 		// Fetch data variant from external API
-		VariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(entity.VariantId)
-		var variantResponses transactionworkshoppayloads.WorkOrderVehicleVariant
-		errVariant := utils.Get(VariantUrl, &variantResponses, nil)
-		if errVariant != nil {
+		variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
+		if variantErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve variant data from the external API",
-				Err:        errVariant,
+				Err:        variantErr.Err,
 			}
 		}
 
 		// Fetch data vehicle from external API
-		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-		var vehicleResponses transactionworkshoppayloads.VehicleResponse
-		errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
-		if errVehicle != nil {
+		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+		if vehicleErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve vehicle data from the external API",
-				Err:        errVehicle,
+				Err:        vehicleErr.Err,
 			}
 		}
 
@@ -137,8 +122,8 @@ func (r *QualityControlBodyshopRepositoryImpl) GetAll(tx *gorm.DB, filterConditi
 		convertedResponses = append(convertedResponses, transactionbodyshoppayloads.QualityControlResponse{
 			WorkOrderDocumentNumber: workOrderResponses.WorkOrderDocumentNumber,
 			WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
-			VehicleCode:             vehicleResponses.VehicleCode,
-			VehicleTnkb:             vehicleResponses.VehicleTnkb,
+			VehicleCode:             vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
 			CustomerName:            customerResponses.CustomerName,
 			WorkOrderSystemNumber:   entity.WorkOrderSystemNumber,
 			VarianCode:              variantResponses.VariantCode,
@@ -188,51 +173,33 @@ func (r *QualityControlBodyshopRepositoryImpl) GetById(tx *gorm.DB, id int, filt
 		}
 	}
 
-	// Fetch data brand from external API
-	BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
-	var brandResponses transactionworkshoppayloads.WorkOrderVehicleBrand
-	errBrand := utils.Get(BrandUrl, &brandResponses, nil)
-	if errBrand != nil {
-		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve brand data from the external API",
-			Err:        errBrand,
-		}
-	}
-
 	// Fetch data model from external API
-	ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
-	var modelResponses transactionworkshoppayloads.WorkOrderVehicleModel
-	errModel := utils.Get(ModelUrl, &modelResponses, nil)
-	if errModel != nil {
+	modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
+	if modelErr != nil {
 		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve model data from the external API",
-			Err:        errModel,
+			Err:        modelErr.Err,
 		}
 	}
 
 	// Fetch data variant from external API
-	VariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(entity.VariantId)
-	var variantResponses transactionworkshoppayloads.WorkOrderVehicleVariant
-	errVariant := utils.Get(VariantUrl, &variantResponses, nil)
-	if errVariant != nil {
+	variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
+	if variantErr != nil {
 		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve variant data from the external API",
-			Err:        errVariant,
+			Err:        variantErr.Err,
 		}
 	}
 
 	// Fetch data vehicle from external API
-	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
-	var vehicleResponses transactionworkshoppayloads.VehicleResponse
-	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
-	if errVehicle != nil {
+	vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+	if vehicleErr != nil {
 		return transactionbodyshoppayloads.QualityControlIdResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
-			Err:        errVehicle,
+			Err:        vehicleErr.Err,
 		}
 	}
 
@@ -317,8 +284,8 @@ func (r *QualityControlBodyshopRepositoryImpl) GetById(tx *gorm.DB, id int, filt
 		WorkOrderDate:           workOrderResponses.WorkOrderDate.Format(time.RFC3339),
 		ModelName:               modelResponses.ModelName,
 		VariantName:             variantResponses.VariantName,
-		VehicleCode:             vehicleResponses.VehicleCode,
-		VehicleTnkb:             vehicleResponses.VehicleTnkb,
+		VehicleCode:             vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:             vehicleResponses.VehicleRegistrationCertificateTNKB,
 		CustomerName:            customerResponses.CustomerName,
 		QualityControlDetails: transactionbodyshoppayloads.QualityControlDetailsResponse{
 			Page:       pages.GetPage(),
@@ -398,15 +365,12 @@ func (r *QualityControlBodyshopRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet
 	}
 
 	// Fetch vehicle master data
-	vehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(details.VehicleId)
-	var vehicleResponses transactionworkshoppayloads.VehicleResponse
-	errVehicle := utils.Get(vehicleUrl, &vehicleResponses, nil)
-	if errVehicle != nil {
-
+	vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(details.VehicleId)
+	if vehicleErr != nil {
 		return transactionbodyshoppayloads.QualityControlUpdateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
-			Err:        errVehicle,
+			Err:        vehicleErr.Err,
 		}
 	}
 
@@ -415,7 +379,7 @@ func (r *QualityControlBodyshopRepositoryImpl) Qcpass(tx *gorm.DB, id int, iddet
 		Select("ISNULL(MAX(technician_allocation_system_number), 0)").
 		Where("work_order_system_number = ?", id).
 		Where("work_order_line = ?", lineTypeOperation).
-		Where("brand_id = ?", vehicleResponses.VehicleBrandId).
+		Where("brand_id = ?", vehicleResponses.VehicleBrandID).
 		Where("company_id = ?", details.CompanyId).
 		Where("operation_code = ?", details.OprItemCode).
 		Scan(&techAllocSysNo).Error

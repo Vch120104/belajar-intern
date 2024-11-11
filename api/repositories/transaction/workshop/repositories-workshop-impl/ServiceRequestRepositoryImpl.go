@@ -6,6 +6,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
+	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"log"
@@ -30,7 +32,6 @@ func OpenServiceRequestRepositoryImpl() transactionworkshoprepository.ServiceReq
 
 func (s *ServiceRequestRepositoryImpl) GenerateDocumentNumberServiceRequest(tx *gorm.DB, ServiceRequestId int) (string, *exceptions.BaseErrorResponse) {
 	var entity transactionworkshopentities.ServiceRequest
-	var brandResponse transactionworkshoppayloads.WorkOrderVehicleBrand
 
 	// Get the service request based on the service request system number
 	err := tx.Model(&transactionworkshopentities.ServiceRequest{}).Where("service_request_system_number = ?", ServiceRequestId).First(&entity).Error
@@ -61,12 +62,12 @@ func (s *ServiceRequestRepositoryImpl) GenerateDocumentNumberServiceRequest(tx *
 	year := currentTime.Year() % 100 // Use last two digits of the year
 
 	// fetch data brand from external api
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
-	errUrl := utils.Get(brandUrl, &brandResponse, nil)
-	if errUrl != nil {
+	brandResponse, brandErr := generalserviceapiutils.GetBrandGenerateDoc(entity.BrandId)
+	if brandErr != nil {
 		return "", &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errUrl,
+			Message:    "Failed to fetch brand data from external service",
+			Err:        brandErr.Err,
 		}
 	}
 
@@ -108,8 +109,10 @@ func (s *ServiceRequestRepositoryImpl) GenerateDocumentNumberServiceRequest(tx *
 func (r *ServiceRequestRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterStatus, *exceptions.BaseErrorResponse) {
 	var statuses []transactionworkshopentities.ServiceRequestMasterStatus
 
+	// Apply filters to the query
 	query := utils.ApplyFilter(tx, filter)
 
+	// Fetch records that match the filter
 	if err := query.Find(&statuses).Error; err != nil {
 		return nil, &exceptions.BaseErrorResponse{
 			Message:    "Failed to retrieve service request statuses from the database",
@@ -117,6 +120,7 @@ func (r *ServiceRequestRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.Fil
 			Err:        err,
 		}
 	}
+
 	return statuses, nil
 }
 
@@ -176,95 +180,73 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			}
 		}
 
-		// Fetch data brand from external API
-		BrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(ServiceRequestReq.BrandId)
-		var brandResponses transactionworkshoppayloads.WorkOrderVehicleBrand
-		errBrand := utils.Get(BrandUrl, &brandResponses, nil)
-		if errBrand != nil {
+		// Fetch data brand from external services
+		brandResponses, brandErr := salesserviceapiutils.GetUnitBrandById(ServiceRequestReq.BrandId)
+		if brandErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve brand data from the external API",
-				Err:        errBrand,
+				Message:    "Failed to fetch brand data from external service",
+				Err:        brandErr.Err,
 			}
 		}
 
-		// Fetch data model from external API
-		ModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(ServiceRequestReq.ModelId)
-		var modelResponses transactionworkshoppayloads.WorkOrderVehicleModel
-		errModel := utils.Get(ModelUrl, &modelResponses, nil)
-		if errModel != nil {
+		// Fetch data model from external services
+		modelResponses, modelErr := salesserviceapiutils.GetUnitModelById(ServiceRequestReq.ModelId)
+		if modelErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve model data from the external API",
-				Err:        errModel,
+				Message:    "Failed to fetch model data from external service",
+				Err:        modelErr.Err,
 			}
 		}
 
-		// fetch data variant from external API
-		VariantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(ServiceRequestReq.VariantId)
-		var variantResponses transactionworkshoppayloads.WorkOrderVehicleVariant
-		errVariant := utils.Get(VariantUrl, &variantResponses, nil)
-		if errVariant != nil {
+		// Fetch data variant from external services
+		variantResponses, variantErr := salesserviceapiutils.GetUnitVariantById(ServiceRequestReq.VariantId)
+		if variantErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve variant data from the external API",
-				Err:        errVariant,
+				Message:    "Failed to fetch variant data from external service",
+				Err:        variantErr.Err,
 			}
 		}
 
 		// fetch data colour from external API
-		ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(ServiceRequestReq.BrandId)
-		var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-		errColour := utils.GetArray(ColourUrl, &colourResponses, nil)
-		if errColour != nil || len(colourResponses) == 0 {
+		colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(ServiceRequestReq.BrandId)
+		if colourErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve colour data from the external API",
-				Err:        errColour,
+				Message:    "Failed to fetch colour data from external service",
+				Err:        colourErr.Err,
 			}
 		}
 
 		// Fetch data company from external API
-		CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(ServiceRequestReq.CompanyId)
-		var companyResponses transactionworkshoppayloads.CompanyResponse
-		if err := utils.Get(CompanyUrl, &companyResponses, nil); err != nil {
+		companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(ServiceRequestReq.CompanyId)
+		if companyErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch company data from internal service",
-				Err:        err,
+				Err:        companyErr.Err,
 			}
 		}
 
 		// Fetch data vehicle from external API
-		VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(ServiceRequestReq.VehicleId)
-		var vehicleResponses []transactionworkshoppayloads.VehicleResponse
-		errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
-		fmt.Println(VehicleUrl)
-		if errVehicle != nil {
+		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(ServiceRequestReq.VehicleId)
+		if vehicleErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve vehicle data from the external API",
-				Err:        errVehicle,
-			}
-		}
-
-		if len(vehicleResponses) == 0 {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Message:    "No vehicle data found",
+				Err:        vehicleErr.Err,
 			}
 		}
 
 		// Fetch data Service Request Status from external API
-		ServiceRequestStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "service-request/dropdown-status?service_request_status_id=" + strconv.Itoa(ServiceRequestReq.ServiceRequestStatusId)
-		//fmt.Println("Fetching Work Order Status data from:", ServiceRequestStatusURL)
-		var StatusResponses []transactionworkshoppayloads.ServiceRequestStatusResponse // Use slice of ServiceRequestStatusResponse
-		errStatus := utils.GetArray(ServiceRequestStatusURL, &StatusResponses, nil)
-		if errStatus != nil || len(StatusResponses) == 0 {
+		StatusResponses, statusErr := generalserviceapiutils.GetServiceRequestStatusById(ServiceRequestReq.ServiceRequestStatusId)
+		if statusErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve status service request data from the external API",
-				Err:        errStatus,
+				Message:    "Failed to retrieve service request status data from the external API",
+				Err:        statusErr.Err,
 			}
 		}
 
@@ -273,13 +255,13 @@ func (s *ServiceRequestRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 			ServiceRequestDocumentNumber: ServiceRequestReq.ServiceRequestDocumentNumber,
 			ServiceRequestDate:           ServiceRequestReq.ServiceRequestDate.Format("2006-01-02 15:04:05"),
 			ServiceRequestBy:             ServiceRequestReq.ServiceRequestBy,
-			ServiceRequestStatusName:     StatusResponses[0].ServiceRequestStatusName,
+			ServiceRequestStatusName:     StatusResponses.ServiceRequestStatusDescription,
 			BrandName:                    brandResponses.BrandName,
 			ModelName:                    modelResponses.ModelName,
 			VariantName:                  variantResponses.VariantName,
 			VariantColourName:            colourResponses[0].VariantColourName,
-			VehicleCode:                  vehicleResponses[0].VehicleCode,
-			VehicleTnkb:                  vehicleResponses[0].VehicleTnkb,
+			VehicleCode:                  vehicleResponses.VehicleChassisNumber,
+			VehicleTnkb:                  vehicleResponses.VehicleRegistrationCertificateTNKB,
 			CompanyName:                  companyResponses.CompanyName,
 			WorkOrderSystemNumber:        ServiceRequestReq.WorkOrderSystemNumber,
 			BookingSystemNumber:          ServiceRequestReq.BookingSystemNumber,
@@ -345,119 +327,104 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	ReplyDate := utils.SafeConvertDateFormat(entity.ReplyDate)
 
 	// Fetch data brand from external API
-	brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(entity.BrandId)
-	var brandResponse transactionworkshoppayloads.WorkOrderVehicleBrand
-	errBrand := utils.Get(brandUrl, &brandResponse, nil)
-	if errBrand != nil {
+	brandResponse, brandErr := salesserviceapiutils.GetUnitBrandById(entity.BrandId)
+	if brandErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve brand data from the external API",
-			Err:        errBrand,
+			Message:    "Failed to fetch brand data from external service",
+			Err:        brandErr.Err,
 		}
 	}
 
 	// Fetch data model from external API
-	modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(entity.ModelId)
-	var modelResponse transactionworkshoppayloads.WorkOrderVehicleModel
-	errModel := utils.Get(modelUrl, &modelResponse, nil)
-	if errModel != nil {
+	modelResponse, modelErr := salesserviceapiutils.GetUnitModelById(entity.ModelId)
+	if modelErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve model data from the external API",
-			Err:        errModel,
+			Err:        modelErr.Err,
 		}
 	}
 
 	// Fetch data variant from external API
-	variantUrl := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(entity.VariantId)
-	var variantResponse transactionworkshoppayloads.WorkOrderVehicleVariant
-	errVariant := utils.Get(variantUrl, &variantResponse, nil)
-	if errVariant != nil {
+	variantResponse, variantErr := salesserviceapiutils.GetUnitVariantById(entity.VariantId)
+	if variantErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve variant data from the external API",
-			Err:        errVariant,
+			Err:        variantErr.Err,
 		}
 	}
 
 	// Fetch data colour from external API
-	ColourUrl := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(entity.BrandId)
-	var colourResponses []transactionworkshoppayloads.WorkOrderVehicleColour
-	errColour := utils.GetArray(ColourUrl, &colourResponses, nil)
-	if errColour != nil || len(colourResponses) == 0 {
+	colourResponses, colourErr := salesserviceapiutils.GetUnitColourByBrandId(entity.BrandId)
+	if colourErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve colour data from the external API",
-			Err:        errColour,
+			Err:        colourErr.Err,
 		}
 	}
 
 	// Fetch data vehicle from external
-	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master?page=0&limit=100&vehicle_id=" + strconv.Itoa(entity.VehicleId)
-	var vehicleResponses []transactionworkshoppayloads.VehicleResponse
-	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
-	if errVehicle != nil {
+	vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(entity.VehicleId)
+	if vehicleErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve vehicle data from the external API",
-			Err:        errVehicle,
+			Err:        vehicleErr.Err,
 		}
 	}
 
 	// Fetch data Service Request Status from external API
-	ServiceRequestStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "service-request/dropdown-status?service_request_status_id=" + strconv.Itoa(entity.ServiceRequestStatusId)
-	var StatusResponses []transactionworkshoppayloads.ServiceRequestStatusResponse
-	errStatus := utils.GetArray(ServiceRequestStatusURL, &StatusResponses, nil)
-	if errStatus != nil || len(StatusResponses) == 0 {
+	StatusResponses, statusErr := generalserviceapiutils.GetServiceRequestStatusById(entity.ServiceRequestStatusId)
+	if statusErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve status service request data from the external API",
-			Err:        errStatus,
+			Message:    "Failed to retrieve service request status data from the external API",
+			Err:        statusErr.Err,
 		}
 	}
 
 	// Fetch data company from external API
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(entity.CompanyId)
-	var companyResponses transactionworkshoppayloads.CompanyResponse
-	if err := utils.Get(CompanyUrl, &companyResponses, nil); err != nil {
+	companyResponses, companyErr := generalserviceapiutils.GetCompanyDataById(entity.CompanyId)
+	if companyErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch company data from internal service",
-			Err:        err,
+			Err:        companyErr.Err,
 		}
 	}
 
 	// Fetch data company from external API
-	ServiceCompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(entity.ServiceCompanyId)
-	var servicecompanyResponses transactionworkshoppayloads.CompanyResponse
-	if err := utils.Get(ServiceCompanyUrl, &servicecompanyResponses, nil); err != nil {
+	servicecompanyResponses, servicecompanyErr := generalserviceapiutils.GetCompanyDataById(entity.ServiceCompanyId)
+	if servicecompanyErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch company data from internal service",
-			Err:        err,
+			Err:        servicecompanyErr.Err,
 		}
 	}
 
 	// Fetch work order from external API
-	WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order?work_order_system_number=" + strconv.Itoa(entity.WorkOrderSystemNumber)
-	var WorkOrderResponses []transactionworkshoppayloads.WorkOrderRequestResponse
-	errWorkOrder := utils.GetArray(WorkOrderUrl, &WorkOrderResponses, nil)
-
-	// Check for error and assign blank value if a 404 error
-	workOrderDocumentNumber := ""
-	if errWorkOrder != nil {
-		if strings.Contains(errWorkOrder.Error(), "404") {
-			workOrderDocumentNumber = ""
-		} else {
-			return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve work order data from the external API",
-				Err:        errWorkOrder,
-			}
-		}
-	} else if len(WorkOrderResponses) > 0 {
-		workOrderDocumentNumber = WorkOrderResponses[0].WorkOrderDocumentNumber
-	}
+	// WorkOrderUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order?work_order_system_number=" + strconv.Itoa(entity.WorkOrderSystemNumber)
+	// var WorkOrderResponses []transactionworkshoppayloads.WorkOrderRequestResponse
+	// errWorkOrder := utils.GetArray(WorkOrderUrl, &WorkOrderResponses, nil)
+	// // Check for error and assign blank value if a 404 error
+	// workOrderDocumentNumber := ""
+	// if errWorkOrder != nil {
+	// 	if strings.Contains(errWorkOrder.Error(), "404") {
+	// 		workOrderDocumentNumber = ""
+	// 	} else {
+	// 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
+	// 			StatusCode: http.StatusInternalServerError,
+	// 			Message:    "Failed to retrieve work order data from the external API",
+	// 			Err:        errWorkOrder,
+	// 		}
+	// 	}
+	// } else if len(WorkOrderResponses) > 0 {
+	// 	workOrderDocumentNumber = WorkOrderResponses[0].WorkOrderDocumentNumber
+	// }
 
 	// Fetch service details with pagination
 	var serviceDetails []transactionworkshoppayloads.ServiceDetailResponse
@@ -517,43 +484,37 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	// fetch profit center from external API
-	ProfitCenterUrl := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(entity.ProfitCenterId)
-	var profitCenterResponses transactionworkshoppayloads.ProfitCenter
-	errProfitCenter := utils.Get(ProfitCenterUrl, &profitCenterResponses, nil)
-	if errProfitCenter != nil {
+	profitCenterResponses, profitCenterErr := generalserviceapiutils.GetProfitCenterById(entity.ProfitCenterId)
+	if profitCenterErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve profit center data from the external API",
-			Err:        errProfitCenter,
+			Err:        profitCenterErr.Err,
 		}
 	}
 
 	// fetch dealer representative from external API
-	DealerRepresentativeUrl := config.EnvConfigs.GeneralServiceUrl + "dealer-representative/" + strconv.Itoa(entity.DealerRepresentativeId)
-	var dealerRepresentativeResponses transactionworkshoppayloads.DealerRepresentative
-	errDealerRepresentative := utils.Get(DealerRepresentativeUrl, &dealerRepresentativeResponses, nil)
-	if errDealerRepresentative != nil {
+	dealerRepresentativeResponses, dealerRepresentativeErr := generalserviceapiutils.GetDealerRepresentativeById(entity.DealerRepresentativeId)
+	if dealerRepresentativeErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve dealer representative data from the external API",
-			Err:        errDealerRepresentative,
+			Err:        dealerRepresentativeErr.Err,
 		}
 	}
 
 	// fetch reference type from external API
-	ReferenceTypeUrl := config.EnvConfigs.GeneralServiceUrl + "service-request-reference-type/" + strconv.Itoa(entity.ReferenceTypeId)
-	var referenceTypeResponses transactionworkshoppayloads.ReferenceType
-	errReferenceType := utils.Get(ReferenceTypeUrl, &referenceTypeResponses, nil)
-	if errReferenceType != nil {
+	referenceTypeResponses, referenceTypeErr := generalserviceapiutils.GetReferenceTypeById(entity.ReferenceTypeId)
+	if referenceTypeErr != nil {
 		return transactionworkshoppayloads.ServiceRequestResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to retrieve reference type data from the external API",
-			Err:        errReferenceType,
+			Err:        referenceTypeErr.Err,
 		}
 	}
 
 	// fetch reference document from external API
-	ReferenceDocUrl := config.EnvConfigs.GeneralServiceUrl + "service-request-reference-doc/" + strconv.Itoa(entity.ReferenceDocSystemNumber)
+	ReferenceDocUrl := config.EnvConfigs.GeneralServiceUrl + "service-request-reference-type/" + strconv.Itoa(entity.ReferenceDocSystemNumber)
 	var referenceDocResponses transactionworkshoppayloads.ReferenceDoc
 	errReferenceDoc := utils.Get(ReferenceDocUrl, &referenceDocResponses, nil)
 	if errReferenceDoc != nil {
@@ -567,36 +528,36 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	// Construct the payload with pagination information
 	payload := transactionworkshoppayloads.ServiceRequestResponse{
 		ServiceRequestSystemNumber:   entity.ServiceRequestSystemNumber,
-		ServiceRequestStatusName:     StatusResponses[0].ServiceRequestStatusName,
+		ServiceRequestStatusName:     StatusResponses.ServiceRequestStatusDescription,
 		ServiceRequestDocumentNumber: entity.ServiceRequestDocumentNumber,
 		ServiceRequestDate:           ServiceRequestDate,
-		BrandName:                    brandResponse.BrandName,
-		ModelName:                    modelResponse.ModelName,
-		VariantName:                  variantResponse.VariantName,
-		VariantColourName:            colourResponses[0].VariantColourName,
-		VehicleId:                    entity.VehicleId,
-		VehicleCode:                  vehicleResponses[0].VehicleCode,
-		VehicleTnkb:                  vehicleResponses[0].VehicleTnkb,
-		CompanyId:                    entity.CompanyId,
-		CompanyName:                  companyResponses.CompanyName,
-		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,
-		ProfitCenterName:             profitCenterResponses.ProfitCenterName,
-		WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
-		WorkOrderDocumentNumber:      workOrderDocumentNumber,
-		BookingSystemNumber:          entity.BookingSystemNumber,
-		EstimationSystemNumber:       entity.EstimationSystemNumber,
-		ReferenceTypeId:              entity.ReferenceTypeId,
-		ReferenceTypeName:            referenceTypeResponses.ReferenceTypeName,
-		ReferenceDocId:               referenceDocResponses.ReferenceDocSystemNumber,
-		ReferenceDocNumber:           referenceDocResponses.ReferenceDocNumber,
-		ReferenceDocDate:             referenceDocResponses.ReferenceDocDate,
-		ReplyBy:                      entity.ReplyBy,
-		ReplyDate:                    ReplyDate,
-		ReplyRemark:                  entity.ReplyRemark,
-		ServiceCompanyId:             entity.ServiceCompanyId,
-		ServiceCompanyName:           servicecompanyResponses.CompanyName,
-		ServiceDate:                  serviceDate,
-		ServiceRequestBy:             entity.ServiceRequestBy,
+		// WorkOrderSystemNumber:        entity.WorkOrderSystemNumber,
+		// WorkOrderDocumentNumber:      workOrderDocumentNumber,
+		BrandName:                brandResponse.BrandName,
+		ModelName:                modelResponse.ModelName,
+		VariantName:              variantResponse.VariantName,
+		VariantColourName:        colourResponses[0].VariantColourName,
+		VehicleId:                entity.VehicleId,
+		VehicleCode:              vehicleResponses.VehicleChassisNumber,
+		VehicleTnkb:              vehicleResponses.VehicleRegistrationCertificateTNKB,
+		CompanyId:                entity.CompanyId,
+		CompanyName:              companyResponses.CompanyName,
+		DealerRepresentativeName: dealerRepresentativeResponses.DealerRepresentativeName,
+		ProfitCenterName:         profitCenterResponses.ProfitCenterName,
+		BookingSystemNumber:      entity.BookingSystemNumber,
+		EstimationSystemNumber:   entity.EstimationSystemNumber,
+		ReferenceTypeId:          entity.ReferenceTypeId,
+		ReferenceTypeName:        referenceTypeResponses.ReferenceTypeName,
+		ReferenceDocId:           referenceDocResponses.ReferenceDocSystemNumber,
+		ReferenceDocNumber:       referenceDocResponses.ReferenceDocNumber,
+		ReferenceDocDate:         referenceDocResponses.ReferenceDocDate,
+		ReplyBy:                  entity.ReplyBy,
+		ReplyDate:                ReplyDate,
+		ReplyRemark:              entity.ReplyRemark,
+		ServiceCompanyId:         entity.ServiceCompanyId,
+		ServiceCompanyName:       servicecompanyResponses.CompanyName,
+		ServiceDate:              serviceDate,
+		ServiceRequestBy:         entity.ServiceRequestBy,
 		ServiceDetails: transactionworkshoppayloads.ServiceRequestDetailsResponse{
 			Page:       pagination.GetPage(),
 			Limit:      pagination.GetLimit(),
@@ -986,13 +947,12 @@ func (s *ServiceRequestRepositoryImpl) CloseOrder(tx *gorm.DB, Id int) (bool, *e
 	woStatusId = workOrder.WorkOrderStatusId
 
 	// Check business category from gmComp0 table
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(entity.CompanyId)
-	var companyResponse transactionworkshoppayloads.CompanyResponse
-	errCompany := utils.Get(CompanyUrl, &companyResponse, nil)
-	if errCompany != nil {
+	companyResponse, companyErr := generalserviceapiutils.GetCompanyDataById(entity.CompanyId)
+	if companyErr != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        errCompany,
+			Message:    "Failed to retrieve company data from the external API",
+			Err:        companyErr.Err,
 		}
 	}
 
@@ -1162,12 +1122,20 @@ func (s *ServiceRequestRepositoryImpl) GetAllServiceDetail(tx *gorm.DB, filterCo
 			}
 		}
 
+		linetype, linetypeErr := generalserviceapiutils.GetLineTypeById(entity.LineTypeId)
+		if linetypeErr != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        linetypeErr.Err,
+			}
+		}
+
 		serviceRequestDetailResponse := map[string]interface{}{
 			"service_request_system_number": entity.ServiceRequestSystemNumber,
 			"uom_name":                      uomItems[0].UomName,
 			"item_code":                     itemResponse.ItemCode,
 			"item_name":                     itemResponse.ItemName,
-			"line_type_id":                  entity.LineTypeId,
+			"line_type_code":                linetype.LineTypeCode,
 			"operation_item_id":             entity.OperationItemId,
 			"frt_quantity":                  entity.FrtQuantity,
 		}
@@ -1225,10 +1193,19 @@ func (s *ServiceRequestRepositoryImpl) GetServiceDetailById(tx *gorm.DB, Id int)
 		}
 	}
 
+	getLineTypeResponse, getLineTypeErr := generalserviceapiutils.GetLineTypeById(detail.LineTypeId)
+	if getLineTypeErr != nil {
+		return transactionworkshoppayloads.ServiceDetailResponse{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve line type data from the external API",
+			Err:        getLineTypeErr.Err,
+		}
+	}
+
 	serviceDetail := transactionworkshoppayloads.ServiceDetailResponse{
 		ServiceRequestDetailId:     detail.ServiceRequestDetailId,
 		ServiceRequestSystemNumber: detail.ServiceRequestSystemNumber,
-		LineTypeId:                 detail.LineTypeId,
+		LineTypeCode:               getLineTypeResponse.LineTypeCode,
 		OperationItemId:            detail.OperationItemId,
 		OperationItemCode:          getItemResponse.ItemCode,
 		OperationItemName:          getItemResponse.ItemName,

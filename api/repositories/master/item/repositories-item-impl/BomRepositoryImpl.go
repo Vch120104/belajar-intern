@@ -7,6 +7,7 @@ import (
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"strconv"
 
 	"after-sales/api/utils"
@@ -182,14 +183,12 @@ func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagin
 
 	// Fetch line type names and update BOM details
 	for i := range bomDetails {
-		lineTypeUrl := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(bomDetails[i].BomDetailTypeId)
-		var lineTypeResponse masteritempayloads.LineTypeResponse
-		errLineType := utils.Get(lineTypeUrl, &lineTypeResponse, nil)
+		lineTypeResponse, errLineType := generalserviceapiutils.GetLineTypeById(bomDetails[i].BomDetailTypeId)
 		if errLineType != nil {
 			return masteritempayloads.BomMasterResponseDetail{}, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch line type name",
-				Err:        errLineType,
+				Err:        errLineType.Err,
 			}
 		}
 		bomDetails[i].LineTypeName = lineTypeResponse.LineTypeName
@@ -525,7 +524,7 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 		mainAlias + ".item_id",
 		mainAlias + ".item_code",
 		mainAlias + ".item_name",
-		mainAlias + ".item_type",
+		mainAlias + ".item_type_id",
 		mainAlias + ".item_group_id",
 		mainAliasClass + ".item_class_id",
 		mainAliasClass + ".item_class_code",
@@ -559,13 +558,13 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 	for rows.Next() {
 		var isActive bool
 		var itemId, itemGroupId, itemClassId, uomId int
-		var itemCode, itemName, itemType, itemClassCode, uomDescription string
+		var itemCode, itemName, itemTypeId, itemClassCode, uomDescription string
 
 		err := rows.Scan(&isActive,
 			&itemId,
 			&itemCode,
 			&itemName,
-			&itemType,
+			&itemTypeId,
 			&itemGroupId,
 			&itemClassId,
 			&itemClassCode,
@@ -584,7 +583,7 @@ func (r *BomRepositoryImpl) GetBomItemList(tx *gorm.DB, filters []utils.FilterCo
 			"item_id":                  itemId,
 			"item_code":                itemCode,
 			"item_name":                itemName,
-			"item_type":                itemType,
+			"item_type_id":             itemTypeId,
 			"item_group_id":            itemGroupId,
 			"item_class_id":            itemClassId,
 			"item_class_code":          itemClassCode,

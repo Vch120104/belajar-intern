@@ -8,6 +8,7 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	utils "after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 	"strconv"
 	"strings"
@@ -121,103 +122,6 @@ func NewWorkOrderController(WorkOrderService transactionworkshopservice.WorkOrde
 	return &WorkOrderControllerImpl{
 		WorkOrderService: WorkOrderService,
 	}
-}
-
-// GetAll gets all work orders
-// @Summary Get All Work Orders
-// @Description Retrieve all work orders with optional filtering and pagination
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Normal
-// @Param work_order_system_number query string false "Work Order System Number"
-// @Param work_order_type_id query string false "Work Order Type ID"
-// @Param brand_id query string false "Brand ID"
-// @Param model_id query string false "Model ID"
-// @Param vehicle_id query string false "Vehicle ID"
-// @Param work_order_date query string false "Work Order Date"
-// @Param work_order_close_date query string false "Work Order Close Date"
-// @Param page query string true "Page number"
-// @Param limit query string true "Items per page"
-// @Param sort_of query string false "Sort order (asc/desc)"
-// @Param sort_by query string false "Field to sort by"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order [get]
-func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"trx_work_order.work_order_document_number":        queryValues.Get("work_order_document_number"),
-		"trx_work_order.work_order_system_number":          queryValues.Get("work_order_system_number"),
-		"trx_work_order.work_order_date_from":              queryValues.Get("work_order_date_from"),
-		"trx_work_order.work_order_date_to":                queryValues.Get("work_order_date_to"),
-		"trx_work_order.work_order_type_id":                queryValues.Get("work_order_type_id"),
-		"trx_work_order.work_order_type_description":       queryValues.Get("work_order_type_description"),
-		"trx_work_order.brand_id":                          queryValues.Get("brand_id"),
-		"trx_work_order.brand_name":                        queryValues.Get("brand_name"),
-		"trx_work_order.model_id":                          queryValues.Get("model_id"),
-		"trx_work_order.model_name":                        queryValues.Get("model_name"),
-		"trx_work_order.vehicle_id":                        queryValues.Get("vehicle_id"),
-		"trx_work_order.vehicle_chassis_number":            queryValues.Get("vehicle_chassis_number"),
-		"trx_work_order.vehicle_tnkb":                      queryValues.Get("vehicle_tnkb"),
-		"trx_work_order.work_order_status_id":              queryValues.Get("work_order_status_id"),
-		"trx_work_order.work_order_status_name":            queryValues.Get("work_order_status_name"),
-		"trx_work_order.work_order_repeated_system_number": queryValues.Get("work_order_repeated_system_number"),
-		"trx_work_order.variant_id":                        queryValues.Get("variant_id"),
-		"trx_work_order.foreman_id":                        queryValues.Get("foreman_id"),
-		"trx_work_order.service_advisor_id":                queryValues.Get("service_advisor_id"),
-	}
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAll(criteria, paginate)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
-
-}
-
-// New creates a new work order
-// @Summary Create New Work Order
-// @Description Create a new work order
-// @Accept json
-// @Produce json
-// @Tags Transaction : Workshop Work Order Normal
-// @Param reqBody body transactionworkshoppayloads.WorkOrderNormalRequest true "Work Order Data"
-// @Success 201 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/work-order/normal [post]
-func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
-
-	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalRequest
-	helper.ReadFromRequestBody(request, &workOrderRequest)
-
-	success, err := r.WorkOrderService.New(workOrderRequest)
-	if err != nil {
-		exceptions.NewAppException(writer, request, err)
-		return
-	}
-
-	if success.WorkOrderSystemNumber > 0 {
-		payloads.NewHandleSuccess(writer, success, "Work order created successfully", http.StatusCreated)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
-
 }
 
 // NewStatus gets the status of new work orders
@@ -886,6 +790,10 @@ func (r *WorkOrderControllerImpl) UpdateRequest(writer http.ResponseWriter, requ
 
 	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
+	if validationErr := validation.ValidationForm(writer, request, &groupRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	update, err := r.WorkOrderService.UpdateRequest(int(workorderID), int(requestID), groupRequest)
 	if err != nil {
@@ -914,6 +822,10 @@ func (r *WorkOrderControllerImpl) AddRequest(writer http.ResponseWriter, request
 
 	var groupRequest transactionworkshoppayloads.WorkOrderServiceRequest
 	helper.ReadFromRequestBody(request, &groupRequest)
+	if validationErr := validation.ValidationForm(writer, request, &groupRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, err := r.WorkOrderService.AddRequest(int(workorderID), groupRequest)
 	if err != nil {
@@ -949,6 +861,10 @@ func (r *WorkOrderControllerImpl) AddRequestMultiId(writer http.ResponseWriter, 
 
 	var groupRequests []transactionworkshoppayloads.WorkOrderServiceRequest
 	helper.ReadFromRequestBody(request, &groupRequests)
+	if validationErr := validation.ValidationForm(writer, request, &groupRequests); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	entities, baseErr := r.WorkOrderService.AddRequestMultiId(workorderID, groupRequests) // Call the modified service method
 	if baseErr != nil {
@@ -1144,7 +1060,10 @@ func (r *WorkOrderControllerImpl) UpdateVehicleService(writer http.ResponseWrite
 
 	var vehicleRequest transactionworkshoppayloads.WorkOrderServiceVehicleRequest
 	helper.ReadFromRequestBody(request, &vehicleRequest)
-
+	if validationErr := validation.ValidationForm(writer, request, &vehicleRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 	update, err := r.WorkOrderService.UpdateVehicleService(int(workorderID), int(vehicleServiceID), vehicleRequest)
 
 	if err != nil {
@@ -1172,6 +1091,10 @@ func (r *WorkOrderControllerImpl) AddVehicleService(writer http.ResponseWriter, 
 
 	var vehicleRequest transactionworkshoppayloads.WorkOrderServiceVehicleRequest
 	helper.ReadFromRequestBody(request, &vehicleRequest)
+	if validationErr := validation.ValidationForm(writer, request, &vehicleRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, err := r.WorkOrderService.AddVehicleService(int(workorderID), vehicleRequest)
 	if err != nil {
@@ -1273,6 +1196,107 @@ func (r *WorkOrderControllerImpl) DeleteVehicleServiceMultiId(writer http.Respon
 
 }
 
+// GetAll gets all work orders
+// @Summary Get All Work Orders
+// @Description Retrieve all work orders with optional filtering and pagination
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal
+// @Param work_order_system_number query string false "Work Order System Number"
+// @Param work_order_type_id query string false "Work Order Type ID"
+// @Param brand_id query string false "Brand ID"
+// @Param model_id query string false "Model ID"
+// @Param vehicle_id query string false "Vehicle ID"
+// @Param work_order_date query string false "Work Order Date"
+// @Param work_order_close_date query string false "Work Order Close Date"
+// @Param page query string true "Page number"
+// @Param limit query string true "Items per page"
+// @Param sort_of query string false "Sort order (asc/desc)"
+// @Param sort_by query string false "Field to sort by"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order [get]
+func (r *WorkOrderControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+
+	queryParams := map[string]string{
+		"trx_work_order.work_order_document_number":        queryValues.Get("work_order_document_number"),
+		"trx_work_order.work_order_system_number":          queryValues.Get("work_order_system_number"),
+		"trx_work_order.work_order_date_from":              queryValues.Get("work_order_date_from"),
+		"trx_work_order.work_order_date_to":                queryValues.Get("work_order_date_to"),
+		"trx_work_order.work_order_type_id":                queryValues.Get("work_order_type_id"),
+		"trx_work_order.work_order_type_description":       queryValues.Get("work_order_type_description"),
+		"trx_work_order.brand_id":                          queryValues.Get("brand_id"),
+		"trx_work_order.brand_name":                        queryValues.Get("brand_name"),
+		"trx_work_order.model_id":                          queryValues.Get("model_id"),
+		"trx_work_order.model_name":                        queryValues.Get("model_name"),
+		"trx_work_order.vehicle_id":                        queryValues.Get("vehicle_id"),
+		"trx_work_order.vehicle_chassis_number":            queryValues.Get("vehicle_chassis_number"),
+		"trx_work_order.vehicle_tnkb":                      queryValues.Get("vehicle_tnkb"),
+		"trx_work_order.work_order_status_id":              queryValues.Get("work_order_status_id"),
+		"trx_work_order.work_order_status_name":            queryValues.Get("work_order_status_name"),
+		"trx_work_order.work_order_repeated_system_number": queryValues.Get("work_order_repeated_system_number"),
+		"trx_work_order.variant_id":                        queryValues.Get("variant_id"),
+		"trx_work_order.foreman_id":                        queryValues.Get("foreman_id"),
+		"trx_work_order.service_advisor_id":                queryValues.Get("service_advisor_id"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginatedData, totalPages, totalRows, err := r.WorkOrderService.GetAll(criteria, paginate)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+
+	if len(paginatedData) > 0 {
+		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+
+}
+
+// New creates a new work order
+// @Summary Create New Work Order
+// @Description Create a new work order
+// @Accept json
+// @Produce json
+// @Tags Transaction : Workshop Work Order Normal
+// @Param reqBody body transactionworkshoppayloads.WorkOrderNormalRequest true "Work Order Data"
+// @Success 201 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/work-order/normal [post]
+func (r *WorkOrderControllerImpl) New(writer http.ResponseWriter, request *http.Request) {
+
+	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalRequest
+	helper.ReadFromRequestBody(request, &workOrderRequest)
+	if validationErr := validation.ValidationForm(writer, request, &workOrderRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	success, err := r.WorkOrderService.New(workOrderRequest)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	if success.WorkOrderSystemNumber > 0 {
+		payloads.NewHandleSuccess(writer, success, "Work order created successfully", http.StatusCreated)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+
+}
+
 // GetById handles the transaction for all work orders
 // @Summary Get Work Order By ID
 // @Description Retrieve work order by ID
@@ -1335,6 +1359,10 @@ func (r *WorkOrderControllerImpl) Save(writer http.ResponseWriter, request *http
 
 	var workOrderRequest transactionworkshoppayloads.WorkOrderNormalSaveRequest
 	helper.ReadFromRequestBody(request, &workOrderRequest)
+	if validationErr := validation.ValidationForm(writer, request, &workOrderRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, baseErr := r.WorkOrderService.Save(workOrderRequest, workOrderId)
 	if baseErr != nil {
@@ -1582,6 +1610,10 @@ func (r *WorkOrderControllerImpl) UpdateDetailWorkOrder(writer http.ResponseWrit
 
 	var detailRequest transactionworkshoppayloads.WorkOrderDetailRequest
 	helper.ReadFromRequestBody(request, &detailRequest)
+	if validationErr := validation.ValidationForm(writer, request, &detailRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	update, err := r.WorkOrderService.UpdateDetailWorkOrder(int(workOrderId), int(detailId), detailRequest)
 	if err != nil {
@@ -1617,6 +1649,10 @@ func (r *WorkOrderControllerImpl) AddDetailWorkOrder(writer http.ResponseWriter,
 
 	var detailRequest transactionworkshoppayloads.WorkOrderDetailRequest
 	helper.ReadFromRequestBody(request, &detailRequest)
+	if validationErr := validation.ValidationForm(writer, request, &detailRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
 
 	success, serviceErr := r.WorkOrderService.AddDetailWorkOrder(workOrderId, detailRequest)
 	if serviceErr != nil {

@@ -1,16 +1,20 @@
 package mastercontroller
 
 import (
+	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	"after-sales/api/payloads"
+	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	masterservice "after-sales/api/services/master"
 	"after-sales/api/utils"
+	"after-sales/api/validation"
 	"net/http"
 )
 
 type LocationStockController interface {
 	GetAllLocationStock(writer http.ResponseWriter, request *http.Request)
+	UpdateLocationStock(writer http.ResponseWriter, request *http.Request)
 }
 type LocationStockControlerImpl struct {
 	LocationStockService masterservice.LocationStockService
@@ -67,4 +71,25 @@ func (l *LocationStockControlerImpl) GetAllLocationStock(writer http.ResponseWri
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfull", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+// location-stock [put]
+func (l *LocationStockControlerImpl) UpdateLocationStock(writer http.ResponseWriter, request *http.Request) {
+	var locationStockPayloads masterwarehousepayloads.LocationStockUpdatePayloads
+
+	helper.ReadFromRequestBody(request, &locationStockPayloads)
+	if validationErr := validation.ValidationForm(writer, request, &locationStockPayloads); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+	//if err != nil {
+	//	helper.ReturnError(writer, request, err)
+	//	return
+	//}
+	res, err := l.LocationStockService.UpdateLocationStock(locationStockPayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "success to update location stock", http.StatusOK)
 }
