@@ -294,12 +294,14 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 
 	// Call external service to get Supplier details
 	supplierResponse := masteritempayloads.SupplierMasterResponse{}
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch supplier data",
-			Err:        err,
+	if response.SupplierId != nil {
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
+		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to fetch supplier data",
+				Err:        err,
+			}
 		}
 	}
 
@@ -387,13 +389,13 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 	}
 
 	supplierResponse := masteritempayloads.SupplierMasterResponse{}
-
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-
-	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+	if response.SupplierId != nil {
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
+		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 
