@@ -17,4 +17,5 @@ type UnitOfMeasurementRepository interface {
 	SaveUnitOfMeasurement(tx *gorm.DB, req masteritempayloads.UomResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusUnitOfMeasurement(tx *gorm.DB, Id int) (bool, *exceptions.BaseErrorResponse)
 	GetUnitOfMeasurementItem(tx *gorm.DB, Payload masteritempayloads.UomItemRequest) (masteritempayloads.UomItemResponses, *exceptions.BaseErrorResponse)
+	GetQuantityConversion(tx *gorm.DB, payload masteritempayloads.UomGetQuantityConversion) (masteritempayloads.GetQuantityConversionResponse, *exceptions.BaseErrorResponse)
 }
