@@ -15,4 +15,5 @@ type OperationKeyRepository interface {
 	SaveOperationKey(*gorm.DB, masteroperationpayloads.OperationKeyResponse) (bool, *exceptions.BaseErrorResponse)
 	GetAllOperationKeyList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationKey(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
+	GetOperationKeyDropdown(tx *gorm.DB, operationGroupId int, operationSectionId int) ([]masteroperationpayloads.OperationKeyDropDown, *exceptions.BaseErrorResponse)
 }
