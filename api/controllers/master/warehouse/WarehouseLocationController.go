@@ -195,6 +195,19 @@ func (r *WarehouseLocationControllerImpl) GetAll(writer http.ResponseWriter, req
 		"mtr_warehouse_location.warehouse_location_code": queryValues.Get("warehouse_location_code"),
 		"mtr_warehouse_location.warehouse_location_name": queryValues.Get("warehouse_location_name"),
 		"mtr_warehouse_location.is_active":               queryValues.Get("is_active"),
+		"mtr_warehouse_master.company_id":                queryValues.Get("company_id"),
+	}
+
+	companyId, errAtoi := strconv.Atoi(filter["mtr_warehouse_master.company_id"])
+
+	if errAtoi != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("please insert valid company id"), StatusCode: http.StatusBadRequest, Message: "please insert valid company id"})
+		return
+	}
+
+	if companyId == 0 {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{Err: errors.New("please insert company id"), StatusCode: http.StatusBadRequest, Message: "please insert company id"})
+		return
 	}
 
 	paginate := pagination.Pagination{
