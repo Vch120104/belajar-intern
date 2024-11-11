@@ -889,6 +889,7 @@ func WarehouseMasterRouter(
 	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
 	router.Get("/drop-down/by-warehouse-group-id/{warehouse_group_id}", warehouseMasterController.DropdownbyGroupId)
 	router.Post("/", warehouseMasterController.Save)
+	router.Put("/{warehouse_id}/{company_id}", warehouseMasterController.Update)
 	router.Patch("/{warehouse_id}", warehouseMasterController.ChangeStatus)
 
 	router.Get("/authorize-user", warehouseMasterController.GetAuthorizeUser)
