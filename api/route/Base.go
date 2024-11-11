@@ -691,7 +691,7 @@ func OperationGroupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationGroupController.GetAllOperationGroup)
-	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.Get("/drop-down", operationGroupController.GetOperationGroupDropDown)
 	router.Get("/by-code/{operation_group_code}", operationGroupController.GetOperationGroupByCode)
 	router.Post("/", operationGroupController.SaveOperationGroup)
 	router.Patch("/{operation_group_id}", operationGroupController.ChangeStatusOperationGroup)

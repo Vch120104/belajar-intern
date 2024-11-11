@@ -23,7 +23,7 @@ import (
 
 type OperationGroupController interface {
 	GetAllOperationGroup(writer http.ResponseWriter, request *http.Request)
-	GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request)
+	GetOperationGroupDropDown(writer http.ResponseWriter, request *http.Request)
 	GetOperationGroupByCode(writer http.ResponseWriter, request *http.Request)
 	SaveOperationGroup(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationGroup(writer http.ResponseWriter, request *http.Request)
@@ -88,9 +88,9 @@ func (r *OperationGroupControllerImpl) GetAllOperationGroup(writer http.Response
 // @Success 200 {object} payloads.Response
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/operation-group/drop-down [get]
-func (r *OperationGroupControllerImpl) GetAllOperationGroupIsActive(writer http.ResponseWriter, request *http.Request) {
+func (r *OperationGroupControllerImpl) GetOperationGroupDropDown(writer http.ResponseWriter, request *http.Request) {
 
-	result, err := r.OperationGroupService.GetAllOperationGroupIsActive()
+	result, err := r.OperationGroupService.GetOperationGroupDropDown()
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
