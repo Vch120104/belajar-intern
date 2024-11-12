@@ -189,9 +189,9 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm
 		BrandId:                 request.BrandId,
 		ModelId:                 request.ModelId,
 		OperationId:             request.OperationId,
-		OperationUsingIncentive: request.OperationUsingIncentive,
-		OperationUsingActual:    request.OperationUsingActual,
-		OperationPdi:            request.OperationPdi,
+		OperationUsingIncentive: &request.OperationUsingIncentive,
+		OperationUsingActual:    &request.OperationUsingActual,
+		OperationPdi:            &request.OperationPdi,
 	}
 
 	err := tx.Save(&entities).Error
@@ -679,3 +679,84 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationLevel(tx *gorm.DB
 
 	return true, nil
 }
+
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLatestId(tx *gorm.DB) (int, *exceptions.BaseErrorResponse) {
+	var latestID int
+
+	err := tx.Table("mtr_operation_model_mapping").
+		Select("operation_model_mapping_id").
+		Order("operation_model_mapping_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return latestID, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) UpdateOperationModelMapping(tx *gorm.DB, operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse) {
+	var OperationModelMapping = masteroperationentities.OperationModelMapping{
+		OperationPdi:            &request.OperationPdi,
+		OperationUsingIncentive: &request.OperationUsingIncentive,
+		OperationUsingActual:    &request.OperationUsingActual,
+	}
+
+	if err := tx.Model(&masteroperationentities.OperationModelMapping{}).
+		Where("operation_model_mapping_id = ?", operationModelMappingId).
+		Updates(&OperationModelMapping).Error; err != nil {
+		return masteroperationentities.OperationModelMapping{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update operation master",
+			Err:        err,
+		}
+	}
+
+	return OperationModelMapping, nil
+}
+
+// func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingAndFRT(tx *gorm.DB, requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
+// 	headerEntities := masteroperationentities.OperationModelMapping{
+// 		IsActive:                requestHeader.IsActive,
+// 		OperationModelMappingId: requestHeader.OperationModelMappingId,
+// 		BrandId:                 requestHeader.BrandId,
+// 		ModelId:                 requestHeader.ModelId,
+// 		OperationId:             requestHeader.OperationId,
+// 		OperationUsingIncentive: requestHeader.OperationUsingIncentive,
+// 		OperationUsingActual:    requestHeader.OperationUsingActual,
+// 		OperationPdi:            requestHeader.OperationPdi,
+// 	}
+
+// 	err := tx.Save(&headerEntities).Error
+
+// 	if err != nil {
+// 		return false, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusInternalServerError,
+// 			Err:        err,
+// 		}
+// 	}
+
+// 	detailFrtEntities := masteroperationentities.OperationFrt{
+// 		IsActive:                requestDetail.IsActive,
+// 		OperationFrtId:          requestDetail.OperationFrtId,
+// 		OperationModelMappingId: requestDetail.OperationModelMappingId,
+// 		VariantId:               requestDetail.VariantId,
+// 		FrtHour:                 requestDetail.FrtHour,
+// 		FrtHourExpress:          requestDetail.FrtHourExpress,
+// 	}
+
+// 	errDetail := tx.Save(&detailFrtEntities).Error
+
+// 	if errDetail != nil {
+// 		return false, &exceptions.BaseErrorResponse{
+// 			StatusCode: http.StatusInternalServerError,
+// 			Err:        errDetail,
+// 		}
+// 	}
+
+// 	return true, nil
+// }

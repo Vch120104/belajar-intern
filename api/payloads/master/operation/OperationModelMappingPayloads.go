@@ -29,6 +29,36 @@ type OperationModelMappingRequest struct {
 	OperationPdi            bool `json:"operation_pdi"`
 }
 
+type OperationModelMappingUpdate struct {
+	OperationModelMappingId int  `json:"operation_model_mapping_id"`
+	OperationUsingIncentive bool `json:"operation_using_incentive"`
+	OperationUsingActual    bool `json:"operation_using_actual"`
+	OperationPdi            bool `json:"operation_pdi"`
+}
+
+type HeaderRequest struct {
+	BrandId                 int  `json:"brand_id"`
+	ModelId                 int  `json:"model_id"`
+	OperationId             int  `json:"operation_id"`
+	OperationUsingIncentive bool `json:"operation_using_incentive"`
+	OperationUsingActual    bool `json:"operation_using_actual"`
+	OperationPdi            bool `json:"operation_pdi"`
+}
+
+type DetailRequest struct {
+	IsActive                bool    `json:"is_active"`
+	OperationModelMappingId int     `json:"operation_model_mapping_id"`
+	OperationFrtId          int     `json:"operation_frt_id"`
+	VariantId               int     `json:"variant_id"`
+	FrtHour                 float64 `json:"frt_hour"`
+	FrtHourExpress          float64 `json:"frt_hour_express"`
+}
+
+type OperationModelMappingAndFRTRequest struct {
+	HeaderRequest OperationModelMappingResponse   `json:"headerRequest"`
+	DetailRequest OperationModelMappingFrtRequest `json:"detailRequest"`
+}
+
 type OperationModelMappingDocumentRequirementRequest struct {
 	IsActive                                bool   `json:"is_active"`
 	OperationModelMappingId                 int    `json:"operation_model_mapping_id"`

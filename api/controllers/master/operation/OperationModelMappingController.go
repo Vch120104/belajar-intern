@@ -40,6 +40,8 @@ type OperationModelMappingController interface {
 	ActivateOperationLevel(writer http.ResponseWriter, request *http.Request)
 	DeactivateOperationLevel(writer http.ResponseWriter, request *http.Request)
 	DeleteOperationLevel(writer http.ResponseWriter, request *http.Request)
+	SaveOperationModelMappingAndFRT(writer http.ResponseWriter, request *http.Request)
+	UpdateOperationModelMapping(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -595,4 +597,56 @@ func (r *OperationModelMappingControllerImpl) ActivateOperationLevel(writer http
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) UpdateOperationModelMapping(writer http.ResponseWriter, request *http.Request) {
+
+	operationModelMappingId, err := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Operation Model Mapping ID", http.StatusBadRequest)
+		return
+	}
+
+	formRequest := masteroperationpayloads.OperationModelMappingUpdate{}
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	update, baseErr := r.operationmodelmappingservice.UpdateOperationModelMapping(operationModelMappingId, formRequest)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Operation Model Mapping ID not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingAndFRT(writer http.ResponseWriter, request *http.Request) {
+	var combinedRequest masteroperationpayloads.OperationModelMappingAndFRTRequest
+	helper.ReadFromRequestBody(request, &combinedRequest)
+	if validationErr := validation.ValidationForm(writer, request, &combinedRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+	var message string
+
+	create, err := r.operationmodelmappingservice.SaveOperationModelMappingAndFRT(combinedRequest.HeaderRequest, combinedRequest.DetailRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	if combinedRequest.HeaderRequest.OperationModelMappingId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }

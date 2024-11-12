@@ -805,6 +805,7 @@ func OperationModelMappingRouter(
 	router.Get("/operation-level/by-id/{operation_level_id}", operationModelMappingController.GetOperationLevelById)
 	router.Get("/operation-level/{operation_model_mapping_id}", operationModelMappingController.GetAllOperationLevel)
 	router.Post("/", operationModelMappingController.SaveOperationModelMapping)
+	router.Post("/with-frt", operationModelMappingController.SaveOperationModelMappingAndFRT)
 	router.Post("/operation-frt", operationModelMappingController.SaveOperationModelMappingFrt)
 	router.Post("/operation-document-requirement", operationModelMappingController.SaveOperationModelMappingDocumentRequirement)
 	router.Post("/operation-level", operationModelMappingController.SaveOperationLevel)
@@ -816,6 +817,7 @@ func OperationModelMappingRouter(
 	router.Patch("/operation-level/deactivate/{operation_level_id}", operationModelMappingController.DeactivateOperationLevel)
 	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
 	router.Delete("/operation-level/delete/{operation_level_id}", operationModelMappingController.DeleteOperationLevel)
+	router.Put("/{operation_model_mapping_id}", operationModelMappingController.UpdateOperationModelMapping)
 
 	return router
 }
