@@ -23,4 +23,5 @@ type BinningListRepository interface {
 	SubmitBinningList(db *gorm.DB, BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse)
 	DeleteBinningList(db *gorm.DB, BinningId int) (bool, *exceptions.BaseErrorResponse)
 	DeleteBinningListDetailMultiId(db *gorm.DB, binningDetailMultiId string) (bool, *exceptions.BaseErrorResponse)
+	GetReferenceNumberTypoPOWithPagination(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

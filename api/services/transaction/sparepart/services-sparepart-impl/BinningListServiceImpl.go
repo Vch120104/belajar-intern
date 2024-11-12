@@ -132,3 +132,12 @@ func (service *BinningListServiceImpl) DeleteBinningListDetailMultiId(binningDet
 	//tx.Rollback()
 	return result, nil
 }
+func (service *BinningListServiceImpl) GetReferenceNumberTypoPOWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.GetReferenceNumberTypoPOWithPagination(tx, filter, pagination)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

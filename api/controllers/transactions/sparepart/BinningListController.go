@@ -27,10 +27,32 @@ type BinningListController interface {
 	SubmitBinningList(writer http.ResponseWriter, request *http.Request)
 	DeleteBinningList(writer http.ResponseWriter, request *http.Request)
 	DeleteBinningListDetailMultiId(writer http.ResponseWriter, request *http.Request)
+	GetReferenceNumberTypoPOWithPagination(writer http.ResponseWriter, request *http.Request)
 }
 
 type BinningListControllerImpl struct {
 	service transactionsparepartservice.BinningListService
+}
+
+func (controller *BinningListControllerImpl) GetReferenceNumberTypoPOWithPagination(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"purchase_order_status_id": queryValues.Get("purchase_order_status_id"),
+	}
+	paginations := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+	filterCondition := utils.BuildFilterCondition(queryParams)
+	res, err := controller.service.GetReferenceNumberTypoPOWithPagination(filterCondition, paginations)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
+
 }
 
 func NewBinningListControllerImpl(service transactionsparepartservice.BinningListService) BinningListController {

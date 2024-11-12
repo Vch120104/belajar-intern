@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -575,7 +576,9 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Patch("/detail", BinningList.UpdateBinningListDetail)
 	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
 	router.Delete("/delete/{binning_system_number}", BinningList.DeleteBinningList)
-	router.Delete("/detail/delete/{binning_detail_multi_id}", BinningList.DeleteBinningListDetailMultiId) //router.Post("/{binning_system_number}",BinningList)
+	router.Delete("/detail/delete/{binning_detail_multi_id}", BinningList.DeleteBinningListDetailMultiId)
+	router.Get("/reference-type-purchase-order", BinningList.GetReferenceNumberTypoPOWithPagination)
+	//router.Post("/{binning_system_number}",BinningList)
 	return router
 }
 func PurchaseOrderRouter(
@@ -736,6 +739,7 @@ func OperationKeyRouter(
 	router.Get("/{operation_key_id}", operationKeyController.GetOperationKeyByID)
 	router.Get("/", operationKeyController.GetAllOperationKeyList)
 	router.Get("/operation-key-name/", operationKeyController.GetOperationKeyName)
+	router.Get("/drop-down/{operation_group_id}/{operation_section_id}", operationKeyController.GetOperationKeyDropdown)
 	router.Post("/", operationKeyController.SaveOperationKey)
 	router.Patch("/{operation_key_id}", operationKeyController.ChangeStatusOperationKey)
 
