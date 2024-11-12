@@ -188,3 +188,25 @@ func (r *OperationKeyRepositoryImpl) ChangeStatusOperationKey(tx *gorm.DB, Id in
 
 	return true, nil
 }
+
+func (r *OperationKeyRepositoryImpl) GetOperationKeyDropdown(tx *gorm.DB, operationGroupId int, operationSectionId int) ([]masteroperationpayloads.OperationKeyDropDown, *exceptions.BaseErrorResponse) {
+
+	var operationKey []masteroperationpayloads.OperationKeyDropDown
+
+	err := tx.Model(&masteroperationentities.OperationKey{}).
+		Select("is_active", "operation_key_id", "CONCAT(operation_key_code, ' - ', operation_key_description) as operation_key_code").
+		Where(masteroperationentities.OperationKey{
+			OperationGroupId:   operationGroupId,
+			OperationSectionId: operationSectionId,
+		}).
+		Scan(&operationKey).Error
+
+	if err != nil {
+		return operationKey, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return operationKey, nil
+}

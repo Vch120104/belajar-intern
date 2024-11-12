@@ -87,3 +87,14 @@ func (s *OperationKeyServiceImpl) ChangeStatusOperationKey(Id int) (bool, *excep
 	}
 	return results, nil
 }
+
+func (s *OperationKeyServiceImpl) GetOperationKeyDropdown(operationGroupId int, operationSectionId int) ([]masteroperationpayloads.OperationKeyDropDown, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	get, err := s.operationKeyRepo.GetOperationKeyDropdown(tx, operationGroupId, operationSectionId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}

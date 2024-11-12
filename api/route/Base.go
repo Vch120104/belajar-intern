@@ -100,6 +100,7 @@ func UnitOfMeasurementRouter(
 	router.Post("/", unitOfMeasurementController.SaveUnitOfMeasurement)
 	router.Patch("/{uom_id}", unitOfMeasurementController.ChangeStatusUnitOfMeasurement)
 	router.Get("/{item_id}/{source_type}", unitOfMeasurementController.GetUnitOfMeasurementItem)
+	router.Post("/get_quantity_conversion", unitOfMeasurementController.GetQuantityConversion)
 
 	return router
 }
@@ -574,6 +575,9 @@ func BinningListRouter(BinningList transactionsparepartcontroller.BinningListCon
 	router.Post("/detail", BinningList.InsertBinningListDetail)
 	router.Patch("/detail", BinningList.UpdateBinningListDetail)
 	router.Post("/submit/{binning_system_number}", BinningList.SubmitBinningList)
+	router.Delete("/delete/{binning_system_number}", BinningList.DeleteBinningList)
+	router.Delete("/detail/delete/{binning_detail_multi_id}", BinningList.DeleteBinningListDetailMultiId)
+	router.Get("/reference-type-purchase-order", BinningList.GetReferenceNumberTypoPOWithPagination)
 	//router.Post("/{binning_system_number}",BinningList)
 	return router
 }
@@ -691,8 +695,9 @@ func OperationGroupRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", operationGroupController.GetAllOperationGroup)
-	router.Get("/drop-down", operationGroupController.GetAllOperationGroupIsActive)
+	router.Get("/drop-down", operationGroupController.GetOperationGroupDropDown)
 	router.Get("/by-code/{operation_group_code}", operationGroupController.GetOperationGroupByCode)
+	router.Get("/by-id/{operation_group_id}", operationGroupController.GetOperationGroupById)
 	router.Post("/", operationGroupController.SaveOperationGroup)
 	router.Patch("/{operation_group_id}", operationGroupController.ChangeStatusOperationGroup)
 
@@ -713,6 +718,7 @@ func OperationSectionRouter(
 	router.Get("/by-id/{operation_section_id}", operationSectionController.GetOperationSectionByID)
 	router.Get("/by-name", operationSectionController.GetOperationSectionName)
 	router.Get("/code-by-group-id/{operation_group_id}", operationSectionController.GetSectionCodeByGroupId)
+	router.Get("/drop-down/{operation_group_id}", operationSectionController.GetOperationSectionDropDown)
 	router.Post("/", operationSectionController.SaveOperationSection)
 	router.Patch("/{operation_section_id}", operationSectionController.ChangeStatusOperationSection)
 
@@ -733,6 +739,7 @@ func OperationKeyRouter(
 	router.Get("/{operation_key_id}", operationKeyController.GetOperationKeyByID)
 	router.Get("/", operationKeyController.GetAllOperationKeyList)
 	router.Get("/operation-key-name/", operationKeyController.GetOperationKeyName)
+	router.Get("/drop-down/{operation_group_id}/{operation_section_id}", operationKeyController.GetOperationKeyDropdown)
 	router.Post("/", operationKeyController.SaveOperationKey)
 	router.Patch("/{operation_key_id}", operationKeyController.ChangeStatusOperationKey)
 

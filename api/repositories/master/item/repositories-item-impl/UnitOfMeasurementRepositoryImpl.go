@@ -223,3 +223,50 @@ func (r *UnitOfMeasurementRepositoryImpl) ChangeStatusUnitOfMeasurement(tx *gorm
 
 	return true, nil
 }
+func (r *UnitOfMeasurementRepositoryImpl) GetQuantityConversion(tx *gorm.DB, payloads masteritempayloads.UomGetQuantityConversion) (masteritempayloads.GetQuantityConversionResponse, *exceptions.BaseErrorResponse) {
+	//get uom 1 data base on srouce type and item id
+	var quantityResult = payloads.Quantity
+	var sellDivided = 1.0
+
+	var result masteritempayloads.GetQuantityConversionResponse
+	var itemUomEntities masteritementities.UomItem
+	err := tx.Model(&itemUomEntities).Where(masteritementities.UomItem{ItemId: payloads.ItemId, UomSourceTypeCode: payloads.SourceType}).
+		First(&itemUomEntities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return result, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("uom data is not found in master uom item"),
+			}
+		}
+		return result, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get uom item data",
+		}
+	}
+	if payloads.SourceType == "P" { //purchase
+		quantityResult = payloads.Quantity * itemUomEntities.TargetConvertion
+		if itemUomEntities.SourceConvertion == 0 {
+			itemUomEntities.SourceConvertion = 1
+		}
+		quantityResult /= itemUomEntities.SourceConvertion
+	}
+	if payloads.SourceType == "S" {
+		if itemUomEntities.SourceUomId == itemUomEntities.TargetUomId {
+			sellDivided = 1
+		} else {
+			sellDivided = itemUomEntities.TargetConvertion
+		}
+		quantityResult = payloads.Quantity * itemUomEntities.TargetConvertion
+		if sellDivided == 0 {
+			sellDivided = 1
+		}
+		quantityResult /= sellDivided
+	}
+	result.Quantity = payloads.Quantity
+	result.QuantityConversion = quantityResult
+	result.ItemId = payloads.ItemId
+	result.SourceType = payloads.SourceType
+	return result, nil
+
+}

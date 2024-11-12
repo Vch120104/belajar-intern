@@ -11,67 +11,67 @@ type ItemResponse struct {
 	Remark                       string  `json:"remark"`
 	Remark2                      string  `json:"remark2"`
 	Remark3                      string  `json:"remark3"`
-	SourceTypeId                 int     `json:"source_type_id"`
-	SupplierId                   int     `json:"supplier_id"`
+	SourceTypeId                 *int    `json:"source_type_id"`
+	SupplierId                   *int    `json:"supplier_id"`
 	SupplierName                 *string `json:"supplier_name"`
 	SupplierCode                 *string `json:"supplier_code"`
-	AtpmSupplierId               int     `json:"atpm_supplier_id"`
-	PersonInChargeId             int     `json:"person_in_charge_id"`
+	AtpmSupplierId               *int    `json:"atpm_supplier_id"`
+	PersonInChargeId             *int    `json:"person_in_charge_id"`
 	HarmonizedNo                 string  `json:"harmonized_no"`
 	MinimumOrderQty              float64 `json:"minimum_order_qty"`
 	CommonPricelist              bool    `json:"common_pricelist"`
 	IsRemovable                  bool    `json:"is_removable"`
-	ItemLevel_1_Id               int     `json:"item_level_1_id"`
+	ItemLevel_1_Id               *int    `json:"item_level_1_id"`
 	ItemLevel_1_Code             string  `json:"item_level_1_code"`
 	ItemLevel_1_Name             string  `json:"item_level_1_name"`
-	ItemLevel_2_Id               int     `json:"item_level_2_id"`
+	ItemLevel_2_Id               *int    `json:"item_level_2_id"`
 	ItemLevel_2_Code             string  `json:"item_level_2_code"`
 	ItemLevel_2_Name             string  `json:"item_level_2_name"`
-	ItemLevel_3_Id               int     `json:"item_level_3_id"`
+	ItemLevel_3_Id               *int    `json:"item_level_3_id"`
 	ItemLevel_3_Code             string  `json:"item_level_3_code"`
 	ItemLevel_3_Name             string  `json:"item_level_3_name"`
-	ItemLevel_4_Id               int     `json:"item_level_4_id"`
+	ItemLevel_4_Id               *int    `json:"item_level_4_id"`
 	ItemLevel_4_Code             string  `json:"item_level_4_code"`
 	ItemLevel_4_Name             string  `json:"item_level_4_name"`
-	UnitOfMeasurementTypeId      int     `json:"unit_of_measurement_type_id"`
-	UnitOfMeasurementSellingId   int     `json:"unit_of_measurement_selling_id"`
-	UnitOfMeasurementPurchaseId  int     `json:"unit_of_measurement_purchase_id"`
-	UnitOfMeasurementStockId     int     `json:"unit_of_measurement_stock_id"`
+	UnitOfMeasurementTypeId      *int    `json:"unit_of_measurement_type_id"`
+	UnitOfMeasurementSellingId   *int    `json:"unit_of_measurement_selling_id"`
+	UnitOfMeasurementPurchaseId  *int    `json:"unit_of_measurement_purchase_id"`
+	UnitOfMeasurementStockId     *int    `json:"unit_of_measurement_stock_id"`
 	IsSellable                   bool    `json:"is_sellable"`
 	Lottable                     bool    `json:"lottable"`
 	Inspection                   bool    `json:"inspection"`
 	StockKeeping                 bool    `json:"stock_keeping"`
-	DiscountId                   int     `json:"discount_id"`
-	MarkupMasterId               int     `json:"markup_master_id"`
-	StorageTypeId                int     `json:"storage_type_id"`
-	AtpmWarrantyClaimTypeId      int     `json:"atpm_warranty_claim_type_id"`
+	DiscountId                   *int    `json:"discount_id"`
+	MarkupMasterId               *int    `json:"markup_master_id"`
+	StorageTypeId                *int    `json:"storage_type_id"`
+	AtpmWarrantyClaimTypeId      *int    `json:"atpm_warranty_claim_type_id"`
 	IsItemRegulation             bool    `json:"is_item_regulation"`
-	ItemRegulationId             int     `json:"item_regulation_id"`
+	ItemRegulationId             *int    `json:"item_regulation_id"`
 	IsTechnicalDefect            bool    `json:"is_technical_defect"`
 	PmsItem                      bool    `json:"pms_item"`
-	SpecialMovementId            int     `json:"special_movement_id"`
+	SpecialMovementId            *int    `json:"special_movement_id"`
 	AutoPickWms                  bool    `json:"auto_pick_wms"`
 	ProportionalSupplyWms        bool    `json:"proportional_supply_wms"`
-	PrincipalCatalogId           int     `json:"principal_catalog_id"`
-	PrincipalBrandParentId       int     `json:"principal_brand_parent_id"`
+	PrincipalCatalogId           *int    `json:"principal_catalog_id"`
+	PrincipalBrandParentId       *int    `json:"principal_brand_parent_id"`
 	SourceConvertion             float64 `json:"source_convertion"`
 	TargetConvertion             float64 `json:"target_convertion"`
-	UomItemId                    int     `json:"uom_item_id"`
-	SourceUomId                  int     `    json:"source_uom_id"`
-	TargetUomId                  int     `    json:"target_uom_id"`
-	PriceListItem                string  `json:"price_list_item"`
+	UomItemId                    *int    `json:"uom_item_id"`
+	SourceUomId                  *int    `    json:"source_uom_id"`
+	TargetUomId                  *int    `    json:"target_uom_id"`
+	PriceListItem                bool    `json:"price_list_item"`
 	DimensionOfLength            float64 `json:"dimension_of_length"`
 	DimensionOfWidth             float64 `json:"dimension_of_width"`
 	DimensionOfHeight            float64 `json:"dimension_of_height"`
-	DimensionUnitOfMeasurementId int     `json:"dimension_unit_of_measurement_id"`
+	DimensionUnitOfMeasurementId *int    `json:"dimension_unit_of_measurement_id"`
 	Weight                       float64 `json:"weight"`
 	UnitOfMeasurementWeight      string  `json:"unit_of_measurement_weight"`
 	LastPrice                    float64 `json:"last_price"`
 	UseDiscDecentralize          bool    `json:"use_disc_decentralize"`
 	IsMaterialPlus               bool    `json:"is_material_plus"`
 	IsMandatory                  bool    `json:"is_mandatory"`
-	AtpmVendorSuppliability      string  `json:"atpm_vendor_suppliability"`
-	AtpmSupplierCodeOrderId      int     `json:"atpm_supplier_code_order_id"`
+	AtpmVendorSuppliability      bool    `json:"atpm_vendor_suppliability"`
+	AtpmSupplierCodeOrderId      *int    `json:"atpm_supplier_code_order_id"`
 }
 
 type UserDetailResponse struct {

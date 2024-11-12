@@ -179,3 +179,20 @@ func (r *OperationSectionRepositoryImpl) ChangeStatusOperationSection(tx *gorm.D
 
 	return true, nil
 }
+
+func (r *OperationSectionRepositoryImpl) GetOperationSectionDropDown(tx *gorm.DB, operationGroupId int) ([]masteroperationpayloads.OperationSectionDropDown, *exceptions.BaseErrorResponse) {
+
+	var OperationSectionDropDown []masteroperationpayloads.OperationSectionDropDown
+
+	err := tx.Model(&masteroperationentities.OperationSection{}).
+		Select("operation_section_id", "CONCAT(operation_section_code, ' - ', operation_section_description) as operation_section_code").
+		Where(masteroperationentities.OperationGroup{OperationGroupId: operationGroupId}).
+		Scan(&OperationSectionDropDown)
+	if err.Error != nil {
+		return OperationSectionDropDown, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err.Error,
+		}
+	}
+	return OperationSectionDropDown, nil
+}
