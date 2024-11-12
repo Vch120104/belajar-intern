@@ -128,33 +128,22 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			}
 		}
 
-		WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(workOrderReq.WorkOrderTypeId)
-		var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse
-		if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+		getWorkOrderTypeResponses, workOrderTypeErr := generalserviceapiutils.GetWorkOrderTypeByID(workOrderReq.WorkOrderTypeId)
+		if workOrderTypeErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch work order type data from external service",
-				Err:        err,
+				Err:        workOrderTypeErr.Err,
 			}
 		}
 
-		var workOrderTypeName string
-		if len(getWorkOrderTypeResponses) > 0 {
-			workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
-		}
-
-		WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(workOrderReq.StatusId)
-		var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse
-		if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+		getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(workOrderReq.StatusId)
+		if workOrderStatusErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch work order status data from external service",
-				Err:        err,
+				Err:        workOrderStatusErr.Err,
 			}
-		}
-		var workOrderStatusName string
-		if len(getWorkOrderStatusResponses) > 0 {
-			workOrderStatusName = getWorkOrderStatusResponses[0].WorkOrderStatusName
 		}
 
 		workOrderRes = transactionworkshoppayloads.WorkOrderGetAllResponse{
@@ -163,7 +152,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			WorkOrderDate:           workOrderReq.WorkOrderDate,
 			FormattedWorkOrderDate:  utils.FormatRFC3339(workOrderReq.WorkOrderDate), // Use RFC3339 format
 			WorkOrderTypeId:         workOrderReq.WorkOrderTypeId,
-			WorkOrderTypeName:       workOrderTypeName,
+			WorkOrderTypeName:       getWorkOrderTypeResponses.WorkOrderTypeName,
 			BrandId:                 workOrderReq.BrandId,
 			BrandName:               getBrandResponse.BrandName,
 			VehicleCode:             vehicleResponses.VehicleChassisNumber,
@@ -173,7 +162,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			VehicleId:               workOrderReq.VehicleId,
 			CustomerId:              workOrderReq.CustomerId,
 			StatusId:                workOrderReq.StatusId,
-			StatusName:              workOrderStatusName,
+			StatusName:              getWorkOrderStatusResponses.WorkOrderStatusName,
 			RepeatedJob:             workOrderReq.RepeatedJob,
 		}
 
@@ -744,31 +733,23 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	}
 
 	// fetch data status work order
-	WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(entity.WorkOrderStatusId)
-	var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
-	if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order status data from external service",
-			Err:        err,
+			Err:        workOrderStatusErr.Err,
 		}
 	}
 
 	// fetch data type work order
-	WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(entity.WorkOrderTypeId)
-	//fmt.Println("Fetching Work Order Type data from:", WorkOrderTypeURL)
-	var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse // Use slice of WorkOrderTypeResponse
-	if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+	getWorkOrderTypeResponses, workOrderTypeErr := generalserviceapiutils.GetWorkOrderTypeByID(entity.WorkOrderTypeId)
+	if workOrderTypeErr != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order type data from external service",
-			Err:        err,
+			Err:        workOrderTypeErr.Err,
 		}
-	}
-
-	var workOrderTypeName string
-	if len(getWorkOrderTypeResponses) > 0 {
-		workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
 	}
 
 	payload := transactionworkshoppayloads.WorkOrderResponseDetail{
@@ -776,9 +757,9 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		WorkOrderDate:                 entity.WorkOrderDate,
 		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
 		WorkOrderTypeId:               entity.WorkOrderTypeId,
-		WorkOrderTypeName:             workOrderTypeName,
+		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:             entity.WorkOrderStatusId,
-		WorkOrderStatusName:           getWorkOrderStatusResponses[0].WorkOrderStatusName,
+		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
 		ServiceAdvisorId:              entity.ServiceAdvisor,
 		BrandId:                       entity.BrandId,
 		BrandName:                     brandResponse.BrandName,
@@ -1810,26 +1791,22 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		}
 
 		// fetch line type from external api
-		lineTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-line-type?line_type_code=" + strconv.Itoa(workOrderReq.LineTypeId)
-		var lineTypeResponse []transactionworkshoppayloads.Linetype
-		err := utils.GetArray(lineTypeUrl, &lineTypeResponse, nil)
-		if err != nil {
+		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(workOrderReq.LineTypeId)
+		if lineErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve line type from the external API",
-				Err:        err,
+				Err:        lineErr.Err,
 			}
 		}
 
 		// fetch transaction type from external api
-		transactionTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-transaction-type?transaction_type_id=" + strconv.Itoa(workOrderReq.TransactionTypeId)
-		var transactionTypeResponse []transactionworkshoppayloads.WorkOrderTransactionType
-		err = utils.GetArray(transactionTypeUrl, &transactionTypeResponse, nil)
-		if err != nil {
+		transactionTypeResponse, transactionTypeErr := generalserviceapiutils.GetTransactionTypeByID(workOrderReq.TransactionTypeId)
+		if transactionTypeErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve transaction type from the external API",
-				Err:        err,
+				Err:        transactionTypeErr.Err,
 			}
 		}
 
@@ -1849,9 +1826,9 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
 			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
 			LineTypeId:                          workOrderReq.LineTypeId,
-			LineTypeCode:                        lineTypeResponse[0].LineTypeCode,
+			LineTypeCode:                        lineTypeResponse.LineTypeCode,
 			TransactionTypeId:                   workOrderReq.TransactionTypeId,
-			TransactionTypeCode:                 transactionTypeResponse[0].TransactionTypeCode,
+			TransactionTypeCode:                 transactionTypeResponse.WoTransactionTypeCode,
 			JobTypeId:                           workOrderReq.JobTypeId,
 			JobTypeCode:                         jobTypeResponse[0].JobTypeCode,
 			OperationItemId:                     workOrderReq.OperationItemId,

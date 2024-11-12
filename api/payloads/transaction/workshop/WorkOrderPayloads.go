@@ -44,7 +44,7 @@ type WorkOrderResponse struct {
 	MobileCustAlternative         string    `json:"mobile_customer_alternative"`
 	MobileCustDriver              string    `json:"mobile_customer_driver"`
 	ContactVia                    string    `json:"contact_via"`
-	WorkOrderStatusInsurance      bool      `json:"work_order_status_insurance"`
+	WorkOrderInsuranceCheck       bool      `json:"insurance_check"`
 	WorkOrderInsurancePolicyNo    string    `json:"insurance_policy_no"`
 	WorkOrderInsuranceExpiredDate time.Time `json:"insurance_expired_date"`
 	WorkOrderInsuranceClaimNo     string    `json:"insurance_claim_no"`
@@ -94,10 +94,9 @@ type WorkOrderRequest struct {
 	WorkOrderProfitCenter   int       `json:"work_order_profit_center"`
 
 	// Work order status and details
-	WorkOrderEraNo           string `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate  string `json:"work_order_era_expired_date"`
-	WorkOrderStatusId        int    `json:"work_order_status_id"`
-	WorkOrderStatusInsurance bool   `json:"work_order_status_insurance"`
+	WorkOrderEraNo          string `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate string `json:"work_order_era_expired_date"`
+	WorkOrderStatusId       int    `json:"work_order_status_id"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -171,9 +170,8 @@ type WorkOrderResponseDetail struct {
 	WorkOrderProfitCenterId int       `json:"profit_center_id"`
 
 	// Work order status and details
-	WorkOrderEraNo           string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate  time.Time `json:"work_order_era_expired_date"`
-	WorkOrderStatusInsurance bool      `json:"work_order_status_insurance"`
+	WorkOrderEraNo          string    `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -301,10 +299,9 @@ type WorkOrderNormalRequest struct {
 	DealerRepresentativeId     int       `json:"dealer_representative_id"`
 
 	// Work order status and details
-	WorkOrderEraNo           string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate  time.Time `json:"work_order_era_expired_date"`
-	WorkOrderStatusId        int       `json:"work_order_status_id"`
-	WorkOrderStatusInsurance bool      `json:"work_order_status_insurance"`
+	WorkOrderEraNo          string    `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
+	WorkOrderStatusId       int       `json:"work_order_status_id"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -355,10 +352,9 @@ type WorkOrderNormalSaveRequest struct {
 	DealerRepresentativeId  int       `json:"dealer_representative_id"`
 
 	// Work order status and details
-	WorkOrderEraNo           string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate  time.Time `json:"work_order_era_expired_date"`
-	WorkOrderStatusId        int       `json:"work_order_status_id"`
-	WorkOrderStatusInsurance bool      `json:"work_order_status_insurance"`
+	WorkOrderEraNo          string    `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
+	WorkOrderStatusId       int       `json:"work_order_status_id"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -469,10 +465,9 @@ type WorkOrderBookingRequest struct {
 	WorkOrderProfitCenterId int       `json:"work_order_profit_center"`
 
 	// Work order status and details
-	WorkOrderEraNo           string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate  time.Time `json:"work_order_era_expired_date"`
-	WorkOrderStatusId        int       `json:"work_order_status_id"`
-	WorkOrderStatusInsurance bool      `json:"work_order_status_insurance"`
+	WorkOrderEraNo          string    `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
+	WorkOrderStatusId       int       `json:"work_order_status_id"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -589,7 +584,6 @@ type WorkOrderBookingResponse struct {
 	WorkOrderInsurancePic           string                          `json:"insurance_pic"`
 	WorkOrderInsuranceWONumber      string                          `json:"insurance_workorder_number"`
 	WorkOrderEraNo                  string                          `json:"work_order_era_no"`
-	WorkOrderStatusInsurance        bool                            `json:"work_order_status_insurance"`
 	WorkOrderCampaign               WorkOrderCampaignDetail         `json:"work_order_campaign"`
 	WorkOrderGeneralRepairAgreement WorkOrderGeneralRepairAgreement `json:"work_order_general_repair_agreement"`
 	WorkOrderBooking                WorkOrderBookingDetail          `json:"work_order_booking"`
@@ -639,10 +633,9 @@ type WorkOrderAffiliateRequest struct {
 	WorkOrderProfitCenter   int       `json:"work_order_profit_center"`
 
 	// Work order status and details
-	WorkOrderEraNo           string    `json:"work_order_era_no"`
-	WorkOrderEraExpiredDate  time.Time `json:"work_order_era_expired_date"`
-	WorkOrderStatusId        int       `json:"work_order_status_id"`
-	WorkOrderStatusInsurance bool      `json:"work_order_status_insurance"`
+	WorkOrderEraNo          string    `json:"work_order_era_no"`
+	WorkOrderEraExpiredDate time.Time `json:"work_order_era_expired_date"`
+	WorkOrderStatusId       int       `json:"work_order_status_id"`
 
 	// Customer contact information
 	Titleprefix           string `json:"title_prefix"`
@@ -654,6 +647,7 @@ type WorkOrderAffiliateRequest struct {
 	ContactVia            string `json:"contact_via"`
 
 	// Insurance details
+	WorkOrderInsuranceCheck       bool      `json:"insurance_check"`
 	WorkOrderInsurancePolicyNo    string    `json:"insurance_policy_no"`
 	WorkOrderInsuranceExpiredDate time.Time `json:"insurance_expired_date"`
 	WorkOrderInsuranceClaimNo     string    `json:"insurance_claim_no"`
@@ -757,7 +751,6 @@ type WorkOrderAffiliateResponse struct {
 	WorkOrderInsurancePic         string                          `json:"insurance_pic"`
 	WorkOrderInsuranceWONumber    string                          `json:"insurance_workorder_number"`
 	WorkOrderEraNo                string                          `json:"work_order_era_no"`
-	WorkOrderStatusInsurance      bool                            `json:"work_order_status_insurance"`
 	WorkOrderDetailService        WorkOrderDetailsResponseRequest `json:"work_order_details_service"`
 	WorkOrderDetailVehicle        WorkOrderDetailsResponseVehicle `json:"work_order_details_vehicle"`
 	WorkOrderDetails              WorkOrderDetailsResponse        `json:"work_order_details"`
