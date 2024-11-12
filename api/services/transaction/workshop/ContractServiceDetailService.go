@@ -11,4 +11,5 @@ type ContractServiceDetailService interface {
 	GetAllDetail(Id int, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetById(Id int) (transactionworkshoppayloads.ContractServiceIdResponse, *exceptions.BaseErrorResponse)
 	SaveDetail(req transactionworkshoppayloads.ContractServiceIdResponse) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse)
+	UpdateDetail(contractServiceSystemNumber int, contractServiceLine string, req transactionworkshoppayloads.ContractServiceDetailRequest) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse)
 }

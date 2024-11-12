@@ -176,3 +176,98 @@ func (r *ContractServiceDetailRepositoryImpl) SaveDetail(tx *gorm.DB, req transa
 
 	return response, nil
 }
+
+// UpdateDetail implements transactionworkshoprepository.ContractServiceDetailRepository.
+func (r *ContractServiceDetailRepositoryImpl) UpdateDetail(tx *gorm.DB, contractServiceSystemNumber int, contractServiceLine string, req transactionworkshoppayloads.ContractServiceDetailRequest) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse) {
+	var existingDetail transactionworkshopentities.ContractServiceDetail
+
+	// Cari data detail berdasarkan `contractServiceSystemNumber` dan `contractServiceLine`
+	err := tx.Model(&transactionworkshopentities.ContractServiceDetail{}).
+		Where("contract_service_system_number = ? AND contract_service_line = ?", contractServiceSystemNumber, contractServiceLine).
+		First(&existingDetail).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Contract Service Detail not found",
+			}
+		}
+		return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Update `item_discount_percent` dan `item_discount_amount`
+	err = tx.Model(&existingDetail).Updates(map[string]interface{}{
+		"item_discount_percent": req.ItemDiscountPercent,
+		"item_discount_amount":  req.ItemDiscountAmount,
+	}).Error
+	if err != nil {
+		return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Perhitungan `total`, `total_value_after_tax`, dan `total_after_tax`
+	var taxRate float64
+	err = tx.Table("trx_contract_service").
+		Select("vat_tax_rate").
+		Where("contract_service_system_number = ?", contractServiceSystemNumber).
+		Scan(&taxRate).Error
+	if err != nil {
+		return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	var totalPrice float64
+	err = tx.Table("trx_contract_service_detail").
+		Select("SUM(frt_quantity * item_price * (1 - (item_discount_percent / 100)))").
+		Where("contract_service_system_number = ?", contractServiceSystemNumber).
+		Scan(&totalPrice).Error
+	if err != nil {
+		return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	totalValueAfterTax := totalPrice * (taxRate / 100)
+	totalAfterTax := totalPrice + totalValueAfterTax
+
+	// Update tabel `trx_contract_service` dengan hasil perhitungan
+	err = tx.Model(&transactionworkshopentities.ContractService{}).
+		Where("contract_service_system_number = ?", contractServiceSystemNumber).
+		Updates(map[string]interface{}{
+			"total":                 totalPrice,
+			"total_vat":             totalValueAfterTax,
+			"total_after_vat":       totalAfterTax,
+		}).Error
+	if err != nil {
+		return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Siapkan response
+	response := transactionworkshoppayloads.ContractServiceDetailPayloads{
+		ContractServicePackageDetailSystemNumber: existingDetail.ContractServicePackageDetailSystemNumber,
+		ItemOperationId:                          existingDetail.ItemOperationId,
+		ItemDiscountPercent:                      req.ItemDiscountPercent,
+		LineTypeId:                               existingDetail.LineTypeId,
+		ContractServiceSystemNumber:              existingDetail.ContractServiceSystemNumber,
+		ContractServiceLine:                      existingDetail.ContractServiceLine,
+		Description:                              existingDetail.Description,
+		FrtQuantity:                              existingDetail.FrtQuantity,
+		ItemPrice:                                existingDetail.ItemPrice,
+		ItemDiscountAmount:                       req.ItemDiscountAmount,
+		PackageId:                                existingDetail.PackageId,
+		TotalUseFrtQuantity:                      existingDetail.TotalUseFrtQuantity,
+	}
+
+	return response, nil
+}

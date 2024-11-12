@@ -64,3 +64,14 @@ func (s *ContractServiceDetailServiceImpl) SaveDetail(req transactionworkshoppay
 	}
 	return result, nil
 }
+
+// UpdateDetail implements transactionworkshopservice.ContractServiceDetailService.
+func (s *ContractServiceDetailServiceImpl) UpdateDetail(contractServiceSystemNumber int, contractServiceLine string, req transactionworkshoppayloads.ContractServiceDetailRequest) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	result, err := s.ContractServiceDetailRepository.UpdateDetail(tx, contractServiceSystemNumber, contractServiceLine, req)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
