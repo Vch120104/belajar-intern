@@ -35,3 +35,21 @@ func TestSubmitGoodsReceive(t *testing.T) {
 		}
 	})
 }
+
+func TestVoidGoodsReceives(t *testing.T) {
+	service := setupGoodsReceive()
+	binningToDelete := 1046205
+	res, err := service.DeleteGoodsReceive(binningToDelete)
+	assert.True(t, res, "result is false")
+	assert.Nil(t, err, func() string {
+		if err == nil {
+			return "true"
+		} else {
+			if err.Err == nil {
+				return err.Message
+			} else {
+				return err.Err.Error()
+			}
+		}
+	})
+}

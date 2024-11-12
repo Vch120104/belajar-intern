@@ -63,3 +63,11 @@ type LocationStockUpdatePayloads struct {
 	UpdatedDate              *time.Time `gorm:"column:updated_date" json:"updated_date"`
 	//TransType
 }
+type ViewLocationStockPayload struct {
+	PeriodYear             string
+	PeriodMonth            string
+	CompanyId              int
+	ItemId                 int
+	WarehouseGroupId       int
+	WarehouseCostingTypeId int
+}
