@@ -1975,7 +1975,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	err = db.Model(&transactionsparepartentities.PurchaseOrderEntities{}).
 		Where(transactionsparepartentities.PurchaseOrderEntities{PurchaseOrderSystemNumber: GoodsReceiveEntities.ReferenceSystemNumber}).
 		Updates(map[string]interface{}{
-			"purchase_order_status_id": DocResponses.ApprovalStatusId,
+			"purchase_order_status_id": DocResponse.ApprovalStatusId,
 			"change_no":                gorm.Expr("change_no + 1"),
 			"updated_date":             time.Now(),
 			"updated_by_user_id":       GoodsReceiveEntities.UpdatedByUserId,
