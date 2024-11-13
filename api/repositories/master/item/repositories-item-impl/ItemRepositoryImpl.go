@@ -34,9 +34,9 @@ func (r *ItemRepositoryImpl) CheckItemCodeExist(tx *gorm.DB, itemCode string, it
 	model := masteritementities.Item{}
 
 	if err := tx.Model(model).Select("mtr_item.item_code,mtr_item.item_id,mtr_item.item_class_id").
-		Joins("ItemDetail", tx.Select("1")).
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where(masteritementities.Item{ItemCode: itemCode, ItemGroupId: itemGroupId, CommonPricelist: commonPriceList}).
-		Where("ItemDetail.brand_id = ?", brandId).
+		Where("mid.brand_id = ?", brandId).
 		First(&model).Error; err != nil {
 		return false, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
