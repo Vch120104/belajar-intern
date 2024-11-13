@@ -36,6 +36,12 @@ type OperationModelMappingUpdate struct {
 	OperationPdi            bool `json:"operation_pdi"`
 }
 
+type OperationFrtUpdate struct {
+	OperationFrtId int     `json:"operation_frt_id"`
+	FrtHour        float64 `json:"frt_hour"`
+	FrtHourExpress float64 `json:"frt_hour_express"`
+}
+
 type HeaderRequest struct {
 	BrandId                 int  `json:"brand_id"`
 	ModelId                 int  `json:"model_id"`
@@ -115,6 +121,7 @@ type CompanyResponse struct {
 
 type ModelResponse struct {
 	ModelId          int    `json:"model_id"`
+	ModelCode        string `json:"model_code"`
 	ModelDescription string `json:"model_description"`
 }
 

@@ -250,6 +250,18 @@ func (s *OperationModelMappingServiceImpl) UpdateOperationModelMapping(operation
 	return update, nil
 }
 
+func (s *OperationModelMappingServiceImpl) UpdateOperationFrt(operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	update, err := s.operationModelMappingRepo.UpdateOperationFrt(tx, operationFrtId, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return update, err
+	}
+	return update, nil
+}
+
 func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingAndFRT(requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	_, err := s.operationModelMappingRepo.SaveOperationModelMapping(tx, requestHeader)

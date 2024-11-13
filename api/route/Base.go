@@ -818,6 +818,7 @@ func OperationModelMappingRouter(
 	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
 	router.Delete("/operation-level/delete/{operation_level_id}", operationModelMappingController.DeleteOperationLevel)
 	router.Put("/{operation_model_mapping_id}", operationModelMappingController.UpdateOperationModelMapping)
+	router.Put("/operation-frt/{operation_frt_id}", operationModelMappingController.UpdateOperationFrt)
 
 	return router
 }
