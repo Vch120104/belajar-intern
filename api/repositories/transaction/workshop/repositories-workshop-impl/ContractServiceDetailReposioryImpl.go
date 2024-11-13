@@ -9,6 +9,7 @@ import (
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	"errors"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -305,4 +306,74 @@ func (r *ContractServiceDetailRepositoryImpl) UpdateDetail(tx *gorm.DB, contract
 	}
 
 	return response, nil
+}
+
+// DeleteDetail implements transactionworkshoprepository.ContractServiceDetailRepository.
+func (r *ContractServiceDetailRepositoryImpl) DeleteDetail(tx *gorm.DB, contractServiceSystemNumber int, packageCode string) (bool, *exceptions.BaseErrorResponse) {
+	var entity transactionworkshopentities.ContractServiceDetail
+
+	err := tx.Model(&transactionworkshopentities.ContractServiceDetail{}).Where("contract_service_system_number = ? AND package_id = ?", contractServiceSystemNumber, packageCode).First(&entity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Contract Service Detail not found",
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if err := tx.Delete(&entity).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to delete the contract service detail",
+			Err:        err,
+		}
+	}
+
+	var taxRate float64
+	if err := tx.Table("trx_contract_service").
+		Select("value_after_tax_rate").
+		Where("contract_service_system_number = ?", contractServiceSystemNumber).
+		Scan(&taxRate).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to retrieve tax rate",
+			Err:        err,
+		}
+	}
+
+	var totalPrice float64
+	if err := tx.Table("trx_contract_service_detail").
+		Select("SUM(frt_quantity * item_price * (1 - (item_discount_percent / 100)))").
+		Where("contract_service_system_number = ?", contractServiceSystemNumber).
+		Scan(&totalPrice).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to calculate total price after deletion",
+			Err:        err,
+		}
+	}
+
+	totalVat := totalPrice * (taxRate / 100)
+	totalAfterVat := totalPrice + totalVat
+
+	if err := tx.Model(&transactionworkshopentities.ContractService{}).
+		Where("contract_service_system_number = ?", contractServiceSystemNumber).
+		Updates(map[string]interface{}{
+			"total":                 totalPrice,
+			"total_value_after_tax": totalAfterVat,
+			"value_after_tax_rate":  totalVat,
+		}).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update contract service totals",
+			Err:        err,
+		}
+	}
+
+	return true, nil
 }

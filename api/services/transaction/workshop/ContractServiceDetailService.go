@@ -12,4 +12,5 @@ type ContractServiceDetailService interface {
 	GetById(Id int) (transactionworkshoppayloads.ContractServiceIdResponse, *exceptions.BaseErrorResponse)
 	SaveDetail(req transactionworkshoppayloads.ContractServiceIdResponse) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse)
 	UpdateDetail(contractServiceSystemNumber int, contractServiceLine string, req transactionworkshoppayloads.ContractServiceDetailRequest) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse)
+	DeleteDetail(contractServiceSystemNumber int, packageCode string) (bool, *exceptions.BaseErrorResponse)
 }

@@ -75,3 +75,14 @@ func (s *ContractServiceDetailServiceImpl) UpdateDetail(contractServiceSystemNum
 	}
 	return result, nil
 }
+
+// DeleteDetail implements transactionworkshopservice.ContractServiceDetailService.
+func (s *ContractServiceDetailServiceImpl) DeleteDetail(contractServiceSystemNumber int, packageCode string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	result, err := s.ContractServiceDetailRepository.DeleteDetail(tx, contractServiceSystemNumber, packageCode)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

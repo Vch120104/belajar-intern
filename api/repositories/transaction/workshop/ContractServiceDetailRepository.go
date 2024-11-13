@@ -14,4 +14,5 @@ type ContractServiceDetailRepository interface {
 	GetById(tx *gorm.DB, Id int) (transactionworkshoppayloads.ContractServiceIdResponse, *exceptions.BaseErrorResponse)
 	SaveDetail(tx *gorm.DB, req transactionworkshoppayloads.ContractServiceIdResponse) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse)
 	UpdateDetail(tx *gorm.DB, contractServiceSystemNumber int, contractServiceLine string, req transactionworkshoppayloads.ContractServiceDetailRequest) (transactionworkshoppayloads.ContractServiceDetailPayloads, *exceptions.BaseErrorResponse)
+	DeleteDetail(tx *gorm.DB, contractServiceSystemNumber int, packageCode string) (bool, *exceptions.BaseErrorResponse)
 }
