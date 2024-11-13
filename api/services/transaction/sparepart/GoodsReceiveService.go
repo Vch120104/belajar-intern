@@ -18,5 +18,4 @@ type GoodsReceiveService interface {
 	LocationItemGoodsReceive(filter []utils.FilterCondition, PaginationParams pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SubmitGoodsReceive(GoodsReceiveId int) (bool, *exceptions.BaseErrorResponse)
 	DeleteGoodsReceive(goodsReceivesId int) (bool, *exceptions.BaseErrorResponse)
-	DeleteGoodsReceiveDetail(goodsReceivesDetailId int) (bool, *exceptions.BaseErrorResponse)
 }

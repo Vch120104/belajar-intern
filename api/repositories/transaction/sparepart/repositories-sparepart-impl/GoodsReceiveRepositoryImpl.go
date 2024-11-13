@@ -9,6 +9,7 @@ import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	financeservice "after-sales/api/payloads/cross-service/finance-service"
+	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
@@ -918,9 +919,15 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	}
 	//get is use dms for gm ref checking
 	//hit general service
-	CompanyReferenceBetByIdResponse, errCompanyReference := generalserviceapiutils.GetCompanyReferenceById(GoodsReceiveEntities.SupplierId)
-	if errCompanyReference != nil {
-		return false, errCompanyReference
+	CompanyReferenceBetByIdResponse := generalservicepayloads.CompanyReferenceBetByIdResponse{}
+	CompanyReferenceUrl := fmt.Sprintf("%scompany-reference/%s", config.EnvConfigs.GeneralServiceUrl, strconv.Itoa(GoodsReceiveEntities.SupplierId))
+	errFetchCompany := utils.Get(CompanyReferenceUrl, &CompanyReferenceBetByIdResponse, nil)
+	if errFetchCompany != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errFetchCompany,
+			Message:    errFetchCompany.Error(),
+		}
 	}
 	if strings.ToUpper(GoodsReceivesItemGroupEntities.ItemGroupCode) == "IN" && CompanyReferenceBetByIdResponse.UseDms {
 		isExist = 0
@@ -1115,25 +1122,24 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 			}
 		}
 	}
-	var PeriodResponseSp financeserviceapiutils.OpenPeriodPayloadResponse
-	var errPeriodResponse *exceptions.BaseErrorResponse
+	var PeriodResponseSp financeservice.OpenPeriodPayloadResponse
 	if GoodsReceivesItemGroupEntities.IsItemSparepart {
-		PeriodResponseSp, errPeriodResponse = financeserviceapiutils.GetOpenPeriodByCompany(GoodsReceiveEntities.CompanyId, "SP")
-		if errPeriodResponse != nil {
-			return false, errPeriodResponse
+		PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(GoodsReceiveEntities.CompanyId) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
+		if err := utils.Get(PeriodUrl, &PeriodResponseSp, nil); err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to Period Response data from external service",
+				Err:        err,
+			}
 		}
-		//PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(GoodsReceiveEntities.CompanyId) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
-		//if err := utils.Get(PeriodUrl, &PeriodResponseSp, nil); err != nil {
-		//	return false, &exceptions.BaseErrorResponse{
-		//		StatusCode: http.StatusInternalServerError,
-		//		Message:    "Failed to Period Response data from external service",
-		//		Err:        err,
-		//	}
-		//}
 	} else {
-		PeriodResponseSp, errPeriodResponse = financeserviceapiutils.GetOpenPeriodByCompany(GoodsReceiveEntities.CompanyId, "AP")
-		if errPeriodResponse != nil {
-			return false, errPeriodResponse
+		PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(GoodsReceiveEntities.CompanyId) + "&closing_module_detail_code=AP" //strconv.Itoa(response.ItemCode)
+		if err := utils.Get(PeriodUrl, &PeriodResponseSp, nil); err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Failed to Period Response data from external service",
+				Err:        err,
+			}
 		}
 	}
 	//validate if period is open
@@ -2363,84 +2369,4 @@ func viewLocationStock(db *gorm.DB, payload masterwarehousepayloads.ViewLocation
 		}
 	}
 	return quantityInTransit, quantityOnHand, nil
-}
-
-// [uspg_atItemGRPO1_Delete] option 0
-func (repository *GoodsReceiveRepositoryImpl) DeleteGoodsReceiveDetail(db *gorm.DB, goodsReceivesDetailId int) (bool, *exceptions.BaseErrorResponse) {
-
-	//get detail if exist first
-	var goodsReceiveDetailEntities transactionsparepartentities.GoodsReceiveDetail
-	err := db.Model(&goodsReceiveDetailEntities).
-		Where(transactionsparepartentities.GoodsReceiveDetail{GoodsReceiveDetailSystemNumber: goodsReceivesDetailId}).
-		First(&goodsReceiveDetailEntities).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New("record is not found with that goods receive id please checin input"),
-			}
-		}
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("unexpected error occurs when fetch goods receive detail please check input"),
-		}
-	}
-	var goodsReceiveEntities transactionsparepartentities.GoodsReceive
-	//get header
-	err = db.Model(&goodsReceiveEntities).Where(transactionsparepartentities.GoodsReceive{GoodsReceiveSystemNumber: goodsReceiveDetailEntities.GoodsReceiveSystemNumber}).
-		First(&goodsReceiveEntities).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New("goods receive header is not found"),
-			}
-		}
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("failed to get goods receive header please check input"),
-		}
-	}
-	if goodsReceiveDetailEntities.BinningDetailId != 0 {
-
-		err = db.Model(&transactionsparepartentities.BinningStockDetail{}).
-			Where(transactionsparepartentities.BinningStockDetail{GoodsReceiveDetailSystemNumber: goodsReceiveDetailEntities.GoodsReceiveSystemNumber}).
-			Updates(map[string]interface{}{
-				"goods_receive_system_number":        0,
-				"goods_receive_detail_system_number": 0,
-				"goods_receive_line_number":          0,
-				"change_no":                          gorm.Expr("change_no + 1"),
-				"updated_date":                       time.Now(),
-			}).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errors.New("failed to update binning stock detail"),
-			}
-		}
-	} else {
-		err = db.Model(&transactionsparepartentities.PurchaseOrderDetailEntities{}).
-			Where(transactionsparepartentities.PurchaseOrderDetailEntities{GoodsReceiveDetailSystemNumber: goodsReceivesDetailId}).
-			Updates(map[string]interface{}{
-				"goods_receive_system_number":        0,
-				"goods_receive_detail_system_number": 0,
-				"goods_receive_line_system_number":   0,
-				"change_no":                          gorm.Expr("change_no + 1"),
-				"updated_date":                       time.Now(),
-			}).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errors.New("failed to update purchase order detail please check input"),
-			}
-		}
-	}
-	err = db.Delete(&goodsReceiveDetailEntities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New("failed to delete goods receive please check input"),
-		}
-	}
-	return true, nil
 }
