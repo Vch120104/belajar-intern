@@ -5,11 +5,12 @@ import (
 	masteritementities "after-sales/api/entities/master/item"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
-	financeservice "after-sales/api/payloads/cross-service/finance-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -437,7 +438,12 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 			Err:        err,
 		}
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 
 	var ItemResponse masteritementities.Item
 	err = db.Model(&ItemResponse).Where(masteritementities.Item{ItemId: response.ItemId}).Scan(&ItemResponse).Error
@@ -568,7 +574,12 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestDetail(db *gorm.DB, pa
 			Err:        err,
 		}
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+
+		}
+	}(rows)
 	LineNumber := 1
 	//default value
 	LineStatus := "10"
@@ -855,16 +866,9 @@ func (p *PurchaseRequestRepositoryImpl) InsertPurchaseRequestDetail(db *gorm.DB,
 func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, conditions []utils.FilterCondition, page pagination.Pagination, companyid int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var response []transactionsparepartpayloads.PurchaseRequestItemGetAll
 	entities := masteritementities.Item{}
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(companyid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
-
-	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
-	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-		return page, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to Period Response data from external service",
-			Err:        err,
-		}
+	PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(companyid, "SP")
+	if periodErr != nil {
+		return page, periodErr
 	}
 
 	year := PeriodResponse.PeriodYear
@@ -966,16 +970,10 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB, compid int, i int) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
 	//entities := masteritementities.Item{}
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
-	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to Period Response data from external service",
-			Err:        err,
-		}
+	PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(compid, "SP")
+	if periodErr != nil {
+		return response, nil
 	}
-
 	year := PeriodResponse.PeriodYear
 	month := PeriodResponse.PeriodMonth
 	fmt.Println("year = " + year)
@@ -1065,15 +1063,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestItemPr(db *gorm.DB
 func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.DB, compid int, s string) (transactionsparepartpayloads.PurchaseRequestItemGetAll, *exceptions.BaseErrorResponse) {
 	var response transactionsparepartpayloads.PurchaseRequestItemGetAll
 
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id" + strconv.Itoa(compid) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
-
-	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to Period Response data from external service",
-			Err:        err,
-		}
+	PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(compid, "SP")
+	if periodErr != nil {
+		return response, periodErr
 	}
 
 	year := PeriodResponse.PeriodYear
@@ -1134,7 +1126,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByCodePurchaseRequestItemPr(db *gorm.
 	if UomItemResponse.SourceConvertion == nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Uom Source Convertion From External Data",
+			Message:    "Failed to fetch Uom Source Conversion From External Data",
 			Err:        err,
 		}
 	}
