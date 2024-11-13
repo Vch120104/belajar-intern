@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -63,19 +64,29 @@ func InitDB() *gorm.DB {
 }
 
 func InitRedis() *redis.Client {
+	//rdb := redis.NewClient(&redis.Options{
+	//	Addr:     EnvConfigs.ClientRedis + ":" + EnvConfigs.PortRedis,
+	//	Password: "OOg6hZ7KvrU4aAIhmhq2cNfhgUjMYlif",
+	//	DB:       0,
+	//})
+	const (
+		REDIS_HOST     = "redis-16833.c334.asia-southeast2-1.gce.redns.redis-cloud.com"
+		REDIS_PASSWORD = "bSJgYT9L4UiMJr4CCSismkxcHZAtnOci"
+		REDIS_PORT     = 16833
+		REDIS_DB       = 0 // Replace "Devin-free-db" with the database number if needed; typically, DB is an integer.
+	)
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     EnvConfigs.ClientRedis + ":" + EnvConfigs.PortRedis,
-		Password: "",
-		DB:       0,
+		Addr:     fmt.Sprintf("%s:%d", REDIS_HOST, REDIS_PORT), // Combine host and port
+		Password: REDIS_PASSWORD,                               // Password if set
+		DB:       REDIS_DB,                                     // Use the default DB
 	})
-
 	// Menguji koneksi Redis
 	_, err := rdb.Ping(context.Background()).Result()
 	if err != nil {
 		log.Fatalf("Failed to connect to Redis: %v", err)
 	}
 
-	log.Info("Connected Redis -- running in -- " + EnvConfigs.ClientRedis + ":" + EnvConfigs.PortRedis)
+	log.Info("Connected Redis -- running in -- " + REDIS_HOST + ":" + strconv.Itoa(REDIS_PORT))
 
 	return rdb
 }

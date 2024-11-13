@@ -105,3 +105,13 @@ func (service *GoodsReceiveServiceImpl) DeleteGoodsReceive(goodsReceivesId int) 
 	}
 	return result, nil
 }
+func (service *GoodsReceiveServiceImpl) DeleteGoodsReceiveDetail(goodsReceivesDetailId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.DeleteGoodsReceiveDetail(tx, goodsReceivesDetailId)
+	tx.Rollback()
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

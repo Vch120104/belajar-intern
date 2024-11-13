@@ -53,3 +53,10 @@ func TestVoidGoodsReceives(t *testing.T) {
 		}
 	})
 }
+func TestDeleteDetailGoodsReceives(t *testing.T) {
+	serviceStart := setupGoodsReceive()
+	detailIdToDelete := 37959
+	res, err := serviceStart.DeleteGoodsReceiveDetail(detailIdToDelete)
+	assert.Nil(t, err)
+	assert.True(t, res, "result is false")
+}

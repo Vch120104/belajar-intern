@@ -19,4 +19,5 @@ type GoodsReceiveRepository interface {
 	LocationItemGoodsReceive(db *gorm.DB, filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SubmitGoodsReceive(db *gorm.DB, GoodsReceiveId int) (bool, *exceptions.BaseErrorResponse)
 	DeleteGoodsReceive(db *gorm.DB, goodsReceivesId int) (bool, *exceptions.BaseErrorResponse)
+	DeleteGoodsReceiveDetail(db *gorm.DB, goodsReceivesDetailId int) (bool, *exceptions.BaseErrorResponse)
 }
