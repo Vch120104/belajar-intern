@@ -1,13 +1,11 @@
 package transactionsparepartrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
-	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -143,28 +141,18 @@ func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB,
 	}
 
 	for _, binningEntity := range binningEntities {
-		var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
-		SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(binningEntity.SupplierId)
-		if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
-			return paginations, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Supplier data from external service" + err.Error(),
-				Err:        err,
-			}
+		SupplierData, errSupplierMaster := generalserviceapiutils.GetSupplierMasterByID(binningEntity.SupplierId)
+		if err != nil {
+			return paginations, errSupplierMaster
 		}
 		exists, _ := rdb.Exists(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId)).Result()
 
 		if exists == 0 {
 			fmt.Println("Failed To Get Status on redis... queue for external service")
-			var DocResponse generalservicepayloads.DocumentStatusPayloads
-			DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(binningEntity.BinningDocumentStatusId)
-			if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-				return paginations, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        errors.New("failed To fetch Document Status From External Service"),
-				}
+			DocResponse, errDocResponse := generalserviceapiutils.GetDocumentStatusById(binningEntity.BinningDocumentStatusId)
+			if errDocResponse != nil {
+				return paginations, errDocResponse
 			}
-
 			rdb.Set(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId), DocResponse.DocumentStatusCode, 1*time.Hour)
 		}
 		StatusCode, _ := rdb.Get(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId)).Result()
@@ -260,15 +248,19 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 		}
 	}
 	//get supplier data
-	var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
-	SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(BinningStockEntities.SupplierId)
-	if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
-		return Response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Supplier data from external service" + err.Error(),
-			Err:        err,
-		}
+	SupplierData, supplierDataErr := generalserviceapiutils.GetSupplierMasterByID(BinningStockEntities.SupplierId)
+	if supplierDataErr != nil {
+		return Response, supplierDataErr
 	}
+	//var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
+	//SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(BinningStockEntities.SupplierId)
+	//if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
+	//	return Response, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Message:    "Failed to fetch Supplier data from external service" + err.Error(),
+	//		Err:        err,
+	//	}
+	//}
 	//get PO Data
 
 	//Item Group Name
@@ -743,14 +735,11 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 		}
 	}
 	//get validation draft doc
-	var DocResponse generalservicepayloads.DocumentStatusPayloads
-	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(BinningEntities.BinningDocumentStatusId)
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return BinningEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch Document Status From External Service"),
-		}
+	DocResponse, errDocResponse := generalserviceapiutils.GetDocumentStatusById(BinningEntities.BinningDocumentStatusId)
+	if errDocResponse != nil {
+		return transactionsparepartentities.BinningStock{}, errDocResponse
 	}
+
 	if DocResponse.DocumentStatusCode != "10" { //draft {
 		return transactionsparepartentities.BinningStock{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -763,15 +752,12 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 	//RAISERROR('Document Source Is Not Define at Table comGenVariable',16,1)
 	//RETURN 0
 	//END
-	var SourceDocType generalservicepayloads.SourceDocumentTypeMasterResponse
-	SourceDocTypeUrl := config.EnvConfigs.GeneralServiceUrl + "source-document-type-code/SPBN"
-	if err := utils.Get(SourceDocTypeUrl, &SourceDocType, nil); err != nil {
-		return BinningEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch source document Status From External Service"),
-		}
+	SourceDocType, errSource := generalserviceapiutils.GetDocumentTypeByCode("SPBN")
+	if errSource != nil {
+		return BinningEntities, errSource
 	}
-	if SourceDocType == (generalservicepayloads.SourceDocumentTypeMasterResponse{}) {
+
+	if SourceDocType == (generalserviceapiutils.SourceDocumentTypeMasterResponse{}) {
 		return BinningEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Document Source Is Not Define at Table",
@@ -1116,14 +1102,17 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 
 	//BinningEntities
 	//get ready id
-	DocumentStatusUrl = config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/20"
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return BinningEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch Document Status From External Service"),
-		}
+	//DocumentStatusUrl = config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/20"
+	//if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+	//	return BinningEntities, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusBadRequest,
+	//		Err:        errors.New("failed To fetch Document Status From External Service"),
+	//	}
+	//}
+	DocumentStatusUrl, errStatus := generalserviceapiutils.GetDocumentStatusByCode("20")
+	if errStatus != nil {
+		return BinningEntities, errStatus
 	}
-
 	//get bining reference type id first "T"
 	binningTypeIdImport := 0
 	err = db.Model(&masterentities.BinningTypeMaster{}).
@@ -1142,7 +1131,7 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 	//	CHANGE_USER_ID = @Change_User_Id ,
 	//	CHANGE_DATETIME = @Change_Datetime
 	//WHERE BIN_SYS_NO = @Bin_Sys_No
-	BinningEntities.BinningDocumentStatusId = DocResponse.DocumentStatusId
+	BinningEntities.BinningDocumentStatusId = DocumentStatusUrl.DocumentStatusId
 	BinningEntities.ChangeNo += 1
 	BinningEntities.BinningDocumentNumber = "dummy doc number waiting for gmsrcdoc1_update"
 	*BinningEntities.CreatedDate = time.Now()

@@ -9,12 +9,12 @@ import (
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
 	financeservice "after-sales/api/payloads/cross-service/finance-service"
-	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -915,15 +915,9 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	}
 	//get is use dms for gm ref checking
 	//hit general service
-	CompanyReferenceBetByIdResponse := generalservicepayloads.CompanyReferenceBetByIdResponse{}
-	CompanyReferenceUrl := fmt.Sprintf("%scompany-reference/%s", config.EnvConfigs.GeneralServiceUrl, strconv.Itoa(GoodsReceiveEntities.SupplierId))
-	errFetchCompany := utils.Get(CompanyReferenceUrl, &CompanyReferenceBetByIdResponse, nil)
+	CompanyReferenceBetByIdResponse, errFetchCompany := generalserviceapiutils.GetCompanyReferenceById(GoodsReceiveEntities.SupplierId)
 	if errFetchCompany != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errFetchCompany,
-			Message:    errFetchCompany.Error(),
-		}
+		return false, errFetchCompany
 	}
 	if strings.ToUpper(GoodsReceivesItemGroupEntities.ItemGroupCode) == "IN" && CompanyReferenceBetByIdResponse.UseDms {
 		isExist = 0
@@ -1937,14 +1931,18 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	//END
 	//
 	//update purchase order
-	var DocResponse generalservicepayloads.ApprovalStatusResponses
-
-	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/99"
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error on getting approval status codes",
-		}
+	//var DocResponse generalservicepayloads.ApprovalStatusResponses
+	//
+	//DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/99"
+	//if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+	//	return false, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Message:    "error on getting approval status codes",
+	//	}
+	//}
+	DocResponse, DocErr := generalserviceapiutils.GetApprovalStatusByCode("99")
+	if DocErr != nil {
+		return false, DocErr
 	}
 
 	err = db.Model(&transactionsparepartentities.PurchaseOrderEntities{}).
