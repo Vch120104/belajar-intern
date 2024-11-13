@@ -1,12 +1,14 @@
 package transactionworkshoprepositoryimpl
 
 import (
+	masteroperationentities "after-sales/api/entities/master/operation"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"net/http"
 
 	"gorm.io/gorm"
@@ -23,12 +25,16 @@ func (r *ContractServiceDetailRepositoryImpl) GetAllDetail(tx *gorm.DB, Id int, 
 	var entities []transactionworkshopentities.ContractServiceDetail
 	combinedPayloads := make([]map[string]interface{}, 0)
 
-	query := tx.Model(&transactionworkshopentities.ContractServiceDetail{}).Where("contract_service_system_number = ?", Id)
+	// Query utama untuk mengambil data ContractServiceDetail
+	query := tx.Model(&transactionworkshopentities.ContractServiceDetail{}).
+		Where("contract_service_system_number = ?", Id)
 
+	// Menambahkan filter condition ke query
 	for _, condition := range filterCondition {
 		query = query.Where(condition.ColumnField+" = ?", condition.ColumnValue)
 	}
 
+	// Eksekusi query untuk mendapatkan ContractServiceDetail
 	if err := query.Find(&entities).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -36,13 +42,39 @@ func (r *ContractServiceDetailRepositoryImpl) GetAllDetail(tx *gorm.DB, Id int, 
 		}
 	}
 
+	// Iterasi melalui hasil query dan melakukan query tambahan untuk Line Type dan Operation Code
 	for _, entity := range entities {
+		// Mengambil Line Type dari API eksternal
+		linetype, linetypeErr := generalserviceapiutils.GetLineTypeById(entity.LineTypeId)
+		if linetypeErr != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        linetypeErr.Err,
+			}
+		}
+
+		// Mengambil Operation Code dari tabel mtr_operation_code menggunakan GORM
+		var operation masteroperationentities.OperationCode
+		operationErr := tx.Model(&masteroperationentities.OperationCode{}).
+			Where("operation_id = ?", entity.ItemOperationId).
+			First(&operation).Error
+		if operationErr != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        operationErr,
+			}
+		}
+
+		// Membuat response untuk setiap entity detail
 		response := map[string]interface{}{
 			"contract_service_package_detail_system_number": entity.ContractServicePackageDetailSystemNumber,
 			"contract_service_system_number":                entity.ContractServiceSystemNumber,
 			"contract_service_line":                         entity.ContractServiceLine,
 			"line_type_id":                                  entity.LineTypeId,
+			"line_type_code":                                linetype.LineTypeCode,
 			"item_operation_id":                             entity.ItemOperationId,
+			"operation_code":                                operation.OperationCode,
+			"operation_name":                                operation.OperationName,
 			"description":                                   entity.Description,
 			"frt_quantity":                                  entity.FrtQuantity,
 			"item_price":                                    entity.ItemPrice,
@@ -51,9 +83,12 @@ func (r *ContractServiceDetailRepositoryImpl) GetAllDetail(tx *gorm.DB, Id int, 
 			"package_id":                                    entity.PackageId,
 			"total_use_frt_quantity":                        entity.TotalUseFrtQuantity,
 		}
+
+		// Menambahkan hasil ke payload kombinasi
 		combinedPayloads = append(combinedPayloads, response)
 	}
 
+	// Pagination hasil data
 	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(combinedPayloads, &pages)
 	return paginatedData, totalPages, totalRows, nil
 }
