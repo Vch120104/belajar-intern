@@ -1436,7 +1436,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				if resdb.QuantityInTransit != 0 {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
-						Err:        fmt.Errorf("there is quantity in transit : %d. Please finish the transfer process before Goods Receive", resdb.QuantityInTransit),
+						Err:        fmt.Errorf("there is quantity in transit : %f. Please finish the transfer process before Goods Receive", resdb.QuantityInTransit),
 					}
 				}
 
@@ -1646,7 +1646,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				if resdb.QuantityInTransit != 0 {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
-						Err:        fmt.Errorf("there is quantity in transit : %d. Please finish the transfer process before Goods Receive", resdb.QuantityInTransit),
+						Err:        fmt.Errorf("there is quantity in transit : %f. Please finish the transfer process before Goods Receive", resdb.QuantityInTransit),
 					}
 				}
 				//SET @Qty_Purchase = dbo.getQtyConvertion(@Source_Type, @CSR1_Item_Code, @CSR1_Qty_Grpo)
@@ -2364,7 +2364,7 @@ func viewLocationStock(db *gorm.DB, payload masterwarehousepayloads.ViewLocation
 		} else {
 			return 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("error occured when fetch quantity instransit and quantity on hand"),
+				Message:    "error occured when fetch quantity instransit and quantity on hand",
 			}
 		}
 	}
