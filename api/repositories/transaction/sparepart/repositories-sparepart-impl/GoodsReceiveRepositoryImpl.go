@@ -1553,7 +1553,9 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				}
 				stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
 
-				errStockTransaction := utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
+				errStockTransaction := utils.CallAPI("POST", stockTransactionUrl, &payloadsStockTransaction, nil)
+
+				//utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
 				if errStockTransaction != nil {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,
@@ -1770,7 +1772,8 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				}
 				stockTransactionUrl := config.EnvConfigs.AfterSalesServiceUrl + "stock-transaction"
 
-				errStockTransaction := utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
+				errStockTransaction := utils.CallAPI("POST", stockTransactionUrl, &payloadsStockTransaction, nil)
+				//utils.Post(stockTransactionUrl, &payloadsStockTransaction, nil)
 				if errStockTransaction != nil {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusInternalServerError,

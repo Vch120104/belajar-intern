@@ -16,7 +16,7 @@ type JournalEntryApprovalUpdatePayload struct {
 
 func UpdateApprovalJournalEntry(payload JournalEntryApprovalUpdatePayload, journalId string) (bool, *exceptions.BaseErrorResponse) {
 	updateApprovalJournalEntryUrl := config2.EnvConfigs.FinanceServiceUrl + "journal-entry/approval/" + journalId
-	err := utils.Put(updateApprovalJournalEntryUrl, payload, nil)
+	err := utils.CallAPI("PUT", updateApprovalJournalEntryUrl, payload, nil)
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

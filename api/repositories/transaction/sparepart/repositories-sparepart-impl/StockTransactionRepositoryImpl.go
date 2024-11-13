@@ -231,7 +231,8 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 		//langsung execure karena setiap reason wo, nl,back order semua sama sama hit
 		RequestBodyLocationStock.QuantityPurchase = payloads.ReferenceQuantity
 		urlLocationStock := config.EnvConfigs.AfterSalesServiceUrl + "location-stock"
-		errCrossService := utils.Put(urlLocationStock, &RequestBodyLocationStock, nil)
+		errCrossService := utils.CallAPI("PUT", urlLocationStock, &RequestBodyLocationStock, nil)
+		//utils.Put(urlLocationStock, &RequestBodyLocationStock, nil)
 		if errCrossService != nil {
 			fmt.Println("cross service pertama gagal")
 			return false, &exceptions.BaseErrorResponse{
@@ -441,7 +442,7 @@ func (s *StockTransactionRepositoryImpl) StockTransactionInsert(db *gorm.DB, pay
 		stockTransactionReason.StockTransactionReasonCode == "AP" {
 		RequestBodyLocationStock.QuantityClaimIn = payloads.ReferenceQuantity
 		urlLocationStock := config.EnvConfigs.AfterSalesServiceUrl + "location-stock"
-		errCrossService := utils.Put(urlLocationStock, &RequestBodyLocationStock, nil)
+		errCrossService := utils.CallAPI("PUT", urlLocationStock, &RequestBodyLocationStock, nil)
 		if errCrossService != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
