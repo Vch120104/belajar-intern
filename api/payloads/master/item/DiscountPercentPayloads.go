@@ -12,8 +12,8 @@ type DiscountPercentListResponse struct {
 	IsActive                bool    `json:"is_active" parent_entity:"mtr_discount_percent"`
 	DiscountPercentId       int     `json:"discount_percent_id" parent_entity:"mtr_discount_percent" main_table:"mtr_discount_percent"`
 	DiscountCodeId          int     `json:"discount_code_id" parent_entity:"mtr_discount" references:"mtr_discount"`
-	DiscountCodeValue       string  `json:"discount_code_value" parent_entity:"mtr_discount"`
-	DiscountCodeDescription string  `json:"discount_code_description" parent_entity:"mtr_discount"`
+	DiscountCodeValue       string  `json:"discount_code" parent_entity:"mtr_discount"`
+	DiscountCodeDescription string  `json:"discount_description" parent_entity:"mtr_discount"`
 	OrderTypeId             int     `json:"order_type_id" parent_entity:"mtr_discount_percent"`
 	Discount                float64 `json:"discount" parent_entity:"mtr_discount_percent"`
 }

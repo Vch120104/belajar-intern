@@ -1082,7 +1082,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("system number %d is not found in reference work order", strconv.Itoa(GoodsReceiveEntities.ReferenceSystemNumber)),
+				Message:    fmt.Sprintf("system number %d is not found in reference work order", GoodsReceiveEntities.ReferenceSystemNumber),
 			}
 		}
 		if isExist > 1 {
@@ -1105,7 +1105,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    fmt.Sprintf("system number %d is not found in reference item claim", strconv.Itoa(GoodsReceiveEntities.ReferenceSystemNumber)),
+				Message:    fmt.Sprintf("system number %s is not found in reference item claim", strconv.Itoa(GoodsReceiveEntities.ReferenceSystemNumber)),
 			}
 		}
 		if isExist > 1 {
@@ -1228,6 +1228,12 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				A.reference_system_number
 			`).Where("goods_receive_system_number = ?", GoodsReceiveId).
 		Scan(&goodsReceivesDetailResponse).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get goods receive detail",
+		}
+	}
 	for _, resdb := range goodsReceivesDetailResponse {
 		//get onhand and intransit first
 		var UomRate float64
@@ -1339,7 +1345,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 		if quantitySumReference < quantitySumGoodsReceive {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Err:        fmt.Errorf("total quantity received : %d cannot exceed quantity reference : %d", quantitySumGoodsReceive, quantitySumReference),
+				Err:        fmt.Errorf("total quantity received : %f cannot exceed quantity reference : %f", quantitySumGoodsReceive, quantitySumReference),
 			}
 		}
 		if GoodsReceiveEntities.ViaBinning {
@@ -1347,19 +1353,19 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 				if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "PO" {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
-						Err:        fmt.Errorf("delivery order quantity : %d is bigger dan PO quantity :%d", resdb.QuantityDeliveryOrder, resdb.QuantityReference),
+						Err:        fmt.Errorf("delivery order quantity : %f is bigger dan PO quantity :%f", resdb.QuantityDeliveryOrder, resdb.QuantityReference),
 					}
 				}
 				if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "CL" {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
-						Err:        fmt.Errorf("delivery order quantity : %d is bigger dan Claim quantity :%d", resdb.QuantityDeliveryOrder, resdb.QuantityReference),
+						Err:        fmt.Errorf("delivery order quantity : %f is bigger dan Claim quantity :%f", resdb.QuantityDeliveryOrder, resdb.QuantityReference),
 					}
 				}
 				if goodsReceiveReferenceTypeEntities.ReferenceTypeGoodReceiveCode == "WC" {
 					return false, &exceptions.BaseErrorResponse{
 						StatusCode: http.StatusBadRequest,
-						Err:        fmt.Errorf("delivery order quantity : %d is bigger dan Claim Warranty quantity :%d", resdb.QuantityDeliveryOrder, resdb.QuantityReference),
+						Err:        fmt.Errorf("delivery order quantity : %f is bigger dan Claim Warranty quantity :%f", resdb.QuantityDeliveryOrder, resdb.QuantityReference),
 					}
 				}
 			}
@@ -1732,7 +1738,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 					}
 				}
 				stockReasonCode := ""
-				if PurchaseOrderEntities.BackOrder == true {
+				if PurchaseOrderEntities.BackOrder {
 					stockReasonCode = "NL"
 				} else {
 					stockReasonCode = "BO"

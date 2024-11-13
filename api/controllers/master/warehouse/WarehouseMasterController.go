@@ -6,7 +6,6 @@ import (
 	"after-sales/api/payloads"
 	"after-sales/api/utils"
 	"after-sales/api/validation"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,6 +32,7 @@ type WarehouseMasterController interface {
 	GetByCode(writer http.ResponseWriter, request *http.Request)
 	GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
+	Update(writer http.ResponseWriter, request *http.Request)
 	ChangeStatus(writer http.ResponseWriter, request *http.Request)
 	DropdownbyGroupId(writer http.ResponseWriter, request *http.Request)
 	GetAuthorizeUser(writer http.ResponseWriter, request *http.Request)
@@ -93,6 +93,7 @@ func (r *WarehouseMasterControllerImpl) GetAll(writer http.ResponseWriter, reque
 		"mtr_warehouse_master.warehouse_code":      queryValues.Get("warehouse_code"),
 		"mtr_warehouse_group.warehouse_group_name": queryValues.Get("warehouse_group_name"),
 		"mtr_warehouse_master.is_active":           queryValues.Get("is_active"),
+		"mtr_warehouse_master.company_id":          queryValues.Get("company_id"),
 	}
 
 	pagination := pagination.Pagination{
@@ -188,7 +189,6 @@ func (r *WarehouseMasterControllerImpl) GetById(writer http.ResponseWriter, requ
 		}
 		return
 	}
-	fmt.Print("test : ", getbyid)
 	payloads.NewHandleSuccess(writer, getbyid, "Get Data Successfully!", http.StatusOK)
 }
 
@@ -268,8 +268,6 @@ func (r *WarehouseMasterControllerImpl) GetWarehouseWithMultiId(writer http.Resp
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/warehouse-master/ [post]
 func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request *http.Request) {
-	var message string
-	var status int
 
 	formRequest := masterwarehousepayloads.GetWarehouseMasterResponse{}
 	helper.ReadFromRequestBody(request, &formRequest)
@@ -277,21 +275,58 @@ func (r *WarehouseMasterControllerImpl) Save(writer http.ResponseWriter, request
 		exceptions.NewBadRequestException(writer, request, validationErr)
 		return
 	}
+
 	save, err := r.WarehouseMasterService.Save(formRequest)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	if formRequest.WarehouseId == 0 {
-		message = "Create Data Successfully!"
-		status = http.StatusCreated
-	} else {
-		message = "Update Data Successfully!"
-		status = http.StatusOK
+	payloads.NewHandleSuccess(writer, save, "Create Data Successfully!", http.StatusCreated)
+}
+
+// @Summary Update Warehouse Master
+// @Description Update Warehouse Master
+// @Accept json
+// @Produce json
+// @Tags Master : Warehouse Master
+// @Param warehouse_id path int true "warehouse_id"
+// @param reqBody body masterwarehousepayloads.GetWarehouseMasterResponse true "Form Request"
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/warehouse-master/{warehouse_id}/{company_id} [put]
+func (r *WarehouseMasterControllerImpl) Update(writer http.ResponseWriter, request *http.Request) {
+
+	warehouseId, err := strconv.Atoi(chi.URLParam(request, "warehouse_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Warehouse ID", http.StatusBadRequest)
+		return
 	}
 
-	payloads.NewHandleSuccess(writer, save, message, status)
+	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
+		return
+	}
+
+	formRequest := masterwarehousepayloads.UpdateWarehouseMasterRequest{}
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	update, baseErr := r.WarehouseMasterService.Update(warehouseId, companyId, formRequest)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Warehouse ID not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
 // @Summary Change Warehouse Master Status By Id

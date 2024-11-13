@@ -13,4 +13,5 @@ type OperationKeyService interface {
 	GetOperationKeyName(masteroperationpayloads.OperationKeyRequest) (masteroperationpayloads.OperationKeyNameResponse, *exceptions.BaseErrorResponse)
 	SaveOperationKey(masteroperationpayloads.OperationKeyResponse) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationKey(int) (bool, *exceptions.BaseErrorResponse)
+	GetOperationKeyDropdown(operationGroupId int, operationSectionId int) ([]masteroperationpayloads.OperationKeyDropDown, *exceptions.BaseErrorResponse)
 }

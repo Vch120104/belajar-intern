@@ -93,6 +93,18 @@ func (s *WarehouseMasterServiceImpl) Save(request masterwarehousepayloads.GetWar
 	return save, nil
 }
 
+func (s *WarehouseMasterServiceImpl) Update(warehouseId int, companyId int, request masterwarehousepayloads.UpdateWarehouseMasterRequest) (masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	update, err := s.warehouseMasterRepo.Update(tx, warehouseId, companyId, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return update, err
+	}
+	return update, nil
+}
+
 func (s *WarehouseMasterServiceImpl) GetById(warehouseId int, pagination pagination.Pagination) (masterwarehousepayloads.GetAllWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	get, err := s.warehouseMasterRepo.GetById(tx, warehouseId, pagination)

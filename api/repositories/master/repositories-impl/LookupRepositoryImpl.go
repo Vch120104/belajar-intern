@@ -563,7 +563,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 		combinedDetailsSubQuery := `
 			(
 				SELECT package_id, frt_quantity, is_active 
-				FROM mtr_package_master_detail_item
+				FROM mtr_package_master_detail
 				WHERE is_active = 1
 				UNION ALL
 				SELECT package_id, frt_quantity, is_active 
@@ -593,14 +593,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
 			Select(`
-				oc.operation_id AS OPERATION_ID, 
-				oc.operation_code AS OPERATION_CODE, 
-				oc.operation_name AS OPERATION_NAME, 
-				ofrt.frt_hour AS FRT_HOUR, 
-				oe.operation_entries_code AS OPERATION_ENTRIES_CODE, 
-				oe.operation_entries_description AS OPERATION_ENTRIES_DESCRIPTION, 
-				ok.operation_key_code AS OPERATION_KEY_CODE, 
-				ok.operation_key_description AS OPERATION_KEY_DESCRIPTION
+				oc.operation_id AS operation_id, 
+				oc.operation_code AS operation_code, 
+				oc.operation_name AS operation_name, 
+				ofrt.frt_hour AS frt_hour, 
+				oe.operation_entries_code AS operation_entries_code, 
+				oe.operation_entries_description AS operation_entries_description, 
+				ok.operation_key_code AS operation_key_code, 
+				ok.operation_key_description AS operation_key_description
 			`).
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
@@ -622,11 +622,15 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 				        AND V.PERIOD_YEAR = ? 
 				        AND V.PERIOD_MONTH = ? 
 				        AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where(filterQuery, filterValues...)
 
@@ -643,11 +647,15 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 				        AND V.PERIOD_YEAR = ? 
 				        AND V.PERIOD_MONTH = ? 
 				        AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where(filterQuery, filterValues...)
 
@@ -663,11 +671,15 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
 							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-					A.item_level_1 AS item_level_1, 
-					A.item_level_2 AS item_level_2, 
-					A.item_level_3 AS item_level_3, 
-					A.item_level_4 AS item_level_4
+					A.item_level_1_id AS item_level_1, 
+					A.item_level_2_id AS item_level_2, 
+					A.item_level_3_id AS item_level_3, 
+					A.item_level_4_id AS item_level_4
 				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
@@ -685,11 +697,15 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
 							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-					A.item_level_1 AS item_level_1, 
-					A.item_level_2 AS item_level_2, 
-					A.item_level_3 AS item_level_3, 
-					A.item_level_4 AS item_level_4
+					A.item_level_1_id AS item_level_1, 
+					A.item_level_2_id AS item_level_2, 
+					A.item_level_3_id AS item_level_3, 
+					A.item_level_4_id AS item_level_4
 				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
@@ -705,11 +721,15 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
 							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-					A.item_level_1 AS item_level_1, 
-					A.item_level_2 AS item_level_2, 
-					A.item_level_3 AS item_level_3, 
-					A.item_level_4 AS item_level_4
+					A.item_level_1_id AS item_level_1, 
+					A.item_level_2_id AS item_level_2, 
+					A.item_level_3_id AS item_level_3, 
+					A.item_level_4_id AS item_level_4
 				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
@@ -854,11 +874,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_code = ?", oprItemCode)
 
@@ -872,11 +896,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_code = ?", oprItemCode)
 
@@ -890,11 +918,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where("A.item_code = ?", oprItemCode).
 			Order("A.item_code")
@@ -910,11 +942,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where("A.item_code = ?", oprItemCode).
 			Order("A.item_code")
@@ -928,11 +964,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where("A.item_code = ?", oprItemCode).
 			Order("A.item_code")
@@ -1044,14 +1084,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
 			Select(`
-			oc.operation_id AS OPERATION_ID, 
-			oc.operation_code AS OPERATION_CODE, 
-			oc.operation_name AS OPERATION_NAME, 
-			ofrt.frt_hour AS FRT_HOUR, 
-			oe.operation_entries_code AS OPERATION_ENTRIES_CODE, 
-			oe.operation_entries_description AS OPERATION_ENTRIES_DESCRIPTION, 
-			ok.operation_key_code AS OPERATION_KEY_CODE, 
-			ok.operation_key_description AS OPERATION_KEY_DESCRIPTION
+			oc.operation_id AS operation_id, 
+			oc.operation_code AS operation_code, 
+			oc.operation_name AS operation_name, 
+			ofrt.frt_hour AS frt_hour, 
+			oe.operation_entries_code AS operation_entries_code, 
+			oe.operation_entries_description AS operation_entries_description, 
+			ok.operation_key_code AS operation_key_code, 
+			ok.operation_key_description AS operation_key_description
 		`).
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_key AS ok ON oc.operation_key_id = ok.operation_key_id").
@@ -1071,11 +1111,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...)
@@ -1090,11 +1134,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...)
@@ -1111,11 +1159,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
@@ -1134,11 +1186,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
@@ -1155,11 +1211,15 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where("A.item_id = ?", oprItemId).
 			Where(filterQuery, filterValues...).
@@ -1223,9 +1283,9 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	)
 
 	result := tx.Table("dms_microservices_finance_dev.dbo.mtr_closing_period_company").
-		Select("TOP 1 PERIOD_YEAR, PERIOD_MONTH").
-		Where("company_id = ? AND closing_module_detail_id = ? AND PERIOD_YEAR <= ? AND PERIOD_MONTH <= ? AND is_period_closed = '0'", companyCode, closingModul, yearNow, monthNow).
-		Order("PERIOD_YEAR DESC, PERIOD_MONTH DESC").
+		Select("TOP 1 period_year, period_month").
+		Where("company_id = ? AND closing_module_detail_id = ? AND period_year <= ? AND period_month <= ? AND is_period_closed = '0'", companyCode, closingModul, yearNow, monthNow).
+		Order("period_year DESC, period_month DESC").
 		Scan(&period)
 
 	if result.Error != nil {
@@ -1295,13 +1355,13 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	case utils.LinetypeOperation:
 		baseQuery = baseQuery.Table("dms_microservices_aftersales_dev.dbo.mtr_operation_code AS oc").
 			Select(`
-        oc.operation_code AS OPERATION_CODE, 
-        oc.operation_name AS OPERATION_NAME, 
-        ofrt.frt_hour AS FRT_HOUR, 
-        oe.operation_entries_code AS OPERATION_ENTRIES_CODE, 
-        oe.operation_entries_description AS OPERATION_ENTRIES_DESCRIPTION, 
-        ok.operation_key_code AS OPERATION_KEY_CODE, 
-        ok.operation_key_description AS OPERATION_KEY_DESCRIPTION,
+        oc.operation_code AS operation_code, 
+        oc.operation_name AS operation_name, 
+        ofrt.frt_hour AS frt_hour, 
+        oe.operation_entries_code AS operation_entries_code, 
+        oe.operation_entries_description AS operation_entries_description, 
+        ok.operation_key_code AS operation_key_code, 
+        ok.operation_key_description AS operation_key_description,
 		? as PRICE
     `, price).
 			Joins("LEFT JOIN dms_microservices_aftersales_dev.dbo.mtr_operation_entries AS oe ON oc.operation_entries_id = oe.operation_entries_id").
@@ -1321,10 +1381,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 						WHERE A.item_id = V.item_id 
 						AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ? 
 						AND V.whs_group = ?), 0) AS Available_qty,
-				A.item_level_1 AS item_level_1,
-				A.item_level_2 AS item_level_2,
-				A.item_level_3 AS item_level_3,
-				A.item_level_4 AS item_level_4,
+				A.item_level_1_id AS item_level_1,
+				A.item_level_2_id AS item_level_2,
+				A.item_level_3_id AS item_level_3,
+				A.item_level_4_id AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type_id
@@ -1365,6 +1425,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode). // Parameters for the final ELSE condition.
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where(filterQuery, filterValues...)
 
@@ -1377,10 +1441,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4,
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type_id
@@ -1421,6 +1485,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
 			Where(filterQuery, filterValues...)
 
@@ -1434,10 +1502,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4,
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type
@@ -1478,6 +1546,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_group_id = ? AND A.item_type_id = ? AND (A.item_class_id = ? OR A.item_class_id = ?) AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, ItmClsSublet, 1).
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
@@ -1493,10 +1565,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4,
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type_id
@@ -1537,6 +1609,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("(A.item_group_id = ? OR A.item_group_id = ?) AND A.item_class_id = ? AND A.item_type_id = ? AND A.is_active = ?", ItmGrpOutsideJob, ItmGrpInventory, ItmCls, PurchaseTypeServices, 1).
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
@@ -1550,10 +1626,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1 AS item_level_1, 
-				A.item_level_2 AS item_level_2, 
-				A.item_level_3 AS item_level_3, 
-				A.item_level_4 AS item_level_4,
+				A.item_level_1_id AS item_level_1, 
+				A.item_level_2_id AS item_level_2, 
+				A.item_level_3_id AS item_level_3, 
+				A.item_level_4_id AS item_level_4,
 				CASE 
 					WHEN ? IN (?, ?, ?) THEN
 						CASE A.item_type_id
@@ -1594,6 +1670,10 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 				2, currencyId, companyId, defaultPriceCode, // Parameters for subquery in CASE
 				year, month, companyId, whsGroup, // Parameters for ELSE subquery in CASE
 				currencyId, companyId, defaultPriceCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
 			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")

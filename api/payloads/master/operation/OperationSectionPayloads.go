@@ -18,6 +18,12 @@ type OperationSectionListResponse struct {
 	OperationGroupDescription   string `json:"operation_group_description" parent_entity:"mtr_operation_group"`
 }
 
+type OperationSectionDropDown struct {
+	IsActive             bool   `json:"is_active"`
+	OperationSectionId   int    `json:"operation_section_id"`
+	OperationSectionCode string `json:"operation_section_code_description"`
+}
+
 type OperationSectionCodeResponse struct {
 	OperationSectionId   int    `json:"operation_section_id" parent_entity:"mtr_operation_section" main_table:"mtr_operation_section"`
 	OperationGroupId     int    `json:"operation_group_id" parent_entity:"mtr_operation_group" references:"mtr_operation_group"`

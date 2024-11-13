@@ -34,9 +34,9 @@ func (r *ItemRepositoryImpl) CheckItemCodeExist(tx *gorm.DB, itemCode string, it
 	model := masteritementities.Item{}
 
 	if err := tx.Model(model).Select("mtr_item.item_code,mtr_item.item_id,mtr_item.item_class_id").
-		Joins("ItemDetail", tx.Select("1")).
+		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where(masteritementities.Item{ItemCode: itemCode, ItemGroupId: itemGroupId, CommonPricelist: commonPriceList}).
-		Where("ItemDetail.brand_id = ?", brandId).
+		Where("mid.brand_id = ?", brandId).
 		First(&model).Error; err != nil {
 		return false, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -111,17 +111,18 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	var supplierIds []int
 	if supplierCode != "" || supplierName != "" {
-		supplierName = strings.ReplaceAll(supplierName, " ", "%20")
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=1000000&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
-		var supplierResponse []masteritempayloads.PurchasePriceSupplierResponse
-		if err := utils.GetArray(supplierUrl, &supplierResponse, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
+		supplierParams := generalserviceapiutils.SupplierMasterParams{
+			Page:         0,
+			Limit:        100000,
+			SupplierCode: supplierCode,
+			SupplierName: supplierName,
+		}
+		supplierResponse, supplierError := generalserviceapiutils.GetAllSupplierMaster(supplierParams)
+		if supplierError != nil {
+			return nil, 0, 0, supplierError
 		}
 
-		for _, supplier := range supplierResponse {
+		for _, supplier := range supplierResponse.Data {
 			supplierIds = append(supplierIds, supplier.SupplierId)
 		}
 
@@ -293,12 +294,14 @@ func (r *ItemRepositoryImpl) GetItemById(tx *gorm.DB, Id int) (masteritempayload
 
 	// Call external service to get Supplier details
 	supplierResponse := masteritempayloads.SupplierMasterResponse{}
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch supplier data",
-			Err:        err,
+	if response.SupplierId != nil {
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
+		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to fetch supplier data",
+				Err:        err,
+			}
 		}
 	}
 
@@ -345,10 +348,24 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 	entities := masteritementities.Item{}
 	response := masteritempayloads.ItemResponse{}
 
-	rows, err := tx.Model(&entities).Select("mtr_item.*,u.*, mil1.*, mil2.*, mil3.*, mil4.*").
-		Where(masteritementities.Item{
-			ItemCode: code,
-		}).
+	rows, err := tx.Model(&entities).
+		Select(`
+			mtr_item.*,
+			mil1.item_level_1_code,
+			mil1.item_level_1_name,
+			mil2.item_level_2_code,
+			mil2.item_level_2_name,
+			mil3.item_level_3_code,
+			mil3.item_level_3_name,
+			mil4.item_level_4_code,
+			mil4.item_level_4_name,
+			u.uom_item_id,
+			u.source_uom_id,
+			u.target_uom_id,
+			u.source_convertion,
+			u.target_convertion
+		`).
+		Where(masteritementities.Item{ItemCode: code}).
 		Joins("INNER JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = mtr_item.item_level_1_id").
 		Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = mtr_item.item_level_2_id").
 		Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = mtr_item.item_level_3_id").
@@ -372,13 +389,13 @@ func (r *ItemRepositoryImpl) GetItemCode(tx *gorm.DB, code string) (masteritempa
 	}
 
 	supplierResponse := masteritempayloads.SupplierMasterResponse{}
-
-	supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
-
-	if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
+	if response.SupplierId != nil {
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(*response.SupplierId)
+		if err := utils.Get(supplierUrl, &supplierResponse, nil); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
 		}
 	}
 

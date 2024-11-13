@@ -27,3 +27,17 @@ func GetLineTypeById(id int) (LineTypeResponse, *exceptions.BaseErrorResponse) {
 	}
 	return line, nil
 }
+
+func GetLineTypeByCode(code string) (LineTypeResponse, *exceptions.BaseErrorResponse) {
+	var line LineTypeResponse
+	url := config.EnvConfigs.GeneralServiceUrl + "line-type-code/" + code
+	err := utils.CallAPI("GET", url, nil, &line)
+	if err != nil {
+		return line, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get line type by code",
+			Err:        err,
+		}
+	}
+	return line, nil
+}
