@@ -200,10 +200,32 @@ type WorkOrderResponseDetail struct {
 	PromiseTime        time.Time `json:"promise_time"`
 
 	// Additional information
-	FSCouponNo                      string                          `json:"fs_coupon_no"`
-	Notes                           string                          `json:"notes"`
-	Suggestion                      string                          `json:"suggestion"`
-	DownpaymentAmount               float64                         `json:"dp_amount"`
+	FSCouponNo string `json:"fs_coupon_no"`
+	Notes      string `json:"notes"`
+	Suggestion string `json:"suggestion"`
+
+	InvoiceSystemNumber             int                             `json:"invoice_system_number"`
+	CurrencyId                      int                             `json:"currency_id"`
+	ATPMWCFDocNo                    string                          `json:"atpm_warranty_claim_form_document_number"`
+	ATPMWCFDate                     *time.Time                      `json:"atpm_warranty_claim_form_date"`
+	ATPMFSDocNo                     string                          `json:"atpm_free_service_document_number"`
+	ATPMFSDate                      *time.Time                      `json:"atpm_free_service_date"`
+	TotalAfterDisc                  *float64                        `json:"total_after_discount"`
+	ApprovalReqNo                   int                             `json:"approval_request_number"`
+	JournalSysNo                    int                             `json:"journal_system_number"`
+	ApprovalGatepassReqNo           int                             `json:"approval_gatepass_request_number"`
+	DPAmount                        float64                         `json:"downpayment_amount"`
+	DPPayment                       *float64                        `json:"downpayment_payment"`
+	DPPaymentAllocated              *float64                        `json:"downpayment_payment_allocated"`
+	DPPaymentVAT                    *float64                        `json:"downpayment_payment_vat"`
+	DPAllocToInv                    *float64                        `json:"downpayment_payment_to_invoice"`
+	DPVATAllocToInv                 *float64                        `json:"downpayment_payment_vat_to_invoice"`
+	JournalOverpaySysNo             int                             `json:"journal_overpay_system_number"`
+	DPOverpay                       *float64                        `json:"downpayment_overpay"`
+	SiteTypeId                      int                             `json:"work_order_site_type_id"`
+	CostCenterId                    int                             `json:"cost_center_id"`
+	JobOnHoldReason                 string                          `json:"job_on_hold_reason"`
+	CPTitlePrefix                   string                          `json:"contact_person_title_prefix"`
 	WorkOrderCampaign               WorkOrderCampaignDetail         `json:"work_order_campaign"`
 	WorkOrderGeneralRepairAgreement WorkOrderGeneralRepairAgreement `json:"work_order_general_repair_agreement"`
 	WorkOrderBooking                WorkOrderBookingDetail          `json:"work_order_booking"`
@@ -989,28 +1011,62 @@ type WorkOrderDetailRequest struct {
 }
 
 type WorkOrderDetailResponse struct {
-	WorkOrderDetailId                   int     `json:"work_order_detail_id"`
-	WorkOrderSystemNumber               int     `json:"work_order_system_number"`
-	LineTypeId                          int     `json:"line_type_id"`
-	LineTypeCode                        string  `json:"line_type_code"`
-	TransactionTypeId                   int     `json:"transaction_type_id"`
-	TransactionTypeCode                 string  `json:"transaction_type_code"`
-	JobTypeId                           int     `json:"job_type_id"`
-	JobTypeCode                         string  `json:"job_type_code"`
-	WarehouseGroupId                    int     `json:"warehouse_group_id"`
-	OperationItemId                     int     `json:"operation_item_id"`
-	FrtQuantity                         float64 `json:"frt_quantity"`
-	SupplyQuantity                      float64 `json:"supply_quantity"`
-	OperationItemPrice                  float64 `json:"operation_item_price"`
-	OperationItemDiscountAmount         float64 `json:"operation_item_discount_amount"`
-	OperationItemDiscountRequestAmount  float64 `json:"operation_item_discount_request_amount"`
-	OperationItemDiscountPercent        float64 `json:"operation_item_discount_percent"`
-	OperationItemDiscountRequestPercent float64 `json:"operation_item_discount_request_percent"`
-	OperationItemCode                   string  `json:"operation_item_code"`
-	OperationItemName                   string  `json:"operation_item_name"`
-	AtpmWCFTypeId                       int     `json:"warranty_claim_type_id"`
-	TotalCostOfGoodsSold                float64 `json:"total_cost_of_goods_sold"`
-	ServiceCategoryId                   int     `json:"service_category_id"`
+	WorkOrderDetailId                   int       `json:"work_order_detail_id"`
+	WorkOrderSystemNumber               int       `json:"work_order_system_number"`
+	LineTypeId                          int       `json:"line_type_id"`
+	LineTypeCode                        string    `json:"line_type_code"`
+	TransactionTypeId                   int       `json:"transaction_type_id"`
+	TransactionTypeCode                 string    `json:"transaction_type_code"`
+	JobTypeId                           int       `json:"job_type_id"`
+	JobTypeCode                         string    `json:"job_type_code"`
+	WarehouseGroupId                    int       `json:"warehouse_group_id"`
+	OperationItemId                     int       `json:"operation_item_id"`
+	FrtQuantity                         float64   `json:"frt_quantity"`
+	SupplyQuantity                      float64   `json:"supply_quantity"`
+	Description                         string    `json:"description"`
+	OperationItemPrice                  float64   `json:"operation_item_price"`
+	OperationItemDiscountAmount         float64   `json:"operation_item_discount_amount"`
+	OperationItemDiscountRequestAmount  float64   `json:"operation_item_discount_request_amount"`
+	OperationItemDiscountPercent        float64   `json:"operation_item_discount_percent"`
+	OperationItemDiscountRequestPercent float64   `json:"operation_item_discount_request_percent"`
+	OperationItemCode                   string    `json:"operation_item_code"`
+	OperationItemName                   string    `json:"operation_item_name"`
+	AtpmWCFTypeId                       int       `json:"warranty_claim_type_id"`
+	TotalCostOfGoodsSold                float64   `json:"total_cost_of_goods_sold"`
+	ServiceCategoryId                   int       `json:"service_category_id"`
+	PphAmount                           float64   `json:"pph_amount"`
+	TaxId                               int       `json:"tax_id"`
+	PphTaxRate                          float64   `json:"pph_tax_rate"`
+	LastApprovalBy                      string    `json:"last_approval_by"`
+	LastApprovalDate                    time.Time `json:"last_approval_date"`
+	QualityControlStatus                string    `json:"quality_control_status"`
+	QualityControlExtraFrt              float64   `json:"quality_control_extra_frt"`
+	QualityControlExtraReason           string    `json:"quality_control_extra_reason"`
+	SubstituteTypeId                    int       `json:"substitute_type_id"`
+	SubstituteItemCode                  string    `json:"substitute_item_code"`
+	AtpmClaimNumber                     string    `json:"atpm_claim_number"`
+	AtpmClaimDate                       time.Time `json:"atpm_claim_date"`
+	PurchaseRequestSystemNumber         int       `json:"purchase_request_system_number"`
+	PurchaseRequestDetailId             int       `json:"purchase_request_detail_id"`
+	PurchaseOrderSystemNumber           int       `json:"purchase_order_system_number"`
+	PurchaseOrderLine                   int       `json:"purchase_order_line"`
+	InvoiceSystemNumber                 int       `json:"invoice_system_number"`
+	GoodsReceiveQuantity                float64   `json:"goods_receive_quantity"`
+	QualityControlTotalExtraFrt         float64   `json:"quality_control_total_extra_frt"`
+	ReorderNumber                       float64   `json:"reorder_number"`
+	BinningQuantity                     float64   `json:"binning_quantity"`
+	IncentiveSystemNumber               int       `json:"incentive_system_number"`
+	Bypass                              bool      `json:"bypass"`
+	TechnicianId                        int       `json:"technician_id"`
+	UserEmployeeId                      int       `json:"user_employee_id"`
+	RecSystemNumber                     int       `json:"recall_system_number"`
+	Request                             string    `json:"request"`
+	FrtQuantityExpress                  float64   `json:"frt_quantity_express"`
+	PriceListId                         int       `json:"price_list_id"`
+	ClaimSystemNumber                   int       `json:"claim_system_number"`
+	QualityControlPassDatetime          time.Time `json:"quality_control_pass_datetime"`
+	ExtendedWarranty                    bool      `json:"extended_warranty"`
+	RemarkExtendedWarranty              string    `json:"remark_extended_warranty"`
 }
 
 type WorkOrderAffiliate struct {
