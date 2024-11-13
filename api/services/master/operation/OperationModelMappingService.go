@@ -32,4 +32,5 @@ type OperationModelMappingService interface {
 	DeleteOperationLevel(ids []int) (bool, *exceptions.BaseErrorResponse)
 	UpdateOperationModelMapping(operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse)
 	SaveOperationModelMappingAndFRT(requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse)
+	UpdateOperationFrt(operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse)
 }

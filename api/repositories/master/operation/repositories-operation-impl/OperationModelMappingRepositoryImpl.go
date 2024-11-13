@@ -111,7 +111,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 
 	// Assign values for external filters (brand and model)
 	for _, extFilter := range externalServiceFilter {
-		if strings.Contains(extFilter.ColumnField, "brand_code") {
+		if strings.Contains(extFilter.ColumnField, "brand_name") {
 			brandCode = extFilter.ColumnValue
 		} else if strings.Contains(extFilter.ColumnField, "model_code") {
 			modelCode = extFilter.ColumnValue
@@ -143,7 +143,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 	}
 
 	// Join with brand data
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_code=" + brandCode
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_name=" + brandCode
 	if err := utils.Get(unitBrandUrl, &getBrandResponse, nil); err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -719,44 +719,22 @@ func (r *OperationModelMappingRepositoryImpl) UpdateOperationModelMapping(tx *go
 	return OperationModelMapping, nil
 }
 
-// func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMappingAndFRT(tx *gorm.DB, requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
-// 	headerEntities := masteroperationentities.OperationModelMapping{
-// 		IsActive:                requestHeader.IsActive,
-// 		OperationModelMappingId: requestHeader.OperationModelMappingId,
-// 		BrandId:                 requestHeader.BrandId,
-// 		ModelId:                 requestHeader.ModelId,
-// 		OperationId:             requestHeader.OperationId,
-// 		OperationUsingIncentive: requestHeader.OperationUsingIncentive,
-// 		OperationUsingActual:    requestHeader.OperationUsingActual,
-// 		OperationPdi:            requestHeader.OperationPdi,
-// 	}
+func (r *OperationModelMappingRepositoryImpl) UpdateOperationFrt(tx *gorm.DB, operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse) {
+	var OperationFrt = masteroperationentities.OperationFrt{
+		OperationFrtId: request.OperationFrtId,
+		FrtHour:        request.FrtHour,
+		FrtHourExpress: request.FrtHourExpress,
+	}
 
-// 	err := tx.Save(&headerEntities).Error
+	if err := tx.Model(&masteroperationentities.OperationFrt{}).
+		Where("operation_frt_id = ?", operationFrtId).
+		Updates(&OperationFrt).Error; err != nil {
+		return masteroperationentities.OperationFrt{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update operation master",
+			Err:        err,
+		}
+	}
 
-// 	if err != nil {
-// 		return false, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
-
-// 	detailFrtEntities := masteroperationentities.OperationFrt{
-// 		IsActive:                requestDetail.IsActive,
-// 		OperationFrtId:          requestDetail.OperationFrtId,
-// 		OperationModelMappingId: requestDetail.OperationModelMappingId,
-// 		VariantId:               requestDetail.VariantId,
-// 		FrtHour:                 requestDetail.FrtHour,
-// 		FrtHourExpress:          requestDetail.FrtHourExpress,
-// 	}
-
-// 	errDetail := tx.Save(&detailFrtEntities).Error
-
-// 	if errDetail != nil {
-// 		return false, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        errDetail,
-// 		}
-// 	}
-
-// 	return true, nil
-// }
+	return OperationFrt, nil
+}
