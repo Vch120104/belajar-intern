@@ -626,6 +626,8 @@ func GoodsReceiveRouter(
 	router.Post("/detail", GoodsReceiveController.InsertGoodsReceiveDetail)
 	router.Put("/detail/{goods_receive_detail_system_number}", GoodsReceiveController.UpdateGoodsReceiveDetail)
 	router.Get("/location-item", GoodsReceiveController.LocationItemGoodsReceive)
+	router.Delete("/{goods_receive_id}", GoodsReceiveController.DeleteGoodsReceive)
+	router.Delete("/detail/{goods_receive_detail_id}", GoodsReceiveController.DeleteGoodsReceiveDetail)
 	return router
 }
 func PurchasePriceRouter(
@@ -818,6 +820,7 @@ func OperationModelMappingRouter(
 	router.Patch("/operation-level/activate/{operation_level_id}", operationModelMappingController.ActivateOperationLevel)
 	router.Delete("/operation-level/delete/{operation_level_id}", operationModelMappingController.DeleteOperationLevel)
 	router.Put("/{operation_model_mapping_id}", operationModelMappingController.UpdateOperationModelMapping)
+	router.Put("/operation-frt/{operation_frt_id}", operationModelMappingController.UpdateOperationFrt)
 
 	return router
 }
@@ -1590,6 +1593,10 @@ func ContractServiceDetailRouter(
 	router.Get("/by-id/{contract_service_package_detail_system_number}", ContractServiceDetailController.GetById)
 
 	router.Post("/", ContractServiceDetailController.SaveDetail)
+
+	router.Delete("/{contract_service_system_number}/{package_code}", ContractServiceDetailController.DeleteDetail)
+
+	router.Put("/{contract_service_system_number}/{contract_service_line}", ContractServiceDetailController.UpdateDetail)
 
 	return router
 }

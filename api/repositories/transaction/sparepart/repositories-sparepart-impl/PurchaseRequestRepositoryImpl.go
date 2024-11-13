@@ -10,7 +10,6 @@ import (
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -438,12 +437,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequestDetail(db *gorm.DB
 			Err:        err,
 		}
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-
-		}
-	}(rows)
+	defer rows.Close()
 
 	var ItemResponse masteritementities.Item
 	err = db.Model(&ItemResponse).Where(masteritementities.Item{ItemId: response.ItemId}).Scan(&ItemResponse).Error
@@ -574,12 +568,7 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestDetail(db *gorm.DB, pa
 			Err:        err,
 		}
 	}
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-
-		}
-	}(rows)
+	defer rows.Close()
 	LineNumber := 1
 	//default value
 	LineStatus := "10"

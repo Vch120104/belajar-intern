@@ -35,4 +35,5 @@ type OperationModelMappingRepository interface {
 	// SaveOperationModelMappingAndFRT(tx *gorm.DB, requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse)
 	GetOperationModelMappingLatestId(tx *gorm.DB) (int, *exceptions.BaseErrorResponse)
 	UpdateOperationModelMapping(tx *gorm.DB, operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse)
+	UpdateOperationFrt(tx *gorm.DB, operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse)
 }
