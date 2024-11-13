@@ -19,4 +19,7 @@ type BinningListService interface {
 	InsertBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailPayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
 	UpdateBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailUpdatePayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse)
 	SubmitBinningList(BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse)
+	DeleteBinningList(BinningId int) (bool, *exceptions.BaseErrorResponse)
+	DeleteBinningListDetailMultiId(binningDetailMultiId string) (bool, *exceptions.BaseErrorResponse)
+	GetReferenceNumberTypoPOWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

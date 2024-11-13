@@ -15,4 +15,5 @@ type OperationSectionService interface {
 	GetOperationSectionName(int, string) (masteroperationpayloads.OperationSectionNameResponse, *exceptions.BaseErrorResponse)
 	SaveOperationSection(masteroperationpayloads.OperationSectionRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationSection(int) (bool, *exceptions.BaseErrorResponse)
+	GetOperationSectionDropDown(int) ([]masteroperationpayloads.OperationSectionDropDown, *exceptions.BaseErrorResponse)
 }

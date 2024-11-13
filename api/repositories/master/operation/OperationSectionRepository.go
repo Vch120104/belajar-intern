@@ -17,4 +17,5 @@ type OperationSectionRepository interface {
 	GetAllOperationSectionList(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	SaveOperationSection(*gorm.DB, masteroperationpayloads.OperationSectionRequest) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusOperationSection(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
+	GetOperationSectionDropDown(tx *gorm.DB, operationGroupId int) ([]masteroperationpayloads.OperationSectionDropDown, *exceptions.BaseErrorResponse)
 }

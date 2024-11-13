@@ -153,3 +153,11 @@ type BinningListDetailUpdatePayloads struct {
 	UpdatedDate                 *time.Time `gorm:"column:updated_date" json:"updated_date"`
 	ChangeNo                    int        `gorm:"column:change_no;size:30;" json:"change_no"`
 }
+
+type BinningListReferenceDocumentNumberTypePOResponse struct {
+	PurchaseNumber string    `gorm:"json:purchase_number"`
+	DocumentDate   time.Time `gorm:"json:document_date"`
+	SupplierCode   string    `gorm:"json:supplier_code"`
+	SupplierName   string    `gorm:"json:supplier_name"`
+	SupplierId     int       `gorm:"json:supplier_id"`
+}

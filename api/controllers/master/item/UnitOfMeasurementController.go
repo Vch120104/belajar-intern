@@ -25,6 +25,7 @@ type UnitOfMeasurementController interface {
 	SaveUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusUnitOfMeasurement(writer http.ResponseWriter, request *http.Request)
 	GetUnitOfMeasurementItem(writer http.ResponseWriter, request *http.Request)
+	GetQuantityConversion(writer http.ResponseWriter, request *http.Request)
 }
 
 type UnitOfMeasurementControllerImpl struct {
@@ -239,4 +240,40 @@ func (r *UnitOfMeasurementControllerImpl) GetUnitOfMeasurementItem(writer http.R
 	}
 	payloads.NewHandleSuccess(writer, response, "Get Data Success!", http.StatusOK)
 
+}
+func (r *UnitOfMeasurementControllerImpl) GetQuantityConversion(writer http.ResponseWriter, request *http.Request) {
+	//var formRequest masteritempayloads.UomItemRequest
+	//groupServiceUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_name=" + groupName
+	//helper.ReadFromRequestBody(request, &formRequest)
+	//SourceType string  `json:"source_type"`
+	//ItemId     int     `json:"item_id"`
+	//Quantity   float64 `json:"quantity"`
+	//<<localhostp8000>>unit-of-measurement/get_quantity_conversion?source_type=S&item_id=893891&quantity=1.0
+	queryValues := request.URL.Query()
+	formRequest := masteritempayloads.UomGetQuantityConversion{
+		Quantity:   utils.NewGetQueryfloat(queryValues, "quantity"),
+		SourceType: queryValues.Get("source_type"),
+		ItemId:     utils.NewGetQueryInt(queryValues, "item_id"),
+	}
+	//var GoodsReceiveHeaderPayloads masteritempayloads.UomItemRequest
+	//helper.ReadFromRequestBody(request, &GoodsReceiveHeaderPayloads)
+
+	//if err != nil {
+	//	exceptions.NewEntityException(writer, request, err)
+	//	return
+	//}
+
+	err := validation.ValidationForm(writer, request, formRequest)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.unitofmeasurementservice.GetQuantityConversion(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, create, "get quantity conversion", http.StatusOK)
 }

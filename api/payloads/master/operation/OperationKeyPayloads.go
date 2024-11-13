@@ -9,6 +9,12 @@ type OperationKeyResponse struct {
 	OperationKeyDescription string `json:"operation_key_description" validate:"required"`
 }
 
+type OperationKeyDropDown struct {
+	IsActive         bool   `json:"is_active"`
+	OperationKeyId   int    `json:"operation_key_id"`
+	OperationKeyCode string `json:"operation_key_code_description"`
+}
+
 type OperationkeyListResponse struct {
 	OperationGroupId            int    `json:"operation_group_id" parent_entity:"mtr_operation_group" references:"mtr_operation_group"`
 	OperationGroupCode          string `json:"operation_group_code" parent_entity:"mtr_operation_group"`
