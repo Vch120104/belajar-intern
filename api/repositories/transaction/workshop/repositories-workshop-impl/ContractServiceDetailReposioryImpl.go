@@ -213,7 +213,7 @@ func (r *ContractServiceDetailRepositoryImpl) UpdateDetail(tx *gorm.DB, contract
 	// Perhitungan `total`, `total_value_after_tax`, dan `total_after_tax`
 	var taxRate float64
 	err = tx.Table("trx_contract_service").
-		Select("vat_tax_rate").
+		Select("value_after_tax_rate").
 		Where("contract_service_system_number = ?", contractServiceSystemNumber).
 		Scan(&taxRate).Error
 	if err != nil {
@@ -243,8 +243,8 @@ func (r *ContractServiceDetailRepositoryImpl) UpdateDetail(tx *gorm.DB, contract
 		Where("contract_service_system_number = ?", contractServiceSystemNumber).
 		Updates(map[string]interface{}{
 			"total":                 totalPrice,
-			"total_vat":             totalValueAfterTax,
-			"total_after_vat":       totalAfterTax,
+			"value_after_tax_rate":  totalValueAfterTax,
+			"total_value_after_tax": totalAfterTax,
 		}).Error
 	if err != nil {
 		return transactionworkshoppayloads.ContractServiceDetailPayloads{}, &exceptions.BaseErrorResponse{
