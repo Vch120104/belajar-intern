@@ -1,6 +1,7 @@
 package masteroperationservice
 
 import (
+	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -29,4 +30,6 @@ type OperationModelMappingService interface {
 	DeactivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse)
 	ActivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse)
 	DeleteOperationLevel(ids []int) (bool, *exceptions.BaseErrorResponse)
+	UpdateOperationModelMapping(operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse)
+	SaveOperationModelMappingAndFRT(requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse)
 }
