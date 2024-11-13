@@ -1040,6 +1040,11 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 			GoodsReceivesItemGroupEntities.ItemGroupCode != "OJ" &&
 			GoodsReceivesItemGroupEntities.ItemGroupCode != "OX" &&
 			GoodsReceivesItemGroupEntities.ItemGroupCode != "FA" {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        errors.New("not yet dev"),
+			}
+
 			//not yet dev forinter grpo and for rtinvoice is not yet dev in finance
 			//IF EXISTS(SELECT TOP 1 1
 			//FROM atitemgrpo0 A
