@@ -22,6 +22,7 @@ type GoodsReceiveController interface {
 	UpdateGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
 	LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request)
 	DeleteGoodsReceive(writer http.ResponseWriter, request *http.Request)
+	DeleteGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type GoodsReceiveControllerImpl struct {
@@ -158,4 +159,16 @@ func (controller *GoodsReceiveControllerImpl) DeleteGoodsReceive(writer http.Res
 		return
 	}
 	payloads.NewHandleSuccess(writer, res, "goods receive deleted successfull", http.StatusOK)
+}
+
+// delete goods receive detail
+// detail/{goods_receive_detail_id} delete
+func (controller *GoodsReceiveControllerImpl) DeleteGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request) {
+	GoodsReceiveDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "goods_receive_detail_id"))
+	res, err := controller.service.DeleteGoodsReceiveDetail(GoodsReceiveDetailSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "goods receive detail deleted successfull", http.StatusOK)
 }

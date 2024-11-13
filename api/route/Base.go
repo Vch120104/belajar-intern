@@ -623,6 +623,7 @@ func GoodsReceiveRouter(
 	router.Put("/detail/{goods_receive_detail_system_number}", GoodsReceiveController.UpdateGoodsReceiveDetail)
 	router.Get("/location-item", GoodsReceiveController.LocationItemGoodsReceive)
 	router.Delete("/{goods_receive_id}", GoodsReceiveController.DeleteGoodsReceive)
+	router.Delete("/detail/{goods_receive_detail_id}", GoodsReceiveController.DeleteGoodsReceiveDetail)
 	return router
 }
 func PurchasePriceRouter(
