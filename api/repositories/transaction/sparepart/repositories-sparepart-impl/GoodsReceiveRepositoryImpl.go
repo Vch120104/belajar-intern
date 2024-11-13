@@ -8,7 +8,6 @@ import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
-	financeservice "after-sales/api/payloads/cross-service/finance-service"
 	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
@@ -795,16 +794,6 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 		}
 	}
 
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(GoodsReceiveEntities.CompanyId) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
-
-	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to Period Response data from external service",
-			Err:        err,
-		}
-	}
 	//IF ((SELECT COUNT(GRPO_LINE_NO) FROM atItemGRPO1 WITH(NOLOCK) WHERE GRPO_SYS_NO = ISNULL(@Grpo_Sys_No,0) AND ISNULL(LOC_CODE,'') = '') > 0)
 	//BEGIN
 	//RAISERROR('Location Code must be filled',16,1)
