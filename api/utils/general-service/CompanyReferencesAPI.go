@@ -31,7 +31,8 @@ func GetCompanyReferenceById(id int) (CompanyReferenceBetByIdResponse, *exceptio
 	CompanyReferenceBetByIdResponseData := CompanyReferenceBetByIdResponse{}
 
 	CompanyReferenceUrl := fmt.Sprintf("%scompany-reference/%s", config.EnvConfigs.GeneralServiceUrl, strconv.Itoa(id))
-	errFetchCompany := utils.Get(CompanyReferenceUrl, &CompanyReferenceBetByIdResponseData, nil)
+	//errFetchCompany := utils.Get(CompanyReferenceUrl, &CompanyReferenceBetByIdResponseData, nil)
+	errFetchCompany := utils.CallAPI("GET", CompanyReferenceUrl, nil, &CompanyReferenceBetByIdResponseData)
 	if errFetchCompany != nil {
 		return CompanyReferenceBetByIdResponseData, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

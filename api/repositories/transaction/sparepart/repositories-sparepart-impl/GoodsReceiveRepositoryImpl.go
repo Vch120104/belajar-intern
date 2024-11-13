@@ -918,9 +918,9 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	}
 	//get is use dms for gm ref checking
 	//hit general service
-	CompanyReferenceBetByIdResponse, errCompanyReference := generalserviceapiutils.GetCompanyReferenceById(GoodsReceiveEntities.SupplierId)
-	if errCompanyReference != nil {
-		return false, errCompanyReference
+	CompanyReferenceBetByIdResponse, errFetchCompany := generalserviceapiutils.GetCompanyReferenceById(GoodsReceiveEntities.SupplierId)
+	if errFetchCompany != nil {
+		return false, errFetchCompany
 	}
 	if strings.ToUpper(GoodsReceivesItemGroupEntities.ItemGroupCode) == "IN" && CompanyReferenceBetByIdResponse.UseDms {
 		isExist = 0
@@ -1967,9 +1967,9 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 	//		Message:    "error on getting approval status codes",
 	//	}
 	//}
-	DocResponses, errdoc := generalserviceapiutils.GetApprovalStatusByCode("99")
-	if errdoc != nil {
-		return false, errdoc
+	DocResponse, DocErr := generalserviceapiutils.GetApprovalStatusByCode("99")
+	if DocErr != nil {
+		return false, DocErr
 	}
 
 	err = db.Model(&transactionsparepartentities.PurchaseOrderEntities{}).
