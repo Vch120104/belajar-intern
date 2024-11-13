@@ -8,12 +8,12 @@ import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
-	financeservice "after-sales/api/payloads/cross-service/finance-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
 	"database/sql"
 	"errors"
@@ -793,7 +793,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 		}
 	}
 
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
+	var PeriodResponse financeserviceapiutils.OpenPeriodPayloadResponse
 	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(GoodsReceiveEntities.CompanyId) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
 
 	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
@@ -1112,7 +1112,7 @@ func (repository *GoodsReceiveRepositoryImpl) SubmitGoodsReceive(db *gorm.DB, Go
 			}
 		}
 	}
-	var PeriodResponseSp financeservice.OpenPeriodPayloadResponse
+	var PeriodResponseSp financeserviceapiutils.OpenPeriodPayloadResponse
 
 	if GoodsReceivesItemGroupEntities.IsItemSparepart {
 		PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(GoodsReceiveEntities.CompanyId) + "&closing_module_detail_code=SP" //strconv.Itoa(response.ItemCode)
