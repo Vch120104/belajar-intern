@@ -1591,6 +1591,10 @@ func ContractServiceDetailRouter(
 
 	router.Post("/", ContractServiceDetailController.SaveDetail)
 
+	router.Delete("/{contract_service_system_number}/{package_code}", ContractServiceDetailController.DeleteDetail)
+
+	router.Put("/{contract_service_system_number}/{contract_service_line}", ContractServiceDetailController.UpdateDetail)
+
 	return router
 }
 
