@@ -321,11 +321,11 @@ func (s *PriceListServiceImpl) GenerateDownloadTemplateFile() (*excelize.File, *
 	f.SetCellValue(sheetName, "C1", "EFFECTIVE_DATE")
 
 	//EXAMPLE DATE FORMAT
-	styleH9, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{
+	styleH1, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{
 		Color: "#FF0000",
 	}})
 	f.SetCellValue(sheetName, "H1", "*DATE FORMAT = 02/01/2006")
-	f.SetCellStyle(sheetName, "H1", "H1", styleH9)
+	f.SetCellStyle(sheetName, "H1", "H1", styleH1)
 
 	f.SetCellValue(sheetName, "D1", "ITEM_CODE")
 	f.SetCellValue(sheetName, "E1", "PRICE_AMOUNT")
