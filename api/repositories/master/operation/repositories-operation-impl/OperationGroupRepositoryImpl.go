@@ -7,7 +7,6 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	"after-sales/api/utils"
-	"errors"
 
 	"net/http"
 	"strings"
@@ -50,26 +49,32 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterC
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+	rows, _ := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	if len(entities) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
-	}
 	defer rows.Close()
 
 	pages.Rows = entities
 
 	return pages, nil
+
+	// if err != nil {
+	// 	return pages, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Err:        err,
+	// 	}
+	// }
+
+	// if len(entities) == 0 {
+	// 	return pages, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusNotFound,
+	// 		Err:        errors.New(""),
+	// 	}
+	// }
+	// defer rows.Close()
+
+	// pages.Rows = entities
+
+	// return pages, nil
 }
 
 func (r *OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
