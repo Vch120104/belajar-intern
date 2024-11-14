@@ -3249,12 +3249,18 @@ func (r *LookupRepositoryImpl) ReferenceTypeWorkOrder(tx *gorm.DB, paginate pagi
 	}
 
 	err = query.
-		Order("A.work_order_document_number").
 		Offset((paginate.Page - 1) * paginate.Limit).
 		Limit(paginate.Limit).
 		Find(&results).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get data",
@@ -3281,11 +3287,11 @@ func (r *LookupRepositoryImpl) ReferenceTypeWorkOrder(tx *gorm.DB, paginate pagi
 func (r *LookupRepositoryImpl) ReferenceTypeWorkOrderByID(tx *gorm.DB, referenceId int, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var (
 		result struct {
-			WorkOrderNo     string
-			WorkOrderDate   time.Time
-			WoStatusId      int
-			WorkOrderStatus string
-			WorkOrderSysNo  int
+			WorkOrderDocumentNumber string
+			WorkOrderDate           time.Time
+			WoStatusId              int
+			WorkOrderStatus         string
+			WorkOrderSystemNumber   int
 		}
 		totalRows  int64
 		totalPages int
@@ -3338,12 +3344,18 @@ func (r *LookupRepositoryImpl) ReferenceTypeWorkOrderByID(tx *gorm.DB, reference
 	}
 
 	err = query.
-		Order("A.work_order_document_number").
 		Offset((paginate.Page - 1) * paginate.Limit).
 		Limit(paginate.Limit).
-		First(&result).Error // Use First to get a single record
+		First(&result).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to get data",
@@ -3351,13 +3363,12 @@ func (r *LookupRepositoryImpl) ReferenceTypeWorkOrderByID(tx *gorm.DB, reference
 		}
 	}
 
-	// Map the single result into a map[string]interface{}
 	mappedResult := map[string]interface{}{
-		"work_order_document_number": result.WorkOrderNo,
+		"work_order_document_number": result.WorkOrderDocumentNumber,
 		"work_order_date":            result.WorkOrderDate,
 		"work_order_status_id":       result.WoStatusId,
 		"work_order_status":          result.WorkOrderStatus,
-		"work_order_system_number":   result.WorkOrderSysNo,
+		"work_order_system_number":   result.WorkOrderSystemNumber,
 	}
 
 	return mappedResult, totalPages, int(totalRows), nil
