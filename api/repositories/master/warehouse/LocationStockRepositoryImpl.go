@@ -396,69 +396,69 @@ func (repo *LocationStockRepositoryImpl) UpdateLocationStock(db *gorm.DB, payloa
 	CurrentLocationStock.QuantityAssemblyIn += payloads.QuantityAssemblyIn
 	CurrentLocationStock.QuantityAssemblyOut += payloads.QuantityAssemblyOut
 
-	if (TransactionTypeEntity.StockTransactionTypeCode == "PU" &&
-		(StockTransactionReason.StockTransactionReasonCode == "NL" ||
-			StockTransactionReason.StockTransactionReasonCode == "BO" ||
-			StockTransactionReason.StockTransactionReasonCode == "WP")) ||
-		(TransactionTypeEntity.StockTransactionTypeCode == "AD" &&
-			(StockTransactionReason.StockTransactionReasonCode == "NL" ||
-				StockTransactionReason.StockTransactionReasonCode == "SF")) ||
-		(TransactionTypeEntity.StockTransactionTypeCode == "TI" &&
-			StockTransactionReason.StockTransactionReasonCode == "NL") ||
-		(TransactionTypeEntity.StockTransactionTypeCode == "CI" &&
-			StockTransactionReason.StockTransactionReasonCode == "AP") ||
-		TransactionTypeEntity.StockTransactionTypeCode == "SR" ||
-		TransactionTypeEntity.StockTransactionTypeCode == "RV" ||
-		(TransactionTypeEntity.StockTransactionTypeCode == "SS" && NegativeStock == true) {
-		//COMPANY_CODE = @Company_Code AND WHS_CODE = @Whs_Code AND
-		//LOC_CODE = @Loc_Code AND ITEM_CODE = @Item_Code AND
-		//PERIOD_YEAR = @Period_Year AND PERIOD_MONTH = @Period_Month
-		//get current location stock from this month
+	//if (TransactionTypeEntity.StockTransactionTypeCode == "PU" &&
+	//	(StockTransactionReason.StockTransactionReasonCode == "NL" ||
+	//		StockTransactionReason.StockTransactionReasonCode == "BO" ||
+	//		StockTransactionReason.StockTransactionReasonCode == "WP")) ||
+	//	(TransactionTypeEntity.StockTransactionTypeCode == "AD" &&
+	//		(StockTransactionReason.StockTransactionReasonCode == "NL" ||
+	//			StockTransactionReason.StockTransactionReasonCode == "SF")) ||
+	//	(TransactionTypeEntity.StockTransactionTypeCode == "TI" &&
+	//		StockTransactionReason.StockTransactionReasonCode == "NL") ||
+	//	(TransactionTypeEntity.StockTransactionTypeCode == "CI" &&
+	//		StockTransactionReason.StockTransactionReasonCode == "AP") ||
+	//	TransactionTypeEntity.StockTransactionTypeCode == "SR" ||
+	//	TransactionTypeEntity.StockTransactionTypeCode == "RV" ||
+	//	(TransactionTypeEntity.StockTransactionTypeCode == "SS" && NegativeStock == true) {
+	//COMPANY_CODE = @Company_Code AND WHS_CODE = @Whs_Code AND
+	//LOC_CODE = @Loc_Code AND ITEM_CODE = @Item_Code AND
+	//PERIOD_YEAR = @Period_Year AND PERIOD_MONTH = @Period_Month
+	//get current location stock from this month
 
-		err = db.Save(&CurrentLocationStock).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error on saving location stock"}
-		}
-	} else {
-		//SET @Qty_Ending = ISNULL((SELECT ISNULL(QTY_BEGIN,0)
-		//+ ISNULL(QTY_PURCHASE,0)
-		//- ISNULL(QTY_PURCHASE_RETURN,0)
-		//- (ISNULL(QTY_SALES,0) - ISNULL(QTY_SALES_RETURN,0))
-		//+ (ISNULL(QTY_TRANSFER_IN,0) - ISNULL(QTY_TRANSFER_OUT,0))
-		//+ ISNULL(QTY_ADJUSTMENT,0)
-		//+ (ISNULL(QTY_CLAIM_IN,0) - ISNULL(QTY_CLAIM_OUT,0))
-		//+ (ISNULL(QTY_ROBBING_IN,0) - ISNULL(QTY_ROBBING_OUT,0))
-		//+ (ISNULL(QTY_ASSY_IN,0) - ISNULL(QTY_ASSY_OUT,0))
-		//FROM amLocationStock
-		//WHERE	COMPANY_CODE = @Company_Code AND WHS_CODE = @Whs_Code AND
-		//LOC_CODE = @Loc_Code AND ITEM_CODE = @Item_Code AND
-		//PERIOD_YEAR = @Period_Year AND PERIOD_MONTH = @Period_Month	),0)
-		var QuantityEnding float64
-		QuantityEnding = CurrentLocationStock.QuantityBegin +
-			CurrentLocationStock.QuantityPurchase -
-			CurrentLocationStock.QuantityPurchaseReturn -
-			(CurrentLocationStock.QuantitySales - CurrentLocationStock.QuantitySalesReturn) +
-			(CurrentLocationStock.QuantityTransferIn - CurrentLocationStock.QuantityTransferOut) +
-			CurrentLocationStock.QuantityAdjustment +
-			(CurrentLocationStock.QuantityClaimIn - CurrentLocationStock.QuantityClaimOut) +
-			(CurrentLocationStock.QuantityRobbingIn - CurrentLocationStock.QuantityRobbingOut) +
-			(CurrentLocationStock.QuantityAssemblyIn - CurrentLocationStock.QuantityAssemblyOut)
+	err = db.Save(&CurrentLocationStock).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on saving location stock"}
+	}
+	//} else {
+	//SET @Qty_Ending = ISNULL((SELECT ISNULL(QTY_BEGIN,0)
+	//+ ISNULL(QTY_PURCHASE,0)
+	//- ISNULL(QTY_PURCHASE_RETURN,0)
+	//- (ISNULL(QTY_SALES,0) - ISNULL(QTY_SALES_RETURN,0))
+	//+ (ISNULL(QTY_TRANSFER_IN,0) - ISNULL(QTY_TRANSFER_OUT,0))
+	//+ ISNULL(QTY_ADJUSTMENT,0)
+	//+ (ISNULL(QTY_CLAIM_IN,0) - ISNULL(QTY_CLAIM_OUT,0))
+	//+ (ISNULL(QTY_ROBBING_IN,0) - ISNULL(QTY_ROBBING_OUT,0))
+	//+ (ISNULL(QTY_ASSY_IN,0) - ISNULL(QTY_ASSY_OUT,0))
+	//FROM amLocationStock
+	//WHERE	COMPANY_CODE = @Company_Code AND WHS_CODE = @Whs_Code AND
+	//LOC_CODE = @Loc_Code AND ITEM_CODE = @Item_Code AND
+	//PERIOD_YEAR = @Period_Year AND PERIOD_MONTH = @Period_Month	),0)
+	var QuantityEnding float64
+	QuantityEnding = CurrentLocationStock.QuantityBegin +
+		CurrentLocationStock.QuantityPurchase -
+		CurrentLocationStock.QuantityPurchaseReturn -
+		(CurrentLocationStock.QuantitySales - CurrentLocationStock.QuantitySalesReturn) +
+		(CurrentLocationStock.QuantityTransferIn - CurrentLocationStock.QuantityTransferOut) +
+		CurrentLocationStock.QuantityAdjustment +
+		(CurrentLocationStock.QuantityClaimIn - CurrentLocationStock.QuantityClaimOut) +
+		(CurrentLocationStock.QuantityRobbingIn - CurrentLocationStock.QuantityRobbingOut) +
+		(CurrentLocationStock.QuantityAssemblyIn - CurrentLocationStock.QuantityAssemblyOut)
 
-		if !NegativeStock && QuantityEnding < 0 {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusBadRequest,
-				Err:        errors.New("quantity ending cannot be negative"),
-			}
+	if !NegativeStock && QuantityEnding < 0 {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("quantity ending cannot be negative"),
 		}
-		CurrentLocationStock.QuantityEnding = QuantityEnding
-		err = db.Save(&CurrentLocationStock).Error
-		if err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "error on saving location stock"}
-		}
+	}
+	CurrentLocationStock.QuantityEnding = QuantityEnding
+	err = db.Save(&CurrentLocationStock).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on saving location stock"}
+		//}
 	}
 	return true, nil
 }

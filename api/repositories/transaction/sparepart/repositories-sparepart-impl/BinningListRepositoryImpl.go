@@ -1,13 +1,11 @@
 package transactionsparepartrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 	"after-sales/api/exceptions"
-	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
@@ -18,6 +16,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,6 +24,46 @@ import (
 )
 
 type BinningListRepositoryImpl struct {
+}
+
+func (b *BinningListRepositoryImpl) GetReferenceNumberTypoPOWithPagination(db *gorm.DB, filter []utils.FilterCondition, paginations pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	//var purchaseOrderEntities []transactionsparepartentities.PurchaseOrderEntities
+	var purchaseOrderEntities []transactionsparepartentities.PurchaseOrderEntities
+	joinTable := db.Table(`trx_item_purchase_order A`).
+		Select(`	A.purchase_order_document_date,
+						A.purchase_order_document_number,
+						A.supplier_id
+`)
+	WhereQuery := utils.ApplyFilter(joinTable, filter)
+	err := WhereQuery.Scopes(pagination.Paginate(&transactionsparepartentities.PurchaseOrderEntities{}, &paginations, WhereQuery)).Order("purchase_order_document_number").Scan(&purchaseOrderEntities).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return paginations, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to to paginate purchase order reference type",
+			Err:        errors.New("failed To Get Paginate purchase order reference type"),
+		}
+	}
+	if len(purchaseOrderEntities) == 0 {
+		paginations.Rows = []string{}
+		return paginations, nil
+	}
+	var responsePO []transactionsparepartpayloads.BinningListReferenceDocumentNumberTypePOResponse
+
+	for _, item := range purchaseOrderEntities {
+		supplierRes, errRes := generalserviceapiutils.GetSupplierMasterByID(item.SupplierId)
+		if errRes != nil {
+			return paginations, errRes
+		}
+		responsePO = append(responsePO, transactionsparepartpayloads.BinningListReferenceDocumentNumberTypePOResponse{
+			PurchaseNumber: item.PurchaseOrderDocumentNumber,
+			DocumentDate:   *item.PurchaseOrderDocumentDate,
+			SupplierCode:   supplierRes.SupplierCode,
+			SupplierName:   supplierRes.SupplierName,
+			SupplierId:     item.SupplierId,
+		})
+	}
+	paginations.Rows = responsePO
+	return paginations, nil
 }
 
 func NewbinningListRepositoryImpl() transactionsparepartrepository.BinningListRepository {
@@ -73,15 +112,16 @@ func (b *BinningListRepositoryImpl) GetAllBinningListDetailWithPagination(db *go
 	paginations.Rows = Responses
 	return paginations, nil
 }
-func GetApprovalStatusId(code string) int {
-	var DocResponse generalservicepayloads.ApprovalStatusResponses
 
-	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return 0
-	}
-	return DocResponse.ApprovalStatusId
-}
+//func GetApprovalStatusId(code string) int {
+//	var DocResponse []generalservicepayloads.ApprovalStatusResponses
+//
+//	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "approval-status-codes/" + code
+//	if err := utils.GetArray(DocumentStatusUrl, &DocResponse, &DocResponse); err != nil {
+//		return 0
+//	}
+//	return DocResponse[0].ApprovalStatusId
+//}
 
 func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB, rdb *redis.Client, filter []utils.FilterCondition, paginations pagination.Pagination, ctx context.Context) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var binningEntities []transactionsparepartentities.BinningStock
@@ -101,28 +141,18 @@ func (b *BinningListRepositoryImpl) GetAllBinningListWithPagination(db *gorm.DB,
 	}
 
 	for _, binningEntity := range binningEntities {
-		var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
-		SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(binningEntity.SupplierId)
-		if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
-			return paginations, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Supplier data from external service" + err.Error(),
-				Err:        err,
-			}
+		SupplierData, errSupplierMaster := generalserviceapiutils.GetSupplierMasterByID(binningEntity.SupplierId)
+		if err != nil {
+			return paginations, errSupplierMaster
 		}
 		exists, _ := rdb.Exists(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId)).Result()
 
 		if exists == 0 {
 			fmt.Println("Failed To Get Status on redis... queue for external service")
-			var DocResponse generalservicepayloads.DocumentStatusPayloads
-			DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(binningEntity.BinningDocumentStatusId)
-			if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-				return paginations, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        errors.New("failed To fetch Document Status From External Service"),
-				}
+			DocResponse, errDocResponse := generalserviceapiutils.GetDocumentStatusById(binningEntity.BinningDocumentStatusId)
+			if errDocResponse != nil {
+				return paginations, errDocResponse
 			}
-
 			rdb.Set(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId), DocResponse.DocumentStatusCode, 1*time.Hour)
 		}
 		StatusCode, _ := rdb.Get(ctx, strconv.Itoa(binningEntity.BinningDocumentStatusId)).Result()
@@ -218,15 +248,19 @@ func (b *BinningListRepositoryImpl) GetBinningListById(db *gorm.DB, BinningStock
 		}
 	}
 	//get supplier data
-	var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
-	SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(BinningStockEntities.SupplierId)
-	if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
-		return Response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Supplier data from external service" + err.Error(),
-			Err:        err,
-		}
+	SupplierData, supplierDataErr := generalserviceapiutils.GetSupplierMasterByID(BinningStockEntities.SupplierId)
+	if supplierDataErr != nil {
+		return Response, supplierDataErr
 	}
+	//var SupplierData generalservicepayloads.SupplierMasterCrossServicePayloads
+	//SupplierDataUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(BinningStockEntities.SupplierId)
+	//if err := utils.Get(SupplierDataUrl, &SupplierData, nil); err != nil {
+	//	return Response, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusInternalServerError,
+	//		Message:    "Failed to fetch Supplier data from external service" + err.Error(),
+	//		Err:        err,
+	//	}
+	//}
 	//get PO Data
 
 	//Item Group Name
@@ -701,14 +735,11 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 		}
 	}
 	//get validation draft doc
-	var DocResponse generalservicepayloads.DocumentStatusPayloads
-	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(BinningEntities.BinningDocumentStatusId)
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return BinningEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch Document Status From External Service"),
-		}
+	DocResponse, errDocResponse := generalserviceapiutils.GetDocumentStatusById(BinningEntities.BinningDocumentStatusId)
+	if errDocResponse != nil {
+		return transactionsparepartentities.BinningStock{}, errDocResponse
 	}
+
 	if DocResponse.DocumentStatusCode != "10" { //draft {
 		return transactionsparepartentities.BinningStock{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -721,15 +752,12 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 	//RAISERROR('Document Source Is Not Define at Table comGenVariable',16,1)
 	//RETURN 0
 	//END
-	var SourceDocType generalservicepayloads.SourceDocumentTypeMasterResponse
-	SourceDocTypeUrl := config.EnvConfigs.GeneralServiceUrl + "source-document-type-code/SPBN"
-	if err := utils.Get(SourceDocTypeUrl, &SourceDocType, nil); err != nil {
-		return BinningEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch source document Status From External Service"),
-		}
+	SourceDocType, errSource := generalserviceapiutils.GetDocumentTypeByCode("SPBN")
+	if errSource != nil {
+		return BinningEntities, errSource
 	}
-	if SourceDocType == (generalservicepayloads.SourceDocumentTypeMasterResponse{}) {
+
+	if SourceDocType == (generalserviceapiutils.SourceDocumentTypeMasterResponse{}) {
 		return BinningEntities, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Document Source Is Not Define at Table",
@@ -1074,14 +1102,17 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 
 	//BinningEntities
 	//get ready id
-	DocumentStatusUrl = config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/20"
-	if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
-		return BinningEntities, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch Document Status From External Service"),
-		}
+	//DocumentStatusUrl = config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/20"
+	//if err := utils.Get(DocumentStatusUrl, &DocResponse, nil); err != nil {
+	//	return BinningEntities, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusBadRequest,
+	//		Err:        errors.New("failed To fetch Document Status From External Service"),
+	//	}
+	//}
+	DocumentStatusUrl, errStatus := generalserviceapiutils.GetDocumentStatusByCode("20")
+	if errStatus != nil {
+		return BinningEntities, errStatus
 	}
-
 	//get bining reference type id first "T"
 	binningTypeIdImport := 0
 	err = db.Model(&masterentities.BinningTypeMaster{}).
@@ -1100,7 +1131,7 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 	//	CHANGE_USER_ID = @Change_User_Id ,
 	//	CHANGE_DATETIME = @Change_Datetime
 	//WHERE BIN_SYS_NO = @Bin_Sys_No
-	BinningEntities.BinningDocumentStatusId = DocResponse.DocumentStatusId
+	BinningEntities.BinningDocumentStatusId = DocumentStatusUrl.DocumentStatusId
 	BinningEntities.ChangeNo += 1
 	BinningEntities.BinningDocumentNumber = "dummy doc number waiting for gmsrcdoc1_update"
 	*BinningEntities.CreatedDate = time.Now()
@@ -1130,4 +1161,302 @@ func (b *BinningListRepositoryImpl) SubmitBinningList(db *gorm.DB, BinningId int
 		}
 	}
 	return BinningEntities, nil
+}
+
+func (b *BinningListRepositoryImpl) DeleteBinningList(db *gorm.DB, BinningId int) (bool, *exceptions.BaseErrorResponse) {
+	//get entity first
+	var binningListEntity transactionsparepartentities.BinningStock
+	err := db.Model(&binningListEntity).Where(transactionsparepartentities.BinningStock{BinningSystemNumber: BinningId}).
+		Preload("BinningStockDetail").
+		Find(&binningListEntity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        errors.New("binning stock is not found please check input"),
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get binning stock header to delete please check input",
+		}
+	}
+	//get status draft on document master
+	ApprovalStatusResponseDraft, errs := generalserviceapiutils.GetApprovalStatusByCode("10")
+	if errs != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get approval status",
+		}
+	}
+	if binningListEntity.BinningDocumentStatusId != ApprovalStatusResponseDraft.ApprovalStatusId {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("document is not draft"),
+		}
+	}
+	//get reference binning list to check
+	var referenceTypeBinningList masterentities.BinningReferenceTypeMaster
+
+	err = db.Model(&referenceTypeBinningList).Where(masterentities.BinningReferenceTypeMaster{BinningReferenceTypeId: binningListEntity.BinningReferenceTypeId}).
+		First(&referenceTypeBinningList).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("failed to get reference type please check reference type input"),
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error on reference type binning list please check input",
+		}
+	}
+	//loop through all the binning detail
+	var binningStockDetailEntities []transactionsparepartentities.BinningStockDetail
+
+	err = db.Model(&binningStockDetailEntities).Where(transactionsparepartentities.BinningStockDetail{BinningSystemNumber: BinningId}).
+		Scan(&binningStockDetailEntities).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to get binning stock detail please check input",
+		}
+	}
+	for _, binningDetail := range binningStockDetailEntities {
+		if strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "PO" || strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "IV" {
+			//cara 1
+			//db.Model(&transactionsparepartentities.PurchaseOrderDetailEntities{}).
+			//	Updates(map[string]interface{}{
+			//		"binning_quantity": gorm.Expr(`
+			//					CASE WHEN (ISNULL(binning_quantity,0) - ? < 0
+			//					THEN 0
+			//					ELSE
+			//					(ISNULL(binning_quantity,0) - ?
+			//					END
+			//				`, binningDetail.DeliveryOrderQuantity, binningDetail.DeliveryOrderQuantity),
+			//	}).Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: binningDetail.ReferenceDetailSystemNumber})
+
+			var purchaseOrderDetail transactionsparepartentities.PurchaseOrderDetailEntities
+			err = db.Model(&purchaseOrderDetail).Where(transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: binningDetail.ReferenceDetailSystemNumber}).
+				First(&purchaseOrderDetail).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Err:        errors.New("purchase order is not found with reference type purchase order please check input"),
+					}
+				}
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update purchase order please check input",
+				}
+			}
+			purchaseOrderDetail.BinningQuantity -= binningDetail.DeliveryOrderQuantity
+			if purchaseOrderDetail.BinningQuantity <= 0 {
+				purchaseOrderDetail.BinningQuantity = 0
+			}
+			err = db.Save(&purchaseOrderDetail).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update purchase order please check input",
+				}
+			}
+		} else if referenceTypeBinningList.BinningReferenceTypeCode == "CL" {
+			var claimDetailEntity transactionsparepartentities.ItemClaimDetail
+			err = db.Model(&claimDetailEntity).Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: binningDetail.ReferenceDetailSystemNumber}).
+				First(&claimDetailEntity).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Err:        errors.New("item claim detail is not found with reference type item claim please check input"),
+					}
+				}
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update item claim detail please check input",
+				}
+			}
+			claimDetailEntity.QuantityBinning -= binningDetail.DeliveryOrderQuantity
+			if claimDetailEntity.QuantityBinning < 0 {
+				claimDetailEntity.QuantityBinning = 0
+			}
+			err = db.Save(&claimDetailEntity).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update item claim detail please check input",
+				}
+			}
+		} else if strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "WC" {
+			//get work order detail first
+			var workOrderDetail transactionworkshopentities.WorkOrderDetail
+			err = db.Model(&workOrderDetail).Where(transactionworkshopentities.WorkOrderDetail{WorkOrderDetailId: binningDetail.ReferenceDetailSystemNumber}).
+				First(&workOrderDetail).Error
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					return false, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Err:        errors.New("work order is not found with reference type workorder please check input"),
+					}
+				}
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update work order please check input",
+				}
+			}
+			workOrderDetail.BinningQuantity -= binningDetail.DeliveryOrderQuantity
+			if workOrderDetail.BinningQuantity < 0 {
+				workOrderDetail.BinningQuantity = 0
+			}
+			err = db.Save(&workOrderDetail).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update work order please check input",
+				}
+			}
+		}
+		//delete detail
+		err = db.Delete(&binningDetail).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to delete binning detail please check input",
+			}
+		}
+	}
+	err = db.Delete(&binningListEntity).Error
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to delete binning list please check input",
+		}
+	}
+	return true, nil
+}
+func (b *BinningListRepositoryImpl) DeleteBinningListDetailMultiId(db *gorm.DB, binningDetailMultiId string) (bool, *exceptions.BaseErrorResponse) {
+	//var splitId []int
+	splitId := strings.Split(binningDetailMultiId, ",")
+	for _, item := range splitId {
+		itemId, splitErr := strconv.Atoi(item)
+		if splitErr != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("id is not a number please check input"),
+			}
+		}
+		//get entity to delete
+		var binningListDetailEntity transactionsparepartentities.BinningStockDetail
+		err := db.Model(&binningListDetailEntity).
+			Where(transactionsparepartentities.BinningStockDetail{BinningDetailSystemNumber: itemId}).
+			First(&binningListDetailEntity).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("binning list detail is not found with id please check input"),
+				}
+			}
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to delete binning detail please check input",
+			}
+		}
+		//get header
+		var binningListEntity transactionsparepartentities.BinningStock
+		err = db.Model(&binningListEntity).
+			Where(transactionsparepartentities.BinningStock{BinningSystemNumber: binningListDetailEntity.BinningSystemNumber}).
+			First(&binningListEntity).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("binning list header is not found with id please check input"),
+				}
+			}
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to delete binning detail please check input",
+			}
+		}
+		docResponseDraft, DocErr := generalserviceapiutils.GetApprovalStatusByCode("10")
+		if DocErr != nil {
+			return false, DocErr
+		}
+		if binningListEntity.BinningDocumentStatusId != docResponseDraft.ApprovalStatusId {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("binning list status is not draft"),
+			}
+		}
+		var referenceTypeBinningList masterentities.BinningReferenceTypeMaster
+		err = db.Model(&referenceTypeBinningList).Where(masterentities.BinningReferenceTypeMaster{BinningReferenceTypeId: binningListEntity.BinningReferenceTypeId}).
+			First(&referenceTypeBinningList).Error
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("failed to get reference type please check reference type input"),
+				}
+			}
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "error on reference type binning list please check input",
+			}
+		}
+
+		//get reference type binning first
+		if strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "PO" {
+			err = db.Model(&transactionsparepartentities.PurchaseOrderDetailEntities{PurchaseOrderDetailSystemNumber: binningListDetailEntity.ReferenceDetailSystemNumber}).
+				Update("binning_quantity", gorm.Expr("ISNULL(binning_quantity,0) - ?", binningListDetailEntity.DeliveryOrderQuantity)).Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update purchase order please check input",
+				}
+			}
+		}
+		//type IV
+		if strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "IV" {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Err:        errors.New("cannot delete ths line!. Please Void document"),
+			}
+		}
+		if strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "CL" {
+			err = db.Model(&transactionsparepartentities.ItemClaimDetail{}).
+				Where(transactionsparepartentities.ItemClaimDetail{ItemClaimDetailId: binningListDetailEntity.ReferenceDetailSystemNumber}).
+				Update("quantity_binning", gorm.Expr("ISNULL(quantity_binning,0) - ?", binningListDetailEntity.DeliveryOrderQuantity)).
+				Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update claim detail please check input",
+				}
+			}
+		}
+		if strings.ToUpper(referenceTypeBinningList.BinningReferenceTypeCode) == "WC" {
+			err = db.Model(&transactionworkshopentities.WorkOrderDetail{}).
+				Where(transactionworkshopentities.WorkOrderDetail{WorkOrderDetailId: binningListDetailEntity.ReferenceDetailSystemNumber}).
+				Update("binning_quantity", gorm.Expr("ISNULL(binning_quantity,0) - ?", binningListDetailEntity.DeliveryOrderQuantity)).
+				Error
+			if err != nil {
+				return false, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Message:    "failed to update work order detail please check input",
+				}
+			}
+		}
+		err = db.Delete(&binningListDetailEntity).Error
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "failed to delete binning detail please check input",
+			}
+		}
+	}
+	return true, nil
 }

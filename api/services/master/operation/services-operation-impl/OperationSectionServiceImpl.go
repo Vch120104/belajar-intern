@@ -114,3 +114,14 @@ func (s *OperationSectionServiceImpl) ChangeStatusOperationSection(Id int) (bool
 	}
 	return results, nil
 }
+
+func (s *OperationSectionServiceImpl) GetOperationSectionDropDown(operationGroupId int) ([]masteroperationpayloads.OperationSectionDropDown, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	get, err := s.operationSectionRepo.GetOperationSectionDropDown(tx, operationGroupId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}

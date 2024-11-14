@@ -56,7 +56,13 @@ func (r *WarehouseMasterControllerImpl) DropdownbyGroupId(writer http.ResponseWr
 		return
 	}
 
-	get, baseErr := r.WarehouseMasterService.DropdownbyGroupId(warehouseDropDownGroupId)
+	companyId, err := strconv.Atoi(chi.URLParam(request, "company_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Company ID", http.StatusBadRequest)
+		return
+	}
+
+	get, baseErr := r.WarehouseMasterService.DropdownbyGroupId(warehouseDropDownGroupId, companyId)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Warehouse Group ID not found", http.StatusNotFound)

@@ -113,3 +113,31 @@ func (service *BinningListServiceImpl) SubmitBinningList(BinningId int) (transac
 	}
 	return result, nil
 }
+func (service *BinningListServiceImpl) DeleteBinningList(BinningId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.DeleteBinningList(tx, BinningId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+func (service *BinningListServiceImpl) DeleteBinningListDetailMultiId(binningDetailMultiId string) (bool, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.DeleteBinningListDetailMultiId(tx, binningDetailMultiId)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	//tx.Rollback()
+	return result, nil
+}
+func (service *BinningListServiceImpl) GetReferenceNumberTypoPOWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := service.DB.Begin()
+	result, err := service.repository.GetReferenceNumberTypoPOWithPagination(tx, filter, pagination)
+	defer helper.CommitOrRollbackTrx(tx)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}

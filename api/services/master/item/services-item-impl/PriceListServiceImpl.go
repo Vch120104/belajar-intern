@@ -261,7 +261,8 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 
 					result = append(result, fmt.Sprintf("Line %d : %s", key, "Price List already exists"))
 				} else {
-					price, err := strconv.Atoi(value[4])
+					cleanValue := strings.ReplaceAll(value[4], ",", "")
+					price, err := strconv.ParseFloat(cleanValue, 64)
 					if err != nil {
 						result = append(result, fmt.Sprintf("Line %d : %s", key, "Error read file"))
 						return result, &exceptions.BaseErrorResponse{StatusCode: 500, Err: err}
@@ -276,7 +277,7 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 						CompanyId:       uploadRequest.CompanyId,
 						ItemId:          itemId,
 						ItemClassId:     itemClassId,
-						PriceListAmount: float64(price),
+						PriceListAmount: price,
 					}
 					req = append(req, model)
 
@@ -321,11 +322,11 @@ func (s *PriceListServiceImpl) GenerateDownloadTemplateFile() (*excelize.File, *
 	f.SetCellValue(sheetName, "C1", "EFFECTIVE_DATE")
 
 	//EXAMPLE DATE FORMAT
-	styleH9, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{
+	styleH1, _ := f.NewStyle(&excelize.Style{Font: &excelize.Font{
 		Color: "#FF0000",
 	}})
-	f.SetCellValue(sheetName, "H9", "*DATE FORMAT = 02/01/2006")
-	f.SetCellStyle(sheetName, "H9", "H9", styleH9)
+	f.SetCellValue(sheetName, "H1", "*DATE FORMAT = 02/01/2006")
+	f.SetCellStyle(sheetName, "H1", "H1", styleH1)
 
 	f.SetCellValue(sheetName, "D1", "ITEM_CODE")
 	f.SetCellValue(sheetName, "E1", "PRICE_AMOUNT")

@@ -23,6 +23,7 @@ type OperationKeyController interface {
 	GetOperationKeyName(writer http.ResponseWriter, request *http.Request)
 	SaveOperationKey(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusOperationKey(writer http.ResponseWriter, request *http.Request)
+	GetOperationKeyDropdown(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationKeyControllerImpl struct {
@@ -212,4 +213,27 @@ func (r *OperationKeyControllerImpl) ChangeStatusOperationKey(writer http.Respon
 	}
 
 	payloads.NewHandleSuccess(writer, response, "Update Data Successfully!", http.StatusOK)
+}
+
+func (r *OperationKeyControllerImpl) GetOperationKeyDropdown(writer http.ResponseWriter, request *http.Request) {
+
+	operationGroupId, err := strconv.Atoi(chi.URLParam(request, "operation_group_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Operation Group ID", http.StatusBadRequest)
+		return
+	}
+
+	operationSectionId, err := strconv.Atoi(chi.URLParam(request, "operation_section_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Operation Section ID", http.StatusBadRequest)
+		return
+	}
+
+	get, errResp := r.operationkeyservice.GetOperationKeyDropdown(operationGroupId, operationSectionId)
+	if errResp != nil {
+		helper.ReturnError(writer, request, errResp)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, get, "Get Data Successfully!", http.StatusOK)
 }
