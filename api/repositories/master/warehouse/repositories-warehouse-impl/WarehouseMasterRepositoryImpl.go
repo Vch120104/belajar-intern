@@ -83,11 +83,12 @@ func (r *WarehouseMasterImpl) InTransitWarehouseCodeDropdown(tx *gorm.DB, compan
 }
 
 // DropdownbyGroupId implements masterwarehouserepository.WarehouseMasterRepository.
-func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId int, companyId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 
 	var warehouseMasterResponse []masterwarehousepayloads.DropdownWarehouseMasterResponse
 
-	err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).Where(masterwarehouseentities.WarehouseMaster{WarehouseGroupId: warehouseGroupId}).
+	err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
+		Where(masterwarehouseentities.WarehouseMaster{WarehouseGroupId: warehouseGroupId, CompanyId: companyId}).
 		Select("warehouse_id", "warehouse_code + ' - ' + warehouse_name as warehouse_code").
 		Find(&warehouseMasterResponse)
 	if err.Error != nil {
