@@ -54,7 +54,10 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 	}
 
 	queryValues := request.URL.Query()
-	queryParams := map[string]string{}
+	queryParams := map[string]string{
+		"opr_item_code": queryValues.Get("opr_item_code"),
+		"opr_item_name": queryValues.Get("opr_item_name"),
+	}
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),

@@ -70,9 +70,9 @@ func (s *WarehouseMasterServiceImpl) InTransitWarehouseCodeDropdown(companyID in
 }
 
 // DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
-func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int, companyId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId)
+	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId, companyId)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
