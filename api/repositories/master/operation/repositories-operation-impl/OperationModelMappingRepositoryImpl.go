@@ -726,8 +726,19 @@ func (r *OperationModelMappingRepositoryImpl) UpdateOperationFrt(tx *gorm.DB, op
 		FrtHourExpress: request.FrtHourExpress,
 	}
 
+	// if err := tx.Model(&masteroperationentities.OperationFrt{}).
+	// 	Where("operation_frt_id = ?", operationFrtId).
+	// 	Updates(&OperationFrt).Error; err != nil {
+	// 	return masteroperationentities.OperationFrt{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to update operation master",
+	// 		Err:        err,
+	// 	}
+	// }
+
 	if err := tx.Model(&masteroperationentities.OperationFrt{}).
 		Where("operation_frt_id = ?", operationFrtId).
+		Select("FrtHour", "FrtHourExpress").
 		Updates(&OperationFrt).Error; err != nil {
 		return masteroperationentities.OperationFrt{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
