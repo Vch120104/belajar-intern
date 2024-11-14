@@ -128,33 +128,22 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			}
 		}
 
-		WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(workOrderReq.WorkOrderTypeId)
-		var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse
-		if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+		getWorkOrderTypeResponses, workOrderTypeErr := generalserviceapiutils.GetWorkOrderTypeByID(workOrderReq.WorkOrderTypeId)
+		if workOrderTypeErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch work order type data from external service",
-				Err:        err,
+				Err:        workOrderTypeErr.Err,
 			}
 		}
 
-		var workOrderTypeName string
-		if len(getWorkOrderTypeResponses) > 0 {
-			workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
-		}
-
-		WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(workOrderReq.StatusId)
-		var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse
-		if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+		getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(workOrderReq.StatusId)
+		if workOrderStatusErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to fetch work order status data from external service",
-				Err:        err,
+				Err:        workOrderStatusErr.Err,
 			}
-		}
-		var workOrderStatusName string
-		if len(getWorkOrderStatusResponses) > 0 {
-			workOrderStatusName = getWorkOrderStatusResponses[0].WorkOrderStatusName
 		}
 
 		workOrderRes = transactionworkshoppayloads.WorkOrderGetAllResponse{
@@ -163,7 +152,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			WorkOrderDate:           workOrderReq.WorkOrderDate,
 			FormattedWorkOrderDate:  utils.FormatRFC3339(workOrderReq.WorkOrderDate), // Use RFC3339 format
 			WorkOrderTypeId:         workOrderReq.WorkOrderTypeId,
-			WorkOrderTypeName:       workOrderTypeName,
+			WorkOrderTypeName:       getWorkOrderTypeResponses.WorkOrderTypeName,
 			BrandId:                 workOrderReq.BrandId,
 			BrandName:               getBrandResponse.BrandName,
 			VehicleCode:             vehicleResponses.VehicleChassisNumber,
@@ -173,7 +162,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 			VehicleId:               workOrderReq.VehicleId,
 			CustomerId:              workOrderReq.CustomerId,
 			StatusId:                workOrderReq.StatusId,
-			StatusName:              workOrderStatusName,
+			StatusName:              getWorkOrderStatusResponses.WorkOrderStatusName,
 			RepeatedJob:             workOrderReq.RepeatedJob,
 		}
 
@@ -219,6 +208,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	defaultWorkOrderDocumentNumber := ""
 	defaultCPCcode := "00002" // Default CPC code 00002 for workshop
 	workOrderTypeId := 1      // Default work order type ID 1 for normal
+	defaultCurrencyId := 11   // Default currency ID 11 for IDR
 
 	// Validation: request date
 	currentDate := time.Now()
@@ -261,7 +251,7 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 
 	// Create WorkOrder entity
 	entitieswo := transactionworkshopentities.WorkOrder{
-		// Default values
+		// page 1
 		WorkOrderDocumentNumber:    defaultWorkOrderDocumentNumber,
 		WorkOrderStatusId:          utils.WoStatDraft,
 		WorkOrderDate:              currentDate,
@@ -307,16 +297,19 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 		InsurancePersonInCharge:  request.WorkOrderInsurancePic,
 		InsuranceOwnRisk:         request.WorkOrderInsuranceOwnRisk,
 		InsuranceWorkOrderNumber: request.WorkOrderInsuranceWONumber,
-		EstTime:                  request.EstimationDuration,
-		CustomerExpress:          request.CustomerExpress,
-		LeaveCar:                 request.LeaveCar,
-		CarWash:                  request.CarWash,
-		PromiseDate:              request.PromiseDate,
-		PromiseTime:              request.PromiseTime,
-		FSCouponNo:               request.FSCouponNo,
-		Notes:                    request.Notes,
-		Suggestion:               request.Suggestion,
-		DPAmount:                 request.DownpaymentAmount,
+
+		// page 2
+		EstTime:         request.EstimationDuration,
+		CustomerExpress: request.CustomerExpress,
+		LeaveCar:        request.LeaveCar,
+		CarWash:         request.CarWash,
+		PromiseDate:     request.PromiseDate,
+		PromiseTime:     request.PromiseTime,
+		FSCouponNo:      request.FSCouponNo,
+		Notes:           request.Notes,
+		Suggestion:      request.Suggestion,
+		DPAmount:        request.DownpaymentAmount,
+		CurrencyId:      defaultCurrencyId,
 	}
 
 	if err := tx.Create(&entitieswo).Error; err != nil {
@@ -330,8 +323,6 @@ func (r *WorkOrderRepositoryImpl) New(tx *gorm.DB, request transactionworkshoppa
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Memperbarui status pemesanan dan estimasi jika Booking_System_No atau Estim_System_No tidak nol
-	// Update related statuses if necessary
-
 	if err := r.UpdateStatusBookEstim(tx, request); err != nil {
 		return transactionworkshopentities.WorkOrder{}, err
 	}
@@ -744,31 +735,23 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 	}
 
 	// fetch data status work order
-	WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(entity.WorkOrderStatusId)
-	var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
-	if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order status data from external service",
-			Err:        err,
+			Err:        workOrderStatusErr.Err,
 		}
 	}
 
 	// fetch data type work order
-	WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(entity.WorkOrderTypeId)
-	//fmt.Println("Fetching Work Order Type data from:", WorkOrderTypeURL)
-	var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse // Use slice of WorkOrderTypeResponse
-	if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+	getWorkOrderTypeResponses, workOrderTypeErr := generalserviceapiutils.GetWorkOrderTypeByID(entity.WorkOrderTypeId)
+	if workOrderTypeErr != nil {
 		return transactionworkshoppayloads.WorkOrderResponseDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order type data from external service",
-			Err:        err,
+			Err:        workOrderTypeErr.Err,
 		}
-	}
-
-	var workOrderTypeName string
-	if len(getWorkOrderTypeResponses) > 0 {
-		workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
 	}
 
 	payload := transactionworkshoppayloads.WorkOrderResponseDetail{
@@ -776,9 +759,9 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		WorkOrderDate:                 entity.WorkOrderDate,
 		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
 		WorkOrderTypeId:               entity.WorkOrderTypeId,
-		WorkOrderTypeName:             workOrderTypeName,
+		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:             entity.WorkOrderStatusId,
-		WorkOrderStatusName:           getWorkOrderStatusResponses[0].WorkOrderStatusName,
+		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
 		ServiceAdvisorId:              entity.ServiceAdvisor,
 		BrandId:                       entity.BrandId,
 		BrandName:                     brandResponse.BrandName,
@@ -830,7 +813,14 @@ func (r *WorkOrderRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination pagina
 		FSCouponNo:                    entity.FSCouponNo,
 		Notes:                         entity.Notes,
 		Suggestion:                    entity.Suggestion,
-		DownpaymentAmount:             entity.DPAmount,
+		DPAmount:                      entity.DPAmount,
+		DPPayment:                     entity.DPPayment,
+		DPPaymentAllocated:            entity.DPPaymentAllocated,
+		DPPaymentVAT:                  entity.DPPaymentVAT,
+		DPAllocToInv:                  entity.DPAllocToInv,
+		InvoiceSystemNumber:           entity.InvoiceSystemNumber,
+		CurrencyId:                    entity.CurrencyId,
+
 		WorkOrderCampaign: transactionworkshoppayloads.WorkOrderCampaignDetail{
 			DataCampaign: workorderCampaigns,
 		},
@@ -1810,38 +1800,32 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 		}
 
 		// fetch line type from external api
-		lineTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-line-type?line_type_code=" + strconv.Itoa(workOrderReq.LineTypeId)
-		var lineTypeResponse []transactionworkshoppayloads.Linetype
-		err := utils.GetArray(lineTypeUrl, &lineTypeResponse, nil)
-		if err != nil {
+		lineTypeResponse, lineErr := generalserviceapiutils.GetLineTypeById(workOrderReq.LineTypeId)
+		if lineErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve line type from the external API",
-				Err:        err,
+				Err:        lineErr.Err,
 			}
 		}
 
 		// fetch transaction type from external api
-		transactionTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-transaction-type?transaction_type_id=" + strconv.Itoa(workOrderReq.TransactionTypeId)
-		var transactionTypeResponse []transactionworkshoppayloads.WorkOrderTransactionType
-		err = utils.GetArray(transactionTypeUrl, &transactionTypeResponse, nil)
-		if err != nil {
+		transactionTypeResponse, transactionTypeErr := generalserviceapiutils.GetTransactionTypeByID(workOrderReq.TransactionTypeId)
+		if transactionTypeErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve transaction type from the external API",
-				Err:        err,
+				Err:        transactionTypeErr.Err,
 			}
 		}
 
 		// fetch job type from external api
-		jobTypeUrl := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-job-type?job_type_id=" + strconv.Itoa(workOrderReq.JobTypeId)
-		var jobTypeResponse []transactionworkshoppayloads.WorkOrderJobType
-		err = utils.GetArray(jobTypeUrl, &jobTypeResponse, nil)
-		if err != nil {
+		jobTypeResponse, jobTypeErr := generalserviceapiutils.GetJobTransactionTypeByID(workOrderReq.JobTypeId)
+		if jobTypeErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Message:    "Failed to retrieve job type from the external API",
-				Err:        err,
+				Err:        jobTypeErr.Err,
 			}
 		}
 
@@ -1849,11 +1833,11 @@ func (r *WorkOrderRepositoryImpl) GetAllDetailWorkOrder(tx *gorm.DB, filterCondi
 			WorkOrderDetailId:                   workOrderReq.WorkOrderDetailId,
 			WorkOrderSystemNumber:               workOrderReq.WorkOrderSystemNumber,
 			LineTypeId:                          workOrderReq.LineTypeId,
-			LineTypeCode:                        lineTypeResponse[0].LineTypeCode,
+			LineTypeCode:                        lineTypeResponse.LineTypeCode,
 			TransactionTypeId:                   workOrderReq.TransactionTypeId,
-			TransactionTypeCode:                 transactionTypeResponse[0].TransactionTypeCode,
+			TransactionTypeCode:                 transactionTypeResponse.WoTransactionTypeCode,
 			JobTypeId:                           workOrderReq.JobTypeId,
-			JobTypeCode:                         jobTypeResponse[0].JobTypeCode,
+			JobTypeCode:                         jobTypeResponse.JobTypeCode,
 			OperationItemId:                     workOrderReq.OperationItemId,
 			FrtQuantity:                         workOrderReq.FrtQuantity,
 			SupplyQuantity:                      workOrderReq.SupplyQuantity,
@@ -1917,13 +1901,22 @@ func (r *WorkOrderRepositoryImpl) GetDetailByIdWorkOrder(tx *gorm.DB, workorderI
 	}
 
 	payload := transactionworkshoppayloads.WorkOrderDetailResponse{
-		WorkOrderDetailId:     entity.WorkOrderDetailId,
-		WorkOrderSystemNumber: entity.WorkOrderSystemNumber,
-		LineTypeId:            entity.LineTypeId,
-		TransactionTypeId:     entity.TransactionTypeId,
-		JobTypeId:             entity.JobTypeId,
-		FrtQuantity:           entity.FrtQuantity,
-		SupplyQuantity:        entity.SupplyQuantity,
+		WorkOrderDetailId:                   entity.WorkOrderDetailId,
+		WorkOrderSystemNumber:               entity.WorkOrderSystemNumber,
+		LineTypeId:                          entity.LineTypeId,
+		TransactionTypeId:                   entity.TransactionTypeId,
+		JobTypeId:                           entity.JobTypeId,
+		FrtQuantity:                         entity.FrtQuantity,
+		SupplyQuantity:                      entity.SupplyQuantity,
+		PriceListId:                         entity.PriceListId,
+		WarehouseGroupId:                    entity.WarehouseGroupId,
+		OperationItemId:                     entity.OperationItemId,
+		OperationItemCode:                   entity.OperationItemCode,
+		OperationItemPrice:                  entity.OperationItemPrice,
+		OperationItemDiscountAmount:         entity.OperationItemDiscountAmount,
+		OperationItemDiscountRequestAmount:  entity.OperationItemDiscountRequestAmount,
+		OperationItemDiscountPercent:        entity.OperationItemDiscountPercent,
+		OperationItemDiscountRequestPercent: entity.OperationItemDiscountRequestPercent,
 	}
 
 	return payload, nil
@@ -3329,31 +3322,23 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 	}
 
 	// fetch data status work order
-	WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(entity.WorkOrderStatusId)
-	var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
-	if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderBookingResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order status data from external service",
-			Err:        err,
+			Err:        workOrderStatusErr.Err,
 		}
 	}
 
 	// fetch data type work order
-	WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(entity.WorkOrderTypeId)
-	//fmt.Println("Fetching Work Order Type data from:", WorkOrderTypeURL)
-	var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse // Use slice of WorkOrderTypeResponse
-	if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+	getWorkOrderTypeResponses, workOrderTypeErr := generalserviceapiutils.GetWorkOrderTypeByID(entity.WorkOrderTypeId)
+	if workOrderTypeErr != nil {
 		return transactionworkshoppayloads.WorkOrderBookingResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order type data from external service",
-			Err:        err,
+			Err:        workOrderTypeErr.Err,
 		}
-	}
-
-	var workOrderTypeName string
-	if len(getWorkOrderTypeResponses) > 0 {
-		workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
 	}
 
 	payload := transactionworkshoppayloads.WorkOrderBookingResponse{
@@ -3361,9 +3346,9 @@ func (r *WorkOrderRepositoryImpl) GetBookingById(tx *gorm.DB, IdWorkorder int, i
 		WorkOrderDate:                 entity.WorkOrderDate.Format("2006-01-02"),
 		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
 		WorkOrderTypeId:               entity.WorkOrderTypeId,
-		WorkOrderTypeName:             workOrderTypeName,
+		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:             entity.WorkOrderStatusId,
-		WorkOrderStatusName:           getWorkOrderStatusResponses[0].WorkOrderStatusName,
+		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
 		ServiceAdvisorId:              entity.ServiceAdvisor,
 		BrandId:                       entity.BrandId,
 		BrandName:                     brandResponse.BrandName,
@@ -3778,31 +3763,23 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 	}
 
 	// fetch data status work order
-	WorkOrderStatusURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-status?work_order_status_id=" + strconv.Itoa(entity.WorkOrderStatusId)
-	var getWorkOrderStatusResponses []transactionworkshoppayloads.WorkOrderStatusResponse // Use slice of WorkOrderStatusResponse
-	if err := utils.Get(WorkOrderStatusURL, &getWorkOrderStatusResponses, nil); err != nil {
+	getWorkOrderStatusResponses, workOrderStatusErr := generalserviceapiutils.GetWorkOrderStatusByID(entity.WorkOrderStatusId)
+	if workOrderStatusErr != nil {
 		return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order status data from external service",
-			Err:        err,
+			Err:        workOrderStatusErr.Err,
 		}
 	}
 
 	// fetch data type work order
-	WorkOrderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "work-order/dropdown-type?work_order_type_id=" + strconv.Itoa(entity.WorkOrderTypeId)
-	//fmt.Println("Fetching Work Order Type data from:", WorkOrderTypeURL)
-	var getWorkOrderTypeResponses []transactionworkshoppayloads.WorkOrderTypeResponse // Use slice of WorkOrderTypeResponse
-	if err := utils.Get(WorkOrderTypeURL, &getWorkOrderTypeResponses, nil); err != nil {
+	getWorkOrderTypeResponses, workOrderTypeErr := generalserviceapiutils.GetWorkOrderTypeByID(entity.WorkOrderTypeId)
+	if workOrderTypeErr != nil {
 		return transactionworkshoppayloads.WorkOrderAffiliateResponse{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Failed to fetch work order type data from external service",
-			Err:        err,
+			Err:        workOrderTypeErr.Err,
 		}
-	}
-
-	var workOrderTypeName string
-	if len(getWorkOrderTypeResponses) > 0 {
-		workOrderTypeName = getWorkOrderTypeResponses[0].WorkOrderTypeName
 	}
 
 	payload := transactionworkshoppayloads.WorkOrderAffiliateResponse{
@@ -3810,9 +3787,9 @@ func (r *WorkOrderRepositoryImpl) GetAffiliatedById(tx *gorm.DB, IdWorkorder int
 		WorkOrderDate:                 entity.WorkOrderDate.Format("2006-01-02"),
 		WorkOrderDocumentNumber:       entity.WorkOrderDocumentNumber,
 		WorkOrderTypeId:               entity.WorkOrderTypeId,
-		WorkOrderTypeName:             workOrderTypeName,
+		WorkOrderTypeName:             getWorkOrderTypeResponses.WorkOrderTypeName,
 		WorkOrderStatusId:             entity.WorkOrderStatusId,
-		WorkOrderStatusName:           getWorkOrderStatusResponses[0].WorkOrderStatusName,
+		WorkOrderStatusName:           getWorkOrderStatusResponses.WorkOrderStatusName,
 		ServiceAdvisorId:              entity.ServiceAdvisor,
 		ServiceSite:                   entity.ServiceSite,
 		BrandId:                       entity.BrandId,
@@ -3922,678 +3899,6 @@ func (r *WorkOrderRepositoryImpl) SaveAffiliated(tx *gorm.DB, IdWorkorder int, i
 	}
 
 	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewStatus(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
-	var statuses []transactionworkshopentities.WorkOrderMasterStatus
-
-	// Apply filters
-	query := utils.ApplyFilter(tx, filter)
-
-	// Execute the query
-	if err := query.Find(&statuses).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order statuses from the database",
-			Err:        err,
-		}
-	}
-
-	return statuses, nil
-}
-
-func (r *WorkOrderRepositoryImpl) AddStatus(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterStatus{
-		WorkOrderStatusCode:        request.WorkOrderStatusCode,
-		WorkOrderStatusDescription: request.WorkOrderStatusName,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateStatus(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterStatus
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterStatus{}).Where("work_order_status_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order status from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderStatusCode = request.WorkOrderStatusCode
-	entity.WorkOrderStatusDescription = request.WorkOrderStatusName
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update work order status",
-			Err:        err,
-		}
-	}
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteStatus(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterStatus
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterStatus{}).Where("work_order_status_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order status from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete work order status",
-			Err:        err,
-		}
-	}
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
-	var types []transactionworkshopentities.WorkOrderMasterType
-
-	query := utils.ApplyFilter(tx, filter)
-
-	if err := query.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type from the database",
-			Err:        err,
-		}
-	}
-	return types, nil
-}
-
-func (r *WorkOrderRepositoryImpl) AddType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterType{
-		WorkOrderTypeCode:        request.WorkOrderTypeCode,
-		WorkOrderTypeDescription: request.WorkOrderTypeName,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save work order type",
-			Err:        err,
-		}
-	}
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterType{}).Where("work_order_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderTypeCode = request.WorkOrderTypeCode
-	entity.WorkOrderTypeDescription = request.WorkOrderTypeName
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update work order type",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterType{}).Where("work_order_type_id = ?", id).First(&entity).Error
-
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete work order type",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewLineType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
-	var types []transactionworkshopentities.WorkOrderMasterLineType
-
-	query := utils.ApplyFilter(tx, filter)
-
-	if err := query.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order line type from the database",
-			Err:        err,
-		}
-	}
-
-	var getlinetype []transactionworkshoppayloads.Linetype
-	for _, t := range types {
-		getlinetype = append(getlinetype, transactionworkshoppayloads.Linetype{
-			LineTypeId:   t.WorkOrderLineTypeId,
-			LineTypeCode: t.WorkOrderLineTypeCode,
-			LineTypeName: t.WorkOrderLineTypeDescription,
-		})
-	}
-
-	return getlinetype, nil
-}
-
-func (r *WorkOrderRepositoryImpl) AddLineType(tx *gorm.DB, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterLineType{
-		WorkOrderLineTypeCode:        request.LineTypeCode,
-		WorkOrderLineTypeDescription: request.LineTypeName,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save linetype data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateLineType(tx *gorm.DB, id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterLineType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterLineType{}).Where("line_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve linetype data from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderLineTypeCode = request.LineTypeCode
-	entity.WorkOrderLineTypeDescription = request.LineTypeName
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update linetype data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteLineType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterLineType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterLineType{}).Where("line_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve linetype data from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete linetype data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewBill(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
-	var types []transactionworkshopentities.WorkOrderMasterBillAbleto
-
-	query := utils.ApplyFilter(tx, filter)
-
-	if err := query.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type from the database",
-			Err:        err,
-		}
-	}
-
-	var getBillables []transactionworkshoppayloads.WorkOrderBillable
-	for _, t := range types {
-		getBillables = append(getBillables, transactionworkshoppayloads.WorkOrderBillable{
-			BillableToID:   t.WorkOrderBillabletoId,
-			BillableToCode: t.WorkOrderBillabletoCode,
-			BillableToName: t.WorkOrderBillabletoName,
-		})
-	}
-
-	return getBillables, nil
-}
-
-func (r *WorkOrderRepositoryImpl) AddBill(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterBillAbleto{
-		WorkOrderBillabletoName: request.BillableToName,
-		WorkOrderBillabletoCode: request.BillableToCode,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save billable data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateBill(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterBillAbleto
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterBillAbleto{}).Where("billable_to_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve billable data from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderBillabletoName = request.BillableToName
-	entity.WorkOrderBillabletoCode = request.BillableToCode
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update billable data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteBill(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterBillAbleto
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterBillAbleto{}).Where("billable_to_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve billable data from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete billable data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewTrxType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
-	var types []transactionworkshopentities.WorkOrderMasterTrxType
-
-	query := utils.ApplyFilter(tx, filter)
-
-	if err := query.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type from the database",
-			Err:        err,
-		}
-	}
-
-	var payloadTypes []transactionworkshoppayloads.WorkOrderTransactionType
-	for _, t := range types {
-		payloadTypes = append(payloadTypes, transactionworkshoppayloads.WorkOrderTransactionType{
-			TransactionTypeId:   t.WorkOrderTrxTypeId,
-			TransactionTypeCode: t.WorkOrderTrxTypeCode,
-			TransactionTypeName: t.WorkOrderTrxTypeDescription,
-		})
-	}
-
-	return payloadTypes, nil
-}
-
-func (r *WorkOrderRepositoryImpl) AddTrxType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterTrxType{
-		WorkOrderTrxTypeDescription: request.TransactionTypeName,
-		WorkOrderTrxTypeCode:        request.TransactionTypeCode,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save transaction type data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateTrxType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterTrxType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxType{}).Where("work_order_transaction_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type data from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderTrxTypeDescription = request.TransactionTypeName
-	entity.WorkOrderTrxTypeCode = request.TransactionTypeCode
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update transaction type data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteTrxType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterTrxType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxType{}).Where("work_order_transaction_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type data from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete transaction type data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewTrxTypeSo(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
-	var types []transactionworkshopentities.WorkOrderMasterTrxSoType
-
-	query := utils.ApplyFilter(tx, filter)
-
-	if err := query.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type from the database",
-			Err:        err,
-		}
-	}
-
-	var payloadsoTypes []transactionworkshoppayloads.WorkOrderTransactionType
-	for _, t := range types {
-		payloadsoTypes = append(payloadsoTypes, transactionworkshoppayloads.WorkOrderTransactionType{
-			TransactionTypeId:   t.WorkOrderTrxTypeSoId,
-			TransactionTypeCode: t.WorkOrderTrxTypeSoCode,
-			TransactionTypeName: t.WorkOrderTrxTypeSoDescription,
-		})
-	}
-
-	return payloadsoTypes, nil
-
-}
-
-func (r *WorkOrderRepositoryImpl) AddTrxTypeSo(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterTrxSoType{
-		WorkOrderTrxTypeSoDescription: request.TransactionTypeName,
-		WorkOrderTrxTypeSoCode:        request.TransactionTypeCode,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save transaction type so data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateTrxTypeSo(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterTrxSoType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxSoType{}).Where("work_order_transaction_type_so_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type so data from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderTrxTypeSoDescription = request.TransactionTypeName
-	entity.WorkOrderTrxTypeSoCode = request.TransactionTypeCode
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update transaction type so data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteTrxTypeSo(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterTrxSoType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterTrxSoType{}).Where("work_order_transaction_type_so_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type so data from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete transaction type so data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewJobType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse) {
-	var types []transactionworkshopentities.WorkOrderMasterJobType
-
-	query := utils.ApplyFilter(tx, filter)
-
-	if err := query.Find(&types).Error; err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order job type from the database",
-			Err:        err,
-		}
-	}
-
-	var payloadJobTypes []transactionworkshoppayloads.WorkOrderJobType
-	for _, t := range types {
-		payloadJobTypes = append(payloadJobTypes, transactionworkshoppayloads.WorkOrderJobType{
-			JobTypeId:   t.WorkOrderJobTypeId,
-			JobTypeCode: t.WorkOrderJobTypeCode,
-			JobTypeName: t.WorkOrderJobTypeDescription,
-		})
-	}
-
-	return payloadJobTypes, nil
-}
-
-func (r *WorkOrderRepositoryImpl) AddJobType(tx *gorm.DB, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
-	entities := transactionworkshopentities.WorkOrderMasterJobType{
-		WorkOrderJobTypeCode:        request.JobTypeCode,
-		WorkOrderJobTypeDescription: request.JobTypeName,
-	}
-
-	err := tx.Create(&entities).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to save job type data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) UpdateJobType(tx *gorm.DB, id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterJobType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterJobType{}).Where("job_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve job type data from the database",
-			Err:        err,
-		}
-	}
-
-	entity.WorkOrderJobTypeCode = request.JobTypeCode
-	entity.WorkOrderJobTypeDescription = request.JobTypeName
-
-	err = tx.Save(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to update job type data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) DeleteJobType(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
-	var entity transactionworkshopentities.WorkOrderMasterJobType
-	err := tx.Model(&transactionworkshopentities.WorkOrderMasterJobType{}).Where("job_type_id = ?", id).First(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve job type data from the database",
-			Err:        err,
-		}
-	}
-
-	err = tx.Delete(&entity).Error
-	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to delete job type data",
-			Err:        err,
-		}
-	}
-
-	return true, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewDropPoint(*gorm.DB) ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
-	DropPointURL := config.EnvConfigs.GeneralServiceUrl + "company-selection-dropdown"
-	fmt.Println("Fetching Drop Point data from:", DropPointURL)
-
-	var getDropPoints []transactionworkshoppayloads.WorkOrderDropPoint
-	if err := utils.Get(DropPointURL, &getDropPoints, nil); err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch drop point data from external service",
-			Err:        err,
-		}
-	}
-
-	return getDropPoints, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewVehicleBrand(*gorm.DB) ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
-	VehicleBrandURL := config.EnvConfigs.SalesServiceUrl + "unit-brand-dropdown"
-	fmt.Println("Fetching Vehicle Brand data from:", VehicleBrandURL)
-
-	var getVehicleBrands []transactionworkshoppayloads.WorkOrderVehicleBrand
-	if err := utils.Get(VehicleBrandURL, &getVehicleBrands, nil); err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch vehicle brand data from external service",
-			Err:        err,
-		}
-	}
-
-	return getVehicleBrands, nil
-}
-
-func (r *WorkOrderRepositoryImpl) NewVehicleModel(_ *gorm.DB, brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
-	VehicleModelURL := config.EnvConfigs.SalesServiceUrl + "unit-model-dropdown/" + strconv.Itoa(brandId)
-	fmt.Println("Fetching Vehicle Model data from:", VehicleModelURL)
-
-	var getVehicleModels []transactionworkshoppayloads.WorkOrderVehicleModel
-	if err := utils.Get(VehicleModelURL, &getVehicleModels, nil); err != nil {
-		return nil, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch vehicle model data from external service",
-			Err:        err,
-		}
-	}
-
-	return getVehicleModels, nil
 }
 
 func (s *WorkOrderRepositoryImpl) DeleteVehicleServiceMultiId(tx *gorm.DB, Id int, DetailIds []int) (bool, *exceptions.BaseErrorResponse) {

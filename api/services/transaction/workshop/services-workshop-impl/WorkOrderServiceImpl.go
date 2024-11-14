@@ -42,160 +42,6 @@ func (s *WorkOrderServiceImpl) GenerateDocumentNumber(workOrderId int) (string, 
 	return documentNumber, nil
 }
 
-func (s *WorkOrderServiceImpl) NewStatus(filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterStatus, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	statuses, err := s.structWorkOrderRepo.NewStatus(tx, filter)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return nil, err
-	}
-	return statuses, nil
-}
-
-func (s *WorkOrderServiceImpl) AddStatus(request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddStatus(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateStatus(id int, request transactionworkshoppayloads.WorkOrderStatusRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateStatus(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-}
-
-func (s *WorkOrderServiceImpl) DeleteStatus(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteStatus(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) NewType(filter []utils.FilterCondition) ([]transactionworkshopentities.WorkOrderMasterType, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	types, err := s.structWorkOrderRepo.NewType(tx, filter)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return nil, err
-	}
-	return types, nil
-}
-
-func (s *WorkOrderServiceImpl) AddType(request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddType(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateType(id int, request transactionworkshoppayloads.WorkOrderTypeRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateType(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-}
-
-func (s *WorkOrderServiceImpl) DeleteType(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteType(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) NewBill(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderBillable, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewBill(tx, filter)
-	if err != nil {
-		return nil, err
-	}
-	return bills, nil
-}
-
-func (s *WorkOrderServiceImpl) AddBill(request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddBill(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateBill(id int, request transactionworkshoppayloads.WorkOrderBillableRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateBill(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-
-}
-
-func (s *WorkOrderServiceImpl) DeleteBill(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteBill(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) NewDropPoint() ([]transactionworkshoppayloads.WorkOrderDropPoint, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	dropPoints, err := s.structWorkOrderRepo.NewDropPoint(tx)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return nil, err
-	}
-	return dropPoints, nil
-}
-
-func (s *WorkOrderServiceImpl) NewVehicleBrand() ([]transactionworkshoppayloads.WorkOrderVehicleBrand, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	brands, err := s.structWorkOrderRepo.NewVehicleBrand(tx)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return nil, err
-	}
-	return brands, nil
-}
-
-func (s *WorkOrderServiceImpl) NewVehicleModel(brandId int) ([]transactionworkshoppayloads.WorkOrderVehicleModel, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	models, err := s.structWorkOrderRepo.NewVehicleModel(tx, brandId)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return nil, err
-	}
-	return models, nil
-}
-
 func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 
 	tx := s.DB.Begin()
@@ -232,6 +78,18 @@ func (s *WorkOrderServiceImpl) GetById(id int, pages pagination.Pagination) (tra
 	}
 
 	return results, nil
+}
+
+func (s *WorkOrderServiceImpl) Submit(id int) (bool, string, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+	submit, newDocumentNumber, err := s.structWorkOrderRepo.Submit(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, "", err
+	}
+
+	return submit, newDocumentNumber, nil
 }
 
 func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrderNormalSaveRequest, workOrderId int) (transactionworkshopentities.WorkOrder, *exceptions.BaseErrorResponse) {
@@ -399,18 +257,6 @@ func (s *WorkOrderServiceImpl) DeleteVehicleService(id int, IdWorkorder int) (bo
 	}
 
 	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) Submit(id int) (bool, string, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	submit, newDocumentNumber, err := s.structWorkOrderRepo.Submit(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, "", err
-	}
-
-	return submit, newDocumentNumber, nil
 }
 
 func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
@@ -655,170 +501,6 @@ func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, detailID []int, req
 	}
 
 	return confirm, nil
-}
-
-func (s *WorkOrderServiceImpl) NewTrxType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewTrxType(tx, filter)
-	if err != nil {
-		return nil, err
-	}
-	return bills, nil
-}
-
-func (s *WorkOrderServiceImpl) AddTrxType(request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddTrxType(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateTrxType(id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateTrxType(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-
-}
-
-func (s *WorkOrderServiceImpl) DeleteTrxType(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteTrxType(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) NewLineType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.Linetype, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewLineType(tx, filter)
-	if err != nil {
-		return nil, err
-	}
-	return bills, nil
-}
-
-func (s *WorkOrderServiceImpl) AddLineType(request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddLineType(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateLineType(id int, request transactionworkshoppayloads.Linetype) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateLineType(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-
-}
-
-func (s *WorkOrderServiceImpl) DeleteLineType(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteLineType(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) NewTrxTypeSo(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderTransactionType, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewTrxTypeSo(tx, filter)
-	if err != nil {
-		return nil, err
-	}
-	return bills, nil
-}
-
-func (s *WorkOrderServiceImpl) AddTrxTypeSo(request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddTrxTypeSo(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateTrxTypeSo(id int, request transactionworkshoppayloads.WorkOrderTransactionType) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateTrxTypeSo(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-
-}
-
-func (s *WorkOrderServiceImpl) DeleteTrxTypeSo(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteTrxTypeSo(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
-}
-
-func (s *WorkOrderServiceImpl) NewJobType(filter []utils.FilterCondition) ([]transactionworkshoppayloads.WorkOrderJobType, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	defer helper.CommitOrRollbackTrx(tx)
-	bills, err := s.structWorkOrderRepo.NewJobType(tx, filter)
-	if err != nil {
-		return nil, err
-	}
-	return bills, nil
-}
-
-func (s *WorkOrderServiceImpl) AddJobType(request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	save, err := s.structWorkOrderRepo.AddJobType(tx, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return save, nil
-}
-
-func (s *WorkOrderServiceImpl) UpdateJobType(id int, request transactionworkshoppayloads.WorkOrderJobType) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	update, err := s.structWorkOrderRepo.UpdateJobType(tx, id, request)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return update, nil
-
-}
-
-func (s *WorkOrderServiceImpl) DeleteJobType(id int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	delete, err := s.structWorkOrderRepo.DeleteJobType(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return delete, nil
 }
 
 func (s *WorkOrderServiceImpl) DeleteCampaign(workOrderId int) (transactionworkshoppayloads.DeleteCampaignPayload, *exceptions.BaseErrorResponse) {
