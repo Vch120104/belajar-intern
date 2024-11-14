@@ -1404,45 +1404,6 @@ func WorkOrderRouter(
 	router.Delete("/normal/{work_order_system_number}/detail/{multi_id}", WorkOrderController.DeleteDetailWorkOrderMultiId)
 
 	//new support function form
-	router.Get("/dropdown-status", WorkOrderController.NewStatus)
-	router.Post("/dropdown-status", WorkOrderController.AddStatus)
-	router.Put("/dropdown-status/{status_id}", WorkOrderController.UpdateStatus)
-	router.Delete("/dropdown-status/{status_id}", WorkOrderController.DeleteStatus)
-
-	router.Get("/dropdown-type", WorkOrderController.NewType)
-	router.Post("/dropdown-type", WorkOrderController.AddType)
-	router.Put("/dropdown-type/{type_id}", WorkOrderController.UpdateType)
-	router.Delete("/dropdown-type/{type_id}", WorkOrderController.DeleteType)
-
-	router.Get("/dropdown-line-type", WorkOrderController.NewLineType)
-	router.Post("/dropdown-line-type", WorkOrderController.AddLineType)
-	router.Put("/dropdown-line-type/{line_type_id}", WorkOrderController.UpdateLineType)
-	router.Delete("/dropdown-billline-type/{line_type_id}", WorkOrderController.DeleteLineType)
-
-	router.Get("/dropdown-bill", WorkOrderController.NewBill)
-	router.Post("/dropdown-bill", WorkOrderController.AddBill)
-	router.Put("/dropdown-bill/{bill_id}", WorkOrderController.UpdateBill)
-	router.Delete("/dropdown-bill/{bill_id}", WorkOrderController.DeleteBill)
-
-	router.Get("/dropdown-transaction-type", WorkOrderController.NewTrxType)
-	router.Post("/dropdown-transaction-type", WorkOrderController.AddTrxType)
-	router.Put("/dropdown-transaction-type/{transaction_type_id}", WorkOrderController.UpdateTrxType)
-	router.Delete("/dropdown-transaction-type/{transaction_type_id}", WorkOrderController.DeleteTrxType)
-
-	router.Get("/dropdown-transaction-type-so", WorkOrderController.NewTrxTypeSo)
-	router.Post("/dropdown-transaction-type-so", WorkOrderController.AddTrxTypeSo)
-	router.Put("/dropdown-transaction-type-so/{transaction_type_id}", WorkOrderController.UpdateTrxTypeSo)
-	router.Delete("/dropdown-transaction-type-so/{transaction_type_id}", WorkOrderController.DeleteTrxTypeSo)
-
-	router.Get("/dropdown-job-type", WorkOrderController.NewJobType)
-	router.Post("/dropdown-job-type", WorkOrderController.AddJobType)
-	router.Put("/dropdown-job-type/{job_type_id}", WorkOrderController.UpdateJobType)
-	router.Delete("/dropdown-job-type/job_type_id}", WorkOrderController.DeleteJobType)
-
-	router.Get("/dropdown-drop-point", WorkOrderController.NewDropPoint)
-	router.Get("/dropdown-brand", WorkOrderController.NewVehicleBrand)
-	router.Get("/dropdown-model/{brand_id}", WorkOrderController.NewVehicleModel)
-
 	router.Post("/add-contract-service/{work_order_system_number}", WorkOrderController.AddContractService)
 	router.Post("/add-general-repair-package/{work_order_system_number}", WorkOrderController.AddGeneralRepairPackage)
 	router.Post("/add-field-action/{work_order_system_number}", WorkOrderController.AddFieldAction)

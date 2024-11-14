@@ -761,6 +761,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Err:        err,
 		}
 	}
+	fmt.Println(baseQuery.Statement.SQL.String()) // Prints SQL statement to check filter and pagination application
+	fmt.Printf("Offset: %d, Limit: %d\n", offset, paginate.Limit)
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
