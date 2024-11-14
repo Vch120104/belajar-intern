@@ -1779,6 +1779,8 @@ func LookupRouter(
 	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
 	router.Get("/item-list-trans", LookupController.ItemListTrans)
 	router.Get("/item-list-trans-pl", LookupController.ItemListTransPL)
+	router.Get("/reference-type-work-order", LookupController.ReferenceTypeWorkOrder)
+	router.Get("/reference-type-work-order/{work_order_system_number}", LookupController.ReferenceTypeWorkOrderByID)
 
 	return router
 }

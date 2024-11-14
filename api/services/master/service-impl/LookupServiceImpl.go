@@ -242,3 +242,27 @@ func (s *LookupServiceImpl) ItemListTransPL(companyId int, filterCondition []uti
 
 	return item, nil
 }
+
+func (s *LookupServiceImpl) ReferenceTypeWorkOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeWorkOrder(tx, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) ReferenceTypeWorkOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeWorkOrderByID(tx, referenceId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
