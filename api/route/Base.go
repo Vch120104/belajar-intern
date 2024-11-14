@@ -409,6 +409,12 @@ func OrderTypeRouter(
 	router.Use(middlewares.MetricsMiddleware)
 
 	router.Get("/", orderTypeController.GetAllOrderType)
+	router.Get("/{order_type_id}", orderTypeController.GetOrderTypeById)
+	router.Get("/by-name", orderTypeController.GetOrderTypeByName)
+	router.Post("/", orderTypeController.SaveOrderType)
+	router.Put("/{order_type_id}", orderTypeController.UpdateOrderType)
+	router.Patch("/{order_type_id}", orderTypeController.ChangeStatusOrderType)
+	router.Delete("/{order_type_id}", orderTypeController.DeleteOrderType)
 
 	return router
 }
