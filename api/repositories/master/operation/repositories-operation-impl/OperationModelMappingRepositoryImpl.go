@@ -896,7 +896,7 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 		oprFrtEntity := masteroperationentities.OperationFrt{
 			IsActive:                operationFrtValues.IsActive,
 			OperationFrtId:          operationFrtValues.OperationFrtId,
-			OperationModelMappingId: operationFrtValues.OperationModelMappingId,
+			OperationModelMappingId: latestID,
 			VariantId:               operationFrtValues.VariantId,
 			FrtHour:                 operationFrtValues.FrtHour,
 			FrtHourExpress:          operationFrtValues.FrtHourExpress,
@@ -916,7 +916,7 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 		oprLvlEntity := masteroperationentities.OperationLevel{
 			IsActive:                operationLevelValues.IsActive,
 			OperationLevelId:        operationLevelValues.OperationLevelId,
-			OperationModelMappingId: operationLevelValues.OperationModelMappingId,
+			OperationModelMappingId: latestID,
 			OperationEntriesId:      operationLevelValues.OperationEntriesId,
 		}
 
@@ -933,7 +933,7 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 	for _, operationDocValues := range CopyRequest.OperationDoc {
 		oprDocEntity := masteroperationentities.OperationDocumentRequirement{
 			IsActive:                                operationDocValues.IsActive,
-			OperationModelMappingId:                 operationDocValues.OperationModelMappingId,
+			OperationModelMappingId:                 latestID,
 			OperationDocumentRequirementId:          operationDocValues.OperationDocumentRequirementId,
 			Line:                                    operationDocValues.Line,
 			OperationDocumentRequirementDescription: operationDocValues.OperationDocumentRequirementDescription,
