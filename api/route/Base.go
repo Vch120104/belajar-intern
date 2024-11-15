@@ -831,6 +831,7 @@ func OperationModelMappingRouter(
 	router.Post("/operation-frt", operationModelMappingController.SaveOperationModelMappingFrt)
 	router.Post("/operation-document-requirement", operationModelMappingController.SaveOperationModelMappingDocumentRequirement)
 	router.Post("/operation-level", operationModelMappingController.SaveOperationLevel)
+	router.Post("/copy-to-other-model", operationModelMappingController.CopyOperationModelMappingToOtherModel)
 	router.Patch("/{operation_model_mapping_id}", operationModelMappingController.ChangeStatusOperationModelMapping)
 	router.Patch("/operation-frt/activate/{operation_frt_id}", operationModelMappingController.ActivateOperationFrt)
 	router.Patch("/operation-frt/deactivate/{operation_frt_id}", operationModelMappingController.DeactivateOperationFrt)
