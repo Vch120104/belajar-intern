@@ -895,14 +895,14 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 	for _, operationFrtValues := range CopyRequest.OperationFrt {
 		oprFrtEntity := masteroperationentities.OperationFrt{
 			IsActive:                operationFrtValues.IsActive,
-			OperationFrtId:          operationFrtValues.OperationFrtId,
+			OperationFrtId:          0,
 			OperationModelMappingId: latestID,
 			VariantId:               operationFrtValues.VariantId,
 			FrtHour:                 operationFrtValues.FrtHour,
 			FrtHourExpress:          operationFrtValues.FrtHourExpress,
 		}
 
-		err := tx.Save(&oprFrtEntity).Error
+		err := tx.Create(&oprFrtEntity).Error
 
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -915,12 +915,12 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 	for _, operationLevelValues := range CopyRequest.OperationLevel {
 		oprLvlEntity := masteroperationentities.OperationLevel{
 			IsActive:                operationLevelValues.IsActive,
-			OperationLevelId:        operationLevelValues.OperationLevelId,
+			OperationLevelId:        0,
 			OperationModelMappingId: latestID,
 			OperationEntriesId:      operationLevelValues.OperationEntriesId,
 		}
 
-		err := tx.Save(&oprLvlEntity).Error
+		err := tx.Create(&oprLvlEntity).Error
 
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -934,12 +934,12 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 		oprDocEntity := masteroperationentities.OperationDocumentRequirement{
 			IsActive:                                operationDocValues.IsActive,
 			OperationModelMappingId:                 latestID,
-			OperationDocumentRequirementId:          operationDocValues.OperationDocumentRequirementId,
+			OperationDocumentRequirementId:          0,
 			Line:                                    operationDocValues.Line,
 			OperationDocumentRequirementDescription: operationDocValues.OperationDocumentRequirementDescription,
 		}
 
-		err := tx.Save(&oprDocEntity).Error
+		err := tx.Create(&oprDocEntity).Error
 
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
