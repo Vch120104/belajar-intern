@@ -839,12 +839,11 @@ func (r *OperationModelMappingRepositoryImpl) UpdateOperationFrt(tx *gorm.DB, op
 func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherModel(tx *gorm.DB, headerId int, request masteroperationpayloads.OperationModelMappingCopyRequest) (bool, *exceptions.BaseErrorResponse) {
 
 	var CopyRequest masteroperationpayloads.CopyRequest
+	var latestID int
 
 	operationModelMappingHeader, _ := r.GetOperationModelMappingById(tx, headerId)
 
 	CopyRequest.HeaderRequest = operationModelMappingHeader
-	CopyRequest.HeaderRequest.ModelId = request.ModelId
-	CopyRequest.HeaderRequest.OperationId = request.OperationId
 
 	operationLevel, _ := r.GetAllOperationLevelByHeaderId(tx, headerId)
 
@@ -858,18 +857,18 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 
 	CopyRequest.OperationDoc = operationDoc
 
-	entities := masteroperationentities.OperationModelMapping{
+	headerEntity := masteroperationentities.OperationModelMapping{
 		IsActive:                CopyRequest.HeaderRequest.IsActive,
-		OperationModelMappingId: CopyRequest.HeaderRequest.OperationModelMappingId,
+		OperationModelMappingId: 0,
 		BrandId:                 CopyRequest.HeaderRequest.BrandId,
-		ModelId:                 CopyRequest.HeaderRequest.ModelId,
+		ModelId:                 request.ModelId,
 		OperationId:             CopyRequest.HeaderRequest.OperationId,
 		OperationUsingIncentive: &CopyRequest.HeaderRequest.OperationUsingIncentive,
 		OperationUsingActual:    &CopyRequest.HeaderRequest.OperationUsingActual,
 		OperationPdi:            &CopyRequest.HeaderRequest.OperationPdi,
 	}
 
-	err := tx.Save(&entities).Error
+	err := tx.Save(&headerEntity).Error
 
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -878,8 +877,23 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 		}
 	}
 
+	errLatestId := tx.Table("mtr_operation_model_mapping").
+		Select("operation_model_mapping_id").
+		Order("operation_model_mapping_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if errLatestId != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errLatestId,
+		}
+	}
+
+	CopyRequest.HeaderRequest.OperationModelMappingId = latestID
+
 	for _, operationFrtValues := range CopyRequest.OperationFrt {
-		entities := masteroperationentities.OperationFrt{
+		oprFrtEntity := masteroperationentities.OperationFrt{
 			IsActive:                operationFrtValues.IsActive,
 			OperationFrtId:          operationFrtValues.OperationFrtId,
 			OperationModelMappingId: operationFrtValues.OperationModelMappingId,
@@ -888,7 +902,7 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 			FrtHourExpress:          operationFrtValues.FrtHourExpress,
 		}
 
-		err := tx.Save(&entities).Error
+		err := tx.Save(&oprFrtEntity).Error
 
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -899,14 +913,14 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 	}
 
 	for _, operationLevelValues := range CopyRequest.OperationLevel {
-		entities := masteroperationentities.OperationLevel{
+		oprLvlEntity := masteroperationentities.OperationLevel{
 			IsActive:                operationLevelValues.IsActive,
 			OperationLevelId:        operationLevelValues.OperationLevelId,
 			OperationModelMappingId: operationLevelValues.OperationModelMappingId,
 			OperationEntriesId:      operationLevelValues.OperationEntriesId,
 		}
 
-		err := tx.Save(&entities).Error
+		err := tx.Save(&oprLvlEntity).Error
 
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
@@ -917,7 +931,7 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 	}
 
 	for _, operationDocValues := range CopyRequest.OperationDoc {
-		entities := masteroperationentities.OperationDocumentRequirement{
+		oprDocEntity := masteroperationentities.OperationDocumentRequirement{
 			IsActive:                                operationDocValues.IsActive,
 			OperationModelMappingId:                 operationDocValues.OperationModelMappingId,
 			OperationDocumentRequirementId:          operationDocValues.OperationDocumentRequirementId,
@@ -925,7 +939,7 @@ func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherMo
 			OperationDocumentRequirementDescription: operationDocValues.OperationDocumentRequirementDescription,
 		}
 
-		err := tx.Save(&entities).Error
+		err := tx.Save(&oprDocEntity).Error
 
 		if err != nil {
 			return false, &exceptions.BaseErrorResponse{
