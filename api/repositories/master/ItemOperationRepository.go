@@ -12,8 +12,8 @@ import (
 
 type ItemOperationRepository interface {
 	GetAllItemOperation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetByIdItemOperation(tx *gorm.DB,id int)(masterpayloads.ItemOperationPost,*exceptions.BaseErrorResponse)
-	PostItemOperation(tx *gorm.DB, req masterpayloads.ItemOperationPost)(masterentities.ItemOperation,*exceptions.BaseErrorResponse)
-	DeleteItemOperation (tx *gorm.DB, id int)(bool,*exceptions.BaseErrorResponse)
-	UpdateItemOperation (tx *gorm.DB, id int, req masterpayloads.ItemOperationPost)(masterentities.ItemOperation,*exceptions.BaseErrorResponse)
+	GetByIdItemOperation(tx *gorm.DB, id int) (masterpayloads.ItemOperationPost, *exceptions.BaseErrorResponse)
+	PostItemOperation(tx *gorm.DB, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse)
+	DeleteItemOperation(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse)
+	UpdateItemOperation(tx *gorm.DB, id int, req masterpayloads.ItemOperationPost) (masterentities.ItemOperation, *exceptions.BaseErrorResponse)
 }
