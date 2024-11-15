@@ -261,7 +261,8 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 
 					result = append(result, fmt.Sprintf("Line %d : %s", key, "Price List already exists"))
 				} else {
-					price, err := strconv.Atoi(value[4])
+					cleanValue := strings.ReplaceAll(value[4], ",", "")
+					price, err := strconv.ParseFloat(cleanValue, 64)
 					if err != nil {
 						result = append(result, fmt.Sprintf("Line %d : %s", key, "Error read file"))
 						return result, &exceptions.BaseErrorResponse{StatusCode: 500, Err: err}
@@ -276,7 +277,7 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 						CompanyId:       uploadRequest.CompanyId,
 						ItemId:          itemId,
 						ItemClassId:     itemClassId,
-						PriceListAmount: float64(price),
+						PriceListAmount: price,
 					}
 					req = append(req, model)
 

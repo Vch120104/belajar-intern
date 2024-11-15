@@ -22,10 +22,18 @@ func GetItemRegulationById(id int) (ItemRegulationResponse, *exceptions.BaseErro
 
 	err := utils.CallAPI("GET", url, nil, &getItemRegulation)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve item regulation due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "item regulation service is temporarily unavailable"
+		}
+
 		return getItemRegulation, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching item regulation by id",
-			Err:        errors.New("failed to retrieve item regulation data from external API by id"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting item regulation by ID"),
 		}
 	}
 	return getItemRegulation, nil

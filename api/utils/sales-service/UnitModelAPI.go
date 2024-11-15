@@ -21,10 +21,18 @@ func GetUnitModelByCode(code string) (UnitModelResponse, *exceptions.BaseErrorRe
 	url := config.EnvConfigs.SalesServiceUrl + "unit-model-by-code/" + code
 	err := utils.CallAPI("GET", url, nil, &getUnitModel)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit model due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit model service is temporarily unavailable"
+		}
+
 		return getUnitModel, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consume external model api",
-			Err:        errors.New("error consume external model api"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit model by Code"),
 		}
 	}
 	return getUnitModel, nil
@@ -35,10 +43,18 @@ func GetUnitModelById(id int) (UnitModelResponse, *exceptions.BaseErrorResponse)
 	url := config.EnvConfigs.SalesServiceUrl + "unit-model/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getUnitModel)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit model due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit model service is temporarily unavailable"
+		}
+
 		return getUnitModel, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consume external model api",
-			Err:        errors.New("error consume external model api"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit model by ID"),
 		}
 	}
 	return getUnitModel, nil

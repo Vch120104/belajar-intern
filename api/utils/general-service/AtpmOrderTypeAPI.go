@@ -22,10 +22,18 @@ func GetAtpmOrderTypeById(id int) (AtpmOrderTypeResponse, *exceptions.BaseErrorR
 
 	err := utils.CallAPI("GET", url, nil, &getAtpmOrderType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve atpm order type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "atpm order type service is temporarily unavailable"
+		}
+
 		return getAtpmOrderType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching atpm order type by id",
-			Err:        errors.New("failed to retrieve atpm order type data from external API by id"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting atpm order type by ID"),
 		}
 	}
 	return getAtpmOrderType, nil

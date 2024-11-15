@@ -55,10 +55,18 @@ func GetVehicleByChassisNumber(chassis string) (VehicleResponse, *exceptions.Bas
 	url := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + chassis
 	errVehicle := utils.CallAPI("GET", url, nil, &vehicleResponse)
 	if errVehicle != nil {
-		return VehicleResponse{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external vehicle API",
-			Err:        errors.New("error consuming external vehicle API"),
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve vehicle due to an external service error"
+
+		if errors.Is(errVehicle, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "vehicle service is temporarily unavailable"
+		}
+
+		return vehicleResponse, &exceptions.BaseErrorResponse{
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting vehicle by ID"),
 		}
 	}
 

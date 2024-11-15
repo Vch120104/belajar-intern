@@ -399,6 +399,26 @@ func MovingCodeRouter(
 	return router
 }
 
+func OrderTypeRouter(
+	orderTypeController mastercontroller.OrderTypeController,
+) chi.Router {
+	router := chi.NewRouter()
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", orderTypeController.GetAllOrderType)
+	router.Get("/{order_type_id}", orderTypeController.GetOrderTypeById)
+	router.Get("/by-name", orderTypeController.GetOrderTypeByName)
+	router.Post("/", orderTypeController.SaveOrderType)
+	router.Put("/{order_type_id}", orderTypeController.UpdateOrderType)
+	router.Patch("/{order_type_id}", orderTypeController.ChangeStatusOrderType)
+	router.Delete("/{order_type_id}", orderTypeController.DeleteOrderType)
+
+	return router
+}
+
 func IncentiveGroupRouter(
 	incentiveGroupController mastercontroller.IncentiveGroupController,
 ) chi.Router {
@@ -1779,6 +1799,10 @@ func LookupRouter(
 	router.Get("/warehouse-group/{company_id}", LookupController.WarehouseGroupByCompany)
 	router.Get("/item-list-trans", LookupController.ItemListTrans)
 	router.Get("/item-list-trans-pl", LookupController.ItemListTransPL)
+	router.Get("/reference-type-work-order", LookupController.ReferenceTypeWorkOrder)
+	router.Get("/reference-type-work-order/{work_order_system_number}", LookupController.ReferenceTypeWorkOrderByID)
+	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
+	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
 
 	return router
 }

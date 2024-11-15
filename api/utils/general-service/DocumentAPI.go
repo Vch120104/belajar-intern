@@ -19,13 +19,20 @@ type DocumentStatusPayloads struct {
 func GetDocumentStatusById(id int) (DocumentStatusPayloads, *exceptions.BaseErrorResponse) {
 	var DocResponse DocumentStatusPayloads
 	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(id)
-	//err := utils.Get(DocumentStatusUrl, &DocResponse, nil)
 	err := utils.CallAPI("GET", DocumentStatusUrl, nil, &DocResponse)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve document status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "document status service is temporarily unavailable"
+		}
+
 		return DocResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed To fetch Document Status From External Service",
-			Err:        errors.New("failed To fetch Document Status From External Service"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting document status by ID"),
 		}
 	}
 	return DocResponse, nil
@@ -33,13 +40,20 @@ func GetDocumentStatusById(id int) (DocumentStatusPayloads, *exceptions.BaseErro
 func GetDocumentStatusByCode(code string) (DocumentStatusPayloads, *exceptions.BaseErrorResponse) {
 	var DocResponse DocumentStatusPayloads
 	DocumentStatusUrl := config.EnvConfigs.GeneralServiceUrl + "document-status-by-code/" + code
-	//err := utils.Get(DocumentStatusUrl, &DocResponse, nil)
 	err := utils.CallAPI("GET", DocumentStatusUrl, nil, &DocResponse)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve document status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "document status service is temporarily unavailable"
+		}
+
 		return DocResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed To fetch Document Status From External Service",
-			Err:        errors.New("failed To fetch Document Status From External Service"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting document status by ID"),
 		}
 	}
 	return DocResponse, nil
@@ -56,11 +70,19 @@ func GetDocumentTypeByCode(code string) (SourceDocumentTypeMasterResponse, *exce
 	var SourceDocType SourceDocumentTypeMasterResponse
 	SourceDocTypeUrl := config.EnvConfigs.GeneralServiceUrl + "source-document-type-code/" + code
 	err := utils.CallAPI("GET", SourceDocTypeUrl, nil, &SourceDocType)
-	//if err := utils.Get(SourceDocTypeUrl, &SourceDocType, nil)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve source document status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "source document status service is temporarily unavailable"
+		}
+
 		return SourceDocType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Err:        errors.New("failed To fetch source document Status From External Service"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting source document status by ID"),
 		}
 	}
 	return SourceDocType, nil

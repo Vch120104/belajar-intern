@@ -3187,3 +3187,375 @@ func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId
 
 	return frt, nil
 }
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeWO'--SERVICE REQUEST REF TYPE WO
+func (r *LookupRepositoryImpl) ReferenceTypeWorkOrder(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		results []struct {
+			WorkOrderDocumentNumber    string
+			WorkOrderDate              time.Time
+			WorkOrderStatusId          int
+			WorkOrderStatusDescription string
+			WorkOrderSystemNumber      int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_work_order AS A").
+		Select("A.work_order_document_number AS work_order_document_number, A.work_order_date AS work_order_date, "+
+			"B.work_order_status_id AS work_order_status_id, E.work_order_status_description AS work_order_status_description, A.work_order_system_number AS work_order_system_number").
+		Joins("INNER JOIN trx_work_order_detail AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.work_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_work_order_status AS E ON A.work_order_status_id = E.work_order_status_id").
+		Where("B.work_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.work_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0")
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&results).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResults := make([]map[string]interface{}, len(results))
+	for i, result := range results {
+		mappedResults[i] = map[string]interface{}{
+			"work_order_document_number":    result.WorkOrderDocumentNumber,
+			"work_order_date":               result.WorkOrderDate.Format("2006-01-02"),
+			"work_order_status_id":          result.WorkOrderStatusId,
+			"work_order_status_description": result.WorkOrderStatusDescription,
+			"work_order_system_number":      result.WorkOrderSystemNumber,
+		}
+	}
+
+	return mappedResults, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeWO'--SERVICE REQUEST REF TYPE WO
+func (r *LookupRepositoryImpl) ReferenceTypeWorkOrderByID(tx *gorm.DB, referenceId int, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		result struct {
+			WorkOrderDocumentNumber string
+			WorkOrderDate           time.Time
+			WoStatusId              int
+			WorkOrderStatus         string
+			WorkOrderSystemNumber   int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_work_order AS A").
+		Select("A.work_order_document_number AS WorkOrderNo, A.work_order_date AS WorkOrderDate, "+
+			"B.work_order_status_id AS WoStatusId, E.work_order_status_description AS WorkOrderStatus, A.work_order_system_number AS WorkOrderSysNo").
+		Joins("INNER JOIN trx_work_order_detail AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.work_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_work_order_status AS E ON A.work_order_status_id = E.work_order_status_id").
+		Where("B.work_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.work_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0").
+		Where("A.work_order_system_number = ?", referenceId)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		First(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResult := map[string]interface{}{
+		"work_order_document_number": result.WorkOrderDocumentNumber,
+		"work_order_date":            result.WorkOrderDate,
+		"work_order_status_id":       result.WoStatusId,
+		"work_order_status":          result.WorkOrderStatus,
+		"work_order_system_number":   result.WorkOrderSystemNumber,
+	}
+
+	return mappedResult, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeSO'--SERVICE REQUEST REF TYPE SO
+func (r *LookupRepositoryImpl) ReferenceTypeSalesOrder(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		results []struct {
+			SalesOrderDocumentNumber    string
+			SalesOrderDate              time.Time
+			SalesOrderStatusId          int
+			SalesOrderStatusDescription string
+			SalesOrderSystemNumber      int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_sales_order AS A").
+		Select("A.sales_order_document_number AS sales_order_document_number, A.sales_order_date AS sales_order_date, "+
+			"B.sales_order_status_id AS work_order_status_id, E.sales_order_status_description AS sales_order_status_description, A.sales_order_system_number AS sales_order_system_number").
+		Joins("INNER JOIN trx_sales_order_detail AS B ON B.sales_order_system_number = A.sales_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.sales_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_sales_order_status AS E ON A.sales_order_status_id = E.work_order_status_id").
+		Where("B.sales_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.sales_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0")
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&results).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResults := make([]map[string]interface{}, len(results))
+	for i, result := range results {
+		mappedResults[i] = map[string]interface{}{
+			"sales_order_document_number":    result.SalesOrderDocumentNumber,
+			"sales_order_date":               result.SalesOrderDate.Format("2006-01-02"),
+			"sales_order_status_id":          result.SalesOrderStatusId,
+			"sales_order_status_description": result.SalesOrderStatusDescription,
+			"sales_order_system_number":      result.SalesOrderSystemNumber,
+		}
+	}
+
+	return mappedResults, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeSO'--SERVICE REQUEST REF TYPE SO
+func (r *LookupRepositoryImpl) ReferenceTypeSalesOrderByID(tx *gorm.DB, referenceId int, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		result struct {
+			SalesOrderDocumentNumber    string
+			SalesOrderDate              time.Time
+			SalesOrderStatusId          int
+			SalesOrderStatusDescription string
+			SalesOrderSystemNumber      int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_sales_order AS A").
+		Select("A.sales_order_document_number AS sales_order_document_number, A.sales_order_date AS sales_order_date, "+
+			"B.sales_order_status_id AS work_order_status_id, E.sales_order_status_description AS sales_order_status_description, A.sales_order_system_number AS sales_order_system_number").
+		Joins("INNER JOIN trx_sales_order_detail AS B ON B.sales_order_system_number = A.sales_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.sales_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_sales_order_status AS E ON A.sales_order_status_id = E.work_order_status_id").
+		Where("B.sales_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.sales_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0").
+		Where("A.sales_order_system_number = ?", referenceId)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		First(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResult := map[string]interface{}{
+		"sales_order_document_number":    result.SalesOrderDocumentNumber,
+		"sales_order_date":               result.SalesOrderDate,
+		"sales_order_status_id":          result.SalesOrderStatusId,
+		"sales_order_status_description": result.SalesOrderStatusDescription,
+		"sales_order_system_number":      result.SalesOrderSystemNumber,
+	}
+
+	return mappedResult, totalPages, int(totalRows), nil
+}

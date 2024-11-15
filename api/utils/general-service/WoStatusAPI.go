@@ -21,10 +21,18 @@ func GetWorkOrderStatusByID(id int) (WorkOrderStatusResponse, *exceptions.BaseEr
 
 	err := utils.CallAPI("GET", url, nil, &workOrderStatus)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve work order type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "Workorder status service is temporarily unavailable"
+		}
+
 		return workOrderStatus, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order status",
-			Err:        errors.New("error consuming external API while getting work order status by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting workorder status by ID"),
 		}
 	}
 	return workOrderStatus, nil
