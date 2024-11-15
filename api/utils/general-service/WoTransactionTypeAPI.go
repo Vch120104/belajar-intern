@@ -21,9 +21,17 @@ func GetTransactionTypeByID(id int) (WorkOrderTransactionType, *exceptions.BaseE
 
 	err := utils.CallAPI("GET", url, nil, &transactionType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve work order type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "Transaction type service is temporarily unavailable"
+		}
+
 		return transactionType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type",
+			StatusCode: status,
+			Message:    message,
 			Err:        errors.New("error consuming external API while getting transaction type by ID"),
 		}
 	}
@@ -36,9 +44,17 @@ func GetTransactionTypeByCode(code string) (WorkOrderTransactionType, *exception
 
 	err := utils.CallAPI("GET", url, nil, &transactionType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve work order type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "Transaction type service is temporarily unavailable"
+		}
+
 		return transactionType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type",
+			StatusCode: status,
+			Message:    message,
 			Err:        errors.New("error consuming external API while getting transaction type by code"),
 		}
 	}

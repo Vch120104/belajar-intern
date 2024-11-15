@@ -5,6 +5,7 @@ import (
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -31,13 +32,20 @@ func GetCompanyReferenceById(id int) (CompanyReferenceBetByIdResponse, *exceptio
 	CompanyReferenceBetByIdResponseData := CompanyReferenceBetByIdResponse{}
 
 	CompanyReferenceUrl := fmt.Sprintf("%scompany-reference/%s", config.EnvConfigs.GeneralServiceUrl, strconv.Itoa(id))
-	//errFetchCompany := utils.Get(CompanyReferenceUrl, &CompanyReferenceBetByIdResponseData, nil)
 	errFetchCompany := utils.CallAPI("GET", CompanyReferenceUrl, nil, &CompanyReferenceBetByIdResponseData)
 	if errFetchCompany != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company references due to an external service error"
+
+		if errors.Is(errFetchCompany, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company references service is temporarily unavailable"
+		}
+
 		return CompanyReferenceBetByIdResponseData, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errFetchCompany,
-			Message:    errFetchCompany.Error(),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company references by ID"),
 		}
 	}
 	return CompanyReferenceBetByIdResponseData, nil

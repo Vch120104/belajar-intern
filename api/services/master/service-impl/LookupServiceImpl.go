@@ -266,3 +266,27 @@ func (s *LookupServiceImpl) ReferenceTypeWorkOrderByID(referenceId int, pages pa
 
 	return lookup, totalPages, totalRows, nil
 }
+
+func (s *LookupServiceImpl) ReferenceTypeSalesOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeSalesOrder(tx, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeSalesOrderByID(tx, referenceId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}

@@ -88,10 +88,18 @@ func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResp
 
 	err := utils.GetArray(url, nil, &getSupplierMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve supplier master due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "supplier master service is temporarily unavailable"
+		}
+
 		return getSupplierMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching get all supplier",
-			Err:        errors.New("failed to retrieve supplier data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting supplier master by ID"),
 		}
 	}
 
@@ -104,10 +112,18 @@ func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.B
 
 	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve supplier master due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "supplier master service is temporarily unavailable"
+		}
+
 		return getSupplierMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching supplier by code",
-			Err:        errors.New("failed to retrieve supplier data from external API by code"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting supplier master by ID"),
 		}
 	}
 	return getSupplierMaster, nil
@@ -119,10 +135,18 @@ func GetSupplierMasterByID(id int) (SupplierMasterResponse, *exceptions.BaseErro
 
 	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve supplier master due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "supplier master service is temporarily unavailable"
+		}
+
 		return getSupplierMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching supplier by ID",
-			Err:        errors.New("failed to retrieve supplier data from external API by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting supplier master by ID"),
 		}
 	}
 	return getSupplierMaster, nil
@@ -143,10 +167,18 @@ func GetSupplierMasterByMultiId(ids []int, abstractType interface{}) *exceptions
 
 	err := utils.CallAPI("GET", url, nil, &abstractType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve supplier master due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "supplier master service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching suppliers by multiple IDs",
-			Err:        errors.New("failed to retrieve supplier data from external API for multiple IDs"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting supplier master by ID"),
 		}
 	}
 	return nil

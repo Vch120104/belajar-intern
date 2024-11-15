@@ -91,10 +91,18 @@ func GetEmployeeByID(id int) (EmployeeMasterResponse, *exceptions.BaseErrorRespo
 
 	err := utils.CallAPI("GET", url, nil, &getEmployee)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve employee due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "employee service is temporarily unavailable"
+		}
+
 		return getEmployee, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching employee data by ID",
-			Err:        errors.New("error consuming external API for employee data by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting employee by ID"),
 		}
 	}
 	return getEmployee, nil
@@ -106,10 +114,18 @@ func GetEmployeeMasterById(id int) (EmployeeMasterResponses, *exceptions.BaseErr
 
 	err := utils.CallAPI("GET", url, nil, &getEmployee)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve employee due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "employee service is temporarily unavailable"
+		}
+
 		return getEmployee, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching employee data by ID",
-			Err:        errors.New("error consuming external API for employee data by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting employee by ID"),
 		}
 	}
 	return getEmployee, nil

@@ -20,10 +20,18 @@ func GetUnitBrandByCode(code string) (UnitBrandResponse, *exceptions.BaseErrorRe
 	url := config.EnvConfigs.SalesServiceUrl + "unit-brand-by-code/" + code
 	err := utils.CallAPI("GET", url, nil, &unitBrand)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve brand due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "brand service is temporarily unavailable"
+		}
+
 		return unitBrand, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching unit brand by code",
-			Err:        errors.New("error consuming external API while fetching unit brand by code"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting brand by code"),
 		}
 	}
 	return unitBrand, nil
@@ -34,10 +42,18 @@ func GetUnitBrandById(id int) (UnitBrandResponse, *exceptions.BaseErrorResponse)
 	url := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &unitBrand)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve brand due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "brand service is temporarily unavailable"
+		}
+
 		return unitBrand, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching unit brand by ID",
-			Err:        errors.New("error consuming external API while fetching unit brand by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting brand by ID"),
 		}
 	}
 	return unitBrand, nil
@@ -64,10 +80,18 @@ func GetUnitBrandByMultiId(ids []int, abstractType interface{}) *exceptions.Base
 	url := config.EnvConfigs.SalesServiceUrl + "unit-brand-multi-id/" + strIds
 	err := utils.CallAPI("GET", url, nil, &abstractType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve brand due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "brand service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching unit brands by multiple IDs",
-			Err:        errors.New("error consuming external API while fetching unit brands by multiple IDs"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting brand by multi ID"),
 		}
 	}
 	return nil

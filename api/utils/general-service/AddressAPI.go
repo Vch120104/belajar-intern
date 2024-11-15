@@ -75,9 +75,18 @@ func GetAddressByID(id int) (AddressResponse, *exceptions.BaseErrorResponse) {
 	url := config.EnvConfigs.GeneralServiceUrl + "address/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &response)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve address due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "address service is temporarily unavailable"
+		}
+
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errors.New(errorMsgGet),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting address by ID"),
 		}
 	}
 	return response, nil

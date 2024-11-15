@@ -4,6 +4,7 @@ import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -19,10 +20,18 @@ func GetOpenPeriodByCompany(companyId int, moduleCode string) (OpenPeriodPayload
 	var PeriodResponse OpenPeriodPayloadResponse
 	PeriodUrl := fmt.Sprintf("%sclosing-period-company/current-period?company_id=%s&closing_module_detail_code=%s", config.EnvConfigs.FinanceServiceUrl, strconv.Itoa(companyId), moduleCode)
 	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve closing period due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "closing period service is temporarily unavailable"
+		}
+
 		return PeriodResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to Period Response data from external service",
-			Err:        err,
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting closing period by Company ID"),
 		}
 	}
 	return PeriodResponse, nil

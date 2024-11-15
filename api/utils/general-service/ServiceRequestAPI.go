@@ -27,10 +27,18 @@ func GetServiceRequestStatusById(id int) (ServiceRequestStatus, *exceptions.Base
 
 	err := utils.CallAPI("GET", url, nil, &getServiceRequestStatus)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve service request status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "service request status service is temporarily unavailable"
+		}
+
 		return getServiceRequestStatus, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching service request status by id",
-			Err:        errors.New("failed to retrieve service request status data from external API by id"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting service request status by ID"),
 		}
 	}
 	return getServiceRequestStatus, nil
@@ -42,10 +50,18 @@ func GetReferenceTypeById(id int) (ReferenceType, *exceptions.BaseErrorResponse)
 
 	err := utils.CallAPI("GET", url, nil, &getReferenceType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve reference type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "reference type service is temporarily unavailable"
+		}
+
 		return getReferenceType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching reference type by id",
-			Err:        errors.New("failed to retrieve reference type data from external API by id"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting reference type by ID"),
 		}
 	}
 	return getReferenceType, nil
