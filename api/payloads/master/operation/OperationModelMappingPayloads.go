@@ -11,6 +11,13 @@ type OperationModelMappingResponse struct {
 	OperationPdi            bool `json:"operation_pdi"`
 }
 
+type CopyRequest struct {
+	HeaderRequest  OperationModelMappingResponse                     `json:"operationModelMapping"`
+	OperationLevel []OperationLevelRequest                           `json:"OperationLevel"`
+	OperationFrt   []OperationModelMappingFrtRequest                 `json:"OperationFrt"`
+	OperationDoc   []OperationModelMappingDocumentRequirementRequest `json:"OperationDoc"`
+}
+
 type OperationModelMappingFrtRequest struct {
 	IsActive                bool    `json:"is_active"`
 	OperationModelMappingId int     `json:"operation_model_mapping_id"`
@@ -18,6 +25,12 @@ type OperationModelMappingFrtRequest struct {
 	VariantId               int     `json:"variant_id"`
 	FrtHour                 float64 `json:"frt_hour"`
 	FrtHourExpress          float64 `json:"frt_hour_express"`
+}
+
+type OperationModelMappingCopyRequest struct {
+	OperationModelMappingId int `json:"operation_model_mapping_id"`
+	ModelId                 int `json:"model_id"`
+	OperationId             int `json:"operation_id"`
 }
 
 type OperationModelMappingRequest struct {
