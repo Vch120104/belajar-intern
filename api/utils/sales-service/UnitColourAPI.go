@@ -29,10 +29,18 @@ func GetUnitColourByBrandId(id int) (UnitColourResponse, *exceptions.BaseErrorRe
 	url := config.EnvConfigs.SalesServiceUrl + "unit-color-dropdown/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &unitColourResponse)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit colour due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit colour service is temporarily unavailable"
+		}
+
 		return unitColourResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching unit color by ID",
-			Err:        errors.New("error consuming external API while fetching unit color by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit colour by Brand ID"),
 		}
 	}
 	return unitColourResponse, nil

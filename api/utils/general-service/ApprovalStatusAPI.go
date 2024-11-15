@@ -22,12 +22,6 @@ type ApprovalStatusResponse struct {
 	ApprovalStatusDescription string `json:"approval_status_description"`
 }
 
-const (
-	errorMsgCode    = "error consuming external API to get approval status by code"
-	errorMsgID      = "error consuming external API to get approval status by ID"
-	errorMsgMultiID = "error consuming external API to get approval status by multiple IDs"
-)
-
 func GetApprovalStatusByCode(code string) (ApprovalStatusResponse, *exceptions.BaseErrorResponse) {
 	var getApprovalStatusTemp ApprovalStatusTempResponse
 	var getApprovalStatus ApprovalStatusResponse
@@ -35,10 +29,18 @@ func GetApprovalStatusByCode(code string) (ApprovalStatusResponse, *exceptions.B
 
 	err := utils.CallAPI("GET", url, nil, &getApprovalStatusTemp)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve approval status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "approval status service is temporarily unavailable"
+		}
+
 		return getApprovalStatus, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    errorMsgCode,
-			Err:        errors.New(errorMsgCode),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting approval status by ID"),
 		}
 	}
 
@@ -57,10 +59,18 @@ func GetApprovalStatusByID(id int) (ApprovalStatusResponse, *exceptions.BaseErro
 
 	err := utils.CallAPI("GET", url, nil, &getApprovalStatusTemp)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve approval status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "approval status service is temporarily unavailable"
+		}
+
 		return getApprovalStatus, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    errorMsgID,
-			Err:        errors.New(errorMsgID),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting approval status by ID"),
 		}
 	}
 
@@ -87,10 +97,18 @@ func GetApprovalStatusByMultiId(ids []int, response interface{}) *exceptions.Bas
 	url := config.EnvConfigs.GeneralServiceUrl + "approval-status-by-multi-id/" + strIds
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve approval status due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "approval status service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    errorMsgMultiID,
-			Err:        errors.New(errorMsgMultiID),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting approval status by ID"),
 		}
 	}
 

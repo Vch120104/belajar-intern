@@ -22,10 +22,18 @@ func GetSpecialMovementById(id int) (SpecialMovementResponse, *exceptions.BaseEr
 
 	err := utils.CallAPI("GET", url, nil, &getSpecialMovement)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve special movement due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "special movement service is temporarily unavailable"
+		}
+
 		return getSpecialMovement, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching special movement by id",
-			Err:        errors.New("failed to retrieve special movement data from external API by id"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting special movement by ID"),
 		}
 	}
 	return getSpecialMovement, nil

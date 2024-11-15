@@ -73,10 +73,18 @@ func GetCompanyVat(id int) (VatCompany, *exceptions.BaseErrorResponse) {
 	url := config.EnvConfigs.GeneralServiceUrl + "company-vat-by-id/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCompanyMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
 		return getCompanyMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for company VAT data",
-			Err:        errors.New("error consuming external API for company VAT data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
 	return getCompanyMaster, nil
@@ -88,10 +96,18 @@ func GetCompanyDataById(companyId int) (GetCompanyByIdResponses, *exceptions.Bas
 
 	err := utils.CallAPI("GET", companyUrl, nil, &companyResponse)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company  due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
 		return companyResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch company data",
-			Err:        errors.New("failed to fetch company data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
 
@@ -114,10 +130,18 @@ func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company  due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for multiple company data",
-			Err:        errors.New("error consuming external API for multiple company data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
 	return nil

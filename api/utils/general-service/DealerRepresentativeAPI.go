@@ -4,7 +4,7 @@ import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 )
@@ -38,9 +38,18 @@ func GetDealerRepresentativeByMultiId(ids []int, abstractType interface{}) *exce
 	url := config.EnvConfigs.GeneralServiceUrl + "dealer-representative-by-multi-id/" + strIds
 	err := utils.CallAPI("GET", url, nil, &abstractType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve dealer representative due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "dealer representative service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("failed to get dealer representative by multiple id : %w", err),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting dealer representative by ID"),
 		}
 	}
 	return nil
@@ -51,9 +60,18 @@ func GetDealerRepresentativeById(id int) (DealerRepresentativesResponse, *except
 	url := config.EnvConfigs.GeneralServiceUrl + "dealer-representative/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &dealer)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve dealer representative due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "dealer representative service is temporarily unavailable"
+		}
+
 		return dealer, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("failed to get dealer representative by id : %w", err),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting dealer representative by ID"),
 		}
 	}
 	return dealer, nil
