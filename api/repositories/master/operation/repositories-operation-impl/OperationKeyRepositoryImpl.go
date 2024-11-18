@@ -26,30 +26,12 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 	entities := masteroperationentities.OperationKey{}
 	var responses []masteroperationpayloads.OperationkeyListResponse
 
-	// define table struct
 	tableStruct := masteroperationpayloads.OperationkeyListResponse{}
 
-	//join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-	//apply pagination and execute
-	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
-
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+	rows, _ := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
 	defer rows.Close()
 
