@@ -286,3 +286,13 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingAndFRT(reque
 
 	return results, nil
 }
+
+func (s *OperationModelMappingServiceImpl) CopyOperationModelMappingToOtherModel(headerId int, request masteroperationpayloads.OperationModelMappingCopyRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.CopyOperationModelMappingToOtherModel(tx, headerId, request)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}

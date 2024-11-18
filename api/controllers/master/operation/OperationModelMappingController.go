@@ -43,6 +43,7 @@ type OperationModelMappingController interface {
 	SaveOperationModelMappingAndFRT(writer http.ResponseWriter, request *http.Request)
 	UpdateOperationModelMapping(writer http.ResponseWriter, request *http.Request)
 	UpdateOperationFrt(writer http.ResponseWriter, request *http.Request)
+	CopyOperationModelMappingToOtherModel(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -673,6 +674,37 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingAndFRT(wr
 	}
 
 	if combinedRequest.HeaderRequest.OperationModelMappingId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) CopyOperationModelMappingToOtherModel(writer http.ResponseWriter, request *http.Request) {
+	operationModelMappingID, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var formRequest masteroperationpayloads.OperationModelMappingCopyRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+	var message string
+
+	create, err := r.operationmodelmappingservice.CopyOperationModelMappingToOtherModel(operationModelMappingID, formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	if formRequest.OperationModelMappingId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"
