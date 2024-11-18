@@ -13,6 +13,7 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/xuri/excelize/v2"
@@ -77,46 +78,121 @@ func (s *WarehouseLocationServiceImpl) ProcessWarehouseLocationTemplate(req mast
 // UploadPreviewFile implements masterwarehouseservice.WarehouseLocationService.
 func (s *WarehouseLocationServiceImpl) UploadPreviewFile(rows [][]string, companyId int) ([]masterwarehousepayloads.GetWarehouseLocationPreviewResponse, *exceptions.BaseErrorResponse) {
 	response := []masterwarehousepayloads.GetWarehouseLocationPreviewResponse{}
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer helper.CommitOrRollback(tx, err)
+
+	var warehouseCodes []string
+	var warehouseLocationCodes []string
+	var warehouseLocationNames []string
 
 	for index, value := range rows {
 		data := masterwarehousepayloads.GetWarehouseLocationPreviewResponse{}
 
 		if index > 0 {
+			// Check each row's column not empty
+			for i := 0; i < 3; i++ {
+				if value[i] == "" {
+					return response, &exceptions.BaseErrorResponse{
+						StatusCode: http.StatusBadRequest,
+						Err:        errors.New("make sure column is not empty for each row"),
+					}
+				}
+			}
+
 			data.WarehouseCode = value[0]
 			data.WarehouseLocationCode = value[1]
 			data.WarehouseLocationName = value[2]
 
-			//Check warehouseCode exist
-			if warehouseCodeExist := s.warehouseMasterService.IsWarehouseMasterByCodeAndCompanyIdExist(companyId, value[0]); warehouseCodeExist {
-				tx := s.DB.Begin()
-
-				//Check warehouslocation exist
-				isExist, err := s.warehouseLocationRepo.CheckIfLocationExist(tx, value[0], value[1], value[2])
-
-				defer helper.CommitOrRollback(tx, err)
-
-				if isExist {
-					data.Validation = "Location is already exist"
-
-				} else {
-
-					data.Validation = "Ok"
-				}
-			} else {
-				data.Validation = "Warehouse Code is invalid"
-			}
-
-			fmt.Print(data.Validation)
+			warehouseCodes = append(warehouseCodes, data.WarehouseCode)
+			warehouseLocationCodes = append(warehouseLocationCodes, data.WarehouseLocationCode)
+			warehouseLocationNames = append(warehouseLocationNames, data.WarehouseLocationName)
 
 			response = append(response, data)
 		} else {
 			if value[0] != "WAREHOUSE_CODE" || value[1] != "LOCATION_CODE" || value[2] != "LOCATION_NAME" && len(value) == 3 {
-				return response, &exceptions.BaseErrorResponse{Err: errors.New("make sure header is correct"), StatusCode: 400}
+				return response, &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusBadRequest,
+					Err:        errors.New("make sure header is correct"),
+				}
+			}
+		}
+	}
+
+	existData, err := s.warehouseMasterService.IsWarehouseMasterByCodeAndCompanyIdExist(companyId, warehouseCodes)
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error when fetching warehouse company existence",
+			Err:        err.Err,
+		}
+	}
+	var existDataWarehouseCodes []string
+	for _, warehouse := range existData {
+		existDataWarehouseCodes = append(existDataWarehouseCodes, warehouse.WarehouseCode)
+	}
+
+	if len(warehouseCodes)+len(warehouseLocationCodes)+len(warehouseLocationNames) == 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("all data is empty"),
+		}
+	}
+	if !(len(warehouseCodes) == len(warehouseLocationCodes) && len(warehouseLocationCodes) == len(warehouseLocationNames)) {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("each code slices has a different length"),
+		}
+	}
+
+	locationData, err := s.warehouseLocationRepo.CheckIfLocationExist(tx, warehouseCodes, warehouseLocationCodes, warehouseLocationNames)
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "error when fetching warehouse location existence",
+			Err:        err.Err,
+		}
+	}
+
+	for i, resp := range response {
+		response[i].Validation = "Ok"
+
+		// Check Warehouse Master existence
+		if isNotInListString(existDataWarehouseCodes, resp.WarehouseCode) {
+			response[i].Validation = "Warehouse Code is invalid"
+			continue
+		}
+
+		// Fetch Warehouse Id
+		var warehouseId int
+		for _, data := range existData {
+			if resp.WarehouseCode == data.WarehouseCode {
+				warehouseId = data.WarehouseId
+				break
+			}
+		}
+
+		// Check Warehouse Location Data existence
+		for _, loc := range locationData {
+			if warehouseId == loc.WarehouseId &&
+				resp.WarehouseLocationCode == loc.WarehouseLocationCode &&
+				resp.WarehouseLocationName == loc.WarehouseLocationName {
+				response[i].Validation = "Location is already exist"
+				break
 			}
 		}
 	}
 
 	return response, nil
+}
+
+func isNotInListString(list []string, value string) bool {
+	for _, v := range list {
+		if v == value {
+			return false
+		}
+	}
+	return true
 }
 
 // GenerateTemplateFile implements masterwarehouseservice.WarehouseLocationService.
