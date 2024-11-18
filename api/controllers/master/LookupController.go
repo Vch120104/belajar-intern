@@ -33,6 +33,10 @@ type LookupController interface {
 	WarehouseGroupByCompany(writer http.ResponseWriter, request *http.Request)
 	ItemListTrans(writer http.ResponseWriter, request *http.Request)
 	ItemListTransPL(writer http.ResponseWriter, request *http.Request)
+	ReferenceTypeWorkOrder(writer http.ResponseWriter, request *http.Request)
+	ReferenceTypeWorkOrderByID(writer http.ResponseWriter, request *http.Request)
+	ReferenceTypeSalesOrder(writer http.ResponseWriter, request *http.Request)
+	ReferenceTypeSalesOrderByID(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -54,7 +58,10 @@ func (r *LookupControllerImpl) ItemOprCode(writer http.ResponseWriter, request *
 	}
 
 	queryValues := request.URL.Query()
-	queryParams := map[string]string{}
+	queryParams := map[string]string{
+		"opr_item_code": queryValues.Get("opr_item_code"),
+		"opr_item_name": queryValues.Get("opr_item_name"),
+	}
 	paginate := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),
@@ -638,4 +645,146 @@ func (r *LookupControllerImpl) ItemListTransPL(writer http.ResponseWriter, reque
 		item.TotalPages = 0
 	}
 	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) ReferenceTypeWorkOrder(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"work_order_system_number":      queryValues.Get("work_order_system_number"),
+		"work_order_document_number":    queryValues.Get("work_order_document_number"),
+		"work_order_date":               queryValues.Get("work_order_date"),
+		"work_order_status_description": queryValues.Get("work_order_status_description"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	var filters []utils.FilterCondition
+	for key, value := range queryParams {
+		if value != "" {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	referenceType, totalPages, totalRows, baseErr := r.LookupService.ReferenceTypeWorkOrder(paginate, filters)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, referenceType, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) ReferenceTypeWorkOrderByID(writer http.ResponseWriter, request *http.Request) {
+
+	referenceTypeIdStr := chi.URLParam(request, "work_order_system_number")
+	referenceTypeId, err := strconv.Atoi(referenceTypeIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Reference Type ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	referenceType, totalPages, totalRows, baseErr := r.LookupService.ReferenceTypeWorkOrderByID(referenceTypeId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, referenceType, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) ReferenceTypeSalesOrder(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"work_order_system_number":      queryValues.Get("work_order_system_number"),
+		"work_order_document_number":    queryValues.Get("work_order_document_number"),
+		"work_order_date":               queryValues.Get("work_order_date"),
+		"work_order_status_description": queryValues.Get("work_order_status_description"),
+	}
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	var filters []utils.FilterCondition
+	for key, value := range queryParams {
+		if value != "" {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	referenceType, totalPages, totalRows, baseErr := r.LookupService.ReferenceTypeSalesOrder(paginate, filters)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, referenceType, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) ReferenceTypeSalesOrderByID(writer http.ResponseWriter, request *http.Request) {
+
+	referenceTypeIdStr := chi.URLParam(request, "sales_order_system_number")
+	referenceTypeId, err := strconv.Atoi(referenceTypeIdStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Reference Type ID", http.StatusBadRequest)
+		return
+	}
+
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{}
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+	referenceType, totalPages, totalRows, baseErr := r.LookupService.ReferenceTypeSalesOrderByID(referenceTypeId, paginate, criteria)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, referenceType, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 }

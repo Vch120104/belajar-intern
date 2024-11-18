@@ -83,7 +83,10 @@ func (s *ItemImportServiceImpl) GenerateTemplateFile() (*excelize.File, *excepti
 	f := excelize.NewFile()
 	sheetName := "ItemImportMaster"
 	defer func() {
-		f.DeleteSheet("Sheet1")
+		err := f.DeleteSheet("Sheet1")
+		if err != nil {
+			return
+		}
 		if err := f.Close(); err != nil {
 			return
 		}

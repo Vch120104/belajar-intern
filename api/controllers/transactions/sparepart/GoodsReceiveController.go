@@ -21,6 +21,8 @@ type GoodsReceiveController interface {
 	InsertGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
 	UpdateGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
 	LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request)
+	DeleteGoodsReceive(writer http.ResponseWriter, request *http.Request)
+	DeleteGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 type GoodsReceiveControllerImpl struct {
@@ -126,9 +128,6 @@ func (controller *GoodsReceiveControllerImpl) UpdateGoodsReceiveDetail(writer ht
 func (controller *GoodsReceiveControllerImpl) LocationItemGoodsReceive(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		//"A.warehouse_id":            queryValues.Get("warehouse_id"),
-		//"A.item_id":                 queryValues.Get("item_id"),
-		//"A.item_location_id":        queryValues.Get("item_location_id"),
 		"B.warehouse_location_name": queryValues.Get("warehouse_location_name"),
 		"item.item_code":            queryValues.Get("item_code"),
 		"whs.company_id":            queryValues.Get("company_id"),
@@ -149,4 +148,27 @@ func (controller *GoodsReceiveControllerImpl) LocationItemGoodsReceive(writer ht
 	payloads.NewHandleSuccessPagination(writer, res.Rows, "Success Get All Data", http.StatusOK, res.Limit, res.Page, res.TotalRows, res.TotalPages)
 
 	panic("implement me")
+}
+
+// delete goods receive
+func (controller *GoodsReceiveControllerImpl) DeleteGoodsReceive(writer http.ResponseWriter, request *http.Request) {
+	GoodsReceiveSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "goods_receive_id"))
+	res, err := controller.service.DeleteGoodsReceive(GoodsReceiveSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "goods receive deleted successfull", http.StatusOK)
+}
+
+// delete goods receive detail
+// detail/{goods_receive_detail_id} delete
+func (controller *GoodsReceiveControllerImpl) DeleteGoodsReceiveDetail(writer http.ResponseWriter, request *http.Request) {
+	GoodsReceiveDetailSystemNumber, _ := strconv.Atoi(chi.URLParam(request, "goods_receive_detail_id"))
+	res, err := controller.service.DeleteGoodsReceiveDetail(GoodsReceiveDetailSystemNumber)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, res, "goods receive detail deleted successfull", http.StatusOK)
 }

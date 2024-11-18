@@ -42,6 +42,8 @@ type OperationModelMappingController interface {
 	DeleteOperationLevel(writer http.ResponseWriter, request *http.Request)
 	SaveOperationModelMappingAndFRT(writer http.ResponseWriter, request *http.Request)
 	UpdateOperationModelMapping(writer http.ResponseWriter, request *http.Request)
+	UpdateOperationFrt(writer http.ResponseWriter, request *http.Request)
+	CopyOperationModelMappingToOtherModel(writer http.ResponseWriter, request *http.Request)
 }
 
 type OperationModelMappingControllerImpl struct {
@@ -73,10 +75,11 @@ func NewOperationModelMappingController(operationModelMappingservice masteropera
 func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"mtr_operation_model_mapping.is_active":            request.URL.Query().Get("is_active"),
-		"mtr_operation_model_mapping.operation_group_code": request.URL.Query().Get("operation_group_code"),
-		"mtr_operation_code.operation_name":                request.URL.Query().Get("operation_name"),
-		"mtr_operation_model_mapping.operation_code":       request.URL.Query().Get("operation_code"),
+		"mtr_operation_model_mapping.is_active": request.URL.Query().Get("is_active"),
+		"mtr_operation_code.operation_code":     request.URL.Query().Get("operation_code"),
+		"mtr_operation_code.operation_name":     request.URL.Query().Get("operation_name"),
+		"mtr_brand.brand_name":                  request.URL.Query().Get("brand_name"),
+		"mtr_unit_model.model_code":             request.URL.Query().Get("model_code"),
 	}
 
 	paginate := pagination.Pagination{
@@ -627,6 +630,34 @@ func (r *OperationModelMappingControllerImpl) UpdateOperationModelMapping(writer
 	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
 }
 
+func (r *OperationModelMappingControllerImpl) UpdateOperationFrt(writer http.ResponseWriter, request *http.Request) {
+
+	operationFrtId, err := strconv.Atoi(chi.URLParam(request, "operation_frt_id"))
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Operation FRT ID", http.StatusBadRequest)
+		return
+	}
+
+	formRequest := masteroperationpayloads.OperationFrtUpdate{}
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+
+	update, baseErr := r.operationmodelmappingservice.UpdateOperationFrt(operationFrtId, formRequest)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Operation FRT ID not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, update, "Update Data Successfully!", http.StatusOK)
+}
+
 func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingAndFRT(writer http.ResponseWriter, request *http.Request) {
 	var combinedRequest masteroperationpayloads.OperationModelMappingAndFRTRequest
 	helper.ReadFromRequestBody(request, &combinedRequest)
@@ -643,6 +674,37 @@ func (r *OperationModelMappingControllerImpl) SaveOperationModelMappingAndFRT(wr
 	}
 
 	if combinedRequest.HeaderRequest.OperationModelMappingId == 0 {
+		message = "Create Data Successfully!"
+	} else {
+		message = "Update Data Successfully!"
+	}
+
+	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *OperationModelMappingControllerImpl) CopyOperationModelMappingToOtherModel(writer http.ResponseWriter, request *http.Request) {
+	operationModelMappingID, errA := strconv.Atoi(chi.URLParam(request, "operation_model_mapping_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var formRequest masteroperationpayloads.OperationModelMappingCopyRequest
+	helper.ReadFromRequestBody(request, &formRequest)
+	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, validationErr)
+		return
+	}
+	var message string
+
+	create, err := r.operationmodelmappingservice.CopyOperationModelMappingToOtherModel(operationModelMappingID, formRequest)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	if formRequest.OperationModelMappingId == 0 {
 		message = "Create Data Successfully!"
 	} else {
 		message = "Update Data Successfully!"

@@ -1,13 +1,11 @@
 package masterrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masterentities "after-sales/api/entities/master"
 	"after-sales/api/exceptions"
-	financeservice "after-sales/api/payloads/cross-service/finance-service"
 	masterpayloads "after-sales/api/payloads/master"
 	masterrepository "after-sales/api/repositories/master"
-	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
 	"fmt"
 	"net/http"
@@ -39,7 +37,7 @@ func ConvertToInt(s string) (int, error) {
 	return strconv.Atoi(s)
 }
 
-func ComparePeriods(payloads masterpayloads.ItemCycleInsertPayloads, Responses financeservice.OpenPeriodPayloadResponse) (bool, *exceptions.BaseErrorResponse) {
+func ComparePeriods(payloads masterpayloads.ItemCycleInsertPayloads, Responses financeserviceapiutils.OpenPeriodPayloadResponse) (bool, *exceptions.BaseErrorResponse) {
 	periodMonthPayload, err := ConvertToInt(payloads.PeriodMonth)
 	if err != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -82,14 +80,10 @@ func ComparePeriods(payloads masterpayloads.ItemCycleInsertPayloads, Responses f
 }
 
 func (i *ItemCycleRepositoryImpl) InsertItemCycle(db *gorm.DB, payloads masterpayloads.ItemCycleInsertPayloads) (bool, *exceptions.BaseErrorResponse) {
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(payloads.CompanyId) + "&closing_module_detail_code=SP"
-	if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusUnprocessableEntity,
-			Message:    "Failed to Get Current Period Response data from external service",
-			Err:        err,
-		}
+	//var PeriodResponse financeservice.OpenPeriodPayloadResponse
+	PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(payloads.CompanyId, "SP")
+	if periodErr != nil {
+		return false, periodErr
 	}
 	valid, errResponse := ComparePeriods(payloads, PeriodResponse)
 	if !valid {

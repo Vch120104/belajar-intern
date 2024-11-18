@@ -42,18 +42,18 @@ func (r *WarehouseMasterImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(tx *g
 }
 
 // IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouserepository.WarehouseMasterRepository.
-func (r *WarehouseMasterImpl) IsWarehouseMasterByCodeAndCompanyIdExist(tx *gorm.DB, companyId int, warehouseCode string) (bool, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) IsWarehouseMasterByCodeAndCompanyIdExist(tx *gorm.DB, companyId int, warehouseCodes []string) ([]masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
+	response := []masterwarehouseentities.WarehouseMaster{}
 
-	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyId: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
-		return false, &exceptions.BaseErrorResponse{
+	if err := tx.Model(&entities).Where("company_id = ? AND warehouse_code IN ?", companyId, warehouseCodes).Scan(&response).Error; err != nil {
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
-
+	return response, nil
 }
 
 func (r *WarehouseMasterImpl) InTransitWarehouseCodeDropdown(tx *gorm.DB, companyID int, warehouseGroupID int) ([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse) {
@@ -83,11 +83,12 @@ func (r *WarehouseMasterImpl) InTransitWarehouseCodeDropdown(tx *gorm.DB, compan
 }
 
 // DropdownbyGroupId implements masterwarehouserepository.WarehouseMasterRepository.
-func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) DropdownbyGroupId(tx *gorm.DB, warehouseGroupId int, companyId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 
 	var warehouseMasterResponse []masterwarehousepayloads.DropdownWarehouseMasterResponse
 
-	err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).Where(masterwarehouseentities.WarehouseMaster{WarehouseGroupId: warehouseGroupId}).
+	err := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
+		Where(masterwarehouseentities.WarehouseMaster{WarehouseGroupId: warehouseGroupId, CompanyId: companyId}).
 		Select("warehouse_id", "warehouse_code + ' - ' + warehouse_name as warehouse_code").
 		Find(&warehouseMasterResponse)
 	if err.Error != nil {

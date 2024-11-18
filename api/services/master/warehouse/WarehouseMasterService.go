@@ -17,10 +17,10 @@ type WarehouseMasterService interface {
 	DropdownWarehouse() ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetWarehouseMasterByCode(Code string) (masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse)
 	GetWarehouseWithMultiId(MultiIds []int) ([]masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse)
-	IsWarehouseMasterByCodeAndCompanyIdExist(int, string) bool
+	IsWarehouseMasterByCodeAndCompanyIdExist(int, []string) ([]masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse)
 	GetWarehouseGroupAndMasterbyCodeandCompanyId(int, string) (int, int, *exceptions.BaseErrorResponse)
 	ChangeStatus(int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse)
-	DropdownbyGroupId(int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
+	DropdownbyGroupId(whsId int, companyId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse)
 	GetAuthorizeUser(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	PostAuthorizeUser(req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse)
 	DeleteMultiIdAuthorizeUser(id string) (bool, *exceptions.BaseErrorResponse)

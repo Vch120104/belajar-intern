@@ -3,7 +3,6 @@ package generalserviceapiutils
 import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
-	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/utils"
 	"errors"
 	"net/http"
@@ -42,31 +41,73 @@ type CompanyMasterResponse struct {
 	IsDistbutor bool   `json:"is_distributor"`
 	BizCategory string `json:"biz_category"`
 }
+type GetCompanyByIdResponses struct {
+	CompanyName            string  `json:"company_name"`
+	RegionId               int     `json:"region_id"`
+	TermOfPaymentId        int     `json:"term_of_payment_id"`
+	TaxCompanyId           int     `json:"tax_company_id"`
+	FinanceAreaId          int     `json:"finance_area_id"`
+	BusinessScopeId        int     `json:"business_scope_id"`
+	IsActive               bool    `json:"is_active"`
+	CompanyId              int     `json:"company_id"`
+	AreaId                 int     `json:"area_id"`
+	BusinessCategoryId     int     `json:"business_category_id"`
+	CompanyPhoneNumber     string  `json:"company_phone_number"`
+	IncentiveGroupId       int     `json:"incentive_group_id"`
+	CompanyNoOfStall       float64 `json:"company_no_of_stall"`
+	CompanyCode            string  `json:"company_code"`
+	CompanyTypeId          int     `json:"company_type_id"`
+	CompanyFaxNumber       string  `json:"company_fax_number"`
+	AftersalesAreaId       int     `json:"aftersales_area_id"`
+	CompanyDealerKiaCode   string  `json:"company_dealer_kia_code"`
+	CompanyTypeSellingId   int     `json:"company_type_selling_id"`
+	CompanyAbbreviation    string  `json:"company_abbreviation"`
+	CompanyEmail           string  `json:"company_email"`
+	VatCompanyId           int     `json:"vat_company_id"`
+	CompanyOwnershipId     int     `json:"company_ownership_id"`
+	CompanyOfficeAddressId int     `json:"company_office_address_id"`
+}
 
 func GetCompanyVat(id int) (VatCompany, *exceptions.BaseErrorResponse) {
 	var getCompanyMaster VatCompany
 	url := config.EnvConfigs.GeneralServiceUrl + "company-vat-by-id/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCompanyMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
 		return getCompanyMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for company VAT data",
-			Err:        errors.New("error consuming external API for company VAT data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
 	return getCompanyMaster, nil
 }
 
-func GetCompanyDataById(companyId int) (generalservicepayloads.GetCompanyByIdResponses, *exceptions.BaseErrorResponse) {
-	var companyResponse generalservicepayloads.GetCompanyByIdResponses
+func GetCompanyDataById(companyId int) (GetCompanyByIdResponses, *exceptions.BaseErrorResponse) {
+	var companyResponse GetCompanyByIdResponses
 	companyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(companyId)
 
 	err := utils.CallAPI("GET", companyUrl, nil, &companyResponse)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company  due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
 		return companyResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "failed to fetch company data",
-			Err:        errors.New("failed to fetch company data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
 
@@ -89,10 +130,18 @@ func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve company  due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "company service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for multiple company data",
-			Err:        errors.New("error consuming external API for multiple company data"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting company by ID"),
 		}
 	}
 	return nil

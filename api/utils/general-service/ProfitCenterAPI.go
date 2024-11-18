@@ -22,10 +22,18 @@ func GetProfitCenterByCode(code string) (ProfitCenterResponse, *exceptions.BaseE
 
 	err := utils.CallAPI("GET", url, nil, &getProfitCenter)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve profit center due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "profit center service is temporarily unavailable"
+		}
+
 		return getProfitCenter, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching profit center by code",
-			Err:        errors.New("failed to retrieve profit center data from external API by code"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting profit center by ID"),
 		}
 	}
 	return getProfitCenter, nil
@@ -37,10 +45,18 @@ func GetProfitCenterById(id int) (ProfitCenterResponse, *exceptions.BaseErrorRes
 
 	err := utils.CallAPI("GET", url, nil, &getProfitCenter)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve profit center due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "profit center service is temporarily unavailable"
+		}
+
 		return getProfitCenter, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching profit center by ID",
-			Err:        errors.New("failed to retrieve profit center data from external API by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting profit center by ID"),
 		}
 	}
 	return getProfitCenter, nil
@@ -61,10 +77,18 @@ func GetProfitCenterByMultiId(ids []int, abstractType interface{}) *exceptions.B
 
 	err := utils.CallAPI("GET", url, nil, &abstractType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve profit center due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "profit center service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching profit center by multiple IDs",
-			Err:        errors.New("failed to retrieve profit center data from external API for multiple IDs"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting profit center by ID"),
 		}
 	}
 	return nil
