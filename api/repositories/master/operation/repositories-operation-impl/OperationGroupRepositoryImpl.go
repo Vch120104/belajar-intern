@@ -22,33 +22,9 @@ func StartOperationGroupRepositoryImpl() masteroperationrepository.OperationGrou
 }
 
 func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	// entities := []masteroperationentities.OperationGroup{}
-	// //define base model
-	// baseModelQuery := tx.Model(&entities)
-	// //apply where query
-	// whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	// //apply pagination and execute
-	// rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
-
-	// if len(entities) == 0 {
-	// 	return pages, gorm.ErrRecordNotFound
-	// }
-
-	// if err != nil {
-	// 	return pages, err
-	// }
-
-	// defer rows.Close()
-
-	// pages.Rows = entities
-
-	// return pages, nil
 	entities := []masteroperationentities.OperationGroup{}
-	//define base model
 	baseModelQuery := tx.Model(&entities)
-	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	//apply pagination and execute
 	rows, _ := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
 
 	defer rows.Close()
@@ -56,25 +32,6 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterC
 	pages.Rows = entities
 
 	return pages, nil
-
-	// if err != nil {
-	// 	return pages, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusInternalServerError,
-	// 		Err:        err,
-	// 	}
-	// }
-
-	// if len(entities) == 0 {
-	// 	return pages, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusNotFound,
-	// 		Err:        errors.New(""),
-	// 	}
-	// }
-	// defer rows.Close()
-
-	// pages.Rows = entities
-
-	// return pages, nil
 }
 
 func (r *OperationGroupRepositoryImpl) GetOperationGroupByCode(tx *gorm.DB, Code string) (masteroperationpayloads.OperationGroupResponse, *exceptions.BaseErrorResponse) {
