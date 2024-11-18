@@ -377,11 +377,31 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 
 	model := masteritementities.ItemPriceList{}
 
-	query := tx.Model(model).
-		Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*,mtr_item_price_code.item_price_code").
-		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
-		Joins("LEFT JOIN mtr_item_price_code on mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id")
+	query := tx.Model(&model).
+		Select(`
+        mtr_item_price_list.brand_id,
+        mtr_item_price_list.item_group_id,
+        mtr_item_price_list.item_class_id,
+        mtr_item_class.item_class_name,
+        mtr_item_price_list.currency_id,
+		CAST(effective_date AS DATE) AS effective_date,
+        mtr_item_price_code.item_price_code,
+        MIN(mtr_item_price_list.price_list_id) AS price_list_id,
+        mtr_item_price_list.is_active
+    `).
+		Joins("JOIN mtr_item ON mtr_item.item_id = mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Joins("LEFT JOIN mtr_item_price_code ON mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id").
+		Group(`
+        mtr_item_price_list.brand_id,
+        mtr_item_price_list.item_group_id,
+        mtr_item_price_list.item_class_id,
+        mtr_item_class.item_class_name,
+        mtr_item_price_list.currency_id,
+        CAST(effective_date AS DATE),
+        mtr_item_price_code.item_price_code,
+        mtr_item_price_list.is_active
+    `).Order("CAST(effective_date AS DATE) desc")
 
 	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)
