@@ -153,6 +153,11 @@ func StartRouting(db *gorm.DB) {
 	gmmPriceCodeService := masterserviceimpl.StartGmmPriceCodeServiceImpl(gmmPriceCodeRepository, db)
 	gmmPriceCodeController := mastercontroller.NewGmmPriceCodeControllerImpl(gmmPriceCodeService)
 
+	// Gmm Discount Setting
+	gmmDiscountSettingRepository := masterrepositoryimpl.StartGmmDiscountSettingRepositoryImpl()
+	gmmDiscountSettingService := masterserviceimpl.StartGmmDiscountSettingServiceImpl(gmmDiscountSettingRepository, db)
+	gmmDiscountSettingController := mastercontroller.NewGmmDiscountSettingControllerImpl(gmmDiscountSettingService)
+
 	// Agreement
 	AgreementRepository := masterrepositoryimpl.StartAgreementRepositoryImpl()
 	AgreementService := masterserviceimpl.StartAgreementService(AgreementRepository, db, rdb)
@@ -460,6 +465,7 @@ func StartRouting(db *gorm.DB) {
 	OrderTypeRouter := OrderTypeRouter(OrderTypeController)
 	ForecastMasterRouter := ForecastMasterRouter(forecastMasterController)
 	GmmPriceCodeRouter := GmmPriceCodeRouter(gmmPriceCodeController)
+	GmmDiscountSettingRouter := GmmDiscountSettingRouter(gmmDiscountSettingController)
 	AgreementRouter := AgreementRouter(AgreementController)
 	DiscountPercentRouter := DiscountPercentRouter(discountPercentController)
 	DiscountRouter := DiscountRouter(discountController)
@@ -568,6 +574,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/order-type", OrderTypeRouter)
 		r.Mount("/forecast-master", ForecastMasterRouter)
 		r.Mount("/gmm-price-code", GmmPriceCodeRouter)
+		r.Mount("/gmm-discount-setting", GmmDiscountSettingRouter)
 		r.Mount("/agreement", AgreementRouter)
 		r.Mount("/package-master", PackageMasterRouter)
 		r.Mount("/skill-level", SkillLevelRouter)

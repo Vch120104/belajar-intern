@@ -991,6 +991,21 @@ func GmmPriceCodeRouter(
 	return router
 }
 
+func GmmDiscountSettingRouter(
+	gmmDiscountSettingController mastercontroller.GmmDiscountSettingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", gmmDiscountSettingController.GetAllGmmDiscountSetting)
+
+	return router
+}
+
 func AgreementRouter(
 	AgreementController mastercontroller.AgreementController,
 ) chi.Router {
