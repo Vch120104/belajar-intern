@@ -20,12 +20,22 @@ func GetWorkOrderTypeByID(id int) (WorkOrderTypeResponse, *exceptions.BaseErrorR
 	url := config.EnvConfigs.GeneralServiceUrl + "work-order-type/" + strconv.Itoa(id)
 
 	err := utils.CallAPI("GET", url, nil, &workOrderType)
+
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve work order type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "Work order type service is temporarily unavailable"
+		}
+
 		return workOrderType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve work order type",
+			StatusCode: status,
+			Message:    message,
 			Err:        errors.New("error consuming external API while getting work order type by ID"),
 		}
 	}
+
 	return workOrderType, nil
 }

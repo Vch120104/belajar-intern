@@ -21,10 +21,18 @@ func GetSoTransactionTypeByID(id int) (SalesOrderTransactionType, *exceptions.Ba
 
 	err := utils.CallAPI("GET", url, nil, &sotransactionType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve sales order transaction type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "sales order transaction type service is temporarily unavailable"
+		}
+
 		return sotransactionType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve transaction type",
-			Err:        errors.New("error consuming external API while getting transaction type by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting sales order transaction type by ID"),
 		}
 	}
 	return sotransactionType, nil

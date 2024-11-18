@@ -21,9 +21,17 @@ func GetJobTransactionTypeByID(id int) (WorkOrderJobType, *exceptions.BaseErrorR
 
 	err := utils.CallAPI("GET", url, nil, &jobType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve job type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "job type service is temporarily unavailable"
+		}
+
 		return jobType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve job type",
+			StatusCode: status,
+			Message:    message,
 			Err:        errors.New("error consuming external API while getting job type by ID"),
 		}
 	}

@@ -21,10 +21,18 @@ func GetUnitVariantById(id int) (UnitVariantResponse, *exceptions.BaseErrorRespo
 	url := config.EnvConfigs.SalesServiceUrl + "unit-variant/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &response)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve unit variant due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "unit variant service is temporarily unavailable"
+		}
+
 		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consume external variant api",
-			Err:        errors.New("error consume external variant api"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting unit variant by ID"),
 		}
 	}
 	return response, nil
