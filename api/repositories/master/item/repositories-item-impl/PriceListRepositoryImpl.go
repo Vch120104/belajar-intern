@@ -295,7 +295,32 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 	PriceListId := -1
 
 	for _, value := range request.Detail {
+		isExist := 0
+		err := tx.Model(&masteritementities.ItemPriceList{}).
+			Where("CONVERT(DATE, effective_date) = ?", request.EffectiveDate.Format("2006-01-02")).
+			Where(masteritementities.ItemPriceList{
+				ItemId:          value.ItemId,
+				BrandId:         request.BrandId,
+				ItemGroupId:     request.ItemGroupId,
+				PriceListCodeId: request.PriceListCodeId,
+				CurrencyId:      request.CurrencyId,
+				CompanyId:       request.CompanyId,
+			}).Select("1").Scan(&isExist).Error
 
+		if err != nil {
+			return PriceListId, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "error on check data price list",
+			}
+		}
+		if isExist == 1 {
+			return PriceListId, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "cannot insert duplicate item",
+				Err:        err,
+			}
+		}
 		entities := masteritementities.ItemPriceList{
 			IsActive:            value.IsActive,
 			PriceListCodeId:     request.PriceListCodeId,
@@ -310,7 +335,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 			PriceListModifiable: true,
 		}
 
-		err := tx.Save(&entities).Where(entities).Select("mtr_item_price_list.price_list_id").First(&PriceListId).Error
+		err = tx.Save(&entities).Where(entities).Select("mtr_item_price_list.price_list_id").First(&PriceListId).Error
 
 		if err != nil {
 			return PriceListId, &exceptions.BaseErrorResponse{
