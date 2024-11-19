@@ -39,7 +39,7 @@ func GetLineTypeById(id int) (LineTypeResponse, *exceptions.BaseErrorResponse) {
 
 func GetLineTypeByCode(code string) (LineTypeResponse, *exceptions.BaseErrorResponse) {
 	var line LineTypeResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "line-type-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "line-type-by-code/" + code
 	err := utils.CallAPI("GET", url, nil, &line)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
