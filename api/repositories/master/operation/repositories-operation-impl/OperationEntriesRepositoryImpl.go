@@ -33,21 +33,7 @@ func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, fil
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	//apply pagination and execute
-	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
-
-	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
+	rows, _ := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
 	defer rows.Close()
 
