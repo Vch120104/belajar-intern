@@ -266,12 +266,12 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 		return
 	}
 
-	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
+	entity, err := r.ItemLocationService.AddItemLocation(itemLocID, formRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
-
-	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, entity, "Item location added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Item Location By ID
