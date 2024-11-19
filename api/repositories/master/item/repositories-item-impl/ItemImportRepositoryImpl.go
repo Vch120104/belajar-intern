@@ -179,8 +179,8 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 
 	whereQuery := utils.ApplyFilter(query, internalFilter)
 
-	err := whereQuery.Scan(&responses).Error
-
+	//err := whereQuery.Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&masteritementities.ItemImport{}, &pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -189,8 +189,8 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	dataPaginate := []map[string]interface{}{}
-	totalPages := 0
-	totalRows := 0
+	//totalPages := 0
+	//totalRows := 0
 
 	if len(responses) > 0 {
 		responseSupplierMultiId := ""
@@ -222,11 +222,11 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 				Err:        errdf,
 			}
 		}
-
-		dataPaginate, totalPages, totalRows = pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
+		dataPaginate = joinedDataSupplier
+		//dataPaginate, _, _ = pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
 	}
 
-	return dataPaginate, totalPages, totalRows, nil
+	return dataPaginate, pages.TotalPages, int(pages.TotalRows), nil
 }
 
 // UpdateItemImport implements masteritemrepository.ItemImportRepository.

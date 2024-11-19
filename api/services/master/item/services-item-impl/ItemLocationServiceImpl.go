@@ -66,14 +66,19 @@ func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLo
 	return results, nil
 }
 
-func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse {
+func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) (masteritementities.ItemLocationDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	err := s.ItemLocationRepo.AddItemLocation(tx, id, req)
-	defer helper.CommitOrRollback(tx, err)
+	var entity masteritementities.ItemLocationDetail
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		helper.CommitOrRollback(tx, err)
+	}()
+
+	entity, err = s.ItemLocationRepo.AddItemLocation(tx, id, req)
 	if err != nil {
-		return err
+		return masteritementities.ItemLocationDetail{}, err
 	}
-	return nil
+	return entity, nil
 }
 
 func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse) {

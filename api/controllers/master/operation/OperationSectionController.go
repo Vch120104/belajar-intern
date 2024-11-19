@@ -82,6 +82,10 @@ func (r *OperationSectionControllerImpl) GetAllOperationSectionList(writer http.
 		return
 	}
 
+	if result.TotalPages == 0 {
+		result.Rows = []masteroperationpayloads.OperationSectionListResponse{}
+	}
+
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
 

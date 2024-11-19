@@ -307,7 +307,17 @@ func (r *ItemLocationRepositoryImpl) PopupItemLocation(tx *gorm.DB, filterCondit
 	return dataPaginate, totalPages, totalRows, nil
 }
 
-func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int, request masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse {
+func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int, request masteritempayloads.ItemLocationDetailRequest) (masteritementities.ItemLocationDetail, *exceptions.BaseErrorResponse) {
+
+	var existing masteritementities.ItemLocationDetail
+	if err := tx.Where("item_id = ?  AND warehouse_location_id = ?", request.ItemId, request.ItemLocationId).First(&existing).Error; err == nil {
+		return masteritementities.ItemLocationDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "combination Item and Warehouse Location already exists",
+			Err:        errors.New("combination Item and Warehouse Location already exists"),
+		}
+	}
+
 	entities := masteritementities.ItemLocationDetail{
 		ItemId:                     request.ItemId,
 		ItemLocationId:             request.ItemLocationId,
@@ -315,15 +325,15 @@ func (r *ItemLocationRepositoryImpl) AddItemLocation(tx *gorm.DB, ItemlocId int,
 	}
 
 	err := tx.Save(&entities).Error
-
 	if err != nil {
-		return &exceptions.BaseErrorResponse{
+		return masteritementities.ItemLocationDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to save data",
 			Err:        err,
 		}
 	}
 
-	return nil
+	return entities, nil
 }
 
 // DeleteItemLocation deletes an item location by ID

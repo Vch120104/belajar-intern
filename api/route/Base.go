@@ -970,6 +970,42 @@ func ForecastMasterRouter(
 	return router
 }
 
+func GmmPriceCodeRouter(
+	gmmPriceCodeController mastercontroller.GmmPriceCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", gmmPriceCodeController.GetAllGmmPriceCode)
+	router.Get("/{gmm_price_code_id}", gmmPriceCodeController.GetGmmPriceCodeById)
+	router.Get("/dropdown", gmmPriceCodeController.GetGmmPriceCodeDropdown)
+	router.Post("/", gmmPriceCodeController.SaveGmmPriceCode)
+	router.Put("/{gmm_price_code_id}", gmmPriceCodeController.UpdateGmmPriceCode)
+	router.Patch("/{gmm_price_code_id}", gmmPriceCodeController.ChangeStatusGmmPriceCode)
+	router.Delete("/{gmm_price_code_id}", gmmPriceCodeController.DeleteGmmPriceCode)
+
+	return router
+}
+
+func GmmDiscountSettingRouter(
+	gmmDiscountSettingController mastercontroller.GmmDiscountSettingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", gmmDiscountSettingController.GetAllGmmDiscountSetting)
+
+	return router
+}
+
 func AgreementRouter(
 	AgreementController mastercontroller.AgreementController,
 ) chi.Router {
