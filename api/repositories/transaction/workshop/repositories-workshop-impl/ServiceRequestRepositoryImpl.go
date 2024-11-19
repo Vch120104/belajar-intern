@@ -459,6 +459,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 
 		// Update service detail with item and UOM data
+		serviceDetails[i].OperationItemId = itemResponse.ItemId
 		serviceDetails[i].OperationItemCode = itemResponse.ItemCode
 		serviceDetails[i].OperationItemName = itemResponse.ItemName
 		serviceDetails[i].UomName = uomItems[0].UomName

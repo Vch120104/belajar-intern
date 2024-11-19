@@ -134,6 +134,8 @@ type ServiceRequestResponse struct {
 	ReferenceDocSystemNumber int    `json:"reference_doc_system_number"`
 	ReferenceTypeId          int    `json:"ref_type_id"`
 	ReferenceTypeName        string `json:"reference_type_name"`
+	ReferenceItemCode        string `json:"reference_item_code"`
+	ReferenceItemName        string `json:"reference_item_name"`
 	ReferenceDocId           int    `json:"ref_doc_id"`
 	ReferenceDocNumber       string `json:"ref_doc_no"`
 	ReferenceDocDate         string `json:"ref_doc_date"`
@@ -200,6 +202,9 @@ type ServiceDetailResponse struct {
 	FrtQuantity                float64 `json:"qty"`
 	ReferenceSystemNumber      int     `json:"reference_system_number"`
 	ReferenceLineNumber        int     `json:"reference_line_number"`
+	ReferenceItemId            int     `json:"reference_item_id"`
+	ReferenceItemCode          string  `json:"reference_item_code"`
+	ReferenceItemName          string  `json:"reference_item_name"`
 }
 
 type ItemServiceRequestDetail struct {
