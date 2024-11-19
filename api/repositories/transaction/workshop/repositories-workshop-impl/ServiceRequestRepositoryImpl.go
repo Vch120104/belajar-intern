@@ -422,7 +422,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 	}
 
 	query := tx.Model(&transactionworkshopentities.ServiceRequestDetail{}).
-		Select("service_request_detail_id, service_request_line_number, service_request_system_number, line_type_id, operation_item_id, frt_quantity, reference_doc_system_number, reference_doc_id").
+		Select("service_request_detail_id, service_request_line_number, service_request_system_number, line_type_id, operation_item_id, frt_quantity").
 		Where("service_request_system_number = ?", Id).
 		Offset(pagination.GetOffset()).
 		Limit(pagination.GetLimit())
@@ -459,6 +459,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		}
 
 		// Update service detail with item and UOM data
+		serviceDetails[i].OperationItemId = itemResponse.ItemId
 		serviceDetails[i].OperationItemCode = itemResponse.ItemCode
 		serviceDetails[i].OperationItemName = itemResponse.ItemName
 		serviceDetails[i].UomName = uomItems[0].UomName
@@ -511,6 +512,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ServiceRequestStatusName:     StatusResponses.ServiceRequestStatusDescription,
 		ServiceRequestDocumentNumber: entity.ServiceRequestDocumentNumber,
 		ServiceRequestDate:           ServiceRequestDate,
+		ServiceTypeId:                entity.ServiceTypeId,
 		ProfitCenterId:               entity.ProfitCenterId,
 		ProfitCenterName:             serviceprofitCenterResponses.ServiceProfitCenterName,
 		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,
