@@ -222,8 +222,8 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 				Err:        errdf,
 			}
 		}
-
-		dataPaginate, _, _ = pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
+		dataPaginate = joinedDataSupplier
+		//dataPaginate, _, _ = pagination.NewDataFramePaginate(joinedDataSupplier, &pages)
 	}
 
 	return dataPaginate, pages.TotalPages, int(pages.TotalRows), nil

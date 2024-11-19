@@ -6,7 +6,7 @@ type OperationEntriesResponse struct {
 	OperationEntriesCode        string `json:"operation_entries_code" parent_entity:"mtr_operation_entries"`
 	OperationEntriesDescription string `json:"operation_entries_description" parent_entity:"mtr_operation_entries"`
 	OperationGroupId            int    `json:"operation_group_id" parent_entity:"mtr_operation_group" references:"mtr_operation_group"`
-	OperationGroupCode          int    `json:"operation_group_code" parent_entity:"mtr_operation_group"`
+	OperationGroupCode          string `json:"operation_group_code" parent_entity:"mtr_operation_group"`
 	OperationGroupDescription   string `json:"operation_group_description" parent_entity:"mtr_operation_group"`
 	OperationSectionId          int    `json:"operation_section_id" parent_entity:"mtr_operation_section" references:"mtr_operation_section"`
 	OperationSectionCode        string `json:"operation_section_code" parent_entity:"mtr_operation_section"`
