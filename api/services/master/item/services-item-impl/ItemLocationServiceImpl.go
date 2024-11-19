@@ -46,26 +46,6 @@ func StartItemLocationService(
 	}
 }
 
-func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocation(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return results, totalPages, totalRows, err
-	}
-	return results, totalPages, totalRows, nil
-}
-
-func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLocationRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	results, err := s.ItemLocationRepo.SaveItemLocation(tx, req)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return false, err
-	}
-	return results, nil
-}
-
 func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) (masteritementities.ItemLocationDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var entity masteritementities.ItemLocationDetail
@@ -79,16 +59,6 @@ func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads
 		return masteritementities.ItemLocationDetail{}, err
 	}
 	return entity, nil
-}
-
-func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	results, err := s.ItemLocationRepo.GetItemLocationById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return results, err
-	}
-	return results, nil
 }
 
 func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

@@ -13,9 +13,6 @@ import (
 type ItemLocationRepository interface {
 	DeleteItemLocation(tx *gorm.DB, Id int) *exceptions.BaseErrorResponse
 	AddItemLocation(*gorm.DB, int, masteritempayloads.ItemLocationDetailRequest) (masteritementities.ItemLocationDetail, *exceptions.BaseErrorResponse)
-	SaveItemLocation(*gorm.DB, masteritempayloads.ItemLocationRequest) (bool, *exceptions.BaseErrorResponse)
-	GetAllItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
-	GetItemLocationById(tx *gorm.DB, Id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse)
 	GetAllItemLocationDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	PopupItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 

@@ -25,158 +25,6 @@ func StartItemLocationRepositoryImpl() masteritemrepository.ItemLocationReposito
 	return &ItemLocationRepositoryImpl{}
 }
 
-func (r *ItemLocationRepositoryImpl) GetAllItemLocation(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.ItemLocationRequest
-	var getWarehouseGroupResponse masteritempayloads.ItemLocWarehouseGroupResponse
-	var getWarehouseResponse masteritempayloads.ItemLocationWarehouseResponse
-	var getItemResponse []masteritempayloads.ItemLocResponse
-	var internalServiceFilter []utils.FilterCondition
-
-	responseStruct := reflect.TypeOf(masteritempayloads.ItemLocationRequest{})
-
-	// Filter internal service conditions
-	for _, condition := range filterCondition {
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if condition.ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, condition)
-				break
-			}
-		}
-	}
-
-	// Apply internal service filter conditions
-	tableStruct := masteritempayloads.ItemLocationRequest{}
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-
-	// Fetch data from database
-	err := whereQuery.Scan(&responses).Error
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        fmt.Errorf("failed to fetch data from database: %w", err),
-		}
-	}
-
-	// Check if responses are empty
-	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
-		}
-	}
-
-	// Define a slice to hold map responses
-	var mapResponses []map[string]interface{}
-
-	// Iterate over responses and convert them to maps
-	for _, response := range responses {
-		responseMap := map[string]interface{}{
-			"warehouse_id":       response.WarehouseId,
-			"warehouse_group_id": response.WarehouseGroupId,
-			"item_id":            response.ItemId,
-			"item_location_id":   response.ItemLocationId,
-		}
-
-		// Fetch warehouse group data if warehouse group ID is not zero
-		if response.WarehouseGroupId != 0 {
-			warehouseGroupURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-group/by-id/" + strconv.Itoa(response.WarehouseGroupId)
-			if err := utils.Get(warehouseGroupURL, &getWarehouseGroupResponse, nil); err != nil {
-				return nil, 0, 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
-			}
-			responseMap["warehouse_group_name"] = getWarehouseGroupResponse.WarehouseGroupName
-		}
-
-		// Fetch item data if item ID is not zero
-		if response.ItemId != 0 {
-			itemURL := config.EnvConfigs.AfterSalesServiceUrl + "item/multi-id/" + strconv.Itoa(response.ItemId)
-			fmt.Println("Fetching mtr_item data from:", itemURL)
-			if err := utils.Get(itemURL, &getItemResponse, nil); err != nil {
-				return nil, 0, 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
-			}
-			if len(getItemResponse) > 0 {
-				responseMap["item_name"] = getItemResponse[0].ItemName
-				responseMap["item_code"] = getItemResponse[0].ItemCode
-			}
-		}
-
-		// Fetch warehouse data if warehouse ID is not zero
-		if response.WarehouseId != 0 {
-			warehouseURL := config.EnvConfigs.AfterSalesServiceUrl + "warehouse-master/" + strconv.Itoa(response.WarehouseId)
-			fmt.Println("Fetching warehouse_id data from:", warehouseURL)
-			if err := utils.Get(warehouseURL, &getWarehouseResponse, nil); err != nil {
-				return nil, 0, 0, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        err,
-				}
-			}
-			responseMap["warehouse_code"] = getWarehouseResponse.WarehouseCode
-			responseMap["warehouse_name"] = getWarehouseResponse.WarehouseName
-		}
-
-		mapResponses = append(mapResponses, responseMap)
-	}
-
-	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-
-	return paginatedData, totalPages, totalRows, nil
-}
-
-func (r *ItemLocationRepositoryImpl) SaveItemLocation(tx *gorm.DB, request masteritempayloads.ItemLocationRequest) (bool, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemLocation{
-		WarehouseGroupId: request.WarehouseGroupId,
-		ItemId:           request.ItemId,
-		WarehouseId:      request.WarehouseId,
-	}
-
-	err := tx.Save(&entities).Error
-
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusConflict,
-				Err:        err,
-			}
-		} else {
-
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-	}
-
-	return true, nil
-}
-
-func (r *ItemLocationRepositoryImpl) GetItemLocationById(tx *gorm.DB, Id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemLocation{}
-	response := masteritempayloads.ItemLocationRequest{}
-
-	err := tx.Model(&entities).
-		Where(masteritementities.ItemLocation{
-			ItemLocationId: Id,
-		}).
-		First(&response).
-		Error
-
-	if err != nil {
-		return masteritempayloads.ItemLocationRequest{}, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("data not found"),
-		}
-	}
-
-	return response, nil
-}
-
 func (r *ItemLocationRepositoryImpl) GetAllItemLocationDetail(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	// Inisialisasi variabel untuk menyimpan respons dari database dan layanan eksternal
 	var responses []masteritempayloads.ItemLocationDetailResponse
@@ -428,6 +276,15 @@ func (r *ItemLocationRepositoryImpl) GetByIdItemLoc(tx *gorm.DB, id int) (master
 }
 
 func (r *ItemLocationRepositoryImpl) SaveItemLoc(tx *gorm.DB, req masteritempayloads.SaveItemlocation) (masteritementities.ItemLocation, *exceptions.BaseErrorResponse) {
+	var existing masteritementities.ItemLocation
+	if err := tx.Where("item_id = ? AND warehouse_location_id = ?", req.ItemId, req.WarehouseLocationId).First(&existing).Error; err == nil {
+		return masteritementities.ItemLocation{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "combination Item, and Warehouse Location already exists",
+			Err:        errors.New("combination Item,  and Warehouse Location already exists"),
+		}
+	}
+
 	entities := masteritementities.ItemLocation{
 		ItemLocationId:      req.ItemLocationId,
 		WarehouseGroupId:    req.WarehouseGroupId,
