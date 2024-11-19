@@ -15,7 +15,7 @@ type ItemSubstituteService interface {
 	GetAllItemSubstituteDetail(pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdItemSubstituteDetail(id int) (masteritempayloads.ItemSubstituteDetailGetPayloads, *exceptions.BaseErrorResponse)
 	SaveItemSubstitute(req masteritempayloads.ItemSubstitutePostPayloads) (masteritementities.ItemSubstitute, *exceptions.BaseErrorResponse)
-	SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse)
+	SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse)
 	ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse)
 	DeactivateItemSubstituteDetail(id string) (bool, *exceptions.BaseErrorResponse)
 	ActivateItemSubstituteDetail(id string) (bool, *exceptions.BaseErrorResponse)

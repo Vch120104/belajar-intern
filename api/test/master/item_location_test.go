@@ -49,9 +49,14 @@ func (m *MockItemLocationService) PopupItemLocation(criteria []utils.FilterCondi
 	return args.Get(0).([]map[string]interface{}), args.Int(1), args.Int(2), args.Get(3).(*exceptions.BaseErrorResponse)
 }
 
-func (m *MockItemLocationService) AddItemLocation(itemLocID int, payload masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse {
+func (m *MockItemLocationService) AddItemLocation(itemLocID int, payload masteritempayloads.ItemLocationDetailRequest) (masteritementities.ItemLocationDetail, *exceptions.BaseErrorResponse) {
 	args := m.Called(itemLocID, payload)
-	return args.Get(0).(*exceptions.BaseErrorResponse)
+	entity := args.Get(0).(masteritementities.ItemLocationDetail)
+	var err *exceptions.BaseErrorResponse
+	if args.Get(1) != nil {
+		err = args.Get(1).(*exceptions.BaseErrorResponse)
+	}
+	return entity, err
 }
 
 func (m *MockItemLocationService) DeleteItemLocation(id int) *exceptions.BaseErrorResponse {
