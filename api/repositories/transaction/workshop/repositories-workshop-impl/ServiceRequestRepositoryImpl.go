@@ -512,6 +512,7 @@ func (s *ServiceRequestRepositoryImpl) GetById(tx *gorm.DB, Id int, pagination p
 		ServiceRequestStatusName:     StatusResponses.ServiceRequestStatusDescription,
 		ServiceRequestDocumentNumber: entity.ServiceRequestDocumentNumber,
 		ServiceRequestDate:           ServiceRequestDate,
+		ServiceTypeId:                entity.ServiceTypeId,
 		ProfitCenterId:               entity.ProfitCenterId,
 		ProfitCenterName:             serviceprofitCenterResponses.ServiceProfitCenterName,
 		DealerRepresentativeName:     dealerRepresentativeResponses.DealerRepresentativeName,

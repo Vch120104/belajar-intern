@@ -111,6 +111,7 @@ type ServiceRequestResponse struct {
 	ServiceRequestStatusName     string `json:"service_request_status_name"`
 	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
 	ServiceRequestDate           string `json:"service_request_date"`
+	ServiceTypeId                int    `json:"service_type_id"`
 	//BrandId                      int                           `json:"brand_id"`
 	BrandName string `json:"brand_name"`
 	//ModelId                      int                           `json:"model_id"`
