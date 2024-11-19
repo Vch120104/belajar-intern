@@ -1,13 +1,15 @@
 package transactionsparepartrepositoryimpl
 
 import (
-	"after-sales/api/config"
 	masteritementities "after-sales/api/entities/master/item"
 	"after-sales/api/exceptions"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"net/http"
 	"strconv"
@@ -73,37 +75,31 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		newFilterCondition = append(newFilterCondition, filter)
 	}
 
-	companyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(companyId)
-	companyPayloads := transactionsparepartpayloads.ItemInquiryCompanyResponse{}
-	if err := utils.Get(companyUrl, &companyPayloads, nil); err != nil {
+	companyResponse, companyError := generalserviceapiutils.GetCompanyDataById(companyId)
+	if companyError != nil || companyResponse.CompanyId == 0 {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "company does not exist",
-			Err:        err,
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("company does not exist"),
 		}
 	}
-	companyCode := companyPayloads.CompanyCode
+	companyCode := companyResponse.CompanyCode
 
-	companySessionUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(companySessionId)
-	companySessionPayloads := transactionsparepartpayloads.ItemInquiryCompanyResponse{}
-	if err := utils.Get(companySessionUrl, &companySessionPayloads, nil); err != nil {
+	companySessionResponse, companySessionError := generalserviceapiutils.GetCompanyDataById(companySessionId)
+	if companySessionError != nil || companySessionResponse.CompanyId == 0 {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "company session does not exist",
-			Err:        err,
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("company session does not exist"),
 		}
 	}
 
-	companySessionReferenceUrl := config.EnvConfigs.GeneralServiceUrl + "company-reference/" + strconv.Itoa(companySessionId)
-	companySessionReferencePayloads := transactionsparepartpayloads.ItemInquiryCompanyReferenceResponse{}
-	if err := utils.Get(companySessionReferenceUrl, &companySessionReferencePayloads, nil); err != nil {
+	companySessionReferenceResponse, companySessionReferenceError := generalserviceapiutils.GetCompanyReferenceById(companySessionId)
+	if companySessionReferenceError != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "company reference does not exist",
-			Err:        err,
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("company session reference does not exist"),
 		}
 	}
-	currencyId := companySessionReferencePayloads.CurrencyId
+	currencyId := companySessionReferenceResponse.CurrencyId
 
 	var priceListCodeId int
 	entitiesItemPriceCode := masteritementities.ItemPriceCode{}
@@ -118,24 +114,22 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		}
 	}
 
-	currentPeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(companyId) + "&closing_module_detail_code=SP"
-	currentPeriodPayloads := transactionsparepartpayloads.ItemInquiryCurrentPeriodResponse{}
-	if err := utils.Get(currentPeriodUrl, &currentPeriodPayloads, nil); err != nil {
+	currentPeriodResponse, currentResponseError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if currentResponseError != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "current period does not exist",
-			Err:        err,
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("current period does not exist"),
 		}
 	}
-	periodYear := currentPeriodPayloads.PeriodYear
-	periodMonth := currentPeriodPayloads.PeriodMonth
+	periodYear := currentPeriodResponse.PeriodYear
+	periodMonth := currentPeriodResponse.PeriodMonth
 
 	var baseModelQuery *gorm.DB
 
 	currentTime := time.Now().Truncate(24 * time.Hour)
 
 	// View other company other than NMDI and KIA 1
-	if companySessionId != companyId && !checkCompany(companyPayloads.CompanyCode) {
+	if companySessionId != companyId && !checkCompany(companyResponse.CompanyCode) {
 		lastEffectiveDate := tx.Table("mtr_item_price_list mipl1").
 			Select("mipl1.effective_date").
 			Where("mipl1.brand_id = mtr_item_detail.brand_id").
@@ -275,7 +269,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 	}
 
 	// from other company view NMDI / KIA
-	if companySessionId != companyId && checkCompany(companyPayloads.CompanyCode) {
+	if companySessionId != companyId && checkCompany(companyResponse.CompanyCode) {
 		lastEffectiveDate := tx.Table("mtr_item_price_list mipl1").
 			Select("mipl1.effective_date").
 			Where("mipl1.brand_id = mtr_item_detail.brand_id").
@@ -361,20 +355,19 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		baseModelQuery = baseModelQuery.Joins("LEFT JOIN (SELECT '' AS available_in_other_dealer) O ON O.available_in_other_dealer = ''")
 	}
 
-	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=IN"
-	itemGroupPayloads := []transactionsparepartpayloads.ItemInquiryItemGroupResponse{}
-	if err := utils.GetArray(itemGroupUrl, &itemGroupPayloads, nil); err != nil {
+	itemGroupParams := generalserviceapiutils.GetAllItemGroupParams{Page: 0, Limit: 1, ItemGroupCode: "IN"}
+	itemGroupResponse, itemGroupError := generalserviceapiutils.GetAllItemGroup(itemGroupParams)
+	if itemGroupError != nil || len(itemGroupResponse.Data) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "item group does not exist",
-			Err:        err,
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("item group inventory is not found"),
 		}
 	}
-	itemGroupInventoryId := itemGroupPayloads[0].ItemGroupId
+	itemGroupInventoryId := itemGroupResponse.Data[0].ItemGroupId
 
-	companyBrandUrl := config.EnvConfigs.GeneralServiceUrl + "company-brand/" + strconv.Itoa(companyId) + "?page=0&limit=1000000"
-	companyBrandPayloads := []transactionsparepartpayloads.ItemInquiryCompanyBrandResponse{}
-	if err := utils.GetArray(companyBrandUrl, &companyBrandPayloads, nil); err != nil {
+	companyBrandParams := generalserviceapiutils.CompanyBrandParams{Page: 0, Limit: 1000000}
+	companyBrandResponse, companyBrandError := generalserviceapiutils.GetCompanyBrandByCompanyPagination(companyId, companyBrandParams)
+	if companyBrandError != nil || len(companyBrandResponse.Data) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "company brand does not exist",
@@ -382,7 +375,7 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 		}
 	}
 	companyBrandIds := []int{}
-	for _, companyBrand := range companyBrandPayloads {
+	for _, companyBrand := range companyBrandResponse.Data {
 		companyBrandIds = append(companyBrandIds, companyBrand.BrandId)
 	}
 
@@ -450,23 +443,16 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 
 	if len(paginatedData) > 0 {
 		brandIds := []int{}
-		brandIdsStr := ""
-
 		for _, data := range paginatedData {
-			if isNotInList(brandIds, data["BrandId"].(int)) {
-				str := strconv.Itoa(data["BrandId"].(int))
-				brandIdsStr += str + ","
-				brandIds = append(brandIds, data["BrandId"].(int))
-			}
+			brandIds = append(brandIds, data["BrandId"].(int))
 		}
 
-		brandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand-multi-id/" + brandIdsStr
-		brandResponse := []transactionsparepartpayloads.ItemInquiryBrandResponse{}
-		if err := utils.GetArray(brandUrl, &brandResponse, nil); err != nil {
+		var brandResponse []map[string]any
+		brandError := salesserviceapiutils.GetUnitBrandByMultiId(brandIds, &brandResponse)
+		if brandError != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Message:    "fail to fetch unit brand data",
-				Err:        err,
+				Err:        errors.New("error fetching unit brand data"),
 			}
 		}
 
@@ -477,7 +463,17 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 			}
 		}
 
-		joinedData := utils.DataFrameLeftJoin(paginatedData, brandResponse, "BrandId")
+		pascalBrandResponse := []map[string]interface{}{}
+		for _, brand := range brandResponse {
+			temp := map[string]interface{}{
+				"BrandId":   brand["brand_id"],
+				"BrandCode": brand["brand_code"],
+				"BrandName": brand["brand_name"],
+			}
+			pascalBrandResponse = append(pascalBrandResponse, temp)
+		}
+
+		joinedData := utils.DataFrameLeftJoin(paginatedData, pascalBrandResponse, "BrandId")
 
 		// start usp_comToolTip @strEntity = 'ItemInquiryBrandModel'
 		itemIds := []int{}
@@ -505,50 +501,47 @@ func (i *ItemInquiryRepositoryImpl) GetAllItemInquiry(tx *gorm.DB, filterConditi
 
 			ttpBrandIds := []int{}
 			ttpModelids := []int{}
-			ttpBrandIdsStr := ""
-			ttpModelIdsStr := ""
 
 			for _, dataa := range responseItemDetails {
-				if isNotInList(ttpBrandIds, dataa.BrandId) {
-					str := strconv.Itoa(dataa.BrandId)
-					ttpBrandIdsStr += str + ","
-					ttpBrandIds = append(ttpBrandIds, dataa.BrandId)
-				}
-				if isNotInList(ttpModelids, dataa.ModelId) {
-					str := strconv.Itoa(dataa.ModelId)
-					ttpModelIdsStr += str + ","
-					ttpModelids = append(ttpModelids, dataa.ModelId)
-				}
+				ttpBrandIds = append(ttpBrandIds, dataa.BrandId)
+				ttpModelids = append(ttpModelids, dataa.ModelId)
 			}
 
-			ttpBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand-multi-id/" + ttpBrandIdsStr
-			ttpBrandResponse := []transactionsparepartpayloads.ItemInquiryBrandResponse{}
-			if err := utils.GetArray(ttpBrandUrl, &ttpBrandResponse, nil); err != nil {
+			ttpBrandResponse := []map[string]interface{}{}
+			ttpBrandError := salesserviceapiutils.GetUnitBrandByMultiId(ttpBrandIds, &ttpBrandResponse)
+			if ttpBrandError != nil {
 				return pages, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
 					Message:    "fail to fetch ttp unit brand data",
 					Err:        err,
 				}
 			}
-			if len(ttpBrandResponse) == 0 {
+			ttpBrandResponseStruct := []transactionsparepartpayloads.ItemInquiryBrandResponse{}
+			for _, resp := range ttpBrandResponse {
+				temp := transactionsparepartpayloads.ItemInquiryBrandResponse{
+					BrandId:   resp["brand_id"].(int),
+					BrandCode: resp["brand_code"].(string),
+				}
+				ttpBrandResponseStruct = append(ttpBrandResponseStruct, temp)
+			}
+			if len(ttpBrandResponseStruct) == 0 {
 				return pages, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusNoContent,
+					StatusCode: http.StatusInternalServerError,
 					Err:        errors.New("ttp unit brand does not exist"),
 				}
 			}
 
-			ttpModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model-multi-id/" + ttpModelIdsStr
-			ttpModelResponse := []transactionsparepartpayloads.ItemInquiryModelResponse{}
-			if err := utils.GetArray(ttpModelUrl, &ttpModelResponse, nil); err != nil {
+			ttpModelResponse, ttpModelError := salesserviceapiutils.GetUnitModelByMultiId(ttpModelids)
+			if ttpModelError != nil {
 				return pages, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusInternalServerError,
-					Message:    "fail to fetch ttp unit model data",
+					Message:    "fail to fetch ttp unit brand data",
 					Err:        err,
 				}
 			}
 			if len(ttpModelResponse) == 0 {
 				return pages, &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusNoContent,
+					StatusCode: http.StatusInternalServerError,
 					Err:        errors.New("ttp unit model does not exist"),
 				}
 			}
