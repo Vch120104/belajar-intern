@@ -201,7 +201,23 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 	return entities, nil
 }
 
-func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse) {
+func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
+
+	var existing masteritementities.ItemSubstituteDetail
+	if err := tx.Where("item_id = ? AND item_substitute_id = ?", req.ItemId, id).First(&existing).Error; err == nil {
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "duplicate item in substitute detail",
+			Err:        errors.New("duplicate item in substitute detail"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Gagal memeriksa data existing",
+			Err:        err,
+		}
+	}
+
 	entities := masteritementities.ItemSubstituteDetail{
 		IsActive:               req.IsActive,
 		ItemSubstituteDetailId: req.ItemSubstituteDetailId,
@@ -210,16 +226,16 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req
 		Quantity:               req.Quantity,
 		Sequence:               req.Sequence,
 	}
-	err := tx.Save(&entities).Error
 
+	err := tx.Save(&entities).Error
 	if err != nil {
-		return false, &exceptions.BaseErrorResponse{
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return entities, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {

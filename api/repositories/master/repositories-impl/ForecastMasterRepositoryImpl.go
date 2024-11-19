@@ -173,7 +173,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 			}
 		}
 
-		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type-filter?order_type_name=" + orderTypeName
+		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + orderTypeName
 		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
@@ -212,7 +212,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 		}
 	}
 
-	orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type"
+	orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type"
 	if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,

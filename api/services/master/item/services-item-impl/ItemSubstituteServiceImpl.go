@@ -81,7 +81,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.It
 	return result, nil
 }
 
-func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (bool, *exceptions.BaseErrorResponse) {
+func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.SaveItemSubstituteDetail(tx, req, id)
