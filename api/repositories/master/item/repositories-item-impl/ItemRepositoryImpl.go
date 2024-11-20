@@ -122,7 +122,7 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			return nil, 0, 0, supplierError
 		}
 
-		for _, supplier := range supplierResponse.Data {
+		for _, supplier := range supplierResponse {
 			supplierIds = append(supplierIds, supplier.SupplierId)
 		}
 
