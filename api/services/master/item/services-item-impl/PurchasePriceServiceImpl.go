@@ -363,7 +363,6 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 			PurchasePriceId: id,
 		})
 	}
-
 	return results, nil
 }
 
