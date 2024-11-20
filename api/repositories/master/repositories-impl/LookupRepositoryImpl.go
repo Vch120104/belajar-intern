@@ -1922,10 +1922,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
-	fmt.Println("Final Results:", results)
-	fmt.Println("Total Rows:", totalRows)
-	fmt.Println("Total Pages:", totalPages)
-
 	return results, int(totalRows), totalPages, nil
 }
 
@@ -2581,10 +2577,8 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 				if !customerExists {
 					billCode = ""
 				} else {
-					// Handle customer logic
 					var typeMap string
-
-					// First query: check company_type in mtr_company_type_map_from_customer
+					// check company_type in mtr_company_type_map_from_customer
 					if err := tx.Table("dms_microservices_general_dev.dbo.mtr_company_type_map_from_customer").
 						Select("client_type_id").
 						Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
@@ -2610,7 +2604,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 						}
 					}
 
-					// Assign billCode based on customer type
 					switch typeMap {
 					case supcusDealer:
 						// Get VAT_REG_NO for company and supcus
@@ -2639,7 +2632,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
 					First(&typeMap).Error
 
-				// If no result found in company_type_map_from_customer, query the mtr_supplier table
 				if err == gorm.ErrRecordNotFound {
 					err = tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
 						Select("client_type_id").
@@ -2655,7 +2647,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					}
 				}
 
-				// Assign billCode based on supplier type
 				switch typeMap {
 				case supcusDealer:
 					if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
@@ -2677,8 +2668,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 			}
 		}
 	}
-
-	// Additional logic for other supcusType cases ('S', 'P', 'C', 'W') can be added here.
 
 	return billCode, nil
 }
@@ -2715,28 +2704,23 @@ func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusC
 // GetLineTypeByItemCode retrieves the line type based on the item code
 func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (int, *exceptions.BaseErrorResponse) {
 	var (
-		lineType         int
-		itemGrp          string
-		itemTypeId       int
-		itemCls          string
-		itmClsSublet     = "SB" // Assuming these are constants in your utils
-		lineTypeSublet   = utils.LinetypeSublet
-		itemClsFee       = "WF"
-		itemGrpInventory = "IN"
-		itemClsAccs      = "AC"
-		itemClsSv        = "SV"
+		lineType       int
+		itemGrp        int
+		itemTypeId     int
+		itemCls        int
+		lineTypeSublet = utils.LinetypeSublet
 	)
 
 	// Retrieve item details
 	var itemDetails struct {
-		ItemGroupId string
+		ItemGroupId int
 		ItemTypeId  int
-		ItemClassId string
+		ItemClassId int
 	}
 
 	if err := tx.Model(&masteritementities.Item{}).
-		Select("item_group_id, item_type, item_class_id").
-		Where("item_code = ? ", itemCode). // Add record status check
+		Select("item_group_id, item_type_id, item_class_id").
+		Where("item_code = ? ", itemCode).
 		Scan(&itemDetails).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2749,35 +2733,33 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	itemTypeId = itemDetails.ItemTypeId
 	itemCls = itemDetails.ItemClassId
 
-	// Determine line type based on the item details
-	if itemGrp == itemGrpInventory {
+	if itemGrp == 2 {
 		if itemTypeId == 1 {
 			switch itemCls {
-			case "SP":
+			case 69 /*"SP"*/ :
 				lineType = utils.LinetypeSparepart
-			case "OL":
+			case 70 /*"OL"*/ :
 				lineType = utils.LinetypeOil
-			case "MT", itmClsSublet:
+			case 71 /*"MT"*/, 72:
 				lineType = utils.LinetypeMaterial
-			case "CM":
+			case 75 /*"CM"*/ :
 				lineType = utils.LinetypeConsumableMaterial
-			case itemClsAccs:
+			case 74 /*"SR"*/ :
 				lineType = utils.LinetypeAccesories
-			case itemClsSv:
+			case 77 /*"SV"*/ :
 				lineType = utils.LinetypeSublet
 			default:
 				lineType = utils.LinetypeAccesories
 			}
-		} else if itemCls == itemClsFee {
+		} else if itemCls == 73 /*"WF"*/ {
 			lineType = lineTypeSublet
-		} else if itemCls == itemClsAccs && itemTypeId == 2 {
+		} else if itemCls == 74 && itemTypeId == 2 {
 			lineType = utils.LinetypeOperation
 		}
-	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemTypeId == 2 && itemCls == itemClsFee) {
+	} else if itemGrp == 6 || (itemGrp == 2 && itemTypeId == 2 && itemCls == 73 /*"WF"*/) {
 		lineType = lineTypeSublet
 	}
 
-	// Check if the item exists
 	var itemExists int64
 	if err := tx.Model(&masteritementities.Item{}).
 		Where("item_code = ? ", itemCode).
@@ -2816,7 +2798,6 @@ func (r *LookupRepositoryImpl) GetWhsGroup(tx *gorm.DB, companyCode int) (int, *
 		err      error
 	)
 
-	// Execute the GORM query
 	if err = tx.Table("dms_microservices_aftersales_dev.dbo.mtr_warehouse_group_mapping").
 		Select("warehouse_group_type_id").
 		Where("company_id = ?", companyCode).
@@ -2849,7 +2830,6 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 		}
 	}
 
-	// Main query to fetch campaign discount details based on the input parameters
 	var campaignDiscount masterpayloads.CampaignDiscount
 
 	if err := tx.Table("mtr_campaign").
@@ -3571,4 +3551,35 @@ func (r *LookupRepositoryImpl) ReferenceTypeSalesOrderByID(tx *gorm.DB, referenc
 	}
 
 	return mappedResult, totalPages, int(totalRows), nil
+}
+
+func (r *LookupRepositoryImpl) GetLineTypeByReferenceType(tx *gorm.DB, referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var lineTypes []map[string]interface{}
+	var excludedIds []int
+
+	switch referenceTypeId {
+	case 1:
+		excludedIds = []int{1, 8}
+	case 2:
+		excludedIds = []int{2, 8}
+	default:
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid reference type ID",
+			Err:        fmt.Errorf("unsupported reference type ID: %d", referenceTypeId),
+		}
+	}
+
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_line_type").
+		Select("line_type_id, line_type_code, line_type_name").
+		Where("line_type_id NOT IN ?", excludedIds).
+		Find(&lineTypes).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get line type",
+			Err:        err,
+		}
+	}
+
+	return lineTypes, nil
 }
