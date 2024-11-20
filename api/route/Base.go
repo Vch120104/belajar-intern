@@ -1164,6 +1164,7 @@ func LabourSellingPriceDetailRouter(
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
 	router.Post("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
 	router.Post("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
+	router.Delete("/{multi_id}", LabourSellingPriceDetailController.DeleteLabourSellingPriceDetail)
 
 	return router
 }

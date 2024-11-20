@@ -130,3 +130,13 @@ func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPriceDetail(req mastero
 	}
 	return results, nil
 }
+
+func (s *LabourSellingPriceServiceImpl) DeleteLabourSellingPriceDetail(iddet []int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	deletemultiid, err := s.labourSellingPriceRepo.DeleteLabourSellingPriceDetail(tx, iddet)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return deletemultiid, nil
+}

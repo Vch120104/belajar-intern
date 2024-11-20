@@ -693,3 +693,30 @@ func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPriceDetail(tx *gorm
 
 	return entities.LabourSellingPriceDetailId, nil
 }
+
+func (r *LabourSellingPriceRepositoryImpl) DeleteLabourSellingPriceDetail(tx *gorm.DB, iddet []int) (bool, *exceptions.BaseErrorResponse) {
+	var entities []masteroperationentities.LabourSellingPriceDetail
+
+	result := tx.Where("labour_selling_price_detail_id IN ?", iddet).Find(&entities)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        result.Error,
+			}
+		}
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	if err := tx.Delete(&entities).Error; err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}

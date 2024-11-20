@@ -16,4 +16,5 @@ type LabourSellingPriceService interface {
 	SaveLabourSellingPriceDetail(req masteroperationpayloads.LabourSellingPriceDetailRequest) (int, *exceptions.BaseErrorResponse)
 	Duplicate(headerId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
 	SaveDuplicate(req masteroperationpayloads.SaveDuplicateLabourSellingPrice) (bool, *exceptions.BaseErrorResponse)
+	DeleteLabourSellingPriceDetail(iddet []int) (bool, *exceptions.BaseErrorResponse)
 }
