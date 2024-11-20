@@ -70,8 +70,4 @@ type LocationAvailableResponse struct {
 	WarehouseLocationId   int    `json:"warehouse_location_id"`
 	WarehouseLocationCode string `json:"warehouse_location_code"`
 	WarehouseLocationName string `json:"warehouse_location_name"`
-	// CompanyId             int     `json:"company_id"`
-	// WarehouseGroupId      int     `json:"warehouse_group_id"`
-	// WarehouseId           int     `json:"warehouse_id"`
-	// QuantityOnHand        float64 `json:"quantity_on_hand"`
 }
