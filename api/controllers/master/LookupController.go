@@ -20,6 +20,7 @@ type LookupController interface {
 	ItemOprCodeByCode(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeByID(writer http.ResponseWriter, request *http.Request)
 	GetLineTypeByItemCode(writer http.ResponseWriter, request *http.Request)
+	GetLineTypeByReferenceType(writer http.ResponseWriter, request *http.Request)
 	GetCampaignMaster(writer http.ResponseWriter, request *http.Request)
 	ItemOprCodeWithPrice(writer http.ResponseWriter, request *http.Request)
 	VehicleUnitMaster(writer http.ResponseWriter, request *http.Request)
@@ -787,4 +788,25 @@ func (r *LookupControllerImpl) ReferenceTypeSalesOrderByID(writer http.ResponseW
 	}
 
 	payloads.NewHandleSuccessPagination(writer, referenceType, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) GetLineTypeByReferenceType(writer http.ResponseWriter, request *http.Request) {
+	referenceTypeStr := chi.URLParam(request, "reference_type_id")
+	referenceType, err := strconv.Atoi(referenceTypeStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid Reference Type", http.StatusBadRequest)
+		return
+	}
+
+	lookup, baseErr := r.LookupService.GetLineTypeByReferenceType(referenceType)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, lookup, "Get Data Successfully", http.StatusOK)
 }
