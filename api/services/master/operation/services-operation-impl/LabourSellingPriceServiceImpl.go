@@ -74,15 +74,15 @@ func (s *LabourSellingPriceServiceImpl) Duplicate(headerId int) ([]map[string]in
 }
 
 // GetAllSellingPrice implements masteroperationservice.LabourSellingPriceService.
-func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.labourSellingPriceRepo.GetAllSellingPrice(tx, filter, pages)
+	results, totalPages, totalRows, err := s.labourSellingPriceRepo.GetAllSellingPrice(tx, filter, pages)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
-		return results, err
+		return results, totalPages, totalRows, err
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *LabourSellingPriceServiceImpl) GetLabourSellingPriceById(Id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
