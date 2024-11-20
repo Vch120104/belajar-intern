@@ -37,6 +37,7 @@ type LookupController interface {
 	ReferenceTypeWorkOrderByID(writer http.ResponseWriter, request *http.Request)
 	ReferenceTypeSalesOrder(writer http.ResponseWriter, request *http.Request)
 	ReferenceTypeSalesOrderByID(writer http.ResponseWriter, request *http.Request)
+	LocationAvailable(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -787,4 +788,45 @@ func (r *LookupControllerImpl) ReferenceTypeSalesOrderByID(writer http.ResponseW
 	}
 
 	payloads.NewHandleSuccessPagination(writer, referenceType, "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+}
+
+func (r *LookupControllerImpl) LocationAvailable(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"company_id":                       queryValues.Get("company_id"),
+		"warehouse_id":                     queryValues.Get("warehouse_id"),
+		"mtr_warehouse_location.is_active": queryValues.Get("is_active"),
+		"mtr_warehouse_location.warehouse_location_code": queryValues.Get("warehouse_location_code"),
+		"mtr_warehouse_location.warehouse_location_name": queryValues.Get("warehouse_location_name"),
+	}
+
+	if queryParams["company_id"] == "" {
+		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusBadRequest)
+		return
+	}
+	if queryParams["warehouse_id"] == "" {
+		payloads.NewHandleError(writer, "warehouse_id cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	pages := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	location, baseErr := r.LookupService.LocationAvailable(criteria, pages)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	payloads.NewHandleSuccessPagination(writer, location.Rows, "Get Data Successfully!", http.StatusOK, location.Limit, location.Page, location.TotalRows, location.TotalPages)
 }

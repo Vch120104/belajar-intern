@@ -290,3 +290,15 @@ func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages p
 
 	return lookup, totalPages, totalRows, nil
 }
+
+func (s *LookupServiceImpl) LocationAvailable(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	location, baseErr := s.LookupRepo.LocationAvailable(tx, filterCondition, pages)
+	if baseErr != nil {
+		return location, baseErr
+	}
+
+	return location, nil
+}
