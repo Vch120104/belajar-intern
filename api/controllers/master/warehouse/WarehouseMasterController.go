@@ -372,6 +372,7 @@ func (r *WarehouseMasterControllerImpl) GetAuthorizeUser(writer http.ResponseWri
 	filter := map[string]string{
 		"mtr_warehouse_authorize.warehouse_authorize_id": queryValues.Get("warehouse_authorize_id"),
 		"mtr_warehouse_authorize.employee_id":            queryValues.Get("employee_id"),
+		"mtr_user_details.user_id":                       queryValues.Get("user_id"),
 		"mtr_user_details.employee_name":                 queryValues.Get("employee_name"),
 		"mtr_warehouse_authorize.company_id":             queryValues.Get("company_id"),
 		"mtr_warehouse_authorize.warehouse_id":           queryValues.Get("warehouse_id"),
