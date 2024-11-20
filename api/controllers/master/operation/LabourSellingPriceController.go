@@ -55,13 +55,13 @@ func (r *LabourSellingPriceControllerImpl) GetAllSellingPrice(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	result, err := r.LabourSellingPriceService.GetAllSellingPrice(criteria, paginate)
+	paginatedData, totalPages, totalRows, err := r.LabourSellingPriceService.GetAllSellingPrice(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
 
 }
 
