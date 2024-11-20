@@ -291,6 +291,18 @@ func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages p
 	return lookup, totalPages, totalRows, nil
 }
 
+func (s *LookupServiceImpl) GetLineTypeByReferenceType(referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lineType, baseErr := s.LookupRepo.GetLineTypeByReferenceType(tx, referenceTypeId)
+	if baseErr != nil {
+		return lineType, baseErr
+	}
+
+	return lineType, nil
+}
+
 func (s *LookupServiceImpl) LocationAvailable(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
