@@ -13,6 +13,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -23,6 +24,7 @@ type LabourSellingPriceDetailController interface {
 	SaveLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request)
 	Duplicate(writer http.ResponseWriter, request *http.Request)
 	SaveDuplicate(writer http.ResponseWriter, request *http.Request)
+	DeleteLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request)
 }
 type LabourSellingPriceDetailControllerImpl struct {
 	LabourSellingPriceService masteroperationservice.LabourSellingPriceService
@@ -147,4 +149,43 @@ func (r *LabourSellingPriceDetailControllerImpl) SaveLabourSellingPriceDetail(wr
 	message = "Create Data Successfully!"
 
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
+}
+
+func (r *LabourSellingPriceDetailControllerImpl) DeleteLabourSellingPriceDetail(writer http.ResponseWriter, request *http.Request) {
+
+	multiId := chi.URLParam(request, "multi_id")
+	if multiId == "[]" {
+		payloads.NewHandleError(writer, "Invalid service request detail multi ID", http.StatusBadRequest)
+		return
+	}
+
+	multiId = strings.Trim(multiId, "[]")
+	elements := strings.Split(multiId, ",")
+
+	var intIds []int
+	for _, element := range elements {
+		num, err := strconv.Atoi(strings.TrimSpace(element))
+		if err != nil {
+			payloads.NewHandleError(writer, "Error converting data to integer", http.StatusBadRequest)
+			return
+		}
+		intIds = append(intIds, num)
+	}
+
+	success, baseErr := r.LabourSellingPriceService.DeleteLabourSellingPriceDetail(intIds)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Labour selling price detail not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Labour selling price deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete Labour selling price", http.StatusInternalServerError)
+	}
+
 }
