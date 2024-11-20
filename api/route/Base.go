@@ -1839,6 +1839,7 @@ func LookupRouter(
 	router.Get("/item-opr-code/{linetype_id}/by-code/{item_code}", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/by-id/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
+	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
@@ -1856,6 +1857,7 @@ func LookupRouter(
 	router.Get("/reference-type-work-order/{work_order_system_number}", LookupController.ReferenceTypeWorkOrderByID)
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
+	router.Get("/location-available", LookupController.LocationAvailable)
 
 	return router
 }

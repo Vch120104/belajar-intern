@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"reflect"
 	"time"
 )
@@ -19,7 +20,7 @@ const (
 	GeneralURL     = "https://testing-backendims.indomobil.co.id/general-service/v1/"
 	AftersalesURL  = "https://testing-backendims.indomobil.co.id/aftersales-service/v1/"
 	requestTimeout = 10 * time.Second
-	maxRetries     = 3 // Number of retries for failed requests
+	maxRetries     = 2 // Number of retries for failed requests
 )
 
 type ResponseBody struct {
@@ -58,6 +59,10 @@ func handleResponse(resp *http.Response, result interface{}) error {
 
 	// Log the status code for better debugging
 	//log.Printf("Received HTTP status: %d", resp.StatusCode)
+
+	if resp.Request.Context().Err() == context.DeadlineExceeded {
+		return fmt.Errorf("request to %s timed out", resp.Request.URL)
+	}
 
 	// Check for non-200 status code
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
@@ -157,6 +162,9 @@ func makeRequest(method, url string, reqBody []byte, result interface{}) error {
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
+		if os.IsTimeout(err) {
+			return fmt.Errorf("request timed out: %w", err)
+		}
 		return fmt.Errorf("error executing request: %w", err)
 	}
 

@@ -64,3 +64,10 @@ type GetCurrentPeriodResponse struct {
 	PeriodMonth       string    `json:"period_month"`
 	CurrentPeriodDate time.Time `json:"current_period_date"`
 }
+
+type LocationAvailableResponse struct {
+	IsActive              bool   `json:"is_active"`
+	WarehouseLocationId   int    `json:"warehouse_location_id"`
+	WarehouseLocationCode string `json:"warehouse_location_code"`
+	WarehouseLocationName string `json:"warehouse_location_name"`
+}
