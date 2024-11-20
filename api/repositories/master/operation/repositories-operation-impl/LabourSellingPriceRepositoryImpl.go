@@ -514,6 +514,26 @@ func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPrice(tx *gorm.DB, r
 
 func (r *LabourSellingPriceRepositoryImpl) SaveLabourSellingPriceDetail(tx *gorm.DB, request masteroperationpayloads.LabourSellingPriceDetailRequest) (int, *exceptions.BaseErrorResponse) {
 
+	entity_check := masteroperationentities.LabourSellingPriceDetail{}
+	response := masteroperationpayloads.LabourSellingPriceDetailResponse{}
+	LabourSellingPriceId := request.LabourSellingPriceId
+	ModelId := request.ModelId
+	VariantId := request.VariantId
+
+	err1 := tx.Model(&entity_check).
+		Where("labour_selling_price_id = ? AND model_id = ? AND variant_id = ?", LabourSellingPriceId, ModelId, VariantId).
+		First(&response).
+		Error
+
+	if err1 == nil {
+		return -1, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Err:        err1,
+			Message: "Data already exist",
+		}
+	}
+
+
 	entities := masteroperationentities.LabourSellingPriceDetail{
 		LabourSellingPriceId: request.LabourSellingPriceId,
 		ModelId:              request.ModelId,
