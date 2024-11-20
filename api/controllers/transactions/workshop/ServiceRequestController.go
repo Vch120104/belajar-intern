@@ -24,6 +24,7 @@ type ServiceRequestControllerImp struct {
 type ServiceRequestController interface {
 	GenerateDocumentNumberServiceRequest(writer http.ResponseWriter, request *http.Request)
 	NewStatus(writer http.ResponseWriter, request *http.Request)
+	NewServiceType(writer http.ResponseWriter, request *http.Request)
 
 	GetAll(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
@@ -668,4 +669,35 @@ func (r *ServiceRequestControllerImp) NewStatus(writer http.ResponseWriter, requ
 
 	payloads.NewHandleSuccess(writer, statuses, "List of service request statuses", http.StatusOK)
 
+}
+
+// NewServiceType get dropdown service type
+// @Summary Get dropdown service type
+// @Description Get dropdown service type
+// @Tags Transaction : Workshop Service Request
+// @Accept json
+// @Produce json
+// @Success 200 {object} payloads.Response
+// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
+// @Router /v1/service-request/dropdown-service-type [get]
+func (r *ServiceRequestControllerImp) NewServiceType(writer http.ResponseWriter, request *http.Request) {
+	queryParams := request.URL.Query()
+	var filters []utils.FilterCondition
+
+	for key, values := range queryParams {
+		for _, value := range values {
+			filters = append(filters, utils.FilterCondition{
+				ColumnField: key,
+				ColumnValue: value,
+			})
+		}
+	}
+
+	serviceTypes, err := r.ServiceRequestService.NewServiceType(filters)
+	if err != nil {
+		exceptions.NewAppException(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, serviceTypes, "List of service request service types", http.StatusOK)
 }
