@@ -304,7 +304,7 @@ type PurchaseRequestHeaderSaveRequest struct {
 	BackOrder                  bool      `parent_entity:"trx_purchase_request" json:"back_order"`
 	SetOrder                   bool      `json:"set_order" parent_entity:"trx_purchase_request"`
 	CurrencyId                 int       `json:"currency_id" parent_entity:"trx_purchase_request"`
-	ItemClassId                int       `json:"column:item_class_id;size:30;" parent_entity:"trx_purchase_request"`
+	ItemClassId                int       `json:"item_class_id;" parent_entity:"trx_purchase_request"`
 	ChangeNo                   int       `json:"change_no" parent_entity:"trx_purchase_request"`
 	CreatedByUserId            int       `json:"created_by_user_id" parent_entity:"trx_purchase_request"`
 	CreatedDate                time.Time `json:"created_date" parent_entity:"trx_purchase_request"`
@@ -325,6 +325,7 @@ type PurchaseRequestSaveDetailRequestPayloads struct {
 	CreatedDate                 time.Time `json:"created_date"`
 	UpdatedByUserId             int       `json:"updated_by_user_id"`
 	UpdatedDate                 time.Time `json:"updated_date"`
+	ItemId                      int       `json:"item_id"`
 }
 
 type PurchaseRequestItemGetAll struct {
@@ -334,10 +335,15 @@ type PurchaseRequestItemGetAll struct {
 	ItemName              string  `json:"item_name" gorm:"column:item_name"`
 	ItemClassName         string  `json:"item_class_name" gorm:"column:item_class_name"`
 	ItemTypeId            int     `json:"item_type_id" gorm:"column:item_type_id"`
+	ItemTypeCode          string  `json:"item_type_code"`
+	ItemLevel1Id          int     `json:"item_level_1_id" gorm:"column:item_level_1_id"`
+	ItemLevel2Id          int     `json:"item_level_2_id" gorm:"column:item_level_2_id"`
+	ItemLevel3Id          int     `json:"item_level_3_id" gorm:"column:item_level_3_id"`
+	ItemLevel4Id          int     `json:"item_level_4_id" gorm:"column:item_level_4_id"`
 	ItemLevel1            string  `json:"item_level_1" gorm:"column:item_level_1"`
 	ItemLevel2            string  `json:"item_level_2" gorm:"column:item_level_2"`
 	ItemLevel3            string  `json:"item_level_3" gorm:"column:item_level_3"`
-	ItemLevel4            string  `json:"item_level_4" gorm:"column:item-level-4"`
+	ItemLevel4            string  `json:"item_level_4" gorm:"column:item_level_4"`
 	Quantity              float64 `json:"quantity" gorm:"column:quantity"`
 	UnitOfMeasurement     int     `json:"unit_of_measurement" gorm:"column:unit_of_measurement_type_id"`
 	UnitOfMeasurementCode string  `json:"unit_of_measurement_code" gorm:"column:uom_code"`
