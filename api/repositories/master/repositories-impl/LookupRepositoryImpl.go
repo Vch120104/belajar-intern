@@ -13,6 +13,7 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"math"
@@ -3704,6 +3705,63 @@ func (r *LookupRepositoryImpl) LocationAvailable(tx *gorm.DB, filterCondition []
 	pages.Rows = utils.ModifyKeysInResponse(paginateData)
 	pages.TotalPages = totalPages
 	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
+}
+
+// uspg_gmItem1_Select
+// IF @Option = 5
+func (r *LookupRepositoryImpl) ItemDetailForItemInquiry(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemDetail{}
+	payloads := []masterpayloads.ItemDetailForItemInquiryPayload{}
+
+	baseModelQuery := tx.Model(&entities).Select("model_id, variant_id")
+	// Where(masteritementities.ItemDetail{ItemDetailId: itemDetailId, BrandId: brandId})
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
+
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching item detail for item inquiry",
+			Err:        err,
+		}
+	}
+
+	finalJoinedData := []map[string]interface{}{}
+	if len(payloads) > 0 {
+		var modelIds []int
+		var variantIds []int
+
+		for _, data := range payloads {
+			modelIds = append(modelIds, data.ModelId)
+			variantIds = append(variantIds, data.VariantId)
+		}
+
+		modelResponse, modelError := salesserviceapiutils.GetUnitModelByMultiId(modelIds)
+		if modelError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching model data",
+				Err:        modelError.Err,
+			}
+		}
+
+		variantResponse, variantError := salesserviceapiutils.GetUnitVariantByMultiId(variantIds)
+		if variantError != nil {
+			return pages, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error fetching model data",
+				Err:        variantError.Err,
+			}
+		}
+
+		joinedData := utils.DataFrameLeftJoin(payloads, modelResponse, "ModelId")
+
+		finalJoinedData = utils.DataFrameLeftJoin(joinedData, variantResponse, "VariantId")
+	}
+
+	pages.Rows = utils.ModifyKeysInResponse(finalJoinedData)
 
 	return pages, nil
 }

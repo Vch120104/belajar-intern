@@ -314,3 +314,15 @@ func (s *LookupServiceImpl) LocationAvailable(filterCondition []utils.FilterCond
 
 	return location, nil
 }
+
+func (s *LookupServiceImpl) ItemDetailForItemInquiry(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, baseErr := s.LookupRepo.ItemDetailForItemInquiry(tx, filterCondition, pages)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}
