@@ -1841,6 +1841,7 @@ func LookupRouter(
 	router.Get("/reference-type-work-order/{work_order_system_number}", LookupController.ReferenceTypeWorkOrderByID)
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
+	router.Get("/location-available", LookupController.LocationAvailable)
 
 	return router
 }

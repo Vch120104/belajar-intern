@@ -39,4 +39,5 @@ type LookupRepository interface {
 	ReferenceTypeSalesOrder(tx *gorm.DB, paginate pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	ReferenceTypeSalesOrderByID(tx *gorm.DB, referenceId int, paginate pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetLineTypeByReferenceType(tx *gorm.DB, referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse)
+	LocationAvailable(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 }

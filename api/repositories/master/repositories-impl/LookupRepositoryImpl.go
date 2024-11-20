@@ -12,6 +12,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
 	"fmt"
 	"math"
@@ -3582,4 +3583,127 @@ func (r *LookupRepositoryImpl) GetLineTypeByReferenceType(tx *gorm.DB, reference
 	}
 
 	return lineTypes, nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'LocationAvailable'
+// Used for insert item location detail
+func (r *LookupRepositoryImpl) LocationAvailable(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocation{}
+	response := []masterpayloads.LocationAvailableResponse{}
+	var err error
+
+	var newFilter []utils.FilterCondition
+	var companyId int
+	var warehouseId int
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "company_id") {
+			companyId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "warehouse_id") {
+			warehouseId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		newFilter = append(newFilter, filter)
+	}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if periodError != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching company current period",
+			Err:        periodError.Err,
+		}
+	}
+
+	var existingWarehouseLocIds []int
+	err = tx.Model(&masteritementities.ItemLocation{}).
+		Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_location_item.item_id").
+		Joins("INNER JOIN mtr_item_group mig ON mig.item_group_id = mi.item_group_id").
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
+		Where("mwm.company_id = ?", companyId).
+		Where("mtr_location_item.warehouse_id = ?", warehouseId).
+		Where("mig.item_group_code = 'IN'").
+		Pluck("warehouse_location_id", &existingWarehouseLocIds).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching existing item location data",
+			Err:        err,
+		}
+	}
+	if len(existingWarehouseLocIds) == 0 {
+		existingWarehouseLocIds = []int{-1}
+	}
+	existingWarehouseLocIds = utils.RemoveDuplicateIds(existingWarehouseLocIds)
+
+	viewLocStock := tx.Table("mtr_location_stock mls").
+		Select(`
+			mls.item_inquiry_id,
+			mls.period_year,
+			mls.period_month,
+			mls.company_id,
+			mls.warehouse_group_id,
+			mls.warehouse_id,
+			mls.location_id,
+			(
+				ISNULL(quantity_sales, 0) +
+				ISNULL(quantity_transfer_out, 0) +
+				ISNULL(quantity_claim_out, 0) +
+				ISNULL(quantity_robbing_out, 0) +
+				ISNULL(quantity_assembly_out, 0)
+			) AS quantity_on_hand
+		`).
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.company_id = mls.company_id AND mwm.warehouse_id = mls.warehouse_id")
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mwm.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_id,
+			SUM(ISNULL(view_stock.quantity_on_hand, 0)) AS quantity_on_hand
+			`).
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_warehouse_location.warehouse_id").
+		Joins(`LEFT JOIN (?) view_stock ON view_stock.period_year = ?
+										AND view_stock.period_month = ?
+										AND view_stock.company_id = mwm.company_id
+										AND view_stock.warehouse_group_id = mtr_warehouse_location.warehouse_group_id
+										AND view_stock.warehouse_id = mtr_warehouse_location.warehouse_id
+										AND view_stock.location_id = mtr_warehouse_location.warehouse_location_id
+										`, viewLocStock, periodResponse.PeriodYear, periodResponse.PeriodMonth).
+		Where("warehouse_location_id NOT IN ?", existingWarehouseLocIds).
+		Where("mwm.company_id = ?", companyId).
+		Group(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mwm.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_id
+		`).
+		Order("warehouse_location_id ASC")
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, newFilter)
+	err = whereQuery.Scan(&response).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fethching location available data",
+			Err:        err,
+		}
+	}
+
+	paginateData, totalPages, totalRows := pagination.NewDataFramePaginate(response, &pages)
+
+	pages.Rows = utils.ModifyKeysInResponse(paginateData)
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
 }
