@@ -266,3 +266,15 @@ func (s *ServiceRequestServiceImpl) DeleteServiceDetailMultiId(idsys int, idserv
 
 	return deletemultiid, nil
 }
+
+func (s *ServiceRequestServiceImpl) NewServiceType(filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterServiceType, *exceptions.BaseErrorResponse) {
+
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollbackTrx(tx)
+
+	types, err := s.ServiceRequestRepository.NewServiceType(tx, filter)
+	if err != nil {
+		return []transactionworkshopentities.ServiceRequestMasterServiceType{}, err
+	}
+	return types, nil
+}
