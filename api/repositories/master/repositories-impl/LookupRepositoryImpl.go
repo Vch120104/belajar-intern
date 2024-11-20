@@ -12,6 +12,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
 	"fmt"
 	"math"
@@ -1922,10 +1923,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
-	fmt.Println("Final Results:", results)
-	fmt.Println("Total Rows:", totalRows)
-	fmt.Println("Total Pages:", totalPages)
-
 	return results, int(totalRows), totalPages, nil
 }
 
@@ -2581,10 +2578,8 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 				if !customerExists {
 					billCode = ""
 				} else {
-					// Handle customer logic
 					var typeMap string
-
-					// First query: check company_type in mtr_company_type_map_from_customer
+					// check company_type in mtr_company_type_map_from_customer
 					if err := tx.Table("dms_microservices_general_dev.dbo.mtr_company_type_map_from_customer").
 						Select("client_type_id").
 						Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
@@ -2610,7 +2605,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 						}
 					}
 
-					// Assign billCode based on customer type
 					switch typeMap {
 					case supcusDealer:
 						// Get VAT_REG_NO for company and supcus
@@ -2639,7 +2633,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
 					First(&typeMap).Error
 
-				// If no result found in company_type_map_from_customer, query the mtr_supplier table
 				if err == gorm.ErrRecordNotFound {
 					err = tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
 						Select("client_type_id").
@@ -2655,7 +2648,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					}
 				}
 
-				// Assign billCode based on supplier type
 				switch typeMap {
 				case supcusDealer:
 					if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
@@ -2677,8 +2669,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 			}
 		}
 	}
-
-	// Additional logic for other supcusType cases ('S', 'P', 'C', 'W') can be added here.
 
 	return billCode, nil
 }
@@ -2715,28 +2705,23 @@ func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusC
 // GetLineTypeByItemCode retrieves the line type based on the item code
 func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (int, *exceptions.BaseErrorResponse) {
 	var (
-		lineType         int
-		itemGrp          string
-		itemTypeId       int
-		itemCls          string
-		itmClsSublet     = "SB" // Assuming these are constants in your utils
-		lineTypeSublet   = utils.LinetypeSublet
-		itemClsFee       = "WF"
-		itemGrpInventory = "IN"
-		itemClsAccs      = "AC"
-		itemClsSv        = "SV"
+		lineType       int
+		itemGrp        int
+		itemTypeId     int
+		itemCls        int
+		lineTypeSublet = utils.LinetypeSublet
 	)
 
 	// Retrieve item details
 	var itemDetails struct {
-		ItemGroupId string
+		ItemGroupId int
 		ItemTypeId  int
-		ItemClassId string
+		ItemClassId int
 	}
 
 	if err := tx.Model(&masteritementities.Item{}).
-		Select("item_group_id, item_type, item_class_id").
-		Where("item_code = ? ", itemCode). // Add record status check
+		Select("item_group_id, item_type_id, item_class_id").
+		Where("item_code = ? ", itemCode).
 		Scan(&itemDetails).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2749,35 +2734,33 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	itemTypeId = itemDetails.ItemTypeId
 	itemCls = itemDetails.ItemClassId
 
-	// Determine line type based on the item details
-	if itemGrp == itemGrpInventory {
+	if itemGrp == 2 {
 		if itemTypeId == 1 {
 			switch itemCls {
-			case "SP":
+			case 69 /*"SP"*/ :
 				lineType = utils.LinetypeSparepart
-			case "OL":
+			case 70 /*"OL"*/ :
 				lineType = utils.LinetypeOil
-			case "MT", itmClsSublet:
+			case 71 /*"MT"*/, 72:
 				lineType = utils.LinetypeMaterial
-			case "CM":
+			case 75 /*"CM"*/ :
 				lineType = utils.LinetypeConsumableMaterial
-			case itemClsAccs:
+			case 74 /*"SR"*/ :
 				lineType = utils.LinetypeAccesories
-			case itemClsSv:
+			case 77 /*"SV"*/ :
 				lineType = utils.LinetypeSublet
 			default:
 				lineType = utils.LinetypeAccesories
 			}
-		} else if itemCls == itemClsFee {
+		} else if itemCls == 73 /*"WF"*/ {
 			lineType = lineTypeSublet
-		} else if itemCls == itemClsAccs && itemTypeId == 2 {
+		} else if itemCls == 74 && itemTypeId == 2 {
 			lineType = utils.LinetypeOperation
 		}
-	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemTypeId == 2 && itemCls == itemClsFee) {
+	} else if itemGrp == 6 || (itemGrp == 2 && itemTypeId == 2 && itemCls == 73 /*"WF"*/) {
 		lineType = lineTypeSublet
 	}
 
-	// Check if the item exists
 	var itemExists int64
 	if err := tx.Model(&masteritementities.Item{}).
 		Where("item_code = ? ", itemCode).
@@ -2816,7 +2799,6 @@ func (r *LookupRepositoryImpl) GetWhsGroup(tx *gorm.DB, companyCode int) (int, *
 		err      error
 	)
 
-	// Execute the GORM query
 	if err = tx.Table("dms_microservices_aftersales_dev.dbo.mtr_warehouse_group_mapping").
 		Select("warehouse_group_type_id").
 		Where("company_id = ?", companyCode).
@@ -2849,7 +2831,6 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 		}
 	}
 
-	// Main query to fetch campaign discount details based on the input parameters
 	var campaignDiscount masterpayloads.CampaignDiscount
 
 	if err := tx.Table("mtr_campaign").
@@ -3571,4 +3552,158 @@ func (r *LookupRepositoryImpl) ReferenceTypeSalesOrderByID(tx *gorm.DB, referenc
 	}
 
 	return mappedResult, totalPages, int(totalRows), nil
+}
+
+func (r *LookupRepositoryImpl) GetLineTypeByReferenceType(tx *gorm.DB, referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var lineTypes []map[string]interface{}
+	var excludedIds []int
+
+	switch referenceTypeId {
+	case 1:
+		excludedIds = []int{1, 8}
+	case 2:
+		excludedIds = []int{2, 8}
+	default:
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid reference type ID",
+			Err:        fmt.Errorf("unsupported reference type ID: %d", referenceTypeId),
+		}
+	}
+
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_line_type").
+		Select("line_type_id, line_type_code, line_type_name").
+		Where("line_type_id NOT IN ?", excludedIds).
+		Find(&lineTypes).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get line type",
+			Err:        err,
+		}
+	}
+
+	return lineTypes, nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'LocationAvailable'
+// Used for insert item location detail
+func (r *LookupRepositoryImpl) LocationAvailable(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocation{}
+	response := []masterpayloads.LocationAvailableResponse{}
+	var err error
+
+	var newFilter []utils.FilterCondition
+	var companyId int
+	var warehouseId int
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "company_id") {
+			companyId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "warehouse_id") {
+			warehouseId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		newFilter = append(newFilter, filter)
+	}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if periodError != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching company current period",
+			Err:        periodError.Err,
+		}
+	}
+
+	var existingWarehouseLocIds []int
+	err = tx.Model(&masteritementities.ItemLocation{}).
+		Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_location_item.item_id").
+		Joins("INNER JOIN mtr_item_group mig ON mig.item_group_id = mi.item_group_id").
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
+		Where("mwm.company_id = ?", companyId).
+		Where("mtr_location_item.warehouse_id = ?", warehouseId).
+		Where("mig.item_group_code = 'IN'").
+		Pluck("warehouse_location_id", &existingWarehouseLocIds).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching existing item location data",
+			Err:        err,
+		}
+	}
+	if len(existingWarehouseLocIds) == 0 {
+		existingWarehouseLocIds = []int{-1}
+	}
+	existingWarehouseLocIds = utils.RemoveDuplicateIds(existingWarehouseLocIds)
+
+	viewLocStock := tx.Table("mtr_location_stock mls").
+		Select(`
+			mls.item_inquiry_id,
+			mls.period_year,
+			mls.period_month,
+			mls.company_id,
+			mls.warehouse_group_id,
+			mls.warehouse_id,
+			mls.location_id,
+			(
+				ISNULL(quantity_sales, 0) +
+				ISNULL(quantity_transfer_out, 0) +
+				ISNULL(quantity_claim_out, 0) +
+				ISNULL(quantity_robbing_out, 0) +
+				ISNULL(quantity_assembly_out, 0)
+			) AS quantity_on_hand
+		`).
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.company_id = mls.company_id AND mwm.warehouse_id = mls.warehouse_id")
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mwm.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_id,
+			SUM(ISNULL(view_stock.quantity_on_hand, 0)) AS quantity_on_hand
+			`).
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_warehouse_location.warehouse_id").
+		Joins(`LEFT JOIN (?) view_stock ON view_stock.period_year = ?
+										AND view_stock.period_month = ?
+										AND view_stock.company_id = mwm.company_id
+										AND view_stock.warehouse_group_id = mtr_warehouse_location.warehouse_group_id
+										AND view_stock.warehouse_id = mtr_warehouse_location.warehouse_id
+										AND view_stock.location_id = mtr_warehouse_location.warehouse_location_id
+										`, viewLocStock, periodResponse.PeriodYear, periodResponse.PeriodMonth).
+		Where("warehouse_location_id NOT IN ?", existingWarehouseLocIds).
+		Where("mwm.company_id = ?", companyId).
+		Group(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mwm.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_id
+		`).
+		Order("warehouse_location_id ASC")
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, newFilter)
+	err = whereQuery.Scan(&response).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fethching location available data",
+			Err:        err,
+		}
+	}
+
+	paginateData, totalPages, totalRows := pagination.NewDataFramePaginate(response, &pages)
+
+	pages.Rows = utils.ModifyKeysInResponse(paginateData)
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
 }
