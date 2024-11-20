@@ -21,17 +21,16 @@ import (
 )
 
 type ItemLocationController interface {
-	GetAllItemLocation(writer http.ResponseWriter, request *http.Request)
-	SaveItemLocation(writer http.ResponseWriter, request *http.Request)
-	GetItemLocationById(writer http.ResponseWriter, request *http.Request)
 	GetAllItemLocationDetail(writer http.ResponseWriter, request *http.Request)
 	PopupItemLocation(writer http.ResponseWriter, request *http.Request)
 	AddItemLocation(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLocation(writer http.ResponseWriter, request *http.Request)
+
 	GetAllItemLoc(writer http.ResponseWriter, request *http.Request)
 	GetByIdItemLoc(writer http.ResponseWriter, request *http.Request)
 	SaveItemLoc(writer http.ResponseWriter, request *http.Request)
 	DeleteItemLoc(writer http.ResponseWriter, request *http.Request)
+
 	DownloadTemplate(writer http.ResponseWriter, request *http.Request)
 	UploadTemplate(writer http.ResponseWriter, request *http.Request)
 	ProcessUploadData(writer http.ResponseWriter, request *http.Request)
@@ -85,110 +84,6 @@ func (r *ItemLocationControllerImpl) PopupItemLocation(writer http.ResponseWrite
 	}
 
 	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-}
-
-// @Summary Get All Item Location
-// @Description REST API Item Location
-// @Accept json
-// @Produce json
-// @Tags Master : Item Location
-// @Param page query string true "page"
-// @Param limit query string true "limit"
-// @Param item_name query int false "item_name"
-// @Param sort_by query string false "sort_by"
-// @Param sort_of query string false "sort_of"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location [get]
-func (r *ItemLocationControllerImpl) GetAllItemLocation(writer http.ResponseWriter, request *http.Request) {
-	queryValues := request.URL.Query()
-
-	queryParams := map[string]string{
-		"mtr_location_item.warehouse_group_id": queryValues.Get("warehouse_group_id"),
-		"mtr_location_item.item_id":            queryValues.Get("item_id"),
-	}
-
-	paginate := pagination.Pagination{
-		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
-		Page:   utils.NewGetQueryInt(queryValues, "page"),
-		SortOf: queryValues.Get("sort_of"),
-		SortBy: queryValues.Get("sort_by"),
-	}
-
-	criteria := utils.BuildFilterCondition(queryParams)
-
-	paginatedData, totalPages, totalRows, err := r.ItemLocationService.GetAllItemLocation(criteria, paginate)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
-}
-
-// @Summary Save Item Location
-// @Description REST API Item Location
-// @Accept json
-// @Produce json
-// @Tags Master : Item Location
-// @param reqBody body masteritempayloads.ItemLocationRequest true "Form Request"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location [post]
-func (r *ItemLocationControllerImpl) SaveItemLocation(writer http.ResponseWriter, request *http.Request) {
-
-	var formRequest masteritempayloads.ItemLocationRequest
-	var message = ""
-	helper.ReadFromRequestBody(request, &formRequest)
-	if validationErr := validation.ValidationForm(writer, request, &formRequest); validationErr != nil {
-		exceptions.NewBadRequestException(writer, request, validationErr)
-		return
-	}
-
-	create, err := r.ItemLocationService.SaveItemLocation(formRequest)
-	if err != nil {
-		exceptions.NewNotFoundException(writer, request, err)
-		return
-	}
-	if formRequest.ItemLocationId == 0 {
-		message = "Create Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusCreated)
-	} else {
-		message = "Update Data Successfully!"
-		payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
-	}
-
-}
-
-// @Summary Get Item Location By ID
-// @Description REST API  Item Location
-// @Accept json
-// @Produce json
-// @Tags Master : Item Location
-// @Param item_location_id path int true "item_location_id"
-// @Success 200 {object} payloads.Response
-// @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
-// @Router /v1/item-location/{item_location_id} [get]
-func (r *ItemLocationControllerImpl) GetItemLocationById(writer http.ResponseWriter, request *http.Request) {
-
-	ItemLocationIds, errA := strconv.Atoi(chi.URLParam(request, "item_location_id"))
-
-	if errA != nil {
-		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
-		return
-	}
-
-	result, err := r.ItemLocationService.GetItemLocationById(ItemLocationIds)
-	if err != nil {
-		helper.ReturnError(writer, request, err)
-		return
-	}
-
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get All Item Location Detail
@@ -266,12 +161,12 @@ func (r *ItemLocationControllerImpl) AddItemLocation(writer http.ResponseWriter,
 		return
 	}
 
-	if err := r.ItemLocationService.AddItemLocation(int(itemLocID), formRequest); err != nil {
+	entity, err := r.ItemLocationService.AddItemLocation(itemLocID, formRequest)
+	if err != nil {
 		exceptions.NewAppException(writer, request, err)
 		return
 	}
-
-	payloads.NewHandleSuccess(writer, nil, "Item location added successfully", http.StatusCreated)
+	payloads.NewHandleSuccess(writer, entity, "Item location added successfully", http.StatusCreated)
 }
 
 // @Summary Delete Item Location By ID

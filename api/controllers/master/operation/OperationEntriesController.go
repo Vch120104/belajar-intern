@@ -62,7 +62,7 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 		"mtr_operation_group.operation_group_description":     query.Get("operation_group_description"),
 		"mtr_operation_section.operation_section_description": query.Get("operation_section_description"),
 		"mtr_operation_entries.operation_entries_code":        query.Get("operation_entries_code"),
-		"mtr_operation_entries.operation_entries_desc":        query.Get("operation_entries_desc"),
+		"mtr_operation_entries.operation_entries_description": query.Get("operation_entries_description"),
 		"mtr_operation_key.is_active":                         query.Get("is_active"),
 		"mtr_operation_key.operation_key_description":         query.Get("operation_key_description"),
 	}
@@ -80,6 +80,9 @@ func (r *OperationEntriesControllerImpl) GetAllOperationEntries(writer http.Resp
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
+	}
+	if result.TotalPages == 0 {
+		result.Rows = []masteroperationpayloads.OperationSectionListResponse{}
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }

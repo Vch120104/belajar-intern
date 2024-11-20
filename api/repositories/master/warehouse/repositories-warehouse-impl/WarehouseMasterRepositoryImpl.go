@@ -42,18 +42,18 @@ func (r *WarehouseMasterImpl) GetWarehouseGroupAndMasterbyCodeandCompanyId(tx *g
 }
 
 // IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouserepository.WarehouseMasterRepository.
-func (r *WarehouseMasterImpl) IsWarehouseMasterByCodeAndCompanyIdExist(tx *gorm.DB, companyId int, warehouseCode string) (bool, *exceptions.BaseErrorResponse) {
+func (r *WarehouseMasterImpl) IsWarehouseMasterByCodeAndCompanyIdExist(tx *gorm.DB, companyId int, warehouseCodes []string) ([]masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
 	entities := masterwarehouseentities.WarehouseMaster{}
+	response := []masterwarehouseentities.WarehouseMaster{}
 
-	if err := tx.Model(entities).Where(masterwarehouseentities.WarehouseMaster{CompanyId: companyId, WarehouseCode: warehouseCode}).First(&entities).Error; err != nil {
-		return false, &exceptions.BaseErrorResponse{
+	if err := tx.Model(&entities).Where("company_id = ? AND warehouse_code IN ?", companyId, warehouseCodes).Scan(&response).Error; err != nil {
+		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	return true, nil
-
+	return response, nil
 }
 
 func (r *WarehouseMasterImpl) InTransitWarehouseCodeDropdown(tx *gorm.DB, companyID int, warehouseGroupID int) ([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse) {
@@ -679,7 +679,7 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 	var response []map[string]interface{}
 
 	query := tx.Model(&entities).
-		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.id_number").
+		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.user_id").
 		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id")
 
 	whereQuery := utils.ApplyFilter(query, filterCondition)
@@ -716,12 +716,28 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 }
 
 func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB, req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {
+	var existingEntity masterwarehouseentities.WarehouseAuthorize
+	err := tx.Where("company_id = ? AND warehouse_id = ? AND employee_id = ?", req.CompanyId, req.WarehouseId, req.EmployeeId).First(&existingEntity).Error
+	if err == nil {
+		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Duplicate entry: combination of company_id, warehouse_id, and employee_id must be unique",
+			Err:        errors.New("duplicate entry : combination of company_id, warehouse_id, and employee_id must be unique"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check for existing entry",
+			Err:        err,
+		}
+	}
+
 	var entities = masterwarehouseentities.WarehouseAuthorize{
 		EmployeeId:  req.EmployeeId,
 		CompanyId:   req.CompanyId,
 		WarehouseId: req.WarehouseId,
 	}
-	err := tx.Save(&entities).Error
+	err = tx.Save(&entities).Error
 
 	if err != nil {
 		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{

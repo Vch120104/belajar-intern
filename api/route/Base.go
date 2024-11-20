@@ -970,6 +970,42 @@ func ForecastMasterRouter(
 	return router
 }
 
+func GmmPriceCodeRouter(
+	gmmPriceCodeController mastercontroller.GmmPriceCodeController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", gmmPriceCodeController.GetAllGmmPriceCode)
+	router.Get("/{gmm_price_code_id}", gmmPriceCodeController.GetGmmPriceCodeById)
+	router.Get("/dropdown", gmmPriceCodeController.GetGmmPriceCodeDropdown)
+	router.Post("/", gmmPriceCodeController.SaveGmmPriceCode)
+	router.Put("/{gmm_price_code_id}", gmmPriceCodeController.UpdateGmmPriceCode)
+	router.Patch("/{gmm_price_code_id}", gmmPriceCodeController.ChangeStatusGmmPriceCode)
+	router.Delete("/{gmm_price_code_id}", gmmPriceCodeController.DeleteGmmPriceCode)
+
+	return router
+}
+
+func GmmDiscountSettingRouter(
+	gmmDiscountSettingController mastercontroller.GmmDiscountSettingController,
+) chi.Router {
+	router := chi.NewRouter()
+
+	// Apply the CORS middleware to all routes
+	router.Use(middlewares.SetupCorsMiddleware)
+	router.Use(middleware.Recoverer)
+	router.Use(middlewares.MetricsMiddleware)
+
+	router.Get("/", gmmDiscountSettingController.GetAllGmmDiscountSetting)
+
+	return router
+}
+
 func AgreementRouter(
 	AgreementController mastercontroller.AgreementController,
 ) chi.Router {
@@ -1128,6 +1164,7 @@ func LabourSellingPriceDetailRouter(
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
 	router.Post("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
 	router.Post("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
+	router.Delete("/{multi_id}", LabourSellingPriceDetailController.DeleteLabourSellingPriceDetail)
 
 	return router
 }
@@ -1787,6 +1824,7 @@ func LookupRouter(
 	router.Get("/item-opr-code/{linetype_id}/by-code/{item_code}", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/by-id/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
+	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
@@ -1804,6 +1842,7 @@ func LookupRouter(
 	router.Get("/reference-type-work-order/{work_order_system_number}", LookupController.ReferenceTypeWorkOrderByID)
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
+	router.Get("/location-available", LookupController.LocationAvailable)
 
 	return router
 }

@@ -29,24 +29,29 @@ func OpenWarehouseLocationImpl() masterwarehouserepository.WarehouseLocationRepo
 	return &WarehouseLocationImpl{}
 }
 
-// ProcessWarehouseLocationTemplate implements masterwarehouserepository.WarehouseLocationRepository.
 // CheckIfLocationExist implements masterwarehouserepository.WarehouseLocationRepository.
-func (r *WarehouseLocationImpl) CheckIfLocationExist(tx *gorm.DB, warehouseCode string, locationCode string, locationName string) (bool, *exceptions.BaseErrorResponse) {
-	entities := masterwarehouseentities.WarehouseMaster{}
-	// warehouseGroup := masterwarehouseentities.WarehouseGroup{}
-	response := masterwarehouseentities.WarehouseLocation{}
+func (r *WarehouseLocationImpl) CheckIfLocationExist(tx *gorm.DB, warehouseCodes []string, locationCodes []string, locationNames []string) ([]masterwarehouseentities.WarehouseLocation, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocation{}
+	response := []masterwarehouseentities.WarehouseLocation{}
 
-	if err := tx.Model(entities).Select("1").Where(masterwarehouseentities.WarehouseMaster{WarehouseCode: warehouseCode}).
-		InnerJoins("WarehouseGroup", tx.Select("1")).
-		InnerJoins("WarehouseGroup.WarehouseLocation", tx.Where(masterwarehouseentities.WarehouseLocation{WarehouseLocationCode: locationCode, WarehouseLocationName: locationName})).
-		First(&response).Error; err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusConflict,
+	query := tx.Model(&entities).Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_warehouse_location.warehouse_id")
+	for i := 0; i < len(warehouseCodes); i++ {
+		if i == 0 {
+			query = query.Where("warehouse_code = ? AND warehouse_location_code = ? AND warehouse_location_name = ?", warehouseCodes[i], locationCodes[i], locationNames[i])
+			continue
+		}
+		query = query.Or("warehouse_code = ? AND warehouse_location_code = ? AND warehouse_location_name = ?", warehouseCodes[i], locationCodes[i], locationNames[i])
+	}
+
+	if err := query.Scan(&response).Error; err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching warehouse location data",
 			Err:        err,
 		}
 	}
 
-	return true, nil
+	return response, nil
 }
 
 func (r *WarehouseLocationImpl) Save(tx *gorm.DB, request masterwarehouseentities.WarehouseLocation) (bool, *exceptions.BaseErrorResponse) {
