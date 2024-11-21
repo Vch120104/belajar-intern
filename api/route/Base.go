@@ -1283,7 +1283,7 @@ func DiscountRouter(
 
 	router.Get("/", discountController.GetAllDiscount)
 	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-code/{discount_code}", discountController.GetDiscountByCode)
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)

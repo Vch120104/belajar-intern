@@ -133,10 +133,13 @@ func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, req
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount/by-code/{discount_code} [get]
 func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	// discountCode, _ := strconv.Atoi(chi.URLParam(request, "discount_code"))
 
-	discountCode := query.Get("discount_code")
+	discountCode := chi.URLParam(request, "discount_code")
+	if discountCode == "" {
+		payloads.NewHandleError(writer, "discount_code cannot be empty", http.StatusBadRequest)
+		return
+	}
+
 	result, err := r.discountservice.GetDiscountByCode(discountCode)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
