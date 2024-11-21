@@ -5,6 +5,7 @@ import (
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
+	"errors"
 	"net/http"
 
 	exceptions "after-sales/api/exceptions"
@@ -107,22 +108,26 @@ func (r *DiscountRepositoryImpl) GetDiscountByCode(tx *gorm.DB, Code string) (ma
 	entities := masteritementities.Discount{}
 	response := masterpayloads.DiscountResponse{}
 
-	rows, err := tx.Model(&entities).
+	err := tx.Model(&entities).
 		Select("mtr_discount.*, discount_code + ' - ' + discount_description AS discount_code_description").
 		Where(masteritementities.Discount{
 			DiscountCode: Code,
 		}).
-		First(&response).
-		Rows()
+		First(&response).Error
 
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "discount code not found",
+				Err:        err,
+			}
+		}
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	return response, nil
 }
