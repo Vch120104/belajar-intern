@@ -13,17 +13,18 @@ type ItemClassResponse struct {
 	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class"`
 	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class"`
 	ItemGroupId   int    `json:"item_group_id"` //FK with mtr_item_group common-general service
-	LineTypeId    int    `json:"line_type_id"`  //FK with mtr_line_type common-general service
+	ItemGroupName string `json:"item_group_name"`
+	LineTypeId    int    `json:"line_type_id"` //FK with mtr_line_type common-general service
 	LineTypeName  string `json:"line_type_name"`
 	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
 }
 
 type ItemClassGetAllResponse struct {
 	IsActive      bool   `json:"is_active" parent_entity:"mtr_item_class"`
-	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class"`
+	ItemClassId   int    `json:"item_class_id" parent_entity:"mtr_item_class" main_table:"mtr_item_class"`
 	ItemClassCode string `json:"item_class_code" parent_entity:"mtr_item_class"`
-	ItemGroupId   int    `json:"item_group_id"` //FK with mtr_item_group common-general service
-	LineTypeId    int    `json:"line_type_id"`  //FK with mtr_line_type common-general service
+	ItemGroupId   int    `json:"item_group_id" parent_entity:"mtr_item_class"` //FK with mtr_item_group common-general service
+	LineTypeId    int    `json:"line_type_id" parent_entity:"mtr_item_class"`  //FK with mtr_line_type common-general service
 	ItemClassName string `json:"item_class_name" parent_entity:"mtr_item_class"`
 }
 
