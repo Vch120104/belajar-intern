@@ -16,5 +16,6 @@ type DiscountRepository interface {
 	GetDiscountById(*gorm.DB, int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
 	GetDiscountByCode(*gorm.DB, string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
 	SaveDiscount(*gorm.DB, masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse)
+	UpdateDiscount(tx *gorm.DB, id int, req masterpayloads.DiscountUpdate) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusDiscount(*gorm.DB, int) (bool, *exceptions.BaseErrorResponse)
 }

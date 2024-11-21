@@ -22,6 +22,23 @@ func StartDiscountRepositoryImpl() masterrepository.DiscountRepository {
 	return &DiscountRepositoryImpl{}
 }
 
+// UpdateDiscount implements masterrepository.DiscountRepository.
+func (r *DiscountRepositoryImpl) UpdateDiscount(tx *gorm.DB, id int, req masterpayloads.DiscountUpdate) (bool, *exceptions.BaseErrorResponse) {
+	err := tx.Updates(&masteritementities.Discount{
+		DiscountCodeId:      id,
+		DiscountDescription: req.DiscountCodeDescription,
+	}).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+		}
+	}
+
+	return true, nil
+}
+
 func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := masteritementities.Discount{}
 	responses := []masterpayloads.DiscountResponse{}
