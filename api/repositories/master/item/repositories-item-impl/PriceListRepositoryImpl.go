@@ -77,6 +77,7 @@ func (r *PriceListRepositoryImpl) CheckPriceListExist(tx *gorm.DB, itemId int, b
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+			Message:    "failed to check price list is exist",
 		}
 	}
 
