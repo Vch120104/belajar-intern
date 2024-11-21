@@ -46,7 +46,7 @@ type UpdateWarehouseMasterRequest struct {
 type GetWarehouseMasterResponse struct {
 	CompanyId                     int    `json:"company_id"`
 	IsActive                      bool   `json:"is_active"`
-	WarehouseId                   int    `json:"warehouse_id,omitempty"`
+	WarehouseId                   int    `json:"warehouse_id"`
 	WarehouseCostingTypeId        int    `json:"warehouse_costing_type_id"`
 	WarehouseKaroseri             bool   `json:"warehouse_karoseri"`
 	WarehouseNegativeStock        bool   `json:"warehouse_negative_stock"`
