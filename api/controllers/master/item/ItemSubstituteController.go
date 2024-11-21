@@ -29,6 +29,7 @@ type ItemSubstituteController interface {
 	ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	GetallItemForFilter(writer http.ResponseWriter, request *http.Request)
+	GetItemSubstituteDetailLastSequence(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemSubstituteControllerImpl struct {
@@ -374,4 +375,19 @@ func (r *ItemSubstituteControllerImpl) GetallItemForFilter(writer http.ResponseW
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *ItemSubstituteControllerImpl) GetItemSubstituteDetailLastSequence(writer http.ResponseWriter, request *http.Request) {
+	itemSubstituteId, errA := strconv.Atoi(chi.URLParam(request, "item_substitute_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read url params, please check your param input")})
+		return
+	}
+
+	result, err := r.ItemSubstituteService.GetItemSubstituteDetailLastSequence(itemSubstituteId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

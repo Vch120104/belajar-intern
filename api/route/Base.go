@@ -293,6 +293,7 @@ func ItemSubstituteRouter(
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
+	router.Get("/detail/last-sequence/{item_substitute_id}", itemSubstituteController.GetItemSubstituteDetailLastSequence)
 	return router
 }
 

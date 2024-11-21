@@ -136,3 +136,14 @@ func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.
 	}
 	return result, nil
 }
+
+func (s *ItemSubstituteServiceImpl) GetItemSubstituteDetailLastSequence(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+
+	result, err := s.itemSubstituteRepo.GetItemSubstituteDetailLastSequence(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
