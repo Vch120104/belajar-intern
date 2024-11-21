@@ -39,12 +39,6 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 			Err:        err,
 		}
 	}
-	// if len(responses) == 0 {
-	// 	return pages, &exceptions.BaseErrorResponse{
-	// 		StatusCode: http.StatusNoContent,
-	// 		Err:        err,
-	// 	}
-	// }
 
 	pages.Rows = responses
 

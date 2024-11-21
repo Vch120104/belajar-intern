@@ -10,6 +10,7 @@ import (
 	transactionsparepartcontroller "after-sales/api/controllers/transactions/sparepart"
 	transactionworkshopcontroller "after-sales/api/controllers/transactions/workshop"
 	"after-sales/api/middlewares"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -1215,7 +1216,7 @@ func DiscountRouter(
 
 	router.Get("/", discountController.GetAllDiscount)
 	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-code/{discount_code}", discountController.GetDiscountByCode)
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)
