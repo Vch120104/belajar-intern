@@ -22,10 +22,18 @@ func GetWarrantyClaimTypeById(id int) (WarrantyClaimTypeResponse, *exceptions.Ba
 
 	err := utils.CallAPI("GET", url, nil, &getWarrantyClaimType)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve warranty claim type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "warranty claim type service is temporarily unavailable"
+		}
+
 		return getWarrantyClaimType, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching warranty claim type by id",
-			Err:        errors.New("failed to retrieve warranty claim type data from external API by id"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting warranty claim type by ID"),
 		}
 	}
 

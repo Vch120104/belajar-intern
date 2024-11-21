@@ -12,6 +12,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
 	"errors"
 	"fmt"
 	"math"
@@ -530,13 +531,13 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 
 	// Default filters and variables
 	const (
-		ItmGrpInventory      = 1 // "IN"
+		ItmGrpInventory      = 2 // "IN"
 		PurchaseTypeGoods    = 1 // "G"
 		PurchaseTypeServices = 2 // "S"
 	)
 
 	var (
-		ItmCls      string
+		ItmCls      int
 		companyCode = 1
 		currentTime = time.Now()
 		year, month = currentTime.Year(), int(currentTime.Month())
@@ -610,7 +611,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...)
 
 	case utils.LinetypeSparepart:
-		ItmCls = "1"
+		ItmCls = 69 // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -622,10 +623,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 				        AND V.PERIOD_YEAR = ? 
 				        AND V.PERIOD_MONTH = ? 
 				        AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -635,7 +640,7 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...)
 
 	case utils.LinetypeOil:
-		ItmCls = "2"
+		ItmCls = 70 // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -647,10 +652,14 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 				        AND V.PERIOD_YEAR = ? 
 				        AND V.PERIOD_MONTH = ? 
 				        AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -660,21 +669,24 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...)
 
 	case utils.LinetypeMaterial:
-		ItmCls = "3"
-		ItmClsSublet := "2"
+		ItmCls = 71        // "MT"
+		ItmClsSublet := 72 // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-					DISTINCT 
 					A.item_id AS item_id, 
 					A.item_code AS item_code, 
 					A.item_name AS item_name, 
 					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
 							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-					A.item_level_1_id AS item_level_1, 
-					A.item_level_2_id AS item_level_2, 
-					A.item_level_3_id AS item_level_3, 
-					A.item_level_4_id AS item_level_4
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 				`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -684,23 +696,53 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
-	case utils.LinetypeFee:
-		ItmCls = "4"
-		ItmGrpOutsideJob := 4
-
+	case utils.LinetypeConsumableMaterial:
+		ItmCls = 75 // "CM"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-					DISTINCT 
 					A.item_id AS item_id, 
 					A.item_code AS item_code, 
 					A.item_name AS item_name, 
 					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
 							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-					A.item_level_1_id AS item_level_1, 
-					A.item_level_2_id AS item_level_2, 
-					A.item_level_3_id AS item_level_3, 
-					A.item_level_4_id AS item_level_4
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
+				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LinetypeFee:
+		ItmCls = 73           // "WF"
+		ItmGrpOutsideJob := 6 // "OJ"
+
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name, 
+					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+							WHERE A.item_id = V.item_id 
+							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 				`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -711,21 +753,51 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Order("A.item_code")
 
 	case utils.LinetypeAccesories:
-		ItmCls = "5"
+		ItmCls = 74 // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-					DISTINCT 
 					A.item_id AS item_id, 
 					A.item_code AS item_code, 
 					A.item_name AS item_name, 
 					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 							WHERE A.item_id = V.item_id 
 							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-					A.item_level_1_id AS item_level_1, 
-					A.item_level_2_id AS item_level_2, 
-					A.item_level_3_id AS item_level_3, 
-					A.item_level_4_id AS item_level_4
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LinetypeSouvenir:
+		ItmCls = 77 // "SV"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name, 
+						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+								WHERE A.item_id = V.item_id 
+								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+					`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -761,6 +833,8 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 			Err:        err,
 		}
 	}
+	fmt.Println(baseQuery.Statement.SQL.String()) // Prints SQL statement to check filter and pagination application
+	fmt.Printf("Offset: %d, Limit: %d\n", offset, paginate.Limit)
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
 
@@ -769,18 +843,18 @@ func (r *LookupRepositoryImpl) ItemOprCode(tx *gorm.DB, linetypeId int, paginate
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var results []map[string]interface{}
+func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, oprItemCode string, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var results map[string]interface{}
 
 	// Default filters and variables
 	const (
-		ItmGrpInventory      = 1 // "IN"
+		ItmGrpInventory      = 2 // "IN"
 		PurchaseTypeGoods    = 1 // "G"
 		PurchaseTypeServices = 2 // "S"
 	)
 
 	var (
-		ItmCls      string
+		ItmCls      int
 		companyCode = 1
 		currentTime = time.Now()
 		year, month = currentTime.Year(), int(currentTime.Month())
@@ -790,7 +864,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 		paginate.Limit = 10
 	}
 
-	fmt.Println("oprItemCode :", oprItemCode)
 	if oprItemCode == "" {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusBadRequest,
@@ -865,7 +938,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Where("oc.operation_code = ?", oprItemCode)
 
 	case utils.LinetypeSparepart:
-		ItmCls = "1"
+		ItmCls = 69 // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -874,10 +947,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+					A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -887,7 +964,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Where("A.item_code = ?", oprItemCode)
 
 	case utils.LinetypeOil:
-		ItmCls = "2"
+		ItmCls = 70 // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -896,10 +973,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -909,19 +990,23 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Where("A.item_code = ?", oprItemCode)
 
 	case utils.LinetypeMaterial:
-		ItmCls = "3"
-		ItmClsSublet := "2"
+		ItmCls = 71        // "MT"
+		ItmClsSublet := 72 // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT A.item_id AS item_id, A.item_code AS item_code, 
+				A.item_id AS item_id, A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -931,21 +1016,52 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Where("A.item_code = ?", oprItemCode).
 			Order("A.item_code")
 
+	case utils.LinetypeConsumableMaterial:
+		ItmCls = 75 // "CM"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+						A.item_id AS item_id, 
+						A.item_code AS item_code, 
+						A.item_name AS item_name, 
+						ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+								WHERE A.item_id = V.item_id 
+								AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
+						A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+					`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ?  AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Order("A.item_code")
+
 	case utils.LinetypeFee:
-		ItmCls = "4"
-		ItmGrpOutsideJob := 4
+		ItmCls = 73           // "WF"
+		ItmGrpOutsideJob := 6 // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT A.item_id AS item_id, A.item_code AS item_code, 
+				A.item_id AS item_id, A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -956,18 +1072,22 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Order("A.item_code")
 
 	case utils.LinetypeAccesories:
-		ItmCls = "5"
+		ItmCls = 74 // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT A.item_id AS item_id, A.item_code AS item_code, 
+				A.item_id AS item_id, A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -977,6 +1097,31 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 			Where("A.item_code = ?", oprItemCode).
 			Order("A.item_code")
 
+	case utils.LinetypeSouvenir:
+		ItmCls = 77 // "SV"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, A.item_code AS item_code, 
+					A.item_name AS item_name, 
+					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+							WHERE A.item_id = V.item_id 
+							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
+					A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
+			Where("A.item_code = ?", oprItemCode).
+			Order("A.item_code")
 	default:
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -1017,18 +1162,18 @@ func (r *LookupRepositoryImpl) ItemOprCodeByCode(tx *gorm.DB, linetypeId int, op
 
 // usp_comLookUp
 // IF @strEntity = 'ItemOprCode'--OPERATION MASTER & ITEM MASTER
-func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var results []map[string]interface{}
+func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprItemId int, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var results map[string]interface{}
 
 	// Default filters and variables
 	const (
-		ItmGrpInventory      = 1 // "IN"
+		ItmGrpInventory      = 2 // "IN"
 		PurchaseTypeGoods    = 1 // "G"
 		PurchaseTypeServices = 2 // "S"
 	)
 
 	var (
-		ItmCls      string
+		ItmCls      int
 		companyCode = 1
 		currentTime = time.Now()
 		year, month = currentTime.Year(), int(currentTime.Month())
@@ -1102,7 +1247,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where(filterQuery, filterValues...)
 
 	case utils.LinetypeSparepart:
-		ItmCls = "1"
+		ItmCls = 69 // "SP"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -1111,10 +1256,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -1125,7 +1274,7 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where(filterQuery, filterValues...)
 
 	case utils.LinetypeOil:
-		ItmCls = "2"
+		ItmCls = 70 // "OL"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
 				A.item_id AS item_id, 
@@ -1134,10 +1283,14 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -1148,21 +1301,24 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where(filterQuery, filterValues...)
 
 	case utils.LinetypeMaterial:
-		ItmCls = "3"
-		ItmClsSublet := "2"
+		ItmCls = 71        // "MT"
+		ItmClsSublet := 72 // "SB"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT 
 				A.item_id AS item_id, 
 				A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -1173,23 +1329,53 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Where(filterQuery, filterValues...).
 			Order("A.item_code")
 
+	case utils.LinetypeConsumableMaterial:
+		ItmCls = 75 // "CM"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name, 
+					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+							WHERE A.item_id = V.item_id 
+							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
+					A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+				`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_group_id = ? AND A.item_type_id = ? AND A.item_class_id = ? AND A.is_active = ?", ItmGrpInventory, PurchaseTypeGoods, ItmCls, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...)
+
 	case utils.LinetypeFee:
-		ItmCls = "4"
-		ItmGrpOutsideJob := 4
+		ItmCls = 73           // "WF"
+		ItmGrpOutsideJob := 6 // "OJ"
 
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT 
 				A.item_id AS item_id, 
 				A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
@@ -1201,21 +1387,52 @@ func (r *LookupRepositoryImpl) ItemOprCodeByID(tx *gorm.DB, linetypeId int, oprI
 			Order("A.item_code")
 
 	case utils.LinetypeAccesories:
-		ItmCls = "5"
+		ItmCls = 74 // "AC"
 		baseQuery = baseQuery.Table("mtr_item A").
 			Select(`
-				DISTINCT 
 				A.item_id AS item_id, 
 				A.item_code AS item_code, 
 				A.item_name AS item_name, 
 				ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
 				        WHERE A.item_id = V.item_id 
 				        AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
-				A.item_level_1_id AS item_level_1, 
-				A.item_level_2_id AS item_level_2, 
-				A.item_level_3_id AS item_level_3, 
-				A.item_level_4_id AS item_level_4
+				A.item_level_1_id AS item_level_1,
+					mil1.item_level_1_code AS item_level_1_code, 
+					A.item_level_2_id AS item_level_2,
+					mil2.item_level_2_code AS item_level_2_code, 
+					A.item_level_3_id AS item_level_3,
+					mil3.item_level_3_code AS item_level_3_code, 
+					A.item_level_4_id AS item_level_4,
+					mil4.item_level_4_code AS item_level_4_code
 			`, year, month, companyCode).
+			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
+			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
+			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
+			Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = A.item_level_4_id").
+			Where("A.item_class_id = ? AND A.item_group_id = ? AND A.is_active = ?", ItmCls, ItmGrpInventory, 1).
+			Where("A.item_id = ?", oprItemId).
+			Where(filterQuery, filterValues...).
+			Order("A.item_code")
+
+	case utils.LinetypeSouvenir:
+		ItmCls = 77 // "SV"
+		baseQuery = baseQuery.Table("mtr_item A").
+			Select(`
+					A.item_id AS item_id, 
+					A.item_code AS item_code, 
+					A.item_name AS item_name, 
+					ISNULL((SELECT SUM(V.quantity_allocated) FROM mtr_location_stock V 
+							WHERE A.item_id = V.item_id 
+							AND V.PERIOD_YEAR = ? AND V.PERIOD_MONTH = ? AND V.company_id = ?), 0) AS Available_qty, 
+					A.item_level_1_id AS item_level_1,
+						mil1.item_level_1_code AS item_level_1_code, 
+						A.item_level_2_id AS item_level_2,
+						mil2.item_level_2_code AS item_level_2_code, 
+						A.item_level_3_id AS item_level_3,
+						mil3.item_level_3_code AS item_level_3_code, 
+						A.item_level_4_id AS item_level_4,
+						mil4.item_level_4_code AS item_level_4_code
+				`, year, month, companyCode).
 			Joins("LEFT JOIN mtr_item_level_1 mil1 ON mil1.item_level_1_id = A.item_level_1_id").
 			Joins("LEFT JOIN mtr_item_level_2 mil2 ON mil2.item_level_2_id = A.item_level_2_id").
 			Joins("LEFT JOIN mtr_item_level_3 mil3 ON mil3.item_level_3_id = A.item_level_3_id").
@@ -1705,10 +1922,6 @@ func (r *LookupRepositoryImpl) ItemOprCodeWithPrice(tx *gorm.DB, linetypeId int,
 	}
 
 	totalPages := int(math.Ceil(float64(totalRows) / float64(paginate.Limit)))
-
-	fmt.Println("Final Results:", results)
-	fmt.Println("Total Rows:", totalRows)
-	fmt.Println("Total Pages:", totalPages)
 
 	return results, int(totalRows), totalPages, nil
 }
@@ -2365,10 +2578,8 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 				if !customerExists {
 					billCode = ""
 				} else {
-					// Handle customer logic
 					var typeMap string
-
-					// First query: check company_type in mtr_company_type_map_from_customer
+					// check company_type in mtr_company_type_map_from_customer
 					if err := tx.Table("dms_microservices_general_dev.dbo.mtr_company_type_map_from_customer").
 						Select("client_type_id").
 						Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
@@ -2394,7 +2605,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 						}
 					}
 
-					// Assign billCode based on customer type
 					switch typeMap {
 					case supcusDealer:
 						// Get VAT_REG_NO for company and supcus
@@ -2423,7 +2633,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					Where("company_from_id = ? AND company_to_id = ?", companyCode, supcusCode).
 					First(&typeMap).Error
 
-				// If no result found in company_type_map_from_customer, query the mtr_supplier table
 				if err == gorm.ErrRecordNotFound {
 					err = tx.Table("dms_microservices_general_dev.dbo.mtr_supplier").
 						Select("client_type_id").
@@ -2439,7 +2648,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 					}
 				}
 
-				// Assign billCode based on supplier type
 				switch typeMap {
 				case supcusDealer:
 					if err := r.getVatRegNo(tx, companyCode, supcusCode, &npwpCompany, &npwpSupcus); err != nil {
@@ -2461,8 +2669,6 @@ func (r *LookupRepositoryImpl) FctGetBillCode(tx *gorm.DB, companyCode int, supc
 			}
 		}
 	}
-
-	// Additional logic for other supcusType cases ('S', 'P', 'C', 'W') can be added here.
 
 	return billCode, nil
 }
@@ -2499,28 +2705,23 @@ func (r *LookupRepositoryImpl) getVatRegNo(tx *gorm.DB, companyCode int, supcusC
 // GetLineTypeByItemCode retrieves the line type based on the item code
 func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode string) (int, *exceptions.BaseErrorResponse) {
 	var (
-		lineType         int
-		itemGrp          string
-		itemTypeId       int
-		itemCls          string
-		itmClsSublet     = "SB" // Assuming these are constants in your utils
-		lineTypeSublet   = utils.LinetypeSublet
-		itemClsFee       = "WF"
-		itemGrpInventory = "IN"
-		itemClsAccs      = "AC"
-		itemClsSv        = "SV"
+		lineType       int
+		itemGrp        int
+		itemTypeId     int
+		itemCls        int
+		lineTypeSublet = utils.LinetypeSublet
 	)
 
 	// Retrieve item details
 	var itemDetails struct {
-		ItemGroupId string
+		ItemGroupId int
 		ItemTypeId  int
-		ItemClassId string
+		ItemClassId int
 	}
 
 	if err := tx.Model(&masteritementities.Item{}).
-		Select("item_group_id, item_type, item_class_id").
-		Where("item_code = ? ", itemCode). // Add record status check
+		Select("item_group_id, item_type_id, item_class_id").
+		Where("item_code = ? ", itemCode).
 		Scan(&itemDetails).Error; err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2533,35 +2734,33 @@ func (r *LookupRepositoryImpl) GetLineTypeByItemCode(tx *gorm.DB, itemCode strin
 	itemTypeId = itemDetails.ItemTypeId
 	itemCls = itemDetails.ItemClassId
 
-	// Determine line type based on the item details
-	if itemGrp == itemGrpInventory {
+	if itemGrp == 2 {
 		if itemTypeId == 1 {
 			switch itemCls {
-			case "SP":
+			case 69 /*"SP"*/ :
 				lineType = utils.LinetypeSparepart
-			case "OL":
+			case 70 /*"OL"*/ :
 				lineType = utils.LinetypeOil
-			case "MT", itmClsSublet:
+			case 71 /*"MT"*/, 72:
 				lineType = utils.LinetypeMaterial
-			case "CM":
+			case 75 /*"CM"*/ :
 				lineType = utils.LinetypeConsumableMaterial
-			case itemClsAccs:
+			case 74 /*"SR"*/ :
 				lineType = utils.LinetypeAccesories
-			case itemClsSv:
+			case 77 /*"SV"*/ :
 				lineType = utils.LinetypeSublet
 			default:
 				lineType = utils.LinetypeAccesories
 			}
-		} else if itemCls == itemClsFee {
+		} else if itemCls == 73 /*"WF"*/ {
 			lineType = lineTypeSublet
-		} else if itemCls == itemClsAccs && itemTypeId == 2 {
+		} else if itemCls == 74 && itemTypeId == 2 {
 			lineType = utils.LinetypeOperation
 		}
-	} else if itemGrp == "OJ" || (itemGrp == itemGrpInventory && itemTypeId == 2 && itemCls == itemClsFee) {
+	} else if itemGrp == 6 || (itemGrp == 2 && itemTypeId == 2 && itemCls == 73 /*"WF"*/) {
 		lineType = lineTypeSublet
 	}
 
-	// Check if the item exists
 	var itemExists int64
 	if err := tx.Model(&masteritementities.Item{}).
 		Where("item_code = ? ", itemCode).
@@ -2600,7 +2799,6 @@ func (r *LookupRepositoryImpl) GetWhsGroup(tx *gorm.DB, companyCode int) (int, *
 		err      error
 	)
 
-	// Execute the GORM query
 	if err = tx.Table("dms_microservices_aftersales_dev.dbo.mtr_warehouse_group_mapping").
 		Select("warehouse_group_type_id").
 		Where("company_id = ?", companyCode).
@@ -2633,7 +2831,6 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 		}
 	}
 
-	// Main query to fetch campaign discount details based on the input parameters
 	var campaignDiscount masterpayloads.CampaignDiscount
 
 	if err := tx.Table("mtr_campaign").
@@ -2716,8 +2913,10 @@ func (r *LookupRepositoryImpl) ItemListTrans(tx *gorm.DB, filterCondition []util
 	responses := []masterpayloads.ItemListTransResponse{}
 
 	baseModelQuery := tx.Model(&entities).
-		Select(`DISTINCT
-			mtr_item.*,
+		Select(`
+			mtr_item.item_id,
+			mtr_item.item_code,
+			mtr_item.item_name,
 			mil1.item_level_1_code,
 			mil2.item_level_2_code,
 			mil3.item_level_3_code,
@@ -2731,11 +2930,10 @@ func (r *LookupRepositoryImpl) ItemListTrans(tx *gorm.DB, filterCondition []util
 		Joins("LEFT JOIN mtr_item_level_4 mil4 ON mil4.item_level_4_id = mtr_item.item_level_4_id").
 		Joins("INNER JOIN mtr_item_class mic ON mic.item_class_id = mtr_item.item_class_id").
 		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
-		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where("mtr_item.is_active = ?", true)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -2754,8 +2952,10 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 	responses := []masterpayloads.ItemListTransPLResponse{}
 
 	baseModelQuery := tx.Model(&entities).
-		Select(`DISTINCT
-			mtr_item.*,
+		Select(`
+			MIN(mtr_item.item_id) AS item_id,
+			mtr_item.item_code,
+			mtr_item.item_name,
 			mil1.item_level_1_code,
 			mil2.item_level_2_code,
 			mil3.item_level_3_code,
@@ -2771,7 +2971,17 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		Joins("INNER JOIN mtr_item_type mit ON mit.item_type_id = mtr_item.item_type_id").
 		Joins("INNER JOIN mtr_item_detail mid ON mid.item_id = mtr_item.item_id").
 		Where("mtr_item.is_active = ?", true).
-		Where("mtr_item.price_list_item = ?", true)
+		Where("mtr_item.price_list_item = ?", true).
+		Group(`
+			mtr_item.item_code,
+			mtr_item.item_name,
+			mil1.item_level_1_code,
+			mil2.item_level_2_code,
+			mil3.item_level_3_code,
+			mil4.item_level_4_code,
+			mic.item_class_code,
+			mit.item_type_code
+		`)
 
 	if companyId == 0 {
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
@@ -2970,4 +3180,531 @@ func (r *LookupRepositoryImpl) GetOprItemFrt(tx *gorm.DB, oprItemId int, brandId
 	}
 
 	return frt, nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeWO'--SERVICE REQUEST REF TYPE WO
+func (r *LookupRepositoryImpl) ReferenceTypeWorkOrder(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		results []struct {
+			WorkOrderDocumentNumber    string
+			WorkOrderDate              time.Time
+			WorkOrderStatusId          int
+			WorkOrderStatusDescription string
+			WorkOrderSystemNumber      int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_work_order AS A").
+		Select("A.work_order_document_number AS work_order_document_number, A.work_order_date AS work_order_date, "+
+			"B.work_order_status_id AS work_order_status_id, E.work_order_status_description AS work_order_status_description, A.work_order_system_number AS work_order_system_number").
+		Joins("INNER JOIN trx_work_order_detail AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.work_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_work_order_status AS E ON A.work_order_status_id = E.work_order_status_id").
+		Where("B.work_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.work_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0")
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&results).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResults := make([]map[string]interface{}, len(results))
+	for i, result := range results {
+		mappedResults[i] = map[string]interface{}{
+			"work_order_document_number":    result.WorkOrderDocumentNumber,
+			"work_order_date":               result.WorkOrderDate.Format("2006-01-02"),
+			"work_order_status_id":          result.WorkOrderStatusId,
+			"work_order_status_description": result.WorkOrderStatusDescription,
+			"work_order_system_number":      result.WorkOrderSystemNumber,
+		}
+	}
+
+	return mappedResults, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeWO'--SERVICE REQUEST REF TYPE WO
+func (r *LookupRepositoryImpl) ReferenceTypeWorkOrderByID(tx *gorm.DB, referenceId int, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		result struct {
+			WorkOrderDocumentNumber string
+			WorkOrderDate           time.Time
+			WoStatusId              int
+			WorkOrderStatus         string
+			WorkOrderSystemNumber   int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_work_order AS A").
+		Select("A.work_order_document_number AS WorkOrderNo, A.work_order_date AS WorkOrderDate, "+
+			"B.work_order_status_id AS WoStatusId, E.work_order_status_description AS WorkOrderStatus, A.work_order_system_number AS WorkOrderSysNo").
+		Joins("INNER JOIN trx_work_order_detail AS B ON B.work_order_system_number = A.work_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.work_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_work_order_status AS E ON A.work_order_status_id = E.work_order_status_id").
+		Where("B.work_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.work_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0").
+		Where("A.work_order_system_number = ?", referenceId)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		First(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResult := map[string]interface{}{
+		"work_order_document_number": result.WorkOrderDocumentNumber,
+		"work_order_date":            result.WorkOrderDate,
+		"work_order_status_id":       result.WoStatusId,
+		"work_order_status":          result.WorkOrderStatus,
+		"work_order_system_number":   result.WorkOrderSystemNumber,
+	}
+
+	return mappedResult, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeSO'--SERVICE REQUEST REF TYPE SO
+func (r *LookupRepositoryImpl) ReferenceTypeSalesOrder(tx *gorm.DB, paginate pagination.Pagination, filters []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		results []struct {
+			SalesOrderDocumentNumber    string
+			SalesOrderDate              time.Time
+			SalesOrderStatusId          int
+			SalesOrderStatusDescription string
+			SalesOrderSystemNumber      int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_sales_order AS A").
+		Select("A.sales_order_document_number AS sales_order_document_number, A.sales_order_date AS sales_order_date, "+
+			"B.sales_order_status_id AS work_order_status_id, E.sales_order_status_description AS sales_order_status_description, A.sales_order_system_number AS sales_order_system_number").
+		Joins("INNER JOIN trx_sales_order_detail AS B ON B.sales_order_system_number = A.sales_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.sales_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_sales_order_status AS E ON A.sales_order_status_id = E.work_order_status_id").
+		Where("B.sales_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.sales_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0")
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		Find(&results).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResults := make([]map[string]interface{}, len(results))
+	for i, result := range results {
+		mappedResults[i] = map[string]interface{}{
+			"sales_order_document_number":    result.SalesOrderDocumentNumber,
+			"sales_order_date":               result.SalesOrderDate.Format("2006-01-02"),
+			"sales_order_status_id":          result.SalesOrderStatusId,
+			"sales_order_status_description": result.SalesOrderStatusDescription,
+			"sales_order_system_number":      result.SalesOrderSystemNumber,
+		}
+	}
+
+	return mappedResults, totalPages, int(totalRows), nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'ServiceReqRefTypeSO'--SERVICE REQUEST REF TYPE SO
+func (r *LookupRepositoryImpl) ReferenceTypeSalesOrderByID(tx *gorm.DB, referenceId int, paginate pagination.Pagination, filters []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	var (
+		result struct {
+			SalesOrderDocumentNumber    string
+			SalesOrderDate              time.Time
+			SalesOrderStatusId          int
+			SalesOrderStatusDescription string
+			SalesOrderSystemNumber      int
+		}
+		totalRows  int64
+		totalPages int
+	)
+
+	if paginate.Limit <= 0 {
+		paginate.Limit = 10
+	}
+
+	filterStrings := []string{}
+	filterValues := []interface{}{}
+	if len(filters) > 0 {
+		for _, filter := range filters {
+			filterStrings = append(filterStrings, fmt.Sprintf("%s = ?", filter.ColumnField))
+			filterValues = append(filterValues, filter.ColumnValue)
+		}
+	}
+
+	filterQuery := strings.Join(filterStrings, " AND ")
+	if len(filterStrings) > 0 {
+		tx = tx.Where(filterQuery, filterValues...)
+	}
+
+	query := tx.Table("trx_sales_order AS A").
+		Select("A.sales_order_document_number AS sales_order_document_number, A.sales_order_date AS sales_order_date, "+
+			"B.sales_order_status_id AS work_order_status_id, E.sales_order_status_description AS sales_order_status_description, A.sales_order_system_number AS sales_order_system_number").
+		Joins("INNER JOIN trx_sales_order_detail AS B ON B.sales_order_system_number = A.sales_order_system_number").
+		Joins("LEFT OUTER JOIN trx_service_request AS C ON A.service_request_system_number = C.service_request_system_number AND C.reference_type_id = 1 AND C.service_request_status_id NOT IN (4, 5) AND NOT (C.service_request_status_id = 8 AND COALESCE(C.booking_system_number, 0) != 0 AND COALESCE(C.sales_order_system_number, 0) != 0)").
+		Joins("LEFT OUTER JOIN trx_service_request_detail AS D ON C.service_request_system_number = D.service_request_system_number AND D.operation_item_id = B.operation_item_id").
+		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_sales_order_status AS E ON A.sales_order_status_id = E.work_order_status_id").
+		Where("B.sales_order_status_id NOT IN (?, ?, ?)", utils.WoStatDraft, utils.WoStatClosed, utils.WoStatCancel).
+		Where("COALESCE(A.sales_order_system_number, 0) != 0").
+		Where("COALESCE(D.service_request_line_number, 0) != 0").
+		Where("A.sales_order_system_number = ?", referenceId)
+
+	err := query.Count(&totalRows).Error
+	if err != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to count total Data",
+			Err:        err,
+		}
+	}
+
+	if paginate.Limit > 0 {
+		totalPages = int(totalRows) / paginate.Limit
+		if int(totalRows)%paginate.Limit != 0 {
+			totalPages++
+		}
+	}
+
+	err = query.
+		Offset((paginate.Page - 1) * paginate.Limit).
+		Limit(paginate.Limit).
+		First(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not found",
+				Err:        err,
+			}
+		}
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get data",
+			Err:        err,
+		}
+	}
+
+	mappedResult := map[string]interface{}{
+		"sales_order_document_number":    result.SalesOrderDocumentNumber,
+		"sales_order_date":               result.SalesOrderDate,
+		"sales_order_status_id":          result.SalesOrderStatusId,
+		"sales_order_status_description": result.SalesOrderStatusDescription,
+		"sales_order_system_number":      result.SalesOrderSystemNumber,
+	}
+
+	return mappedResult, totalPages, int(totalRows), nil
+}
+
+func (r *LookupRepositoryImpl) GetLineTypeByReferenceType(tx *gorm.DB, referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	var lineTypes []map[string]interface{}
+	var excludedIds []int
+
+	switch referenceTypeId {
+	case 1:
+		excludedIds = []int{1, 8}
+	case 2:
+		excludedIds = []int{2, 8}
+	default:
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid reference type ID",
+			Err:        fmt.Errorf("unsupported reference type ID: %d", referenceTypeId),
+		}
+	}
+
+	if err := tx.Table("dms_microservices_general_dev.dbo.mtr_line_type").
+		Select("line_type_id, line_type_code, line_type_name").
+		Where("line_type_id NOT IN ?", excludedIds).
+		Find(&lineTypes).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to get line type",
+			Err:        err,
+		}
+	}
+
+	return lineTypes, nil
+}
+
+// usp_comLookUp
+// IF @strEntity = 'LocationAvailable'
+// Used for insert item location detail
+func (r *LookupRepositoryImpl) LocationAvailable(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	entities := masterwarehouseentities.WarehouseLocation{}
+	response := []masterpayloads.LocationAvailableResponse{}
+	var err error
+
+	var newFilter []utils.FilterCondition
+	var companyId int
+	var warehouseId int
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "company_id") {
+			companyId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		if strings.Contains(filter.ColumnField, "warehouse_id") {
+			warehouseId, _ = strconv.Atoi(filter.ColumnValue)
+			continue
+		}
+		newFilter = append(newFilter, filter)
+	}
+
+	periodResponse, periodError := financeserviceapiutils.GetOpenPeriodByCompany(companyId, "SP")
+	if periodError != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching company current period",
+			Err:        periodError.Err,
+		}
+	}
+
+	var existingWarehouseLocIds []int
+	err = tx.Model(&masteritementities.ItemLocation{}).
+		Joins("INNER JOIN mtr_item mi ON mi.item_id = mtr_location_item.item_id").
+		Joins("INNER JOIN mtr_item_group mig ON mig.item_group_id = mi.item_group_id").
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_location_item.warehouse_id").
+		Where("mwm.company_id = ?", companyId).
+		Where("mtr_location_item.warehouse_id = ?", warehouseId).
+		Where("mig.item_group_code = 'IN'").
+		Pluck("warehouse_location_id", &existingWarehouseLocIds).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching existing item location data",
+			Err:        err,
+		}
+	}
+	if len(existingWarehouseLocIds) == 0 {
+		existingWarehouseLocIds = []int{-1}
+	}
+	existingWarehouseLocIds = utils.RemoveDuplicateIds(existingWarehouseLocIds)
+
+	viewLocStock := tx.Table("mtr_location_stock mls").
+		Select(`
+			mls.item_inquiry_id,
+			mls.period_year,
+			mls.period_month,
+			mls.company_id,
+			mls.warehouse_group_id,
+			mls.warehouse_id,
+			mls.location_id,
+			(
+				ISNULL(quantity_sales, 0) +
+				ISNULL(quantity_transfer_out, 0) +
+				ISNULL(quantity_claim_out, 0) +
+				ISNULL(quantity_robbing_out, 0) +
+				ISNULL(quantity_assembly_out, 0)
+			) AS quantity_on_hand
+		`).
+		Joins("LEFT JOIN mtr_warehouse_master mwm ON mwm.company_id = mls.company_id AND mwm.warehouse_id = mls.warehouse_id")
+
+	baseModelQuery := tx.Model(&entities).
+		Select(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mwm.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_id,
+			SUM(ISNULL(view_stock.quantity_on_hand, 0)) AS quantity_on_hand
+			`).
+		Joins("INNER JOIN mtr_warehouse_master mwm ON mwm.warehouse_id = mtr_warehouse_location.warehouse_id").
+		Joins(`LEFT JOIN (?) view_stock ON view_stock.period_year = ?
+										AND view_stock.period_month = ?
+										AND view_stock.company_id = mwm.company_id
+										AND view_stock.warehouse_group_id = mtr_warehouse_location.warehouse_group_id
+										AND view_stock.warehouse_id = mtr_warehouse_location.warehouse_id
+										AND view_stock.location_id = mtr_warehouse_location.warehouse_location_id
+										`, viewLocStock, periodResponse.PeriodYear, periodResponse.PeriodMonth).
+		Where("warehouse_location_id NOT IN ?", existingWarehouseLocIds).
+		Where("mwm.company_id = ?", companyId).
+		Where("mwm.warehouse_id = ?", warehouseId).
+		Group(`
+			mtr_warehouse_location.is_active,
+			mtr_warehouse_location.warehouse_location_id,
+			mtr_warehouse_location.warehouse_location_code,
+			mtr_warehouse_location.warehouse_location_name,
+			mwm.company_id,
+			mtr_warehouse_location.warehouse_group_id,
+			mtr_warehouse_location.warehouse_id
+		`).
+		Order("warehouse_location_id ASC")
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, newFilter)
+	err = whereQuery.Scan(&response).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fethching location available data",
+			Err:        err,
+		}
+	}
+
+	paginateData, totalPages, totalRows := pagination.NewDataFramePaginate(response, &pages)
+
+	pages.Rows = utils.ModifyKeysInResponse(paginateData)
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
 }

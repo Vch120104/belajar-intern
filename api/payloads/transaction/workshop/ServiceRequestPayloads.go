@@ -111,6 +111,7 @@ type ServiceRequestResponse struct {
 	ServiceRequestStatusName     string `json:"service_request_status_name"`
 	ServiceRequestDocumentNumber string `json:"service_request_document_number"`
 	ServiceRequestDate           string `json:"service_request_date"`
+	ServiceTypeId                int    `json:"service_type_id"`
 	//BrandId                      int                           `json:"brand_id"`
 	BrandName string `json:"brand_name"`
 	//ModelId                      int                           `json:"model_id"`
@@ -125,16 +126,17 @@ type ServiceRequestResponse struct {
 	CompanyName       string `json:"company_name"`
 	//DealerRepresentativeId       int                           `json:"dealer_representative_id"`
 	DealerRepresentativeName string `json:"dealer_rep_code_name"`
-	//ProfitCenterId               int                           `json:"profit_center_id"`
-	ProfitCenterName         string `json:"profit_center_name"`
-	ServiceProfitCenterName  string `json:"service_profit_center_name"`
-	WorkOrderSystemNumber    int    `json:"work_order_no"`
-	WorkOrderDocumentNumber  string `json:"work_order_document_number"`
+	ProfitCenterId           int    `json:"service_profit_center_id"`
+	ProfitCenterName         string `json:"service_profit_center_description"`
+	//WorkOrderSystemNumber    int    `json:"work_order_no"`
+	//WorkOrderDocumentNumber  string `json:"work_order_document_number"`
 	BookingSystemNumber      int    `json:"booking_no"`
 	EstimationSystemNumber   int    `json:"estimation_system_number"`
 	ReferenceDocSystemNumber int    `json:"reference_doc_system_number"`
 	ReferenceTypeId          int    `json:"ref_type_id"`
 	ReferenceTypeName        string `json:"reference_type_name"`
+	ReferenceItemCode        string `json:"reference_item_code"`
+	ReferenceItemName        string `json:"reference_item_name"`
 	ReferenceDocId           int    `json:"ref_doc_id"`
 	ReferenceDocNumber       string `json:"ref_doc_no"`
 	ReferenceDocDate         string `json:"ref_doc_date"`
@@ -199,9 +201,11 @@ type ServiceDetailResponse struct {
 	OperationItemName          string  `json:"description"`
 	UomName                    string  `json:"uom"`
 	FrtQuantity                float64 `json:"qty"`
-	ReferenceDocSystemNumber   int     `json:"reference_doc_system_number"`
-	ReferenceDocCode           string  `json:"reference_doc_code"`
-	ReferenceDocNumber         string  `json:"reference_doc_name"`
+	ReferenceSystemNumber      int     `json:"reference_system_number"`
+	ReferenceLineNumber        int     `json:"reference_line_number"`
+	ReferenceItemId            int     `json:"reference_item_id"`
+	ReferenceItemCode          string  `json:"reference_item_code"`
+	ReferenceItemName          string  `json:"reference_item_name"`
 }
 
 type ItemServiceRequestDetail struct {
@@ -278,4 +282,9 @@ type ServiceType struct {
 	ServiceTypeId   int    `json:"service_profit_center_id"`
 	ServiceTypeCode string `json:"service_profit_center_code"`
 	ServiceTypeName string `json:"service_profit_center_description"`
+}
+
+type DealerRepresentativeByProfitCenter struct {
+	DealerRepresentativeId   int    `json:"dealer_representative_id"`
+	DealerRepresentativeName string `json:"dealer_representative_name"`
 }

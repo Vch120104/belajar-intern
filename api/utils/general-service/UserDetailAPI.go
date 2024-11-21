@@ -24,9 +24,17 @@ func GetUserDetailsByID(id int) (UserDetailsResponse, *exceptions.BaseErrorRespo
 
 	err := utils.CallAPI("GET", url, nil, &userDetails)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve user details due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "user details service is temporarily unavailable"
+		}
+
 		return userDetails, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to retrieve user details",
+			StatusCode: status,
+			Message:    message,
 			Err:        errors.New("error consuming external API while getting user details by ID"),
 		}
 	}

@@ -1,6 +1,7 @@
 package masteroperationrepository
 
 import (
+	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
 	"after-sales/api/payloads/pagination"
@@ -31,4 +32,12 @@ type OperationModelMappingRepository interface {
 	ActivateOperationLevel(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
 	DeactivateOperationLevel(tx *gorm.DB, id string) (bool, *exceptions.BaseErrorResponse)
 	DeleteOperationLevel(tx *gorm.DB, ids []int) (bool, *exceptions.BaseErrorResponse)
+	// SaveOperationModelMappingAndFRT(tx *gorm.DB, requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse)
+	GetOperationModelMappingLatestId(tx *gorm.DB) (int, *exceptions.BaseErrorResponse)
+	UpdateOperationModelMapping(tx *gorm.DB, operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse)
+	UpdateOperationFrt(tx *gorm.DB, operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse)
+	GetAllOperationLevelByHeaderId(tx *gorm.DB, id int) ([]masteroperationpayloads.OperationLevelRequest, *exceptions.BaseErrorResponse)
+	GetAllOperationFrtByHeaderId(tx *gorm.DB, id int) ([]masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse)
+	GetAllOperationDocumentRequirementByHeaderId(tx *gorm.DB, id int) ([]masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse)
+	CopyOperationModelMappingToOtherModel(tx *gorm.DB, headerId int, request masteroperationpayloads.OperationModelMappingCopyRequest) (bool, *exceptions.BaseErrorResponse)
 }

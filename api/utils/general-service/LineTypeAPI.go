@@ -4,6 +4,7 @@ import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 	"strconv"
 )
@@ -19,10 +20,18 @@ func GetLineTypeById(id int) (LineTypeResponse, *exceptions.BaseErrorResponse) {
 	url := config.EnvConfigs.GeneralServiceUrl + "line-type/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &line)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve line type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "line type service is temporarily unavailable"
+		}
+
 		return line, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to get line type by id",
-			Err:        err,
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting line type by ID"),
 		}
 	}
 	return line, nil
@@ -30,13 +39,21 @@ func GetLineTypeById(id int) (LineTypeResponse, *exceptions.BaseErrorResponse) {
 
 func GetLineTypeByCode(code string) (LineTypeResponse, *exceptions.BaseErrorResponse) {
 	var line LineTypeResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "line-type-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "line-type-by-code/" + code
 	err := utils.CallAPI("GET", url, nil, &line)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve line type due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "line type service is temporarily unavailable"
+		}
+
 		return line, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to get line type by code",
-			Err:        err,
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting line type by ID"),
 		}
 	}
 	return line, nil

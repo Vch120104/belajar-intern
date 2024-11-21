@@ -19,12 +19,20 @@ type BrandDocResponse struct {
 func GetBrandGenerateDoc(id int) (BrandDocResponse, *exceptions.BaseErrorResponse) {
 	var brandDoc BrandDocResponse
 	url := config.EnvConfigs.SalesServiceUrl + "unit-brand/" + strconv.Itoa(id)
-	err := utils.CallAPI("GET", url, &brandDoc, nil)
+	err := utils.CallAPI("GET", url, nil, &brandDoc)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve brand generate doc due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "brand generate doc service is temporarily unavailable"
+		}
+
 		return brandDoc, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error fetching brand doc by code",
-			Err:        errors.New("error consuming external API while fetching brand doc by code"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting brand generate doc by ID"),
 		}
 	}
 	return brandDoc, nil

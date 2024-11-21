@@ -43,19 +43,19 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseGroupAndMasterbyCodeandCompanyI
 }
 
 // IsWarehouseMasterByCodeAndCompanyIdExist implements masterwarehouseservice.WarehouseMasterService.
-func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(companyId int, warehouseCode string) bool {
+func (s *WarehouseMasterServiceImpl) IsWarehouseMasterByCodeAndCompanyIdExist(companyId int, warehouseCodes []string) ([]masterwarehouseentities.WarehouseMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
 	var err *exceptions.BaseErrorResponse
 	defer helper.CommitOrRollback(tx, err)
 
-	isExist, err := s.warehouseMasterRepo.IsWarehouseMasterByCodeAndCompanyIdExist(tx, companyId, warehouseCode)
+	isExist, err := s.warehouseMasterRepo.IsWarehouseMasterByCodeAndCompanyIdExist(tx, companyId, warehouseCodes)
 
 	if err != nil {
-		return isExist
+		return isExist, err
 	}
 
-	return isExist
+	return isExist, nil
 }
 
 func (s *WarehouseMasterServiceImpl) InTransitWarehouseCodeDropdown(companyID int, warehouseGroupID int) ([]masterwarehousepayloads.DropdownWarehouseMasterByCodeResponse, *exceptions.BaseErrorResponse) {
@@ -70,9 +70,9 @@ func (s *WarehouseMasterServiceImpl) InTransitWarehouseCodeDropdown(companyID in
 }
 
 // DropdownbyGroupId implements masterwarehouseservice.WarehouseMasterService.
-func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
+func (s *WarehouseMasterServiceImpl) DropdownbyGroupId(warehouseGroupId int, companyId int) ([]masterwarehousepayloads.DropdownWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId)
+	get, err := s.warehouseMasterRepo.DropdownbyGroupId(tx, warehouseGroupId, companyId)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {

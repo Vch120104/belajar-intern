@@ -39,7 +39,7 @@ func (s *LookupServiceImpl) ItemOprCode(linetypeId int, pages pagination.Paginat
 	return lookup, totalPages, totalRows, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
@@ -51,7 +51,7 @@ func (s *LookupServiceImpl) ItemOprCodeByCode(linetypeId int, oprItemCode string
 	return lookup, totalPages, totalRows, nil
 }
 
-func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LookupServiceImpl) ItemOprCodeByID(linetypeId int, oprItemId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	defer helper.CommitOrRollback(tx, nil)
 
@@ -241,4 +241,76 @@ func (s *LookupServiceImpl) ItemListTransPL(companyId int, filterCondition []uti
 	}
 
 	return item, nil
+}
+
+func (s *LookupServiceImpl) ReferenceTypeWorkOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeWorkOrder(tx, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) ReferenceTypeWorkOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeWorkOrderByID(tx, referenceId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) ReferenceTypeSalesOrder(pages pagination.Pagination, filterCondition []utils.FilterCondition) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeSalesOrder(tx, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) ReferenceTypeSalesOrderByID(referenceId int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, totalPages, totalRows, baseErr := s.LookupRepo.ReferenceTypeSalesOrderByID(tx, referenceId, pages, filterCondition)
+	if baseErr != nil {
+		return nil, 0, 0, baseErr
+	}
+
+	return lookup, totalPages, totalRows, nil
+}
+
+func (s *LookupServiceImpl) GetLineTypeByReferenceType(referenceTypeId int) ([]map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lineType, baseErr := s.LookupRepo.GetLineTypeByReferenceType(tx, referenceTypeId)
+	if baseErr != nil {
+		return lineType, baseErr
+	}
+
+	return lineType, nil
+}
+
+func (s *LookupServiceImpl) LocationAvailable(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	location, baseErr := s.LookupRepo.LocationAvailable(tx, filterCondition, pages)
+	if baseErr != nil {
+		return location, baseErr
+	}
+
+	return location, nil
 }

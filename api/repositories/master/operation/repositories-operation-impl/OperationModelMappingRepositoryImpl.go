@@ -111,7 +111,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 
 	// Assign values for external filters (brand and model)
 	for _, extFilter := range externalServiceFilter {
-		if strings.Contains(extFilter.ColumnField, "brand_code") {
+		if strings.Contains(extFilter.ColumnField, "brand_name") {
 			brandCode = extFilter.ColumnValue
 		} else if strings.Contains(extFilter.ColumnField, "model_code") {
 			modelCode = extFilter.ColumnValue
@@ -143,7 +143,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 	}
 
 	// Join with brand data
-	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_code=" + brandCode
+	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_name=" + brandCode
 	if err := utils.Get(unitBrandUrl, &getBrandResponse, nil); err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -189,9 +189,9 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm
 		BrandId:                 request.BrandId,
 		ModelId:                 request.ModelId,
 		OperationId:             request.OperationId,
-		OperationUsingIncentive: request.OperationUsingIncentive,
-		OperationUsingActual:    request.OperationUsingActual,
-		OperationPdi:            request.OperationPdi,
+		OperationUsingIncentive: &request.OperationUsingIncentive,
+		OperationUsingActual:    &request.OperationUsingActual,
+		OperationPdi:            &request.OperationPdi,
 	}
 
 	err := tx.Save(&entities).Error
@@ -279,6 +279,29 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrt(tx *gorm.DB, id
 	results, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData1, &pages)
 
 	return results, totalPages, totalRows, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationFrtByHeaderId(tx *gorm.DB, id int) ([]masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse) {
+	var OperationFrtResponse []masteroperationpayloads.OperationModelMappingFrtRequest
+
+	err := tx.Table(masteroperationentities.TableNameOperationFrt).
+		Select("mtr_operation_frt.operation_frt_id AS operation_frt_id, "+
+			"mtr_operation_frt.operation_model_mapping_id AS operation_model_mapping_id, "+
+			"mtr_operation_frt.variant_id AS variant_id, "+
+			"mtr_operation_frt.frt_hour AS frt_hour, "+
+			"mtr_operation_frt.frt_hour_express AS frt_hour_express, "+
+			"mtr_operation_frt.is_active AS is_active").
+		Where("operation_model_mapping_id = ?", id).
+		Scan(&OperationFrtResponse).Error
+
+	if err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return OperationFrtResponse, nil
 }
 
 func (*OperationModelMappingRepositoryImpl) GetOperationFrtById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingFrtRequest, *exceptions.BaseErrorResponse) {
@@ -419,6 +442,26 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement
 	pages.Rows = OperationDocumentRequirementResponse
 
 	return pages, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirementByHeaderId(tx *gorm.DB, id int) ([]masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse) {
+
+	var OperationDocumentRequirementResponse []masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
+
+	err := tx.
+		Model(masteroperationentities.OperationDocumentRequirement{}).
+		Where("operation_model_mapping_id = ?", id).
+		Scan(&OperationDocumentRequirementResponse).Error
+
+	if err != nil {
+
+		return OperationDocumentRequirementResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return OperationDocumentRequirementResponse, nil
 }
 
 func (*OperationModelMappingRepositoryImpl) GetOperationDocumentRequirementById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse) {
@@ -585,6 +628,49 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, 
 	return pages, nil
 }
 
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevelByHeaderId(tx *gorm.DB, id int) ([]masteroperationpayloads.OperationLevelRequest, *exceptions.BaseErrorResponse) {
+
+	var OperationLevelResponse []masteroperationpayloads.OperationLevelRequest
+
+	err := tx.Table("mtr_operation_level").Select(`
+		mtr_operation_level.operation_level_id,
+		mtr_operation_group.operation_group_id,
+		mtr_operation_group.operation_group_code,
+		mtr_operation_group.operation_group_description,
+		mtr_operation_section.operation_section_id,
+		mtr_operation_section.operation_section_code,
+		mtr_operation_section.operation_section_description,
+		mtr_operation_key.operation_key_id,
+		mtr_operation_key.operation_key_code,
+		mtr_operation_key.operation_key_description,
+		op_entries.operation_entries_id,
+		op_entries.operation_entries_code,
+		op_entries.operation_entries_description`).
+		Joins("JOIN mtr_operation_entries AS op_entries ON op_entries.operation_entries_id = mtr_operation_level.operation_entries_id").
+		Joins("JOIN mtr_operation_group ON mtr_operation_group.operation_group_id = op_entries.operation_group_id").
+		Joins("JOIN mtr_operation_key ON mtr_operation_key.operation_key_id = op_entries.operation_key_id").
+		Joins("JOIN mtr_operation_section ON mtr_operation_section.operation_section_id = op_entries.operation_section_id").
+		Where("mtr_operation_level.operation_model_mapping_id = ?", id).
+		Scan(&OperationLevelResponse).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return OperationLevelResponse, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Operation Level not found",
+				Err:        err,
+			}
+		}
+		return OperationLevelResponse, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error retrieving Operation Level",
+			Err:        err,
+		}
+	}
+
+	return OperationLevelResponse, nil
+}
+
 func (r *OperationModelMappingRepositoryImpl) GetOperationLevelById(tx *gorm.DB, Id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {
 	response := masteroperationpayloads.OperationLevelByIdResponse{}
 
@@ -673,6 +759,192 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationLevel(tx *gorm.DB
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        result.Error,
+			}
+		}
+	}
+
+	return true, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLatestId(tx *gorm.DB) (int, *exceptions.BaseErrorResponse) {
+	var latestID int
+
+	err := tx.Table("mtr_operation_model_mapping").
+		Select("operation_model_mapping_id").
+		Order("operation_model_mapping_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if err != nil {
+		return 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return latestID, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) UpdateOperationModelMapping(tx *gorm.DB, operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse) {
+	var OperationModelMapping = masteroperationentities.OperationModelMapping{
+		OperationPdi:            &request.OperationPdi,
+		OperationUsingIncentive: &request.OperationUsingIncentive,
+		OperationUsingActual:    &request.OperationUsingActual,
+	}
+
+	if err := tx.Model(&masteroperationentities.OperationModelMapping{}).
+		Where("operation_model_mapping_id = ?", operationModelMappingId).
+		Updates(&OperationModelMapping).Error; err != nil {
+		return masteroperationentities.OperationModelMapping{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update operation master",
+			Err:        err,
+		}
+	}
+
+	return OperationModelMapping, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) UpdateOperationFrt(tx *gorm.DB, operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse) {
+	var OperationFrt = masteroperationentities.OperationFrt{
+		OperationFrtId: request.OperationFrtId,
+		FrtHour:        request.FrtHour,
+		FrtHourExpress: request.FrtHourExpress,
+	}
+
+	// if err := tx.Model(&masteroperationentities.OperationFrt{}).
+	// 	Where("operation_frt_id = ?", operationFrtId).
+	// 	Updates(&OperationFrt).Error; err != nil {
+	// 	return masteroperationentities.OperationFrt{}, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusInternalServerError,
+	// 		Message:    "Failed to update operation master",
+	// 		Err:        err,
+	// 	}
+	// }
+
+	if err := tx.Model(&masteroperationentities.OperationFrt{}).
+		Where("operation_frt_id = ?", operationFrtId).
+		Select("FrtHour", "FrtHourExpress").
+		Updates(&OperationFrt).Error; err != nil {
+		return masteroperationentities.OperationFrt{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to update operation master",
+			Err:        err,
+		}
+	}
+
+	return OperationFrt, nil
+}
+
+func (r *OperationModelMappingRepositoryImpl) CopyOperationModelMappingToOtherModel(tx *gorm.DB, headerId int, request masteroperationpayloads.OperationModelMappingCopyRequest) (bool, *exceptions.BaseErrorResponse) {
+
+	var CopyRequest masteroperationpayloads.CopyRequest
+	var latestID int
+
+	operationModelMappingHeader, _ := r.GetOperationModelMappingById(tx, headerId)
+
+	CopyRequest.HeaderRequest = operationModelMappingHeader
+
+	operationLevel, _ := r.GetAllOperationLevelByHeaderId(tx, headerId)
+
+	CopyRequest.OperationLevel = operationLevel
+
+	operationFrt, _ := r.GetAllOperationFrtByHeaderId(tx, headerId)
+
+	CopyRequest.OperationFrt = operationFrt
+
+	operationDoc, _ := r.GetAllOperationDocumentRequirementByHeaderId(tx, headerId)
+
+	CopyRequest.OperationDoc = operationDoc
+
+	headerEntity := masteroperationentities.OperationModelMapping{
+		IsActive:                CopyRequest.HeaderRequest.IsActive,
+		OperationModelMappingId: 0,
+		BrandId:                 CopyRequest.HeaderRequest.BrandId,
+		ModelId:                 request.ModelId,
+		OperationId:             CopyRequest.HeaderRequest.OperationId,
+		OperationUsingIncentive: &CopyRequest.HeaderRequest.OperationUsingIncentive,
+		OperationUsingActual:    &CopyRequest.HeaderRequest.OperationUsingActual,
+		OperationPdi:            &CopyRequest.HeaderRequest.OperationPdi,
+	}
+
+	err := tx.Save(&headerEntity).Error
+
+	if err != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	errLatestId := tx.Table("mtr_operation_model_mapping").
+		Select("operation_model_mapping_id").
+		Order("operation_model_mapping_id DESC").
+		Limit(1).
+		Scan(&latestID).Error
+
+	if errLatestId != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errLatestId,
+		}
+	}
+
+	CopyRequest.HeaderRequest.OperationModelMappingId = latestID
+
+	for _, operationFrtValues := range CopyRequest.OperationFrt {
+		oprFrtEntity := masteroperationentities.OperationFrt{
+			IsActive:                operationFrtValues.IsActive,
+			OperationFrtId:          0,
+			OperationModelMappingId: latestID,
+			VariantId:               operationFrtValues.VariantId,
+			FrtHour:                 operationFrtValues.FrtHour,
+			FrtHourExpress:          operationFrtValues.FrtHourExpress,
+		}
+
+		err := tx.Create(&oprFrtEntity).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	for _, operationLevelValues := range CopyRequest.OperationLevel {
+		oprLvlEntity := masteroperationentities.OperationLevel{
+			IsActive:                operationLevelValues.IsActive,
+			OperationLevelId:        0,
+			OperationModelMappingId: latestID,
+			OperationEntriesId:      operationLevelValues.OperationEntriesId,
+		}
+
+		err := tx.Create(&oprLvlEntity).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+			}
+		}
+	}
+
+	for _, operationDocValues := range CopyRequest.OperationDoc {
+		oprDocEntity := masteroperationentities.OperationDocumentRequirement{
+			IsActive:                                operationDocValues.IsActive,
+			OperationModelMappingId:                 latestID,
+			OperationDocumentRequirementId:          0,
+			Line:                                    operationDocValues.Line,
+			OperationDocumentRequirementDescription: operationDocValues.OperationDocumentRequirementDescription,
+		}
+
+		err := tx.Create(&oprDocEntity).Error
+
+		if err != nil {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
 			}
 		}
 	}

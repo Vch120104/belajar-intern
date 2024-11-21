@@ -6,12 +6,12 @@ import (
 	masterwarehouseentities "after-sales/api/entities/master/warehouse"
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
-	financeservice "after-sales/api/payloads/cross-service/finance-service"
-	generalservicepayloads "after-sales/api/payloads/cross-service/general-service"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	"after-sales/api/utils"
+	financeserviceapiutils "after-sales/api/utils/finance-service"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"fmt"
 	"math"
@@ -1684,8 +1684,9 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 		}
 	}
 	//		SET @TAX_RATE = dbo.getTaxPercent(dbo.getVariableValue('TAX_TYPE_PPN'),dbo.getVariableValue('TAX_SERV_CODE_PPN'),@Change_Datetime)
-	var PeriodResponse financeservice.OpenPeriodPayloadResponse
-	PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(payloads.CompanyId) + "&closing_module_detail_code=" //strconv.Itoa(response.ItemCode)
+	//var PeriodResponse financeservice.OpenPeriodPayloadResponse
+	//PeriodResponse,periodErr := financeserviceapiutils.GetOpenPeriodByCompany(payloads.CompanyId,"SP")
+	//PeriodUrl := config.EnvConfigs.FinanceServiceUrl + "closing-period-company/current-period?company_id=" + strconv.Itoa(payloads.CompanyId) + "&closing_module_detail_code=" //strconv.Itoa(response.ItemCode)
 	//UomItem := config.EnvConfigs.AfterSalesServiceUrl + "unit-of-measurement/" + res.ItemCode + "/P" //strconv.Itoa(response.ItemCode)
 	//IF @Is_SP_PO = 1
 	//if purchase order is sparepart po
@@ -1700,13 +1701,9 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 		//RETURN 0
 		//END
 		//SET @Po_Doc_Date = GETDATE()
-		PeriodUrl = PeriodUrl + "SP"
-		if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusUnprocessableEntity,
-				Message:    "Failed to Period Response data from external service",
-				Err:        err,
-			}
+		PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(payloads.CompanyId, "SP")
+		if periodErr != nil {
+			return false, periodErr
 		}
 		if PeriodResponse.PeriodYear != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) && PeriodResponse.PeriodMonth != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) {
 			return false, &exceptions.BaseErrorResponse{
@@ -1721,13 +1718,9 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 		//get Current Open Period
 	} else {
 		//if purchase order is ga po
-		PeriodUrl = PeriodUrl + "FXA"
-		if err := utils.Get(PeriodUrl, &PeriodResponse, nil); err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusUnprocessableEntity,
-				Message:    "Failed to Get Period Response data from external service",
-				Err:        err,
-			}
+		PeriodResponse, periodErr := financeserviceapiutils.GetOpenPeriodByCompany(payloads.CompanyId, "FXA")
+		if periodErr != nil {
+			return false, periodErr
 		}
 		if PeriodResponse.PeriodYear != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) && PeriodResponse.PeriodMonth != strconv.Itoa(payloads.PurchaseOrderDocumentDate.Year()) {
 			return false, &exceptions.BaseErrorResponse{
@@ -1758,15 +1751,20 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//RAISERROR('Regulated item can''t be mixed with non regulated item on same PO.',16,1)
 	//RETURN 0
 	//END
-	var SupplierCompanyResponse generalservicepayloads.GetCompanyByIdResponses
-	CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(payloads.CompanyId)
-	if err := utils.Get(CompanyUrl, &SupplierCompanyResponse, nil); err != nil {
-		return false, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusUnprocessableEntity,
-			Message:    "Failed to Get Company data from external service",
-			Err:        err,
-		}
+	//var SupplierCompanyResponse generalservicepayloads.GetCompanyByIdResponses
+	//CompanyUrl := config.EnvConfigs.GeneralServiceUrl + "company/" + strconv.Itoa(payloads.CompanyId)
+	//if err := utils.Get(CompanyUrl, &SupplierCompanyResponse, nil); err != nil {
+	//	return false, &exceptions.BaseErrorResponse{
+	//		StatusCode: http.StatusUnprocessableEntity,
+	//		Message:    "Failed to Get Company data from external service",
+	//		Err:        err,
+	//	}
+	//}
+	SupplierCompanyResponse, companyResError := generalserviceapiutils.GetCompanyDataById(payloads.CompanyId)
+	if companyResError != nil {
+		return false, companyResError
 	}
+
 	//checking regulated item but based on sp only checking for nmdi
 	if SupplierCompanyResponse.CompanyCode == "3125098" {
 		count := 0
@@ -2029,16 +2027,11 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	}
 	employeeCostCenter := 0
 	if poEntities.ItemGroupId != ItemGroupInventoryId {
-		var empReponse generalservicepayloads.EmployeeMasterResponses
-		empReponseUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(payloads.CreatedByUserId)
-		if err := utils.Get(empReponseUrl, &empReponse, nil); err != nil {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusUnprocessableEntity,
-				Message:    "Failed to Get Employee Data from external service",
-				Err:        err,
-			}
+		empResponse, empErr := generalserviceapiutils.GetEmployeeMasterById(payloads.CreatedByUserId)
+		if empErr != nil {
+			return false, empErr
 		}
-		employeeCostCenter = empReponse.CostCenterId
+		employeeCostCenter = empResponse.CostCenterId
 		fmt.Println(employeeCostCenter)
 	}
 	//SET @Approval_Code =  dbo.getApprovalCodeBrand(@Company_Code,@Src_Code,@Item_Group,@Vehicle_Brand,@Profit_Center,@Employee_Cost_center)
@@ -2054,12 +2047,15 @@ func (repo *PurchaseOrderRepositoryImpl) SubmitPurchaseOrderRequest(db *gorm.DB,
 	//UPDATE atItemPO0
 	//
 	//get document status id for approved
-	ApprovedStatusId := GetApprovalStatusId("20")
+	ApprovedStatus, errs := generalserviceapiutils.GetApprovalStatusByCode("20")
+	if errs != nil {
+		return false, errs
+	}
 	//masi dummy anggap always true belum ada
 	//dbo.getApprovalCodeBrand
 	//dan approvalreqrfp
 	if true { //ISNULL(@Approval_Req_No, 0)
-		poEntities.PurchaseOrderStatusId = ApprovedStatusId
+		poEntities.PurchaseOrderStatusId = ApprovedStatus.ApprovalStatusId
 		poEntities.PurchaseOrderRemark = payloads.PurchaseOrderRemark
 		*poEntities.LastTotalDiscount = *poEntities.TotalDiscount
 		*poEntities.TotalAmount = *poEntities.TotalAmountConfirm

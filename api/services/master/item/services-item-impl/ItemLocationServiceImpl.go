@@ -46,44 +46,19 @@ func StartItemLocationService(
 	}
 }
 
-func (s *ItemLocationServiceImpl) GetAllItemLocation(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) (masteritementities.ItemLocationDetail, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, totalPages, totalRows, err := s.ItemLocationRepo.GetAllItemLocation(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return results, totalPages, totalRows, err
-	}
-	return results, totalPages, totalRows, nil
-}
+	var entity masteritementities.ItemLocationDetail
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		helper.CommitOrRollback(tx, err)
+	}()
 
-func (s *ItemLocationServiceImpl) SaveItemLocation(req masteritempayloads.ItemLocationRequest) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	results, err := s.ItemLocationRepo.SaveItemLocation(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+	entity, err = s.ItemLocationRepo.AddItemLocation(tx, id, req)
 	if err != nil {
-		return false, err
+		return masteritementities.ItemLocationDetail{}, err
 	}
-	return results, nil
-}
-
-func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads.ItemLocationDetailRequest) *exceptions.BaseErrorResponse {
-	tx := s.DB.Begin()
-	err := s.ItemLocationRepo.AddItemLocation(tx, id, req)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *ItemLocationServiceImpl) GetItemLocationById(id int) (masteritempayloads.ItemLocationRequest, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	results, err := s.ItemLocationRepo.GetItemLocationById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
-	if err != nil {
-		return results, err
-	}
-	return results, nil
+	return entity, nil
 }
 
 func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

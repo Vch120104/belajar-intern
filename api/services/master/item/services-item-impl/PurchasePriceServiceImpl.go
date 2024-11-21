@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/gommon/log"
 	"github.com/redis/go-redis/v9"
@@ -325,7 +326,7 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 
 func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
 	var results []masteritempayloads.PurchasePriceDetailResponses
-	var numericRegex = regexp.MustCompile(`^\d+$`)
+	var numericRegex = regexp.MustCompile(`^\d*\.?\d+$`)
 	for i, row := range rows {
 		if i == 0 {
 			// Skip header row
@@ -338,16 +339,25 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 				Message:    "Invalid row length",
 			}
 		}
-		// Check if purchase price is numeric without punctuation
-		if !numericRegex.MatchString(row[2]) {
+
+		// Debugging row data
+		//fmt.Printf("Debugging Row: %v\n", row)
+
+		// Preprocessing purchase price
+		purchasePriceStr := strings.TrimSpace(row[2])                     // Trim whitespace
+		purchasePriceStr = strings.ReplaceAll(purchasePriceStr, ",", ".") // Replace comma with dot
+
+		if !numericRegex.MatchString(purchasePriceStr) {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
-				Message:    "Purchase price must be numeric without any punctuation",
+				Message:    "Purchase price must be numeric (integer or decimal)",
 			}
 		}
 
-		// Convert validated numeric string to integer
-		purchasePrice, err := strconv.Atoi(row[2])
+		// Debugging PurchasePrice before validation
+		//fmt.Printf("Debugging PurchasePrice: '%s'\n", purchasePriceStr)
+
+		purchasePrice, err := strconv.ParseFloat(purchasePriceStr, 64)
 		if err != nil {
 			return nil, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusBadRequest,
@@ -363,7 +373,6 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 			PurchasePriceId: id,
 		})
 	}
-
 	return results, nil
 }
 

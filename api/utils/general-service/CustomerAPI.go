@@ -63,10 +63,18 @@ func GetCustomerMasterDetailById(id int) (CustomerMasterDetailResponse, *excepti
 	url := config.EnvConfigs.GeneralServiceUrl + "customer-detail/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve customer due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "customer service is temporarily unavailable"
+		}
+
 		return getCustomerMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for customer detail by ID",
-			Err:        err,
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting customer by ID"),
 		}
 	}
 	return getCustomerMaster, nil
@@ -77,10 +85,18 @@ func GetCustomerMasterByID(id int) (CustomerMasterResponse, *exceptions.BaseErro
 	url := config.EnvConfigs.GeneralServiceUrl + "customer/" + strconv.Itoa(id)
 	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve customer due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "customer service is temporarily unavailable"
+		}
+
 		return getCustomerMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for customer by ID",
-			Err:        errors.New("error consuming external API for customer by ID"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting customer by ID"),
 		}
 	}
 	return getCustomerMaster, nil
@@ -91,10 +107,18 @@ func GetCustomerMasterByCode(code string) (CustomerMasterByCodeResponse, *except
 	url := config.EnvConfigs.GeneralServiceUrl + "customer-code/" + code
 	err := utils.CallAPI("GET", url, nil, &getCustomerMaster)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve customer due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "customer service is temporarily unavailable"
+		}
+
 		return getCustomerMaster, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for customer by code",
-			Err:        errors.New("error consuming external API for customer by code"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting customer by ID"),
 		}
 	}
 	return getCustomerMaster, nil
@@ -116,10 +140,18 @@ func GetCustomerMultiId(ids []int, response interface{}) *exceptions.BaseErrorRe
 
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {
+		status := http.StatusBadGateway // Default to 502
+		message := "Failed to retrieve customer due to an external service error"
+
+		if errors.Is(err, utils.ErrServiceUnavailable) {
+			status = http.StatusServiceUnavailable
+			message = "customer service is temporarily unavailable"
+		}
+
 		return &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "error consuming external API for customer by multiple IDs",
-			Err:        errors.New("error consuming external API for customer by multiple IDs"),
+			StatusCode: status,
+			Message:    message,
+			Err:        errors.New("error consuming external API while getting customer by ID"),
 		}
 	}
 	return nil

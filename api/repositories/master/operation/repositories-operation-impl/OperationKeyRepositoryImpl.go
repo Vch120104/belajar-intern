@@ -26,30 +26,12 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 	entities := masteroperationentities.OperationKey{}
 	var responses []masteroperationpayloads.OperationkeyListResponse
 
-	// define table struct
 	tableStruct := masteroperationpayloads.OperationkeyListResponse{}
 
-	//join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-	//apply pagination and execute
-	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
-
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+	rows, _ := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
 	defer rows.Close()
 
@@ -187,4 +169,26 @@ func (r *OperationKeyRepositoryImpl) ChangeStatusOperationKey(tx *gorm.DB, Id in
 	}
 
 	return true, nil
+}
+
+func (r *OperationKeyRepositoryImpl) GetOperationKeyDropdown(tx *gorm.DB, operationGroupId int, operationSectionId int) ([]masteroperationpayloads.OperationKeyDropDown, *exceptions.BaseErrorResponse) {
+
+	var operationKey []masteroperationpayloads.OperationKeyDropDown
+
+	err := tx.Model(&masteroperationentities.OperationKey{}).
+		Select("is_active", "operation_key_id", "CONCAT(operation_key_code, ' - ', operation_key_description) as operation_key_code").
+		Where(masteroperationentities.OperationKey{
+			OperationGroupId:   operationGroupId,
+			OperationSectionId: operationSectionId,
+		}).
+		Scan(&operationKey).Error
+
+	if err != nil {
+		return operationKey, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return operationKey, nil
 }

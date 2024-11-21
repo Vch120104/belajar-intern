@@ -10,6 +10,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
 	"strconv"
@@ -785,16 +786,25 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 		}
 	}
 
+	lineTypeOpr, lineTypeError := generalserviceapiutils.GetLineTypeByCode("1")
+	if lineTypeError != nil {
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error fetching line type operation data",
+			Err:        lineTypeError.Err,
+		}
+	}
+
 	for _, op := range responsedetail {
 		if op.PackageId != 0 {
-			err := tx.Select("mtr_package.package_code").Table("mtr_package").Where("mtr_package.package_id=?", op.PackageId).Scan(packagecode).Error
+			err := tx.Select("mtr_package.package_code").Table("mtr_package").Where("mtr_package.package_id=?", op.PackageId).Scan(&packagecode).Error
 			if err != nil {
 				return nil, 0, 0, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
 				}
 			}
 		}
-		if op.LineTypeId != 9 && op.LineTypeId != 0 {
+		if op.LineTypeId != lineTypeOpr.LineTypeId && op.LineTypeId != 0 {
 			err = tx.Select("mtr_item.item_name,mtr_item.item_code").Table("mtr_campaign_master_detail").
 				Joins("join mtr_item_operation on mtr_item_operation.item_operation_id=mtr_campaign_master_detail.item_operation_id").
 				Joins("join mtr_item on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
@@ -838,7 +848,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, p
 			"total":              afterDisc,
 		}
 
-		if op.LineTypeId != 9 && op.LineTypeId != 1 {
+		if op.LineTypeId != lineTypeOpr.LineTypeId && op.LineTypeId != 0 {
 			response["item_name"] = item.ItemName
 			response["item_code"] = item.ItemCode
 		} else {

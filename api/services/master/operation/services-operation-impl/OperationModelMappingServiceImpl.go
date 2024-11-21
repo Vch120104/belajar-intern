@@ -1,6 +1,7 @@
 package masteroperationserviceimpl
 
 import (
+	masteroperationentities "after-sales/api/entities/master/operation"
 	exceptions "after-sales/api/exceptions"
 	"after-sales/api/helper"
 	masteroperationpayloads "after-sales/api/payloads/master/operation"
@@ -230,6 +231,65 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationLevel(id string) (
 func (s *OperationModelMappingServiceImpl) ActivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.operationModelMappingRepo.ActivateOperationLevel(tx, id)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+	return results, nil
+}
+
+func (s *OperationModelMappingServiceImpl) UpdateOperationModelMapping(operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	update, err := s.operationModelMappingRepo.UpdateOperationModelMapping(tx, operationModelMappingId, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return update, err
+	}
+	return update, nil
+}
+
+func (s *OperationModelMappingServiceImpl) UpdateOperationFrt(operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+
+	update, err := s.operationModelMappingRepo.UpdateOperationFrt(tx, operationFrtId, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return update, err
+	}
+	return update, nil
+}
+
+func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingAndFRT(requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	_, err := s.operationModelMappingRepo.SaveOperationModelMapping(tx, requestHeader)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return false, err
+	}
+
+	latestID, errGet := s.operationModelMappingRepo.GetOperationModelMappingLatestId(tx)
+	defer helper.CommitOrRollback(tx, err)
+	if errGet != nil {
+		return false, errGet
+	}
+
+	requestDetail.OperationModelMappingId = latestID
+
+	results, errDetail := s.operationModelMappingRepo.SaveOperationModelMappingFrt(tx, requestDetail)
+	defer helper.CommitOrRollback(tx, err)
+	if errDetail != nil {
+		return false, errDetail
+	}
+
+	return results, nil
+}
+
+func (s *OperationModelMappingServiceImpl) CopyOperationModelMappingToOtherModel(headerId int, request masteroperationpayloads.OperationModelMappingCopyRequest) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.operationModelMappingRepo.CopyOperationModelMappingToOtherModel(tx, headerId, request)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err

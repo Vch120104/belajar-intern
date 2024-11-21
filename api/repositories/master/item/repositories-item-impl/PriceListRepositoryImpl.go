@@ -71,12 +71,13 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 func (r *PriceListRepositoryImpl) CheckPriceListExist(tx *gorm.DB, itemId int, brandId int, currencyId int, date string, companyId int) (bool, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemPriceList{}
 
-	if err := tx.Model(model).Where(masteritementities.ItemPriceList{BrandId: brandId, ItemId: itemId}).
+	if err := tx.Model(&model).Where(masteritementities.ItemPriceList{BrandId: brandId, ItemId: itemId}).
 		Where("mtr_item_price_list.company_id = ?", companyId).
-		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) = ?", date).First(&model).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
+			Message:    "failed to check price list is exist",
 		}
 	}
 
@@ -295,7 +296,32 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 	PriceListId := -1
 
 	for _, value := range request.Detail {
+		isExist := 0
+		err := tx.Model(&masteritementities.ItemPriceList{}).
+			Where("CONVERT(DATE, effective_date) = ?", request.EffectiveDate.Format("2006-01-02")).
+			Where(masteritementities.ItemPriceList{
+				ItemId:          value.ItemId,
+				BrandId:         request.BrandId,
+				ItemGroupId:     request.ItemGroupId,
+				PriceListCodeId: request.PriceListCodeId,
+				CurrencyId:      request.CurrencyId,
+				CompanyId:       request.CompanyId,
+			}).Select("1").Scan(&isExist).Error
 
+		if err != nil {
+			return PriceListId, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        err,
+				Message:    "error on check data price list",
+			}
+		}
+		if isExist == 1 {
+			return PriceListId, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "cannot insert duplicate item",
+				Err:        err,
+			}
+		}
 		entities := masteritementities.ItemPriceList{
 			IsActive:            value.IsActive,
 			PriceListCodeId:     request.PriceListCodeId,
@@ -310,7 +336,7 @@ func (r *PriceListRepositoryImpl) SavePriceList(tx *gorm.DB, request masteritemp
 			PriceListModifiable: true,
 		}
 
-		err := tx.Save(&entities).Where(entities).Select("mtr_item_price_list.price_list_id").First(&PriceListId).Error
+		err = tx.Save(&entities).Where(entities).Select("mtr_item_price_list.price_list_id").First(&PriceListId).Error
 
 		if err != nil {
 			return PriceListId, &exceptions.BaseErrorResponse{
@@ -377,11 +403,31 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 
 	model := masteritementities.ItemPriceList{}
 
-	query := tx.Model(model).
-		Select("mtr_item.*,mtr_item_class.*,mtr_item_price_list.*,mtr_item_price_code.item_price_code").
-		Joins("JOIN mtr_item on mtr_item.item_id=mtr_item_price_list.item_id").
-		Joins("JOIN mtr_item_class on mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
-		Joins("LEFT JOIN mtr_item_price_code on mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id")
+	query := tx.Model(&model).
+		Select(`
+        mtr_item_price_list.brand_id,
+        mtr_item_price_list.item_group_id,
+        mtr_item_price_list.item_class_id,
+        mtr_item_class.item_class_name,
+        mtr_item_price_list.currency_id,
+		CAST(effective_date AS DATE) AS effective_date,
+        mtr_item_price_code.item_price_code,
+        MIN(mtr_item_price_list.price_list_id) AS price_list_id,
+        mtr_item_price_list.is_active
+    `).
+		Joins("JOIN mtr_item ON mtr_item.item_id = mtr_item_price_list.item_id").
+		Joins("JOIN mtr_item_class ON mtr_item_class.item_class_id = mtr_item_price_list.item_class_id").
+		Joins("LEFT JOIN mtr_item_price_code ON mtr_item_price_code.item_price_code_id = mtr_item_price_list.price_list_code_id").
+		Group(`
+        mtr_item_price_list.brand_id,
+        mtr_item_price_list.item_group_id,
+        mtr_item_price_list.item_class_id,
+        mtr_item_class.item_class_name,
+        mtr_item_price_list.currency_id,
+        CAST(effective_date AS DATE),
+        mtr_item_price_code.item_price_code,
+        mtr_item_price_list.is_active
+    `).Order("CAST(effective_date AS DATE) desc")
 
 	//apply where query
 	whereQuery := utils.ApplyFilterExact(query, filtercondition)

@@ -25,6 +25,8 @@ type ContractServiceDetailController interface {
 	GetAllDetail(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	SaveDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateDetail(writer http.ResponseWriter, request *http.Request)
+	DeleteDetail(writer http.ResponseWriter, request *http.Request)
 }
 
 func NewContractServiceDetailController(contractServiceDetailService transactionworkshopservice.ContractServiceDetailService) ContractServiceDetailController {
@@ -108,4 +110,76 @@ func (c *ContractServiceDetailControllerImpl) SaveDetail(writer http.ResponseWri
 	}
 
 	payloads.NewHandleSuccess(writer, create, "Create Data Successfully", http.StatusCreated) // Menggunakan StatusCreated (201)
+}
+
+// UpdateDetail implements ContractServiceDetailController.
+func (c *ContractServiceDetailControllerImpl) UpdateDetail(writer http.ResponseWriter, request *http.Request) {
+	contractServiceSystemNumber, err := strconv.Atoi(chi.URLParam(request, "contract_service_system_number"))
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+			Message:    "Invalid contract service system number",
+		})
+		return
+	}
+
+	contractServiceLine := chi.URLParam(request, "contract_service_line")
+	if contractServiceLine == "" {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "Invalid contract service line",
+		})
+		return
+	}
+
+	var detailRequest transactionworkshoppayloads.ContractServiceDetailRequest
+	helper.ReadFromRequestBody(request, &detailRequest)
+	if validationErr := validation.ValidationForm(writer, request, &detailRequest); validationErr != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        err,
+			Message:    "Validation error",
+		})
+		return
+	}
+
+	updatedDetail, iferr := c.ContractServiceDetailService.UpdateDetail(contractServiceSystemNumber, contractServiceLine, detailRequest)
+	if iferr != nil {
+		exceptions.NewAppException(writer, request, iferr)
+		return
+	}
+
+	if updatedDetail.ContractServiceSystemNumber > 0 {
+		payloads.NewHandleSuccess(writer, updatedDetail, "Detail updated successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
+	}
+}
+
+// DeleteDetail implements ContractServiceDetailController.
+func (c *ContractServiceDetailControllerImpl) DeleteDetail(writer http.ResponseWriter, request *http.Request) {
+	contractServiceSystemNumberStr := chi.URLParam(request, "contract_service_system_number")
+	packageCode := chi.URLParam(request, "package_code")
+
+	contractServiceSystemNumber, err := strconv.Atoi(contractServiceSystemNumberStr)
+	if err != nil {
+		payloads.NewHandleError(writer, "Invalid contract service system number", http.StatusBadRequest)
+		return
+	}
+
+	success, baseErr := c.ContractServiceDetailService.DeleteDetail(contractServiceSystemNumber, packageCode)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, baseErr.Message, http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	if success {
+		payloads.NewHandleSuccess(writer, success, "Contract service detail deleted successfully", http.StatusOK)
+	} else {
+		payloads.NewHandleError(writer, "Failed to delete contract service detail", http.StatusInternalServerError)
+	}
 }
