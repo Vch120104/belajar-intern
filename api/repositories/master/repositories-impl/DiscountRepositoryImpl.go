@@ -31,7 +31,7 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 	//apply where query
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 	//apply pagination and execute
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+	err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -39,13 +39,12 @@ func (r *DiscountRepositoryImpl) GetAllDiscount(tx *gorm.DB, filterCondition []u
 			Err:        err,
 		}
 	}
-	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-	defer rows.Close()
+	// if len(responses) == 0 {
+	// 	return pages, &exceptions.BaseErrorResponse{
+	// 		StatusCode: http.StatusNoContent,
+	// 		Err:        err,
+	// 	}
+	// }
 
 	pages.Rows = responses
 
