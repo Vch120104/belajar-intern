@@ -13,5 +13,6 @@ type DiscountService interface {
 	GetDiscountById(Id int) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
 	GetDiscountByCode(Code string) (masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse)
 	SaveDiscount(req masterpayloads.DiscountResponse) (bool, *exceptions.BaseErrorResponse)
+	UpdateDiscount(id int, req masterpayloads.DiscountUpdate) (bool, *exceptions.BaseErrorResponse)
 	ChangeStatusDiscount(Id int) (bool, *exceptions.BaseErrorResponse)
 }
