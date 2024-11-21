@@ -3,12 +3,14 @@ package jsonchecker
 import (
 	"after-sales/api/exceptions"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
 func ReadFromRequestBody(request *http.Request, result interface{}) *exceptions.BaseErrorResponse {
 	decoder := json.NewDecoder(request.Body)
 	err := decoder.Decode(result)
+	fmt.Println(result)
 	if err != nil {
 		// errorMsg := fmt.Sprintf("Failed to decode request body: %s", err.Error())
 		return &exceptions.BaseErrorResponse{

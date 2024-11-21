@@ -56,6 +56,12 @@ func (r *DiscountControllerImpl) UpdateDiscount(writer http.ResponseWriter, requ
 		return
 	}
 
+	err = validation.ValidationForm(writer, request, requestForm)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
 	result, err := r.discountservice.UpdateDiscount(discountId, requestForm)
 
 	if err != nil {
