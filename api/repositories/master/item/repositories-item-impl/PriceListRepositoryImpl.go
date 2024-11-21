@@ -71,9 +71,9 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 func (r *PriceListRepositoryImpl) CheckPriceListExist(tx *gorm.DB, itemId int, brandId int, currencyId int, date string, companyId int) (bool, *exceptions.BaseErrorResponse) {
 	model := masteritementities.ItemPriceList{}
 
-	if err := tx.Model(model).Where(masteritementities.ItemPriceList{BrandId: brandId, ItemId: itemId}).
+	if err := tx.Model(&model).Where(masteritementities.ItemPriceList{BrandId: brandId, ItemId: itemId}).
 		Where("mtr_item_price_list.company_id = ?", companyId).
-		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date).First(&model).Error; err != nil {
+		Where("CONVERT(DATE, mtr_item_price_list.effective_date) = ?", date).First(&model).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
