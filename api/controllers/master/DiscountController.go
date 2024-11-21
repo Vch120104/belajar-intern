@@ -27,6 +27,7 @@ type DiscountController interface {
 	GetDiscountById(writer http.ResponseWriter, request *http.Request)
 	SaveDiscount(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request)
+	UpdateDiscount(writer http.ResponseWriter, request *http.Request)
 }
 
 type DiscountControllerImpl struct {
@@ -37,6 +38,33 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 	return &DiscountControllerImpl{
 		discountservice: discountService,
 	}
+}
+
+// UpdateDiscount implements DiscountController.
+func (r *DiscountControllerImpl) UpdateDiscount(writer http.ResponseWriter, request *http.Request) {
+	discountId, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var requestForm masterpayloads.DiscountUpdate
+
+	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	result, err := r.discountservice.UpdateDiscount(discountId, requestForm)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Update Success", http.StatusOK)
+
 }
 
 // @Summary Get All Discount
