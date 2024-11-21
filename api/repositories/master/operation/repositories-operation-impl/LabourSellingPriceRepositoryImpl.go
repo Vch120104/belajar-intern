@@ -262,6 +262,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 	var BrandId string
 	var JobTypeId string
 	var BillToId string
+	emptyData := []map[string]interface{}{}
 
 	for i := 0; i < len(filter); i++ {
 		// flag := false
@@ -308,10 +309,7 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New(""),
-		}
+		return emptyData, 0, 0, nil
 	}
 
 	defer rows.Close()
