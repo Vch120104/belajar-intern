@@ -275,12 +275,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	}
 
 	// Fetch supplier details
-	SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
-	if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching supplier details",
-			Err:        err,
+	if warehouseMasterResponse.WarehouseKaroseri {
+		SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
+		if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
+			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error when fetching supplier details",
+				Err:        err,
+			}
 		}
 	}
 
@@ -295,12 +297,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	}
 
 	// Fetch user details
-	UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
-	if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching user details",
-			Err:        err,
+	if !warehouseMasterResponse.WarehouseKaroseri {
+		UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
+		if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
+			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error when fetching user details",
+				Err:        err,
+			}
 		}
 	}
 
