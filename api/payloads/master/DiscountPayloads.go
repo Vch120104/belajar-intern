@@ -7,3 +7,7 @@ type DiscountResponse struct {
 	DiscountDescription     string `json:"discount_description"`
 	DiscountCodeDescription string `json:"discount_code_description"`
 }
+
+type DiscountUpdate struct {
+	DiscountDescription string `json:"discount_description" validate:"required"`
+}
