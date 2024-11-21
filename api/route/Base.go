@@ -903,6 +903,7 @@ func WarehouseMasterRouter(
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
+	router.Get("/by-code-company/{warehouse_code}/{company_id}", warehouseMasterController.GetWarehouseMasterByCodeCompany)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
 	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
 	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
