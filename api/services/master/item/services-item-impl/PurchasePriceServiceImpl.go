@@ -560,9 +560,9 @@ func ConvertPurchasePriceDetailMapToStruct(maps []map[string]interface{}) ([]mas
 	return result, nil
 }
 
-func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate)
+	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
