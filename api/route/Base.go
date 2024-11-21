@@ -1283,8 +1283,9 @@ func DiscountRouter(
 
 	router.Get("/", discountController.GetAllDiscount)
 	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-code/{discount_code}", discountController.GetDiscountByCode)
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
+	router.Put("/{id}", discountController.UpdateDiscount)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)
 
@@ -1312,7 +1313,7 @@ func CampaignMasterRouter(
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
 	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
-	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
 	router.Post("/detail/save-from-package", campaignmastercontroller.SaveCampaignMasterDetailFromPackage)
 
@@ -1496,6 +1497,7 @@ func ServiceRequestRouter(
 	// generate document
 	router.Post("/document-number/{service_request_system_number}", ServiceRequestController.GenerateDocumentNumberServiceRequest)
 	router.Get("/dropdown-status", ServiceRequestController.NewStatus)
+	router.Get("/dropdown-service-type", ServiceRequestController.NewServiceType)
 
 	router.Get("/", ServiceRequestController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceRequestController.GetById)
@@ -1824,6 +1826,7 @@ func LookupRouter(
 	router.Get("/item-opr-code/{linetype_id}/by-code/{item_code}", LookupController.ItemOprCodeByCode)
 	router.Get("/item-opr-code/{linetype_id}/by-id/{item_id}", LookupController.ItemOprCodeByID)
 	router.Get("/line-type/{item_code}", LookupController.GetLineTypeByItemCode)
+	router.Get("/line-type-reference/{reference_type_id}", LookupController.GetLineTypeByReferenceType)
 	router.Get("/campaign-master/{company_id}", LookupController.GetCampaignMaster)
 	router.Get("/item-opr-code-with-price/{linetype_id}/{company_id}/{operation_item_id}/{brand_id}/{model_id}/{job_type_id}/{variant_id}/{currency_id}/{bill_code}/{warehouse_group}", LookupController.ItemOprCodeWithPrice)
 	router.Get("/vehicle-unit-master/{brand_id}/{model_id}", LookupController.VehicleUnitMaster)
@@ -1841,6 +1844,7 @@ func LookupRouter(
 	router.Get("/reference-type-work-order/{work_order_system_number}", LookupController.ReferenceTypeWorkOrderByID)
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
+	router.Get("/location-available", LookupController.LocationAvailable)
 
 	return router
 }

@@ -275,12 +275,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	}
 
 	// Fetch supplier details
-	SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
-	if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching supplier details",
-			Err:        err,
+	if warehouseMasterResponse.WarehouseKaroseri {
+		SupplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(warehouseMasterResponse.SupplierId)
+		if err := utils.Get(SupplierUrl, &getSupplierResponse, nil); err != nil {
+			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error when fetching supplier details",
+				Err:        err,
+			}
 		}
 	}
 
@@ -295,12 +297,14 @@ func (r *WarehouseMasterImpl) GetById(tx *gorm.DB, warehouseId int, pagination p
 	}
 
 	// Fetch user details
-	UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
-	if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
-		return warehouseMasterResponse, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Error when fetching user details",
-			Err:        err,
+	if !warehouseMasterResponse.WarehouseKaroseri {
+		UserUrl := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(warehouseMasterResponse.UserId)
+		if err := utils.Get(UserUrl, &getUserResponse, nil); err != nil {
+			return warehouseMasterResponse, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Message:    "Error when fetching user details",
+				Err:        err,
+			}
 		}
 	}
 
@@ -679,7 +683,7 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 	var response []map[string]interface{}
 
 	query := tx.Model(&entities).
-		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.id_number").
+		Select("mtr_warehouse_authorize.warehouse_authorize_id, mtr_warehouse_authorize.employee_id, mtr_user_details.employee_name, mtr_user_details.user_id").
 		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_user_details ON mtr_warehouse_authorize.employee_id = mtr_user_details.user_employee_id")
 
 	whereQuery := utils.ApplyFilter(query, filterCondition)
@@ -716,12 +720,28 @@ func (r *WarehouseMasterImpl) GetAuthorizeUser(tx *gorm.DB, filterCondition []ut
 }
 
 func (r *WarehouseMasterImpl) PostAuthorizeUser(tx *gorm.DB, req masterwarehousepayloads.WarehouseAuthorize) (masterwarehousepayloads.WarehouseAuthorize, *exceptions.BaseErrorResponse) {
+	var existingEntity masterwarehouseentities.WarehouseAuthorize
+	err := tx.Where("company_id = ? AND warehouse_id = ? AND employee_id = ?", req.CompanyId, req.WarehouseId, req.EmployeeId).First(&existingEntity).Error
+	if err == nil {
+		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "Duplicate entry: combination of company_id, warehouse_id, and employee_id must be unique",
+			Err:        errors.New("duplicate entry : combination of company_id, warehouse_id, and employee_id must be unique"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to check for existing entry",
+			Err:        err,
+		}
+	}
+
 	var entities = masterwarehouseentities.WarehouseAuthorize{
 		EmployeeId:  req.EmployeeId,
 		CompanyId:   req.CompanyId,
 		WarehouseId: req.WarehouseId,
 	}
-	err := tx.Save(&entities).Error
+	err = tx.Save(&entities).Error
 
 	if err != nil {
 		return masterwarehousepayloads.WarehouseAuthorize{}, &exceptions.BaseErrorResponse{
