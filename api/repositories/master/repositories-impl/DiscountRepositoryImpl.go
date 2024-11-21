@@ -26,7 +26,7 @@ func StartDiscountRepositoryImpl() masterrepository.DiscountRepository {
 func (r *DiscountRepositoryImpl) UpdateDiscount(tx *gorm.DB, id int, req masterpayloads.DiscountUpdate) (bool, *exceptions.BaseErrorResponse) {
 	err := tx.Updates(&masteritementities.Discount{
 		DiscountCodeId:      id,
-		DiscountDescription: req.DiscountCodeDescription,
+		DiscountDescription: req.DiscountDescription,
 	}).Error
 
 	if err != nil {

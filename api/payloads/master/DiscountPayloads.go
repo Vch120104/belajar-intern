@@ -9,5 +9,5 @@ type DiscountResponse struct {
 }
 
 type DiscountUpdate struct {
-	DiscountCodeDescription string `json:"discount_code_description"`
+	DiscountDescription string `json:"discount_description" validate:"required"`
 }
