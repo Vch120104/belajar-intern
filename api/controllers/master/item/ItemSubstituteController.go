@@ -25,10 +25,12 @@ type ItemSubstituteController interface {
 	GetByIdItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	SaveItemSubstitute(writer http.ResponseWriter, request *http.Request)
 	SaveItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
+	UpdateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusItemSubstitute(writer http.ResponseWriter, request *http.Request)
 	ActivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	DeactivateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request)
 	GetallItemForFilter(writer http.ResponseWriter, request *http.Request)
+	GetItemSubstituteDetailLastSequence(writer http.ResponseWriter, request *http.Request)
 }
 
 type ItemSubstituteControllerImpl struct {
@@ -271,6 +273,25 @@ func (r *ItemSubstituteControllerImpl) SaveItemSubstituteDetail(writer http.Resp
 	payloads.NewHandleSuccess(writer, create, message, http.StatusOK)
 }
 
+func (r *ItemSubstituteControllerImpl) UpdateItemSubstituteDetail(writer http.ResponseWriter, request *http.Request) {
+	var formRequest masteritempayloads.ItemSubstituteDetailUpdatePayloads
+	err := jsonchecker.ReadFromRequestBody(request, &formRequest)
+
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	create, err := r.ItemSubstituteService.UpdateItemSubstituteDetail(formRequest)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, create, "Update Data Successfully!", http.StatusOK)
+}
+
 // @Summary Change Status Item Substitute
 // @Description REST API Item Substitute
 // @Accept json
@@ -374,4 +395,19 @@ func (r *ItemSubstituteControllerImpl) GetallItemForFilter(writer http.ResponseW
 		return
 	}
 	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", 200, result.Limit, result.Page, result.TotalRows, result.TotalPages)
+}
+
+func (r *ItemSubstituteControllerImpl) GetItemSubstituteDetailLastSequence(writer http.ResponseWriter, request *http.Request) {
+	itemSubstituteId, errA := strconv.Atoi(chi.URLParam(request, "item_substitute_id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read url params, please check your param input")})
+		return
+	}
+
+	result, err := r.ItemSubstituteService.GetItemSubstituteDetailLastSequence(itemSubstituteId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

@@ -289,10 +289,12 @@ func ItemSubstituteRouter(
 	router.Get("/detail/by-id/{item_substitute_detail_id}", itemSubstituteController.GetByIdItemSubstituteDetail)
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
+	router.Put("/detail", itemSubstituteController.UpdateItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
+	router.Get("/detail/last-sequence/{item_substitute_id}", itemSubstituteController.GetItemSubstituteDetailLastSequence)
 	return router
 }
 
@@ -901,6 +903,7 @@ func WarehouseMasterRouter(
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
+	router.Get("/by-code-company/{warehouse_code}/{company_id}", warehouseMasterController.GetWarehouseMasterByCodeCompany)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
 	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
 	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
