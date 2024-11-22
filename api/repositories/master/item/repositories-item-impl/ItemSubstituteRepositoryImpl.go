@@ -238,6 +238,41 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req
 	return entities, nil
 }
 
+func (r *ItemSubstituteRepositoryImpl) UpdateItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailUpdatePayloads) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
+	var err error
+	entities := masteritementities.ItemSubstituteDetail{}
+
+	err = tx.Model(&entities).
+		Where(masteritementities.ItemSubstituteDetail{ItemSubstituteDetailId: req.ItemSubstituteDetailId}).
+		First(&entities).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "item substitute detail not found",
+				Err:        err,
+			}
+		}
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching item substitute detail data",
+			Err:        err,
+		}
+	}
+
+	entities.Quantity = req.Quantity
+
+	err = tx.Save(&entities).Error
+	if err != nil {
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        err,
+		}
+	}
+
+	return entities, nil
+}
+
 func (r *ItemSubstituteRepositoryImpl) ChangeStatusItemSubstitute(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 
@@ -370,4 +405,27 @@ func (r *ItemSubstituteRepositoryImpl) GetallItemForFilter(tx *gorm.DB, filterCo
 	pages.Rows = payloads
 
 	return pages, nil
+}
+
+func (r *ItemSubstituteRepositoryImpl) GetItemSubstituteDetailLastSequence(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	entities := masteritementities.ItemSubstituteDetail{}
+	response := map[string]interface{}{}
+
+	err := tx.Model(&entities).Where(masteritementities.ItemSubstituteDetail{ItemSubstituteId: id}).Last(&entities).Error
+
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when fetching item substitute detail last sequence number",
+			Err:        err,
+		}
+	}
+
+	if err == nil {
+		response["last_sequence"] = entities.Sequence
+	} else {
+		response["last_sequence"] = 0
+	}
+
+	return response, nil
 }

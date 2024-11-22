@@ -92,6 +92,17 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 	return result, nil
 }
 
+func (s *ItemSubstituteServiceImpl) UpdateItemSubstituteDetail(req masteritempayloads.ItemSubstituteDetailUpdatePayloads) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+
+	result, err := s.itemSubstituteRepo.UpdateItemSubstituteDetail(tx, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.Db.Begin()
 
@@ -130,6 +141,17 @@ func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.
 	tx := s.Db.Begin()
 
 	result, err := s.itemSubstituteRepo.GetallItemForFilter(tx, filterCondition, pages)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *ItemSubstituteServiceImpl) GetItemSubstituteDetailLastSequence(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
+	tx := s.Db.Begin()
+
+	result, err := s.itemSubstituteRepo.GetItemSubstituteDetailLastSequence(tx, id)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err

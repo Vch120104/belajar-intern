@@ -171,6 +171,17 @@ func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCode(Code string) (mast
 	return get, nil
 }
 
+func (s *WarehouseMasterServiceImpl) GetWarehouseMasterByCodeCompany(warehouseCode string, companyId int) (masterwarehousepayloads.GetAllWarehouseMasterCodeResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	get, err := s.warehouseMasterRepo.GetWarehouseMasterByCodeCompany(tx, warehouseCode, companyId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return get, err
+	}
+	return get, nil
+}
+
 func (s *WarehouseMasterServiceImpl) ChangeStatus(warehouseId int) (masterwarehousepayloads.GetWarehouseMasterResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
