@@ -85,3 +85,12 @@ type ItemDetailForItemInquiryPayload struct {
 	ModelId   int `json:"model_id"`
 	VariantId int `json:"variant_id"`
 }
+
+type ItemSubstituteDetailForItemInquiryResponse struct {
+	ItemSubstituteDetailId int     `json:"item_substitute_detail_id"`
+	IsActive               bool    `json:"is_active"`
+	ItemId                 int     `json:"item_id"`
+	ItemName               string  `json:"item_name"`
+	Quantity               float64 `json:"quantity"`
+	Sequence               int     `json:"sequence"`
+}

@@ -326,3 +326,15 @@ func (s *LookupServiceImpl) ItemDetailForItemInquiry(filterCondition []utils.Fil
 
 	return lookup, nil
 }
+
+func (s *LookupServiceImpl) ItemSubstituteDetailForItemInquiry(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	defer helper.CommitOrRollback(tx, nil)
+
+	lookup, baseErr := s.LookupRepo.ItemSubstituteDetailForItemInquiry(tx, filterCondition, pages)
+	if baseErr != nil {
+		return lookup, baseErr
+	}
+
+	return lookup, nil
+}

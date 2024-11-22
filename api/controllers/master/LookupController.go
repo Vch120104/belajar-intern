@@ -40,6 +40,7 @@ type LookupController interface {
 	ReferenceTypeSalesOrderByID(writer http.ResponseWriter, request *http.Request)
 	LocationAvailable(writer http.ResponseWriter, request *http.Request)
 	ItemDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
+	ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request)
 }
 
 type LookupControllerImpl struct {
@@ -880,6 +881,43 @@ func (r *LookupControllerImpl) ItemDetailForItemInquiry(writer http.ResponseWrit
 	}
 
 	item, baseErr := r.LookupService.ItemDetailForItemInquiry(criteria, paginate)
+	if baseErr != nil {
+		if baseErr.StatusCode == http.StatusNotFound {
+			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)
+		} else {
+			exceptions.NewAppException(writer, request, baseErr)
+		}
+		return
+	}
+	payloads.NewHandleSuccessPagination(writer, item.Rows, "Get Data Successfully!", http.StatusOK, item.Limit, item.Page, item.TotalRows, item.TotalPages)
+}
+
+func (r *LookupControllerImpl) ItemSubstituteDetailForItemInquiry(writer http.ResponseWriter, request *http.Request) {
+	queryValues := request.URL.Query()
+	queryParams := map[string]string{
+		"item_id":    queryValues.Get("item_id"),
+		"company_id": queryValues.Get("company_id"),
+	}
+
+	if queryParams["item_id"] == "" {
+		payloads.NewHandleError(writer, "item_id cannot be empty", http.StatusBadRequest)
+		return
+	}
+	if queryParams["company_id"] == "" {
+		payloads.NewHandleError(writer, "company_id cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	criteria := utils.BuildFilterCondition(queryParams)
+
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	item, baseErr := r.LookupService.ItemSubstituteDetailForItemInquiry(criteria, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Lookup data not found", http.StatusNotFound)

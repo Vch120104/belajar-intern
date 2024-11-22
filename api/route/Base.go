@@ -1864,7 +1864,8 @@ func LookupRouter(
 	router.Get("/reference-type-sales-order", LookupController.ReferenceTypeSalesOrder)
 	router.Get("/reference-type-sales-order/{sales_order_system_number}", LookupController.ReferenceTypeSalesOrderByID)
 	router.Get("/location-available", LookupController.LocationAvailable)
-	router.Get("/item-detail-for-item-inquiry", LookupController.ItemDetailForItemInquiry)
+	router.Get("/item-detail/item-inquiry", LookupController.ItemDetailForItemInquiry)
+	router.Get("/item-substitute/detail/item-inquiry", LookupController.ItemSubstituteDetailForItemInquiry)
 
 	return router
 }

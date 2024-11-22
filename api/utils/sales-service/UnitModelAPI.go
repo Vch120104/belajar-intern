@@ -16,6 +16,12 @@ type UnitModelResponse struct {
 	ModelCodeDescription string `json:"model_code_description"`
 }
 
+type UnitModelMultiIdResponse struct {
+	ModelId          int    `json:"model_id"`
+	ModelCode        string `json:"model_code"`
+	ModelDescription string `json:"model_description"`
+}
+
 func GetUnitModelByCode(code string) (UnitModelResponse, *exceptions.BaseErrorResponse) {
 	var getUnitModel UnitModelResponse
 	url := config.EnvConfigs.SalesServiceUrl + "unit-model-by-code/" + code
@@ -60,8 +66,8 @@ func GetUnitModelById(id int) (UnitModelResponse, *exceptions.BaseErrorResponse)
 	return getUnitModel, nil
 }
 
-func GetUnitModelByMultiId(ids []int) ([]UnitModelResponse, *exceptions.BaseErrorResponse) {
-	var getUnitModel []UnitModelResponse
+func GetUnitModelByMultiId(ids []int) ([]UnitModelMultiIdResponse, *exceptions.BaseErrorResponse) {
+	var getUnitModel []UnitModelMultiIdResponse
 
 	ids = utils.RemoveDuplicateIds(ids)
 
