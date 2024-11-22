@@ -289,10 +289,12 @@ func ItemSubstituteRouter(
 	router.Get("/detail/by-id/{item_substitute_detail_id}", itemSubstituteController.GetByIdItemSubstituteDetail)
 	router.Post("/", itemSubstituteController.SaveItemSubstitute)
 	router.Post("/detail/{item_substitute_id}", itemSubstituteController.SaveItemSubstituteDetail)
+	router.Put("/detail", itemSubstituteController.UpdateItemSubstituteDetail)
 	router.Patch("/header/by-id/{item_substitute_id}", itemSubstituteController.ChangeStatusItemSubstitute)
 	router.Patch("/detail/activate/by-id/{item_substitute_detail_id}", itemSubstituteController.ActivateItemSubstituteDetail)
 	router.Patch("/detail/deactivate/by-id/{item_substitute_detail_id}", itemSubstituteController.DeactivateItemSubstituteDetail)
 	router.Get("/item-for-substitute", itemSubstituteController.GetallItemForFilter)
+	router.Get("/detail/last-sequence/{item_substitute_id}", itemSubstituteController.GetItemSubstituteDetailLastSequence)
 	return router
 }
 
@@ -917,6 +919,7 @@ func WarehouseMasterRouter(
 	router.Get("/", warehouseMasterController.GetAll)
 	router.Get("/{warehouse_id}", warehouseMasterController.GetById)
 	router.Get("/by-code/{warehouse_code}", warehouseMasterController.GetByCode)
+	router.Get("/by-code-company/{warehouse_code}/{company_id}", warehouseMasterController.GetWarehouseMasterByCodeCompany)
 	router.Get("/multi-id/{warehouse_ids}", warehouseMasterController.GetWarehouseWithMultiId)
 	router.Get("/is-active", warehouseMasterController.GetAllIsActive)
 	router.Get("/drop-down", warehouseMasterController.DropdownWarehouse)
@@ -1180,6 +1183,7 @@ func LabourSellingPriceDetailRouter(
 	router.Post("/", LabourSellingPriceDetailController.SaveLabourSellingPriceDetail)
 	router.Post("/duplicate/{labour_selling_price_id}", LabourSellingPriceDetailController.Duplicate)
 	router.Post("/save-duplicate", LabourSellingPriceDetailController.SaveDuplicate)
+	router.Delete("/{multi_id}", LabourSellingPriceDetailController.DeleteLabourSellingPriceDetail)
 
 	return router
 }
@@ -1298,8 +1302,9 @@ func DiscountRouter(
 
 	router.Get("/", discountController.GetAllDiscount)
 	router.Get("/drop-down", discountController.GetAllDiscountIsActive)
-	router.Get("/by-code", discountController.GetDiscountByCode)
+	router.Get("/by-code/{discount_code}", discountController.GetDiscountByCode)
 	router.Get("/by-id/{id}", discountController.GetDiscountById)
+	router.Put("/{id}", discountController.UpdateDiscount)
 	router.Post("/", discountController.SaveDiscount)
 	router.Patch("/{id}", discountController.ChangeStatusDiscount)
 
@@ -1327,7 +1332,7 @@ func CampaignMasterRouter(
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
 	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
-	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
 	router.Post("/detail/save-from-package", campaignmastercontroller.SaveCampaignMasterDetailFromPackage)
 
@@ -1511,6 +1516,7 @@ func ServiceRequestRouter(
 	// generate document
 	router.Post("/document-number/{service_request_system_number}", ServiceRequestController.GenerateDocumentNumberServiceRequest)
 	router.Get("/dropdown-status", ServiceRequestController.NewStatus)
+	router.Get("/dropdown-service-type", ServiceRequestController.NewServiceType)
 
 	router.Get("/", ServiceRequestController.GetAll)
 	router.Get("/{service_request_system_number}", ServiceRequestController.GetById)

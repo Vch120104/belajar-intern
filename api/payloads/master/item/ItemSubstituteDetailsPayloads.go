@@ -19,6 +19,11 @@ type ItemSubstituteDetailPostPayloads struct {
 	Sequence               int     `json:"sequence"`
 }
 
+type ItemSubstituteDetailUpdatePayloads struct {
+	ItemSubstituteDetailId int     `json:"item_substitute_detail_id" validate:"required"`
+	Quantity               float64 `json:"quantity" validate:"required"`
+}
+
 type ItemSubstituteDetailGetPayloads struct {
 	IsActive               bool    `json:"is_active"`
 	ItemSubstituteDetailId int     `json:"item_substitute_detail_id"`

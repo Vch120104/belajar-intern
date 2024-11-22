@@ -7,6 +7,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+	"errors"
+	"net/http"
 
 	"after-sales/api/utils"
 
@@ -26,6 +28,29 @@ func StartDiscountService(discountRepo masterrepository.DiscountRepository, db *
 		DB:           db,
 		RedisClient:  redisClient,
 	}
+}
+
+// UpdateDiscount implements masterservice.DiscountService.
+func (s *DiscountServiceImpl) UpdateDiscount(id int, req masterpayloads.DiscountUpdate) (bool, *exceptions.BaseErrorResponse) {
+
+	//check id
+	res, _ := s.GetDiscountById(id)
+
+	if res == (masterpayloads.DiscountResponse{}) {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Err:        errors.New("id not found"),
+			Message:    "Id not found",
+		}
+	}
+
+	tx := s.DB.Begin()
+	results, err := s.discountRepo.UpdateDiscount(tx, id, req)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
 }
 
 func (s *DiscountServiceImpl) GetAllDiscountIsActive() ([]masterpayloads.DiscountResponse, *exceptions.BaseErrorResponse) {

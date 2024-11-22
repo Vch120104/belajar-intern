@@ -3679,6 +3679,7 @@ func (r *LookupRepositoryImpl) LocationAvailable(tx *gorm.DB, filterCondition []
 										`, viewLocStock, periodResponse.PeriodYear, periodResponse.PeriodMonth).
 		Where("warehouse_location_id NOT IN ?", existingWarehouseLocIds).
 		Where("mwm.company_id = ?", companyId).
+		Where("mwm.warehouse_id = ?", warehouseId).
 		Group(`
 			mtr_warehouse_location.is_active,
 			mtr_warehouse_location.warehouse_location_id,

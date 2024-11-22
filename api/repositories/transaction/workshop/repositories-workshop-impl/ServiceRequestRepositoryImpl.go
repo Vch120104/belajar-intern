@@ -1323,3 +1323,21 @@ func (s *ServiceRequestRepositoryImpl) DeleteServiceDetailMultiId(tx *gorm.DB, I
 
 	return true, nil
 }
+
+func (s *ServiceRequestRepositoryImpl) NewServiceType(tx *gorm.DB, filter []utils.FilterCondition) ([]transactionworkshopentities.ServiceRequestMasterServiceType, *exceptions.BaseErrorResponse) {
+	var statuses []transactionworkshopentities.ServiceRequestMasterServiceType
+
+	// Apply filters to the query
+	query := utils.ApplyFilter(tx, filter)
+
+	// Fetch records that match the filter
+	if err := query.Find(&statuses).Error; err != nil {
+		return nil, &exceptions.BaseErrorResponse{
+			Message:    "Failed to retrieve service request statuses from the database",
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	return statuses, nil
+}

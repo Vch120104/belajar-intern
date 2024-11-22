@@ -27,6 +27,7 @@ type DiscountController interface {
 	GetDiscountById(writer http.ResponseWriter, request *http.Request)
 	SaveDiscount(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusDiscount(writer http.ResponseWriter, request *http.Request)
+	UpdateDiscount(writer http.ResponseWriter, request *http.Request)
 }
 
 type DiscountControllerImpl struct {
@@ -37,6 +38,39 @@ func NewDiscountController(discountService masterservice.DiscountService) Discou
 	return &DiscountControllerImpl{
 		discountservice: discountService,
 	}
+}
+
+// UpdateDiscount implements DiscountController.
+func (r *DiscountControllerImpl) UpdateDiscount(writer http.ResponseWriter, request *http.Request) {
+	discountId, errA := strconv.Atoi(chi.URLParam(request, "id"))
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	var requestForm masterpayloads.DiscountUpdate
+
+	err := jsonchecker.ReadFromRequestBody(request, &requestForm)
+	if err != nil {
+		exceptions.NewEntityException(writer, request, err)
+		return
+	}
+
+	err = validation.ValidationForm(writer, request, requestForm)
+	if err != nil {
+		exceptions.NewBadRequestException(writer, request, err)
+		return
+	}
+
+	result, err := r.discountservice.UpdateDiscount(discountId, requestForm)
+
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, result, "Update Success", http.StatusOK)
+
 }
 
 // @Summary Get All Discount
@@ -133,10 +167,13 @@ func (r *DiscountControllerImpl) GetDiscountById(writer http.ResponseWriter, req
 // @Failure 500,400,401,404,403,422 {object} exceptions.BaseErrorResponse
 // @Router /v1/discount/by-code/{discount_code} [get]
 func (r *DiscountControllerImpl) GetDiscountByCode(writer http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query()
-	// discountCode, _ := strconv.Atoi(chi.URLParam(request, "discount_code"))
 
-	discountCode := query.Get("discount_code")
+	discountCode := chi.URLParam(request, "discount_code")
+	if discountCode == "" {
+		payloads.NewHandleError(writer, "discount_code cannot be empty", http.StatusBadRequest)
+		return
+	}
+
 	result, err := r.discountservice.GetDiscountByCode(discountCode)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)

@@ -63,6 +63,11 @@ type JobTypeLabourSellingPriceResponse struct {
 	JobTypeName string `json:"job_type_name"`
 }
 
+type BillToLabourSellingPriceResponse struct {
+	BillToId   int    `json:"supplier_id"`
+	BillToName string `json:"supplier_name"`
+}
+
 type ModelSellingPriceDetailResponse struct {
 	ModelId          int    `json:"model_id"`
 	ModelCode        string `json:"model_code"`
