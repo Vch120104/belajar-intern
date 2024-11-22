@@ -115,3 +115,13 @@ type PurchasePriceDownloadResponse struct {
 	IsActive                   bool                        `json:"is_active"`
 	PurchasePriceDetail        PurchasePriceDetailResponse `json:"purchase_price_detail"`
 }
+
+type GetPurchasePriceDetailByParamResponse struct {
+	PurchasePriceDetailId int     `json:"purchase_price_detail_id"`
+	PurchasePriceId       int     `json:"purchase_price_id"`
+	ItemId                int     `json:"item_id"`
+	ItemCode              string  `json:"item_code"`
+	ItemName              string  `json:"item_name"`
+	IsActive              bool    `json:"is_active"`
+	PurchasePrice         float64 `json:"purchase_price"`
+}

@@ -281,7 +281,7 @@ func ConvertPurchasePriceMapToStruct(maps []map[string]interface{}) ([]masterite
 }
 
 func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exceptions.BaseErrorResponse) {
-	resp, err := http.Get(config.EnvConfigs.AfterSalesServiceUrl + "item?item_code=" + itemCode + "&limit=1&page=0")
+	resp, err := http.Get(config.EnvConfigs.AfterSalesServiceUrl + "item/by-code?item_code=" + itemCode)
 	if err != nil {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -301,7 +301,7 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 	var result struct {
 		StatusCode int    `json:"status_code"`
 		Message    string `json:"message"`
-		Data       []struct {
+		Data       struct {
 			ItemId int `json:"item_id"`
 		} `json:"data"`
 	}
@@ -314,19 +314,23 @@ func (s *PurchasePriceServiceImpl) FetchItemId(itemCode string) (int, *exception
 		}
 	}
 
-	if len(result.Data) == 0 {
+	if result.Data.ItemId == 0 {
 		return 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Message:    "Item not found for item code: " + itemCode,
 		}
 	}
 
-	return result.Data[0].ItemId, nil
+	return result.Data.ItemId, nil
 }
 
 func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([]masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
 	var results []masteritempayloads.PurchasePriceDetailResponses
 	var numericRegex = regexp.MustCompile(`^\d*\.?\d+$`)
+
+	var regexCheckInput = regexp.MustCompile(`^\d*(,\d{3})*(\.\d{2})?$`)  // handle 12,345,678.99
+	var regexCheckInput2 = regexp.MustCompile(`^\d*(\.\d{3})*(,\d{2})?$`) // handle 12.345.678,99
+
 	for i, row := range rows {
 		if i == 0 {
 			// Skip header row
@@ -344,8 +348,18 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 		//fmt.Printf("Debugging Row: %v\n", row)
 
 		// Preprocessing purchase price
-		purchasePriceStr := strings.TrimSpace(row[2])                     // Trim whitespace
-		purchasePriceStr = strings.ReplaceAll(purchasePriceStr, ",", ".") // Replace comma with dot
+		purchasePriceStr := strings.TrimSpace(row[2])      // Trim whitespace
+		if regexCheckInput.MatchString(purchasePriceStr) { // check if format 12,345,678.99
+			purchasePriceStr = strings.ReplaceAll(purchasePriceStr, ",", "") // Delete comma
+		} else if regexCheckInput2.MatchString(purchasePriceStr) { //check if format 12.345.678,99
+			purchasePriceStr = strings.ReplaceAll(purchasePriceStr, ".", "")  // Delete dot
+			purchasePriceStr = strings.ReplaceAll(purchasePriceStr, ",", ".") // Replace comma with dot
+		} else {
+			return nil, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "format must be either '12,345,678.99' or '12.345.678,99'",
+			}
+		}
 
 		if !numericRegex.MatchString(purchasePriceStr) {
 			return nil, &exceptions.BaseErrorResponse{
@@ -560,9 +574,9 @@ func ConvertPurchasePriceDetailMapToStruct(maps []map[string]interface{}) ([]mas
 	return result, nil
 }
 
-func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string) (masteritempayloads.PurchasePriceDetailResponses, *exceptions.BaseErrorResponse) {
+func (s *PurchasePriceServiceImpl) GetPurchasePriceDetailByParam(curId int, supId int, effectiveDate string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate)
+	results, err := s.PurchasePriceRepo.GetPurchasePriceDetailByParam(tx, curId, supId, effectiveDate, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
