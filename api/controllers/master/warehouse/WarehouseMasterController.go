@@ -30,6 +30,7 @@ type WarehouseMasterController interface {
 	DropdownWarehouse(writer http.ResponseWriter, request *http.Request)
 	GetById(writer http.ResponseWriter, request *http.Request)
 	GetByCode(writer http.ResponseWriter, request *http.Request)
+	GetWarehouseMasterByCodeCompany(writer http.ResponseWriter, request *http.Request)
 	GetWarehouseWithMultiId(writer http.ResponseWriter, request *http.Request)
 	Save(writer http.ResponseWriter, request *http.Request)
 	Update(writer http.ResponseWriter, request *http.Request)
@@ -224,6 +225,28 @@ func (r *WarehouseMasterControllerImpl) GetByCode(writer http.ResponseWriter, re
 
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
 
+}
+
+func (r *WarehouseMasterControllerImpl) GetWarehouseMasterByCodeCompany(writer http.ResponseWriter, request *http.Request) {
+	warehouseCode := chi.URLParam(request, "warehouse_code")
+	if warehouseCode == "" {
+		payloads.NewHandleError(writer, "Invalid Warehouse Code", http.StatusBadRequest)
+		return
+	}
+
+	companyId, errA := strconv.Atoi(chi.URLParam(request, "company_id"))
+	if errA != nil || companyId == 0 {
+		payloads.NewHandleError(writer, "Invalid Company Id", http.StatusBadRequest)
+		return
+	}
+
+	get, err := r.WarehouseMasterService.GetWarehouseMasterByCodeCompany(warehouseCode, companyId)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(get), "Get Data Successfully!", http.StatusOK)
 }
 
 // @Summary Get Warehouse Master With MultiId
