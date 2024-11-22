@@ -1021,6 +1021,7 @@ func AgreementRouter(
 
 	router.Get("/", AgreementController.GetAllAgreement)
 	router.Get("/{agreement_id}", AgreementController.GetAgreementById)
+	router.Get("/by-code/{agreement_code}", AgreementController.GetAgreementByCode)
 	router.Post("/", AgreementController.SaveAgreement)
 	router.Put("/{agreement_id}", AgreementController.UpdateAgreement)
 	router.Patch("/{agreement_id}", AgreementController.ChangeStatusAgreement)
@@ -1316,7 +1317,7 @@ func CampaignMasterRouter(
 	//campaign master detail
 	router.Get("/detail/{campaign_id}", campaignmastercontroller.GetAllCampaignMasterDetail)
 	router.Get("/detail/by-id/{campaign_detail_id}", campaignmastercontroller.GetByIdCampaignMasterDetail)
-	router.Post("/detail", campaignmastercontroller.SaveCampaignMasterDetail)
+	router.Post("/detail/{campaign_id}", campaignmastercontroller.SaveCampaignMasterDetail)
 	router.Post("/detail/save-from-history/{campaign_id_1}/{campaign_id_2}", campaignmastercontroller.SaveCampaignMasterDetailFromHistory)
 	router.Post("/detail/save-from-package", campaignmastercontroller.SaveCampaignMasterDetailFromPackage)
 
