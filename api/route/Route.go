@@ -367,6 +367,11 @@ func StartRouting(db *gorm.DB) {
 	BinningListService := transactionsparepartserviceimpl.NewBinningListServiceImpl(BinningListRepository, db, rdb)
 	BinningListController := transactionsparepartcontroller.NewBinningListControllerImpl(BinningListService)
 
+	//claim supplier
+	ClaimSupplierRepository := transactionsparepartrepositoryimpl.NewClaimSupplierRepositoryImpl()
+	ClaimSupplierService := transactionsparepartserviceimpl.NewClaimSupplierServiceImpl(ClaimSupplierRepository, db, rdb)
+	ClaimSupplierController := transactionsparepartcontroller.NewClaimSupplierControllerImpl(ClaimSupplierService)
+
 	//stock transaction
 	StockTransactionRepository := transactionsparepartrepositoryimpl.StartStockTransactionRepositoryImpl()
 	StockTransactionService := masterserviceimpl.StartStockTransactionServiceImpl(StockTransactionRepository, db, rdb)
@@ -524,7 +529,7 @@ func StartRouting(db *gorm.DB) {
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
-
+	ClaimSupplierRoute := ClaimSupplierRouter(ClaimSupplierController)
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
 	r.Route("/v1", func(r chi.Router) {
@@ -628,6 +633,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/purchase-request", PurchaseRequestRouter)
 		r.Mount("/purchase-order", PurchaseOrderRouter)
 		r.Mount("/goods-receive", GoodsReceiveRouter)
+		r.Mount("/claim-supplier", ClaimSupplierRoute)
 
 		r.Mount("/binning-list", BinningListRouter)
 		/* Support Func Afs */
