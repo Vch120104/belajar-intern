@@ -63,8 +63,8 @@ type SupplierMasterGetAllResponse struct {
 	Data       []SupplierMasterResponse `json:"data"`
 }
 
-func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResponse, *exceptions.BaseErrorResponse) {
-	var getSupplierMaster SupplierMasterGetAllResponse
+func GetAllSupplierMaster(params SupplierMasterParams) ([]SupplierMasterResponse, *exceptions.BaseErrorResponse) {
+	var getSupplierMaster []SupplierMasterResponse
 	if params.Limit == 0 {
 		params.Limit = 1000000
 	}
@@ -86,7 +86,7 @@ func GetAllSupplierMaster(params SupplierMasterParams) (SupplierMasterGetAllResp
 
 	url := baseURL + "?" + queryParams
 
-	err := utils.GetArray(url, nil, &getSupplierMaster)
+	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {
 		status := http.StatusBadGateway // Default to 502
 		message := "Failed to retrieve supplier master due to an external service error"
