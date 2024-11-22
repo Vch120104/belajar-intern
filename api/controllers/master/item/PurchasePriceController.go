@@ -875,7 +875,15 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailByParam(writer http.
 	}
 	effectiveDateFormatted := effectiveDate.Format("2006-01-02")
 
-	result, baseErr := r.PurchasePriceService.GetPurchasePriceDetailByParam(currencyID, supplierID, effectiveDateFormatted)
+	queryValues := request.URL.Query()
+	paginate := pagination.Pagination{
+		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
+		Page:   utils.NewGetQueryInt(queryValues, "page"),
+		SortOf: queryValues.Get("sort_of"),
+		SortBy: queryValues.Get("sort_by"),
+	}
+
+	result, baseErr := r.PurchasePriceService.GetPurchasePriceDetailByParam(currencyID, supplierID, effectiveDateFormatted, paginate)
 	if baseErr != nil {
 		if baseErr.StatusCode == http.StatusNotFound {
 			payloads.NewHandleError(writer, "Purchase price detail data not found", http.StatusNotFound)
@@ -885,5 +893,5 @@ func (r *PurchasePriceControllerImpl) GetPurchasePriceDetailByParam(writer http.
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccessPagination(writer, result.Rows, "Get Data Successfully!", http.StatusOK, result.Limit, result.Page, result.TotalRows, result.TotalPages)
 }
