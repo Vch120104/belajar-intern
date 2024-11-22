@@ -98,7 +98,7 @@ func (r *WarehouseLocationImpl) GetById(tx *gorm.DB, warehouseLocationId int) (m
 		mtr_warehouse_master.warehouse_code,
 		mtr_warehouse_master.warehouse_name`).
 		Joins(" JOIN mtr_warehouse_group ON mtr_warehouse_location.warehouse_group_id = mtr_warehouse_group.warehouse_group_id").
-		Joins(" JOIN mtr_warehouse_master ON mtr_warehouse_group.warehouse_group_id = mtr_warehouse_master.warehouse_group_id").
+		Joins(" JOIN mtr_warehouse_master ON mtr_warehouse_location.warehouse_id = mtr_warehouse_master.warehouse_id").
 		Where(masterwarehouseentities.WarehouseLocation{WarehouseLocationId: warehouseLocationId}).
 		First(&warehouseLocationResponse).Error
 
