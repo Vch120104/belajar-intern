@@ -25,7 +25,17 @@ type AgreementResponse struct {
 	CustomerCode      string    `json:"customer_code"`
 	CustomerName      string    `json:"customer_name"`
 	CustomerType      string    `json:"customer_type"`
+	AddressStreet1    string    `json:"address_street_1"`
+	AddressStreet2    string    `json:"address_street_2"`
+	AddressStreet3    string    `json:"address_street_3"`
+	VillageName       string    `json:"village_name"`
+	VillageZipCode    string    `json:"village_zip_code"`
+	DistrictName      string    `json:"district_name"`
+	CityName          string    `json:"city_name"`
+	ProvinceName      string    `json:"province_name"`
+	CountryName       string    `json:"country_name"`
 	ProfitCenterId    int       `json:"profit_center_id"`
+	ProfitCenterName  string    `json:"profit_center_name"`
 	AgreementDateFrom time.Time `json:"agreement_date_from"`
 	AgreementDateTo   time.Time `json:"agreement_date_to"`
 	DealerId          int       `json:"company_id"`
@@ -53,7 +63,7 @@ type DiscountGroupRequest struct {
 	AgreementDiscountGroupId int     `json:"agreement_discount_group_id" parent_entity:"mtr_agreement_discount_group_detail" main_table:"mtr_agreement_discount_group_detail"`
 	AgreementId              int     `json:"agreement_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementSelection       int     `json:"agreement_selection_id" parent_entity:"mtr_agreement_discount_group_detail"`
-	AgreementLineTypeId      int     `json:"agreement_order_type_id" parent_entity:"mtr_agreement_discount_group_detail"`
+	AgreementOrderTypeId     int     `json:"agreement_order_type_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDiscountMarkup  int     `json:"agreement_discount_markup_id" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDiscount        float32 `json:"agreement_discount" parent_entity:"mtr_agreement_discount_group_detail"`
 	AgreementDetailRemaks    string  `json:"agreement_detail_remarks" parent_entity:"mtr_agreement_discount_group_detail"`
@@ -63,7 +73,7 @@ type DiscountGroupResponse struct {
 	AgreementDiscountGroupId int     `json:"agreement_discount_group_id"`
 	AgreementId              int     `json:"agreement_id"`
 	AgreementSelection       int     `json:"agreement_selection_id"`
-	AgreementLineTypeId      int     `json:"agreement_order_type_id"`
+	AgreementOrderTypeId     int     `json:"agreement_order_type_id"`
 	AgreementDiscountMarkup  int     `json:"agreement_discount_markup_id"`
 	AgreementDiscount        float32 `json:"agreement_discount"`
 	AgreementDetailRemaks    string  `json:"agreement_detail_remarks"`

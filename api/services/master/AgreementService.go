@@ -10,6 +10,7 @@ import (
 
 type AgreementService interface {
 	GetAgreementById(int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
+	GetAgreementByCode(string) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	SaveAgreement(masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	UpdateAgreement(int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	ChangeStatusAgreement(int) (masterentities.Agreement, *exceptions.BaseErrorResponse)

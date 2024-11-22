@@ -45,10 +45,22 @@ type TaxCustomer struct {
 }
 
 type CustomerMasterResponse struct {
-	CustomerId   int    `json:"customer_id"`
-	CustomerCode string `json:"customer_code"`
-	CustomerName string `json:"customer_name"`
-	IdType       int    `json:"id_type"`
+	CustomerId     int    `json:"customer_id"`
+	CustomerCode   string `json:"customer_code"`
+	CustomerName   string `json:"customer_name"`
+	IdType         int    `json:"id_type"`
+	IdNumber       string `json:"id_number"`
+	IdAddressId    int    `json:"id_address_id"`
+	AddressStreet1 string `json:"address_street_1"`
+	AddressStreet2 string `json:"address_street_2"`
+	AddressStreet3 string `json:"address_street_3"`
+	VillageName    string `json:"village_name"`
+	VillageZipCode string `json:"village_zip_code"`
+	DistrictName   string `json:"district_name"`
+	CityName       string `json:"city_name"`
+	CityPhoneArea  string `json:"city_phone_area"`
+	ProvinceName   string `json:"province_name"`
+	CountryName    string `json:"country_name"`
 }
 
 type CustomerMasterByCodeResponse struct {
