@@ -415,107 +415,97 @@ func (r *CampaignMasterRepositoryImpl) PostCampaignMasterDetailFromPackage(tx *g
 
 func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMaster(tx *gorm.DB, id int) (bool, *exceptions.BaseErrorResponse) {
 	var entities masterentities.CampaignMaster
-
 	result := tx.
 		Model(&entities).
-		Where(masterentities.CampaignMaster{CampaignId: id}).
+		Where("campaign_id = ?", id).
 		First(&entities)
 
 	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "CampaignMaster not found",
+				Err:        result.Error,
+			}
+		}
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        result.Error,
 		}
 	}
 
-	if entities.IsActive {
-		entities.IsActive = false
-	} else {
-		entities.IsActive = true
-	}
+	entities.IsActive = !entities.IsActive
 
-	result = tx.Save(&entities)
-
-	if result.Error != nil {
+	if err := tx.Save(&entities).Error; err != nil {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Err:        result.Error,
+			Message:    "Failed to update CampaignMaster status",
+			Err:        err,
 		}
 	}
 
 	return entities.IsActive, nil
 }
 
-// func (r *CampaignMasterRepositoryImpl) ChangeStatusCampaignMasterDetail(tx *gorm.DB, id []string)(bool,*exceptions.BaseErrorResponse){
-// 	var entities []masterentities.CampaignMasterDetail
-
-// 	rows, err := tx.Model(&entities).
-// 		Where("warehouse_id in ?", id).
-// 		Scan(&entities).
-// 		Rows()
-
-// 	if err != nil {
-// 		return false, &exceptions.BaseErrorResponse{
-// 			StatusCode: http.StatusInternalServerError,
-// 			Err:        err,
-// 		}
-// 	}
-// 	if rows.IsActive {
-// 		rows.IsActive = false
-// 	} else {
-// 		rows.IsActive = true
-// 	}
-
-// 	defer rows.Close()
-
-// 	return true, nil
-// }
-
 func (r *CampaignMasterRepositoryImpl) DeactivateCampaignMasterDetail(tx *gorm.DB, ids string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(ids, ",")
-	for _, Id := range idSlice {
-		var entityToUpdate masterentities.CampaignMasterDetail
-		result := tx.Model(&entityToUpdate).Where("campaign_detail_id = ?", Id).Where("Campaign_id=?", Id).First(&entityToUpdate).Update("is_active", false)
-		if result.Error != nil {
+
+	result := tx.Model(&masterentities.CampaignMasterDetail{}).
+		Where("campaign_detail_id IN (?)", idSlice).
+		Update("is_active", false)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	var campaignIDs []int
+	tx.Model(&masterentities.CampaignMasterDetail{}).
+		Where("campaign_detail_id IN (?)", idSlice).
+		Pluck("campaign_id", &campaignIDs)
+
+	for _, campaignID := range campaignIDs {
+		if !r.UpdateTotalCampaignMaster(tx, campaignID) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        result.Error,
-			}
-		}
-
-		results := r.UpdateTotalCampaignMaster(tx, entityToUpdate.CampaignId)
-		if !results {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        result.Error,
+				Message:    "Failed to update total campaign master",
 			}
 		}
 	}
+
 	return true, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) ActivateCampaignMasterDetail(tx *gorm.DB, ids string) (bool, *exceptions.BaseErrorResponse) {
 	idSlice := strings.Split(ids, ",")
 
-	for _, Id := range idSlice {
-		var entityToUpdate masterentities.CampaignMasterDetail
-		result := tx.Model(&entityToUpdate).Where("campaign_detail_id = ?", Id).Where("Campaign_detail_id=?", Id).First(&entityToUpdate).Update("is_active", true)
-		if result.Error != nil {
+	result := tx.Model(&masterentities.CampaignMasterDetail{}).
+		Where("campaign_detail_id IN (?)", idSlice).
+		Update("is_active", true)
+
+	if result.Error != nil {
+		return false, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	var campaignIDs []int
+	tx.Model(&masterentities.CampaignMasterDetail{}).
+		Where("campaign_detail_id IN (?)", idSlice).
+		Pluck("campaign_id", &campaignIDs)
+
+	for _, campaignID := range campaignIDs {
+		if !r.UpdateTotalCampaignMaster(tx, campaignID) {
 			return false, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
-				Err:        result.Error,
+				Message:    "Failed to update total campaign master",
 			}
 		}
-
-		results := r.UpdateTotalCampaignMaster(tx, entityToUpdate.CampaignId)
-		if !results {
-			return false, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        result.Error,
-			}
-		}
-
 	}
+
 	return true, nil
 }
 
