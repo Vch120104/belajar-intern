@@ -12,6 +12,7 @@ import (
 
 type AgreementRepository interface {
 	GetAgreementById(*gorm.DB, int) (masterpayloads.AgreementRequest, *exceptions.BaseErrorResponse)
+	GetAgreementByCode(*gorm.DB, string) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse)
 	SaveAgreement(*gorm.DB, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	UpdateAgreement(*gorm.DB, int, masterpayloads.AgreementRequest) (masterentities.Agreement, *exceptions.BaseErrorResponse)
 	ChangeStatusAgreement(*gorm.DB, int) (masterentities.Agreement, *exceptions.BaseErrorResponse)

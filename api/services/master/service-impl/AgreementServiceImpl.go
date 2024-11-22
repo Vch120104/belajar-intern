@@ -246,3 +246,13 @@ func (s *AgreementServiceImpl) GetDiscountValueAgreementById(agreementID, valueI
 	}
 	return result, nil
 }
+
+func (s *AgreementServiceImpl) GetAgreementByCode(code string) (masterpayloads.AgreementResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.AgreementRepo.GetAgreementByCode(tx, code)
+	defer helper.CommitOrRollback(tx, err)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
