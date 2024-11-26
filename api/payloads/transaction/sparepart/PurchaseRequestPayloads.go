@@ -132,7 +132,7 @@ type PurchaseRequestGetByIdResponses struct {
 	PurchaseRequestDocumentStatusId int       `json:"purchase_request_document_status_id" parent_entity:"trx_purchase_request"`
 	ItemGroupId                     int       `json:"item_group_id" parent_entity:"trx_purchase_request"`
 	BrandId                         int       `json:"brand_id" parent_entity:"trx_purchase_request"`
-	ReferenceTypeId                 int       `json:"reference_type_id" parent_entity:"trx_purchase_request"`
+	ReferenceTypeId                 int       `gorm:"column:reference_type_id" json:"reference_type_id"`
 	ReferenceSystemNumber           int       `json:"reference_system_number" parent_entity:"trx_purchase_request"`
 	ReferenceDocumentNumber         string    `json:"reference_document_number" parent_entity:"trx_purchase_request"`
 	//ReferenceWorkOrderSystemNumber   int       `json:"reference_work_order_system_number" parent_entity:"trx_purchase_request"`
@@ -161,7 +161,7 @@ type PurchaseRequestGetByIdResponses struct {
 	ChangeNo                   int       `json:"change_no" parent_entity:"trx_purchase_request"`
 	CreatedByUserId            int       `json:"created_by_user_id" parent_entity:"trx_purchase_request"`
 	CreatedDate                time.Time `json:"created_date" parent_entity:"trx_purchase_request"`
-	UpdatedByUserId            int       `json:"updated_by_user_id" parent_entity:"trx_purchase_request"`
+	UpdatedByUserId            int       `json:"updated_by_user_id" gorm:"column:updated_by_user_id" parent_entity:"trx_purchase_request"`
 	UpdatedDate                time.Time `json:"updated_date" parent_entity:"trx_purchase_request"`
 }
 
