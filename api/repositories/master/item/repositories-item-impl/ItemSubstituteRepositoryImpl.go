@@ -24,69 +24,70 @@ func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepo
 	return &ItemSubstituteRepositoryImpl{}
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 	var payloads []masteritempayloads.ItemSubstitutePayloads
 	var typepayloads []masteritempayloads.ItemSubstituteCode
 
-	query := tx.Model(entities).Select("mtr_item_substitute.*, Item.item_code, Item.item_name").
-		Joins("Item", tx.Select(""))
+	query := tx.Model(&entities).
+		Select("mtr_item_substitute.*, item.item_code, item.item_name").
+		Joins("LEFT JOIN mtr_item AS item ON item.item_id = mtr_item_substitute.item_id")
 
-	whereQuery := utils.ApplyFilter(query, filterCondition)
+	query = utils.ApplyFilter(query, filterCondition)
 
 	if !from.IsZero() && !to.IsZero() {
-		whereQuery.Where("effective_date BETWEEN ? AND ?", from, to)
+		query = query.Where("effective_date BETWEEN ? AND ?", from, to)
 	} else if !from.IsZero() {
-		whereQuery.Where("effective_date >= ?", from)
+		query = query.Where("effective_date >= ?", from)
 	}
 
-	err := whereQuery.Scan(&payloads).Error
+	query = query.Scopes(pagination.Paginate(&pages, query))
 
+	err := query.Scan(&payloads).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	result := []map[string]interface{}{}
-	totalPages := 0
-	totalRows := 0
+	if len(payloads) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
+		return pages, nil
+	}
 
-	if len(payloads) > 0 {
-		errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-type", &typepayloads, nil)
-		if errUrlSubstituteType != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errUrlSubstituteType,
-			}
-		}
-
-		joinedData1 := utils.DataFrameLeftJoin(payloads, typepayloads, "SubstituteTypeId")
-
-		paginatedata, pages, rows := pagination.NewDataFramePaginate(joinedData1, &pages)
-		totalPages = pages
-		totalRows = rows
-
-		for _, res := range paginatedata {
-			data := map[string]interface{}{
-				"effective_date":       res["EffectiveDate"],
-				"is_active":            res["IsActive"],
-				"item_class_code":      res["ItemClassCode"],
-				"item_class_id":        res["ItemClassId"],
-				"item_code":            res["ItemCode"],
-				"item_group_id":        res["ItemgroupId"],
-				"item_id":              res["ItemId"],
-				"item_name":            res["ItemName"],
-				"item_substitute_id":   res["ItemSubstituteId"],
-				"substitute_type_id":   res["SubstituteTypeId"],
-				"substitute_type_name": res["SubstituteTypeNames"],
-			}
-			result = append(result, data)
+	errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-types", &typepayloads, nil)
+	if errUrlSubstituteType != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errUrlSubstituteType,
 		}
 	}
 
-	return result, totalPages, totalRows, nil
+	joinedData := utils.DataFrameLeftJoin(payloads, typepayloads, "SubstituteTypeId")
+
+	result := []map[string]interface{}{}
+	for _, res := range joinedData {
+		data := map[string]interface{}{
+			"effective_date":       res["EffectiveDate"],
+			"is_active":            res["IsActive"],
+			"item_class_code":      res["ItemClassCode"],
+			"item_class_id":        res["ItemClassId"],
+			"item_code":            res["ItemCode"],
+			"item_group_id":        res["ItemgroupId"],
+			"item_id":              res["ItemId"],
+			"item_name":            res["ItemName"],
+			"item_substitute_id":   res["ItemSubstituteId"],
+			"substitute_type_id":   res["SubstituteTypeId"],
+			"substitute_type_name": res["SubstituteTypeNames"],
+		}
+		result = append(result, data)
+	}
+
+	pages.Rows = result
+	return pages, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {

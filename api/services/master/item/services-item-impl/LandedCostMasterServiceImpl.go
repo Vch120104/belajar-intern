@@ -28,14 +28,14 @@ func StartLandedCostMasterService(LandedCostMasterRepo masteritemrepository.Land
 	}
 }
 
-func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *LandedCostMasterServiceImpl) GetAllLandedCost(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, totalpages, totalrows, err := s.LandedCostMasterRepo.GetAllLandedCost(tx, filterCondition, pages)
+	results, err := s.LandedCostMasterRepo.GetAllLandedCost(tx, filterCondition, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return nil, 0, 0, err
+		return results, err
 	}
-	return results, totalpages, totalrows, nil
+	return results, nil
 }
 
 func (s *LandedCostMasterServiceImpl) GetByIdLandedCost(id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {
