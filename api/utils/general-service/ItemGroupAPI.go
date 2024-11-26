@@ -4,8 +4,12 @@ import (
 	"after-sales/api/config"
 	"after-sales/api/exceptions"
 	"after-sales/api/utils"
+	"errors"
+	"fmt"
 	"net/http"
+	"reflect"
 	"strconv"
+	"strings"
 )
 
 type ItemGroupResponse struct {
@@ -26,18 +30,6 @@ func GetItemGroupById(itemGroupId int) (ItemGroupResponse, *exceptions.BaseError
 	}
 	return ItemGroup, nil
 }
-package generalserviceapiutils
-
-import (
-	"after-sales/api/config"
-	"after-sales/api/exceptions"
-	"after-sales/api/utils"
-	"errors"
-	"fmt"
-	"net/http"
-	"reflect"
-	"strings"
-)
 
 type GetAllItemGroupParams struct {
 	Page          int    `json:"page"`
