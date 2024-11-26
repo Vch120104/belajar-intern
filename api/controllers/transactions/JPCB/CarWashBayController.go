@@ -21,6 +21,7 @@ type BayMasterController interface {
 	GetAllDeactiveCarWashBay(writer http.ResponseWriter, request *http.Request)
 	ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request)
 	GetAllCarWashBayDropDown(writer http.ResponseWriter, request *http.Request)
+	PostCarWashBay(writer http.ResponseWriter, request *http.Request)
 }
 
 type BayMasterControllerImpl struct {
@@ -112,7 +113,7 @@ func (r *BayMasterControllerImpl) GetAllDeactiveCarWashBay(writer http.ResponseW
 }
 
 func (r *BayMasterControllerImpl) ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request) {
-	valueRequest := transactionjpcbpayloads.BayMasterUpdateRequest{}
+	valueRequest := transactionjpcbpayloads.CarWashBayUpdateRequest{}
 	helper.ReadFromRequestBody(request, &valueRequest)
 	if validationErr := validation.ValidationForm(writer, request, &valueRequest); validationErr != nil {
 		exceptions.NewBadRequestException(writer, request, validationErr)
@@ -162,4 +163,16 @@ func (r *BayMasterControllerImpl) GetAllCarWashBayDropDown(writer http.ResponseW
 	}
 
 	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(responseData), "Get Data Successfully", http.StatusOK)
+}
+
+func (r *BayMasterControllerImpl) PostCarWashBay(writer http.ResponseWriter, request *http.Request) {
+	var CarWashBayPostPayloads transactionjpcbpayloads.CarWashBayPostRequest
+	helper.ReadFromRequestBody(request, &CarWashBayPostPayloads)
+
+	response, err := r.bayMasterService.PostCarWashBay(CarWashBayPostPayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Successfully Inserted Car Wash Bay", http.StatusCreated)
 }

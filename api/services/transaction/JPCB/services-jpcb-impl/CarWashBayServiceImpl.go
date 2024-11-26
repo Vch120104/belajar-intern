@@ -61,7 +61,7 @@ func (s *BayMasterServiceImpl) GetAllDeactiveCarWashBay(filterCondition []utils.
 	return results, nil
 }
 
-func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpayloads.BayMasterUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+func (s *BayMasterServiceImpl) ChangeStatusCarWashBay(request transactionjpcbpayloads.CarWashBayUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	results, err := s.BayMasterRepository.ChangeStatus(tx, request)
 	defer helper.CommitOrRollback(tx, err)
@@ -81,5 +81,16 @@ func (s *BayMasterServiceImpl) GetAllCarWashBayDropDown(filterCondition []utils.
 		return nil, err
 	}
 
+	return results, nil
+}
+
+func (s *BayMasterServiceImpl) PostCarWashBay(request transactionjpcbpayloads.CarWashBayPostRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	results, err := s.BayMasterRepository.PostCarWashBay(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return transactionjpcbentities.BayMaster{}, err
+	}
 	return results, nil
 }

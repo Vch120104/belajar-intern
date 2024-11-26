@@ -23,7 +23,7 @@ func NewCarWashBayRepositoryImpl() transactionjpcbrepository.BayMasterRepository
 }
 
 func (*BayMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	responses := []transactionjpcbpayloads.BayMasterGetAllResponse{}
+	responses := []transactionjpcbpayloads.CarWashBayGetAllResponse{}
 
 	keyAttributes := []string{
 		"car_wash_bay_id",
@@ -59,7 +59,7 @@ func (*BayMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterConditio
 			}
 		}
 
-		responseMap := transactionjpcbpayloads.BayMasterGetAllResponse{
+		responseMap := transactionjpcbpayloads.CarWashBayGetAllResponse{
 			CarWashBayId:          carWashBayId,
 			CarWashBayCode:        carWashBayCode,
 			IsActive:              isActive,
@@ -192,7 +192,7 @@ func (*BayMasterImpl) GetAllDeactive(tx *gorm.DB, filterCondition []utils.Filter
 	return responses, nil
 }
 
-func (r *BayMasterImpl) ChangeStatus(tx *gorm.DB, request transactionjpcbpayloads.BayMasterUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+func (r *BayMasterImpl) ChangeStatus(tx *gorm.DB, request transactionjpcbpayloads.CarWashBayUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	carWashEntities := []transactionjpcbentities.CarWash{}
 	var bayEntity transactionjpcbentities.BayMaster
 
@@ -266,6 +266,40 @@ func (r *BayMasterImpl) ChangeStatus(tx *gorm.DB, request transactionjpcbpayload
 		Err:        fmt.Errorf("already start"),
 	}
 
+}
+
+func (r *BayMasterImpl) PostCarWashBay(tx *gorm.DB, request transactionjpcbpayloads.CarWashBayPostRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+	var entities transactionjpcbentities.BayMaster
+
+	entities.IsActive = true
+	entities.CarWashBayCode = request.CarWashBayCode
+	entities.CarWashBayDescription = request.CarWashBayDescription
+	entities.CompanyId = request.CompanyId
+
+	err := tx.Create(&entities).Error
+	if err != nil {
+		return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+	resetErr := resetAllOrderNumber(tx, request.CompanyId)
+	if resetErr != nil {
+		errorReset := errors.New("reset order fail")
+		return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        errorReset,
+		}
+	}
+
+	reorderErr := reorderOrderNumber(tx, request.CompanyId)
+	if reorderErr != nil {
+		return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        reorderErr.Err,
+		}
+	}
+	return entities, nil
 }
 
 func reorderOrderNumber(tx *gorm.DB, companyId int) *exceptions.BaseErrorResponse {
