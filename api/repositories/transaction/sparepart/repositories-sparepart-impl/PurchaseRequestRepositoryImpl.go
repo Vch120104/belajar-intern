@@ -155,21 +155,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	}
 
 	//get company name
-	var CompanyReponse []transactionsparepartpayloads.PurchaseRequestCompanyResponse
-	CompanyURL := config.EnvConfigs.GeneralServiceUrl + "company-id/" + strconv.Itoa(response.CompanyId)
-	if err := utils.Get(CompanyURL, &CompanyReponse, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Company data from external service",
-			Err:        err,
-		}
-	}
-	if len(CompanyReponse) == 0 {
-		CompanyReponse = append(CompanyReponse, transactionsparepartpayloads.PurchaseRequestCompanyResponse{
-			CompanyId:   0,
-			CompanyCode: "",
-			CompanyName: "",
-		})
+	CompanyReponse, CompanyReponseerr := generalserviceapiutils.GetCompanyDataById(response.CompanyId)
+	if CompanyReponseerr != nil {
+		return response, CompanyReponseerr
 	}
 	var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
 	ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
@@ -181,12 +169,13 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		}
 	}
 
-	var OrderType transactionsparepartpayloads.PurchaseRequestOrderTypeResponse
-	OrderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
-	if err := utils.Get(OrderTypeURL, &OrderType, nil); err != nil {
+	OrderType := masterentities.OrderType{}
+
+	err := db.Model(&OrderType).Where(masterentities.OrderType{OrderTypeId: response.OrderTypeId}).First(&OrderType).Error
+	if err != nil {
 		return response, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch customer data from external service",
+			Message:    "Failed to get order type",
 			Err:        err,
 		}
 	}
@@ -250,7 +239,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	}
 	var WarehouseGroupName masterwarehouseentities.WarehouseGroup
 
-	err := db.Model(&WarehouseGroupName).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupId: response.WarehouseGroupId}).
+	err = db.Model(&WarehouseGroupName).Where(masterwarehouseentities.WarehouseGroup{WarehouseGroupId: response.WarehouseGroupId}).
 		First(&WarehouseGroupName).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -344,7 +333,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	}
 
 	result := transactionsparepartpayloads.PurchaseRequestGetByIdNormalizeResponses{
-		Company:                       CompanyReponse[0].CompanyName,
+		Company:                       CompanyReponse.CompanyName,
 		PurchaseRequestSystemNumber:   response.PurchaseRequestSystemNumber,
 		PurchaseRequestDocumentNumber: response.PurchaseRequestDocumentNumber,
 		PurchaseRequestDocumentDate:   response.PurchaseRequestDocumentDate,
