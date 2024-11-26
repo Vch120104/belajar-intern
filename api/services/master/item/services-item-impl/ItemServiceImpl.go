@@ -40,15 +40,15 @@ func (s *ItemServiceImpl) CheckItemCodeExist(itemCode string, itemGroupId int, c
 	return results, itemId, itemClassId, nil
 }
 
-func (s *ItemServiceImpl) GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *ItemServiceImpl) GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItemSearch(tx, filterCondition, itemIDs, supplierIDs, pages)
+	results, repoErr := s.itemRepo.GetAllItemSearch(tx, filterCondition, itemIDs, supplierIDs, pages)
 	defer helper.CommitOrRollback(tx, repoErr)
 
 	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
+		return results, repoErr
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 // GetUomDropDown implements masteritemservice.ItemService.
@@ -71,18 +71,6 @@ func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDrop
 		return results, err
 	}
 	return results, nil
-}
-
-func (s *ItemServiceImpl) GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-
-	tx := s.DB.Begin()
-	results, totalPages, totalRows, repoErr := s.itemRepo.GetAllItem(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, repoErr)
-	if repoErr != nil {
-		return results, totalPages, totalRows, repoErr
-	}
-	return results, totalPages, totalRows, nil
-
 }
 
 func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse) {

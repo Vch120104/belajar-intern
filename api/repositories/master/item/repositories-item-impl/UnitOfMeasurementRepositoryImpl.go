@@ -69,7 +69,6 @@ func StartUnitOfMeasurementRepositoryImpl() masteritemrepository.UnitOfMeasureme
 }
 
 func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.Uom{}
 	var responses []masteritempayloads.UomResponse
 	// define table struct
 	tableStruct := masteritempayloads.UomResponse{}
@@ -78,7 +77,7 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(tx *gorm.DB, f
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 	//apply pagination and execute
-	rows, err := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+	rows, err := joinTable.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Rows()
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -88,10 +87,8 @@ func (r *UnitOfMeasurementRepositoryImpl) GetAllUnitOfMeasurement(tx *gorm.DB, f
 	}
 
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []masteritempayloads.UomResponse{}
+		return pages, nil
 	}
 
 	defer rows.Close()

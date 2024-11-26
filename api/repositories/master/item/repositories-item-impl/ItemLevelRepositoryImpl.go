@@ -62,8 +62,9 @@ func (r *ItemLevelImpl) GetItemLevelLookUpbyId(tx *gorm.DB, filter []utils.Filte
 }
 
 func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination, itemClassId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := masteritementities.ItemLevel1{}
+
 	responses := []masteritemlevelpayloads.GetItemLevelLookUp{}
+	entities := masteritementities.ItemLevel1{}
 
 	query := tx.Model(&entities).
 		Select(`
@@ -87,7 +88,10 @@ func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCon
 		Where("mtr_item_level_1.item_class_id = ?", itemClassId)
 
 	queryFilter := utils.ApplyFilter(query, filter)
-	err := queryFilter.Scopes(pagination.Paginate(&entities, &pages, queryFilter)).Order("mtr_item_level_1.item_level_1_id").Scan(&responses).Error
+
+	err := queryFilter.Scopes(pagination.Paginate(&pages, queryFilter)).
+		Order("mtr_item_level_1.item_level_1_id").
+		Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -96,10 +100,15 @@ func (r *ItemLevelImpl) GetItemLevelLookUp(tx *gorm.DB, filter []utils.FilterCon
 		}
 	}
 
+	// If no records are found, return an empty slice
+	if len(responses) == 0 {
+		pages.Rows = []masteritemlevelpayloads.GetItemLevelLookUp{}
+		return pages, nil
+	}
+
 	pages.Rows = responses
 
 	return pages, nil
-
 }
 
 func (r *ItemLevelImpl) GetItemLevelDropDown(tx *gorm.DB, itemLevel int) ([]masteritemlevelpayloads.GetItemLevelDropdownResponse, *exceptions.BaseErrorResponse) {

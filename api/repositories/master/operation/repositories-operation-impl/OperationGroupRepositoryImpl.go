@@ -25,9 +25,19 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterC
 	entities := []masteroperationentities.OperationGroup{}
 	baseModelQuery := tx.Model(&entities)
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	rows, _ := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 
-	defer rows.Close()
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masteroperationentities.OperationGroup{}
+		return pages, nil
+	}
 
 	pages.Rows = entities
 

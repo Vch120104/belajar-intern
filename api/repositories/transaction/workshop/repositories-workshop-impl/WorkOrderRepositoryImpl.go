@@ -52,7 +52,7 @@ func (r *WorkOrderRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []utils.Fi
 
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	whereQuery := utils.ApplyFilterSearch(joinTable, filterCondition)
+	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
 	// Add the additional where condition
 	whereQuery = whereQuery.Where("service_request_system_number = 0 AND booking_system_number = 0 AND estimation_system_number = 0 and cpc_code = '00002'")
@@ -1307,10 +1307,10 @@ func (r *WorkOrderRepositoryImpl) GetAllRequest(tx *gorm.DB, filterCondition []u
 	query := tx.Model(&transactionworkshopentities.WorkOrderService{})
 
 	if len(filterCondition) > 0 {
-		query = utils.ApplyFilterSearch(query, filterCondition)
+		query = utils.ApplyFilter(query, filterCondition)
 	}
 
-	query = query.Scopes(pagination.Paginate(&entities, &pages, tx))
+	query = query.Scopes(pagination.Paginate(&pages, tx))
 
 	err := query.Find(&entities).Error
 	if err != nil {
@@ -1510,10 +1510,10 @@ func (r *WorkOrderRepositoryImpl) GetAllVehicleService(tx *gorm.DB, filterCondit
 	query := tx.Model(&transactionworkshopentities.WorkOrderServiceVehicle{})
 
 	if len(filterCondition) > 0 {
-		query = utils.ApplyFilterSearch(query, filterCondition)
+		query = utils.ApplyFilter(query, filterCondition)
 	}
 
-	query = query.Scopes(pagination.Paginate(&entities, &pages, tx))
+	query = query.Scopes(pagination.Paginate(&pages, tx))
 
 	err := query.Find(&entities).Error
 	if err != nil {
@@ -7754,7 +7754,7 @@ func (r *WorkOrderRepositoryImpl) GetServiceRequestByWO(tx *gorm.DB, workOrderId
 	query := tx.Model(&tableStruct).Where("work_order_system_number = ? AND work_order_system_number != 0", workOrderId)
 
 	// Apply filters to the query
-	query = utils.ApplyFilterSearch(query, filterCondition)
+	query = utils.ApplyFilter(query, filterCondition)
 
 	// Get total rows for pagination
 	var totalRows int64
@@ -7767,7 +7767,7 @@ func (r *WorkOrderRepositoryImpl) GetServiceRequestByWO(tx *gorm.DB, workOrderId
 	}
 
 	// Apply pagination
-	paginatedQuery := pagination.Paginate(&tableStruct, &pages, query)
+	paginatedQuery := pagination.Paginate(&pages, query)
 
 	// Execute the query
 	var results []transactionworkshopentities.ServiceRequest
@@ -7863,7 +7863,7 @@ func (r *WorkOrderRepositoryImpl) GetClaimItemByWO(tx *gorm.DB, workOrderId int,
 	}
 
 	var results []transactionworkshopentities.WorkOrderDetail
-	paginatedQuery := pagination.Paginate(&transactionworkshopentities.WorkOrderDetail{}, &pages, entities)
+	paginatedQuery := pagination.Paginate(&pages, entities)
 
 	if err := paginatedQuery(tx).Find(&results).Error; err != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
@@ -7910,7 +7910,7 @@ func (r *WorkOrderRepositoryImpl) GetWOByBillCode(tx *gorm.DB, workOrderId int, 
 		}
 	}
 
-	paginatedQuery := pagination.Paginate(&transactionworkshopentities.WorkOrderDetail{}, &pages, query)
+	paginatedQuery := pagination.Paginate(&pages, query)
 
 	var results []transactionworkshopentities.WorkOrderDetail
 	if err := paginatedQuery(tx).Find(&results).Error; err != nil {
@@ -8083,7 +8083,7 @@ func (r *WorkOrderRepositoryImpl) GetSupplyByWO(tx *gorm.DB, workOrderId int, fi
 		}
 	}
 
-	paginatedQuery := pagination.Paginate(&transactionsparepartentities.SupplySlip{}, &pages, query)
+	paginatedQuery := pagination.Paginate(&pages, query)
 
 	var results []transactionsparepartentities.SupplySlip
 	if err := paginatedQuery(tx).Find(&results).Error; err != nil {

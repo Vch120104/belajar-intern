@@ -366,7 +366,7 @@ func (r *SupplySlipRepositoryImpl) GetAllSupplySlip(tx *gorm.DB, internalFilter 
 	//define join table
 	joinTable := utils.CreateJoinSelectStatementTransaction(tx, tableStruct)
 	//apply filter
-	whereQuery := utils.ApplyFilterSearch(joinTable, internalFilter)
+	whereQuery := utils.ApplyFilter(joinTable, internalFilter)
 
 	// Execute the query
 	rows, err := whereQuery.Rows()
@@ -618,7 +618,7 @@ func (r *SupplySlipRepositoryImpl) SubmitSupplySlip(tx *gorm.DB, supplySlipId in
 		if genErr != nil {
 			return false, "", genErr
 		}
-		//newDocumentNumber 
+		//newDocumentNumber
 
 		entity.SupplyDocumentNumber = newDocumentNumber
 

@@ -135,14 +135,14 @@ func (s *CampaignMasterServiceImpl) GetAllCampaignMasterCodeAndName(pages pagina
 	return result, nil
 }
 
-func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *CampaignMasterServiceImpl) GetAllCampaignMaster(filtercondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result, totalpages, totalrows, err := s.CampaignMasterRepo.GetAllCampaignMaster(tx, filtercondition, pages)
+	result, err := s.CampaignMasterRepo.GetAllCampaignMaster(tx, filtercondition, pages)
 	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
-		return result, 0, 0, err
+		return result, err
 	}
-	return result, totalpages, totalrows, nil
+	return result, nil
 }
 
 func (s *CampaignMasterServiceImpl) GetAllCampaignMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {

@@ -29,7 +29,7 @@ func (r *IncentiveGroupDetailRepositoryImpl) GetAllIncentiveGroupDetail(tx *gorm
 		Where(masterentities.IncentiveGroupDetail{IncentiveGroupId: headerId})
 
 	//apply pagination and execute
-	rows, err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&response).Rows()
+	rows, err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&response).Rows()
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

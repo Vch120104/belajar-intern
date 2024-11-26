@@ -16,6 +16,16 @@ type BaseErrorResponse struct {
 	Err        error       `json:"-"`
 }
 
+// Error implements the error interface for BaseErrorResponse
+func (e *BaseErrorResponse) Error() string {
+	// If there is an underlying error, include it in the string
+	if e.Err != nil {
+		return e.Message + ": " + e.Err.Error()
+	}
+	// Otherwise, just return the message
+	return e.Message
+}
+
 // NewAppException creates a new AppException with a customizable HTTP status code
 func NewAppException(writer http.ResponseWriter, request *http.Request, err *BaseErrorResponse) {
 	handleError(writer, err, http.StatusInternalServerError, utils.SomethingWrong)

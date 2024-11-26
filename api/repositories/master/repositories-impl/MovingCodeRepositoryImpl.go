@@ -318,13 +318,13 @@ func (r *MovingCodeRepositoryImpl) CreateMovingCode(tx *gorm.DB, req masterpaylo
 
 // GetAllMovingCode implements masterrepository.MovingCodeRepository.
 func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, companyId int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	model := masterentities.MovingCode{}
 	var responses []masterentities.MovingCode
 
-	whereQuery := tx.Model(&model).Where("mtr_moving_code.company_id LIKE ?", companyId)
+	whereQuery := tx.Model(&model).Where("mtr_moving_code.company_id = ?", companyId)
 
-	err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&responses).Error
-
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -332,35 +332,14 @@ func (r *MovingCodeRepositoryImpl) GetAllMovingCode(tx *gorm.DB, companyId int, 
 		}
 	}
 
-	fmt.Print(len(responses))
-
 	if len(responses) == 0 {
-		whereQuery := tx.Model(&model).Where("mtr_moving_code.company_id LIKE '0'")
-
-		err := whereQuery.Scopes(pagination.Paginate(&model, &pages, whereQuery)).Scan(&responses).Error
-
-		if err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-
-		fmt.Print(responses)
-
-		if len(responses) == 0 {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        errors.New(""),
-			}
-		}
-
+		pages.Rows = []masterentities.MovingCode{}
+		return pages, nil
 	}
 
 	pages.Rows = responses
 
 	return pages, nil
-
 }
 
 // PushMovingCodePriority implements masterrepository.MovingCodeRepository.

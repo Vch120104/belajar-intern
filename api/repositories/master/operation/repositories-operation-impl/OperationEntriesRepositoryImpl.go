@@ -32,10 +32,19 @@ func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, fil
 
 	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-	//apply pagination and execute
-	rows, _ := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 
-	defer rows.Close()
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	if len(entities) == 0 {
+		pages.Rows = []masteroperationentities.OperationEntries{}
+		return pages, nil
+	}
 
 	pages.Rows = responses
 

@@ -687,7 +687,7 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailByParam(tx *gorm.DB,
 		Where("mpp.currency_id = ?", curId).
 		Where("mpp.supplier_id = ?", supId).
 		Where("mpp.purchase_price_effective_date >= ? AND mpp.purchase_price_effective_date <= ?", effectiveDate+" 00:00:00.000", effectiveDate+" 23:59:59.999")
-	err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&response).Error
+	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Scan(&response).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
