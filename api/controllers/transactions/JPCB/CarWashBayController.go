@@ -11,6 +11,7 @@ import (
 	"after-sales/api/validation"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -22,6 +23,8 @@ type BayMasterController interface {
 	ChangeStatusCarWashBay(writer http.ResponseWriter, request *http.Request)
 	GetAllCarWashBayDropDown(writer http.ResponseWriter, request *http.Request)
 	PostCarWashBay(writer http.ResponseWriter, request *http.Request)
+	PutCarWashBay(writer http.ResponseWriter, request *http.Request)
+	GetCarWashBayById(writer http.ResponseWriter, request *http.Request)
 }
 
 type BayMasterControllerImpl struct {
@@ -175,4 +178,32 @@ func (r *BayMasterControllerImpl) PostCarWashBay(writer http.ResponseWriter, req
 		return
 	}
 	payloads.NewHandleSuccess(writer, response, "Successfully Inserted Car Wash Bay", http.StatusCreated)
+}
+
+func (r *BayMasterControllerImpl) PutCarWashBay(writer http.ResponseWriter, request *http.Request) {
+	var CarWashBayPutPayloads transactionjpcbpayloads.CarWashBayPutRequest
+	helper.ReadFromRequestBody(request, &CarWashBayPutPayloads)
+
+	response, err := r.bayMasterService.PutCarWashBay(CarWashBayPutPayloads)
+	if err != nil {
+		helper.ReturnError(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, response, "Successfully Updated Car Wash Bay", http.StatusOK)
+}
+
+func (r *BayMasterControllerImpl) GetCarWashBayById(writer http.ResponseWriter, request *http.Request) {
+	carWashBayId, errA := strconv.Atoi(chi.URLParam(request, "car_wash_bay_id"))
+
+	if errA != nil {
+		exceptions.NewBadRequestException(writer, request, &exceptions.BaseErrorResponse{StatusCode: http.StatusBadRequest, Err: errors.New("failed to read request param, please check your param input")})
+		return
+	}
+
+	result, err := r.bayMasterService.GetCarWashBayById(carWashBayId)
+	if err != nil {
+		exceptions.NewNotFoundException(writer, request, err)
+		return
+	}
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }

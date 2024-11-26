@@ -86,11 +86,33 @@ func (s *BayMasterServiceImpl) GetAllCarWashBayDropDown(filterCondition []utils.
 
 func (s *BayMasterServiceImpl) PostCarWashBay(request transactionjpcbpayloads.CarWashBayPostRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.BayMasterRepository.PostCarWashBay(tx, request)
+	result, err := s.BayMasterRepository.PostCarWashBay(tx, request)
 	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return transactionjpcbentities.BayMaster{}, err
 	}
-	return results, nil
+	return result, nil
+}
+
+func (s *BayMasterServiceImpl) PutCarWashBay(request transactionjpcbpayloads.CarWashBayPutRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.BayMasterRepository.UpdateCarWashBay(tx, request)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return transactionjpcbentities.BayMaster{}, err
+	}
+	return result, nil
+}
+
+func (s *BayMasterServiceImpl) GetCarWashBayById(carWashBayId int) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	result, err := s.BayMasterRepository.GetCarWashBayById(tx, carWashBayId)
+	defer helper.CommitOrRollback(tx, err)
+
+	if err != nil {
+		return transactionjpcbentities.BayMaster{}, err
+	}
+	return result, nil
 }

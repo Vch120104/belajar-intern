@@ -25,3 +25,9 @@ type CarWashBayPostRequest struct {
 	CarWashBayCode        string `json:"car_wash_bay_code"`
 	CarWashBayDescription string `json:"car_wash_bay_description"`
 }
+
+type CarWashBayPutRequest struct {
+	CarWashBayID          int    `json:"car_wash_bay_id"`
+	CarWashBayCode        string `json:"car_wash_bay_code"`
+	CarWashBayDescription string `json:"car_wash_bay_description"`
+}

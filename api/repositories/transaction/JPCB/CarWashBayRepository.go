@@ -17,4 +17,6 @@ type BayMasterRepository interface {
 	CarWashBayDropDown(tx *gorm.DB, filterCondition []utils.FilterCondition) ([]transactionjpcbpayloads.CarWashBayDropDownResponse, *exceptions.BaseErrorResponse)
 	ChangeStatus(tx *gorm.DB, request transactionjpcbpayloads.CarWashBayUpdateRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse)
 	PostCarWashBay(tx *gorm.DB, request transactionjpcbpayloads.CarWashBayPostRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse)
+	UpdateCarWashBay(tx *gorm.DB, request transactionjpcbpayloads.CarWashBayPutRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse)
+	GetCarWashBayById(tx *gorm.DB, carWashBayId int) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse)
 }

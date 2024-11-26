@@ -59,6 +59,8 @@ func CarWashBayRouter(
 	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
 	router.Get("/dropdown", bayController.GetAllCarWashBayDropDown)
 	router.Post("/", bayController.PostCarWashBay)
+	router.Put("/", bayController.PutCarWashBay)
+	router.Get("/{car_wash_bay_id}", bayController.GetCarWashBayById)
 
 	return router
 }

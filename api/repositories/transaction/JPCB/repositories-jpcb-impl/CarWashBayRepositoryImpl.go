@@ -84,6 +84,30 @@ func (*BayMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterConditio
 	return paginatedData, totalPages, totalRows, nil
 }
 
+func (r *BayMasterImpl) GetCarWashBayById(tx *gorm.DB, carWashBayId int) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+	var entity transactionjpcbentities.BayMaster
+
+	err := tx.Model(&entity).Where(transactionjpcbentities.BayMaster{
+		CarWashBayId: carWashBayId,
+	}).First(&entity).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Data not Found",
+				Err:        err,
+			}
+		}
+		return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch BOM Master record",
+			Err:        err,
+		}
+	}
+
+	return entity, nil
+}
+
 func (*BayMasterImpl) GetAllActive(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var responses []map[string]interface{}
 
@@ -299,6 +323,47 @@ func (r *BayMasterImpl) PostCarWashBay(tx *gorm.DB, request transactionjpcbpaylo
 			Err:        reorderErr.Err,
 		}
 	}
+	return entities, nil
+}
+
+func (r *BayMasterImpl) UpdateCarWashBay(tx *gorm.DB, request transactionjpcbpayloads.CarWashBayPutRequest) (transactionjpcbentities.BayMaster, *exceptions.BaseErrorResponse) {
+	var entities transactionjpcbentities.BayMaster
+
+	result := tx.Model(&entities).Where(transactionjpcbentities.BayMaster{
+		CarWashBayId: request.CarWashBayID,
+	}).First(&entities)
+
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Err:        fmt.Errorf("bay with id %d not found", request.CarWashBayID),
+			}
+		}
+		return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
+	entities.CarWashBayId = request.CarWashBayID
+	entities.CarWashBayCode = request.CarWashBayCode
+	entities.CarWashBayDescription = request.CarWashBayDescription
+
+	result = tx.Model(&entities).Where(transactionjpcbentities.BayMaster{
+		CarWashBayId: request.CarWashBayID,
+	}).Updates(map[string]interface{}{
+		"car_wash_bay_id":          request.CarWashBayID,
+		"car_wash_bay_code":        request.CarWashBayCode,
+		"car_wash_bay_description": request.CarWashBayDescription,
+	})
+	if result.Error != nil {
+		return transactionjpcbentities.BayMaster{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        result.Error,
+		}
+	}
+
 	return entities, nil
 }
 
