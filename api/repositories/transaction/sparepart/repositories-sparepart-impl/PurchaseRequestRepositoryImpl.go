@@ -13,6 +13,7 @@ import (
 	"after-sales/api/utils"
 	financeserviceapiutils "after-sales/api/utils/finance-service"
 	generalserviceapiutils "after-sales/api/utils/general-service"
+	salesserviceapiutils "after-sales/api/utils/sales-service"
 	"errors"
 	"fmt"
 	"log"
@@ -159,14 +160,9 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	if CompanyReponseerr != nil {
 		return response, CompanyReponseerr
 	}
-	var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
-	ItemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-	if err := utils.Get(ItemGroupURL, &ItemGroup, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Item Group data from external service",
-			Err:        err,
-		}
+	ItemGroup, ItemGroupErr := generalserviceapiutils.GetItemGroupById(response.ItemGroupId)
+	if ItemGroupErr != nil {
+		return response, ItemGroupErr
 	}
 
 	OrderType := masterentities.OrderType{}
@@ -180,62 +176,36 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		}
 	}
 	var purchaseRequestStatusDesc transactionsparepartpayloads.PurchaseRequestStatusResponse
-	StatusURL := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(response.PurchaseRequestDocumentStatusId)
-	if err := utils.Get(StatusURL, &purchaseRequestStatusDesc, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Status data from external service",
-			Err:        err,
-		}
+	//StatusURL, StatusURLErr := generalserviceapiutils.GetDocumentStatusById(response.PurchaseRequestDocumentStatusId)
+	//if StatusURLErr != nil {
+	//	return response, StatusURLErr
+	//}
+
+	GetBrandName, GetBrandNameErr := salesserviceapiutils.GetUnitBrandById(response.PurchaseRequestDocumentStatusId)
+	if GetBrandNameErr != nil {
+		return response, GetBrandNameErr
 	}
 
-	var GetBrandName transactionsparepartpayloads.PurchaseRequestStatusResponse
-	BrandURL := config.EnvConfigs.GeneralServiceUrl + "document-status/" + strconv.Itoa(response.PurchaseRequestDocumentStatusId)
-	if err := utils.Get(BrandURL, &GetBrandName, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Brand data from external service",
-			Err:        err,
-		}
+	GetDivision, GetDivisionErr := generalserviceapiutils.GetDivisionById(response.DivisionId)
+	if GetDivisionErr != nil {
+		return response, GetDivisionErr
 	}
 
-	var GetDivisionName transactionsparepartpayloads.DivisionResponse
-	DivisionURL := config.EnvConfigs.GeneralServiceUrl + "division/" + strconv.Itoa(response.DivisionId)
-	if err := utils.Get(DivisionURL, &GetDivisionName, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Division data from external service",
-			Err:        err,
-		}
+	//var GetCostCenterName transactionsparepartpayloads.CostCenterResponses
+	CostCenter, CostCenterErr := generalserviceapiutils.GetCostCenterById(response.CostCenterId)
+	if CostCenterErr != nil {
+		return response, CostCenterErr
 	}
 
-	var GetCostCenterName transactionsparepartpayloads.CostCenterResponses
-	CostCenterURL := config.EnvConfigs.GeneralServiceUrl + "cost-center/" + strconv.Itoa(response.CostCenterId)
-	if err := utils.Get(CostCenterURL, &GetCostCenterName, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Cost Center data from external service",
-			Err:        err,
-		}
-	}
-	var GetCcyName transactionsparepartpayloads.CurrencyCodeResponse
-	CurrencyURL := config.EnvConfigs.FinanceServiceUrl + "currency-code/" + strconv.Itoa(response.CurrencyId)
-	if err := utils.Get(CurrencyURL, &GetCcyName, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Currency data from external service",
-			Err:        err,
-		}
+	//var GetCcyName transactionsparepartpayloads.CurrencyCodeResponse
+	GetCcyName, GetCcyNameErr := financeserviceapiutils.GetCurrencyId(response.CurrencyId)
+	if GetCcyNameErr != nil {
+		return response, GetCcyNameErr
 	}
 
-	var ProfitCenterName transactionsparepartpayloads.ProfitCenterResponses
-	ProfitCenterURL := config.EnvConfigs.GeneralServiceUrl + "profit-center/" + strconv.Itoa(response.ProfitCenterId)
-	if err := utils.Get(ProfitCenterURL, &ProfitCenterName, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Profit Center data from external service",
-			Err:        err,
-		}
+	ProfitCenter, ProfitCenterErr := generalserviceapiutils.GetProfitCenterById(response.ProfitCenterId)
+	if ProfitCenterErr != nil {
+		return response, ProfitCenterErr
 	}
 	var WarehouseGroupName masterwarehouseentities.WarehouseGroup
 
@@ -335,7 +305,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		PurchaseRequestDocumentDate:   response.PurchaseRequestDocumentDate,
 		PurchaseRequestDocumentStatus: purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
 		ItemGroup:                     ItemGroup.ItemGroupName,
-		Brand:                         GetBrandName.PurchaseRequestStatusDescription,
+		Brand:                         GetBrandName.BrandName,
 		ReferenceType:                 PurchaseRequestReferenceType.ReferenceTypePurchaseRequestName,
 		//ReferenceDocumentNumber:       docNo,
 		ReferenceDocumentNumber: response.ReferenceDocumentNumber,
@@ -343,13 +313,13 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		OrderType:                  OrderType.OrderTypeName,
 		BudgetCode:                 response.BudgetCode,
 		ProjectNo:                  response.ProjectNo,
-		Division:                   GetDivisionName.DivisionName,
+		Division:                   GetDivision.DivisionName,
 		PurchaseRequestRemark:      response.PurchaseRequestRemark,
 		PurchaseRequestTotalAmount: response.PurchaseRequestTotalAmount,
 		ExpectedArrivalDate:        response.ExpectedArrivalDate,
 		ExpectedArrivalTime:        response.ExpectedArrivalTime,
-		CostCenter:                 GetCostCenterName.CostCenterName,
-		ProfitCenter:               ProfitCenterName.ProfitCenterName,
+		CostCenter:                 CostCenter.CostCenterName,
+		ProfitCenter:               ProfitCenter.ProfitCenterName,
 		WarehouseGroup:             WarehouseGroupName.WarehouseGroupName,
 		Warehouse:                  GetWarehouseResponses.WarehouseName,
 		SetOrder:                   response.SetOrder,
