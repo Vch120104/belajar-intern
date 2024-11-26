@@ -312,14 +312,10 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		}
 	}
 
-	var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	UpdatedByURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(response.UpdatedByUserId)
-	if err := utils.Get(UpdatedByURL, &UpdatedBy, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Requested By data from external service",
-			Err:        err,
-		}
+	//var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
+	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	if UpdatedByerr != nil {
+		return response, UpdatedByerr
 	}
 
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
@@ -361,7 +357,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		ChangeNo:                   0,
 		CreatedByUser:              RequestBy.UserEmployeeName,
 		CreatedDate:                response.CreatedDate,
-		UpdatedByUser:              UpdatedBy.UserEmployeeName,
+		UpdatedByUser:              UpdatedBy.EmployeeName,
 		UpdatedDate:                response.UpdatedDate,
 	}
 	fmt.Println(result)
