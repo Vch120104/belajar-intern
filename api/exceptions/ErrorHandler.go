@@ -3,8 +3,10 @@ package exceptions
 import (
 	jsonresponse "after-sales/api/helper/json/json-response"
 	"after-sales/api/utils"
+	"errors"
 	"net/http"
 
+	mssql "github.com/microsoft/go-mssqldb"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,7 +15,7 @@ type BaseErrorResponse struct {
 	StatusCode int         `json:"status_code"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data"`
-	Err        error       `json:"-"`
+	Err        error       `json:"-"` // The underlying error is not included in the response
 }
 
 // Error implements the error interface for BaseErrorResponse
@@ -68,18 +70,73 @@ func handleError(writer http.ResponseWriter, err *BaseErrorResponse, defaultStat
 		statusCode = defaultStatusCode
 	}
 
+	// If no message is set, try to assign a default message
 	if err.Message == "" {
-		err.Message = defaultMessage
-	}
-	if err.Err != nil {
-		logrus.Info(err)
+		if err.Err != nil && err.Err.Error() != "" {
+			err.Message = translateErrorMessage(err.Err)
+		} else {
+			err.Message = defaultMessage
+		}
 	}
 
+	// Log the error if there is an underlying error
+	if err.Err != nil {
+		logrus.Error(err)
+	}
+
+	// Build the response object
 	res := &BaseErrorResponse{
 		StatusCode: statusCode,
 		Message:    err.Message,
 	}
 
+	// Write the response
+	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(statusCode)
 	jsonresponse.WriteToResponseBody(writer, res)
+}
+
+// translateErrorMessage provides a human-readable error message for specific SQL errors
+func translateErrorMessage(err error) string {
+	var sqlErr mssql.Error
+	if errors.As(err, &sqlErr) {
+		switch sqlErr.Number {
+		case 547:
+			return "This record is associated with other data and cannot be deleted or modified. Please ensure there are no dependent records before proceeding."
+		case 2601, 2627:
+			return "Data already exists (Unique Constraint Violation)."
+		case 1205:
+			return "Deadlock detected, transaction stopped."
+		case 208:
+			return "Invalid object name. Table, view, or another object is not found."
+		case 4060:
+			return "Failed to access the database."
+		case 53:
+			return "Cannot connect to the server. Hostname or port is wrong."
+		case 233:
+			return "Database server refused the connection because resources are full."
+		case 515, 8153:
+			return "Cannot insert or update data to empty value."
+		case 8152:
+			return "Data exceeds column length or data type."
+		case 102:
+			return "SQL Syntax is not valid."
+		case 207:
+			return "Column name not found."
+		case 209:
+			return "Ambiguous column name."
+		case 4104:
+			return "Multi-part identifier could not be bound in SQL syntax."
+		case 701:
+			return "Server is running out of memory."
+		case 8645:
+			return "Resource request failed due to out of memory."
+		case 1105:
+			return "There is not enough disk space."
+		default:
+			return err.Error()
+		}
+	} else {
+		return err.Error()
+	}
 }
