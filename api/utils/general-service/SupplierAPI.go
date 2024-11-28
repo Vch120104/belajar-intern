@@ -108,7 +108,7 @@ func GetAllSupplierMaster(params SupplierMasterParams) ([]SupplierMasterResponse
 
 func GetSupplierMasterByCode(code string) (SupplierMasterResponse, *exceptions.BaseErrorResponse) {
 	var getSupplierMaster SupplierMasterResponse
-	url := config.EnvConfigs.GeneralServiceUrl + "supplier-by-code/" + code
+	url := config.EnvConfigs.GeneralServiceUrl + "supplier-code/" + code
 
 	err := utils.CallAPI("GET", url, nil, &getSupplierMaster)
 	if err != nil {

@@ -9,8 +9,11 @@ import (
 	masteroperationrepository "after-sales/api/repositories/master/operation"
 	masteroperationservice "after-sales/api/services/master/operation"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,28 +33,76 @@ func StartOperationModelMappingService(operationModelMappingRepo masteroperation
 
 func (s *OperationModelMappingServiceImpl) GetOperationModelMappingById(id int) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.GetOperationModelMappingById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masteroperationpayloads.OperationModelMappingResponse{}, err
 	}
 	return results, nil
 }
 
-func (s *OperationModelMappingServiceImpl) GetOperationModelMappingLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (s *OperationModelMappingServiceImpl) GetOperationModelMappingLookup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, totalPages, totalRows, err := s.operationModelMappingRepo.GetOperationModelMappingLookup(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+	results, err := s.operationModelMappingRepo.GetOperationModelMappingLookup(tx, filterCondition, pages)
 	if err != nil {
-		return results, totalPages, totalRows, err
+		return results, err
 	}
-	return results, totalPages, totalRows, nil
+	return results, nil
 }
 
 func (s *OperationModelMappingServiceImpl) GetOperationModelMappingByBrandModelOperationCode(request masteroperationpayloads.OperationModelModelBrandOperationCodeRequest) (masteroperationpayloads.OperationModelMappingResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.GetOperationModelMappingByBrandModelOperationCode(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -60,8 +111,24 @@ func (s *OperationModelMappingServiceImpl) GetOperationModelMappingByBrandModelO
 
 func (s *OperationModelMappingServiceImpl) SaveOperationModelMapping(req masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.SaveOperationModelMapping(tx, req)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -70,8 +137,24 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMapping(req mastero
 
 func (s *OperationModelMappingServiceImpl) ChangeStatusOperationModelMapping(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.ChangeStatusOperationModelMapping(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -80,8 +163,24 @@ func (s *OperationModelMappingServiceImpl) ChangeStatusOperationModelMapping(Id 
 
 func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.SaveOperationModelMappingFrt(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -90,8 +189,24 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingFrt(request 
 
 func (s *OperationModelMappingServiceImpl) DeleteOperationLevel(ids []int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := s.operationModelMappingRepo.DeleteOperationLevel(tx, ids)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -100,8 +215,24 @@ func (s *OperationModelMappingServiceImpl) DeleteOperationLevel(ids []int) (bool
 
 func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.DeactivateOperationFrt(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -110,8 +241,24 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationFrt(id string) (bo
 
 func (s *OperationModelMappingServiceImpl) ActivateOperationFrt(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.ActivateOperationFrt(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -120,8 +267,24 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationFrt(id string) (bool
 
 func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.GetAllOperationDocumentRequirement(tx, id, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -130,8 +293,24 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationDocumentRequirement(id
 
 func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, totalPages, totalRows, err := s.operationModelMappingRepo.GetAllOperationFrt(tx, id, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -140,8 +319,24 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationFrt(id int, pages pagi
 
 func (s *OperationModelMappingServiceImpl) GetOperationDocumentRequirementById(id int) (masteroperationpayloads.OperationModelMappingDocumentRequirementRequest, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.GetOperationDocumentRequirementById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masteroperationpayloads.OperationModelMappingDocumentRequirementRequest{}, err
 	}
@@ -160,8 +355,24 @@ func (s *OperationModelMappingServiceImpl) GetOperationFrtById(id int) (masterop
 
 func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingDocumentRequirement(request masteroperationpayloads.OperationModelMappingDocumentRequirementRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.SaveOperationModelMappingDocumentRequirement(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -170,8 +381,24 @@ func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingDocumentRequ
 
 func (s *OperationModelMappingServiceImpl) DeactivateOperationDocumentRequirement(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.DeactivateOperationDocumentRequirement(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -180,8 +407,24 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationDocumentRequiremen
 
 func (s *OperationModelMappingServiceImpl) ActivateOperationDocumentRequirement(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.ActivateOperationDocumentRequirement(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -190,8 +433,24 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationDocumentRequirement(
 
 func (s *OperationModelMappingServiceImpl) SaveOperationLevel(request masteroperationpayloads.OperationLevelRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.SaveOperationLevel(tx, request)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -200,8 +459,24 @@ func (s *OperationModelMappingServiceImpl) SaveOperationLevel(request masteroper
 
 func (s *OperationModelMappingServiceImpl) GetAllOperationLevel(id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.GetAllOperationLevel(tx, id, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -210,8 +485,24 @@ func (s *OperationModelMappingServiceImpl) GetAllOperationLevel(id int, pages pa
 
 func (s *OperationModelMappingServiceImpl) GetOperationLevelById(id int) (masteroperationpayloads.OperationLevelByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.GetOperationLevelById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return masteroperationpayloads.OperationLevelByIdResponse{}, err
 	}
@@ -220,8 +511,24 @@ func (s *OperationModelMappingServiceImpl) GetOperationLevelById(id int) (master
 
 func (s *OperationModelMappingServiceImpl) DeactivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.DeactivateOperationLevel(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -230,8 +537,24 @@ func (s *OperationModelMappingServiceImpl) DeactivateOperationLevel(id string) (
 
 func (s *OperationModelMappingServiceImpl) ActivateOperationLevel(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.operationModelMappingRepo.ActivateOperationLevel(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}
@@ -240,9 +563,25 @@ func (s *OperationModelMappingServiceImpl) ActivateOperationLevel(id string) (bo
 
 func (s *OperationModelMappingServiceImpl) UpdateOperationModelMapping(operationModelMappingId int, request masteroperationpayloads.OperationModelMappingUpdate) (masteroperationentities.OperationModelMapping, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 
 	update, err := s.operationModelMappingRepo.UpdateOperationModelMapping(tx, operationModelMappingId, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return update, err
@@ -252,9 +591,25 @@ func (s *OperationModelMappingServiceImpl) UpdateOperationModelMapping(operation
 
 func (s *OperationModelMappingServiceImpl) UpdateOperationFrt(operationFrtId int, request masteroperationpayloads.OperationFrtUpdate) (masteroperationentities.OperationFrt, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 
 	update, err := s.operationModelMappingRepo.UpdateOperationFrt(tx, operationFrtId, request)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return update, err
@@ -264,14 +619,30 @@ func (s *OperationModelMappingServiceImpl) UpdateOperationFrt(operationFrtId int
 
 func (s *OperationModelMappingServiceImpl) SaveOperationModelMappingAndFRT(requestHeader masteroperationpayloads.OperationModelMappingResponse, requestDetail masteroperationpayloads.OperationModelMappingFrtRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	_, err := s.operationModelMappingRepo.SaveOperationModelMapping(tx, requestHeader)
-	defer helper.CommitOrRollback(tx, err)
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+	_, err = s.operationModelMappingRepo.SaveOperationModelMapping(tx, requestHeader)
+
 	if err != nil {
 		return false, err
 	}
 
 	latestID, errGet := s.operationModelMappingRepo.GetOperationModelMappingLatestId(tx)
-	defer helper.CommitOrRollback(tx, err)
 	if errGet != nil {
 		return false, errGet
 	}

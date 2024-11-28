@@ -92,14 +92,14 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 	internalCriteria := utils.BuildFilterCondition(internalFilterCondition)
 	externalCriteria := utils.BuildFilterCondition(externalFilterCondition)
 
-	paginatedData, totalPages, totalRows, err := r.ItemPackageService.GetAllItemPackage(internalCriteria, externalCriteria, paginate)
+	paginatedData, err := r.ItemPackageService.GetAllItemPackage(internalCriteria, externalCriteria, paginate)
 
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(paginatedData), "success", http.StatusOK)
 }
 
 // @Summary Get Item Package By ID

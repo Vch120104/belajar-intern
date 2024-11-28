@@ -146,7 +146,7 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstituteDetail(tx *gorm.DB, p
 	query := tx.Model(entities).Select("mtr_item_substitute_detail.*, Item.item_code, Item.item_name").
 		Joins("Item", tx.Select("")).Where("mtr_item_substitute_detail.item_substitute_id = ?", id)
 
-	err := query.Scopes(pagination.Paginate(&entities, &pages, query)).Scan(&payloads).Error
+	err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&payloads).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -386,7 +386,7 @@ func (r *ItemSubstituteRepositoryImpl) GetallItemForFilter(tx *gorm.DB, filterCo
 	whereQuery := utils.ApplyFilter(query, filterCondition)
 
 	// Apply pagination and execute the query
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

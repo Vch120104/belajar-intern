@@ -2,14 +2,16 @@ package masteritemserviceimpl
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -29,8 +31,25 @@ func StartMarkupRateService(markupRepo masteritemrepository.MarkupRateRepository
 
 func (s *MarkupRateServiceImpl) GetAllMarkupRate(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, totalPages, totalRows, err := s.markupRepo.GetAllMarkupRate(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, totalPages, totalRows, err
 	}
@@ -39,8 +58,25 @@ func (s *MarkupRateServiceImpl) GetAllMarkupRate(filterCondition []utils.FilterC
 
 func (s *MarkupRateServiceImpl) GetMarkupRateById(id int) (masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.markupRepo.GetMarkupRateById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -49,6 +85,23 @@ func (s *MarkupRateServiceImpl) GetMarkupRateById(id int) (masteritempayloads.Ma
 
 func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRateRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 
 	if req.MarkupRateId != 0 {
 		_, err := s.markupRepo.GetMarkupRateById(tx, req.MarkupRateId)
@@ -59,7 +112,7 @@ func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRate
 	}
 
 	results, err := s.markupRepo.SaveMarkupRate(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
@@ -68,15 +121,32 @@ func (s *MarkupRateServiceImpl) SaveMarkupRate(req masteritempayloads.MarkupRate
 
 func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.markupRepo.GetMarkupRateById(tx, Id)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+
+	_, err = s.markupRepo.GetMarkupRateById(tx, Id)
 
 	if err != nil {
 		return false, err
 	}
 
 	results, err := s.markupRepo.ChangeStatusMarkupRate(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -85,8 +155,25 @@ func (s *MarkupRateServiceImpl) ChangeStatusMarkupRate(Id int) (bool, *exception
 
 func (s *MarkupRateServiceImpl) GetMarkupRateByMarkupMasterAndOrderType(MarkupMasterId int, OrderTypeId int) ([]masteritempayloads.MarkupRateResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.markupRepo.GetMarkupRateByMarkupMasterAndOrderType(tx, MarkupMasterId, OrderTypeId)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}

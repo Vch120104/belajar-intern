@@ -26,12 +26,12 @@ func StartFieldActionRepositoryImpl() masterrepository.FieldActionRepository {
 func (r *FieldActionRepositoryImpl) GetAllFieldAction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []masterpayloads.FieldActionResponse
 	entities := masterentities.FieldAction{}
-	JoinTable := tx.Table("mtr_field_action as fa").
-		Select("fa.*,faev.*").
-		Joins("Join mtr_field_action_eligible_vehicle as faev ON faev.field_action_system_number=fa.field_action_system_number")
+	JoinTable := tx.Model(&entities).
+		Select("mtr_field_action.*,faev.*").
+		Joins("Join mtr_field_action_eligible_vehicle as faev ON faev.field_action_system_number=mtr_field_action.field_action_system_number")
 
 	whereQuery := utils.ApplyFilter(JoinTable, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, JoinTable)).Order("fa.field_action_system_number").Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, JoinTable)).Order("mtr_field_action.field_action_system_number").Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -111,7 +111,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleDetailById(tx *gorm.
 			FieldActionSystemNumber: Id,
 		})
 	filterQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, filterQuery)).Scan(&payloads).Rows()
+	rows, err := baseModelQuery.Scopes(pagination.Paginate(&pages, filterQuery)).Scan(&payloads).Rows()
 
 	if len(payloads) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
@@ -192,7 +192,7 @@ func (r *FieldActionRepositoryImpl) GetAllFieldActionVehicleItemDetailById(tx *g
 	}
 
 	err2 := tx.Model(&entitiesoperation).
-		Where("field_action_eligible_vehicle_system_number =?",Id).Joins("JOIN mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_field_action_eligible_vehicle_operation.operation_model_mapping_id").Select("mtr_field_action_eligible_vehicle_operation.*,mtr_operation_model_mapping.*").
+		Where("field_action_eligible_vehicle_system_number =?", Id).Joins("JOIN mtr_operation_model_mapping on mtr_operation_model_mapping.operation_model_mapping_id=mtr_field_action_eligible_vehicle_operation.operation_model_mapping_id").Select("mtr_field_action_eligible_vehicle_operation.*,mtr_operation_model_mapping.*").
 		Scan(&payloadsoperation).Error
 
 	if err2 != nil {
@@ -278,11 +278,11 @@ func (r *FieldActionRepositoryImpl) PostFieldActionVehicleItemDetail(tx *gorm.DB
 	if req.LineTypeId == 5 {
 		entities := masterentities.FieldActionEligibleVehicleOperation{
 			FieldActionEligibleVehicleOperationSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
-			FieldActionEligibleVehicleSystemNumber:     id,
-			LineTypeId:                                 req.LineTypeId,
-			FieldActionEligibleVehicleItemLineNumber:   req.FieldActionEligibleVehicleItemLineNumber,
-			OperationModelMappingId:                    req.ItemOperationCode,
-			FieldActionFrt:                             req.FieldActionFrt,
+			FieldActionEligibleVehicleSystemNumber:          id,
+			LineTypeId:                                      req.LineTypeId,
+			FieldActionEligibleVehicleItemLineNumber:        req.FieldActionEligibleVehicleItemLineNumber,
+			OperationModelMappingId:                         req.ItemOperationCode,
+			FieldActionFrt:                                  req.FieldActionFrt,
 		}
 
 		err := tx.Save(&entities).Error
@@ -406,11 +406,11 @@ func (r *FieldActionRepositoryImpl) PostVehicleItemIntoAllVehicleDetail(tx *gorm
 		if req.LineTypeId == 5 {
 			entities := masterentities.FieldActionEligibleVehicleOperation{
 				FieldActionEligibleVehicleOperationSystemNumber: req.FieldActionEligibleVehicleItemSystemNumber,
-				FieldActionEligibleVehicleSystemNumber:     value.FieldActionSystemNumber,
-				LineTypeId:                                 req.LineTypeId,
-				FieldActionEligibleVehicleItemLineNumber:   req.FieldActionEligibleVehicleItemLineNumber,
-				OperationModelMappingId:                    req.ItemOperationCode,
-				FieldActionFrt:                             req.FieldActionFrt,
+				FieldActionEligibleVehicleSystemNumber:          value.FieldActionSystemNumber,
+				LineTypeId:                                      req.LineTypeId,
+				FieldActionEligibleVehicleItemLineNumber:        req.FieldActionEligibleVehicleItemLineNumber,
+				OperationModelMappingId:                         req.ItemOperationCode,
+				FieldActionFrt:                                  req.FieldActionFrt,
 			}
 
 			err := tx.Save(&entities).Error

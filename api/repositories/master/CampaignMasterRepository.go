@@ -22,7 +22,7 @@ type CampaignMasterRepository interface {
 	GetByIdCampaignMasterDetail(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByCodeCampaignMaster(*gorm.DB, string) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetAllCampaignMasterCodeAndName(*gorm.DB, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetAllCampaignMaster(*gorm.DB, []utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllCampaignMaster(*gorm.DB, []utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllCampaignMasterDetail(*gorm.DB, pagination.Pagination, int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	UpdateCampaignMasterDetail(*gorm.DB, int, masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse)
 	GetAllPackageMasterToCopy(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)

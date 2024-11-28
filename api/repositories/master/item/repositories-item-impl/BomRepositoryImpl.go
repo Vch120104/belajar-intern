@@ -26,101 +26,54 @@ func StartBomRepositoryImpl() masteritemrepository.BomRepository {
 	return &BomRepositoryImpl{}
 }
 
-func (s *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filters []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+func (r *BomRepositoryImpl) GetBomMasterList(tx *gorm.DB, filterConditions []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	var responses []map[string]interface{}
-
-	// Define main table
-	mainTable := "mtr_bom"
-	mainAlias := "bom"
-	mainAliasItem := "item"
-	mainAliasUom := "uom"
-
-	// Define join tables
-	joinTables := []utils.JoinTable{
-		{Table: "mtr_item", Alias: "item", ForeignKey: mainAlias + ".item_id", ReferenceKey: "item.item_id"},
-		{Table: "mtr_uom", Alias: "uom", ForeignKey: "item.unit_of_measurement_type_id", ReferenceKey: "uom.uom_id"},
+	type BomResponse struct {
+		IsActive               bool      `json:"is_active"`
+		BomMasterId            int       `json:"bom_master_id"`
+		BomMasterQty           int       `json:"bom_master_qty"`
+		BomMasterEffectiveDate time.Time `json:"bom_master_effective_date"`
+		ItemCode               string    `json:"item_code"`
+		ItemName               string    `json:"item_name"`
+		UomDescription         string    `json:"uom_description"`
 	}
 
-	// Create join query
-	joinQuery := utils.CreateJoin(tx, mainTable, mainAlias, joinTables...)
+	var responses []BomResponse
 
-	// Define key attributes to be selected
-	keyAttributes := []string{
-		mainAlias + ".is_active",
-		mainAlias + ".bom_master_id",
-		mainAlias + ".bom_master_qty",
-		mainAlias + ".bom_master_effective_date",
-		mainAliasItem + ".item_code",
-		mainAliasItem + ".item_name",
-		mainAliasItem + ".item_id",
-		mainAliasUom + ".uom_id",
-		mainAliasUom + ".uom_description",
-	}
+	baseQuery := tx.Table("mtr_bom AS bom").
+		Select(`
+			bom.is_active,
+			bom.bom_master_id,
+			bom.bom_master_qty,
+			bom.bom_master_effective_date,
+			item.item_code,
+			item.item_name,
+			uom.uom_description`).
+		Joins("LEFT JOIN mtr_item AS item ON bom.item_id = item.item_id").
+		Joins("LEFT JOIN mtr_uom AS uom ON item.unit_of_measurement_type_id = uom.uom_id")
 
-	// Apply key attributes selection
-	joinQuery = joinQuery.Select(keyAttributes)
+	baseQuery = utils.ApplyFilter(baseQuery, filterConditions)
 
-	// Apply filters
-	for _, filter := range filters {
-		if filter.ColumnField == "bom_master_id" {
-			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" = ?", filter.ColumnValue) // Menggunakan operator "="
-		} else {
-			joinQuery = joinQuery.Where(mainAlias+"."+filter.ColumnField+" LIKE ?", "%"+filter.ColumnValue+"%") // Menggunakan operator "LIKE"
-		}
-	}
+	paginatedQuery := baseQuery.Scopes(pagination.Paginate(&pages, baseQuery))
 
-	// Execute query
-	rows, err := joinQuery.Rows()
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+	if err := paginatedQuery.Scan(&responses).Error; err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-	defer rows.Close()
 
-	// Fetch data and append to response slice
-	for rows.Next() {
-		var isActive bool
-		var bomMasterId, bomMasterQty int
-		var bomMasterEffectiveDate time.Time
-		var itemId, uomId int
-		var itemCode, itemName, uomDescription string
-
-		err := rows.Scan(&isActive,
-			&bomMasterId,
-			&bomMasterQty,
-			&bomMasterEffectiveDate,
-			&itemCode,
-			&itemName,
-			&itemId,
-			&uomId,
-			&uomDescription)
-
-		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusNotFound,
-				Err:        err,
-			}
-		}
-
-		responseMap := map[string]interface{}{
-			"is_active":                 isActive,
-			"bom_master_id":             bomMasterId,
-			"bom_master_qty":            bomMasterQty,
-			"bom_master_effective_date": bomMasterEffectiveDate,
-			"item_code":                 itemCode,
-			"item_name":                 itemName,
-			"uom_description":           uomDescription,
-		}
-		responses = append(responses, responseMap)
+	// Jika data kosong, kembalikan response sukses dengan list kosong
+	if len(responses) == 0 {
+		pages.Rows = []masteritementities.MarkupMaster{}
+		pages.TotalRows = 0
+		pages.TotalPages = 0
+		return pages, nil
 	}
 
-	// Paginate the response data
-	paginatedData, totalPages, totalRows := pagination.NewDataFramePaginate(responses, &pages)
+	pages.Rows = responses
 
-	return paginatedData, totalPages, totalRows, nil
+	return pages, nil
 }
 
 func (*BomRepositoryImpl) GetBomMasterById(tx *gorm.DB, id int, pagination pagination.Pagination) (masteritempayloads.BomMasterResponseDetail, *exceptions.BaseErrorResponse) {

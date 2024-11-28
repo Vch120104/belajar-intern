@@ -421,13 +421,19 @@ func (r *BookingEstimationImpl) GetByIdBookEstimReq(tx *gorm.DB, id int) (transa
 func (r *BookingEstimationImpl) GetAllBookEstimReq(tx *gorm.DB, pages *pagination.Pagination, id int) (*pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var model []transactionworkshopentities.BookingEstimationRequest
 
-	err := tx.Model(&model).Where("booking_system_number = ?", id).Scan(&model).Scopes(pagination.Paginate(model, pages, tx)).Error
+	err := tx.Model(&model).Where("booking_system_number = ?", id).Scan(&model).Scopes(pagination.Paginate(pages, tx)).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+
+	if len(model) == 0 {
+		pages.Rows = []transactionworkshopentities.BookingEstimationRequest{}
+		return pages, nil
+	}
+
 	pages.Rows = model
 	return pages, nil
 }
@@ -1521,7 +1527,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 			Err:        err8,
 		}
 	}
-	approvalstatusid,_:=strconv.Atoi(approvalstatus.ApprovalStatusId)
+	approvalstatusid, _ := strconv.Atoi(approvalstatus.ApprovalStatusId)
 	entities := transactionworkshopentities.BookingEstimationServiceDiscount{
 		BatchSystemNumber:                entity.BatchSystemNumber,
 		DocumentStatusID:                 documentstatus.DocumentStatusId,
@@ -1575,12 +1581,12 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromServiceRequest(tx *gorm
 			Err:        err3,
 		}
 	}
-	approvalstatusid1,_ := strconv.Atoi(approvalstatus.ApprovalStatusId)
+	approvalstatusid1, _ := strconv.Atoi(approvalstatus.ApprovalStatusId)
 	for _, detail := range servicerequestdetail {
 		entities3 := transactionworkshopentities.BookingEstimationDetail{
 			EstimationSystemNumber:         entities.EstimationSystemNumber,
 			BillID:                         workordertransaction.WorkOrderTransactionTypeId, //transaction type workorder external
-			EstimationLineDiscountApproval: approvalstatusid1,                 //status draft
+			EstimationLineDiscountApproval: approvalstatusid1,                               //status draft
 			ItemOperationID:                detail.OperationItemId,
 			LineTypeID:                     detail.LineTypeId, //line type id where line type description = operation
 			RequestDescription:             "",
@@ -1626,7 +1632,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, idpdi 
 		}
 	}
 	errUrlPdiDetailrequest := utils.Get(config.EnvConfigs.SalesServiceUrl+"pdi-request-full/"+strconv.Itoa(idpdi)+"?page=0&limit=1000000", &pdidetailpayloads, nil)
-		if errUrlPdiDetailrequest != nil || len(pdidetailpayloads) == 0 {
+	if errUrlPdiDetailrequest != nil || len(pdidetailpayloads) == 0 {
 		return false, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errUrlPdiDetailrequest,
@@ -1664,7 +1670,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, idpdi 
 			Err:        erragreementcompare,
 		}
 	}
-	urlApprovalStatus1:=config.EnvConfigs.GeneralServiceUrl+"approval-status-description/Ready"
+	urlApprovalStatus1 := config.EnvConfigs.GeneralServiceUrl + "approval-status-description/Ready"
 	errapprovalstatuscontractservice := utils.Get(urlApprovalStatus1, &approvalstatus, nil)
 	if errapprovalstatuscontractservice != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -1798,7 +1804,7 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, idpdi 
 			Err:        errUrlLineType,
 		}
 	}
-	urlApprovalStatus:=config.EnvConfigs.GeneralServiceUrl+"approval-status-description/Draft"
+	urlApprovalStatus := config.EnvConfigs.GeneralServiceUrl + "approval-status-description/Draft"
 	errUrlApprovalStatus := utils.Get(urlApprovalStatus, &approvalstatus, nil)
 	if errUrlApprovalStatus != nil {
 		return false, &exceptions.BaseErrorResponse{
@@ -1813,12 +1819,12 @@ func (r *BookingEstimationImpl) SaveBookingEstimationFromPDI(tx *gorm.DB, idpdi 
 			Err:        errUrlWorkorderTransactionType,
 		}
 	}
-	approvalstatusid,_:= strconv.Atoi(approvalstatus[0].ApprovalStatusId)
+	approvalstatusid, _ := strconv.Atoi(approvalstatus[0].ApprovalStatusId)
 	for _, detail := range pdidetailbyid {
 		entities3 := transactionworkshopentities.BookingEstimationDetail{
 			EstimationSystemNumber:         entities2.EstimationSystemNumber,
 			BillID:                         workordertransaction.WorkOrderTransactionTypeId, //transaction type workorder external
-			EstimationLineDiscountApproval: approvalstatusid,                 //status draft
+			EstimationLineDiscountApproval: approvalstatusid,                                //status draft
 			ItemOperationID:                detail.OperationNumberId,
 			LineTypeID:                     linetype.LineTypeId, //line type id where line type description = operation
 			RequestDescription:             "",

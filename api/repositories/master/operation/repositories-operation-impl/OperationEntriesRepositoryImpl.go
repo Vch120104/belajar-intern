@@ -21,24 +21,30 @@ func StartOperationEntriesRepositoryImpl() masteroperationrepository.OperationEn
 }
 
 func (r *OperationEntriesRepositoryImpl) GetAllOperationEntries(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	entities := []masteroperationentities.OperationEntries{}
+
 	var responses []masteroperationpayloads.OperationEntriesResponse
 
-	// define table struct
 	tableStruct := masteroperationpayloads.OperationEntriesResponse{}
 
-	//join table
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
 
-	//apply filter
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
-	//apply pagination and execute
-	rows, _ := joinTable.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Rows()
 
-	defer rows.Close()
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Failed to fetch operation entries",
+			Err:        err,
+		}
+	}
+
+	if len(responses) == 0 {
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
+	}
 
 	pages.Rows = responses
-
 	return pages, nil
 }
 
