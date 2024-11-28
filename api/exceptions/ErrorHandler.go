@@ -15,16 +15,16 @@ type BaseErrorResponse struct {
 	StatusCode int         `json:"status_code"`
 	Message    string      `json:"message"`
 	Data       interface{} `json:"data"`
-	Err        error       `json:"-"` // The underlying error is not included in the response
+	Err        error       `json:"-"`
 }
 
 // Error implements the error interface for BaseErrorResponse
 func (e *BaseErrorResponse) Error() string {
-	// If there is an underlying error, include it in the string
+
 	if e.Err != nil {
 		return e.Message + ": " + e.Err.Error()
 	}
-	// Otherwise, just return the message
+
 	return e.Message
 }
 
@@ -70,7 +70,6 @@ func handleError(writer http.ResponseWriter, err *BaseErrorResponse, defaultStat
 		statusCode = defaultStatusCode
 	}
 
-	// If no message is set, try to assign a default message
 	if err.Message == "" {
 		if err.Err != nil && err.Err.Error() != "" {
 			err.Message = translateErrorMessage(err.Err)
@@ -79,18 +78,15 @@ func handleError(writer http.ResponseWriter, err *BaseErrorResponse, defaultStat
 		}
 	}
 
-	// Log the error if there is an underlying error
 	if err.Err != nil {
 		logrus.Error(err)
 	}
 
-	// Build the response object
 	res := &BaseErrorResponse{
 		StatusCode: statusCode,
 		Message:    err.Message,
 	}
 
-	// Write the response
 	writer.Header().Set("Content-Type", "application/json")
 	writer.WriteHeader(statusCode)
 	jsonresponse.WriteToResponseBody(writer, res)
