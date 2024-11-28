@@ -8,7 +8,7 @@ import (
 )
 
 type FieldActionService interface {
-	GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination)  (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse)
 	GetFieldActionHeaderById(Id int) (masterpayloads.FieldActionResponse, *exceptions.BaseErrorResponse)
 	GetAllFieldActionVehicleDetailById(Id int, pages pagination.Pagination, filterCondition []utils.FilterCondition) (pagination.Pagination, *exceptions.BaseErrorResponse)

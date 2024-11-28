@@ -31,14 +31,14 @@ func StartFieldActionService(FieldActionRepo masterrepository.FieldActionReposit
 	}
 }
 
-func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *FieldActionServiceImpl) GetAllFieldAction(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	results, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	results, totalPages, totalRows, err := s.FieldActionRepo.GetAllFieldAction(tx, filterCondition, pages)
+	defer func() { helper.CommitOrRollback(tx, err) }()
 	if err != nil {
-		return results, err
+		return results, 0, 0, err
 	}
-	return results, nil
+	return results, totalPages, totalRows, nil
 }
 
 func (s *FieldActionServiceImpl) SaveFieldAction(req masterpayloads.FieldActionRequest) (bool, *exceptions.BaseErrorResponse) {
