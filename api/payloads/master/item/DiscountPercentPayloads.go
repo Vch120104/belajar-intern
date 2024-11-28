@@ -23,10 +23,16 @@ type DiscountPercentListResponse struct {
 	DiscountCode        string  `json:"discount_code"`
 	DiscountDescription string  `json:"discount_description"`
 	OrderTypeId         int     `json:"order_type_id"`
+	OrderTypeName       string  `json:"order_type_name"`
 	Discount            float64 `json:"discount"`
 }
 
 type OrderTypeResponse struct {
 	OrderTypeId   int    `json:"order_type_id"`
 	OrderTypeName string `json:"order_type_name"`
+}
+
+type DiscountDetails struct {
+	DiscountCode        string `gorm:"column:discount_code"`
+	DiscountDescription string `gorm:"column:discount_description"`
 }
