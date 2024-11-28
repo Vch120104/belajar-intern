@@ -8,9 +8,8 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
-	"errors"
 	"net/http"
-	"reflect"
+	"strconv"
 	"strings"
 
 	"gorm.io/gorm"
@@ -23,93 +22,95 @@ func StartDiscountPercentRepositoryImpl() masteritemrepository.DiscountPercentRe
 	return &DiscountPercentRepositoryImpl{}
 }
 
-func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var responses []masteritempayloads.DiscountPercentListResponse
-	var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
-
-	var internalServiceFilter, externalServiceFilter []utils.FilterCondition
+func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tableStruct := masteritempayloads.DiscountPercentRequest{}
 	var orderTypeName string
-	responseStruct := reflect.TypeOf(masteritempayloads.DiscountPercentListResponse{})
+	newFilterCondition := []utils.FilterCondition{}
 
-	for i := 0; i < len(filterCondition); i++ {
-		flag := false
-		for j := 0; j < responseStruct.NumField(); j++ {
-			if filterCondition[i].ColumnField == responseStruct.Field(j).Tag.Get("parent_entity")+"."+responseStruct.Field(j).Tag.Get("json") {
-				internalServiceFilter = append(internalServiceFilter, filterCondition[i])
-				flag = true
-				break
+	// Separate order type filters and other conditions
+	for _, filter := range filterCondition {
+		if strings.Contains(filter.ColumnField, "order_type_name") {
+			orderTypeName = filter.ColumnValue
+			continue
+		}
+		newFilterCondition = append(newFilterCondition, filter)
+	}
+
+	// Build the join table query
+	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
+		Joins("LEFT JOIN mtr_discount ON mtr_discount.discount_code_id = mtr_discount_percent.discount_code_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_order_type ON mtr_order_type.order_type_id = mtr_discount_percent.order_type_id")
+
+	// Apply filter conditions to the query
+	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
+
+	// Handle order_type_name filter via external service
+	var orderTypeIds []int
+	if orderTypeName != "" {
+		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type?page=0&limit=100&order_type_name=" + orderTypeName
+		var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
+
+		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
+			for _, orderType := range getOrderTypeResponse {
+				orderTypeIds = append(orderTypeIds, orderType.OrderTypeId)
 			}
 		}
-		if !flag {
-			externalServiceFilter = append(externalServiceFilter, filterCondition[i])
+
+		if len(orderTypeIds) == 0 {
+			orderTypeIds = []int{-1} // Ensure no matches
 		}
+
+		whereQuery = whereQuery.Where("mtr_discount_percent.order_type_id IN ?", orderTypeIds)
 	}
 
-	//apply external services filter
-	for i := 0; i < len(externalServiceFilter); i++ {
-		orderTypeName = externalServiceFilter[i].ColumnValue
-	}
-
-	// define table struct
-	tableStruct := masteritempayloads.DiscountPercentListResponse{}
-	//define join table
-	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct)
-	//apply filter
-	whereQuery := utils.ApplyFilter(joinTable, internalServiceFilter)
-
-	// Execute the query
-	rows, err := whereQuery.Rows()
+	// Execute the query with pagination
+	var responses []masteritempayloads.DiscountPercentListResponse
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
+			Message:    "failed to fetch data from database",
 			Err:        err,
 		}
 	}
-	defer rows.Close()
-
-	// Scan the results into the responses slice
-	for rows.Next() {
-		var response masteritempayloads.DiscountPercentListResponse
-		if err := rows.Scan(&response.IsActive, &response.DiscountPercentId, &response.DiscountCodeId, &response.DiscountCodeValue, &response.DiscountCodeDescription, &response.OrderTypeId, &response.Discount); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
-		responses = append(responses, response)
-	}
 
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []map[string]interface{}{}
+		return pages, nil
 	}
 
-	// Fetch order type data
-	orderTypeUrl := config.EnvConfigs.GeneralServiceUrl + "order-type-filter?order_type_name=" + orderTypeName
-	errUrlDiscountPercent := utils.Get(orderTypeUrl, &getOrderTypeResponse, nil)
-	if errUrlDiscountPercent != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errUrlDiscountPercent,
+	// Prepare the response map
+	var mapResponses []map[string]interface{}
+	for _, response := range responses {
+		responseMap := map[string]interface{}{
+			"is_active":            response.IsActive,
+			"discount_percent_id":  response.DiscountPercentId,
+			"discount_code_id":     response.DiscountCodeId,
+			"discount_code":        response.DiscountCode,
+			"discount_description": response.DiscountDescription,
+			"order_type_id":        response.OrderTypeId,
+			"discount":             response.Discount,
 		}
+
+		// Fetch additional order type details if applicable
+		if response.OrderTypeId != 0 {
+			orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
+			var getOrderTypeResponse masteritempayloads.OrderTypeResponse
+
+			if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
+				responseMap["order_type_name"] = getOrderTypeResponse.OrderTypeName
+			} else {
+				responseMap["order_type_name"] = ""
+			}
+		} else {
+			responseMap["order_type_name"] = ""
+		}
+
+		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Perform inner join with order type data
-	joinedData, errdf := utils.DataFrameInnerJoin(responses, getOrderTypeResponse, "OrderTypeId")
-
-	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        errdf,
-		}
-	}
-
-	// Paginate the joined data
-	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData, &pages)
-
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = mapResponses
+	return pages, nil
 }
 
 func (r *DiscountPercentRepositoryImpl) GetDiscountPercentById(tx *gorm.DB, Id int) (masteritempayloads.DiscountPercentResponse, *exceptions.BaseErrorResponse) {

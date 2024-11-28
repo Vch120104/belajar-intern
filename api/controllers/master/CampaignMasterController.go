@@ -244,14 +244,13 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 
 	filterCondition := utils.BuildFilterCondition(queryParams)
 
-	result, totalpages, totalrows, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
-
+	result, err := r.CampaignMasterService.GetAllCampaignMaster(filterCondition, pagination)
 	if err != nil {
-		result = []map[string]interface{}{}
-		totalpages = 0
-		totalrows = 0
+		helper.ReturnError(writer, request, err)
+		return
 	}
-	payloads.NewHandleSuccessPagination(writer, result, "Get Data Successfully!", 200, pagination.Limit, pagination.Page, int64(totalrows), totalpages)
+
+	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
 }
 
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {

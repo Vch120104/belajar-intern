@@ -156,7 +156,7 @@ func (r *ForecastMasterRepositoryImpl) GetAllForecastMaster(tx *gorm.DB, filterC
 
 	// Handle supplier and order type filters
 	if supplierName != "" || orderTypeName != "" {
-		supplierURL := config.EnvConfigs.GeneralServiceUrl + "filter-supplier-master?supplier_name=" + supplierName
+		supplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier?page=0&limit=100&supplier_name=" + supplierName
 		if err := utils.Get(supplierURL, &getSupplierResponse, nil); err != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
