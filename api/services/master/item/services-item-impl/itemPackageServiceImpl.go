@@ -3,14 +3,16 @@ package masteritemserviceimpl
 import (
 	masteritementities "after-sales/api/entities/master/item"
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -31,8 +33,24 @@ func StartItemPackageService(ItemPackageRepo masteritemrepository.ItemPackageRep
 // GetItemPackageByCode implements masteritemservice.ItemPackageService.
 func (s *ItemPackageServiceImpl) GetItemPackageByCode(itemPackageCode string) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.ItemPackageRepo.GetItemPackageByCode(tx, itemPackageCode)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -41,8 +59,24 @@ func (s *ItemPackageServiceImpl) GetItemPackageByCode(itemPackageCode string) (m
 
 func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []utils.FilterCondition, externalFilterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.ItemPackageRepo.GetAllItemPackage(tx, internalFilterCondition, externalFilterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -51,8 +85,24 @@ func (s *ItemPackageServiceImpl) GetAllItemPackage(internalFilterCondition []uti
 
 func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) (masteritempayloads.GetItemPackageResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.ItemPackageRepo.GetItemPackageById(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -61,10 +111,25 @@ func (s *ItemPackageServiceImpl) GetItemPackageById(Id int) (masteritempayloads.
 
 func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItemPackageRequest) (masteritementities.ItemPackage, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 
 	results, err := s.ItemPackageRepo.SaveItemPackage(tx, req)
-	defer helper.CommitOrRollback(tx, err)
-
 	if err != nil {
 		return results, err
 	}
@@ -73,15 +138,31 @@ func (s *ItemPackageServiceImpl) SaveItemPackage(req masteritempayloads.SaveItem
 
 func (s *ItemPackageServiceImpl) ChangeStatusItemPackage(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.ItemPackageRepo.GetItemPackageById(tx, Id)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+
+	_, err = s.ItemPackageRepo.GetItemPackageById(tx, Id)
 
 	if err != nil {
 		return false, err
 	}
 
 	results, err := s.ItemPackageRepo.ChangeStatusItemPackage(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return false, err
 	}

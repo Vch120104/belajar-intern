@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
@@ -212,8 +213,24 @@ func (s *ItemImportServiceImpl) GetItemImportbyItemIdandSupplierId(itemId int, s
 // GetItemImportbyId implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.ItemImportByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.itemImportRepo.GetItemImportbyId(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -223,8 +240,24 @@ func (s *ItemImportServiceImpl) GetItemImportbyId(Id int) (masteritempayloads.It
 // GetAllItemImport implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCondition, externalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.itemImportRepo.GetAllItemImport(tx, internalFilter, externalFilter, pages)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -234,8 +267,24 @@ func (s *ItemImportServiceImpl) GetAllItemImport(internalFilter []utils.FilterCo
 // SaveItemImport implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.itemImportRepo.SaveItemImport(tx, req)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}
@@ -245,8 +294,24 @@ func (s *ItemImportServiceImpl) SaveItemImport(req masteritementities.ItemImport
 // UpdateItemImport implements masteritemservice.ItemImportService.
 func (s *ItemImportServiceImpl) UpdateItemImport(req masteritementities.ItemImport) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.itemImportRepo.UpdateItemImport(tx, req)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return results, err
 	}

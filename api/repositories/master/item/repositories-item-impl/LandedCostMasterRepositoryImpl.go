@@ -29,9 +29,9 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 	var landedcostpayloads []masteritempayloads.LandedCostTypeResponse
 
 	query := tx.Model(&entities).
-		Select("mtr_landed_cost.*, shipping_method.shipping_method_name, landed_cost_type.landed_cost_type_name").
-		Joins("LEFT JOIN shipping_method ON mtr_landed_cost.shipping_method_id = shipping_method.shipping_method_id").
-		Joins("LEFT JOIN landed_cost_type ON mtr_landed_cost.landed_cost_type_id = landed_cost_type.landed_cost_type_id")
+		Select("mtr_landed_cost.*, mtr_shipping_method.shipping_method_description, mtr_landed_cost_type.landed_cost_type_name").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_shipping_method ON mtr_landed_cost.shipping_method_id = mtr_shipping_method.shipping_method_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_landed_cost_type ON mtr_landed_cost.landed_cost_type_id = mtr_landed_cost_type.landed_cost_type_id")
 
 	query = utils.ApplyFilter(query, filterCondition)
 
@@ -52,7 +52,7 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 		return pages, nil
 	}
 
-	errShippingMethod := utils.Get(config.EnvConfigs.GeneralServiceUrl+"shipping-method", &shippingmethodpayloads, nil)
+	errShippingMethod := utils.Get(config.EnvConfigs.GeneralServiceUrl+"shipping-methods", &shippingmethodpayloads, nil)
 	if errShippingMethod != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
@@ -60,7 +60,7 @@ func (r *LandedCostMasterRepositoryImpl) GetAllLandedCost(tx *gorm.DB, filterCon
 		}
 	}
 
-	errLandedCostType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"landed-cost-type", &landedcostpayloads, nil)
+	errLandedCostType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"landed-cost-types", &landedcostpayloads, nil)
 	if errLandedCostType != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,

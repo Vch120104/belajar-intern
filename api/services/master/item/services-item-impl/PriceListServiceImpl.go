@@ -9,11 +9,13 @@ import (
 	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
@@ -37,8 +39,25 @@ func StartPriceListService(priceListRepo masteritemrepository.PriceListRepositor
 // Duplicate implements masteritemservice.PriceListService.
 func (s *PriceListServiceImpl) Duplicate(itemGroupId int, brandId int, currencyId int, date string) ([]masteritempayloads.PriceListItemResponses, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.priceListRepo.Duplicate(tx, itemGroupId, brandId, currencyId, date)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -153,8 +172,25 @@ func (s *PriceListServiceImpl) Download(uploadRequest masteritempayloads.PriceLi
 // CheckPriceListItem implements masteritemservice.PriceListService.
 func (s *PriceListServiceImpl) CheckPriceListItem(itemGroupId int, brandId int, currencyId int, date string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.priceListRepo.CheckPriceListItem(tx, itemGroupId, brandId, currencyId, date, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -378,8 +414,25 @@ func (s *PriceListServiceImpl) GenerateDownloadTemplateFile() (*excelize.File, *
 
 func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceListGetAllRequest) ([]masteritempayloads.PriceListResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.priceListRepo.GetPriceList(tx, request)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -388,8 +441,25 @@ func (s *PriceListServiceImpl) GetPriceList(request masteritempayloads.PriceList
 
 func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.PriceListGetbyId, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.priceListRepo.GetPriceListById(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -398,9 +468,26 @@ func (s *PriceListServiceImpl) GetPriceListById(Id int) (masteritempayloads.Pric
 
 func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.SavePriceListMultiple) (int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 
 	id, err := s.priceListRepo.SavePriceList(tx, request)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return id, err
 	}
@@ -409,15 +496,32 @@ func (s *PriceListServiceImpl) SavePriceList(request masteritempayloads.SavePric
 
 func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.priceListRepo.GetPriceListById(tx, Id)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+
+	_, err = s.priceListRepo.GetPriceListById(tx, Id)
 
 	if err != nil {
 		return false, err
 	}
 
 	result, err := s.priceListRepo.ChangeStatusPriceList(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
@@ -426,8 +530,25 @@ func (s *PriceListServiceImpl) ChangeStatusPriceList(Id int) (bool, *exceptions.
 
 func (s *PriceListServiceImpl) GetAllPriceListNew(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, total_page, total_rows, err := s.priceListRepo.GetAllPriceListNew(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -437,8 +558,25 @@ func (s *PriceListServiceImpl) GetAllPriceListNew(filterCondition []utils.Filter
 
 func (s *PriceListServiceImpl) DeactivatePriceList(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := s.priceListRepo.DeactivatePriceList(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
@@ -448,8 +586,25 @@ func (s *PriceListServiceImpl) DeactivatePriceList(id string) (bool, *exceptions
 
 func (s *PriceListServiceImpl) ActivatePriceList(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := s.priceListRepo.ActivatePriceList(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
@@ -459,8 +614,25 @@ func (s *PriceListServiceImpl) ActivatePriceList(id string) (bool, *exceptions.B
 
 func (s *PriceListServiceImpl) DeletePriceList(id string) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	result, err := s.priceListRepo.DeletePriceList(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return false, err
 	}
