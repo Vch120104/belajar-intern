@@ -158,7 +158,7 @@ func (i *ItemImportRepositoryImpl) GetAllItemImport(tx *gorm.DB, internalFilter 
 	}
 
 	if supplierCode != "" || supplierName != "" {
-		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier?page=" + strconv.Itoa(0) + "&limit=" + strconv.Itoa(10000000) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
+		supplierUrl := config.EnvConfigs.GeneralServiceUrl + "supplier-list?page=" + strconv.Itoa(0) + "&limit=" + strconv.Itoa(10000000) + "&supplier_code=" + supplierCode + "&supplier_name=" + supplierName
 
 		if errSupplier := utils.Get(supplierUrl, &supplierResponses, nil); errSupplier != nil {
 			return pages, &exceptions.BaseErrorResponse{

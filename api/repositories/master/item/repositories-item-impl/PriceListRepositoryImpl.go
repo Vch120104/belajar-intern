@@ -257,6 +257,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	if brandpayloads != (masteritempayloads.UnitBrandResponses{}) {
 		response.BrandId = brandpayloads.BrandId
 		response.BrandName = brandpayloads.BrandName
+		response.BrandCode = brandpayloads.BrandCode
 	}
 
 	ErrUrlItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group/"+strconv.Itoa(response.ItemGroupId), &itemgrouppayloads, nil)
@@ -451,7 +452,7 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
 
 	joinedData := utils.DataFrameLeftJoin(payloads, brandpayloads, "BrandId")
 
-	errItemGroupUrl := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group", &itemgrouppayloads, nil)
+	errItemGroupUrl := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-groups", &itemgrouppayloads, nil)
 	if errItemGroupUrl != nil {
 		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,

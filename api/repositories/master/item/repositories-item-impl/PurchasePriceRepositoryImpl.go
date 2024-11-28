@@ -63,7 +63,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		var supplierIds []int
 		supplierParams := generalserviceapiutils.SupplierMasterParams{
 			Page:         0,
-			Limit:        100000,
+			Limit:        1000,
 			SupplierCode: supplierCode,
 			SupplierName: supplierName,
 		}
