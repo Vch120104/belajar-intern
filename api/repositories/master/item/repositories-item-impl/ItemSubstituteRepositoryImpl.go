@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
 	"strconv"
@@ -27,7 +28,6 @@ func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepo
 func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 	var payloads []masteritempayloads.ItemSubstitutePayloads
-	var typepayloads []masteritempayloads.ItemSubstituteCode
 
 	query := tx.Model(entities).Select("mtr_item_substitute.*, Item.item_code, Item.item_name").
 		Joins("Item", tx.Select(""))
@@ -54,15 +54,16 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 	totalRows := 0
 
 	if len(payloads) > 0 {
-		errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-type", &typepayloads, nil)
-		if errUrlSubstituteType != nil {
+		typeResponse, typeError := generalserviceapiutils.GetAllSubstituteType()
+		if typeError != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Err:        errUrlSubstituteType,
+				Message:    "Error fetching substitute type data",
+				Err:        typeError.Err,
 			}
 		}
 
-		joinedData1 := utils.DataFrameLeftJoin(payloads, typepayloads, "SubstituteTypeId")
+		joinedData1 := utils.DataFrameLeftJoin(payloads, typeResponse, "SubstituteTypeId")
 
 		paginatedata, pages, rows := pagination.NewDataFramePaginate(joinedData1, &pages)
 		totalPages = pages
@@ -80,7 +81,7 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 				"item_name":            res["ItemName"],
 				"item_substitute_id":   res["ItemSubstituteId"],
 				"substitute_type_id":   res["SubstituteTypeId"],
-				"substitute_type_name": res["SubstituteTypeNames"],
+				"substitute_type_name": res["SubstituteTypeName"],
 			}
 			result = append(result, data)
 		}
