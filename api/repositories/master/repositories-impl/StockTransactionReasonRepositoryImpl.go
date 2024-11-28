@@ -9,8 +9,9 @@ import (
 	"after-sales/api/utils"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
 type StockTransactionReasonRepositoryImpl struct {
@@ -60,7 +61,7 @@ func (s *StockTransactionReasonRepositoryImpl) GetAllStockTransactionReason(db *
 	Jointable := db.Model(&StockTransactionReason)
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
 
-	err := WhereQuery.Scopes(pagination.Paginate(&StockTransactionReason, &paginationParams, WhereQuery)).Order("stock_transaction_reason_id").Scan(&Responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationParams, WhereQuery)).Order("stock_transaction_reason_id").Scan(&Responses).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return paginationParams, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

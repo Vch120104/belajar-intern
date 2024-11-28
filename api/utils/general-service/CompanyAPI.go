@@ -126,7 +126,7 @@ func GetCompanyByMultiId(ids []int, response interface{}) *exceptions.BaseErrorR
 	}
 
 	strIds := "[" + strings.Join(validIds, ",") + "]"
-	url := config.EnvConfigs.GeneralServiceUrl + "company-by-multi-id/" + strIds
+	url := config.EnvConfigs.GeneralServiceUrl + "company-multi-id/" + strIds
 
 	err := utils.CallAPI("GET", url, nil, response)
 	if err != nil {

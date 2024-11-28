@@ -3,15 +3,17 @@ package masterserviceimpl
 import (
 	masterentities "after-sales/api/entities/master"
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	masterpayloads "after-sales/api/payloads/master"
 	"after-sales/api/payloads/pagination"
 	masterrepository "after-sales/api/repositories/master"
 	masterservice "after-sales/api/services/master"
+	"fmt"
+	"net/http"
 
 	"after-sales/api/utils"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -31,8 +33,24 @@ func StartSkillLevelService(SkillLevelRepo masterrepository.SkillLevelRepository
 
 func (s *SkillLevelServiceImpl) GetSkillLevelById(id int) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.SkillLevelRepo.GetSkillLevelById(tx, id)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -42,8 +60,24 @@ func (s *SkillLevelServiceImpl) GetSkillLevelById(id int) (masterpayloads.SkillL
 
 func (s *SkillLevelServiceImpl) GetSkillLevelByCode(code string) (masterpayloads.SkillLevelResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.SkillLevelRepo.GetSkillLevelByCode(tx, code)
-	defer helper.CommitOrRollback(tx, err)
 
 	if err != nil {
 		return results, err
@@ -53,8 +87,25 @@ func (s *SkillLevelServiceImpl) GetSkillLevelByCode(code string) (masterpayloads
 
 func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 	results, err := s.SkillLevelRepo.GetAllSkillLevel(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -63,15 +114,32 @@ func (s *SkillLevelServiceImpl) GetAllSkillLevel(filterCondition []utils.FilterC
 
 func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (masterpayloads.SkillLevelPatchResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
 
-	_, err := s.SkillLevelRepo.GetSkillLevelById(tx, Id)
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+
+	_, err = s.SkillLevelRepo.GetSkillLevelById(tx, Id)
 
 	if err != nil {
 		return masterpayloads.SkillLevelPatchResponse{}, err
 	}
 
 	results, err := s.SkillLevelRepo.ChangeStatusSkillLevel(tx, Id)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return results, err
 	}
@@ -80,21 +148,55 @@ func (s *SkillLevelServiceImpl) ChangeStatusSkillLevel(Id int) (masterpayloads.S
 
 func (s *SkillLevelServiceImpl) SaveSkillLevel(req masterpayloads.SkillLevelResponse) (masterentities.SkillLevel, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
 
 	results, err := s.SkillLevelRepo.SaveSkillLevel(tx, req)
-	defer helper.CommitOrRollback(tx, err)
+
 	if err != nil {
 		return masterentities.SkillLevel{}, err
 	}
 	return results, nil
 }
 
-func (s *SkillLevelServiceImpl) UpdateSkillLevel(req masterpayloads.SkillLevelResponse, id int)(masterentities.SkillLevel,*exceptions.BaseErrorResponse){
+func (s *SkillLevelServiceImpl) UpdateSkillLevel(req masterpayloads.SkillLevelResponse, id int) (masterentities.SkillLevel, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	result,err := s.SkillLevelRepo.UpdateSkillLevel(tx,req,id)
-	defer helper.CommitOrRollback(tx,err)
-	if err != nil{
-		return masterentities.SkillLevel{},err
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			tx.Commit()
+			//logrus.Info("Transaction committed successfully")
+		}
+	}()
+	result, err := s.SkillLevelRepo.UpdateSkillLevel(tx, req, id)
+
+	if err != nil {
+		return masterentities.SkillLevel{}, err
 	}
 
 	return result, nil
