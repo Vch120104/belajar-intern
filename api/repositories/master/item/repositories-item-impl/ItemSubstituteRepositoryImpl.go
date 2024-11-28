@@ -25,27 +25,25 @@ func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepo
 	return &ItemSubstituteRepositoryImpl{}
 }
 
-func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 	var payloads []masteritempayloads.ItemSubstitutePayloads
 
-	query := tx.Model(&entities).
-		Select("mtr_item_substitute.*, item.item_code, item.item_name").
-		Joins("LEFT JOIN mtr_item AS item ON item.item_id = mtr_item_substitute.item_id")
+	query := tx.Model(entities).Select("mtr_item_substitute.*, Item.item_code, Item.item_name").
+		Joins("Item", tx.Select(""))
 
-	query = utils.ApplyFilter(query, filterCondition)
+	whereQuery := utils.ApplyFilter(query, filterCondition)
 
 	if !from.IsZero() && !to.IsZero() {
-		query = query.Where("effective_date BETWEEN ? AND ?", from, to)
+		whereQuery.Where("effective_date BETWEEN ? AND ?", from, to)
 	} else if !from.IsZero() {
-		query = query.Where("effective_date >= ?", from)
+		whereQuery.Where("effective_date >= ?", from)
 	}
 
-	query = query.Scopes(pagination.Paginate(&pages, query))
+	err := whereQuery.Scan(&payloads).Error
 
-	err := query.Scan(&payloads).Error
 	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
+		return nil, 0, 0, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -89,8 +87,7 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 		}
 	}
 
-	pages.Rows = result
-	return pages, nil
+	return result, totalPages, totalRows, nil
 }
 
 func (r *ItemSubstituteRepositoryImpl) GetByIdItemSubstitute(tx *gorm.DB, id int) (map[string]interface{}, *exceptions.BaseErrorResponse) {

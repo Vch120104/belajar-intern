@@ -12,7 +12,7 @@ import (
 )
 
 type ItemSubstituteRepository interface {
-	GetAllItemSubstitute(*gorm.DB, []utils.FilterCondition, pagination.Pagination, time.Time, time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse)
+	GetAllItemSubstitute(*gorm.DB, []utils.FilterCondition, pagination.Pagination, time.Time, time.Time) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetByIdItemSubstitute(*gorm.DB, int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetAllItemSubstituteDetail(*gorm.DB, pagination.Pagination, int) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetByIdItemSubstituteDetail(*gorm.DB, int) (masteritempayloads.ItemSubstituteDetailGetPayloads, *exceptions.BaseErrorResponse)
