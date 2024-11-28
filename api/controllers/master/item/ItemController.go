@@ -66,7 +66,6 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		"dms_microservices_general_dev.dbo.mtr_supplier.supplier_name": queryValues.Get("supplier_name"),
 	}
 
-	// Handle item_type (Goods, Services, G, S)
 	itemTypes := strings.Split(queryValues.Get("item_type"), ",")
 	var processedItemTypes []string
 	for _, itemType := range itemTypes {
@@ -78,12 +77,10 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		}
 	}
 
-	// Jika ada itemTypes yang valid, tambahkan ke queryParams
 	if len(processedItemTypes) > 0 {
 		queryParams["mtr_item_type.item_type_code"] = strings.Join(processedItemTypes, ",")
 	}
 
-	// Handle multi_id and supplier_id as multiple parameters
 	itemIDs := strings.Split(queryValues.Get("item_id"), ",")
 	supplierIDs := strings.Split(queryValues.Get("supplier_id"), ",")
 
@@ -102,7 +99,7 @@ func (r *ItemControllerImpl) GetAllItemSearch(writer http.ResponseWriter, reques
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(data), "success", http.StatusOK)
+	payloads.NewHandleSuccessPagination(writer, data.Rows, "success", http.StatusOK, data.Limit, data.Page, data.TotalRows, data.TotalPages)
 }
 
 // GetItembyId implements ItemController.

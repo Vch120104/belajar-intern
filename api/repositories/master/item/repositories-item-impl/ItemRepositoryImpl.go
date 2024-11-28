@@ -98,18 +98,16 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 
 	// Build the join table query
 	joinTable := utils.CreateJoinSelectStatement(tx, tableStruct).
-		Joins("INNER JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id").
+		Joins("LEFT JOIN dms_microservices_general_dev.dbo.mtr_supplier ON dms_microservices_general_dev.dbo.mtr_supplier.supplier_id = mtr_item.supplier_id").
 		Joins("LEFT JOIN mtr_item_type AS mtr_item_type_alias ON mtr_item_type_alias.item_type_id = mtr_item.item_type_id")
 
 	// Apply filter conditions to the query
 	whereQuery := utils.ApplyFilter(joinTable, newFilterCondition)
 
-	// Handle item_id filter
 	if len(itemIDs) > 0 && itemIDs[0] != "" {
 		whereQuery = whereQuery.Where("mtr_item.item_id IN (?)", itemIDs)
 	}
 
-	// Handle supplier_id filter if any
 	if len(supplierIDs) > 0 && supplierIDs[0] != "" {
 		whereQuery = whereQuery.Where("mtr_item.supplier_id IN (?)", supplierIDs)
 	}
@@ -117,7 +115,6 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 	// Handle supplier_code and supplier_name filters
 	var supplierIds []int
 	if supplierCode != "" || supplierName != "" {
-		// Query external supplier service for matching suppliers
 		supplierParams := generalserviceapiutils.SupplierMasterParams{
 			Page:         0,
 			Limit:        100000,
@@ -125,20 +122,14 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			SupplierName: supplierName,
 		}
 		supplierResponse, supplierError := generalserviceapiutils.GetAllSupplierMaster(supplierParams)
-		if supplierError != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        supplierError,
+		if supplierError == nil {
+			for _, supplier := range supplierResponse {
+				supplierIds = append(supplierIds, supplier.SupplierId)
 			}
 		}
 
-		for _, supplier := range supplierResponse {
-			supplierIds = append(supplierIds, supplier.SupplierId)
-		}
-
-		// If no suppliers match, return an empty result
 		if len(supplierIds) == 0 {
-			supplierIds = []int{-1} // This ensures that no suppliers match
+			supplierIds = []int{-1}
 		}
 
 		whereQuery = whereQuery.Where("mtr_item.supplier_id IN ?", supplierIds)
@@ -155,37 +146,21 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 		}
 	}
 
-	// If no records are found, return an empty response
 	if len(responses) == 0 {
 		pages.Rows = []map[string]interface{}{}
 		return pages, nil
 	}
 
-	// Prepare the response map with additional supplier and item group data
 	var mapResponses []map[string]interface{}
 	for _, response := range responses {
-		// Fetch supplier data from external API
-		SupplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
+		supplierURL := config.EnvConfigs.GeneralServiceUrl + "supplier/" + strconv.Itoa(response.SupplierId)
 		var getSupplierResponse masteritempayloads.SupplierMasterResponse
-		if err := utils.Get(SupplierURL, &getSupplierResponse, nil); err != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        err,
-			}
-		}
+		supplierError := utils.Get(supplierURL, &getSupplierResponse, nil)
 
-		// Fetch item group data from external API
-		itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
-		getItemGroupResponses := masteritempayloads.ItemGroupResponse{}
-		errUrlItemPackage := utils.Get(itemGroupUrl, &getItemGroupResponses, nil)
-		if errUrlItemPackage != nil {
-			return pages, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        errUrlItemPackage,
-			}
-		}
+		itemGroupURL := config.EnvConfigs.GeneralServiceUrl + "item-group/" + strconv.Itoa(response.ItemGroupId)
+		var getItemGroupResponse masteritempayloads.ItemGroupResponse
+		itemGroupError := utils.Get(itemGroupURL, &getItemGroupResponse, nil)
 
-		// Build the final response map
 		responseMap := map[string]interface{}{
 			"is_active":       response.IsActive,
 			"item_id":         response.ItemId,
@@ -197,14 +172,23 @@ func (r *ItemRepositoryImpl) GetAllItemSearch(tx *gorm.DB, filterCondition []uti
 			"item_type":       response.ItemTypeCode,
 			"supplier_id":     response.SupplierId,
 			"item_class_code": response.ItemClassCode,
-			"item_group_code": getItemGroupResponses.ItemGroupCode,
+			"item_group_code": getItemGroupResponse.ItemGroupCode,
 			"supplier_name":   getSupplierResponse.SupplierName,
 			"supplier_code":   getSupplierResponse.SupplierCode,
 		}
+
+		if supplierError != nil {
+			responseMap["supplier_name"] = ""
+			responseMap["supplier_code"] = ""
+		}
+
+		if itemGroupError != nil {
+			responseMap["item_group_code"] = ""
+		}
+
 		mapResponses = append(mapResponses, responseMap)
 	}
 
-	// Set the rows for pagination and return the result
 	pages.Rows = mapResponses
 	return pages, nil
 }
