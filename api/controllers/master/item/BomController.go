@@ -85,18 +85,22 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 	criteria := utils.BuildFilterCondition(queryParams)
 
 	// Call service to get paginated data
-	paginatedData, totalPages, totalRows, err := r.BomService.GetBomMasterList(criteria, paginate)
+	paginatedData, err := r.BomService.GetBomMasterList(criteria, paginate)
 	if err != nil {
 		exceptions.NewNotFoundException(writer, request, err)
 		return
 	}
-	// Construct the response
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		// If paginatedData is empty, return error response
-		exceptions.NewNotFoundException(writer, request, err)
-	}
+
+	payloads.NewHandleSuccessPagination(
+		writer,
+		paginatedData.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // @Summary Get Bom Master By ID

@@ -43,7 +43,7 @@ func (s *StockTransactionTypeRepositoryImpl) GetAllStockTransactionType(db *gorm
 	Jointable := db.Model(&StockTransaction)
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
 
-	err := WhereQuery.Scopes(pagination.Paginate(&StockTransaction, &paginationParams, WhereQuery)).Order("stock_transaction_type_id").Scan(&Responses).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationParams, WhereQuery)).Order("stock_transaction_type_id").Scan(&Responses).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return paginationParams, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

@@ -58,6 +58,9 @@ func CarWashBayRouter(
 	router.Get("/deactive", bayController.GetAllDeactiveCarWashBay)
 	router.Put("/change-status", bayController.ChangeStatusCarWashBay)
 	router.Get("/dropdown", bayController.GetAllCarWashBayDropDown)
+	router.Post("/", bayController.PostCarWashBay)
+	router.Put("/", bayController.PutCarWashBay)
+	router.Get("/{car_wash_bay_id}", bayController.GetCarWashBayById)
 
 	return router
 }
@@ -226,7 +229,6 @@ func ItemRouter(
 	router.Get("/by-code", itemController.GetItemByCode)
 	router.Get("/uom-type/drop-down", itemController.GetUomTypeDropDown)
 	router.Get("/uom/drop-down/{uom_type_id}", itemController.GetUomDropDown)
-	router.Get("/search", itemController.GetAllItem)
 	router.Post("/", itemController.SaveItem)
 	router.Patch("/{item_id}", itemController.ChangeStatusItem)
 	// router.Put("/{item_id}", itemController.UpdateItem

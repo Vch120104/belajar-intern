@@ -25,8 +25,8 @@ func (t *TechnicianAttendanceImpl) GetAllTechnicianAttendance(tx *gorm.DB, filte
 	responses := []transactionjpcbpayloads.TechnicianAttendanceGetAllResponse{}
 
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilterExact(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

@@ -20,7 +20,7 @@ type CampaignMasterService interface {
 	GetByIdCampaignMasterDetail(id int) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetByCodeCampaignMaster(code string) (map[string]interface{}, *exceptions.BaseErrorResponse)
 	GetAllCampaignMasterCodeAndName(pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
-	GetAllCampaignMaster([]utils.FilterCondition, pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllCampaignMaster([]utils.FilterCondition, pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	GetAllCampaignMasterDetail(pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	UpdateCampaignMasterDetail(int, masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse)
 	GetAllPackageMasterToCopy(pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
