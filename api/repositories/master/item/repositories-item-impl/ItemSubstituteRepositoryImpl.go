@@ -8,6 +8,7 @@ import (
 	"after-sales/api/payloads/pagination"
 	masteritemrepository "after-sales/api/repositories/master/item"
 	"after-sales/api/utils"
+	generalserviceapiutils "after-sales/api/utils/general-service"
 	"errors"
 	"net/http"
 	"strconv"
@@ -27,7 +28,6 @@ func StartItemSubstituteRepositoryImpl() masteritemrepository.ItemSubstituteRepo
 func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination, from time.Time, to time.Time) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var entities masteritementities.ItemSubstitute
 	var payloads []masteritempayloads.ItemSubstitutePayloads
-	var typepayloads []masteritempayloads.ItemSubstituteCode
 
 	query := tx.Model(&entities).
 		Select("mtr_item_substitute.*, item.item_code, item.item_name").
@@ -51,39 +51,42 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 		}
 	}
 
-	if len(payloads) == 0 {
-		pages.Rows = []map[string]interface{}{}
-		pages.TotalRows = 0
-		pages.TotalPages = 0
-		return pages, nil
-	}
-
-	errUrlSubstituteType := utils.Get(config.EnvConfigs.GeneralServiceUrl+"substitute-types", &typepayloads, nil)
-	if errUrlSubstituteType != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errUrlSubstituteType,
-		}
-	}
-
-	joinedData := utils.DataFrameLeftJoin(payloads, typepayloads, "SubstituteTypeId")
-
 	result := []map[string]interface{}{}
-	for _, res := range joinedData {
-		data := map[string]interface{}{
-			"effective_date":       res["EffectiveDate"],
-			"is_active":            res["IsActive"],
-			"item_class_code":      res["ItemClassCode"],
-			"item_class_id":        res["ItemClassId"],
-			"item_code":            res["ItemCode"],
-			"item_group_id":        res["ItemgroupId"],
-			"item_id":              res["ItemId"],
-			"item_name":            res["ItemName"],
-			"item_substitute_id":   res["ItemSubstituteId"],
-			"substitute_type_id":   res["SubstituteTypeId"],
-			"substitute_type_name": res["SubstituteTypeNames"],
+	totalPages := 0
+	totalRows := 0
+
+	if len(payloads) > 0 {
+		typeResponse, typeError := generalserviceapiutils.GetAllSubstituteType()
+		if typeError != nil {
+			return nil, 0, 0, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusNotFound,
+				Message:    "Error fetching substitute type data",
+				Err:        typeError.Err,
+			}
 		}
-		result = append(result, data)
+
+		joinedData1 := utils.DataFrameLeftJoin(payloads, typeResponse, "SubstituteTypeId")
+
+		paginatedata, pages, rows := pagination.NewDataFramePaginate(joinedData1, &pages)
+		totalPages = pages
+		totalRows = rows
+
+		for _, res := range paginatedata {
+			data := map[string]interface{}{
+				"effective_date":       res["EffectiveDate"],
+				"is_active":            res["IsActive"],
+				"item_class_code":      res["ItemClassCode"],
+				"item_class_id":        res["ItemClassId"],
+				"item_code":            res["ItemCode"],
+				"item_group_id":        res["ItemgroupId"],
+				"item_id":              res["ItemId"],
+				"item_name":            res["ItemName"],
+				"item_substitute_id":   res["ItemSubstituteId"],
+				"substitute_type_id":   res["SubstituteTypeId"],
+				"substitute_type_name": res["SubstituteTypeName"],
+			}
+			result = append(result, data)
+		}
 	}
 
 	pages.Rows = result
