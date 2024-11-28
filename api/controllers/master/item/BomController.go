@@ -91,8 +91,16 @@ func (r *BomControllerImpl) GetBomMasterList(writer http.ResponseWriter, request
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK)
-
+	payloads.NewHandleSuccessPagination(
+		writer,
+		paginatedData.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // @Summary Get Bom Master By ID
