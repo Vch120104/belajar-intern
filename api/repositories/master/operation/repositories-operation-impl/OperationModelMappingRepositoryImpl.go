@@ -83,7 +83,10 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingByBrandMod
 }
 
 func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
-	tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
+	tx *gorm.DB,
+	filterCondition []utils.FilterCondition,
+	pages pagination.Pagination,
+) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var responses []masteroperationpayloads.OperationModelMappingLookup
 	var getBrandResponse []masteroperationpayloads.BrandResponse
@@ -118,51 +121,54 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 		}
 	}
 
-	// Begin query with join only once
-	result := tx.Table("mtr_operation_model_mapping").
+	// Start with query for operation model mapping
+	query := tx.Table("mtr_operation_model_mapping").
 		Select("mtr_operation_model_mapping.operation_model_mapping_id, " +
 			"mtr_operation_model_mapping.brand_id, mtr_operation_model_mapping.model_id, " +
 			"mtr_operation_model_mapping.operation_id, mtr_operation_model_mapping.is_active, " +
 			"mtr_operation_code.operation_code, mtr_operation_code.operation_name").
 		Joins("JOIN mtr_operation_code ON mtr_operation_model_mapping.operation_id = mtr_operation_code.operation_id")
 
-	// Apply internal filters as WHERE conditions
-	whereQuery := utils.ApplyFilter(result, internalServiceFilter)
-	if err := whereQuery.Scan(&responses).Error; err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+	// Apply internal filters
+	whereQuery := utils.ApplyFilter(query, internalServiceFilter)
+
+	// Apply pagination
+	paginationScope := pagination.Paginate(&pages, whereQuery)
+	err := whereQuery.Scopes(paginationScope).Find(&responses).Error
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
+	// If no data found
 	if len(responses) == 0 {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        errors.New("no data found"),
-		}
+		return pages, nil
 	}
 
-	// Join with brand data
+	// Fetch Brand Data based on external filters (brandCode)
 	unitBrandUrl := config.EnvConfigs.SalesServiceUrl + "unit-brand?page=0&limit=1000000&brand_name=" + brandCode
 	if err := utils.Get(unitBrandUrl, &getBrandResponse, nil); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	joinedData1, err := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
-	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
-	}
-
-	// Join with model data
+	// Fetch Model Data based on external filters (modelCode)
 	unitModelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=100000&model_code=" + modelCode
 	if err := utils.Get(unitModelUrl, &getModelResponse, nil); err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
+
+	// Join Brand and Model Data
+	joinedData1, err := utils.DataFrameInnerJoin(responses, getBrandResponse, "BrandId")
+	if err != nil {
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -170,7 +176,7 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 
 	joinedData2, err := utils.DataFrameInnerJoin(joinedData1, getModelResponse, "ModelId")
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
@@ -179,7 +185,12 @@ func (r *OperationModelMappingRepositoryImpl) GetOperationModelMappingLookup(
 	// Paginate the final joined data
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(joinedData2, &pages)
 
-	return dataPaginate, totalPages, totalRows, nil
+	// Update pagination results
+	pages.Rows = dataPaginate
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
 }
 
 func (r *OperationModelMappingRepositoryImpl) SaveOperationModelMapping(tx *gorm.DB, request masteroperationpayloads.OperationModelMappingResponse) (bool, *exceptions.BaseErrorResponse) {
@@ -412,33 +423,42 @@ func (r *OperationModelMappingRepositoryImpl) ActivateOperationFrt(tx *gorm.DB, 
 	return true, nil
 }
 
-func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	OperationDocumentRequirementMapping := []masteroperationentities.OperationDocumentRequirement{}
-	OperationDocumentRequirementResponse := []masteroperationpayloads.OperationModelMappingDocumentRequirementRequest{}
+func (r *OperationModelMappingRepositoryImpl) GetAllOperationDocumentRequirement(
+	tx *gorm.DB,
+	id int,
+	pages pagination.Pagination,
+) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
+	var OperationDocumentRequirementResponse []masteroperationpayloads.OperationModelMappingDocumentRequirementRequest
+
+	// Start query on the table
 	query := tx.
-		Model(masteroperationentities.OperationDocumentRequirement{}).
-		Where("operation_model_mapping_id = ?", id).
-		Scan(&OperationDocumentRequirementResponse)
+		Model(&masteroperationentities.OperationDocumentRequirement{}).
+		Where("operation_model_mapping_id = ?", id)
 
-	err := query.
-		Scopes(pagination.Paginate(&OperationDocumentRequirementMapping, &pages, query)).
-		Scan(&OperationDocumentRequirementResponse).
-		Error
+	// Apply pagination to the query using the Paginate function
+	queryWithPagination := query.Scopes(pagination.Paginate(&pages, query))
 
-	if len(OperationDocumentRequirementResponse) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+	// Execute the query
+	err := queryWithPagination.Scan(&OperationDocumentRequirementResponse).Error
 
+	// Handle the error if any
 	if err != nil {
-
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+
+	// If no records found
+	if len(OperationDocumentRequirementResponse) == 0 {
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Err:        errors.New("no data found"),
+		}
+	}
+
+	// Assign the paginated rows to the pages.Rows field
 	pages.Rows = OperationDocumentRequirementResponse
 
 	return pages, nil
@@ -582,7 +602,6 @@ func (r *OperationModelMappingRepositoryImpl) SaveOperationLevel(tx *gorm.DB, re
 func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, id int, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	var OperationLevelResponse []masteroperationpayloads.OperationLevelGetAll
-	var OperationLevelEntity []masteroperationentities.OperationLevel
 
 	query := tx.Table("mtr_operation_level").Select(`
 		mtr_operation_level.operation_level_id,
@@ -604,23 +623,19 @@ func (r *OperationModelMappingRepositoryImpl) GetAllOperationLevel(tx *gorm.DB, 
 		Joins("JOIN mtr_operation_section ON mtr_operation_section.operation_section_id = op_entries.operation_section_id").
 		Where("mtr_operation_level.operation_model_mapping_id = ?", id)
 
-	err := query.
-		Scopes(pagination.Paginate(&OperationLevelEntity, &pages, query)).
-		Scan(&OperationLevelResponse).
-		Error
-
-	if len(OperationLevelResponse) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+	err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&OperationLevelResponse).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
+	}
+
+	// If no data is found, return empty array
+	if len(OperationLevelResponse) == 0 {
+		pages.Rows = []masteroperationpayloads.OperationLevelGetAll{}
+		return pages, nil
 	}
 
 	pages.Rows = OperationLevelResponse

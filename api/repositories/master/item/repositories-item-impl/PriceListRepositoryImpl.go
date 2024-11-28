@@ -55,7 +55,7 @@ func (r *PriceListRepositoryImpl) CheckPriceListItem(tx *gorm.DB, itemGroupId in
 		Where(masteritementities.ItemPriceList{ItemGroupId: itemGroupId, BrandId: brandId, CurrencyId: currencyId}).
 		Where("CONVERT(DATE, mtr_item_price_list.effective_date) like ?", date)
 
-	if err := query.Scopes(pagination.Paginate(model, &pages, query)).Scan(&result).Error; err != nil {
+	if err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&result).Error; err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
 			Err:        errors.New("price list item not found"),
@@ -431,7 +431,7 @@ func (r *PriceListRepositoryImpl) GetAllPriceListNew(tx *gorm.DB, filterconditio
     `).Order("CAST(effective_date AS DATE) desc")
 
 	//apply where query
-	whereQuery := utils.ApplyFilterExact(query, filtercondition)
+	whereQuery := utils.ApplyFilter(query, filtercondition)
 	//execute
 	err := whereQuery.Scan(&payloads).Error
 

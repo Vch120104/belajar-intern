@@ -2892,7 +2892,9 @@ func (r *LookupRepositoryImpl) GetCampaignDiscForWO(tx *gorm.DB, campaignId int,
 
 // usp_comLookUp IF @strEntity = 'ListItemLocation'
 func (r *LookupRepositoryImpl) ListItemLocation(tx *gorm.DB, companyId int, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	response := []masterpayloads.WarehouseMasterForItemLookupResponse{}
+
 	entities := masterwarehouseentities.WarehouseMaster{}
 
 	baseModelQuery := tx.Model(&entities).
@@ -2908,13 +2910,19 @@ func (r *LookupRepositoryImpl) ListItemLocation(tx *gorm.DB, companyId int, filt
 		Where("mtr_warehouse_master.company_id = ?", companyId)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&response).Error
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&response).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
+	}
+
+	if len(response) == 0 {
+		pages.Rows = []masterpayloads.WarehouseMasterForItemLookupResponse{}
+		return pages, nil
 	}
 
 	pages.Rows = response
@@ -2970,7 +2978,7 @@ func (r *LookupRepositoryImpl) ItemListTrans(tx *gorm.DB, filterCondition []util
 		Where("mtr_item.is_active = ?", true)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -3024,7 +3032,7 @@ func (r *LookupRepositoryImpl) ItemListTransPL(tx *gorm.DB, companyId int, filte
 		baseModelQuery = baseModelQuery.Where("mtr_item.common_pricelist = ?", true)
 	}
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.PaginateDistinct(&pages, whereQuery)).Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&responses).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

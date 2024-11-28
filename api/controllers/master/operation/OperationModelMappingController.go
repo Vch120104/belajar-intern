@@ -90,13 +90,13 @@ func (r *OperationModelMappingControllerImpl) GetOperationModelMappingLookup(wri
 	}
 
 	criteria := utils.BuildFilterCondition(queryParams)
-	paginatedData, totalPages, totalRows, err := r.operationmodelmappingservice.GetOperationModelMappingLookup(criteria, paginate)
+	paginatedData, err := r.operationmodelmappingservice.GetOperationModelMappingLookup(criteria, paginate)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "success", 200, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
+	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(paginatedData), "success", http.StatusOK)
 }
 
 // @Summary Get Operation Model Mapping By ID

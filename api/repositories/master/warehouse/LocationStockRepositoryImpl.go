@@ -9,11 +9,12 @@ import (
 	masterrepository "after-sales/api/repositories/master"
 	"after-sales/api/utils"
 	"fmt"
-	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/AzureAD/microsoft-authentication-library-for-go/apps/errors"
+	"gorm.io/gorm"
 )
 
 type LocationStockRepositoryImpl struct {
@@ -26,7 +27,6 @@ func NewLocationStockRepositoryImpl() masterrepository.LocationStockRepository {
 func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//var
 	var response []masterwarehousepayloads.LocationStockDBResponse
-	entities := masterentities.LocationStock{}
 	Jointable := db.Table("mtr_location_stock a").Select(`a.company_id,
 		a.period_year,
 		a.period_month,
@@ -64,17 +64,16 @@ func (repo *LocationStockRepositoryImpl) GetAllStock(db *gorm.DB, filter []utils
 		ISNULL(A.quantity_allocated, 0))
 		AS quantity_available`).Joins("left outer join mtr_warehouse_master b ON a.company_id = b.company_id AND a.warehouse_id = b.warehouse_id")
 	whereQuaery := utils.ApplyFilter(Jointable, filter)
-	err := whereQuaery.Scopes(pagination.Paginate(&entities, &pages, whereQuaery)).Scan(&response).Error
+	err := whereQuaery.Scopes(pagination.Paginate(&pages, whereQuaery)).Scan(&response).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "failed to fetch",
-			Data:       nil,
 			Err:        errors.New("Failed to fetch"),
 		}
 	}
+
 	pages.Rows = response
-	//page := pagination.Pagination{}
 
 	return pages, nil
 }

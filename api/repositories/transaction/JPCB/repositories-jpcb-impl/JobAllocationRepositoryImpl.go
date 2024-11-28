@@ -68,7 +68,7 @@ func (r *JobAllocationRepositoryImpl) GetAllJobAllocation(tx *gorm.DB, filterCon
 		Where("trx_work_order_allocation.operation_code IS NOT NULL AND trx_work_order_allocation.operation_code != ''").
 		Where("moc.operation_name IS NOT NULL OR mi.item_name IS NOT NULL")
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

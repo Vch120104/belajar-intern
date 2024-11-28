@@ -21,32 +21,29 @@ func StartDeductionRepositoryImpl() masterrepository.DeductionRepository {
 }
 
 func (r *DeductionRepositoryImpl) GetAllDeduction(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	entities := []masterentities.DeductionList{}
 	response := []masterpayloads.DeductionListResponse{}
 
-	// Start building the base query
-	baseModelQuery := tx.Model(&masterentities.DeductionList{})
+	baseModelQuery := tx.Model(&entities)
 
-	// Apply filters
 	baseModelQuery = utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	// Apply pagination
-	baseModelQuery = baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery))
+	baseModelQuery = baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery))
 
-	// Execute the query and scan results
 	if err := baseModelQuery.Find(&response).Error; err != nil {
+
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
-	// Check if no rows were found
 	if len(response) == 0 {
-		response = []masterpayloads.DeductionListResponse{} // Return an empty slice
+		pages.Rows = []masterpayloads.DeductionListResponse{}
+		return pages, nil
 	}
 
-	// Set the pagination rows
 	pages.Rows = response
 
 	return pages, nil
@@ -97,31 +94,25 @@ func (r *DeductionRepositoryImpl) GetDeductionById(tx *gorm.DB, Id int, pages pa
 func (r *DeductionRepositoryImpl) GetAllDeductionDetail(tx *gorm.DB, pages pagination.Pagination, Id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
 	entities := []masterentities.DeductionDetail{}
-
 	response := []masterpayloads.DeductionDetailResponse{}
 
 	baseModelQuery := tx.Model(&entities).
-		Where(masterentities.DeductionDetail{
-			DeductionId: Id},
-		)
+		Where("deduction_id = ?", Id)
 
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&response).Rows()
+	baseModelQuery = baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery))
+
+	if err := baseModelQuery.Find(&response).Error; err != nil {
+
+		return pages, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Err:        err,
+		}
+	}
 
 	if len(response) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
+		pages.Rows = []masterpayloads.DeductionDetailResponse{}
+		return pages, nil
 	}
-
-	if err != nil {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
-
-	defer rows.Close()
 
 	pages.Rows = response
 

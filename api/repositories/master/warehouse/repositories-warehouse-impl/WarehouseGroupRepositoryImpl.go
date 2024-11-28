@@ -132,30 +132,26 @@ func (r *WarehouseGroupImpl) GetByIdWarehouseGroup(tx *gorm.DB, warehouseGroupId
 }
 
 func (r *WarehouseGroupImpl) GetAllWarehouseGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	entities := []masterwarehouseentities.WarehouseGroup{}
 
-	//ON PROGRESS JOIN WAREHOUSMASTER AND WAREHOUSELOCATION
 	baseModelQuery := tx.Model(&entities)
 
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
 
-	rows, err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&entities).Rows()
-
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
+	// If no records are found, return an empty slice
 	if len(entities) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNoContent,
-			Err:        errors.New(""),
-		}
+		pages.Rows = []masterwarehouseentities.WarehouseGroup{}
+		return pages, nil
 	}
-
-	defer rows.Close()
 
 	pages.Rows = entities
 
