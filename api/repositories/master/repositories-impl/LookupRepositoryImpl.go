@@ -3761,9 +3761,8 @@ func (r *LookupRepositoryImpl) ItemDetailForItemInquiry(tx *gorm.DB, filterCondi
 	payloads := []masterpayloads.ItemDetailForItemInquiryPayload{}
 
 	baseModelQuery := tx.Model(&entities).Select("model_id, variant_id")
-	// Where(masteritementities.ItemDetail{ItemDetailId: itemDetailId, BrandId: brandId})
 	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
