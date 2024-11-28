@@ -25,4 +25,5 @@ type PurchasePriceRepository interface {
 	DeletePurchasePrice(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
 	ActivatePurchasePriceDetail(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
 	DeactivatePurchasePriceDetail(tx *gorm.DB, Id int, iddet []int) (bool, *exceptions.BaseErrorResponse)
+	CheckPurchasePriceDetailExistence(tx *gorm.DB, Id int, itemId int) (bool, *exceptions.BaseErrorResponse)
 }
