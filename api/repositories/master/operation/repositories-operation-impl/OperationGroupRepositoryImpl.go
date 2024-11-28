@@ -24,9 +24,13 @@ func StartOperationGroupRepositoryImpl() masteroperationrepository.OperationGrou
 func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	entities := []masteroperationentities.OperationGroup{}
 	baseModelQuery := tx.Model(&entities)
-	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 
+	baseModelQuery = baseModelQuery.Preload("OperationSection").Preload("OperationSection.OperationEntries").Preload("OperationSection.OperationKey")
+	baseModelQuery = baseModelQuery.Preload("OperationEntries").Preload("OperationKey")
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -40,7 +44,6 @@ func (r *OperationGroupRepositoryImpl) GetAllOperationGroup(tx *gorm.DB, filterC
 	}
 
 	pages.Rows = entities
-
 	return pages, nil
 }
 

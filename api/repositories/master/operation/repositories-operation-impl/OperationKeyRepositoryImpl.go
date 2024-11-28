@@ -24,8 +24,6 @@ func StartOperationKeyRepositoryImpl() masteroperationrepository.OperationKeyRep
 }
 
 func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-
-	var entities []masteroperationentities.OperationKey
 	var responses []masteroperationpayloads.OperationkeyListResponse
 
 	tableStruct := masteroperationpayloads.OperationkeyListResponse{}
@@ -33,8 +31,12 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 
 	whereQuery := utils.ApplyFilter(joinTable, filterCondition)
 
+	whereQuery = whereQuery.
+		Joins("JOIN mtr_operation_group AS og ON mtr_operation_key.operation_group_id = og.operation_group_id").
+		Joins("JOIN mtr_operation_section AS os ON mtr_operation_key.operation_section_id = os.operation_section_id")
+
 	var totalRows int64
-	err := whereQuery.Table("(?) as a", joinTable).Count(&totalRows).Error
+	err := whereQuery.Count(&totalRows).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -46,7 +48,7 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 	totalPages := int(math.Ceil(float64(totalRows) / float64(pages.Limit)))
 	pages.TotalPages = totalPages
 
-	err = whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&entities).Error
+	err = whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -54,7 +56,7 @@ func (r *OperationKeyRepositoryImpl) GetAllOperationKeyList(tx *gorm.DB, filterC
 		}
 	}
 
-	if len(entities) == 0 {
+	if len(responses) == 0 {
 		pages.Rows = []masteroperationpayloads.OperationkeyListResponse{}
 		return pages, nil
 	}
