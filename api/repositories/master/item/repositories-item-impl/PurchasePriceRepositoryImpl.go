@@ -22,6 +22,26 @@ import (
 type PurchasePriceRepositoryImpl struct {
 }
 
+// return false if purchase price detail does not exists
+func (r *PurchasePriceRepositoryImpl) CheckPurchasePriceDetailExistence(tx *gorm.DB, Id int, itemId int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.PurchasePriceDetail
+	var count int64
+
+	err := tx.Model(&entities).Where(masteritementities.PurchasePriceDetail{PurchasePriceId: Id, ItemId: itemId}).Count(&count).Error
+	if err != nil {
+		return true, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when checking purchase price detail existence",
+			Err:        err,
+		}
+	}
+
+	if count > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
 func StartPurchasePriceRepositoryImpl() masteritemrepository.PurchasePriceRepository {
 	return &PurchasePriceRepositoryImpl{}
 }
