@@ -588,9 +588,18 @@ func (s *PurchasePriceServiceImpl) PreviewUploadData(rows [][]string, id int) ([
 func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.UploadRequest) (bool, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 
-	for _, value := range req.Data {
+	var dupCheck []string
 
+	for i, value := range req.Data {
 		itemCode := value.ItemCode
+		if len(dupCheck) > 0 && isDuplicate(dupCheck, itemCode) {
+			tx.Rollback()
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "item code: " + itemCode + " already exist in excel file at line: " + strconv.Itoa(i+1),
+			}
+		}
+		dupCheck = append(dupCheck, itemCode)
 
 		itemId, errResp := s.FetchItemId(itemCode)
 		if errResp != nil {
@@ -599,6 +608,20 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 		}
 
 		requestData := convertToPurchasePriceRequest(value, itemId)
+
+		isExist, errExist := s.PurchasePriceRepo.CheckPurchasePriceDetailExistence(tx, requestData.PurchasePriceId, requestData.ItemId)
+		if errExist != nil {
+			tx.Rollback()
+			return false, errExist
+		}
+		if isExist {
+			tx.Rollback()
+			return false, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "item code: " + itemCode + " already exist in the current header.",
+				Err:        errors.New("item code: " + itemCode + " already exist in the current header"),
+			}
+		}
 
 		_, err := s.PurchasePriceRepo.GetPurchasePriceById(tx, requestData.PurchasePriceId, pagination.Pagination{})
 		if err != nil && err.StatusCode != http.StatusNotFound {
@@ -640,6 +663,15 @@ func (s *PurchasePriceServiceImpl) ProcessDataUpload(req masteritempayloads.Uplo
 
 	tx.Commit()
 	return true, nil
+}
+
+func isDuplicate(list []string, value string) bool {
+	for _, v := range list {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
 
 func convertToPurchasePriceRequest(detail masteritempayloads.PurchasePriceDetailResponses, itemId int) masteritempayloads.PurchasePriceDetailRequest {
