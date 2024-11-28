@@ -14,7 +14,7 @@ import (
 
 	// transactionjpcbentities "after-sales/api/entities/transaction/JPCB"
 	// transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
-	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"``
+	// transactionworkshopentities "after-sales/api/entities/transaction/workshop"
 
 	"time"
 
@@ -204,6 +204,7 @@ func Migrate() {
 	//&transactionworkshopentities.BookingEstimationRequest{},
 	// &transactionworkshopentities.ContractService{},
 	// &transactionworkshopentities.ContractServiceDetail{},
+	// &transactionworkshopentities.LicenseOwnerChange{},
 	//
 	//&transactionworkshopentities.BookingEstimation{},
 	//&transactionworkshopentities.BookingEstimationAllocation{},

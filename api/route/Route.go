@@ -441,6 +441,11 @@ func StartRouting(db *gorm.DB) {
 	ContractServiceDetailService := transactionworkshopserviceimpl.OpenContractServiceDetailServiceImpl(ContractServiceDetailRepository, db, rdb)
 	ContractServiceDetailController := transactionworkshopcontroller.NewContractServiceDetailController(ContractServiceDetailService)
 
+	//License Owner Change
+	LicenseOwnerChangeRepository := transactionworkshoprepositoryimpl.OpenLicenseOwnerChangeRepositoryImpl()
+	LicenseOwnerChangeService := transactionworkshopserviceimpl.OpenLicenseOwnerChangeServiceImpl(LicenseOwnerChangeRepository, db, rdb)
+	LicenseOwnerChangeController := transactionworkshopcontroller.NewLicenseOwnerChangeController(LicenseOwnerChangeService)
+
 	/* Master */
 	itemClassRouter := ItemClassRouter(itemClassController)
 	itemPackageRouter := ItemPackageRouter(itemPackageController)
@@ -524,6 +529,7 @@ func StartRouting(db *gorm.DB) {
 	LookupRouter := LookupRouter(LookupController)
 	ContractServiceRouter := ContractServiceRouter(ContractServiceController)
 	ContractServiceDetailRouter := ContractServiceDetailRouter(ContractServiceDetailController)
+	LicenseOwnerChangeRouter := LicenseOwnerChangeRouter(LicenseOwnerChangeController)
 
 	r := chi.NewRouter()
 	// Route untuk setiap versi API
@@ -615,6 +621,7 @@ func StartRouting(db *gorm.DB) {
 		r.Mount("/service-workshop", ServiceWorkshopRouter)
 		r.Mount("/contract-service", ContractServiceRouter)
 		r.Mount("/contract-service-detail", ContractServiceDetailRouter)
+		r.Mount("/license-owner-change", LicenseOwnerChangeRouter)
 
 		r.Mount("/stock-transaction", StockTransactionRouter)
 		/* Transaction Bodyshop */
