@@ -257,6 +257,7 @@ func (r *PriceListRepositoryImpl) GetPriceListById(tx *gorm.DB, Id int) (masteri
 	if brandpayloads != (masteritempayloads.UnitBrandResponses{}) {
 		response.BrandId = brandpayloads.BrandId
 		response.BrandName = brandpayloads.BrandName
+		response.BrandCode = brandpayloads.BrandCode
 	}
 
 	ErrUrlItemGroup := utils.Get(config.EnvConfigs.GeneralServiceUrl+"item-group/"+strconv.Itoa(response.ItemGroupId), &itemgrouppayloads, nil)

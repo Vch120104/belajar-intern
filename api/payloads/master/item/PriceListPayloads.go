@@ -58,7 +58,7 @@ type SavePriceListMultiple struct {
 }
 
 type PriceListUploadDataRequest struct {
-	BrandName       string `json:"brand_name" validate:"required"`
+	BrandCode       string `json:"brand_code" validate:"required"`
 	BrandId         int    `json:"brand_id" validate:"required"`
 	ItemGroupCode   string `json:"item_group_code" validate:"required"`
 	ItemGroupId     int    `json:"item_group_id" validate:"required"`
@@ -131,6 +131,7 @@ type PriceListGetbyId struct {
 	CompanyId           int     `json:"company_id" parent_entity:"mtr_item_price_list"`
 	BrandId             int     `json:"brand_id" parent_entity:"mtr_item_price_list"`
 	BrandName           string  `json:"brand_name"`
+	BrandCode           string  `json:"brand_code"`
 	CurrencyId          int     `json:"currency_id" parent_entity:"mtr_item_price_list"`
 	CurrencyCode        string  `json:"currency_code"`
 	EffectiveDate       string  `json:"effective_date" parent_entity:"mtr_item_price_list"`
