@@ -25,6 +25,7 @@ type ItemModelMappingReponses struct {
 type UnitBrandResponses struct {
 	BrandId   int    `json:"brand_id"`
 	BrandName string `json:"brand_name"`
+	BrandCode string `json:"brand_code"`
 }
 
 type UnitModelResponses struct {
