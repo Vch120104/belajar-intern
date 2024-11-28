@@ -250,7 +250,16 @@ func (r *CampaignMasterControllerImpl) GetAllCampaignMaster(writer http.Response
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, result, "Get Data Successfully!", http.StatusOK)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 func (r *CampaignMasterControllerImpl) GetAllCampaignMasterDetail(writer http.ResponseWriter, request *http.Request) {

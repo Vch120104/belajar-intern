@@ -99,7 +99,16 @@ func (r *ItemPackageControllerImpl) GetAllItemPackage(writer http.ResponseWriter
 		return
 	}
 
-	payloads.NewHandleSuccess(writer, utils.ModifyKeysInResponse(paginatedData), "success", http.StatusOK)
+	payloads.NewHandleSuccessPagination(
+		writer,
+		utils.ModifyKeysInResponse(paginatedData.Rows),
+		"Get Data Successfully!",
+		http.StatusOK,
+		paginate.Limit,
+		paginate.Page,
+		int64(paginatedData.TotalRows),
+		paginatedData.TotalPages,
+	)
 }
 
 // @Summary Get Item Package By ID
