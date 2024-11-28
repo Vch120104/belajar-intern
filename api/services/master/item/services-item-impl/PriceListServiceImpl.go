@@ -133,7 +133,7 @@ func (s *PriceListServiceImpl) Download(uploadRequest masteritempayloads.PriceLi
 				break
 			}
 			for i := 0; i < len(data); i++ {
-				f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), uploadRequest.BrandName)
+				f.SetCellValue(sheetName, fmt.Sprintf("A%d", i+2), uploadRequest.BrandCode)
 				f.SetCellValue(sheetName, fmt.Sprintf("B%d", i+2), uploadRequest.CurrencyCode)
 				f.SetCellValue(sheetName, fmt.Sprintf("C%d", i+2), formattedDate)
 				f.SetCellValue(sheetName, fmt.Sprintf("D%d", i+2), data[i].ItemCode)
@@ -214,7 +214,7 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 	for key := 1; key < len(rows); key++ {
 		value := rows[key]
 		if key != 0 {
-			if !strings.EqualFold(value[0], uploadRequest.BrandName) {
+			if !strings.EqualFold(value[0], uploadRequest.BrandCode) {
 				result = append(result, fmt.Sprintf("Line %d : %s", key, "Vehicle Brand not match"))
 			}
 			if !strings.EqualFold(value[1], uploadRequest.CurrencyCode) {
