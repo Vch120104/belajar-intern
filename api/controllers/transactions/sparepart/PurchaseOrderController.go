@@ -65,15 +65,15 @@ func NewPurchaseOrderControllerImpl(PurchaseOrderService transactionsparepartser
 func (controller *PurchaseOrderControllerImpl) GetAllPurchaserOrderWithPagination(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
-		"A.purchase_order_document_number": queryValues.Get("purchase_order_document_number"),
-		"A.item_group_id":                  queryValues.Get("item_group_id"),
-		"A.order_type_id":                  queryValues.Get("order_type_id"),
-		"A.purchase_order_status_id":       queryValues.Get("purchase_order_status_id"),
-		"A.warehouse_id":                   queryValues.Get("warehouse_id"),
-		"A.warehouse_group_id":             queryValues.Get("warehouse_group_id"),
-		"A.supplier_id":                    queryValues.Get("supplier_id"),
-		"A.cost_center_id":                 queryValues.Get("cost_center_id"),
-		"A.created_by_user_id":             queryValues.Get("created_by_user_id"),
+		"trx_item_purchase_order.purchase_order_document_number": queryValues.Get("purchase_order_document_number"),
+		"trx_item_purchase_order.item_group_id":                  queryValues.Get("item_group_id"),
+		"trx_item_purchase_order.order_type_id":                  queryValues.Get("order_type_id"),
+		"trx_item_purchase_order.purchase_order_status_id":       queryValues.Get("purchase_order_status_id"),
+		"trx_item_purchase_order.warehouse_id":                   queryValues.Get("warehouse_id"),
+		"trx_item_purchase_order.warehouse_group_id":             queryValues.Get("warehouse_group_id"),
+		"trx_item_purchase_order.supplier_id":                    queryValues.Get("supplier_id"),
+		"trx_item_purchase_order.cost_center_id":                 queryValues.Get("cost_center_id"),
+		"trx_item_purchase_order.created_by_user_id":             queryValues.Get("created_by_user_id"),
 	}
 	DateParams := map[string]string{
 		"purchase_order_date_from": queryValues.Get("purchase_order_date_from"),

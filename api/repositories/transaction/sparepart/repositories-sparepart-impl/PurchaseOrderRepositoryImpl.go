@@ -46,7 +46,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	JoinTable := db.Model(&entities).
 		Select("*").
 		//Select("A.purchase_order_system_number,A.purchase_order_document_number,A.purchase_order_document_date,A.purchase_order_status_id,A.purchase_order_type_id,A.warehouse_id,A.supplier_id,C.purchase_request_document_number").
-		Joins("left JOIN trx_item_purchase_order_detail B ON A.purchase_order_system_number = B.purchase_order_system_number " +
+		Joins("left JOIN trx_item_purchase_order_detail B ON trx_item_purchase_order.purchase_order_system_number = B.purchase_order_system_number " +
 			"left JOIN trx_purchase_request C ON B.purchase_request_system_number = C.purchase_request_system_number").
 		Where(strfilter)
 	whereQuery := utils.ApplyFilter(JoinTable, filter)
@@ -59,7 +59,7 @@ func (repo *PurchaseOrderRepositoryImpl) GetAllPurchaseOrder(db *gorm.DB, filter
 	}
 	strDateFilter = "purchase_order_document_date >='" + DateParams["purchase_order_date_from"] + "' AND purchase_order_document_date <= '" + DateParams["purchase_order_date_to"] + "'"
 
-	err := whereQuery.Scopes(pagination.Paginate(&page, JoinTable)).Order("A.purchase_order_document_date desc").Where(strDateFilter).Scan(&payloadsresdb).Error
+	err := whereQuery.Scopes(pagination.Paginate(&page, JoinTable)).Order("trx_item_purchase_order.purchase_order_document_date desc").Where(strDateFilter).Scan(&payloadsresdb).Error
 	if err != nil {
 		return page, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
