@@ -54,8 +54,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAll(companyCode int, foremanId int, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -89,8 +87,6 @@ func (s *WorkOrderAllocationServiceImpl) GetWorkOrderAllocationHeaderData(compan
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -124,8 +120,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocate(brandId int, woSysNum int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -159,8 +153,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAllocateDetail(filterCondition []uti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -195,8 +187,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAssignTechnician(filterCondition []u
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -230,8 +220,6 @@ func (s *WorkOrderAllocationServiceImpl) NewAssignTechnician(date time.Time, tec
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -266,8 +254,6 @@ func (s *WorkOrderAllocationServiceImpl) GetAssignTechnicianById(date time.Time,
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -301,8 +287,6 @@ func (s *WorkOrderAllocationServiceImpl) SaveAssignTechnician(date time.Time, te
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -335,8 +319,6 @@ func (s *WorkOrderAllocationServiceImpl) SaveAllocateDetail(date time.Time, tech
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

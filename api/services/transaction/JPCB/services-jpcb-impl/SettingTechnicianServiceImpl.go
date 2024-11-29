@@ -51,8 +51,6 @@ func (s *SettingTechnicianServiceImpl) GetAllSettingTechnician(filterCondition [
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *SettingTechnicianServiceImpl) GetAllSettingTechnicianDetail(filterCondi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -117,8 +113,6 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianById(settingTechnicia
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -150,8 +144,6 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianDetailById(settingTec
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -183,8 +175,6 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianByCompanyDate(company
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -216,8 +206,6 @@ func (s *SettingTechnicianServiceImpl) SaveSettingTechnician(CompanyId int) (tra
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -249,8 +237,6 @@ func (s *SettingTechnicianServiceImpl) SaveSettingTechnicianDetail(req transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -291,8 +277,6 @@ func (s *SettingTechnicianServiceImpl) UpdateSettingTechnicianDetail(settingTech
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

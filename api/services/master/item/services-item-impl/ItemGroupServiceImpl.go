@@ -42,8 +42,6 @@ func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []ut
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -74,8 +72,6 @@ func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementitie
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -107,8 +103,6 @@ func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.Item
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -139,8 +133,6 @@ func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.Ba
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -171,8 +163,6 @@ func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.It
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -203,8 +193,6 @@ func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -235,8 +223,6 @@ func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masterit
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -267,8 +253,6 @@ func (i *ItemGroupServiceImpl) NewItemGroup(payload masteritempayloads.NewItemGr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

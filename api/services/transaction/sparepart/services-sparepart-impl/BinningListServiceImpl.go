@@ -52,8 +52,6 @@ func (s *BinningListServiceImpl) GetBinningListById(BinningStockId int) (transac
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -86,8 +84,6 @@ func (s *BinningListServiceImpl) GetAllBinningListWithPagination(filter []utils.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -121,8 +117,6 @@ func (s *BinningListServiceImpl) InsertBinningListHeader(payloads transactionspa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -155,8 +149,6 @@ func (s *BinningListServiceImpl) UpdateBinningListHeader(payloads transactionspa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -188,8 +180,6 @@ func (s *BinningListServiceImpl) GetBinningListDetailById(BinningDetailSystemNum
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -222,8 +212,6 @@ func (s *BinningListServiceImpl) GetAllBinningListDetailWithPagination(filter []
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -255,8 +243,6 @@ func (s *BinningListServiceImpl) InsertBinningListDetail(payloads transactionspa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -288,8 +274,6 @@ func (s *BinningListServiceImpl) UpdateBinningListDetail(payloads transactionspa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -321,8 +305,6 @@ func (s *BinningListServiceImpl) SubmitBinningList(BinningId int) (transactionsp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -354,8 +336,6 @@ func (s *BinningListServiceImpl) DeleteBinningList(BinningId int) (bool, *except
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -387,8 +367,6 @@ func (s *BinningListServiceImpl) DeleteBinningListDetailMultiId(binningDetailMul
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -421,8 +399,6 @@ func (s *BinningListServiceImpl) GetReferenceNumberTypoPOWithPagination(filter [
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

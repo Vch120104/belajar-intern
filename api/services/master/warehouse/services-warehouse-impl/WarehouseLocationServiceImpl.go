@@ -312,8 +312,6 @@ func (s *WarehouseLocationServiceImpl) Save(request masterwarehouseentities.Ware
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -355,8 +353,6 @@ func (s *WarehouseLocationServiceImpl) GetById(warehouseLocationId int) (masterw
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -389,8 +385,6 @@ func (s *WarehouseLocationServiceImpl) GetByCode(warehouseLocationCode string) (
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -423,8 +417,6 @@ func (s *WarehouseLocationServiceImpl) GetAll(filter []utils.FilterCondition, pa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -457,8 +449,6 @@ func (s *WarehouseLocationServiceImpl) ChangeStatus(warehouseLocationId int) (bo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

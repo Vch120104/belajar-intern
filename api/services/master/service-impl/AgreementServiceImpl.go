@@ -51,8 +51,6 @@ func (s *AgreementServiceImpl) GetAgreementById(id int) (masterpayloads.Agreemen
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *AgreementServiceImpl) SaveAgreement(req masterpayloads.AgreementRequest
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -128,8 +124,6 @@ func (s *AgreementServiceImpl) UpdateAgreement(id int, req masterpayloads.Agreem
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -167,8 +161,6 @@ func (s *AgreementServiceImpl) ChangeStatusAgreement(Id int) (masterentities.Agr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -202,8 +194,6 @@ func (s *AgreementServiceImpl) GetAllAgreement(filterCondition []utils.FilterCon
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -235,8 +225,6 @@ func (s *AgreementServiceImpl) AddDiscountGroup(id int, req masterpayloads.Disco
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -268,8 +256,6 @@ func (s *AgreementServiceImpl) UpdateDiscountGroup(id int, discountGroupId int, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -302,8 +288,6 @@ func (s *AgreementServiceImpl) DeleteDiscountGroup(id int, discountGroupId int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -336,8 +320,6 @@ func (s *AgreementServiceImpl) AddItemDiscount(id int, req masterpayloads.ItemDi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -369,8 +351,6 @@ func (s *AgreementServiceImpl) UpdateItemDiscount(id int, itemDiscountId int, re
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -402,8 +382,6 @@ func (s *AgreementServiceImpl) DeleteItemDiscount(id int, itemDiscountId int) *e
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -435,8 +413,6 @@ func (s *AgreementServiceImpl) AddDiscountValue(id int, req masterpayloads.Disco
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -468,8 +444,6 @@ func (s *AgreementServiceImpl) UpdateDiscountValue(id int, discountValueId int, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -501,8 +475,6 @@ func (s *AgreementServiceImpl) DeleteDiscountValue(id int, discountValueId int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -535,8 +507,6 @@ func (s *AgreementServiceImpl) GetAllDiscountGroup(filterCondition []utils.Filte
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -569,8 +539,6 @@ func (s *AgreementServiceImpl) GetAllItemDiscount(filterCondition []utils.Filter
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -603,8 +571,6 @@ func (s *AgreementServiceImpl) GetAllDiscountValue(filterCondition []utils.Filte
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -637,8 +603,6 @@ func (s *AgreementServiceImpl) GetDiscountGroupAgreementById(agreementID, groupI
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -671,8 +635,6 @@ func (s *AgreementServiceImpl) GetDiscountItemAgreementById(agreementID, itemID 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -705,8 +667,6 @@ func (s *AgreementServiceImpl) GetDiscountValueAgreementById(agreementID, valueI
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -739,8 +699,6 @@ func (s *AgreementServiceImpl) GetAgreementByCode(code string) (masterpayloads.A
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

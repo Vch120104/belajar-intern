@@ -40,8 +40,6 @@ func (s *ItemModelMappingServiceImpl) GetItemModelMappingByItemId(itemId int, pa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -74,8 +72,6 @@ func (s *ItemModelMappingServiceImpl) UpdateItemModelMapping(req masteritempaylo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -108,8 +104,6 @@ func (s *ItemModelMappingServiceImpl) CreateItemModelMapping(req masteritempaylo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

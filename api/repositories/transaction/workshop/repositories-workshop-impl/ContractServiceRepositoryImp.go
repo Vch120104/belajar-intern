@@ -186,7 +186,7 @@ func (r *ContractServiceRepositoryImpl) GetById(tx *gorm.DB, Id int, filterCondi
 
 	VehicleUrl := config.EnvConfigs.SalesServiceUrl + "vehicle-master/" + strconv.Itoa(entity.VehicleId)
 	var vehicleResponses transactionworkshoppayloads.ContractServiceVehicleResponse
-	errVehicle := utils.GetArray(VehicleUrl, &vehicleResponses, nil)
+	errVehicle := utils.Get(VehicleUrl, &vehicleResponses, nil)
 	if errVehicle != nil {
 		return transactionworkshoppayloads.ContractServiceResponseId{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,

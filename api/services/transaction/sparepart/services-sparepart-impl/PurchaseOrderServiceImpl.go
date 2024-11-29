@@ -51,8 +51,6 @@ func (s *PurchaseOrderServiceImpl) GetAllPurchaseOrder(filter []utils.FilterCond
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *PurchaseOrderServiceImpl) GetByIdPurchaseOrder(i int) (transactionspare
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -117,8 +113,6 @@ func (s *PurchaseOrderServiceImpl) GetByIdPurchaseOrderDetail(id int, page pagin
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -150,8 +144,6 @@ func (s *PurchaseOrderServiceImpl) NewPurchaseOrderHeader(responses transactions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -183,8 +175,6 @@ func (s *PurchaseOrderServiceImpl) UpdatePurchaseOrderHeader(id int, responses t
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -216,8 +206,6 @@ func (s *PurchaseOrderServiceImpl) GetPurchaseOrderDetailById(id int) (transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -249,8 +237,6 @@ func (s *PurchaseOrderServiceImpl) NewPurchaseOrderDetail(payloads transactionsp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -282,8 +268,6 @@ func (s *PurchaseOrderServiceImpl) DeletePurchaseOrderDetailMultiId(multiid stri
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -315,8 +299,6 @@ func (s *PurchaseOrderServiceImpl) SavePurchaseOrderDetail(payloads transactions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
