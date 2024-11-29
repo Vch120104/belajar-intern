@@ -44,7 +44,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 	var orderTypeIds []int
 	if orderTypeName != "" {
-		orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-types?page=0&limit=100&order_type_name=" + orderTypeName
+		orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-types?page=0&limit=100&order_type_name=" + orderTypeName
 		var getOrderTypeResponse []masteritempayloads.OrderTypeResponse
 
 		if err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil); err == nil {
@@ -105,7 +105,7 @@ func (r *DiscountPercentRepositoryImpl) GetAllDiscountPercent(tx *gorm.DB, filte
 
 		// Fetch order type name
 		if response.OrderTypeId != 0 {
-			orderTypeURL := config.EnvConfigs.GeneralServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
+			orderTypeURL := config.EnvConfigs.AfterSalesServiceUrl + "order-type/" + strconv.Itoa(response.OrderTypeId)
 			var getOrderTypeResponse masteritempayloads.OrderTypeResponse
 
 			err := utils.Get(orderTypeURL, &getOrderTypeResponse, nil)

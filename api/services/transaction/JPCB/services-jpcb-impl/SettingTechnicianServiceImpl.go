@@ -2,15 +2,17 @@ package transactionjpcbserviceimpl
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionjpcbpayloads "after-sales/api/payloads/transaction/JPCB"
 	transactionjpcbrepository "after-sales/api/repositories/transaction/JPCB"
 	transactionjpcbservice "after-sales/api/services/transaction/JPCB"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -30,8 +32,31 @@ func StartServiceTechnicianService(SettingTechnicianRepo transactionjpcbreposito
 
 func (s *SettingTechnicianServiceImpl) GetAllSettingTechnician(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	pages, err := s.SettingTechnicianRepository.GetAllSettingTechnician(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	pages, err = s.SettingTechnicianRepository.GetAllSettingTechnician(tx, filterCondition, pages)
 	if err != nil {
 		return pages, err
 	}
@@ -40,8 +65,31 @@ func (s *SettingTechnicianServiceImpl) GetAllSettingTechnician(filterCondition [
 
 func (s *SettingTechnicianServiceImpl) GetAllSettingTechnicianDetail(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
-	pages, err := s.SettingTechnicianRepository.GetAllSettingTechnicianDetail(tx, filterCondition, pages)
-	defer helper.CommitOrRollback(tx, err)
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	pages, err = s.SettingTechnicianRepository.GetAllSettingTechnicianDetail(tx, filterCondition, pages)
 	if err != nil {
 		return pages, err
 	}
@@ -50,8 +98,31 @@ func (s *SettingTechnicianServiceImpl) GetAllSettingTechnicianDetail(filterCondi
 
 func (s *SettingTechnicianServiceImpl) GetSettingTechnicianById(settingTechnicianId int) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	result, err := s.SettingTechnicianRepository.GetSettingTechnicianById(tx, settingTechnicianId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -60,8 +131,31 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianById(settingTechnicia
 
 func (s *SettingTechnicianServiceImpl) GetSettingTechnicianDetailById(settingTechnicianDetailId int) (transactionjpcbpayloads.SettingTechnicianDetailGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	result, err := s.SettingTechnicianRepository.GetSettingTechnicianDetailById(tx, settingTechnicianDetailId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -70,8 +164,31 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianDetailById(settingTec
 
 func (s *SettingTechnicianServiceImpl) GetSettingTechnicianByCompanyDate(companyId int, effectiveDate time.Time) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	result, err := s.SettingTechnicianRepository.GetSettingTechnicianByCompanyDate(tx, companyId, effectiveDate)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -80,8 +197,31 @@ func (s *SettingTechnicianServiceImpl) GetSettingTechnicianByCompanyDate(company
 
 func (s *SettingTechnicianServiceImpl) SaveSettingTechnician(CompanyId int) (transactionjpcbpayloads.SettingTechnicianGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	result, err := s.SettingTechnicianRepository.SaveSettingTechnician(tx, CompanyId)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
@@ -91,7 +231,29 @@ func (s *SettingTechnicianServiceImpl) SaveSettingTechnician(CompanyId int) (tra
 func (s *SettingTechnicianServiceImpl) SaveSettingTechnicianDetail(req transactionjpcbpayloads.SettingTechnicianDetailSaveRequest) (transactionjpcbpayloads.SettingTechnicianDetailGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-	defer helper.CommitOrRollback(tx, err)
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 
 	if req.SettingTechnicianSystemNumber == 0 {
 		headerData, err := s.SettingTechnicianRepository.SaveSettingTechnician(tx, req.CompanyId)
@@ -110,8 +272,31 @@ func (s *SettingTechnicianServiceImpl) SaveSettingTechnicianDetail(req transacti
 
 func (s *SettingTechnicianServiceImpl) UpdateSettingTechnicianDetail(settingTechnicianDetailId int, req transactionjpcbpayloads.SettingTechnicianDetailUpdateRequest) (transactionjpcbpayloads.SettingTechnicianDetailGetByIdResponse, *exceptions.BaseErrorResponse) {
 	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
 	result, err := s.SettingTechnicianRepository.UpdateSettingTechnicianDetail(tx, settingTechnicianDetailId, req)
-	defer helper.CommitOrRollback(tx, err)
 	if err != nil {
 		return result, err
 	}
