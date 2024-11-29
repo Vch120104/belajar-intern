@@ -35,7 +35,7 @@ func NewPurchaseRequestRepositoryImpl() transactionsparepartrepository.PurchaseR
 func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, conditions []utils.FilterCondition, paginationResponses pagination.Pagination, Dateparams map[string]string) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionsparepartpayloads.PurchaseRequestResponses
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
-	Jointable := db.Table("trx_purchase_request A").
+	Jointable := db.Model(&entities).
 		Select("purchase_request_system_number," +
 			"purchase_request_document_number," +
 			"purchase_request_document_status_id," +
@@ -51,9 +51,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 	if Dateparams["purchase_request_date_to"] == "" {
 		Dateparams["purchase_request_date_to"] = "99991212"
 	}
-
-	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date < '" + Dateparams["purchase_request_date_to"] + "'"
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &paginationResponses, WhereQuery)).Where(strDateFilter).Scan(&responses).Error
+	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date <= '" + Dateparams["purchase_request_date_to"] + "'"
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Where(strDateFilter).Scan(&responses).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -364,10 +363,10 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequestDetail(db *gorm.DB,
 	//TODO implement me
 	entities := transactionsparepartentities.PurchaseRequestDetail{}
 	var response []transactionsparepartpayloads.PurchaseRequestDetailRequestPayloads
-	Jointable := db.Table("trx_purchase_request_detail").
+	Jointable := db.Model(&entities).
 		Select("item_id,item_quantity,item_remark,item_unit_of_measure,purchase_request_system_number,purchase_request_line_number,reference_system_number,reference_line,purchase_request_detail_system_number")
 	WhereQuery := utils.ApplyFilter(Jointable, conditions)
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &paginationResponses, WhereQuery)).Scan(&response).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&paginationResponses, WhereQuery)).Scan(&response).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -959,7 +958,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 
 	year := PeriodResponse.PeriodYear
 	month := PeriodResponse.PeriodMonth
-	JoinTable := db.Table("mtr_item A").Select("A.item_id,"+
+	JoinTable := db.Model(&entities).Select("A.item_id,"+
 		"A.item_code,"+
 		"A.item_name,"+
 		"A.item_name,"+
@@ -1005,7 +1004,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			"IT.item_type_code")
 	//.Order("A.item_id")
 	WhereQuery := utils.ApplyFilter(JoinTable, conditions)
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &page, WhereQuery)).Where("stock_keeping = 1").Scan(&response).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&page, WhereQuery)).Scan(&response).Error
 	if len(response) == 0 {
 		page.Rows = []string{}
 		return page, nil

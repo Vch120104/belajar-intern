@@ -9,7 +9,6 @@ import (
 )
 
 type ItemService interface {
-	GetAllItem(filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
 	GetAllItemLookup(filter []utils.FilterCondition) (any, *exceptions.BaseErrorResponse)
 	GetItemById(Id int) (masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
 	GetItemWithMultiId(MultiIds []string) ([]masteritempayloads.ItemResponse, *exceptions.BaseErrorResponse)
@@ -27,7 +26,7 @@ type ItemService interface {
 	GetPrincipalBrandParent(id int) ([]masteritempayloads.PrincipalBrandDropdownDescription, *exceptions.BaseErrorResponse)
 	GetPrincipalBrandDropdown() ([]masteritempayloads.PrincipalBrandDropdownResponse, *exceptions.BaseErrorResponse)
 	AddItemDetailByBrand(id string, itemId int) ([]masteritempayloads.ItemDetailResponse, *exceptions.BaseErrorResponse)
-	GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse)
+	GetAllItemSearch(filterCondition []utils.FilterCondition, itemIDs []string, supplierIDs []string, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse)
 	CheckItemCodeExist(itemCode string, itemGroupId int, commonPriceList bool, brandId int) (bool, int, int, *exceptions.BaseErrorResponse)
 	GetPrincipalCatalog() ([]masteritempayloads.GetPrincipalCatalog, *exceptions.BaseErrorResponse)
 }

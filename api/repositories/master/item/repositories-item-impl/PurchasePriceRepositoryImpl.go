@@ -22,6 +22,26 @@ import (
 type PurchasePriceRepositoryImpl struct {
 }
 
+// return false if purchase price detail does not exists
+func (r *PurchasePriceRepositoryImpl) CheckPurchasePriceDetailExistence(tx *gorm.DB, Id int, itemId int) (bool, *exceptions.BaseErrorResponse) {
+	var entities masteritementities.PurchasePriceDetail
+	var count int64
+
+	err := tx.Model(&entities).Where(masteritementities.PurchasePriceDetail{PurchasePriceId: Id, ItemId: itemId}).Count(&count).Error
+	if err != nil {
+		return true, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Error when checking purchase price detail existence",
+			Err:        err,
+		}
+	}
+
+	if count > 0 {
+		return true, nil
+	}
+	return false, nil
+}
+
 func StartPurchasePriceRepositoryImpl() masteritemrepository.PurchasePriceRepository {
 	return &PurchasePriceRepositoryImpl{}
 }
@@ -63,7 +83,7 @@ func (r *PurchasePriceRepositoryImpl) GetAllPurchasePrice(tx *gorm.DB, filterCon
 		var supplierIds []int
 		supplierParams := generalserviceapiutils.SupplierMasterParams{
 			Page:         0,
-			Limit:        100000,
+			Limit:        1000,
 			SupplierCode: supplierCode,
 			SupplierName: supplierName,
 		}
@@ -686,7 +706,7 @@ func (r *PurchasePriceRepositoryImpl) GetPurchasePriceDetailByParam(tx *gorm.DB,
 		Where("mpp.currency_id = ?", curId).
 		Where("mpp.supplier_id = ?", supId).
 		Where("mpp.purchase_price_effective_date >= ? AND mpp.purchase_price_effective_date <= ?", effectiveDate+" 00:00:00.000", effectiveDate+" 23:59:59.999")
-	err := baseModelQuery.Scopes(pagination.Paginate(&entities, &pages, baseModelQuery)).Scan(&response).Error
+	err := baseModelQuery.Scopes(pagination.Paginate(&pages, baseModelQuery)).Scan(&response).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{

@@ -283,14 +283,14 @@ func (r *LabourSellingPriceRepositoryImpl) GetAllSellingPrice(tx *gorm.DB, filte
 			BrandId = ServiceFilter[i].ColumnValue
 		} else if strings.Contains(ServiceFilter[i].ColumnField, "job_type_id") {
 			JobTypeId = ServiceFilter[i].ColumnValue
-		} else if strings.Contains(ServiceFilter[i].ColumnField, "bill_to_id"){
+		} else if strings.Contains(ServiceFilter[i].ColumnField, "bill_to_id") {
 			BillToId = ServiceFilter[i].ColumnValue
 		}
 	}
 
 	query := tx.Model(entities)
 
-	filterQuery := utils.ApplyFilterExact(query, filter)
+	filterQuery := utils.ApplyFilter(query, filter)
 
 	// if err := filterQuery.Scopes(pagination.Paginate(entities, &pages, filterQuery)).Scan(&responses).Error; err != nil {
 	// 	return pages, &exceptions.BaseErrorResponse{

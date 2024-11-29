@@ -72,17 +72,22 @@ func (r *IncentiveMasterControllerImpl) GetAllIncentiveMaster(writer http.Respon
 
 	criteria := utils.BuildFilterCondition(queryParams)
 
-	paginatedData, totalPages, totalRows, err := r.IncentiveMasterService.GetAllIncentiveMaster(criteria, paginate)
+	result, err := r.IncentiveMasterService.GetAllIncentiveMaster(criteria, paginate)
 	if err != nil {
 		helper.ReturnError(writer, request, err)
 		return
 	}
 
-	if len(paginatedData) > 0 {
-		payloads.NewHandleSuccessPagination(writer, utils.ModifyKeysInResponse(paginatedData), "Get Data Successfully", http.StatusOK, paginate.Limit, paginate.Page, int64(totalRows), totalPages)
-	} else {
-		payloads.NewHandleError(writer, "Data not found", http.StatusNotFound)
-	}
+	payloads.NewHandleSuccessPagination(
+		writer,
+		result.Rows,
+		"Get Data Successfully!",
+		http.StatusOK,
+		result.Limit,
+		result.Page,
+		int64(result.TotalRows),
+		result.TotalPages,
+	)
 }
 
 // @Summary Get Incentive Master By ID

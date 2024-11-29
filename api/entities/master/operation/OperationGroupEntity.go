@@ -7,9 +7,9 @@ type OperationGroup struct {
 	OperationGroupId          int              `gorm:"column:operation_group_id;not null;primaryKey;size:30" json:"operation_group_id"`
 	OperationGroupCode        string           `gorm:"column:operation_group_code;unique;size:2;type:char(2);not null" json:"operation_group_code"`
 	OperationGroupDescription string           `gorm:"column:operation_group_description;not null;size:50" json:"operation_group_description"`
-	OperationSection          OperationSection `gorm:"foreignKey:OperationGroupId;references:OperationGroupId"`
-	OperationEntries          OperationEntries `gorm:"foreignKey:OperationGroupId;references:OperationGroupId"`
-	OperationKey              OperationKey     `gorm:"foreignKey:OperationGroupId;references:OperationGroupId"`
+	OperationSection          OperationSection `gorm:"foreignKey:OperationGroupId;references:OperationGroupId" json:"OperationSection"`
+	OperationEntries          OperationEntries `gorm:"foreignKey:OperationGroupId;references:OperationGroupId" json:"OperationEntries"`
+	OperationKey              OperationKey     `gorm:"foreignKey:OperationGroupId;references:OperationGroupId" json:"OperationKey"`
 }
 
 func (*OperationGroup) TableName() string {

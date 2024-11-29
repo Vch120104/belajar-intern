@@ -485,16 +485,17 @@ func (r *WarehouseMasterImpl) GetWarehouseWithMultiId(tx *gorm.DB, MultiIds []in
 	return warehouseResponses, nil
 }
 
-func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	var entities masterwarehouseentities.WarehouseMaster
-	response := []masterwarehousepayloads.GetLookupWarehouseMasterResponse{}
-	query := tx.Model(entities).
-		Select("mtr_warehouse_group.*,mtr_warehouse_master.*").
-		Joins("LEFT JOIN mtr_warehouse_group on mtr_warehouse_master.warehouse_group_id = mtr_warehouse_group.warehouse_group_id")
+func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 
-	whereQuery := utils.ApplyFilter(query, filter)
+	var response []masterwarehousepayloads.GetLookupWarehouseMasterResponse
 
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&response).Error
+	baseModelQuery := tx.Model(&masterwarehouseentities.WarehouseMaster{}).
+		Select("mtr_warehouse_group.*, mtr_warehouse_master.*").
+		Joins("LEFT JOIN mtr_warehouse_group ON mtr_warehouse_master.warehouse_group_id = mtr_warehouse_group.warehouse_group_id")
+
+	whereQuery := utils.ApplyFilter(baseModelQuery, filterCondition)
+
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Find(&response).Error
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
@@ -504,12 +505,10 @@ func (r *WarehouseMasterImpl) GetAll(tx *gorm.DB, filter []utils.FilterCondition
 		}
 	}
 
+	// If no records are found, return an empty slice
 	if len(response) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Message:    "No warehouse master found",
-			Err:        err,
-		}
+		pages.Rows = []masterwarehousepayloads.GetLookupWarehouseMasterResponse{}
+		return pages, nil
 	}
 
 	pages.Rows = response

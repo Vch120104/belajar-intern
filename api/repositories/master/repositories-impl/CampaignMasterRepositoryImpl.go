@@ -681,33 +681,44 @@ func (r *CampaignMasterRepositoryImpl) GetByCodeCampaignMaster(tx *gorm.DB, code
 	return ModelIdJoinData[0], nil
 }
 
-func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	CampaignMasterMapping := []masterentities.CampaignMaster{}
+func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterCodeAndName(
+	tx *gorm.DB,
+	pages pagination.Pagination,
+) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	// Initialize response and entity arrays
 	CampaignMasterResponse := []masterpayloads.GetHistory{}
+	CampaignMasterMapping := []masterentities.CampaignMaster{}
+
+	// Start query on the CampaignMaster model
 	query := tx.Model(masterentities.CampaignMaster{}).Scan(&CampaignMasterResponse)
-	err := query.Scopes(pagination.Paginate(&CampaignMasterMapping, &pages, query)).Scan(&CampaignMasterResponse).Error
-	if len(CampaignMasterResponse) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
-	}
+	err := query.Scopes(pagination.Paginate(&pages, query)).Scan(&CampaignMasterResponse).Error
 
 	if err != nil {
-
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+
+	// If no data is found, return empty array and pagination info
+	if len(CampaignMasterResponse) == 0 {
+		pages.Rows = CampaignMasterMapping
+		return pages, nil
+	}
+
 	pages.Rows = CampaignMasterResponse
+
 	return pages, nil
 }
 
-func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	model := []masterpayloads.GetModelResponse{}
-	entities := masterentities.CampaignMaster{}
-	payloads := []masterpayloads.CampaignMasterResponse{}
+func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(
+	tx *gorm.DB,
+	filterCondition []utils.FilterCondition, // Add the filterCondition parameter
+	pages pagination.Pagination,
+) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	var model []masterpayloads.GetModelResponse
+	var entities masterentities.CampaignMaster
+	var payloads []masterpayloads.CampaignMasterResponse
 	var mapResponses []map[string]interface{}
 
 	var modelDescription string
@@ -715,7 +726,9 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 	var campaignPeriodFrom string
 	var campaignPeriodTo string
 	var newFilterCondition []utils.FilterCondition
-	for _, filter := range filterCondition {
+
+	// Loop through filter conditions to capture the specific filters
+	for _, filter := range filterCondition { // Change to iterate through filterCondition
 		if filter.ColumnField == "model_description" && filter.ColumnValue != "" {
 			modelDescription = filter.ColumnValue
 			continue
@@ -735,82 +748,98 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 		newFilterCondition = append(newFilterCondition, filter)
 	}
 
+	// Initialize base query on CampaignMaster model
 	baseModelQuery := tx.Model(&entities)
 
+	// Filter by model description if provided
 	if modelDescription != "" {
 		modelIds := []int{}
 		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_description=" + modelDescription
 		modelPayloads := []masterpayloads.GetModelResponse{}
-		if err := utils.GetArray(modelUrl, &modelPayloads, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+		if err := utils.Get(modelUrl, &modelPayloads, nil); err != nil {
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
-		if len(modelPayloads) > 0 {
-			for _, model := range modelPayloads {
-				modelIds = append(modelIds, model.ModelId)
-			}
-		} else {
-			modelIds = append(modelIds, -1)
+		for _, model := range modelPayloads {
+			modelIds = append(modelIds, model.ModelId)
+		}
+		if len(modelIds) == 0 {
+			modelIds = append(modelIds, -1) // Ensure a fallback when no models are found
 		}
 		baseModelQuery = baseModelQuery.Where("model_id IN ?", modelIds)
 	}
 
+	// Filter by model code if provided
 	if modelCode != "" {
 		modelIds := []int{}
 		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_code=" + modelCode
 		modelPayloads := []masterpayloads.GetModelResponse{}
-		if err := utils.GetArray(modelUrl, &modelPayloads, nil); err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+		if err := utils.Get(modelUrl, &modelPayloads, nil); err != nil {
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
 			}
 		}
-		if len(modelPayloads) > 0 {
-			for _, model := range modelPayloads {
-				modelIds = append(modelIds, model.ModelId)
-			}
-		} else {
-			modelIds = append(modelIds, -1)
+		for _, model := range modelPayloads {
+			modelIds = append(modelIds, model.ModelId)
+		}
+		if len(modelIds) == 0 {
+			modelIds = append(modelIds, -1) // Ensure a fallback when no models are found
 		}
 		baseModelQuery = baseModelQuery.Where("model_id IN ?", modelIds)
 	}
 
+	// Filter by campaign period if provided
 	if campaignPeriodFrom != "" {
-		baseModelQuery.Where("FORMAT(campaign_period_from, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodFrom+"%")
+		baseModelQuery = baseModelQuery.Where("FORMAT(campaign_period_from, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodFrom+"%")
 	}
 
 	if campaignPeriodTo != "" {
-		baseModelQuery.Where("FORMAT(campaign_period_to, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodTo+"%")
+		baseModelQuery = baseModelQuery.Where("FORMAT(campaign_period_to, 'dd MMM yyyy') LIKE ?", "%"+campaignPeriodTo+"%")
 	}
 
+	// Apply additional filters from the request
 	whereQuery := utils.ApplyFilter(baseModelQuery, newFilterCondition)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, whereQuery)).Scan(&payloads).Error
 
+	// Paginate the query and retrieve the data
+	err := whereQuery.Scopes(pagination.Paginate(&pages, whereQuery)).Scan(&payloads).Error
+
+	// Handle error if there was an issue retrieving the data
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
+
+	// If no data is found, return an empty pagination response
+	if len(payloads) == 0 {
+		pages.Rows = []masterpayloads.CampaignMasterResponse{} // Empty array if no data found
+		return pages, nil
+	}
+
+	// Get model data from external service
 	errUrlModel := utils.Get(config.EnvConfigs.SalesServiceUrl+"unit-model?page=0&limit=1000000", &model, nil)
 	if errUrlModel != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusNotFound,
-			Err:        err,
+			Err:        errUrlModel,
 		}
 	}
-	joineddata1, errdf := utils.DataFrameInnerJoin(payloads, model, "ModelId")
 
+	// Join the campaign master data with model data
+	joinedData, errdf := utils.DataFrameInnerJoin(payloads, model, "ModelId")
 	if errdf != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errdf,
 		}
 	}
 
-	for _, response := range joineddata1 {
+	// Convert the joined data to a map for easier handling and return the response
+	for _, response := range joinedData {
 		responseMap := map[string]interface{}{
 			"appointment_only":     response["AppointmentOnly"],
 			"brand_id":             response["BrandID"],
@@ -831,103 +860,123 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(tx *gorm.DB, filterC
 		mapResponses = append(mapResponses, responseMap)
 	}
 
+	// Handle the three return values from pagination
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(mapResponses, &pages)
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = dataPaginate
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
 }
 
-func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, pages pagination.Pagination, id int) ([]map[string]interface{}, int, int, *exceptions.BaseErrorResponse) {
-	var entities []masterentities.CampaignMasterDetail
+func (r *CampaignMasterRepositoryImpl) GetAllCampaignMasterDetail(tx *gorm.DB, pages pagination.Pagination, id int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responsedetail []masterpayloads.CampaignMasterDetailGetPayloads
 	var item masteritempayloads.BomItemNameResponse
 	var operation masterpayloads.Operation
-	var packagecode string
 	combinedPayloads := make([]map[string]interface{}, 0)
 
-	err := tx.Model(&entities).
-		Where(masterentities.CampaignMasterDetail{
-			CampaignId: id,
-		}).Scan(&responsedetail).Error
+	// Query Campaign Master Detail filtered by CampaignId
+	err := tx.Model(&masterentities.CampaignMasterDetail{}).
+		Where("campaign_id = ?", id).
+		Scan(&responsedetail).Error
 
 	if err != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
 
+	// Fetch Line Type for Operation
 	lineTypeOpr, lineTypeError := generalserviceapiutils.GetLineTypeByCode("1")
 	if lineTypeError != nil {
-		return nil, 0, 0, &exceptions.BaseErrorResponse{
+		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Message:    "Error fetching line type operation data",
 			Err:        lineTypeError.Err,
 		}
 	}
 
-	for _, op := range responsedetail {
-		if op.PackageId != 0 {
-			err := tx.Select("mtr_package.package_code").Table("mtr_package").Where("mtr_package.package_id=?", op.PackageId).Scan(&packagecode).Error
+	for _, detail := range responsedetail {
+		var packageCode string
+		if detail.PackageId != 0 {
+			err := tx.Table("mtr_package").Select("package_code").
+				Where("package_id = ?", detail.PackageId).
+				Scan(&packageCode).Error
 			if err != nil {
-				return nil, 0, 0, &exceptions.BaseErrorResponse{
+				return pages, &exceptions.BaseErrorResponse{
 					StatusCode: http.StatusNotFound,
+					Err:        err,
 				}
 			}
 		}
-		if op.LineTypeId != lineTypeOpr.LineTypeId && op.LineTypeId != 0 {
-			err = tx.Select("mtr_item.item_name,mtr_item.item_code").Table("mtr_campaign_master_detail").
-				Joins("join mtr_item_operation on mtr_item_operation.item_operation_id=mtr_campaign_master_detail.item_operation_id").
-				Joins("join mtr_item on mtr_item.item_id=mtr_item_operation.item_operation_model_mapping_id").
-				Where("mtr_campaign_master_detail.campaign_detail_id=?", op.CampaignDetailId).
-				Scan(&item).
-				Error
+
+		if detail.LineTypeId != lineTypeOpr.LineTypeId && detail.LineTypeId != 0 {
+			err = tx.Table("mtr_item").
+				Select("item_name, item_code").
+				Joins("JOIN mtr_item_operation ON mtr_item.item_id = mtr_item_operation.item_operation_model_mapping_id").
+				Joins("JOIN mtr_campaign_master_detail ON mtr_campaign_master_detail.item_operation_id = mtr_item_operation.item_operation_id").
+				Where("mtr_campaign_master_detail.campaign_detail_id = ?", detail.CampaignDetailId).
+				Scan(&item).Error
 		} else {
-			err = tx.Select("operation_code.operation_name,operation_code.operation_code").Where("campaign_detail_id=?", op.CampaignDetailId).
-				Joins("join mtr_item_operation on mtr_item_operation.item_operation_id = mtr_campaign_master_detail.item_operation_id").
-				Joins("JOIN mtr_operation_model_mapping ON mtr_operation_model_mapping.operation_model_mapping_id=mtr_item_operation.item_operation_model_mapping_id").
-				Joins("join mtr_operation_code on mtr_operation_code.operation_id=mtr_operation_model_mapping.operation_id").
-				Select("mtr_campaign_master_detail.*,mtr_operation_code.operation_code,mtr_operation_code.operation_name").
-				Table("mtr_campaign_master_detail").
+			err = tx.Table("mtr_operation_code").
+				Select("operation_name, operation_code").
+				Joins("JOIN mtr_operation_model_mapping ON mtr_operation_code.operation_id = mtr_operation_model_mapping.operation_id").
+				Joins("JOIN mtr_item_operation ON mtr_operation_model_mapping.operation_model_mapping_id = mtr_item_operation.item_operation_model_mapping_id").
+				Joins("JOIN mtr_campaign_master_detail ON mtr_item_operation.item_operation_id = mtr_campaign_master_detail.item_operation_id").
+				Where("mtr_campaign_master_detail.campaign_detail_id = ?", detail.CampaignDetailId).
 				Scan(&operation).Error
 		}
+
 		if err != nil {
-			return nil, 0, 0, &exceptions.BaseErrorResponse{
+			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
 				Err:        err,
 			}
 		}
 
-		beforeDisc := op.Price * op.Quantity
+		// Calculate discounted total
+		beforeDisc := detail.Price * detail.Quantity
 		afterDisc := beforeDisc
-		if op.DiscountPercent > 0 {
-			afterDisc = beforeDisc - (beforeDisc * op.DiscountPercent / 100)
+		if detail.DiscountPercent > 0 {
+			afterDisc = beforeDisc - (beforeDisc * detail.DiscountPercent / 100)
 		}
 
+		// Build the response map
 		response := map[string]interface{}{
-			"is_active":          op.IsActive,
-			"campaign_id":        op.CampaignId,
-			"campaign_detail_id": op.CampaignDetailId,
-			"package_code":       packagecode,
-			"package_id":         op.PackageId,
-			"line_type_id":       op.LineTypeId,
-			"item_operation_id":  op.ItemOperationId,
-			"frt_quantity":       op.Quantity,
-			"price":              op.Price,
-			"discount_percent":   op.DiscountPercent,
-			"share_percent":      op.SharePercent,
+			"is_active":          detail.IsActive,
+			"campaign_id":        detail.CampaignId,
+			"campaign_detail_id": detail.CampaignDetailId,
+			"package_code":       packageCode,
+			"package_id":         detail.PackageId,
+			"line_type_id":       detail.LineTypeId,
+			"item_operation_id":  detail.ItemOperationId,
+			"frt_quantity":       detail.Quantity,
+			"price":              detail.Price,
+			"discount_percent":   detail.DiscountPercent,
+			"share_percent":      detail.SharePercent,
 			"total":              afterDisc,
 		}
 
-		if op.LineTypeId != lineTypeOpr.LineTypeId && op.LineTypeId != 0 {
+		// Add item or operation data based on line type
+		if detail.LineTypeId != lineTypeOpr.LineTypeId && detail.LineTypeId != 0 {
 			response["item_name"] = item.ItemName
 			response["item_code"] = item.ItemCode
 		} else {
 			response["operation_name"] = operation.OperationName
 			response["operation_code"] = operation.OperationCode
 		}
+
 		combinedPayloads = append(combinedPayloads, response)
 	}
+
+	// Paginate results
 	dataPaginate, totalPages, totalRows := pagination.NewDataFramePaginate(combinedPayloads, &pages)
-	return dataPaginate, totalPages, totalRows, nil
+	pages.Rows = dataPaginate
+	pages.TotalPages = totalPages
+	pages.TotalRows = int64(totalRows)
+
+	return pages, nil
 }
 
 func (r *CampaignMasterRepositoryImpl) UpdateCampaignMasterDetail(tx *gorm.DB, id int, req masterpayloads.CampaignMasterDetailPayloads) (int, *exceptions.BaseErrorResponse) {
@@ -994,26 +1043,27 @@ func (r *CampaignMasterRepositoryImpl) UpdateTotalCampaignMaster(tx *gorm.DB, id
 }
 
 func (r *CampaignMasterRepositoryImpl) GetAllPackageMasterToCopy(tx *gorm.DB, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+
 	var packageentities masterentities.PackageMaster
 	var payloads []masterpayloads.PackageMasterForCampaignMaster
 
 	BaseModelQuery := tx.Model(&packageentities)
-	rows, err := BaseModelQuery.Scopes(pagination.Paginate(&packageentities, &pages, BaseModelQuery)).Where("profit_center_id=?", 13).Scan(payloads).Rows()
+
+	err := BaseModelQuery.Scopes(pagination.Paginate(&pages, BaseModelQuery)).
+		Where("profit_center_id = ?", 13).
+		Scan(&payloads).Error
+
 	if len(payloads) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
-			Err:        err,
-		}
+		pages.Rows = []masterpayloads.PackageMasterForCampaignMaster{}
+		return pages, nil
 	}
 
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusNotFound,
+			StatusCode: http.StatusInternalServerError,
 			Err:        err,
 		}
 	}
-
-	defer rows.Close()
 
 	pages.Rows = payloads
 

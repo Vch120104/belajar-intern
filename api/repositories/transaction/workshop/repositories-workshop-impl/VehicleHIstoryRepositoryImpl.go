@@ -8,9 +8,10 @@ import (
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	"after-sales/api/utils"
-	"gorm.io/gorm"
 	"net/http"
 	"strconv"
+
+	"gorm.io/gorm"
 )
 
 type VehicleHIstoryImpl struct {
@@ -23,13 +24,13 @@ func NewVehicleHistoryImpl() transactionworkshoprepository.VehicleHistoryReposit
 func (r *VehicleHIstoryImpl) GetAllVehicleHistory(tx *gorm.DB, filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	var responses []transactionworkshoppayloads.VehicleHistoryResponses
 	entities := transactionworkshopentities.WorkOrder{}
-	JoinTable := tx.Table("trx_work_order as wo").
+	JoinTable := tx.Model(&entities).
 		Select("wo.work_order_system_number,wo.work_order_document_number,wo.work_order_date,WO.billable_to_id,ST.work_order_status_description,WO.service_mileage,WO.company_id,WO.customer_id,WO.total_after_vat").
 		Joins("Join mtr_work_order_status as ST ON WO.work_order_status_id = ST.work_order_status_id")
 
 	whereQuery := utils.ApplyFilter(JoinTable, filterCondition)
 	//whereQuery.Model(entities).Count(&totalRows)
-	err := whereQuery.Scopes(pagination.Paginate(&entities, &pages, JoinTable)).Order("wo.work_order_date desc").Scan(&responses).Error
+	err := whereQuery.Scopes(pagination.Paginate(&pages, JoinTable)).Order("wo.work_order_date desc").Scan(&responses).Error
 	if err != nil {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -37,10 +38,8 @@ func (r *VehicleHIstoryImpl) GetAllVehicleHistory(tx *gorm.DB, filterCondition [
 		}
 	}
 	if len(responses) == 0 {
-		return pages, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+		pages.Rows = []transactionworkshoppayloads.VehicleHistoryResponses{}
+		return pages, nil
 	}
 	var GetAllResponses []transactionworkshoppayloads.VehicleHistoryGetAllResponses
 	index := 0
