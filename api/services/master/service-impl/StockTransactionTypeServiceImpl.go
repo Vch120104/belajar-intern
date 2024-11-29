@@ -44,8 +44,6 @@ func (s *StockTransactionTypeServiceImpl) GetStockTransactionTypeByCode(Code str
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -77,8 +75,6 @@ func (s *StockTransactionTypeServiceImpl) GetAllStockTransactionType(conditions 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

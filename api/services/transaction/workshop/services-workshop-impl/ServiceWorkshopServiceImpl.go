@@ -51,8 +51,6 @@ func (s *ServiceWorkshopServiceImpl) GetAllByTechnicianWO(idTech int, idSysWo in
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -86,8 +84,6 @@ func (s *ServiceWorkshopServiceImpl) StartService(idAlloc int, idSysWo int, comp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -122,8 +118,6 @@ func (s *ServiceWorkshopServiceImpl) PendingService(idAlloc int, idSysWo int, co
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -158,8 +152,6 @@ func (s *ServiceWorkshopServiceImpl) TransferService(idAlloc int, idSysWo int, c
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -194,8 +186,6 @@ func (s *ServiceWorkshopServiceImpl) StopService(idAlloc int, idSysWo int, compa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

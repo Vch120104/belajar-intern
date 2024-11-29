@@ -756,7 +756,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(
 		modelIds := []int{}
 		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_description=" + modelDescription
 		modelPayloads := []masterpayloads.GetModelResponse{}
-		if err := utils.GetArray(modelUrl, &modelPayloads, nil); err != nil {
+		if err := utils.Get(modelUrl, &modelPayloads, nil); err != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,
@@ -776,7 +776,7 @@ func (r *CampaignMasterRepositoryImpl) GetAllCampaignMaster(
 		modelIds := []int{}
 		modelUrl := config.EnvConfigs.SalesServiceUrl + "unit-model?page=0&limit=1000000&model_code=" + modelCode
 		modelPayloads := []masterpayloads.GetModelResponse{}
-		if err := utils.GetArray(modelUrl, &modelPayloads, nil); err != nil {
+		if err := utils.Get(modelUrl, &modelPayloads, nil); err != nil {
 			return pages, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusInternalServerError,
 				Err:        err,

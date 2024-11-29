@@ -53,8 +53,6 @@ func (s *WorkOrderServiceImpl) GenerateDocumentNumber(workOrderId int) (string, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -87,8 +85,6 @@ func (s *WorkOrderServiceImpl) GetAll(filterCondition []utils.FilterCondition, p
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -122,8 +118,6 @@ func (s *WorkOrderServiceImpl) New(request transactionworkshoppayloads.WorkOrder
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -157,8 +151,6 @@ func (s *WorkOrderServiceImpl) GetById(id int, pages pagination.Pagination) (tra
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -191,8 +183,6 @@ func (s *WorkOrderServiceImpl) Submit(id int) (bool, string, *exceptions.BaseErr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -226,8 +216,6 @@ func (s *WorkOrderServiceImpl) Save(request transactionworkshoppayloads.WorkOrde
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -261,8 +249,6 @@ func (s *WorkOrderServiceImpl) Void(workOrderId int) (bool, *exceptions.BaseErro
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -294,8 +280,6 @@ func (s *WorkOrderServiceImpl) CloseOrder(id int) (bool, *exceptions.BaseErrorRe
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -329,8 +313,6 @@ func (s *WorkOrderServiceImpl) GetAllRequest(filterCondition []utils.FilterCondi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -365,8 +347,6 @@ func (s *WorkOrderServiceImpl) GetRequestById(workorderID int, detailID int) (tr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -400,8 +380,6 @@ func (s *WorkOrderServiceImpl) UpdateRequest(workorderID int, detailID int, requ
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -435,8 +413,6 @@ func (s *WorkOrderServiceImpl) AddRequest(id int, request transactionworkshoppay
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -469,8 +445,6 @@ func (s *WorkOrderServiceImpl) AddRequestMultiId(workorderID int, requests []tra
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -503,8 +477,6 @@ func (s *WorkOrderServiceImpl) DeleteRequest(id int, IdWorkorder int) (bool, *ex
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -537,8 +509,6 @@ func (s *WorkOrderServiceImpl) GetAllVehicleService(filterCondition []utils.Filt
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -573,8 +543,6 @@ func (s *WorkOrderServiceImpl) GetVehicleServiceById(workorderID int, detailID i
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -608,8 +576,6 @@ func (s *WorkOrderServiceImpl) UpdateVehicleService(workorderID int, detailID in
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -644,8 +610,6 @@ func (s *WorkOrderServiceImpl) AddVehicleService(id int, request transactionwork
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -678,8 +642,6 @@ func (s *WorkOrderServiceImpl) DeleteVehicleService(id int, IdWorkorder int) (bo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -713,8 +675,6 @@ func (s *WorkOrderServiceImpl) GetAllDetailWorkOrder(filterCondition []utils.Fil
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -750,8 +710,6 @@ func (s *WorkOrderServiceImpl) GetDetailByIdWorkOrder(workorderID int, detailID 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -789,8 +747,6 @@ func (s *WorkOrderServiceImpl) UpdateDetailWorkOrder(workorderID int, detailID i
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -823,8 +779,6 @@ func (s *WorkOrderServiceImpl) AddDetailWorkOrder(id int, request transactionwor
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -857,8 +811,6 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrder(id int, IdWorkorder int) (b
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -892,8 +844,6 @@ func (s *WorkOrderServiceImpl) GetAllBooking(filterCondition []utils.FilterCondi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -928,8 +878,6 @@ func (s *WorkOrderServiceImpl) GetBookingById(workOrderId int, id int, pages pag
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -963,8 +911,6 @@ func (s *WorkOrderServiceImpl) NewBooking(request transactionworkshoppayloads.Wo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -997,8 +943,6 @@ func (s *WorkOrderServiceImpl) SaveBooking(workOrderId int, id int, request tran
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1033,8 +977,6 @@ func (s *WorkOrderServiceImpl) GetAllAffiliated(filterCondition []utils.FilterCo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1071,8 +1013,6 @@ func (s *WorkOrderServiceImpl) GetAffiliatedById(workOrderId int, id int, pages 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1107,8 +1047,6 @@ func (s *WorkOrderServiceImpl) NewAffiliated(workOrderId int, request transactio
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1143,8 +1081,6 @@ func (s *WorkOrderServiceImpl) SaveAffiliated(workOrderId int, id int, request t
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1179,8 +1115,6 @@ func (s *WorkOrderServiceImpl) DeleteRequestMultiId(workorderID int, detailID []
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1215,8 +1149,6 @@ func (s *WorkOrderServiceImpl) DeleteVehicleServiceMultiId(workOrderId int, id [
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1251,8 +1183,6 @@ func (s *WorkOrderServiceImpl) DeleteDetailWorkOrderMultiId(workOrderId int, id 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1286,8 +1216,6 @@ func (s *WorkOrderServiceImpl) ChangeBillTo(workOrderId int, request transaction
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1321,8 +1249,6 @@ func (s *WorkOrderServiceImpl) ChangePhoneNo(workOrderId int, request transactio
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1356,8 +1282,6 @@ func (s *WorkOrderServiceImpl) ConfirmPrice(workOrderId int, detailID []int, req
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1391,8 +1315,6 @@ func (s *WorkOrderServiceImpl) DeleteCampaign(workOrderId int) (transactionworks
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1424,8 +1346,6 @@ func (s *WorkOrderServiceImpl) AddContractService(workOrderId int, request trans
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1457,8 +1377,6 @@ func (s *WorkOrderServiceImpl) AddGeneralRepairPackage(workOrderId int, request 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1490,8 +1408,6 @@ func (s *WorkOrderServiceImpl) AddFieldAction(workOrderId int, request transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1523,8 +1439,6 @@ func (s *WorkOrderServiceImpl) GetServiceRequestByWO(workOrderId int, filterCond
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1558,8 +1472,6 @@ func (s *WorkOrderServiceImpl) GetClaimByWO(workOrderId int, filterCondition []u
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1593,8 +1505,6 @@ func (s *WorkOrderServiceImpl) GetClaimItemByWO(workOrderId int, filterCondition
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1628,8 +1538,6 @@ func (s *WorkOrderServiceImpl) GetWOByBillCode(workOrderId int, filterCondition 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1663,8 +1571,6 @@ func (s *WorkOrderServiceImpl) GetDetailWOByClaimBillCode(workOrderId int, trans
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1698,8 +1604,6 @@ func (s *WorkOrderServiceImpl) GetDetailWOByBillCode(workOrderId int, transactio
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1733,8 +1637,6 @@ func (s *WorkOrderServiceImpl) GetDetailWOByATPMBillCode(workOrderId int, transa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -1768,8 +1670,6 @@ func (s *WorkOrderServiceImpl) GetSupplyByWO(workOrderId int, filterCondition []
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

@@ -50,8 +50,6 @@ func (s *QualityControlServiceImpl) GetAll(filterCondition []utils.FilterConditi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -88,8 +86,6 @@ func (s *QualityControlServiceImpl) GetById(id int, filterCondition []utils.Filt
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -124,8 +120,6 @@ func (s *QualityControlServiceImpl) Qcpass(id int, iddet int) (transactionworksh
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -161,8 +155,6 @@ func (s *QualityControlServiceImpl) Reorder(id int, iddet int, payload transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

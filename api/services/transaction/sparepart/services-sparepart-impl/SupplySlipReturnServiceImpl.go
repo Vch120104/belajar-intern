@@ -53,8 +53,6 @@ func (s *SupplySlipReturnServiceImpl) SaveSupplySlipReturn(req transactionsparep
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -87,8 +85,6 @@ func (s *SupplySlipReturnServiceImpl) SaveSupplySlipReturnDetail(req transaction
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -121,8 +117,6 @@ func (s *SupplySlipReturnServiceImpl) GetAllSupplySlipReturn(internalFilter []ut
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -210,8 +204,6 @@ func (s *SupplySlipReturnServiceImpl) GetSupplySlipReturnDetailById(id int) (tra
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -243,8 +235,6 @@ func (s *SupplySlipReturnServiceImpl) UpdateSupplySlipReturn(req transactionspar
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -277,8 +267,6 @@ func (s *SupplySlipReturnServiceImpl) UpdateSupplySlipReturnDetail(req transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

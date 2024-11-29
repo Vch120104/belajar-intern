@@ -50,8 +50,6 @@ func (s *MarkupMasterServiceImpl) GetMarkupMasterList(filter []utils.FilterCondi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *MarkupMasterServiceImpl) GetMarkupMasterById(id int) (masteritempayload
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -118,8 +114,6 @@ func (s *MarkupMasterServiceImpl) GetAllMarkupMasterIsActive() ([]masteritempayl
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -152,8 +146,6 @@ func (s *MarkupMasterServiceImpl) SaveMarkupMaster(req masteritempayloads.Markup
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -194,8 +186,6 @@ func (s *MarkupMasterServiceImpl) ChangeStatusMasterMarkupMaster(Id int) (bool, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -234,8 +224,6 @@ func (s *MarkupMasterServiceImpl) GetMarkupMasterByCode(markupCode string) (mast
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

@@ -51,8 +51,6 @@ func (s *ServiceBodyshopServiceImpl) GetAllByTechnicianWOBodyshop(idTech int, id
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -86,8 +84,6 @@ func (s *ServiceBodyshopServiceImpl) StartService(idAlloc int, idSysWo int, comp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -122,8 +118,6 @@ func (s *ServiceBodyshopServiceImpl) PendingService(idAlloc int, idSysWo int, co
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -158,8 +152,6 @@ func (s *ServiceBodyshopServiceImpl) TransferService(idAlloc int, idSysWo int, c
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -194,8 +186,6 @@ func (s *ServiceBodyshopServiceImpl) StopService(idAlloc int, idSysWo int, compa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

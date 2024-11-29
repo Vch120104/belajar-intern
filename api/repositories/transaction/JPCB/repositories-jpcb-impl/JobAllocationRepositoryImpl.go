@@ -29,7 +29,7 @@ func (r *JobAllocationRepositoryImpl) GetAllJobAllocation(tx *gorm.DB, filterCon
 
 	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=OJ"
 	itemGroupPayloads := []transactionjpcbpayloads.ItemGroupPayload{}
-	if err := utils.GetArray(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
+	if err := utils.Get(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
 		return pages, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("fail to retrieve item group data"),
@@ -148,7 +148,7 @@ func (r *JobAllocationRepositoryImpl) GetJobAllocationById(tx *gorm.DB, technici
 
 	itemGroupUrl := config.EnvConfigs.GeneralServiceUrl + "filter-item-group?item_group_code=OJ"
 	itemGroupPayloads := []transactionjpcbpayloads.ItemGroupPayload{}
-	if err := utils.GetArray(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
+	if err := utils.Get(itemGroupUrl, &itemGroupPayloads, nil); err != nil || len(itemGroupPayloads) == 0 {
 		return responses, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
 			Err:        errors.New("fail to retrieve item group data"),

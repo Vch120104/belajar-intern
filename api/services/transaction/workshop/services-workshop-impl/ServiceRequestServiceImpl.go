@@ -52,8 +52,6 @@ func (s *ServiceRequestServiceImpl) GenerateDocumentNumberServiceRequest(Service
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *ServiceRequestServiceImpl) NewStatus(filter []utils.FilterCondition) ([
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -120,8 +116,6 @@ func (s *ServiceRequestServiceImpl) GetAll(filterCondition []utils.FilterConditi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -156,8 +150,6 @@ func (s *ServiceRequestServiceImpl) GetById(id int, pages pagination.Pagination)
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -192,8 +184,6 @@ func (s *ServiceRequestServiceImpl) New(request transactionworkshoppayloads.Serv
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -226,8 +216,6 @@ func (s *ServiceRequestServiceImpl) Save(id int, request transactionworkshoppayl
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -260,8 +248,6 @@ func (s *ServiceRequestServiceImpl) Submit(id int) (bool, string, *exceptions.Ba
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -294,8 +280,6 @@ func (s *ServiceRequestServiceImpl) Void(id int) (bool, *exceptions.BaseErrorRes
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -327,8 +311,6 @@ func (s *ServiceRequestServiceImpl) CloseOrder(id int) (bool, *exceptions.BaseEr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -361,8 +343,6 @@ func (s *ServiceRequestServiceImpl) GetAllServiceDetail(filterCondition []utils.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -397,8 +377,6 @@ func (s *ServiceRequestServiceImpl) GetServiceDetailById(idsys int) (transaction
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -436,8 +414,6 @@ func (s *ServiceRequestServiceImpl) AddServiceDetail(idsys int, request transact
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -471,8 +447,6 @@ func (s *ServiceRequestServiceImpl) UpdateServiceDetail(idsys int, idservice int
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -506,8 +480,6 @@ func (s *ServiceRequestServiceImpl) DeleteServiceDetail(idsys int, idservice int
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -541,8 +513,6 @@ func (s *ServiceRequestServiceImpl) DeleteServiceDetailMultiId(idsys int, idserv
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -576,8 +546,6 @@ func (s *ServiceRequestServiceImpl) NewServiceType(filter []utils.FilterConditio
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

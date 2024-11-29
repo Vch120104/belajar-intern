@@ -40,8 +40,6 @@ func (s *MovingCodeServiceImpl) ActivateMovingCode(id string) (bool, *exceptions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -75,8 +73,6 @@ func (s *MovingCodeServiceImpl) DeactiveMovingCode(id string) (bool, *exceptions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -110,8 +106,6 @@ func (s *MovingCodeServiceImpl) GetDropdownMovingCode(companyId int) ([]masterpa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -145,8 +139,6 @@ func (s *MovingCodeServiceImpl) ChangeStatusMovingCode(Id int) (any, *exceptions
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -180,8 +172,6 @@ func (s *MovingCodeServiceImpl) CreateMovingCode(req masterpayloads.MovingCodeLi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -215,8 +205,6 @@ func (s *MovingCodeServiceImpl) GetAllMovingCode(companyId int, pages pagination
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -250,8 +238,6 @@ func (s *MovingCodeServiceImpl) GetMovingCodebyId(Id int) (masterpayloads.Moving
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -285,8 +271,6 @@ func (s *MovingCodeServiceImpl) PushMovingCodePriority(companyId int, Id int) (b
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -320,8 +304,6 @@ func (s *MovingCodeServiceImpl) UpdateMovingCode(req masterpayloads.MovingCodeLi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

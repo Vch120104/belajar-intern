@@ -46,8 +46,6 @@ func (s *OrderTypeServiceImpl) GetAllOrderType() ([]masterpayloads.GetOrderTypeR
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -80,8 +78,6 @@ func (s *OrderTypeServiceImpl) GetOrderTypeById(id int) (masterpayloads.GetOrder
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -114,8 +110,6 @@ func (s *OrderTypeServiceImpl) GetOrderTypeByName(name string) ([]masterpayloads
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -148,8 +142,6 @@ func (s *OrderTypeServiceImpl) SaveOrderType(req masterpayloads.OrderTypeSaveReq
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -182,8 +174,6 @@ func (s *OrderTypeServiceImpl) UpdateOrderType(id int, req masterpayloads.OrderT
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -216,8 +206,6 @@ func (s *OrderTypeServiceImpl) ChangeStatusOrderType(id int) (masterentities.Ord
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -250,8 +238,6 @@ func (s *OrderTypeServiceImpl) DeleteOrderType(id int) (bool, *exceptions.BaseEr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

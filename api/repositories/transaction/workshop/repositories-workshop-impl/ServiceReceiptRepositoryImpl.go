@@ -130,8 +130,8 @@ func (s *ServiceReceiptRepositoryImpl) GetAll(tx *gorm.DB, filterCondition []uti
 		vehicleResponses, vehicleErr := salesserviceapiutils.GetVehicleById(ServiceReceiptReq.VehicleId)
 		if vehicleErr != nil {
 			return nil, 0, 0, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to retrieve vehicle data from the external API",
+				StatusCode: vehicleErr.StatusCode,
+				Message:    vehicleErr.Message,
 				Err:        vehicleErr.Err,
 			}
 		}
