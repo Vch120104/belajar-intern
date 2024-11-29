@@ -39,7 +39,7 @@ func GetCompanyBrandByCompanyPagination(id int, params CompanyBrandParams) (Comp
 	if params.Limit == 0 {
 		params.Limit = 100000
 	}
-	url := config.EnvConfigs.GeneralServiceUrl + "company-brand/" + strconv.Itoa(id) + "?page=" + strconv.Itoa(params.Page) + "&limit=" + strconv.Itoa(params.Limit)
+	url := config.EnvConfigs.GeneralServiceUrl + "company-brand-list/" + strconv.Itoa(id) + "?page=" + strconv.Itoa(params.Page) + "&limit=" + strconv.Itoa(params.Limit)
 
 	err := utils.GetArray(url, nil, &getCompanyBrand)
 	if err != nil {
