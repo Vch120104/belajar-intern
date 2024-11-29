@@ -10,7 +10,6 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -212,54 +211,6 @@ func Put(url string, body interface{}, result interface{}) error {
 
 func Delete(url string, body interface{}, result interface{}) error {
 	return CallAPI("DELETE", url, body, result)
-}
-
-// GetArray handles array responses
-func GetArray(url string, params interface{}, response interface{}) error {
-	if params != nil {
-		queryParams, err := json.Marshal(params)
-		if err != nil {
-			return fmt.Errorf("failed to marshal query params: %w", err)
-		}
-
-		var queryMap map[string]interface{}
-		if err := json.Unmarshal(queryParams, &queryMap); err != nil {
-			return fmt.Errorf("failed to unmarshal query params: %w", err)
-		}
-
-		query := "?"
-		for key, value := range queryMap {
-			query += fmt.Sprintf("%s=%v&", key, value)
-		}
-		query = strings.TrimRight(query, "&")
-		url += query
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	// Execute the request
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Check for non-200 status codes
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("received non-200 response: %s, body: %s", resp.Status, string(bodyBytes))
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(response); err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	return nil
 }
 
 // BatchRequest supports sending multiple requests in one call

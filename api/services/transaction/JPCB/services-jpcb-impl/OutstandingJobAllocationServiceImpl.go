@@ -54,8 +54,6 @@ func (s *OutstandingJobAllocationServiceImpl) GetAllOutstandingJobAllocation(fil
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -87,8 +85,6 @@ func (s *OutstandingJobAllocationServiceImpl) GetByTypeIdOutstandingJobAllocatio
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -120,8 +116,6 @@ func (s *OutstandingJobAllocationServiceImpl) SaveOutstandingJobAllocation(refer
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

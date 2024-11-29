@@ -51,8 +51,6 @@ func (s *WarrantyFreeServiceServiceImpl) GetAllWarrantyFreeService(filterConditi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *WarrantyFreeServiceServiceImpl) GetWarrantyFreeServiceById(Id int) (map
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -119,8 +115,6 @@ func (s *WarrantyFreeServiceServiceImpl) SaveWarrantyFreeService(req masterpaylo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -154,8 +148,6 @@ func (s *WarrantyFreeServiceServiceImpl) ChangeStatusWarrantyFreeService(Id int)
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -195,8 +187,6 @@ func (s *WarrantyFreeServiceServiceImpl) UpdateWarrantyFreeService(req masterent
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

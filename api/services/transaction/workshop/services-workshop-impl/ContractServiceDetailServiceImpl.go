@@ -51,8 +51,6 @@ func (s *ContractServiceDetailServiceImpl) GetAllDetail(Id int, filterCondition 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -89,8 +87,6 @@ func (s *ContractServiceDetailServiceImpl) GetById(Id int) (transactionworkshopp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -123,8 +119,6 @@ func (s *ContractServiceDetailServiceImpl) SaveDetail(req transactionworkshoppay
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -157,8 +151,6 @@ func (s *ContractServiceDetailServiceImpl) UpdateDetail(contractServiceSystemNum
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -191,8 +183,6 @@ func (s *ContractServiceDetailServiceImpl) DeleteDetail(contractServiceSystemNum
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

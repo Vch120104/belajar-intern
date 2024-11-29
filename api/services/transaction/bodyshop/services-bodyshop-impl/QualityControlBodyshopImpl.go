@@ -51,8 +51,6 @@ func (s *QualityControlBodyshopServiceImpl) GetAll(filterCondition []utils.Filte
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -90,8 +88,6 @@ func (s *QualityControlBodyshopServiceImpl) GetById(id int, filterCondition []ut
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -126,8 +122,6 @@ func (s *QualityControlBodyshopServiceImpl) Qcpass(id int, iddet int) (transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -163,8 +157,6 @@ func (s *QualityControlBodyshopServiceImpl) Reorder(id int, iddet int, payload t
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

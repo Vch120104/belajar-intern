@@ -68,8 +68,6 @@ func (s *ItemLocationServiceImpl) AddItemLocation(id int, req masteritempayloads
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -102,8 +100,6 @@ func (s *ItemLocationServiceImpl) GetAllItemLocationDetail(filterCondition []uti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -136,8 +132,6 @@ func (s *ItemLocationServiceImpl) PopupItemLocation(filterCondition []utils.Filt
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -170,8 +164,6 @@ func (s *ItemLocationServiceImpl) DeleteItemLocation(id int) *exceptions.BaseErr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -203,8 +195,6 @@ func (s *ItemLocationServiceImpl) GetAllItemLoc(filtercondition []utils.FilterCo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -236,8 +226,6 @@ func (s *ItemLocationServiceImpl) GetByIdItemLoc(id int) (masteritempayloads.Ite
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -269,8 +257,6 @@ func (s *ItemLocationServiceImpl) SaveItemLoc(req masteritempayloads.SaveItemloc
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -302,8 +288,6 @@ func (s *ItemLocationServiceImpl) DeleteItemLoc(ids []int) (bool, *exceptions.Ba
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -476,8 +460,6 @@ func (s *ItemLocationServiceImpl) UploadProcessFile(uploadPreview []masteritempa
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

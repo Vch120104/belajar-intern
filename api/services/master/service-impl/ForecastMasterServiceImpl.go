@@ -51,8 +51,6 @@ func (s *ForecastMasterServiceImpl) GetForecastMasterById(id int) (masterpayload
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *ForecastMasterServiceImpl) SaveForecastMaster(req masterpayloads.Foreca
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -119,8 +115,6 @@ func (s *ForecastMasterServiceImpl) ChangeStatusForecastMaster(Id int) (bool, *e
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -160,8 +154,6 @@ func (s *ForecastMasterServiceImpl) GetAllForecastMaster(filterCondition []utils
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -194,8 +186,6 @@ func (s *ForecastMasterServiceImpl) UpdateForecastMaster(req masterpayloads.Fore
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

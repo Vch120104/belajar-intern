@@ -48,8 +48,6 @@ func (s *LabourSellingPriceServiceImpl) GetSellingPriceDetailById(detailId int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -83,8 +81,6 @@ func (s *LabourSellingPriceServiceImpl) SaveDuplicate(req masteroperationpayload
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -127,8 +123,6 @@ func (s *LabourSellingPriceServiceImpl) Duplicate(headerId int) ([]map[string]in
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -162,8 +156,6 @@ func (s *LabourSellingPriceServiceImpl) GetAllSellingPrice(filter []utils.Filter
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -196,8 +188,6 @@ func (s *LabourSellingPriceServiceImpl) GetLabourSellingPriceById(Id int) (map[s
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -230,8 +220,6 @@ func (s *LabourSellingPriceServiceImpl) GetAllSellingPriceDetailByHeaderId(heade
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -264,8 +252,6 @@ func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPrice(req masteroperati
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -299,8 +285,6 @@ func (s *LabourSellingPriceServiceImpl) SaveLabourSellingPriceDetail(req mastero
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -334,8 +318,6 @@ func (s *LabourSellingPriceServiceImpl) DeleteLabourSellingPriceDetail(iddet []i
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

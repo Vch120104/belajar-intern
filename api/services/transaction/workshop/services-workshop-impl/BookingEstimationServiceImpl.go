@@ -51,8 +51,6 @@ func (s *BookingEstimationServiceImpl) GetAll(filterCondition []utils.FilterCond
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *BookingEstimationServiceImpl) New(tx *gorm.DB, request transactionworks
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -117,8 +113,6 @@ func (s *BookingEstimationServiceImpl) GetById(id int) (map[string]interface{}, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -150,8 +144,6 @@ func (s *BookingEstimationServiceImpl) Save(tx *gorm.DB, request transactionwork
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -183,8 +175,6 @@ func (s *BookingEstimationServiceImpl) Submit(tx *gorm.DB, id int) (bool, *excep
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -216,8 +206,6 @@ func (s *BookingEstimationServiceImpl) Void(id int) (bool, *exceptions.BaseError
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -249,8 +237,6 @@ func (s *BookingEstimationServiceImpl) CloseOrder(tx *gorm.DB, id int) *exceptio
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -282,8 +268,6 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReq(req transactionworkshopp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -315,8 +299,6 @@ func (s *BookingEstimationServiceImpl) UpdateBookEstimReq(req transactionworksho
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -348,8 +330,6 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimReq(id int) (transactionw
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -381,8 +361,6 @@ func (s *BookingEstimationServiceImpl) GetAllBookEstimReq(pages *pagination.Pagi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -414,8 +392,6 @@ func (s *BookingEstimationServiceImpl) SaveBookEstimReminderServ(req transaction
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -494,8 +470,6 @@ func (s *BookingEstimationServiceImpl) AddPackage(id int, packId int) (bool, *ex
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -527,8 +501,6 @@ func (s *BookingEstimationServiceImpl) AddContractService(id int, contractservic
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -560,8 +532,6 @@ func (s *BookingEstimationServiceImpl) CopyFromHistory(batchid int) ([]map[strin
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -593,8 +563,6 @@ func (s *BookingEstimationServiceImpl) InputDiscount(id int, req transactionwork
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -626,8 +594,6 @@ func (s *BookingEstimationServiceImpl) AddFieldAction(id int, idrecall int) (int
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -659,8 +625,6 @@ func (s *BookingEstimationServiceImpl) GetByIdBookEstimDetail(id int, LineTypeID
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -692,8 +656,6 @@ func (s *BookingEstimationServiceImpl) PostBookingEstimationCalculation(id int) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -725,8 +687,6 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromPDI(id int, req 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -758,8 +718,6 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationFromServiceRequest(i
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -791,8 +749,6 @@ func (s *BookingEstimationServiceImpl) SaveBookingEstimationAllocation(id int, r
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

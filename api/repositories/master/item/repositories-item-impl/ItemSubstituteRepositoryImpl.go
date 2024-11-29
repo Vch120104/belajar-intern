@@ -34,10 +34,13 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 
 	whereQuery := utils.ApplyFilter(query, filterCondition)
 
-	if !from.IsZero() && !to.IsZero() {
-		whereQuery.Where("effective_date BETWEEN ? AND ?", from, to)
-	} else if !from.IsZero() {
-		whereQuery.Where("effective_date >= ?", from)
+	if !from.IsZero() {
+		fromFormatted := from.Format("2006-01-02") + " 00:00:00.000"
+		whereQuery.Where("effective_date >= ?", fromFormatted)
+	}
+	if !to.IsZero() {
+		toFormatted := to.Format("2006-01-02") + " 23:59:59.999"
+		whereQuery.Where("effective_date <= ?", toFormatted)
 	}
 
 	err := whereQuery.Scan(&payloads).Error
@@ -203,7 +206,6 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstitute(tx *gorm.DB, req maste
 }
 
 func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req masteritempayloads.ItemSubstituteDetailPostPayloads, id int) (masteritementities.ItemSubstituteDetail, *exceptions.BaseErrorResponse) {
-
 	var existing masteritementities.ItemSubstituteDetail
 	if err := tx.Where("item_id = ? AND item_substitute_id = ?", req.ItemId, id).First(&existing).Error; err == nil {
 		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
@@ -214,7 +216,22 @@ func (r *ItemSubstituteRepositoryImpl) SaveItemSubstituteDetail(tx *gorm.DB, req
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
 			StatusCode: http.StatusInternalServerError,
-			Message:    "Gagal memeriksa data existing",
+			Message:    "Fail to check existing data",
+			Err:        err,
+		}
+	}
+
+	var header masteritementities.ItemSubstitute
+	if err := tx.Where("item_id = ? AND item_substitute_id = ?", req.ItemId, id).First(&header).Error; err == nil {
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusConflict,
+			Message:    "duplicate item with substitute header",
+			Err:        errors.New("duplicate item with substitute header"),
+		}
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return masteritementities.ItemSubstituteDetail{}, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusInternalServerError,
+			Message:    "Fail to check existing data",
 			Err:        err,
 		}
 	}

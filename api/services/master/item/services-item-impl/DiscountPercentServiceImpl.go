@@ -50,8 +50,6 @@ func (s *DiscountPercentServiceImpl) GetAllDiscountPercent(filterCondition []uti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -83,8 +81,6 @@ func (s *DiscountPercentServiceImpl) GetDiscountPercentById(Id int) (masteritemp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -116,8 +112,6 @@ func (s *DiscountPercentServiceImpl) SaveDiscountPercent(req masteritempayloads.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -157,8 +151,6 @@ func (s *DiscountPercentServiceImpl) ChangeStatusDiscountPercent(Id int) (bool, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

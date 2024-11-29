@@ -47,7 +47,7 @@ func (s *ItemSubstituteServiceImpl) GetAllItemSubstitute(filterCondition []utils
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	results, page, limit, err := s.itemSubstituteRepo.GetAllItemSubstitute(tx, filterCondition, pages, from, to)
@@ -73,7 +73,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstitute(id int) (map[string]in
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstitute(tx, id)
@@ -100,7 +100,7 @@ func (s *ItemSubstituteServiceImpl) GetAllItemSubstituteDetail(pages pagination.
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	result, err := s.itemSubstituteRepo.GetAllItemSubstituteDetail(tx, pages, id)
@@ -127,7 +127,7 @@ func (s *ItemSubstituteServiceImpl) GetByIdItemSubstituteDetail(id int) (masteri
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 	result, err := s.itemSubstituteRepo.GetByIdItemSubstituteDetail(tx, id)
@@ -154,7 +154,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstitute(req masteritempayloads.It
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -182,7 +182,7 @@ func (s *ItemSubstituteServiceImpl) SaveItemSubstituteDetail(req masteritempaylo
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -210,7 +210,7 @@ func (s *ItemSubstituteServiceImpl) UpdateItemSubstituteDetail(req masteritempay
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -238,7 +238,7 @@ func (s *ItemSubstituteServiceImpl) ChangeStatusItemSubstitute(id int) (bool, *e
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -266,7 +266,7 @@ func (s *ItemSubstituteServiceImpl) DeactivateItemSubstituteDetail(id string) (b
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -294,7 +294,7 @@ func (s *ItemSubstituteServiceImpl) ActivateItemSubstituteDetail(id string) (boo
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -322,7 +322,7 @@ func (s *ItemSubstituteServiceImpl) GetallItemForFilter(filterCondition []utils.
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 
@@ -350,7 +350,7 @@ func (s *ItemSubstituteServiceImpl) GetItemSubstituteDetailLastSequence(id int) 
 			logrus.Info("Transaction rollback due to error:", err)
 		} else {
 			tx.Commit()
-			//logrus.Info("Transaction committed successfully")
+			//logrus.Debug("Transaction committed successfully")
 		}
 	}()
 

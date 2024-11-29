@@ -51,8 +51,6 @@ func (s *CarWashServiceImpl) GetAll(filterCondition []utils.FilterCondition, pag
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *CarWashServiceImpl) UpdatePriority(workOrderSystemNumber int, carWashPr
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -119,8 +115,6 @@ func (s *CarWashServiceImpl) GetAllCarWashPriorityDropDown() ([]transactionjpcbp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -153,8 +147,6 @@ func (s *CarWashServiceImpl) DeleteCarWash(workOrderSystemNumber int) (bool, *ex
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -187,8 +179,6 @@ func (s *CarWashServiceImpl) PostCarWash(workOrderSystemNumber int) (transaction
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -221,8 +211,6 @@ func (s *CarWashServiceImpl) GetAllCarWashScreen(companyId int) ([]transactionjp
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -255,8 +243,6 @@ func (s *CarWashServiceImpl) UpdateBayNumberCarWashScreen(bayNumber, workOrderSy
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -289,8 +275,6 @@ func (s *CarWashServiceImpl) StartCarWash(workOrderSystemNumber int, carWashBayI
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -323,8 +307,6 @@ func (s *CarWashServiceImpl) StopCarWash(workOrderSystemNumber int) (transaction
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -357,8 +339,6 @@ func (s *CarWashServiceImpl) CancelCarWash(workOrderSystemNumber int) (transacti
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -391,8 +371,6 @@ func (s *CarWashServiceImpl) GetCarWashByWorkOrderSystemNumber(workOrderSystemNu
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

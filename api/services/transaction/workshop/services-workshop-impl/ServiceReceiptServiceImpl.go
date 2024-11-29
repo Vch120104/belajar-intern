@@ -52,8 +52,6 @@ func (s *ServiceReceiptServiceImpl) GetAll(filterCondition []utils.FilterConditi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -120,8 +118,6 @@ func (s *ServiceReceiptServiceImpl) Save(id int, request transactionworkshoppayl
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

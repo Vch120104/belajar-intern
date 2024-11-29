@@ -51,8 +51,6 @@ func (s *ItemPriceCodeServiceImpl) GetAllItemPriceCode(filterCondition []utils.F
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -84,8 +82,6 @@ func (s *ItemPriceCodeServiceImpl) GetByIdItemPriceCode(id int) (masteritempaylo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -117,8 +113,6 @@ func (s *ItemPriceCodeServiceImpl) GetByCodeItemPriceCode(itemPriceCode string) 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -150,8 +144,6 @@ func (s *ItemPriceCodeServiceImpl) SaveItemPriceCode(req masteritempayloads.Save
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -183,8 +175,6 @@ func (s *ItemPriceCodeServiceImpl) DeleteItemPriceCode(id int) (bool, *exception
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -216,8 +206,6 @@ func (s *ItemPriceCodeServiceImpl) UpdateItemPriceCode(itemPriceId int, req mast
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -249,8 +237,6 @@ func (s *ItemPriceCodeServiceImpl) ChangeStatusItemPriceCode(id int) (bool, *exc
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -282,8 +268,6 @@ func (s *ItemPriceCodeServiceImpl) GetItemPriceCodeDropDown() ([]masteritempaylo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()

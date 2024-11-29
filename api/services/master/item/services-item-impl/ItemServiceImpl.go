@@ -52,8 +52,6 @@ func (s *ItemServiceImpl) CheckItemCodeExist(itemCode string, itemGroupId int, c
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -85,8 +83,6 @@ func (s *ItemServiceImpl) GetAllItemSearch(filterCondition []utils.FilterConditi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -120,8 +116,6 @@ func (s *ItemServiceImpl) GetUomDropDown(uomTypeId int) ([]masteritempayloads.Uo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -154,8 +148,6 @@ func (s *ItemServiceImpl) GetUomTypeDropDown() ([]masteritempayloads.UomTypeDrop
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -187,8 +179,6 @@ func (s *ItemServiceImpl) GetAllItemLookup(filter []utils.FilterCondition) (any,
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -220,8 +210,6 @@ func (s *ItemServiceImpl) GetItemById(Id int) (masteritempayloads.ItemResponse, 
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -253,8 +241,6 @@ func (s *ItemServiceImpl) GetPrincipalCatalog() ([]masteritempayloads.GetPrincip
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -286,8 +272,6 @@ func (s *ItemServiceImpl) GetItemWithMultiId(MultiIds []string) ([]masteritempay
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -320,8 +304,6 @@ func (s *ItemServiceImpl) GetItemCode(code string) (masteritempayloads.ItemRespo
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -353,8 +335,6 @@ func (s *ItemServiceImpl) SaveItem(req masteritempayloads.ItemRequest) (masterit
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -387,8 +367,6 @@ func (s *ItemServiceImpl) ChangeStatusItem(Id int) (bool, *exceptions.BaseErrorR
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -427,8 +405,6 @@ func (s *ItemServiceImpl) GetAllItemDetail(filterCondition []utils.FilterConditi
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -463,8 +439,6 @@ func (s *ItemServiceImpl) GetItemDetailById(itemID, itemDetailID int) (masterite
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -496,8 +470,6 @@ func (s *ItemServiceImpl) AddItemDetail(id int, req masteritempayloads.ItemDetai
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -530,8 +502,6 @@ func (s *ItemServiceImpl) DeleteItemDetails(id int, itemDetailIDs []int) (master
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -564,8 +534,6 @@ func (s *ItemServiceImpl) UpdateItem(id int, req masteritempayloads.ItemUpdateRe
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -598,8 +566,6 @@ func (s *ItemServiceImpl) UpdateItemDetail(id int, itemDetail int, req masterite
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -632,8 +598,6 @@ func (s *ItemServiceImpl) GetPrincipalBrandParent(id int) ([]masteritempayloads.
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -665,8 +629,6 @@ func (s *ItemServiceImpl) GetPrincipalBrandDropdown() ([]masteritempayloads.Prin
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
@@ -699,8 +661,6 @@ func (s *ItemServiceImpl) AddItemDetailByBrand(id string, itemId int) ([]masteri
 					StatusCode: http.StatusInternalServerError,
 					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
 				}
-			} else {
-				logrus.Info("Transaction committed successfully")
 			}
 		}
 	}()
