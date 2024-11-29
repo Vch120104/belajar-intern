@@ -220,7 +220,6 @@ func (s *PriceListServiceImpl) UploadFile(rows [][]string, uploadRequest masteri
 			if !strings.EqualFold(value[1], uploadRequest.CurrencyCode) {
 				result = append(result, fmt.Sprintf("Line %d : %s", key, "Currency Code not match"))
 			}
-
 			//parse from excel
 			parsedDate1, err := time.Parse("01-02-06", value[2])
 			if err != nil {

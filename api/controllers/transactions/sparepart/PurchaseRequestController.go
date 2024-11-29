@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -70,6 +71,11 @@ func NewPurchaseRequestController(PurchaseRequestService transactionsparepartser
 func (controller *PurchaseRequestControllerImpl) GetAllItemTypePr(writer http.ResponseWriter, request *http.Request) {
 	queryValues := request.URL.Query()
 	queryParams := map[string]string{
+		// tambahin item group, stock keep, brand_id, stock_keeping = 1
+		// item detail tidak boleh duplicate
+		//
+		"A.item_group_id":      queryValues.Get("item_group_id"),
+		"DT.brand_id":          queryValues.Get("brand_id"),
 		"item_code":            queryValues.Get("item_code"),
 		"item_name":            queryValues.Get("item_name"),
 		"item_class_name":      queryValues.Get("item_class_name"),
@@ -133,7 +139,22 @@ func (controller *PurchaseRequestControllerImpl) GetAllPurchaseRequest(writer ht
 		"purchase_request_date_from": queryValues.Get("purchase_request_date_from"),
 		"purchase_request_date_to":   queryValues.Get("purchase_request_date_to"),
 	}
-	fmt.Println(DateParams["purchase_request_date_from"])
+	purchase_request_date_from, errsparseTime := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_from"])
+	if errsparseTime != nil {
+		payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+		return
+	}
+	DateParams["purchase_request_date_from"] = purchase_request_date_from.Format("2006-01-02")
+
+	purchase_request_date_to, errsparse := time.Parse("2006-01-02T15:04:05.000Z", DateParams["purchase_request_date_to"])
+	if errsparse != nil {
+		payloads.NewHandleError(writer, "Invalid effective date", http.StatusBadRequest)
+		return
+	}
+	DateParams["purchase_request_date_to"] = purchase_request_date_to.Format("2006-01-02")
+	DateParams["purchase_request_date_to"] = DateParams["purchase_request_date_to"] + " 23:59:59.999"
+
+	fmt.Println(DateParams["purchase_request_date_to"])
 	pagination := pagination.Pagination{
 		Limit:  utils.NewGetQueryInt(queryValues, "limit"),
 		Page:   utils.NewGetQueryInt(queryValues, "page"),

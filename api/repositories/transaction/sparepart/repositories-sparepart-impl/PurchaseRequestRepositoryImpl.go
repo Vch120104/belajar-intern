@@ -51,7 +51,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 	if Dateparams["purchase_request_date_to"] == "" {
 		Dateparams["purchase_request_date_to"] = "99991212"
 	}
-	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date <= '" + Dateparams["purchase_request_date_to"] + "'"
+
+	strDateFilter = "purchase_request_document_date >='" + Dateparams["purchase_request_date_from"] + "' AND purchase_request_document_date < '" + Dateparams["purchase_request_date_to"] + "'"
 	err := WhereQuery.Scopes(pagination.Paginate(&entities, &paginationResponses, WhereQuery)).Where(strDateFilter).Scan(&responses).Error
 	if err != nil {
 		return paginationResponses, &exceptions.BaseErrorResponse{
@@ -60,10 +61,8 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 		}
 	}
 	if len(responses) == 0 {
-		return paginationResponses, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Err:        err,
-		}
+		paginationResponses.Rows = []string{}
+		return paginationResponses, nil
 	}
 	var result []transactionsparepartpayloads.PurchaseRequestGetAllListResponses
 	for _, res := range responses {
@@ -77,14 +76,9 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			}
 		}
 
-		var RequestBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-		RequestByURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(res.CreatedByUserId)
-		if err := utils.Get(RequestByURL, &RequestBy, nil); err != nil {
-			return paginationResponses, &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Message:    "Failed to fetch Requested By data from external service",
-				Err:        err,
-			}
+		RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(res.CreatedByUserId)
+		if RequestByErr != nil {
+			return paginationResponses, RequestByErr
 		}
 
 		var ItemGroup transactionsparepartpayloads.PurchaseRequestItemGroupResponse
@@ -132,7 +126,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllPurchaseRequest(db *gorm.DB, condi
 			ReferenceNo:                   res.ReferenceDocumentNumber,
 			ExpectedArrivalDate:           res.ExpectedArrivalDate,
 			Status:                        purchaseRequestStatusDesc.PurchaseRequestStatusDescription,
-			RequestBy:                     RequestBy.UserEmployeeName,
+			RequestBy:                     RequestBy.EmployeeName,
 		}
 		result = append(result, tempRes)
 	}
@@ -185,10 +179,13 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	if GetBrandNameErr != nil {
 		return response, GetBrandNameErr
 	}
-
-	GetDivision, GetDivisionErr := generalserviceapiutils.GetDivisionById(response.DivisionId)
-	if GetDivisionErr != nil {
-		return response, GetDivisionErr
+	GetDivision := generalserviceapiutils.DivisionResponseAPI{}
+	GetDivisionErr := &exceptions.BaseErrorResponse{}
+	if response.DivisionId != 0 {
+		GetDivision, GetDivisionErr = generalserviceapiutils.GetDivisionById(response.DivisionId)
+		if GetDivisionErr != nil {
+			return response, GetDivisionErr
+		}
 	}
 
 	//var GetCostCenterName transactionsparepartpayloads.CostCenterResponses
@@ -243,7 +240,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
 				StatusCode: http.StatusNotFound,
-				Message:    "warehouse master is not found please check inputt",
+				Message:    "warehouse master is not found please check input",
 				Err:        err,
 			}
 		}
@@ -272,29 +269,26 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 	//		Err:        err,
 	//	}
 	//}
-	var RequestBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	RequestByURL := config.EnvConfigs.GeneralServiceUrl + "user-detail/" + strconv.Itoa(response.CreatedByUserId)
-	if err := utils.Get(RequestByURL, &RequestBy, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusInternalServerError,
-			Message:    "Failed to fetch Requested By data from external service",
-			Err:        err,
-		}
+	RequestBy, RequestByErr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	if RequestByErr != nil {
+		return response, RequestByErr
 	}
 
 	//var UpdatedBy transactionsparepartpayloads.PurchaseRequestRequestedByResponse
-	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.CreatedByUserId)
+	UpdatedBy, UpdatedByerr := generalserviceapiutils.GetUserDetailsByID(response.UpdatedByUserId)
 	if UpdatedByerr != nil {
 		return response, UpdatedByerr
 	}
 
 	var PurchaseRequestReferenceType transactionsparepartpayloads.PurchaseRequestReferenceType
-	PurchaseReuqestReferenceType := config.EnvConfigs.GeneralServiceUrl + "reference-type-purchase-request/" + strconv.Itoa(response.ReferenceTypeId)
-	if err := utils.Get(PurchaseReuqestReferenceType, &PurchaseRequestReferenceType, nil); err != nil {
-		return response, &exceptions.BaseErrorResponse{
-			StatusCode: http.StatusBadRequest,
-			Message:    "Failed to fetch Reference from external service",
-			Err:        err,
+	if response.ReferenceTypeId != 0 {
+		PurchaseReuqestReferenceType := config.EnvConfigs.GeneralServiceUrl + "reference-type-purchase-request/" + strconv.Itoa(response.ReferenceTypeId)
+		if err := utils.CallAPI("GET", PurchaseReuqestReferenceType, nil, &PurchaseRequestReferenceType); err != nil {
+			return response, &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusBadRequest,
+				Message:    "Failed to fetch Reference from external service",
+				Err:        err,
+			}
 		}
 	}
 
@@ -325,7 +319,7 @@ func (p *PurchaseRequestRepositoryImpl) GetByIdPurchaseRequest(db *gorm.DB, i in
 		SetOrder:                   response.SetOrder,
 		Currency:                   GetCcyName.CurrencyName,
 		ChangeNo:                   0,
-		CreatedByUser:              RequestBy.UserEmployeeName,
+		CreatedByUser:              RequestBy.EmployeeName,
 		CreatedDate:                response.CreatedDate,
 		UpdatedByUser:              UpdatedBy.EmployeeName,
 		UpdatedDate:                response.UpdatedDate,
@@ -597,7 +591,23 @@ func (p *PurchaseRequestRepositoryImpl) NewPurchaseRequestDetail(db *gorm.DB, pa
 	//get header data
 	var Response = transactionsparepartentities.PurchaseRequestDetail{}
 	entities := transactionsparepartentities.PurchaseRequestEntities{}
-	err := db.Model(&entities).
+	isExistDuplicate := 0
+	err := db.Model(&Response).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestSystemNumber: payloads.PurchaseRequestSystemNumber, ItemId: payloads.ItemId}).Select("1").Scan(&isExistDuplicate).Error
+	if err != nil {
+		return Response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "error on check duplicate item",
+			Err:        err,
+		}
+	}
+	if isExistDuplicate != 0 {
+		return Response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "cannot insert duplicate item data on detail",
+			Err:        err,
+		}
+	}
+	err = db.Model(&entities).
 		Where(transactionsparepartentities.PurchaseRequestEntities{PurchaseRequestSystemNumber: payloads.PurchaseRequestSystemNumber}).
 		First(&entities).Error
 	if err != nil {
@@ -711,8 +721,24 @@ func (p *PurchaseRequestRepositoryImpl) SavePurchaseRequestDetail(db *gorm.DB, p
 	//TODO implement me
 	response := transactionsparepartpayloads.PurchaseRequestSaveDetailRequestPayloads{}
 	entities := transactionsparepartentities.PurchaseRequestDetail{}
+	isExistDuplicate := 0
+	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id, ItemId: payloads.ItemId}).Select("1").Scan(&isExistDuplicate).Error
+	if err != nil {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "error on check duplicate item",
+			Err:        err,
+		}
+	}
+	if isExistDuplicate != 0 {
+		return response, &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusBadRequest,
+			Message:    "cannot insert duplicate item data on detail",
+			Err:        err,
+		}
+	}
 
-	err := db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id}).First(&entities).Error
+	err = db.Model(&entities).Where(transactionsparepartentities.PurchaseRequestDetail{PurchaseRequestDetailSystemNumber: id}).First(&entities).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return response, &exceptions.BaseErrorResponse{
@@ -949,6 +975,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 		"IT.item_type_code,"+
 		"A.item_level_4_id,A.unit_of_measurement_type_id,"+
 		"ISNULL(SUM(x.quantity_ending-x.quantity_allocated),0) as quantity").
+		Joins(`LEFT JOIN mtr_item_detail DT ON A.item_id = DT.item_id`).
 		Joins("LEFT JOIN mtr_item_class Z on A.item_class_id = Z.item_class_id").
 		Joins(`LEFT JOIN mtr_item_level_1 L1 ON A.item_level_1_id = L1.item_level_1_id AND A.item_level_1_id <> 0`).
 		Joins(`LEFT JOIN mtr_item_level_2 L2 ON A.item_level_2_id = L2.item_level_2_id AND A.item_level_2_id <> 0`).
@@ -978,7 +1005,7 @@ func (p *PurchaseRequestRepositoryImpl) GetAllItemTypePrRequest(db *gorm.DB, con
 			"IT.item_type_code")
 	//.Order("A.item_id")
 	WhereQuery := utils.ApplyFilter(JoinTable, conditions)
-	err := WhereQuery.Scopes(pagination.Paginate(&entities, &page, WhereQuery)).Scan(&response).Error
+	err := WhereQuery.Scopes(pagination.Paginate(&entities, &page, WhereQuery)).Where("stock_keeping = 1").Scan(&response).Error
 	if len(response) == 0 {
 		page.Rows = []string{}
 		return page, nil
