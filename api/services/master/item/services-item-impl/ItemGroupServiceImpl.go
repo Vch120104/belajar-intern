@@ -1,11 +1,12 @@
-package masterwarehouseserviceimpl
+package masteritemserviceimpl
 
 import (
-	exceptions "after-sales/api/exceptions"
-	masterwarehousepayloads "after-sales/api/payloads/master/warehouse"
+	masteritementities "after-sales/api/entities/master/item"
+	"after-sales/api/exceptions"
+	masteritempayloads "after-sales/api/payloads/master/item"
 	"after-sales/api/payloads/pagination"
-	masterwarehouserepository "after-sales/api/repositories/master/warehouse"
-	masterwarehouseservice "after-sales/api/services/master/warehouse"
+	masteritemrepository "after-sales/api/repositories/master/item"
+	masteritemservice "after-sales/api/services/master/item"
 	"after-sales/api/utils"
 	"fmt"
 	"net/http"
@@ -13,28 +14,17 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	// "after-sales/api/utils"
 )
 
-type WarehouseGroupServiceImpl struct {
-	warehouseGroupRepo masterwarehouserepository.WarehouseGroupRepository
-	DB                 *gorm.DB
-	RedisClient        *redis.Client // Redis client
+type ItemGroupServiceImpl struct {
+	repository masteritemrepository.ItemGroupRepository
+	DB         *gorm.DB
+	rdb        *redis.Client
 }
 
-func OpenWarehouseGroupService(warehouseGroup masterwarehouserepository.WarehouseGroupRepository, db *gorm.DB, redisClient *redis.Client) masterwarehouseservice.WarehouseGroupService {
-	return &WarehouseGroupServiceImpl{
-		warehouseGroupRepo: warehouseGroup,
-		DB:                 db,
-		RedisClient:        redisClient,
-	}
-}
-
-// GetbyGroupCode implements masterwarehouseservice.WarehouseGroupService.
-func (s *WarehouseGroupServiceImpl) GetbyGroupCode(groupCode string) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (i *ItemGroupServiceImpl) GetAllItemGroupWithPagination(internalFilter []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -57,88 +47,16 @@ func (s *WarehouseGroupServiceImpl) GetbyGroupCode(groupCode string) (masterware
 			}
 		}
 	}()
-	get, err := s.warehouseGroupRepo.GetbyGroupCode(tx, groupCode)
-
+	results, err := i.repository.GetAllItemGroupWithPagination(tx, internalFilter, pages)
 	if err != nil {
-		return get, err
+		return results, err
 	}
-	return get, nil
+	return results, nil
 }
 
-// GetWarehouseGroupDropdownbyId implements masterwarehouseservice.WarehouseGroupService.
-func (s *WarehouseGroupServiceImpl) GetWarehouseGroupDropdownbyId(Id int) (masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (i *ItemGroupServiceImpl) GetAllItemGroup(code string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			} else {
-				logrus.Info("Transaction committed successfully")
-			}
-		}
-	}()
-	get, err := s.warehouseGroupRepo.GetWarehouseGroupDropdownbyId(tx, Id)
-
-	if err != nil {
-		return get, err
-	}
-	return get, nil
-}
-
-// GetWarehouseGroupDropdown implements masterwarehouseservice.WarehouseGroupService.
-func (s *WarehouseGroupServiceImpl) GetWarehouseGroupDropdown() ([]masterwarehousepayloads.GetWarehouseGroupDropdown, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-			err = &exceptions.BaseErrorResponse{
-				StatusCode: http.StatusInternalServerError,
-				Err:        fmt.Errorf("panic recovered: %v", r),
-			}
-		} else if err != nil {
-			tx.Rollback()
-			logrus.Info("Transaction rollback due to error:", err)
-		} else {
-			if commitErr := tx.Commit().Error; commitErr != nil {
-				logrus.WithError(commitErr).Error("Transaction commit failed")
-				err = &exceptions.BaseErrorResponse{
-					StatusCode: http.StatusInternalServerError,
-					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
-				}
-			} else {
-				logrus.Info("Transaction committed successfully")
-			}
-		}
-	}()
-	get, err := s.warehouseGroupRepo.GetWarehouseGroupDropdown(tx)
-
-	if err != nil {
-		return get, err
-	}
-	return get, nil
-}
-
-func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepayloads.GetWarehouseGroupResponse) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
-	var err *exceptions.BaseErrorResponse
-
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -162,26 +80,16 @@ func (s *WarehouseGroupServiceImpl) SaveWarehouseGroup(request masterwarehousepa
 		}
 	}()
 
-	if request.WarehouseGroupId != 0 {
-		_, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, request.WarehouseGroupId)
-
-		if err != nil {
-			return false, err
-		}
-	}
-
-	save, err := s.warehouseGroupRepo.SaveWarehouseGroup(tx, request)
-
+	results, err := i.repository.GetAllItemGroup(tx, code)
 	if err != nil {
-		return false, err
+		return results, err
 	}
-	return save, nil
+	return results, nil
 }
 
-func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) (masterwarehousepayloads.GetWarehouseGroupResponse, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (i *ItemGroupServiceImpl) GetItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -204,18 +112,16 @@ func (s *WarehouseGroupServiceImpl) GetByIdWarehouseGroup(warehouseGroupId int) 
 			}
 		}
 	}()
-	get, err := s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
-
+	results, err := i.repository.GetItemGroupById(tx, id)
 	if err != nil {
-		return get, err
+		return results, err
 	}
-	return get, nil
+	return results, nil
 }
 
-func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (i *ItemGroupServiceImpl) DeleteItemGroupById(id int) (bool, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -238,18 +144,16 @@ func (s *WarehouseGroupServiceImpl) GetAllWarehouseGroup(filterCondition []utils
 			}
 		}
 	}()
-	get, err := s.warehouseGroupRepo.GetAllWarehouseGroup(tx, filterCondition, pages)
-
+	results, err := i.repository.DeleteItemGroupById(tx, id)
 	if err != nil {
-		return get, err
+		return results, err
 	}
-	return get, nil
+	return results, nil
 }
 
-func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId int) (bool, *exceptions.BaseErrorResponse) {
-	tx := s.DB.Begin()
+func (i *ItemGroupServiceImpl) UpdateItemGroupById(payload masteritempayloads.ItemGroupUpdatePayload, id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
 	var err *exceptions.BaseErrorResponse
-
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -272,17 +176,113 @@ func (s *WarehouseGroupServiceImpl) ChangeStatusWarehouseGroup(warehouseGroupId 
 			}
 		}
 	}()
-
-	_, err = s.warehouseGroupRepo.GetByIdWarehouseGroup(tx, warehouseGroupId)
-
+	results, err := i.repository.UpdateItemGroupById(tx, payload, id)
 	if err != nil {
-		return false, err
+		return results, err
 	}
+	return results, nil
+}
 
-	change_status, err := s.warehouseGroupRepo.ChangeStatusWarehouseGroup(tx, warehouseGroupId)
-
+func (i *ItemGroupServiceImpl) UpdateStatusItemGroupById(id int) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	results, err := i.repository.UpdateStatusItemGroupById(tx, id)
 	if err != nil {
-		return change_status, err
+		return results, err
 	}
-	return change_status, nil
+	return results, nil
+}
+
+func (i *ItemGroupServiceImpl) GetItemGroupByMultiId(multiId string) ([]masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	results, err := i.repository.GetItemGroupByMultiId(tx, multiId)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func (i *ItemGroupServiceImpl) NewItemGroup(payload masteritempayloads.NewItemGroupPayload) (masteritementities.ItemGroup, *exceptions.BaseErrorResponse) {
+	tx := i.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	results, err := i.repository.NewItemGroup(tx, payload)
+	if err != nil {
+		return results, err
+	}
+	return results, nil
+}
+
+func NewItemGroupServiceImpl(repo masteritemrepository.ItemGroupRepository, DB *gorm.DB, rdb *redis.Client) masteritemservice.ItemGroupService {
+	return &ItemGroupServiceImpl{
+		repository: repo,
+		DB:         DB,
+		rdb:        rdb,
+	}
 }
