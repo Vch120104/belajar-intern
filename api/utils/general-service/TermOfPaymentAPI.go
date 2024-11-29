@@ -31,7 +31,7 @@ func GetTermOfPaymentById(id int) (TermOfPaymentResponse, *exceptions.BaseErrorR
 		return top, &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
-			Err:        errors.New("error consuming external API while getting line type by ID"),
+			Err:        errors.New("error consuming external API while getting top by ID"),
 		}
 	}
 	return top, nil
@@ -53,7 +53,7 @@ func GetTermOfPaymentByCode(code string) (TermOfPaymentResponse, *exceptions.Bas
 		return top, &exceptions.BaseErrorResponse{
 			StatusCode: status,
 			Message:    message,
-			Err:        errors.New("error consuming external API while getting line type by ID"),
+			Err:        errors.New("error consuming external API while getting top by ID"),
 		}
 	}
 	return top, nil
