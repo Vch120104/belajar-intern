@@ -34,10 +34,13 @@ func (r *ItemSubstituteRepositoryImpl) GetAllItemSubstitute(tx *gorm.DB, filterC
 
 	whereQuery := utils.ApplyFilter(query, filterCondition)
 
-	if !from.IsZero() && !to.IsZero() {
-		whereQuery.Where("effective_date BETWEEN ? AND ?", from, to)
-	} else if !from.IsZero() {
-		whereQuery.Where("effective_date >= ?", from)
+	if !from.IsZero() {
+		fromFormatted := from.Format("2006-01-02") + " 00:00:00.000"
+		whereQuery.Where("effective_date >= ?", fromFormatted)
+	}
+	if !to.IsZero() {
+		toFormatted := to.Format("2006-01-02") + " 23:59:59.999"
+		whereQuery.Where("effective_date <= ?", toFormatted)
 	}
 
 	err := whereQuery.Scan(&payloads).Error
