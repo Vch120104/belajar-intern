@@ -3,14 +3,17 @@ package transactionsparepartserviceimpl
 import (
 	transactionsparepartentities "after-sales/api/entities/transaction/sparepart"
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
 	"after-sales/api/utils"
 	"context"
+	"fmt"
+	"net/http"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -28,114 +31,402 @@ func NewBinningListServiceImpl(repository transactionsparepartrepository.Binning
 	}
 }
 
-func (service *BinningListServiceImpl) GetBinningListById(BinningStockId int) (transactionsparepartpayloads.BinningListGetByIdResponse, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.GetBinningListById(tx, BinningStockId)
-	defer helper.CommitOrRollbackTrx(tx)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-func (service *BinningListServiceImpl) GetAllBinningListWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination, ctx context.Context) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	rdb := service.redis
-	result, err := service.repository.GetAllBinningListWithPagination(tx, rdb, filter, pagination, ctx)
-	defer helper.CommitOrRollbackTrx(tx)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-func (service *BinningListServiceImpl) InsertBinningListHeader(payloads transactionsparepartpayloads.BinningListInsertPayloads) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.InsertBinningListHeader(tx, payloads)
-	defer helper.CommitOrRollbackTrx(tx)
+func (s *BinningListServiceImpl) GetBinningListById(BinningStockId int) (transactionsparepartpayloads.BinningListGetByIdResponse, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.GetBinningListById(tx, BinningStockId)
+
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (service *BinningListServiceImpl) UpdateBinningListHeader(payloads transactionsparepartpayloads.BinningListSavePayload) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.UpdateBinningListHeader(tx, payloads)
-	defer helper.CommitOrRollbackTrx(tx)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-func (service *BinningListServiceImpl) GetBinningListDetailById(BinningDetailSystemNumber int) (transactionsparepartpayloads.BinningListGetByIdResponses, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.GetBinningListDetailById(tx, BinningDetailSystemNumber)
-	defer helper.CommitOrRollbackTrx(tx)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-func (service *BinningListServiceImpl) GetAllBinningListDetailWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination, binningListId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.GetAllBinningListDetailWithPagination(tx, filter, pagination, binningListId)
-	defer helper.CommitOrRollbackTrx(tx)
+func (s *BinningListServiceImpl) GetAllBinningListWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination, ctx context.Context) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	rdb := s.redis
+	result, err := s.repository.GetAllBinningListWithPagination(tx, rdb, filter, pagination, ctx)
+
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (service *BinningListServiceImpl) InsertBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailPayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.InsertBinningListDetail(tx, payloads)
-	defer helper.CommitOrRollbackTrx(tx)
-	if err != nil {
-		return result, err
-	}
-	return result, nil
-}
-func (service *BinningListServiceImpl) UpdateBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailUpdatePayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.UpdateBinningListDetail(tx, payloads)
-	defer helper.CommitOrRollbackTrx(tx)
+func (s *BinningListServiceImpl) InsertBinningListHeader(payloads transactionsparepartpayloads.BinningListInsertPayloads) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.InsertBinningListHeader(tx, payloads)
+
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (service *BinningListServiceImpl) SubmitBinningList(BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.SubmitBinningList(tx, BinningId)
-	defer helper.CommitOrRollbackTrx(tx)
+func (s *BinningListServiceImpl) UpdateBinningListHeader(payloads transactionsparepartpayloads.BinningListSavePayload) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.UpdateBinningListHeader(tx, payloads)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
-func (service *BinningListServiceImpl) DeleteBinningList(BinningId int) (bool, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.DeleteBinningList(tx, BinningId)
-	defer helper.CommitOrRollbackTrx(tx)
+
+func (s *BinningListServiceImpl) GetBinningListDetailById(BinningDetailSystemNumber int) (transactionsparepartpayloads.BinningListGetByIdResponses, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.GetBinningListDetailById(tx, BinningDetailSystemNumber)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
+func (s *BinningListServiceImpl) GetAllBinningListDetailWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination, binningListId int) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.GetAllBinningListDetailWithPagination(tx, filter, pagination, binningListId)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
-func (service *BinningListServiceImpl) DeleteBinningListDetailMultiId(binningDetailMultiId string) (bool, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.DeleteBinningListDetailMultiId(tx, binningDetailMultiId)
-	defer helper.CommitOrRollbackTrx(tx)
+
+func (s *BinningListServiceImpl) InsertBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailPayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.InsertBinningListDetail(tx, payloads)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *BinningListServiceImpl) UpdateBinningListDetail(payloads transactionsparepartpayloads.BinningListDetailUpdatePayloads) (transactionsparepartentities.BinningStockDetail, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.UpdateBinningListDetail(tx, payloads)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *BinningListServiceImpl) SubmitBinningList(BinningId int) (transactionsparepartentities.BinningStock, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.SubmitBinningList(tx, BinningId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *BinningListServiceImpl) DeleteBinningList(BinningId int) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.DeleteBinningList(tx, BinningId)
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+func (s *BinningListServiceImpl) DeleteBinningListDetailMultiId(binningDetailMultiId string) (bool, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.DeleteBinningListDetailMultiId(tx, binningDetailMultiId)
 	if err != nil {
 		return result, err
 	}
 	//tx.Rollback()
 	return result, nil
 }
-func (service *BinningListServiceImpl) GetReferenceNumberTypoPOWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
-	tx := service.DB.Begin()
-	result, err := service.repository.GetReferenceNumberTypoPOWithPagination(tx, filter, pagination)
-	defer helper.CommitOrRollbackTrx(tx)
+
+func (s *BinningListServiceImpl) GetReferenceNumberTypoPOWithPagination(filter []utils.FilterCondition, pagination pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.repository.GetReferenceNumberTypoPOWithPagination(tx, filter, pagination)
 	if err != nil {
 		return result, err
 	}

@@ -2,13 +2,16 @@ package transactionworkshopserviceimpl
 
 import (
 	"after-sales/api/exceptions"
-	"after-sales/api/helper"
 	"after-sales/api/payloads/pagination"
 	transactionworkshoppayloads "after-sales/api/payloads/transaction/workshop"
 	transactionworkshoprepository "after-sales/api/repositories/transaction/workshop"
 	transactionworkshopservice "after-sales/api/services/transaction/workshop"
 	"after-sales/api/utils"
+	"fmt"
+	"net/http"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -25,22 +28,68 @@ func NewVehicleHistoryServiceImpl(VehicleHistoryRepo transactionworkshopreposito
 		RedisClient:        redis,
 	}
 }
-func (v *VehicleHistoryServiceImpl) GetAllVehicleHistory(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
+func (s *VehicleHistoryServiceImpl) GetAllVehicleHistory(filterCondition []utils.FilterCondition, pages pagination.Pagination) (pagination.Pagination, *exceptions.BaseErrorResponse) {
 	//TODO implement me
-	tx := v.DB.Begin()
-	result, err := v.VehicleHistoryRepo.GetAllVehicleHistory(tx, filterCondition, pages)
-	defer helper.CommitOrRollbackTrx(tx)
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.VehicleHistoryRepo.GetAllVehicleHistory(tx, filterCondition, pages)
 	if err != nil {
 		return result, err
 	}
 	return result, nil
 }
 
-func (v *VehicleHistoryServiceImpl) GetVehicleHistoryById(id int) (transactionworkshoppayloads.VehicleHistoryByIdResponses, *exceptions.BaseErrorResponse) {
+func (s *VehicleHistoryServiceImpl) GetVehicleHistoryById(id int) (transactionworkshoppayloads.VehicleHistoryByIdResponses, *exceptions.BaseErrorResponse) {
 	//TODO implement me
-	tx := v.DB.Begin()
-	result, err := v.VehicleHistoryRepo.GetVehicleHistoryById(tx, id)
-	defer helper.CommitOrRollbackTrx(tx)
+	tx := s.DB.Begin()
+	var err *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			err = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if err != nil {
+			tx.Rollback()
+			logrus.Info("Transaction rollback due to error:", err)
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				err = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+	result, err := s.VehicleHistoryRepo.GetVehicleHistoryById(tx, id)
 
 	if err != nil {
 		return result, err

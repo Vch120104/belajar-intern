@@ -2,12 +2,14 @@ package transactionsparepartserviceimpl
 
 import (
 	exceptions "after-sales/api/exceptions"
-	"after-sales/api/helper"
 	transactionsparepartpayloads "after-sales/api/payloads/transaction/sparepart"
 	transactionsparepartrepository "after-sales/api/repositories/transaction/sparepart"
 	transactionsparepartservice "after-sales/api/services/transaction/sparepart"
+	"fmt"
+	"net/http"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -26,10 +28,42 @@ func StartSalesOrderService(salesOrderRepo transactionsparepartrepository.SalesO
 }
 
 func (s *SalesOrderServiceImpl) GetSalesOrderByID(tx *gorm.DB, id int) (transactionsparepartpayloads.SalesOrderResponse, *exceptions.BaseErrorResponse) {
-	value, err := s.salesOrderRepo.GetSalesOrderByID(tx, id)
-	defer helper.CommitOrRollback(tx, err)
+	tx = s.DB.Begin()
+	var result transactionsparepartpayloads.SalesOrderResponse
+	var errResponse *exceptions.BaseErrorResponse
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			errResponse = &exceptions.BaseErrorResponse{
+				StatusCode: http.StatusInternalServerError,
+				Err:        fmt.Errorf("panic recovered: %v", r),
+			}
+		} else if errResponse != nil {
+			tx.Rollback()
+			logrus.WithError(errResponse.Err).Info("Transaction rollback due to error")
+		} else {
+			if commitErr := tx.Commit().Error; commitErr != nil {
+				logrus.WithError(commitErr).Error("Transaction commit failed")
+				errResponse = &exceptions.BaseErrorResponse{
+					StatusCode: http.StatusInternalServerError,
+					Err:        fmt.Errorf("failed to commit transaction: %w", commitErr),
+				}
+			} else {
+				logrus.Info("Transaction committed successfully")
+			}
+		}
+	}()
+
+	result, err := s.salesOrderRepo.GetSalesOrderByID(tx, id)
 	if err != nil {
-		return transactionsparepartpayloads.SalesOrderResponse{}, err
+		errResponse = &exceptions.BaseErrorResponse{
+			StatusCode: http.StatusNotFound,
+			Message:    "Sales Order not found",
+			Err:        err,
+		}
+		return transactionsparepartpayloads.SalesOrderResponse{}, errResponse
 	}
-	return value, nil
+
+	return result, nil
 }
